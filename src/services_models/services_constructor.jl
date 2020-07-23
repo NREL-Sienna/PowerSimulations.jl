@@ -139,6 +139,7 @@ function construct_service!(
     end
     add_variables!(SteadyStateFrequencyDeviation, psi_container)
     add_variables!(AreaMismatchVariable, psi_container, areas)
+    add_variables!(SmoothACE, psi_container, areas)
     add_variables!(LiftVariable, psi_container, areas)
     add_variables!(ActivePowerVariable, psi_container, areas)
     add_variables!(DeltaActivePowerUpVariable, psi_container, areas)

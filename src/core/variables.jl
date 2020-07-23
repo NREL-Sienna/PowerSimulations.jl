@@ -224,12 +224,20 @@ function make_variable_name(
     return encode_symbol(T, "ΔPe_dn")
 end
 
-
 function make_variable_name(
     ::Type{AdditionalDeltaActivePowerDownVariable},
     ::Type{PSY.RegulationDevice{T}},
 ) where {T <: PSY.Device}
     return encode_symbol(T, "ΔPe_dn")
+end
+
+struct SmoothACE <: VariableType end
+
+function make_variable_name(
+    ::Type{SmoothACE},
+    ::Type{T},
+) where {T <: PSY.AggregationTopology}
+    return encode_symbol(T, "SACE")
 end
 
 function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}

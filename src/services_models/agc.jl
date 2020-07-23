@@ -33,6 +33,21 @@ function AddVariableSpec(
     )
 end
 
+
+"""
+This function adds the smooth ACE Variable
+"""
+function AddVariableSpec(
+    ::Type{SmoothACE},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {U <: PSY.AggregationTopology}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(SmoothACE, U),
+        binary = false,
+    )
+end
+
 """
 This function add the upwards scheduled regulation variables for power generation output to the model
 """
@@ -63,6 +78,7 @@ function AddVariableSpec(
     )
 end
 
+#= Commented out since not in use. These functions will substitute balancing_auxiliary_variables!
 """
 This function add the upwards scheduled regulation variables for power generation output to the model
 """
@@ -94,6 +110,7 @@ function AddVariableSpec(
         expression_name = :emergency_dn,
     )
 end
+=#
 
 function AddVariableSpec(
     ::Type{T},
@@ -233,8 +250,7 @@ function smooth_ace_pid!(
     time_steps = model_time_steps(psi_container)
     area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
     RAW_ACE = add_expression_container!(psi_container, :RAW_ACE, area_names, time_steps)
-    SACE = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(psi_container, variable_name("SACE", PSY.AGC), SACE)
+    SACE = get_variable(psi_container, make_variable_name(SmoothACE, PSY.Area))
     SACE_pid = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "SACE_pid", SACE_pid)
 
@@ -280,13 +296,11 @@ function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     aux_equation = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "balance_aux", aux_equation)
     area_mismatch = get_variable(psi_container, :area_mismatch)
-    SACE = get_variable(psi_container, make_variable_name("SACE", PSY.AGC))
-    R_up = get_variable(psi_container, make_variable_name("area_total_reserve_up"))
-    R_dn = get_variable(psi_container, make_variable_name("area_total_reserve_dn"))
-    R_up_emergency =
-        get_variable(psi_container, make_variable_name("area_emergency_reserve_up"))
-    R_dn_emergency =
-        get_variable(psi_container, make_variable_name("area_emergency_reserve_dn"))
+    SACE = get_variable(psi_container, make_variable_name(SmoothACE, PSY.Area))
+    R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, PSY.Area))
+    R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, PSY.Area))
+    R_up_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area))
+    R_dn_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area))
 
     for t in time_steps, a in area_names
         aux_equation[a, t] = JuMP.@constraint(
