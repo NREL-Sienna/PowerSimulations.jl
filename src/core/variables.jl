@@ -24,17 +24,6 @@ const LIFT = "z"
 
 abstract type VariableType end
 
-function make_variable_name(::Type{T}) where {T <: VariableType}
-    error("make_variable_name not implemented for $T")
-end
-
-function make_variable_name(
-    ::Type{T},
-    ::Type{U},
-) where {T <: VariableType, U <: PSY.Component}
-    error("make_variable_name not implemented for $T / $U")
-end
-
 """
 Struct to dispatch the creation of Active Power Variables
 """

@@ -233,8 +233,8 @@ function ramp_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.ThermalStandard}
-    R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, T))
-    R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, T))
+    R_up = get_variable(psi_container, DeltaActivePowerUpVariable, T)
+    R_dn = get_variable(psi_container, DeltaActivePowerDownVariable, T)
 
     resolution = Dates.value(Dates.Second(model_resolution(psi_container)))
     names = (PSY.get_name(g) for g in devices)
@@ -270,24 +270,12 @@ function participation_assignment!(
     ::Nothing,
 ) where {T <: PSY.StaticInjection}
     time_steps = model_time_steps(psi_container)
-    R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, T))
-    R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, T))
-    R_up_emergency = get_variable(
-        psi_container,
-        make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
-    )
-    R_dn_emergency = get_variable(
-        psi_container,
-        make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
-    )
-    area_reserve_up = get_variable(
-        psi_container,
-        make_variable_name(DeltaActivePowerUpVariable, PSY.Area),
-    )
-    area_reserve_dn = get_variable(
-        psi_container,
-        make_variable_name(DeltaActivePowerDownVariable, PSY.Area),
-    )
+    R_up = get_variable(psi_container, DeltaActivePowerUpVariable, T)
+    R_dn = get_variable(psi_container, DeltaActivePowerDownVariable, T)
+    R_up_emergency = get_variable(psi_container, AdditionalDeltaActivePowerUpVariable, T)
+    R_dn_emergency = get_variable(psi_container, AdditionalDeltaActivePowerUpVariable, T)
+    area_reserve_up = get_variable(psi_container, DeltaActivePowerUpVariable, PSY.Area)
+    area_reserve_dn = get_variable(psi_container, DeltaActivePowerDownVariable, PSY.Area)
 
     component_names = (PSY.get_name(d) for d in devices)
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
@@ -342,16 +330,10 @@ function regulation_cost!(
     ::DeviceModel{PSY.RegulationDevice{T}, <:AbstractRegulationFormulation},
 ) where {T <: PSY.StaticInjection}
     time_steps = model_time_steps(psi_container)
-    R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, T))
-    R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, T))
-    R_up_emergency = get_variable(
-        psi_container,
-        make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
-    )
-    R_dn_emergency = get_variable(
-        psi_container,
-        make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
-    )
+    R_up = get_variable(psi_container, DeltaActivePowerUpVariable, T)
+    R_dn = get_variable(psi_container, DeltaActivePowerDownVariable, T)
+    R_up_emergency = get_variable(psi_container, AdditionalDeltaActivePowerUpVariable, T)
+    R_dn_emergency = get_variable(psi_container, AdditionalDeltaActivePowerUpVariable, T)
 
     for d in devices
         cost = PSY.get_cost(d)

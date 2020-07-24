@@ -45,7 +45,7 @@ function service_requirement_constraint!(
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, make_constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(psi_container, make_variable_name(name, SR))
+    reserve_variable = get_variable(psi_container, name, SR)
     use_slacks = get_services_slack_variables(psi_container.settings)
 
     if use_forecast_data
@@ -96,7 +96,7 @@ function cost_function!(
     service::SR,
     ::ServiceModel{SR, RangeReserve},
 ) where {SR <: PSY.Reserve}
-    reserve = get_variable(psi_container, make_variable_name(PSY.get_name(service), SR))
+    reserve = get_variable(psi_container, PSY.get_name(service), SR)
     for r in reserve
         JuMP.add_to_expression!(psi_container.cost_function, r, 1.0)
     end
@@ -114,9 +114,8 @@ function service_requirement_constraint!(
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, make_constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(psi_container, make_variable_name(name, SR))
-    requirement_variable =
-        get_variable(psi_container, make_variable_name(SERVICE_REQUIREMENT, SR))
+    reserve_variable = get_variable(psi_container, name, SR)
+    requirement_variable = get_variable(psi_container, SERVICE_REQUIREMENT, SR)
 
     for t in time_steps
         constraint[name, t] = JuMP.@constraint(
@@ -163,7 +162,7 @@ function cost_function!(
 
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    variable = get_variable(psi_container, make_variable_name(SERVICE_REQUIREMENT, SR))
+    variable = get_variable(psi_container, SERVICE_REQUIREMENT, SR)
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)

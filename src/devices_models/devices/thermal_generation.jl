@@ -122,8 +122,7 @@ function commitment_variables!(
         make_variable_name(OnVariable, PSY.ThermalMultiStart),
         true,
     )
-    varstatus =
-        get_variable(psi_container, make_variable_name(OnVariable, PSY.ThermalMultiStart))
+    varstatus = get_variable(psi_container, OnVariable, PSY.ThermalMultiStart)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))
@@ -1218,7 +1217,7 @@ function cost_function(
 ) where {T <: PSY.ThermalGen}
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    variable = get_variable(psi_container, make_variable_name(ActivePowerVariable, T))
+    variable = get_variable(psi_container, ActivePowerVariable, T)
 
     # uses the same cost function whenever there is NO PWL
     function _ps_cost!(d::PSY.ThermalGen, cost_component::PSY.VariableCost)

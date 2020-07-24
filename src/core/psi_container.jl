@@ -229,6 +229,14 @@ function get_variable(
     return get_variable(psi_container, make_variable_name(var_type, T))
 end
 
+function get_variable(
+    psi_container::PSIContainer,
+    ::Type{T},
+    ::Type{U},
+) where {T <: VariableType, U <: PSY.Component}
+    return get_variable(psi_container, make_variable_name(T, U))
+end
+
 function get_variable(psi_container::PSIContainer, var_type::AbstractString)
     return get_variable(psi_container, make_variable_name(var_type))
 end

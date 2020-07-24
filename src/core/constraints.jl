@@ -52,18 +52,6 @@ const NODAL_BALANCE_REACTIVE = "nodal_balance_reactive"
 
 abstract type ConstraintType end
 
-function make_constraint_name(::Type{T}) where {T <: ConstraintType}
-    error("make_constraint_name not implemented for $T")
-end
-
-function make_constraint_name(
-    ::Type{T},
-    ::Type{U},
-    use_forecasts::Bool,
-) where {T <: ConstraintType, U <: PSY.Component}
-    error("make_constraint_name not implemented for $T / $U")
-end
-
 abstract type RangeConstraint <: ConstraintType end
 
 function make_constraint_name(
