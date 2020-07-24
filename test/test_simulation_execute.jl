@@ -589,6 +589,8 @@ function test_load_simulation(file_path::String)
     end
 
     @testset "Simulation with Cache" begin
+        c_sys5_hy_uc = build_system("c_sys5_hy_uc")
+        c_sys5_hy_ed = build_system("c_sys5_hy_ed")
         stages_definition = Dict(
             "UC" => Stage(
                 GenericOpProblem,
