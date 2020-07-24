@@ -333,6 +333,9 @@ function _get_status_value(device, key)
 end
 
 function _get_active_power_output_value(device, key)
+    if !PSY.get_status(device)
+        return 0.0
+    end
     return PSY.get_active_power(device)
 end
 
@@ -355,10 +358,10 @@ end
 
 function _get_duration_value(dev, key)
     if key.ic_type == TimeDurationON
-        value = PSY.get_status(dev) > 0 ? PSY.get_time_at_status(dev) : 0.0
+        value = PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     else
         @assert key.ic_type == TimeDurationOFF
-        value = PSY.get_status(dev) <= 0 ? PSY.get_time_at_status(dev) : 0.0
+        value = !PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     end
 
     return value
