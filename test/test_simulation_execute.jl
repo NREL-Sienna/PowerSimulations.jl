@@ -5,7 +5,6 @@ function get_deserialized(sim::Simulation, stage_info)
 end
 
 function test_load_simulation(file_path::String)
-
     c_sys5_uc = build_system("c_sys5_uc")
     single_stage_definition =
         Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
