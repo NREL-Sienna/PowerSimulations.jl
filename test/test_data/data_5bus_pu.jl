@@ -1,6 +1,7 @@
 using TimeSeries
 using Dates
 using Random
+Random.seed!(123)
 using PowerSystems
 
 DayAhead = collect(
