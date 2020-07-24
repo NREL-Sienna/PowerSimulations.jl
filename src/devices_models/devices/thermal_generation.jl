@@ -657,9 +657,7 @@ function ramp_constraints!(
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
-    key_status = ICKey(DevicePower, PSY.ThermalMultiStart)
     initial_conditions = get_initial_conditions(psi_container, key_power)
-    ic_power = get_initial_conditions(psi_container, key_power)
     ini_conds, constaint_data = _get_data_for_rocc_pglib(ic_power, resolution)
 
     for (ix, ic) in enumerate(ini_conds)
