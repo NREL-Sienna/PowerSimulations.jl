@@ -333,7 +333,7 @@ function initial_range_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
@@ -584,7 +584,7 @@ function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
@@ -617,7 +617,7 @@ function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     T <: PSY.ThermalGen,
@@ -634,7 +634,7 @@ function ramp_constraints!(
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange!(
             psi_container,
-            ramp_params,
+            (ramp_params, minmax_params),
             ini_conds,
             make_constraint_name(RAMP, T),
             make_variable_name(ActivePowerVariable, T),
@@ -649,7 +649,7 @@ function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
@@ -895,7 +895,7 @@ function startup_time_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
@@ -929,7 +929,7 @@ function startup_type_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
@@ -988,7 +988,7 @@ function startup_initial_condition_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
@@ -1019,7 +1019,7 @@ function must_run_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
@@ -1094,7 +1094,7 @@ function time_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     parameters = model_has_parameters(psi_container)
@@ -1140,7 +1140,7 @@ function time_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     parameters = model_has_parameters(psi_container)

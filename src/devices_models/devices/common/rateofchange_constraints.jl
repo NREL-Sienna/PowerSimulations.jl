@@ -29,7 +29,7 @@ If t > 1:
 """
 function device_linear_rateofchange!(
     psi_container::PSIContainer,
-    rate_data::Vector{UpDown},
+    rate_data::Tuple{Vector{UpDown}, Vector{MinMax}},
     initial_conditions::Vector{InitialCondition},
     cons_name::Symbol,
     var_name::Symbol,
@@ -52,11 +52,11 @@ function device_linear_rateofchange!(
         ) || !parameters
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[ix].up
+            variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[1][ix].up
         )
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            get_value(initial_conditions[ix]) - variable[name, 1] <= rate_data[ix].down
+            get_value(initial_conditions[ix]) - variable[name, 1] <= rate_data[1][ix].down
         )
     end
 
@@ -64,11 +64,11 @@ function device_linear_rateofchange!(
         name = device_name(ic)
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t] - variable[name, t - 1] <= rate_data[ix].up
+            variable[name, t] - variable[name, t - 1] <= rate_data[1][ix].up
         )
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t - 1] - variable[name, t] <= rate_data[ix].down
+            variable[name, t - 1] - variable[name, t] <= rate_data[1][ix].down
         )
     end
 
