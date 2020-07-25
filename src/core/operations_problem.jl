@@ -29,14 +29,15 @@ template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, s
 OpModel = OperationsProblem(TestOpProblem, template, system)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `slack_variables::Bool` True will add slacks to the system balance constraints
+- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
+- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 """
 function OperationsProblem(
     ::Type{M},
@@ -97,14 +98,15 @@ model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `slack_variables::Bool` True will add slacks to the system balance constraints
+- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
+- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 """
 function OperationsProblem(
     ::Type{M},
@@ -138,14 +140,15 @@ model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `slack_variables::Bool` True will add slacks to the system balance constraints
+- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
+- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 """
 function OperationsProblem(
     ::Type{T},
@@ -206,7 +209,9 @@ get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
-get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
+get_base_power(op_problem::OperationsProblem) = PSY.get_base_power(op_problem.sys)
+get_jump_model(op_problem::OperationsProblem) = get_jump_model(op_problem.psi_container)
+
 function reset!(op_problem::OperationsProblem)
     op_problem.psi_container =
         PSIContainer(op_problem.sys, op_problem.psi_container.settings, nothing)
@@ -313,7 +318,7 @@ function set_model!(
     name::Symbol,
     device_model::DeviceModel,
 ) where {D <: PSY.StaticInjection}
-    op_problem.template.devices[name] = device_model
+    set_model!(op_problem.template, name, device_model)
 end
 
 function set_model!(
@@ -330,9 +335,6 @@ function construct_device!(
     name::Symbol,
     device_model::DeviceModel,
 )
-    if haskey(op_problem.template.devices, name)
-        throw(IS.ConflictingInputsError("Device with model name $(name) already exists in the Opertaion Model"))
-    end
     set_model!(device_model.device_type, op_problem, name, device_model)
 
     construct_device!(
@@ -415,12 +417,9 @@ function _build!(
         @debug check_problem_size(psi_container)
     end
 
-    if model_has_parameters(psi_container)
-        add_initial_condition_parameters!(psi_container)
-    end
-
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
+    @debug "Total operation count $(psi_container.JuMPmodel.operator_counter)"
     return
 end
 
@@ -483,12 +482,12 @@ function solve!(
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
-    base_power = PSY.get_basepower(op_problem.sys)
+    base_power = PSY.get_base_power(op_problem.sys)
     dual_result = get_dual_values(op_problem)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
-    basepower = get_base_power(op_problem)
+    base_power = get_base_power(op_problem)
     merge!(optimizer_log, timed_log)
 
     results = OperationsProblemResults(

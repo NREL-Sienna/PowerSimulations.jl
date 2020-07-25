@@ -20,11 +20,6 @@ mutable struct PSIContainer
         PSY.check_forecast_consistency(sys)
         resolution = PSY.get_forecasts_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
-        if isnothing(jump_model)
-            V = JuMP.VariableRef
-        else
-            V = JuMP.variable_type(jump_model)
-        end
         new(
             jump_model,
             1:1,
@@ -33,7 +28,7 @@ mutable struct PSIContainer
             copy_for_serialization(settings),
             Dict{Symbol, AbstractArray}(),
             Dict{Symbol, AbstractArray}(),
-            zero(JuMP.GenericAffExpr{Float64, V}),
+            zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
             nothing,
             InitialConditions(use_parameters = get_use_parameters(settings)),
@@ -100,11 +95,11 @@ function _make_jump_model!(psi_container::PSIContainer)
     return
 end
 
-function _make_container_array(V::DataType, parameters::Bool, ax...)
+function _make_container_array(parameters::Bool, ax...)
     if parameters
-        return JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
+        return JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...)
     else
-        return JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
+        return JuMP.Containers.DenseAxisArray{GAE}(undef, ax...)
     end
     return
 end
@@ -116,13 +111,12 @@ function _make_expressions_dict!(
 ) where {S <: PM.AbstractPowerModel}
     settings = psi_container.settings
     parameters = get_use_parameters(settings)
-    V = JuMP.variable_type(psi_container.JuMPmodel)
     time_steps = 1:get_horizon(settings)
     psi_container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
+            _make_container_array(parameters, bus_numbers, time_steps),
         :nodal_balance_reactive =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
+            _make_container_array(parameters, bus_numbers, time_steps),
     )
     return
 end
@@ -134,11 +128,10 @@ function _make_expressions_dict!(
 ) where {S <: PM.AbstractActivePowerModel}
     settings = psi_container.settings
     parameters = get_use_parameters(settings)
-    V = JuMP.variable_type(psi_container.JuMPmodel)
     time_steps = 1:get_horizon(settings)
     psi_container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
+            _make_container_array(parameters, bus_numbers, time_steps),
     )
     return
 end
@@ -148,12 +141,19 @@ function psi_container_init!(
     ::Type{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
+    PSY.set_units_base_system!(sys, "system_base")
     # The order of operations matter
     settings = psi_container.settings
     _make_jump_model!(psi_container)
     @assert !isnothing(psi_container.JuMPmodel)
     make_parameters_container = get_use_parameters(settings)
     make_parameters_container && (psi_container.parameters = ParametersContainer())
+
+    use_forecasts = get_use_forecast_data(settings)
+    if make_parameters_container && !use_forecasts
+        throw(IS.ConflictingInputsError("enabling parameters without forecasts is not supported"))
+    end
+
     if get_initial_time(settings) == UNSET_INI_TIME
         set_initial_time!(settings, PSY.get_forecasts_initial_time(sys))
     end
@@ -162,10 +162,12 @@ function psi_container_init!(
         set_horizon!(settings, PSY.get_forecasts_horizon(sys))
     end
 
-    if get_use_forecast_data(settings)
+    if use_forecasts
         total_number_of_devices = length(get_available_components(PSY.Device, sys))
         psi_container.time_steps = 1:get_horizon(settings)
-        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html The maximum numbers of constraints and variables in the benchmark provlems is 1,918,399 and 1,259,121, respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
+        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
+        # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
+        # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
         variable_count_estimate = length(psi_container.time_steps) * total_number_of_devices
         if variable_count_estimate > 10e6
             @warn("The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times.")
@@ -175,16 +177,6 @@ function psi_container_init!(
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
     _make_expressions_dict!(psi_container, bus_numbers, T)
     return
-end
-
-function add_initial_condition_parameters!(psi_container::PSIContainer)
-    for (_, initial_conditions) in iterate_initial_conditions(psi_container)
-        for (i, ic) in enumerate(initial_conditions)
-            val = PJ.add_parameter(psi_container.JuMPmodel, get_value(ic))
-            initial_conditions[i] =
-                InitialCondition(ic.device, ic.update_ref, val, ic.cache_type)
-        end
-    end
 end
 
 function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
@@ -211,59 +203,6 @@ function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
     set_initial_conditions!(psi_container.initial_conditions, key, value)
 end
 
-function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
-    return Symbol(join((name1, name2, T), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(
-    ::Type{T},
-    name1::AbstractString,
-    name2::AbstractString,
-) where {T <: PSY.Reserve}
-    T_ = replace(string(T), "{" => "_")
-    T_ = replace(T_, "}" => "")
-    return Symbol(join((name1, name2, T_), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name1::Symbol, name2::Symbol) where {T}
-    return encode_symbol(T, string(name1), string(name2))
-end
-
-function encode_symbol(::Type{T}, name::AbstractString) where {T}
-    return Symbol(join((name, T), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name::AbstractString) where {T <: PSY.Reserve}
-    T_ = replace(string(T), "{" => "_")
-    T_ = replace(T_, "}" => "")
-    return Symbol(join((name, T_), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name::Symbol) where {T}
-    return encode_symbol(T, string(name))
-end
-
-function encode_symbol(name::AbstractString)
-    return Symbol(name)
-end
-
-function encode_symbol(name1::AbstractString, name2::AbstractString)
-    return Symbol(join((name1, name2), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(name::Symbol)
-    return name
-end
-
-function decode_symbol(name::Symbol)
-    return split(String(name), PSI_NAME_DELIMITER)
-end
-
-constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
-constraint_name(cons_type) = encode_symbol(cons_type)
-variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
-variable_name(var_type) = encode_symbol(var_type)
-
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
 model_resolution(psi_container::PSIContainer) = psi_container.resolution
@@ -280,17 +219,26 @@ get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expres
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
 get_settings(psi_container::PSIContainer) = psi_container.settings
+get_jump_model(psi_container::PSIContainer) = psi_container.JuMPmodel
 
 function get_variable(
     psi_container::PSIContainer,
     var_type::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Component}
-    return get_variable(psi_container, variable_name(var_type, T))
+    return get_variable(psi_container, make_variable_name(var_type, T))
+end
+
+function get_variable(
+    psi_container::PSIContainer,
+    ::Type{T},
+    ::Type{U},
+) where {T <: VariableType, U <: PSY.Component}
+    return get_variable(psi_container, make_variable_name(T, U))
 end
 
 function get_variable(psi_container::PSIContainer, var_type::AbstractString)
-    return get_variable(psi_container, variable_name(var_type))
+    return get_variable(psi_container, make_variable_name(var_type))
 end
 
 function get_variable(psi_container::PSIContainer, update_ref::UpdateRef)
@@ -317,12 +265,12 @@ function assign_variable!(
     ::Type{T},
     value,
 ) where {T <: PSY.Component}
-    assign_variable!(psi_container, variable_name(variable_type, T), value)
+    assign_variable!(psi_container, make_variable_name(variable_type, T), value)
     return
 end
 
 function assign_variable!(psi_container::PSIContainer, variable_type::AbstractString, value)
-    assign_variable!(psi_container, variable_name(variable_type), value)
+    assign_variable!(psi_container, make_variable_name(variable_type), value)
     return
 end
 
@@ -358,11 +306,11 @@ function get_constraint(
     constraint_type::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Component}
-    return get_constraint(psi_container, constraint_name(constraint_type, T))
+    return get_constraint(psi_container, make_constraint_name(constraint_type, T))
 end
 
 function get_constraint(psi_container::PSIContainer, constraint_type::AbstractString)
-    return get_constraint(psi_container, constraint_name(constraint_type))
+    return get_constraint(psi_container, make_constraint_name(constraint_type))
 end
 
 function get_constraint(psi_container::PSIContainer, name::Symbol)
@@ -385,7 +333,7 @@ function assign_constraint!(
     ::Type{T},
     value,
 ) where {T <: PSY.Component}
-    assign_constraint!(psi_container, constraint_name(constraint_type, T), value)
+    assign_constraint!(psi_container, make_constraint_name(constraint_type, T), value)
     return
 end
 
@@ -394,7 +342,7 @@ function assign_constraint!(
     constraint_type::AbstractString,
     value,
 )
-    assign_constraint!(psi_container, constraint_name(constraint_type), value)
+    assign_constraint!(psi_container, make_constraint_name(constraint_type), value)
     return
 end
 
@@ -404,8 +352,17 @@ function assign_constraint!(psi_container::PSIContainer, name::Symbol, value)
     return
 end
 
-function add_cons_container!(psi_container::PSIContainer, cons_name::Symbol, axs...)
-    container = JuMPConstraintArray(undef, axs...)
+function add_cons_container!(
+    psi_container::PSIContainer,
+    cons_name::Symbol,
+    axs...;
+    sparse = false,
+)
+    if sparse
+        container = sparse_container_spec(psi_container.JuMPmodel, axs...)
+    else
+        container = JuMPConstraintArray(undef, axs...)
+    end
     assign_constraint!(psi_container, cons_name, container)
     return container
 end
@@ -498,6 +455,18 @@ function get_parameters_value(psi_container::PSIContainer)
     return params_dict
 end
 
+function assign_expression!(psi_container::PSIContainer, name::Symbol, value)
+    @debug "set_expression" name
+    psi_container.expressions[name] = value
+    return
+end
+
+function add_expression_container!(psi_container::PSIContainer, exp_name::Symbol, axs...)
+    container = JuMP.Containers.DenseAxisArray{JuMP.GenericAffExpr}(undef, axs...)
+    assign_expression!(psi_container, exp_name, container)
+    return container
+end
+
 function is_milp(container::PSIContainer)
     type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)
     supports_milp = hasfield(type_of_optimizer, :last_solved_by_mip)
@@ -546,4 +515,11 @@ function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
         results_dict[c] = axis_array_to_dataframe(v)
     end
     return results_dict
+end
+
+function add_to_setting_ext!(psi_container::PSIContainer, key::String, value)
+    settings = get_settings(psi_container)
+    push!(get_ext(settings), key => value)
+    @debug "Add to settings ext" key value
+    return
 end

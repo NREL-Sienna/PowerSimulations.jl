@@ -7,6 +7,7 @@
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -18,7 +19,7 @@
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
-        moi_tests(op_problem, p, 384, 0, 120, 192, 24, false)
+        moi_tests(op_problem, p, 648, 0, 120, 216, 72, false)
     end
 end
 
@@ -31,6 +32,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :UpReserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -42,7 +44,7 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
-        moi_tests(op_problem, p, 744, 0, 240, 192, 144, true)
+        moi_tests(op_problem, p, 1008, 0, 240, 216, 192, true)
     end
 end
 
@@ -54,6 +56,7 @@ end
     branches = Dict{Symbol, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -65,7 +68,7 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_re; use_parameters = p)
-        moi_tests(op_problem, p, 144, 0, 72, 24, 24, false)
+        moi_tests(op_problem, p, 360, 0, 72, 48, 72, false)
     end
 end
 
@@ -81,6 +84,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -92,13 +96,38 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_bat; use_parameters = p)
-        moi_tests(op_problem, p, 240, 0, 192, 240, 48, false)
+        moi_tests(op_problem, p, 408, 0, 192, 264, 96, false)
     end
 end
 
 @testset "Test Reserves from Hydro" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_hyd = build_system("c_sys5_hyd"; add_reserves = true)
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, model_template, c_sys5_hyd; use_parameters = p)
+        moi_tests(op_problem, p, 240, 0, 24, 96, 72, false)
+    end
+end
+
+@testset "Test Reserves from with slack variables" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
     branches = Dict{Symbol, DeviceModel}()
@@ -112,10 +141,34 @@ end
         branches,
         services_template,
     )
-    c_sys5_hyd = build_system("c_sys5_hyd"; add_reserves = true)
+    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(TestOpProblem, model_template, c_sys5_hyd; use_parameters = p)
-        moi_tests(op_problem, p, 72, 0, 24, 72, 24, false)
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            model_template,
+            c_sys5_uc;
+            use_parameters = p,
+            services_slack_variables = true,
+            balance_slack_variables = true,
+        )
+        moi_tests(op_problem, p, 504, 0, 120, 192, 24, false)
     end
+end
+
+@testset "Test AGC" begin
+    c_sys5_reg = build_system("c_sys5_reg")
+    # End of the system creation code.
+    devices = Dict(
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+        :Regulation_thermal =>
+            DeviceModel(RegulationDevice{ThermalStandard}, DeviceLimitedRegulation),
+    )
+    services = Dict(:AGC => ServiceModel(AGC, PIDSmoothACE))
+
+    @test_throws ArgumentError template_agc_reserve_deployment(devices = devices)
+
+    template_agc = template_agc_reserve_deployment()
+    agc_problem = OperationsProblem(AGCReserveDeployment, template_agc, c_sys5_reg)
+    # These values might change as the AGC model is refined
+    moi_tests(agc_problem, false, 720, 0, 480, 0, 384, false)
 end

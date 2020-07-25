@@ -1,9 +1,4 @@
 @doc raw"""
-    device_commitment(psi_container::PSIContainer,
-                        initial_conditions::Vector{InitialCondition},
-                        cons_name::Symbol,
-                        var_names::Tuple{Symbol, Symbol, Symbol})
-
 Constructs multi-timestep constraint from initial conditions and binary variable tuple.
 
 # Constraints
@@ -38,7 +33,7 @@ If t > 1:
 -  : var_names[2] : varstop
 -  : var_names[3] : varon
 """
-function device_commitment(
+function device_commitment!(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
     cons_name::Symbol,
@@ -77,7 +72,5 @@ function device_commitment(
             varstart[name, t] + varstop[name, t] <= 1.0
         )
     end
-
     return
-
 end

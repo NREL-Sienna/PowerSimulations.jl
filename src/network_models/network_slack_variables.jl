@@ -6,8 +6,8 @@ function _add_system_balance_slacks!(
 )
     time_steps = model_time_steps(psi_container)
     expression_array = get_expression(psi_container, expression)
-    var_name_up = variable_name(slack_name, SLACK_UP)
-    var_name_dn = variable_name(slack_name, SLACK_DN)
+    var_name_up = make_variable_name(slack_name, SLACK_UP)
+    var_name_dn = make_variable_name(slack_name, SLACK_DN)
     single_first_axes && (first_index = [axes(expression_array)[1][1]])
     !single_first_axes && (first_index = axes(expression_array)[1])
     variable_up = add_var_container!(psi_container, var_name_up, first_index, time_steps)
@@ -27,7 +27,7 @@ function _add_system_balance_slacks!(
         add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
         JuMP.add_to_expression!(
             psi_container.cost_function,
-            (variable_dn[ix, jx] + variable_up[ix, jx]) * SLACK_COST,
+            (variable_dn[ix, jx] + variable_up[ix, jx]) * BALANCE_SLACK_COST,
         )
     end
     return

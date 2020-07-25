@@ -52,6 +52,7 @@ struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     initial_condition_type::String
     device_type::String
     device_name::String
+    previous_value::Float64
     val::Float64
     stage_number::Int
 end
@@ -61,6 +62,7 @@ function InitialConditionUpdateEvent(
     key::ICKey,
     ic::InitialCondition,
     val::Float64,
+    previous_value::Float64,
     stage_number::Int,
 )
     return InitialConditionUpdateEvent(
@@ -70,7 +72,43 @@ function InitialConditionUpdateEvent(
         string(key.device_type),
         device_name(ic),
         val,
+        previous_value,
         stage_number,
+    )
+end
+
+struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
+    common::IS.RecorderEventCommon
+    category::String
+    simulation_time::Dates.DateTime
+    parameter_type::String
+    device_name::String
+    previous_value::Float64
+    val::Float64
+    stage_number::Int
+    source::Int
+end
+
+function ParameterUpdateEvent(
+    category::String,
+    simulation_time::Dates.DateTime,
+    update_ref::UpdateRef{JuMP.VariableRef},
+    device_name::String,
+    val::Float64,
+    previous_value::Float64,
+    destination_stage::Stage,
+    source_stage::Stage,
+)
+    return ParameterUpdateEvent(
+        IS.RecorderEventCommon("ParameterUpdateEvent"),
+        category,
+        simulation_time,
+        string(update_ref.access_ref),
+        device_name,
+        previous_value,
+        val,
+        get_number(destination_stage),
+        get_number(source_stage),
     )
 end
 

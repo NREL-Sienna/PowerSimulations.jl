@@ -260,7 +260,7 @@ get_date_range(s::Simulation) = s.internal.date_range
 function get_base_powers(s::Simulation)
     base_powers = Dict()
     for (k, v) in s.stages
-        base_powers[k] = v.sys.base_powers
+        base_powers[k] = PSY.get_base_power(v.sys)
     end
     return base_powers
 end
@@ -323,7 +323,7 @@ end
 function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
-        resolution = PSY.get_forecasts_resolution(get_sys(stage))
+        resolution = get_resolution(stage)
         horizon = get_stage_horizon(get_sequence(sim), stage_name)
         interval = get_stage_interval(get_sequence(sim), stage_name)
         horizon_time = resolution * horizon
@@ -346,21 +346,22 @@ end
 
 function _assign_feedforward_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.feedforward_chronologies
-        to_stage = get_stage(sim, key.second)
-        to_stage_interval = IS.time_period_conversion(get_stage_interval(sim, key.second))
-        from_stage_number = find_key_with_value(sim.sequence.order, key.first)
-        if isempty(from_stage_number)
+        destination_stage = get_stage(sim, key.second)
+        destination_stage_interval =
+            IS.time_period_conversion(get_stage_interval(sim, key.second))
+        source_stage_number = find_key_with_value(sim.sequence.order, key.first)
+        if isempty(source_stage_number)
             throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
         end
-        for stage_number in from_stage_number
-            to_stage.internal.chronolgy_dict[stage_number] = chron
-            from_stage = get_stage(sim, stage_number)
-            from_stage_resolution =
-                IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage.sys))
+        for stage_number in source_stage_number
+            destination_stage.internal.chronolgy_dict[stage_number] = chron
+            source_stage = get_stage(sim, stage_number)
+            source_stage_resolution =
+                IS.time_period_conversion(PSY.get_forecasts_resolution(source_stage.sys))
             # This line keeps track of the executions of a stage relative to other stages.
             # This might be needed in the future to run multiple stages. For now it is disabled
-            #to_stage.internal.synchronized_executions[stage_number] =
-            #Int(from_stage_resolution / to_stage_interval)
+            #destination_stage.internal.synchronized_executions[stage_number] =
+            #Int(source_stage_resolution / destination_stage_interval)
         end
     end
     return
@@ -593,7 +594,7 @@ function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
-    chronology::IntraStageChronology,
+    ::IntraStageChronology,
     sim::Simulation,
 )
     for ic in initial_conditions
@@ -608,12 +609,14 @@ function initial_condition_update!(
             cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
         end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             sim.internal.current_time,
             ini_cond_key,
             ic,
             quantity,
+            previous_value,
             get_number(stage),
         )
     end
@@ -624,17 +627,25 @@ function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
-    chronology::InterStageChronology,
+    ::InterStageChronology,
     sim::Simulation,
 )
     execution_index = get_execution_order(sim)
     for ic in initial_conditions
         name = device_name(ic)
         current_ix = get_current_execution_index(sim)
-        source_stage_ix = current_ix == 1 ? length(execution_index) : current_ix - 1
+        source_stage_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
         source_stage = get_stage(sim, execution_index[source_stage_ix])
         source_stage_name = get_stage_name(sim, source_stage)
-        interval_chronology = get_stage_interval_chronology(sim.sequence, source_stage_name)
+
+        # If the stage that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
+        if get_number(source_stage) >= get_number(stage)
+            interval_chronology =
+                get_stage_interval_chronology(sim.sequence, source_stage_name)
+        elseif get_number(source_stage) < get_number(stage)
+            interval_chronology = RecedingHorizon()
+        end
+
         var_value = get_stage_variable(
             interval_chronology,
             (source_stage => stage),
@@ -647,12 +658,14 @@ function initial_condition_update!(
             cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
         end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             sim.internal.current_time,
             ini_cond_key,
             ic,
             quantity,
+            previous_value,
             get_number(stage),
         )
     end
@@ -733,6 +746,7 @@ function update_parameter!(
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
     for d in devices
+        # RECORDER TODO: Parameter Update from forecast
         forecast = PSY.get_forecast(
             PSY.Deterministic,
             d,
@@ -759,8 +773,16 @@ function update_parameter!(
     sim::Simulation,
 )
     param_array = get_parameter_array(container)
-    for (k, ref) in stage.internal.chronolgy_dict
-        feedforward_update(ref, param_reference, param_array, stage, get_stage(sim, k))
+    for (k, chronology) in stage.internal.chronolgy_dict
+        source_stage = get_stage(sim, k)
+        feedforward_update!(
+            stage,
+            source_stage,
+            chronology,
+            param_reference,
+            param_array,
+            sim.internal.current_time,
+        )
     end
 
     return
@@ -823,7 +845,7 @@ each stage and step.
 # Example
 ```julia
 sim = Simulation("Test", 7, stages, "/Users/folder")
-execute!!(sim::Simulation; kwargs...)
+execute!(sim::Simulation; kwargs...)
 ```
 """
 

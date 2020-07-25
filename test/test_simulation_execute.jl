@@ -5,7 +5,6 @@ function get_deserialized(sim::Simulation, stage_info)
 end
 
 function test_load_simulation(file_path::String)
-
     c_sys5_uc = build_system("c_sys5_uc")
     single_stage_definition =
         Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
@@ -71,11 +70,11 @@ function test_load_simulation(file_path::String)
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
+                binary_source_stage = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_from_stage = PSI.ACTIVE_POWER,
+                variable_source_stage = PSI.ACTIVE_POWER,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -98,7 +97,10 @@ function test_load_simulation(file_path::String)
 
         build!(sim; output_dir = output_dir, recorders = [:simulation])
         sim_results = execute!(sim)
-
+        UC = load_simulation_results(sim_results, "UC")
+        ED = load_simulation_results(sim_results, "ED")
+        write_results(UC)
+        write_results(ED)
         stage_names = keys(sim.stages)
         step = ["step-1", "step-2"]
 
@@ -112,15 +114,16 @@ function test_load_simulation(file_path::String)
 
         @testset "Test reading and writing to the results folder" begin
             for name in stage_names
-                files = collect(readdir(sim_results.results_folder))
+                results_folder = joinpath(sim_results.results_folder, name)
+                files = readdir(results_folder)
                 for f in files
-                    rm("$(sim_results.results_folder)/$f")
+                    rm("$(results_folder)/$f")
                 end
-                rm(sim_results.results_folder)
+                rm(results_folder)
                 res = load_simulation_results(sim_results, name)
                 !ispath(res.results_folder) && mkdir(res.results_folder)
                 write_results(res)
-                loaded_res = load_operation_results(sim_results.results_folder)
+                loaded_res = load_results(results_folder) ##### check
                 @test loaded_res.variable_values == res.variable_values
                 @test loaded_res.parameter_values == res.parameter_values
             end
@@ -128,9 +131,10 @@ function test_load_simulation(file_path::String)
 
         @testset "Test file names" begin
             for name in stage_names
-                files = collect(readdir(sim_results.results_folder))
+                results_folder = joinpath(sim_results.results_folder, name)
+                files = readdir(results_folder)
                 for f in files
-                    rm("$(sim_results.results_folder)/$f")
+                    rm("$(results_folder)/$f")
                 end
                 res = load_simulation_results(sim_results, name)
                 write_results(res)
@@ -147,7 +151,7 @@ function test_load_simulation(file_path::String)
                     "parameter_P_RenewableDispatch"
                     "parameter_P_HydroEnergyReservoir"
                 ]
-                file_list = collect(readdir(sim_results.results_folder))
+                file_list = readdir(results_folder)
                 for name in file_list
                     variable = splitext(name)[1]
                     @test any(x -> x == variable, variable_list)
@@ -159,7 +163,7 @@ function test_load_simulation(file_path::String)
             for name in stage_names
                 res = load_simulation_results(sim_results, name)
                 if isdir(res.results_folder)
-                    files = collect(readdir(res.results_folder))
+                    files = readdir(res.results_folder)
                     for f in files
                         rm("$(res.results_folder)/$f")
                     end
@@ -171,7 +175,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Test simulation output serialization and deserialization" begin
             output_path = joinpath(dirname(sim_results.results_folder), "output_references")
-            sim_output = collect(readdir(output_path))
+            sim_output = readdir(output_path)
             @test sim_output == [
                 "base_power.json",
                 "chronologies.json",
@@ -204,10 +208,7 @@ function test_load_simulation(file_path::String)
             for name in keys(sim.stages)
                 stage = sim.stages[name]
                 results = load_simulation_results(sim_results, name)
-                resolution = convert(
-                    Dates.Millisecond,
-                    PSY.get_forecasts_resolution(PSI.get_sys(stage)),
-                )
+                resolution = convert(Dates.Millisecond, PSI.get_resolution(stage))
                 time_stamp = results.time_stamp
                 length = size(time_stamp, 1)
                 test = results.time_stamp[1, 1]:resolution:results.time_stamp[length, 1]
@@ -238,9 +239,9 @@ function test_load_simulation(file_path::String)
             ]
 
             vars_names = [
-                PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
-                #PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-                #PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
+                PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
+                #PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+                #PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
             ]
             for (ik, key) in enumerate(P_keys)
                 variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
@@ -275,7 +276,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Test verify initial condition feedforward for consecutive ED to UC" begin
             ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-            vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
+            vars_names = [PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
                 initial_conditions =
@@ -363,7 +364,7 @@ function test_load_simulation(file_path::String)
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
+                binary_source_stage = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -398,7 +399,7 @@ function test_load_simulation(file_path::String)
 
     @testset "Test verify parameter feedforward for Receding Horizon" begin
         P_keys = [(PSI.ON, PSY.ThermalStandard)]
-        vars_names = [PSI.variable_name(PSI.ON, PSY.ThermalStandard)]
+        vars_names = [PSI.make_variable_name(PSI.ON, PSY.ThermalStandard)]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 2, vars_names[ik])[1]
             raw_result = Feather.read(variable_ref)
@@ -418,7 +419,7 @@ function test_load_simulation(file_path::String)
     @testset "Test verify initial condition feedforward for Receding Horizon" begin
         results = load_simulation_results(sim_results, "ED")
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-        vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
+        vars_names = [PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
         ed_horizon = PSI.get_stage_horizon(sim.sequence, "ED")
         no_steps = PSI.get_steps(sim)
         for (ik, key) in enumerate(ic_keys)
@@ -450,7 +451,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -468,7 +469,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -486,7 +487,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -504,8 +505,8 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => RangeFF(
-                    variable_from_stage_ub = PSI.ON,
-                    variable_from_stage_lb = PSI.ON,
+                    variable_source_stage_ub = PSI.ON,
+                    variable_source_stage_lb = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -525,7 +526,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -543,17 +544,20 @@ function test_load_simulation(file_path::String)
     end
 
     ####################
+    UC_results = load_simulation_results(sim_results, "UC")
+    write_results(UC_results)
     @testset "negative test checking total sums" begin
         stage_names = keys(sim.stages)
         for name in stage_names
-            files = collect(readdir(sim_results.results_folder))
+            results_folder = joinpath(sim_results.results_folder, name)
+            files = readdir(results_folder)
             for f in files
-                rm("$(sim_results.results_folder)/$f")
+                rm("$(results_folder)/$f")
             end
             variable_list = PSI.get_variable_names(sim, name)
             res = load_simulation_results(sim_results, name)
             write_results(res)
-            _file_path = joinpath(sim_results.results_folder, "$(variable_list[1]).feather")
+            _file_path = joinpath(results_folder, "$(variable_list[1]).feather")
             rm(_file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))
             Feather.write(_file_path, fake_df)
@@ -585,6 +589,8 @@ function test_load_simulation(file_path::String)
     end
 
     @testset "Simulation with Cache" begin
+        c_sys5_hy_uc = build_system("c_sys5_hy_uc")
+        c_sys5_hy_ed = build_system("c_sys5_hy_ed")
         stages_definition = Dict(
             "UC" => Stage(
                 GenericOpProblem,
@@ -615,11 +621,11 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_from_stage = PSI.ACTIVE_POWER,
+                    variable_source_stage = PSI.ACTIVE_POWER,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -655,7 +661,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Test verify initial condition update using StoredEnergy cache" begin
             ic_keys = [PSI.ICKey(PSI.EnergyLevel, PSY.HydroEnergyReservoir)]
-            vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
+            vars_names = [PSI.make_variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref =
                     PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[end]
@@ -702,7 +708,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Test verify initial condition update using StoredEnergy cache" begin
             ic_keys = [PSI.ICKey(PSI.EnergyLevel, PSY.HydroEnergyReservoir)]
-            vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
+            vars_names = [PSI.make_variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref =
                     PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[1]
@@ -721,9 +727,7 @@ end
 
 @testset "Test load simulation" begin
     # Use spaces in this path because that has caused failures.
-    path = (joinpath(pwd(), "test reading results"))
-    !isdir(path) && mkdir(path)
-
+    path = mkpath(joinpath(pwd(), "test_reading_results"))
     try
         test_load_simulation(path)
     finally

@@ -3,12 +3,15 @@ struct PSISettings
     use_forecast_data::Bool
     use_parameters::Bool
     warm_start::Base.RefValue{Bool}
-    slack_variables::Bool
+    balance_slack_variables::Bool
+    services_slack_variables::Bool
     initial_time::Base.RefValue{Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     constraint_duals::Vector{Symbol}
     system_to_file::Bool
+    export_pwl_vars::Bool
+    allow_fails::Bool
     ext::Dict{String, Any}
 end
 
@@ -18,12 +21,15 @@ function PSISettings(
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
     warm_start::Bool = true,
-    slack_variables::Bool = false,
+    balance_slack_variables::Bool = false,
+    services_slack_variables::Bool = false,
     horizon::Int = UNSET_HORIZON,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
     system_to_file = true,
+    export_pwl_vars = false,
+    allow_fails = false,
     ext = Dict{String, Any}(),
 )
     return PSISettings(
@@ -31,12 +37,15 @@ function PSISettings(
         use_forecast_data,
         use_parameters,
         Ref(warm_start),
-        slack_variables,
+        balance_slack_variables,
+        services_slack_variables,
         Ref(initial_time),
         PTDF,
         optimizer,
         constraint_duals,
         system_to_file,
+        export_pwl_vars,
+        allow_fails,
         ext,
     )
 end
@@ -96,5 +105,7 @@ function set_warm_start!(settings::PSISettings, warm_start::Bool)
 end
 get_warm_start(settings::PSISettings) = settings.warm_start[]
 get_constraint_duals(settings::PSISettings) = settings.constraint_duals
-get_slack_variables(settings::PSISettings) = settings.slack_variables
+get_balance_slack_variables(settings::PSISettings) = settings.balance_slack_variables
+get_services_slack_variables(settings::PSISettings) = settings.services_slack_variables
 get_system_to_file(settings::PSISettings) = settings.system_to_file
+get_export_pwl_vars(settings::PSISettings) = settings.export_pwl_vars

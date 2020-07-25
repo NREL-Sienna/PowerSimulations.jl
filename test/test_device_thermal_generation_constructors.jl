@@ -11,15 +11,15 @@ end
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
     bin_variable_names = [
-        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     uc_constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -54,15 +54,15 @@ end
 
 @testset "Thermal UC With AC - PF" begin
     bin_variable_names = [
-        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     uc_constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -98,9 +98,9 @@ end
 ################################### Basic Unit Commitment tests ############################
 @testset "Thermal Basic UC With DC - PF" begin
     bin_variable_names = [
-        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -133,9 +133,9 @@ end
 
 @testset "Thermal Basic UC With AC - PF" begin
     bin_variable_names = [
-        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -224,11 +224,7 @@ end
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(
-            op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
-            0.0,
-        )
+        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -239,11 +235,7 @@ end
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(
-            op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
-            0.0,
-        )
+        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -257,11 +249,7 @@ end
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(
-            op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
-            0.0,
-        )
+        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -272,11 +260,7 @@ end
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(
-            op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
-            0.0,
-        )
+        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -284,8 +268,8 @@ end
 ################################### Ramp Limited Testing ##################################
 @testset "Thermal Ramp Limited Dispatch With DC - PF" begin
     constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
@@ -312,8 +296,8 @@ end
 
 @testset "Thermal Ramp Limited Dispatch With AC - PF" begin
     constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
@@ -338,6 +322,36 @@ end
     end
 end
 
+################################### ThermalMultiStart Testing ##################################
+
+@testset "Thermal MultiStart Dispatch With DC - PF" begin
+    constraint_names = [
+        PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.START_TYPE, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.MUST_RUN_LB, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_WARM, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_HOT, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_LB, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
+    no_less_than = Dict(true => 238, false => 234)
+    @info "5-Bus testing"
+    c_sys5_pglib = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            DCPPowerModel,
+            c_sys5_pglib;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 528, 0, no_less_than[p], 60, 192, true)
+        psi_constraint_test(op_problem, constraint_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
 ############################# UC validation tests ##########################################
 branches = Dict{Symbol, DeviceModel}()
 services = Dict{Symbol, ServiceModel}()
@@ -352,7 +366,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
 # Testing Ramping Constraint
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
     DA_ramp = collect(
         DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
             "1/1/2024  4:00:00",
@@ -375,6 +389,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
             nothing,
             nothing,
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            100.0,
         ),
         ThermalStandard(
             "Park City",
@@ -388,13 +403,15 @@ UC_devices = Dict{Symbol, DeviceModel}(
             ThermalFuels.COAL,
             (min = 0.7, max = 2.20),
             nothing,
-            (up = 0.010625, down = 0.010625),
+            (up = 0.010625 * 2.0, down = 0.010625 * 2.0),
             nothing,
             ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            100.0,
         ),
     ]
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
-    load_forecast_ramp = Deterministic("get_maxactivepower", TimeArray(DA_ramp, ramp_load))
+    load_forecast_ramp =
+        Deterministic("get_max_active_power", TimeArray(DA_ramp, ramp_load))
     ramp_test_sys = System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)
@@ -415,11 +432,10 @@ UC_devices = Dict{Symbol, DeviceModel}(
     moi_tests(ED, true, 10, 0, 20, 10, 5, false)
 end
 
-#= Disabled temporarily due to the elimination of initial conditions passing
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
     DA_dur = collect(
         DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
             "1/1/2024  6:00:00",
@@ -428,70 +444,52 @@ end
     )
     gens_dur = [
         ThermalStandard(
-            "Alta",
-            true,
-            true,
-            node,
-            0.40,
-            0.010,
-                0.5,
-                PrimeMovers.ST,
-                ThermalFuels.COAL,
-                (min = 0.3, max = 0.9),
-                nothing,
-                nothing,
-                (up = 4, down = 2),
-            ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            name = "Alta",
+            available = true,
+            status = true,
+            bus = node,
+            active_power = 0.40,
+            reactive_power = 0.010,
+            rating = 0.5,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.3, max = 0.9),
+            reactive_power_limits = nothing,
+            ramp_limits = nothing,
+            time_limits = (up = 4, down = 2),
+            operation_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            base_power = 100.0,
+            time_at_status = 2.0,
         ),
         ThermalStandard(
-            "Park City",
-            true,
-            true,
-            node,
-            1.70,
-            0.20,
-                2.2125,
-                PrimeMovers.ST,
-                ThermalFuels.COAL,
-                (min = 0.7, max = 2.2),
-                nothing,
-                nothing,
-                (up = 6, down = 4),
-            ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            name = "Park City",
+            available = true,
+            status = false,
+            bus = node,
+            active_power = 1.70,
+            reactive_power = 0.20,
+            rating = 2.2125,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.7, max = 2.2),
+            reactive_power_limits = nothing,
+            ramp_limits = nothing,
+            time_limits = (up = 6, down = 4),
+            operation_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            base_power = 100.0,
+            time_at_status = 3.0,
         ),
     ]
 
     duration_load = [0.3, 0.6, 0.8, 0.7, 1.7, 0.9, 0.7]
     load_forecast_dur =
-        Deterministic("get_maxactivepower", TimeArray(DA_dur, duration_load))
+        Deterministic("get_max_active_power", TimeArray(DA_dur, duration_load))
     duration_test_sys = System(100.0)
     add_component!(duration_test_sys, node)
     add_component!(duration_test_sys, load)
     add_component!(duration_test_sys, gens_dur[1])
     add_component!(duration_test_sys, gens_dur[2])
     add_forecast!(duration_test_sys, load, load_forecast_dur)
-
-    status = [1.0, 0.0]
-    up_time = [2.0, 0.0]
-    down_time = [0.0, 3.0]
-
-    alta = gens_dur[1]
-    init_cond = PSI.InitialConditions()
-    PSI.set_initial_conditions!(
-        init_cond,
-        PSI.ICKey(DeviceStatus, typeof(alta)),
-        build_init(gens_dur, status),
-    )
-    PSI.set_initial_conditions!(
-        init_cond,
-        PSI.ICKey(TimeDurationON, typeof(alta)),
-        build_init(gens_dur, up_time),
-    )
-    PSI.set_initial_conditions!(
-        init_cond,
-        PSI.ICKey(TimeDurationOFF, typeof(alta)),
-        build_init(gens_dur, down_time),
-    )
 
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
@@ -505,12 +503,11 @@ end
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
     moi_tests(UC, true, 56, 0, 56, 14, 21, true)
 end
-=#
 
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Linear PWL" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
     gens_cost = [
         ThermalStandard(
             "Alta",
@@ -532,6 +529,7 @@ end
                 5665.23,
                 0.0,
             ),
+            100.0,
         ),
         ThermalStandard(
             "Park City",
@@ -540,7 +538,7 @@ end
             node,
             0.62,
             0.20,
-            2.2125,
+            221.25,
             PrimeMovers.ST,
             ThermalFuels.COAL,
             (min = 0.62, max = 1.55),
@@ -553,6 +551,7 @@ end
                 5665.23,
                 0.0,
             ),
+            100.0,
         ),
     ]
     DA_cost = collect(
@@ -562,7 +561,8 @@ end
         ),
     )
     cost_load = [1.3, 2.1]
-    load_forecast_cost = Deterministic("get_maxactivepower", TimeArray(DA_cost, cost_load))
+    load_forecast_cost =
+        Deterministic("get_max_active_power", TimeArray(DA_cost, cost_load))
     cost_test_sys = System(100.0)
     add_component!(cost_test_sys, node)
     add_component!(cost_test_sys, load)
@@ -586,7 +586,7 @@ end
 ## PWL SOS-2 Cost implementation test
 @testset "Solving UC with CopperPlate testing SOS2 implementation" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
     gens_cost_sos = [
         ThermalStandard(
             "Alta",
@@ -608,6 +608,7 @@ end
                 5665.23,
                 0.0,
             ),
+            100.0,
         ),
         ThermalStandard(
             "Park City",
@@ -629,6 +630,7 @@ end
                 5665.23,
                 0.0,
             ),
+            100.0,
         ),
     ]
     DA_cost_sos = collect(
@@ -639,7 +641,7 @@ end
     )
     cost_sos_load = [1.3, 2.1]
     load_forecast_cost_sos =
-        Deterministic("get_maxactivepower", TimeArray(DA_cost_sos, cost_sos_load))
+        Deterministic("get_max_active_power", TimeArray(DA_cost_sos, cost_sos_load))
     cost_test_sos_sys = System(100.0)
     add_component!(cost_test_sos_sys, node)
     add_component!(cost_test_sos_sys, load)
@@ -648,7 +650,7 @@ end
     add_forecast!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
     for g in gens_cost_sos
-        @test PSI._pwlparamcheck(PSY.get_op_cost(g).variable) == false
+        @test PSI._pwlparamcheck(PSY.get_operation_cost(g).variable) == false
     end
 
     template =
