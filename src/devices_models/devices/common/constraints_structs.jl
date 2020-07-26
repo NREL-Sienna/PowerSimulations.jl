@@ -132,6 +132,8 @@ function DeviceRampConstraintInfo(name::String)
     )
 end
 
+get_name(d::DeviceRampConstraintInfo) = d.name
+
 struct DeviceStartUpConstraintInfo <: AbstractStartConstraintInfo
     name::String
     time_limits::StartUpStages
