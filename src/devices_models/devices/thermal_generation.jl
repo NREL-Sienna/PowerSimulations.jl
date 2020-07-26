@@ -484,63 +484,16 @@ end
 
 ########################### Ramp/Rate of Change Constraints ################################
 """
-This function gets the data for the generators
+This function gets the data for the generators for ramping constraints of thermal generators
 """
 function _get_data_for_rocc(
-    initial_conditions::Vector{InitialCondition},
-    resolution::Dates.TimePeriod,
-)
-    if resolution > Dates.Minute(1)
-        minutes_per_period = Dates.value(Dates.Minute(resolution))
-    else
-        throw(ArgumentError("Resolutions values under 1-minute are not supported"))
-    end
-    lenght_devices = length(initial_conditions)
-    ini_conds = Vector{InitialCondition}(undef, lenght_devices)
-    ramp_params = Vector{UpDown}(undef, lenght_devices)
-    minmax_params = Vector{MinMax}(undef, lenght_devices)
-    idx = 0
-    for ic in initial_conditions
-        g = ic.device
-        name = PSY.get_name(g)
-        non_binding_up = false
-        non_binding_down = false
-        ramp_limits = PSY.get_ramp_limits(g)
-        if !isnothing(ramp_limits)
-            p_lims = PSY.get_active_power_limits(g)
-            max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
-                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
-                continue
-            else
-                idx += 1
-            end
-            ini_conds[idx] = ic
-            ramp_params[idx] = (
-                up = ramp_limits.up * minutes_per_period,
-                down = ramp_limits.down * minutes_per_period,
-            )
-            minmax_params[idx] = p_lims
-        end
-    end
-    if idx < lenght_devices
-        deleteat!(ini_conds, (idx + 1):lenght_devices)
-        deleteat!(ramp_params, (idx + 1):lenght_devices)
-        deleteat!(minmax_params, (idx + 1):lenght_devices)
-    end
-    return ini_conds, ramp_params, minmax_params
-end
-
-"""
-This function gets the data for the generators for PGLIB formulation
-"""
-function _get_data_for_rocc_pglib(
     initial_conditions_power::Vector{InitialCondition},
     resolution::Dates.TimePeriod,
 )
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
+        @warning("Not all formulations support under 1-minute resolutions. Exercise caution.")
         minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
     end
     lenght_devices_power = length(initial_conditions_power)
@@ -592,13 +545,12 @@ function ramp_constraints!(
     key = ICKey(DevicePower, T)
     initial_conditions = get_initial_conditions(psi_container, key)
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
-    ini_conds, ramp_params, minmax_params =
-        _get_data_for_rocc(initial_conditions, resolution)
+    ini_conds, data = _get_data_for_rocc(initial_conditions, resolution)
     if !isempty(ini_conds)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_mixedinteger_rateofchange!(
             psi_container,
-            (ramp_params, minmax_params),
+            data,
             ini_conds,
             make_constraint_name(RAMP, T),
             (
@@ -628,13 +580,12 @@ function ramp_constraints!(
     resolution = model_resolution(psi_container)
     initial_conditions = get_initial_conditions(psi_container, ICKey(DevicePower, T))
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
-    ini_conds, ramp_params, minmax_params =
-        _get_data_for_rocc(initial_conditions, resolution)
+    ini_conds, data = _get_data_for_rocc(initial_conditions, resolution)
     if !isempty(ini_conds)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange!(
             psi_container,
-            (ramp_params, minmax_params),
+            data,
             ini_conds,
             make_constraint_name(RAMP, T),
             make_variable_name(ActivePowerVariable, T),
@@ -658,7 +609,7 @@ function ramp_constraints!(
     key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
     initial_conditions = get_initial_conditions(psi_container, key_power)
     ic_power = get_initial_conditions(psi_container, key_power)
-    ini_conds, constaint_data = _get_data_for_rocc_pglib(ic_power, resolution)
+    ini_conds, constaint_data = _get_data_for_rocc(ic_power, resolution)
 
     for (ix, ic) in enumerate(ini_conds)
         add_device_services!(constaint_data[ix], ic.device, model)
