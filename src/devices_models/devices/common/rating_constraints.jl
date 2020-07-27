@@ -1,9 +1,4 @@
 @doc raw"""
-    rating_constraint!(psi_container::PSIContainer,
-                            rating_data::Vector{Tuple{String, Float64}},
-                            cons_name::Symbol,
-                            var_names::Tuple{Symbol, Symbol})
-
 Constructs constraint from rating data and related variable tuple.
 
 # Constraint

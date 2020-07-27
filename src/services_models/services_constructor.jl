@@ -53,7 +53,12 @@ function construct_service!(
         get_parameter_array(container)
     end
 
-    add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
+    add_cons_container!(
+        psi_container,
+        make_constraint_name(REQUIREMENT, SR),
+        names,
+        time_steps,
+    )
 
     for service in services
         contributing_devices =
@@ -67,7 +72,7 @@ function construct_service!(
         end
 
         #Variables
-        activeservice_variables!(psi_container, service, contributing_devices)
+        add_variables!(ActiveServiceVariable, psi_container, service, contributing_devices)
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
@@ -88,9 +93,13 @@ function construct_service!(
     services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
-    activerequirement_variables!(psi_container, services)
-
-    add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
+    add_variables!(ServiceRequirementVariable, psi_container, services)
+    add_cons_container!(
+        psi_container,
+        make_constraint_name(REQUIREMENT, SR),
+        names,
+        time_steps,
+    )
 
     for service in services
         contributing_devices =
@@ -99,7 +108,7 @@ function construct_service!(
                 name = PSY.get_name(service),
             )].contributing_devices
         #Variables
-        activeservice_variables!(psi_container, service, contributing_devices)
+        add_variables!(ActiveServiceVariable, psi_container, service, contributing_devices)
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
@@ -121,7 +130,6 @@ function construct_service!(
     for device_model in devices_template
         #TODO: make a check for the devices' models
     end
-    services_mapping = PSY.get_contributing_device_mapping(sys)
     agc_areas = [PSY.get_area(agc) for agc in services]
     areas = PSY.get_components(PSY.Area, sys)
     for area in areas
@@ -129,10 +137,18 @@ function construct_service!(
             #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
         end
     end
-    area_mismatch_variables!(psi_container, areas)
-    absolute_value_lift(psi_container, areas)
-    steady_state_frequency_variables!(psi_container)
+    add_variables!(SteadyStateFrequencyDeviation, psi_container)
+    add_variables!(AreaMismatchVariable, psi_container, areas)
+    add_variables!(SmoothACE, psi_container, areas)
+    add_variables!(LiftVariable, psi_container, areas)
+    add_variables!(ActivePowerVariable, psi_container, areas)
+    add_variables!(DeltaActivePowerUpVariable, psi_container, areas)
+    add_variables!(DeltaActivePowerDownVariable, psi_container, areas)
+    #add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, areas)
+    #add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, areas)
     balancing_auxiliary_variables!(psi_container, sys)
+
+    absolute_value_lift(psi_container, areas)
     frequency_response_constraint!(psi_container, sys)
     area_control_init(psi_container, services)
     smooth_ace_pid!(psi_container, services)

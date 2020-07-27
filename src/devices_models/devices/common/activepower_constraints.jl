@@ -5,9 +5,9 @@ function make_active_power_constraints_inputs(
     ::Type{T},
     ::Type{U},
     ::Type{V},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-    use_forecasts::Bool,
+    ::Union{Nothing, AbstractAffectFeedForward},
+    ::Bool,
+    ::Bool,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
     error("make_active_power_constraints_inputs is not implemented for types $T / $U / $V")
 end
@@ -17,9 +17,9 @@ Default implementation to add active power constraints.
 
 Users of this function must implement a method for
 [`make_active_power_constraints_inputs`](@ref) for their specific types.
-Users may also implement custom activepower_constraints! methods.
+Users may also implement custom active_power_constraints! methods.
 """
-function activepower_constraints!(
+function active_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},

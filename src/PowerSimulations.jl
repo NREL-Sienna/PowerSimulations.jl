@@ -60,6 +60,7 @@ export ThermalBasicUnitCommitment
 export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
+export ThermalMultiStartUnitCommitment
 
 ###### Regulation Device Formulation #######
 export DeviceLimitedRegulation
@@ -135,6 +136,7 @@ export get_duals
 export SimulationResultsReference
 export write_results
 export check_file_integrity
+export load_results
 export load_operation_results
 export load_simulation_results
 export write_to_CSV
@@ -258,6 +260,7 @@ include("logging.jl")
 include("utils.jl")
 
 #Models and constructors
+include("core/results.jl")
 include("core/abstract_types.jl")
 include("core/aux_structs.jl")
 
@@ -266,6 +269,8 @@ include("devices_models/device_model.jl")
 include("network_models/networks.jl")
 
 include("core/parameters.jl")
+include("core/variables.jl")
+include("core/constraints.jl")
 include("core/cache.jl")
 include("core/initial_condition_types.jl")
 include("core/initial_condition.jl")
@@ -286,8 +291,6 @@ include("core/recorder_events.jl")
 
 #Device Modeling components
 include("devices_models/devices/common/device_range_constraints.jl")
-include("devices_models/devices/common/activepower_constraints.jl")
-include("devices_models/devices/common/reactivepower_constraints.jl")
 include("devices_models/devices/common/nodal_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")

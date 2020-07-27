@@ -1,5 +1,5 @@
 
-function include_parameters(
+function include_parameters!(
     psi_container::PSIContainer,
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
     param_reference::UpdateRef,
@@ -8,7 +8,6 @@ function include_parameters(
 )
     @assert model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
-    ## TODO, replace multiplier
     names = (get_name(r) for r in constraint_infos)
     @debug "adding" param_reference "parameter"
     container = add_param_container!(psi_container, param_reference, names, time_steps)
@@ -29,7 +28,7 @@ function include_parameters(
     return container
 end
 
-function include_parameters(
+function include_parameters!(
     psi_container::PSIContainer,
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
     param_reference::UpdateRef,
@@ -37,7 +36,6 @@ function include_parameters(
 )
     @assert model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
-    ## TODO, replace multiplier
     names = (get_name(r) for r in constraint_infos)
     container = add_param_container!(psi_container, param_reference, names, time_steps)
     param = get_parameter_array(container)

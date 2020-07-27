@@ -5,33 +5,29 @@ struct StepwiseCostReserve <: AbstractReservesFormulation end
 """
 This function add the variables for reserves to the model
 """
-function activeservice_variables!(
-    psi_container::PSIContainer,
-    service::SR,
-    contributing_devices::Vector{<:PSY.Device},
-) where {SR <: PSY.Reserve}
-    add_variable(
-        psi_container,
-        [device for device ∈ contributing_devices if PSY.get_available(device)],
-        variable_name(PSY.get_name(service), SR),
-        false;
-        lb_value = d -> 0,
+function AddVariableSpec(
+    ::Type{ActiveServiceVariable},
+    ::PSIContainer,
+    service::T,
+) where {T <: PSY.Reserve}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(PSY.get_name(service), T),
+        binary = false,
+        lb_value_func = x -> 0,
+        devices_filter_func = x -> PSY.get_available(x),
     )
-    return
 end
 
-function activerequirement_variables!(
-    psi_container::PSIContainer,
-    services::IS.FlattenIteratorWrapper{PSY.ReserveDemandCurve{D}},
-) where {D <: PSY.ReserveDirection}
-    add_variable(
-        psi_container,
-        services,
-        variable_name(SERVICE_REQUIREMENT, PSY.ReserveDemandCurve{D}),
-        false;
-        lb_value = x -> 0.0,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ServiceRequirementVariable, U <: PSY.ReserveDemandCurve}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(T, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
     )
-    return
 end
 
 ################################## Reserve Requirement Constraint ##########################
@@ -48,8 +44,8 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
-    constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(psi_container, variable_name(name, SR))
+    constraint = get_constraint(psi_container, make_constraint_name(REQUIREMENT, SR))
+    reserve_variable = get_variable(psi_container, name, SR)
     use_slacks = get_services_slack_variables(psi_container.settings)
 
     if use_forecast_data
@@ -100,7 +96,7 @@ function cost_function!(
     service::SR,
     ::ServiceModel{SR, RangeReserve},
 ) where {SR <: PSY.Reserve}
-    reserve = get_variable(psi_container, variable_name(PSY.get_name(service), SR))
+    reserve = get_variable(psi_container, PSY.get_name(service), SR)
     for r in reserve
         JuMP.add_to_expression!(psi_container.cost_function, r, 1.0)
     end
@@ -117,10 +113,9 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
-    constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(psi_container, variable_name(name, SR))
-    requirement_variable =
-        get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
+    constraint = get_constraint(psi_container, make_constraint_name(REQUIREMENT, SR))
+    reserve_variable = get_variable(psi_container, name, SR)
+    requirement_variable = get_variable(psi_container, SERVICE_REQUIREMENT, SR)
 
     for t in time_steps
         constraint[name, t] = JuMP.@constraint(
@@ -148,7 +143,7 @@ function cost_function!(
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}},
     ) where {JV <: JuMP.AbstractVariableRef}
-        return _pwlgencost_sos(psi_container, variable, cost_component)
+        return _pwlgencost_sos!(psi_container, variable, cost_component)
     end
 
     if use_forecast_data
@@ -161,18 +156,19 @@ function cost_function!(
         )))
 
     else
-        ts_vector = repeat(PSY.get_variable(PSY.get_op_cost(service)), time_steps[end])
+        ts_vector =
+            repeat(PSY.get_variable(PSY.get_operation_cost(service)), time_steps[end])
     end
 
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
+    variable = get_variable(psi_container, SERVICE_REQUIREMENT, SR)
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
     container = add_var_container!(
         psi_container,
-        variable_name("$(name)_pwl_cost_vars", SR),
+        make_variable_name("$(name)_pwl_cost_vars", SR),
         [name],
         time_steps,
         1:length(ts_vector[1]);
@@ -234,38 +230,47 @@ function modify_device_model!(
 end
 
 function include_service!(
-    constraint_info::DeviceRangeConstraintInfo,
+    constraint_info::T,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
-) where {SR <: PSY.Reserve{PSY.ReserveUp}}
+) where {
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    SR <: PSY.Reserve{PSY.ReserveUp},
+}
     for (ix, service) in enumerate(services)
         push!(
             constraint_info.additional_terms_ub,
-            constraint_name(PSY.get_name(service), SR),
+            make_constraint_name(PSY.get_name(service), SR),
         )
     end
     return
 end
 
 function include_service!(
-    constraint_info::DeviceRangeConstraintInfo,
+    constraint_info::T,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
-) where {SR <: PSY.Reserve{PSY.ReserveDown}}
+) where {
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    SR <: PSY.Reserve{PSY.ReserveDown},
+}
     for (ix, service) in enumerate(services)
         push!(
             constraint_info.additional_terms_lb,
-            constraint_name(PSY.get_name(service), SR),
+            make_constraint_name(PSY.get_name(service), SR),
         )
     end
     return
 end
 
 function add_device_services!(
-    constraint_info::AbstractRangeConstraintInfo,
+    constraint_info::T,
     device::D,
     model::DeviceModel,
-) where {D <: PSY.Device}
+) where {
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    D <: PSY.Device,
+}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
             services =
@@ -292,14 +297,20 @@ function add_device_services!(
                 for service in services
                     push!(
                         constraint_data_in.additional_terms_ub,
-                        constraint_name(PSY.get_name(service), service_model.service_type),
+                        make_constraint_name(
+                            PSY.get_name(service),
+                            service_model.service_type,
+                        ),
                     )
                 end
             elseif service_model.service_type <: PSY.Reserve{PSY.ReserveUp}
                 for service in services
                     push!(
                         constraint_data_out.additional_terms_ub,
-                        constraint_name(PSY.get_name(service), service_model.service_type),
+                        make_constraint_name(
+                            PSY.get_name(service),
+                            service_model.service_type,
+                        ),
                     )
                 end
             end

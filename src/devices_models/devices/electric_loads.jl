@@ -5,53 +5,51 @@ struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ####################################
-function activepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, L),
-        false,
-        :nodal_balance_active,
-        -1.0;
-        ub_value = x -> PSY.get_maxactivepower(x),
-        lb_value = x -> 0.0,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ActivePowerVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_active,
+        sign = -1.0,
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_max_active_power(x),
     )
-    return
 end
 
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, L),
-        false,
-        :nodal_balance_reactive,
-        -1.0;
-        ub_value = x -> PSY.get_maxreactivepower(x),
-        lb_value = x -> 0.0,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ReactivePowerVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_reactive,
+        sign = -1.0,
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_max_reactive_power(x),
     )
-    return
 end
 
-function commitment_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(psi_container, devices, variable_name(ON, L), true)
-    return
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: OnVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
 end
 
 ####################################### Reactive Power Constraints #########################
 """
-Reactive Power Constraints on Controllable Loads Assume Constant PowerFactor
+Reactive Power Constraints on Controllable Loads Assume Constant power_factor
 """
-function make_reactive_power_constraints_inputs(
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
     ::Type{<:PSY.ElectricLoad},
     ::Type{<:AbstractControllablePowerLoadFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -59,7 +57,7 @@ function make_reactive_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    return DeviceRangeConstraintInputs(;
+    return DeviceRangeConstraintSpec(;
         custom_psi_container_func = custom_reactive_power_constraints!,
     )
 end
@@ -75,104 +73,118 @@ function custom_reactive_power_constraints!(
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        pf = sin(atan((PSY.get_maxreactivepower(d) / PSY.get_maxactivepower(d))))
+        pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
         reactive = get_variable(psi_container, REACTIVE_POWER, T)[name, t]
         real = get_variable(psi_container, ACTIVE_POWER, T)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel, reactive == real)
     end
 end
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.ElectricLoad},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
     ::Type{<:DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
+) where {T <: PSY.ElectricLoad}
     if (!use_parameters && !use_forecasts)
-        return DeviceRangeConstraintInputs(;
-            range_constraint_inputs = [RangeConstraintInputs(;
-                constraint_name = ACTIVE_RANGE,
-                variable_name = ACTIVE_POWER,
-                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+        return DeviceRangeConstraintSpec(;
+            range_constraint_spec = RangeConstraintSpec(;
+                constraint_name = make_constraint_name(
+                    RangeConstraint,
+                    ActivePowerVariable,
+                    T,
+                ),
+                variable_name = make_variable_name(ActivePowerVariable, T),
+                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range,
-            )],
+                constraint_struct = DeviceRangeConstraintInfo,
+            ),
         )
     end
 
-    return DeviceRangeConstraintInputs(;
-        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
-            constraint_name = ACTIVE,
-            variable_name = ACTIVE_POWER,
+    return DeviceRangeConstraintSpec(;
+        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-            forecast_label = "get_maxactivepower",
-            multiplier_func = x -> PSY.get_maxactivepower(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub :
-                              device_timeseries_ub,
-        )],
+            forecast_label = "get_max_active_power",
+            multiplier_func = x -> PSY.get_max_active_power(x),
+            constraint_func = use_parameters ? device_timeseries_param_ub! :
+                              device_timeseries_ub!,
+        ),
     )
 end
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.ElectricLoad},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
     ::Type{<:InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
+) where {T <: PSY.ElectricLoad}
     if (!use_parameters && !use_forecasts)
-        return DeviceRangeConstraintInputs(;
-            range_constraint_inputs = [RangeConstraintInputs(;
-                constraint_name = ACTIVE_RANGE,
-                variable_name = ACTIVE_POWER,
-                bin_variable_name = ON,
-                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+        return DeviceRangeConstraintSpec(;
+            range_constraint_spec = RangeConstraintSpec(;
+                constraint_name = make_constraint_name(
+                    RangeConstraint,
+                    ActivePowerVariable,
+                    T,
+                ),
+                variable_name = make_variable_name(ActivePowerVariable, T),
+                bin_variable_names = [make_variable_name(OnVariable, T)],
+                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_semicontinuousrange,
-            )],
+                constraint_struct = DeviceRangeConstraintInfo,
+            ),
         )
     end
 
-    return DeviceRangeConstraintInputs(;
-        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
-            constraint_name = ACTIVE,
-            variable_name = ACTIVE_POWER,
-            bin_variable_name = ON,
+    return DeviceRangeConstraintSpec(;
+        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
+            bin_variable_name = make_variable_name(OnVariable, T),
             parameter_name = use_parameters ? ON : nothing,
-            forecast_label = "get_maxactivepower",
-            multiplier_func = x -> PSY.get_maxactivepower(x),
-            constraint_func = use_parameters ? device_timeseries_ub_bigM :
-                              device_timeseries_ub_bin,
-        )],
+            forecast_label = "get_max_active_power",
+            multiplier_func = x -> PSY.get_max_active_power(x),
+            constraint_func = use_parameters ? device_timeseries_ub_bigM! :
+                              device_timeseries_ub_bin!,
+        ),
     )
 end
 
 ########################## Addition to the nodal balances ##################################
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
-    return NodalExpressionInputs(
-        "get_maxactivepower",
+    return NodalExpressionSpec(
+        "get_max_active_power",
         REACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_maxreactivepower(x) : x -> PSY.get_reactivepower(x),
+        use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
         -1.0,
         T,
     )
 end
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
-    return NodalExpressionInputs(
-        "get_maxactivepower",
+    return NodalExpressionSpec(
+        "get_max_active_power",
         ACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_maxactivepower(x) : x -> PSY.get_activepower(x),
+        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         -1.0,
         T,
     )
@@ -185,7 +197,13 @@ function cost_function(
     ::Type{DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
-    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, L), :variable, -1.0)
+    add_to_cost!(
+        psi_container,
+        devices,
+        make_variable_name(ACTIVE_POWER, L),
+        :variable,
+        -1.0,
+    )
     return
 end
 
@@ -195,6 +213,6 @@ function cost_function(
     ::Type{InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
-    add_to_cost(psi_container, devices, variable_name(ON, L), :fixed, -1.0)
+    add_to_cost!(psi_container, devices, make_variable_name(ON, L), :fixed, -1.0)
     return
 end

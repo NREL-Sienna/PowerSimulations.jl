@@ -325,7 +325,7 @@ function test_write_functions(file_path, op_problem, res)
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
-        var_name = PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
+        var_name = PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
         PSI.write_data(
             get_variables(res)[var_name],
             mkdir(joinpath(file_path, "four")),
@@ -358,12 +358,12 @@ function test_write_functions(file_path, op_problem, res)
         c_sys5_re = build_system("c_sys5_re")
         system = op_problem.sys
         params =
-            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__get_maxactivepower__PowerLoad])
+            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__get_max_active_power__PowerLoad])
         params = PSI.axis_array_to_dataframe(params)
         devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
-        multiplier = [PSY.get_activepower(devices[1])]
+        multiplier = [PSY.get_active_power(devices[1])]
         for d in 2:length(devices)
-            multiplier = hcat(multiplier, PSY.get_activepower(devices[d]))
+            multiplier = hcat(multiplier, PSY.get_active_power(devices[d]))
         end
         extracted = -multiplier .* params
         @test extracted == res.parameter_values[:P_PowerLoad]
@@ -412,7 +412,7 @@ end
     end
 
     @testset "test constraint duals in the operations problem" begin
-        name = PSI.constraint_name("CopperPlateBalance")
+        name = PSI.make_constraint_name("CopperPlateBalance")
         for i in 1:ncol(get_time_stamp(res))
             dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
             @test isapprox(dual, get_duals(res)[name][i, 1])

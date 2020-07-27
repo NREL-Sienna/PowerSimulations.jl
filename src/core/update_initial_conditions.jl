@@ -57,7 +57,7 @@ function calculate_ic_quantity(
     status_change_to_off =
         get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
     if status_change_to_on
-        return ic.device.activepowerlimits.min
+        return ic.device.active_power_limits.min
     end
 
     if status_change_to_off
@@ -158,6 +158,21 @@ function output_init(
     return
 end
 
+function output_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DevicePower, PSY.ThermalMultiStart),
+        _make_initial_condition_active_power,
+        _get_active_power_output_above_min_value,
+    )
+
+    return
+end
+
 function duration_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -188,7 +203,7 @@ function storage_energy_init(
         devices,
         key,
         _make_initial_condition_energy,
-        _get_energy_value,
+        _get_initial_energy_value,
     )
 
     return
@@ -318,11 +333,19 @@ function _get_status_value(device, key)
 end
 
 function _get_active_power_output_value(device, key)
-    return PSY.get_activepower(device)
+    if !PSY.get_status(device)
+        return 0.0
+    end
+    return PSY.get_active_power(device)
 end
 
-function _get_energy_value(device, key)
-    return PSY.get_energy(device)
+function _get_active_power_output_above_min_value(device, key)
+    return PSY.get_status(device) ?
+           PSY.get_active_power(device) - PSY.get_active_power_limits(device).min : 0.0
+end
+
+function _get_initial_energy_value(device, key)
+    return PSY.get_initial_energy(device)
 end
 
 function _get_reservoir_energy_value(device, key)
@@ -335,10 +358,10 @@ end
 
 function _get_duration_value(dev, key)
     if key.ic_type == TimeDurationON
-        value = PSY.get_status(dev) > 0 ? PSY.get_time_at_status(dev) : 0.0
+        value = PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     else
         @assert key.ic_type == TimeDurationOFF
-        value = PSY.get_status(dev) <= 0 ? PSY.get_time_at_status(dev) : 0.0
+        value = !PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     end
 
     return value
@@ -349,12 +372,12 @@ function _get_ref_active_power(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
-           UpdateRef{T}(ACTIVE_POWER, "get_activepower")
+           UpdateRef{T}(ACTIVE_POWER, "get_active_power")
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "get_energy")
+           UpdateRef{T}(ENERGY, "get_initial_energy")
 end
 
 function _get_ref_reservoir_energy(

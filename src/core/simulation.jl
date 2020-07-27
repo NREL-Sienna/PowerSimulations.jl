@@ -260,7 +260,7 @@ get_date_range(s::Simulation) = s.internal.date_range
 function get_base_powers(s::Simulation)
     base_powers = Dict()
     for (k, v) in s.stages
-        base_powers[k] = v.sys.base_powers
+        base_powers[k] = PSY.get_base_power(v.sys)
     end
     return base_powers
 end
@@ -845,7 +845,7 @@ each stage and step.
 # Example
 ```julia
 sim = Simulation("Test", 7, stages, "/Users/folder")
-execute!!(sim::Simulation; kwargs...)
+execute!(sim::Simulation; kwargs...)
 ```
 """
 

@@ -1,10 +1,4 @@
 @doc raw"""
-    energy_balance(psi_container::PSIContainer,
-                        initial_conditions::Vector{InitialCondition},
-                        efficiency_data::Tuple{Vector{String}, Vector{InOut}},
-                        cons_name::Symbol,
-                        var_names::Tuple{Symbol, Symbol, Symbol})
-
 Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
 
 # Constraints
@@ -81,11 +75,6 @@ function energy_balance(
 end
 
 @doc raw"""
-    energy_balance_external_input(psi_container::PSIContainer,
-                        initial_conditions::Vector{InitialCondition},
-                        efficiency_data::Tuple{Vector{String}, Vector{InOut}},
-                        cons_name::Symbol,
-                        var_names::Tuple{Symbol, Symbol, Symbol})
 Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
 # Constraints
 If t = 1:
@@ -106,7 +95,7 @@ If t > 1:
 - : var_names[3] : varenergy
 * param_reference::UpdateRef : UpdateRef to access the inflow parameter
 """
-function energy_balance_external_input_param(
+function energy_balance_external_input_param!(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
     inflow_data::Vector{DeviceTimeSeriesConstraintInfo},
@@ -157,11 +146,6 @@ function energy_balance_external_input_param(
 end
 
 @doc raw"""
-    energy_balance_external_input(psi_container::PSIContainer,
-                        initial_conditions::Vector{InitialCondition},
-                        efficiency_data::Tuple{Vector{String}, Vector{InOut}},
-                        cons_name::Symbol,
-                        var_names::Tuple{Symbol, Symbol, Symbol})
 Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
 # Constraints
 If t = 1:
@@ -181,7 +165,7 @@ If t > 1:
 - : var_names[2] : varout
 - : var_names[3] : varenergy
 """
-function energy_balance_external_input(
+function energy_balance_external_input!(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
     inflow_data::Vector{DeviceTimeSeriesConstraintInfo},

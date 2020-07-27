@@ -12,14 +12,40 @@ function construct_device!(
     end
 
     devices = get_available_components(model.device_type, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
     #Variables
-    regulation_service_variables!(psi_container, devices)
+    add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
-    activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        RangeConstraint,
+        DeltaActivePowerUpVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        RangeConstraint,
+        DeltaActivePowerDownVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
     participation_assignment!(psi_container, devices, model, S, nothing)
+    regulation_cost!(psi_container, devices, model)
     return
 end
 
@@ -37,12 +63,37 @@ function construct_device!(
     end
 
     devices = get_available_components(model.device_type, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
     #Variables
-    regulation_service_variables!(psi_container, devices)
+    add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
-    activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        RangeConstraint,
+        DeltaActivePowerUpVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        RangeConstraint,
+        DeltaActivePowerDownVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     participation_assignment!(psi_container, devices, model, S, nothing)
     regulation_cost!(psi_container, devices, model)
     return
@@ -62,6 +113,9 @@ function construct_device!(
     end
 
     devices = get_available_components(model.device_type, sys)
+    if !validate_available_devices(T, devices)
+        return
+    end
     nodal_expression!(psi_container, devices, S)
     return
 end

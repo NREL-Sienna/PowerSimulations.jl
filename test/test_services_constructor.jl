@@ -154,3 +154,21 @@ end
         moi_tests(op_problem, p, 504, 0, 120, 192, 24, false)
     end
 end
+
+@testset "Test AGC" begin
+    c_sys5_reg = build_system("c_sys5_reg")
+    # End of the system creation code.
+    devices = Dict(
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+        :Regulation_thermal =>
+            DeviceModel(RegulationDevice{ThermalStandard}, DeviceLimitedRegulation),
+    )
+    services = Dict(:AGC => ServiceModel(AGC, PIDSmoothACE))
+
+    @test_throws ArgumentError template_agc_reserve_deployment(devices = devices)
+
+    template_agc = template_agc_reserve_deployment()
+    agc_problem = OperationsProblem(AGCReserveDeployment, template_agc, c_sys5_reg)
+    # These values might change as the AGC model is refined
+    moi_tests(agc_problem, false, 720, 0, 480, 0, 384, false)
+end

@@ -118,7 +118,7 @@ function build_c_sys5(; kwargs...)
                 add_forecast!(
                     c_sys5,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -147,7 +147,7 @@ function build_c_sys5_ml(; kwargs...)
                 add_forecast!(
                     c_sys5_ml,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -175,7 +175,7 @@ function build_c_sys14(; kwargs...)
             add_forecast!(
                 c_sys14,
                 l,
-                Deterministic("get_maxactivepower", timeseries_DA14[ix]),
+                Deterministic("get_max_active_power", timeseries_DA14[ix]),
             )
         end
     end
@@ -203,14 +203,14 @@ function build_c_sys5_re(; kwargs...)
                 add_forecast!(
                     c_sys5_re,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re))
                 add_forecast!(
                     c_sys5_re,
                     r,
-                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -232,7 +232,7 @@ function build_c_sys5_re(; kwargs...)
             add_forecast!(
                 c_sys5_re,
                 serv,
-                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
             )
         end
     end
@@ -260,14 +260,14 @@ function build_c_sys5_re_only(; kwargs...)
                 add_forecast!(
                     c_sys5_re_only,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re_only))
                 add_forecast!(
                     c_sys5_re_only,
                     r,
-                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -296,14 +296,14 @@ function build_c_sys5_hy(; kwargs...)
                 add_forecast!(
                     c_sys5_hy,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hy))
                 add_forecast!(
                     c_sys5_hy,
                     h,
-                    Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", hydro_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -332,14 +332,14 @@ function build_c_sys5_hyd(; kwargs...)
                 add_forecast!(
                     c_sys5_hyd,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
                 add_forecast!(
                     c_sys5_hyd,
                     h,
-                    Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", hydro_timeseries_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
@@ -379,13 +379,11 @@ function build_c_sys5_hyd(; kwargs...)
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
             add_forecast!(c_sys5_hyd, serv, Deterministic("get_requirement", Reserve_ts[t]))
         end
-        for t in 1:2,
-            (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_hyd))
-
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_hyd)
             add_forecast!(
                 c_sys5_hyd,
                 serv,
-                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
             )
         end
     end
@@ -414,7 +412,7 @@ function build_c_sys5_bat(; kwargs...)
                 add_forecast!(
                     c_sys5_bat,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -431,13 +429,11 @@ function build_c_sys5_bat(; kwargs...)
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
             add_forecast!(c_sys5_bat, serv, Deterministic("get_requirement", Reserve_ts[t]))
         end
-        for t in 1:2,
-            (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_bat))
-
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_bat)
             add_forecast!(
                 c_sys5_bat,
                 serv,
-                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
             )
         end
     end
@@ -465,14 +461,14 @@ function build_c_sys5_il(; kwargs...)
                 add_forecast!(
                     c_sys5_il,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_il))
                 add_forecast!(
                     c_sys5_il,
                     i,
-                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -490,11 +486,11 @@ function build_c_sys5_il(; kwargs...)
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
             add_forecast!(c_sys5_il, serv, Deterministic("get_requirement", Reserve_ts[t]))
         end
-        for t in 1:2, (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_il))
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_il)
             add_forecast!(
                 c_sys5_il,
                 serv,
-                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
             )
         end
     end
@@ -522,14 +518,14 @@ function build_c_sys5_dc(; kwargs...)
                 add_forecast!(
                     c_sys5_dc,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_dc))
                 add_forecast!(
                     c_sys5_dc,
                     r,
-                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -557,12 +553,71 @@ function build_c_sys14_dc(; kwargs...)
             add_forecast!(
                 c_sys14_dc,
                 l,
-                Deterministic("get_maxactivepower", timeseries_DA14[ix]),
+                Deterministic("get_max_active_power", timeseries_DA14[ix]),
             )
         end
     end
 
     return c_sys14_dc
+end
+
+function build_c_sys5_reg(; kwargs...)
+    nodes = nodes5()
+
+    c_sys5_reg = System(
+        nodes,
+        thermal_generators5(nodes),
+        loads5(nodes),
+        branches5(nodes),
+        nothing,
+        100.0,
+        nothing,
+        nothing,
+    )
+
+    area = Area("1")
+    add_component!(c_sys5_reg, area)
+    [set_area!(b, area) for b in get_components(Bus, c_sys5_reg)]
+    AGC_service = PSY.AGC(
+        name = "AGC_Area1",
+        available = true,
+        bias = 739.0,
+        K_p = 2.5,
+        K_i = 0.1,
+        K_d = 0.0,
+        delta_t = 4,
+        area = first(get_components(Area, c_sys5_reg)),
+    )
+    add_component!(c_sys5_reg, AGC_service)
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_reg))
+                add_forecast!(
+                    c_sys5_reg,
+                    l,
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (_, l) in enumerate(get_components(ThermalStandard, c_sys5_reg))
+                add_forecast!(
+                    c_sys5_reg,
+                    l,
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][1]),
+                )
+            end
+        end
+    end
+
+    for g in get_components(Generator, c_sys5_reg)
+        droop = isa(g, ThermalStandard) ? 0.04 * PSY.get_base_power(g) :
+            0.05 * PSY.get_base_power(g)
+        p_factor = (up = 1.0, dn = 1.0)
+        t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
+        add_component!(c_sys5_reg, t)
+        add_service!(t, AGC_service)
+        @assert has_forecasts(t)
+    end
+    return c_sys5_reg
 end
 
 # System to test UC Forms
@@ -587,7 +642,7 @@ thermal_generators5_uc_testing(nodes) = [
         nothing,
         nothing,
         ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Park City",
@@ -601,10 +656,10 @@ thermal_generators5_uc_testing(nodes) = [
         ThermalFuels.COAL,
         (min = 0.65, max = 1.70),
         (min = -1.275, max = 1.275),
-        (up = 0.02, down = 0.02),
+        (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
         nothing,
         ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Solitude",
@@ -618,10 +673,10 @@ thermal_generators5_uc_testing(nodes) = [
         ThermalFuels.COAL,
         (min = 1.0, max = 5.20),
         (min = -3.90, max = 3.90),
-        (up = 0.0012, down = 0.0012),
+        (up = 0.0012 * 5.2, down = 0.0012 * 5.2),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 3000.0), 0.0, 3.0, 1.5),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Sundance",
@@ -635,10 +690,10 @@ thermal_generators5_uc_testing(nodes) = [
         ThermalFuels.COAL,
         (min = 1.0, max = 2.0),
         (min = -1.5, max = 1.5),
-        (up = 0.015, down = 0.015),
+        (up = 0.015 * 2.5, down = 0.015 * 2.5),
         (up = 2.0, down = 1.0),
         ThreePartCost((0.0, 4000.0), 0.0, 4.0, 2.0),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Brighton",
@@ -652,10 +707,10 @@ thermal_generators5_uc_testing(nodes) = [
         ThermalFuels.COAL,
         (min = 3.0, max = 6.0),
         (min = -4.50, max = 4.50),
-        (up = 0.0015, down = 0.0015),
+        (up = 0.0015 * 7.5, down = 0.0015 * 7.5),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 1000.0), 0.0, 1.5, 0.75),
-        1.0,
+        100.0,
     ),
 ];
 
@@ -679,21 +734,21 @@ function build_c_sys5_uc(; kwargs...)
                 add_forecast!(
                     c_sys5_uc,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
                 add_forecast!(
                     c_sys5_uc,
                     r,
-                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
                 )
             end
             for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_uc))
                 add_forecast!(
                     c_sys5_uc,
                     i,
-                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -712,7 +767,7 @@ function build_c_sys5_uc(; kwargs...)
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
             add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[t]))
         end
-        for t in 1:2, (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_uc))
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_uc)
             add_forecast!(
                 c_sys5_uc,
                 serv,
@@ -722,6 +777,15 @@ function build_c_sys5_uc(; kwargs...)
 
     end
 
+    return c_sys5_uc
+end
+
+function build_c_sys5_pwl_uc(; kwargs...)
+    c_sys5_uc = build_c_sys5_uc(; kwargs...)
+    thermal = thermal_generators5_pwl(nodes5())
+    for d in thermal
+        PSY.add_component!(c_sys5_uc, d)
+    end
     return c_sys5_uc
 end
 
@@ -746,7 +810,7 @@ function build_c_sys5_ed(; kwargs...)
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                    add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+                    add_forecast!(c_sys5_ed, l, Deterministic("get_max_active_power", data))
                 end
             end
         end
@@ -756,7 +820,7 @@ function build_c_sys5_ed(; kwargs...)
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                    add_forecast!(c_sys5_ed, l, Deterministic("get_rating", data))
+                    add_forecast!(c_sys5_ed, l, Deterministic("get_max_active_power", data))
                 end
             end
         end
@@ -766,12 +830,21 @@ function build_c_sys5_ed(; kwargs...)
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                    add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+                    add_forecast!(c_sys5_ed, l, Deterministic("get_max_active_power", data))
                 end
             end
         end
     end
 
+    return c_sys5_ed
+end
+
+function build_c_sys5_pwl_ed(; kwargs...)
+    c_sys5_ed = build_c_sys5_ed(; kwargs...)
+    thermal = thermal_generators5_pwl(nodes5())
+    for d in thermal
+        PSY.add_component!(c_sys5_ed, d)
+    end
     return c_sys5_ed
 end
 
@@ -812,14 +885,14 @@ function build_c_sys5_hy_uc(; kwargs...)
                 add_forecast!(
                     c_sys5_hy_uc,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
                 add_forecast!(
                     c_sys5_hy_uc,
                     h,
-                    Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", hydro_timeseries_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
@@ -840,21 +913,21 @@ function build_c_sys5_hy_uc(; kwargs...)
                 add_forecast!(
                     c_sys5_hy_uc,
                     h,
-                    Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", hydro_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_hy_uc))
                 add_forecast!(
                     c_sys5_hy_uc,
                     r,
-                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
                 )
             end
             for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_uc))
                 add_forecast!(
                     c_sys5_hy_uc,
                     i,
-                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -891,7 +964,7 @@ function build_c_sys5_hy_ed(; kwargs...)
                     add_forecast!(
                         c_sys5_hy_ed,
                         l,
-                        Deterministic("get_maxactivepower", data),
+                        Deterministic("get_max_active_power", data),
                     )
                 end
             end
@@ -900,7 +973,11 @@ function build_c_sys5_hy_ed(; kwargs...)
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
                 end
             end
             for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_hy_ed))
@@ -908,7 +985,11 @@ function build_c_sys5_hy_ed(; kwargs...)
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
                 end
             end
             for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
@@ -939,7 +1020,7 @@ function build_c_sys5_hy_ed(; kwargs...)
                     add_forecast!(
                         c_sys5_hy_ed,
                         l,
-                        Deterministic("get_maxactivepower", data),
+                        Deterministic("get_max_active_power", data),
                     )
                 end
             end
@@ -948,13 +1029,60 @@ function build_c_sys5_hy_ed(; kwargs...)
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
                 end
             end
         end
     end
 
     return c_sys5_hy_ed
+end
+
+function build_c_sys5_pglib(; kwargs...)
+    nodes = nodes5()
+    c_sys5_uc = System(
+        nodes,
+        vcat(thermal_generators5_uc_testing(nodes), thermal_pglib_generators5(nodes)),
+        loads5(nodes),
+        branches5(nodes),
+        nothing,
+        100.0,
+        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
+    )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
+                add_forecast!(
+                    c_sys5_uc,
+                    l,
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
+                )
+            end
+        end
+    end
+
+    if get(kwargs, :add_reserves, false)
+        reserve_uc = reserve5(get_components(ThermalStandard, c_sys5_uc))
+        add_service!(c_sys5_uc, reserve_uc[1], get_components(ThermalStandard, c_sys5_uc))
+        add_service!(
+            c_sys5_uc,
+            reserve_uc[2],
+            [collect(get_components(ThermalStandard, c_sys5_uc))[end]],
+        )
+        add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalStandard, c_sys5_uc))
+        for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
+            add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        end
+    end
+
+    return c_sys5_uc
 end
 
 TEST_SYSTEMS = Dict(
@@ -1009,6 +1137,26 @@ TEST_SYSTEMS = Dict(
         (description = "", build = build_c_sys5_re_only, time_series_in_memory = true),
     "c_sys5_uc" =>
         (description = "", build = build_c_sys5_uc, time_series_in_memory = true),
+    "c_sys5_pglib" => (
+        description = "5-bus with ThermalMultiStart",
+        build = build_c_sys5_pglib,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_pwl_uc" => (
+        description = "5-bus with SOS cost function",
+        build = build_c_sys5_pwl_uc,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_pwl_ed" => (
+        description = "5-bus with SOS cost function",
+        build = build_c_sys5_pwl_ed,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_reg" => (
+        description = "5-bus with regulation devices and AGC",
+        build = build_c_sys5_reg,
+        time_series_in_memory = true,
+    ),
 )
 
 build_PTDF5() = PTDF(build_system("c_sys5"))
