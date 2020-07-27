@@ -52,19 +52,26 @@ function calculate_ic_quantity(
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.ThermalGen}
-    status_change_to_on =
-        get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
-    status_change_to_off =
-        get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
+    if isnothing(cache)
+        status_change_to_on =
+            get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
+        status_change_to_off =
+            get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
+    else
+        last_status = time_cache[:status]
+        status_change_to_on =
+            get_condition(ic) <= ABSOLUTE_TOLERANCE && last_status >= ABSOLUTE_TOLERANCE
+        status_change_to_off =
+            get_condition(ic) >= ABSOLUTE_TOLERANCE && last_status <= ABSOLUTE_TOLERANCE
+    end
+
     if status_change_to_on
         return ic.device.active_power_limits.min
-    end
-
-    if status_change_to_off
+    elseif status_change_to_off
         return 0.0
+    else
+        return var_value
     end
-
-    return var_value
 end
 
 function calculate_ic_quantity(
@@ -121,7 +128,6 @@ function _make_initial_conditions!(
     @assert length(ini_conds) == length_devices
     return
 end
-
 
 ######################### Initialize Functions for ThermalGen ##############################
 """

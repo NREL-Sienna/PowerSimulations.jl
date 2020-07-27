@@ -715,7 +715,6 @@ thermal_generators5_uc_testing(nodes) = [
     ),
 ];
 
-
 function build_sys_ramp_testing(; kwargs...)
     node = Bus(1, "nodeA", "REF", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
     load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
