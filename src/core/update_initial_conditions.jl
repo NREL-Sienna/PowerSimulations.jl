@@ -122,6 +122,8 @@ function _make_initial_conditions!(
     return
 end
 
+
+######################### Initialize Functions for ThermalGen ##############################
 """
 Status Init is always calculated based on the Power Output of the device
 This is to make it easier to calculate when the previous model doesn't
@@ -151,21 +153,6 @@ function output_init(
         psi_container,
         devices,
         ICKey(DevicePower, T),
-        _make_initial_condition_active_power,
-        _get_active_power_output_value,
-    )
-
-    return
-end
-
-function output_init(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-)
-    _make_initial_conditions!(
-        psi_container,
-        devices,
-        ICKey(DevicePower, PSY.ThermalMultiStart),
         _make_initial_condition_active_power,
         _get_active_power_output_above_min_value,
     )
@@ -340,8 +327,10 @@ function _get_active_power_output_value(device, key)
 end
 
 function _get_active_power_output_above_min_value(device, key)
-    return PSY.get_status(device) ?
-           PSY.get_active_power(device) - PSY.get_active_power_limits(device).min : 0.0
+    if !PSY.get_status(device)
+        return 0.0
+    end
+    return PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
 end
 
 function _get_initial_energy_value(device, key)
@@ -371,8 +360,11 @@ function _get_ref_active_power(
     ::Type{T},
     container::InitialConditions,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
-           UpdateRef{T}(ACTIVE_POWER, "get_active_power")
+    if get_use_parameters(container)
+        return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
+    else
+        return UpdateRef{T}(ACTIVE_POWER, "get_active_power")
+    end
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
