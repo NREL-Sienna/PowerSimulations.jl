@@ -150,19 +150,6 @@ function activepower_constraints!(
         variable_name(ACTIVE_POWER, T),
         variable_name(ON, T),
     )
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        limits = PSY.get_activepowerlimits(d)
-        range_data = DeviceRange(name, limits)
-        add_device_services!(range_data, d, model; add_supplemental=true)
-        constraint_data[ix] = range_data
-    end
-    device_range(
-        psi_container,
-        constraint_data,
-        constraint_name(ACTIVE_RANGE, T),
-        variable_name(ACTIVE_POWER, T),
-    )
     return
 end
 
