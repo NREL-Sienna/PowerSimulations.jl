@@ -455,7 +455,7 @@ end
 function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    device_formulation::Type{D},
+    ::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
     status_init(psi_container, devices)
     output_init(psi_container, devices)
@@ -466,18 +466,12 @@ end
 function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    device_formulation::Type{ThermalBasicUnitCommitment},
-) where {T <: PSY.ThermalGen}
+    ::Type{D},
+) where {
+    T <: PSY.ThermalGen,
+    D <: Union{ThermalBasicUnitCommitment, AbstractThermalDispatchFormulation},
+}
     status_init(psi_container, devices)
-    output_init(psi_container, devices)
-    return
-end
-
-function initial_conditions!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    device_formulation::Type{D},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
     output_init(psi_container, devices)
     return
 end
@@ -487,17 +481,22 @@ end
 This function gets the data for the generators for ramping constraints of thermal generators
 """
 function _get_data_for_rocc(
-    initial_conditions_power::Vector{InitialCondition},
-    resolution::Dates.TimePeriod,
-)
+    psi_container::PSIContainer,
+    ::Type{T},
+) where {T <: PSY.ThermalGen}
+    resolution = model_resolution(psi_container)
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
-        @warning("Not all formulations support under 1-minute resolutions. Exercise caution.")
+        @warn("Not all formulations support under 1-minute resolutions. Exercise caution.")
         minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
     end
+
+    initial_conditions_power = get_initial_conditions(psi_container, ICKey(DevicePower, T))
+    initial_conditions_status =
+        get_initial_conditions(psi_container, ICKey(DeviceStatus, T))
+
     lenght_devices_power = length(initial_conditions_power)
-    ini_conds = Vector{InitialCondition}(undef, lenght_devices_power)
     data = Vector{DeviceRampConstraintInfo}(undef, lenght_devices_power)
     idx = 0
     for (ix, ic) in enumerate(initial_conditions_power)
@@ -515,19 +514,24 @@ function _get_data_for_rocc(
             else
                 idx += 1
             end
-            ini_conds[idx] = ic
             ramp = (
                 up = ramp_limits.up * minutes_per_period,
                 down = ramp_limits.down * minutes_per_period,
             )
-            data[idx] = DeviceRampConstraintInfo(name, p_lims, ramp)
+            @assert ic.device == initial_conditions_status[ix].device
+            data[idx] = DeviceRampConstraintInfo(
+                name,
+                p_lims,
+                ic,
+                initial_conditions_status[ix],
+                ramp,
+            )
         end
     end
     if idx < lenght_devices_power
-        deleteat!(ini_conds, (idx + 1):lenght_devices_power)
         deleteat!(data, (idx + 1):lenght_devices_power)
     end
-    return ini_conds, data
+    return data
 end
 
 """
@@ -541,17 +545,12 @@ function ramp_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    resolution = model_resolution(psi_container)
-    key = ICKey(DevicePower, T)
-    initial_conditions = get_initial_conditions(psi_container, key)
-    rate_data = _get_data_for_rocc(initial_conditions, resolution)
-    ini_conds, data = _get_data_for_rocc(initial_conditions, resolution)
-    if !isempty(ini_conds)
+    data = _get_data_for_rocc(psi_container, T)
+    if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_mixedinteger_rateofchange!(
             psi_container,
             data,
-            ini_conds,
             make_constraint_name(RAMP, T),
             (
                 make_variable_name(ActivePowerVariable, T),
@@ -577,16 +576,12 @@ function ramp_constraints!(
     S <: PM.AbstractPowerModel,
 }
     time_steps = model_time_steps(psi_container)
-    resolution = model_resolution(psi_container)
-    initial_conditions = get_initial_conditions(psi_container, ICKey(DevicePower, T))
-    rate_data = _get_data_for_rocc(initial_conditions, resolution)
-    ini_conds, data = _get_data_for_rocc(initial_conditions, resolution)
-    if !isempty(ini_conds)
+    data = _get_data_for_rocc(psi_container, T)
+    if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange!(
             psi_container,
             data,
-            ini_conds,
             make_constraint_name(RAMP, T),
             make_variable_name(ActivePowerVariable, T),
         )
@@ -599,26 +594,21 @@ end
 function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    model::DeviceModel{T, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {S <: PM.AbstractPowerModel}
-
+) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    resolution = model_resolution(psi_container)
-    key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
-    initial_conditions = get_initial_conditions(psi_container, key_power)
-    ic_power = get_initial_conditions(psi_container, key_power)
-    ini_conds, constaint_data = _get_data_for_rocc(ic_power, resolution)
+    data = _get_data_for_rocc(psi_container, T)
 
-    for (ix, ic) in enumerate(ini_conds)
-        add_device_services!(constaint_data[ix], ic.device, model)
+    # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
+    for r in data
+        add_device_services!(r, r.ic_status.device, model)
     end
-    if !isempty(ini_conds)
+    if !isempty(data)
         device_multistart_rateofchange!(
             psi_container,
             constaint_data,
-            ini_conds,
             make_constraint_name(RAMP, PSY.ThermalMultiStart),
             make_variable_name(ActivePowerVariable, PSY.ThermalMultiStart),
         )
