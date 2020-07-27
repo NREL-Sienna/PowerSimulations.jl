@@ -103,6 +103,8 @@ end
 struct DeviceRampConstraintInfo <: AbstractRampConstraintInfo
     name::String
     limits::PSI.MinMax
+    ic_power_above_min::InitialCondition
+    ic_status::InitialCondition
     ramp_limits::PSI.UpDown
     additional_terms_ub::Vector{Symbol}
     additional_terms_lb::Vector{Symbol}
@@ -111,28 +113,42 @@ end
 function DeviceRampConstraintInfo(
     name::String,
     limits::PSY.Min_Max,
+    ic_power_above_min::InitialCondition,
+    ic_status::InitialCondition,
     ramp_limits::PSI.UpDown,
 )
     return DeviceRampConstraintInfo(
         name,
         limits,
+        ic_power_above_min,
+        ic_status,
         ramp_limits,
         Vector{Symbol}(),
         Vector{Symbol}(),
     )
 end
 
-function DeviceRampConstraintInfo(name::String)
+function DeviceRampConstraintInfo(
+    name::String,
+    ic_power_above_min::InitialCondition,
+    ic_status::InitialCondition,
+)
     return DeviceRampConstraintInfo(
         name,
         (min = -Inf, max = Inf),
+        ic_power_above_min,
+        ic_status,
         (up = Inf, down = Inf),
-        Vector{Symbol}(),
-        Vector{Symbol}(),
     )
 end
 
 get_name(d::DeviceRampConstraintInfo) = d.name
+get_limits(d::DeviceRampConstraintInfo) = d.limits
+get_ic_power_above_min(d::DeviceRampConstraintInfo) = d.ic_power_above_min
+get_ic_status(d::DeviceRampConstraintInfo) = d.ic_status
+get_ramp_limits(d::DeviceRampConstraintInfo) = d.ramp_limits
+get_additional_terms_ub(d::DeviceRampConstraintInfo) = d.additional_terms_ub
+get_additional_terms_lb(d::DeviceRampConstraintInfo) = d.additional_terms_lb
 
 struct DeviceStartUpConstraintInfo <: AbstractStartConstraintInfo
     name::String
