@@ -6,8 +6,8 @@ using PowerGraphics
 const PG = PowerGraphics
 
 folders = Dict(
-    #  "Operations" => readdir("src/Operations"),
-    #  "Simulations" => readdir("src/Simulations"),
+    #  "Operations" => readdir("docs/src/Operations"),
+    #  "Simulations" => readdir("docs/src/Simulations"),
     "PowerGraphics" => readdir("docs/src/PowerGraphics"),
 )
 
@@ -21,7 +21,7 @@ end
 if isfile("docs/src/howto/.DS_Store.md")
     rm("docs/src/howto/.DS_Store.md")
 end
-#=
+
 makedocs(
     sitename = "PowerSimulations.jl",
     format = Documenter.HTML(
@@ -46,7 +46,7 @@ makedocs(
             "Plot Multiple Results" => "howto/3.6_plot_multiple_results.md",
         ],
         "Simulation Recorder" => "man/simulation_recorder.md",
-        #  "API" => Any["PowerSimulations" => "api/PowerSimulations.md"],
+        "API" => Any["PowerSimulations" => "api/PowerSimulations.md"],
     ],
 )
 
@@ -58,4 +58,3 @@ deploydocs(
     devurl = "dev",
     versions = ["stable" => "v^", "v#.#"],
 )
-=#

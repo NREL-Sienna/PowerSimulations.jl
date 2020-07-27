@@ -188,14 +188,14 @@ function build_c_sys5_re(; kwargs...)
                 add_forecast!(
                     c_sys5_re,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re))
                 add_forecast!(
                     c_sys5_re,
                     r,
-                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -209,8 +209,16 @@ function build_c_sys5_re(; kwargs...)
             reserve_re[2],
             [collect(get_components(RenewableDispatch, c_sys5_re))[end]],
         )
+        add_service!(c_sys5_re, reserve_re[3], get_components(RenewableDispatch, c_sys5_re))
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
             add_forecast!(c_sys5_re, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        end
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_re)
+            add_forecast!(
+                c_sys5_re,
+                serv,
+                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
+            )
         end
     end
 

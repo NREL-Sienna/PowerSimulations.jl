@@ -2,6 +2,8 @@ using TimeSeries
 using Dates
 using Random
 using PowerSystems
+Random.seed!(123)
+using PowerSystems
 
 DayAhead = collect(
     DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
@@ -314,6 +316,7 @@ thermal_generators5(nodes5) = [
         nothing,
         nothing,
         ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+        100.0,
     ),
     ThermalStandard(
         "Park City",
@@ -327,9 +330,10 @@ thermal_generators5(nodes5) = [
         ThermalFuels.COAL,
         (min = 0.0, max = 1.70),
         (min = -1.275, max = 1.275),
-        (up = 0.02, down = 0.02),
+        (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
         (up = 2.0, down = 1.0),
         ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+        100.0,
     ),
     ThermalStandard(
         "Solitude",
@@ -343,9 +347,10 @@ thermal_generators5(nodes5) = [
         ThermalFuels.COAL,
         (min = 0.0, max = 5.20),
         (min = -3.90, max = 3.90),
-        (up = 0.012, down = 0.012),
+        (up = 0.012 * 5.2, down = 0.012 * 5.2),
         (up = 3.0, down = 2.0),
         ThreePartCost((0.0, 3000.0), 0.0, 3.0, 1.5),
+        100.0,
     ),
     ThermalStandard(
         "Sundance",
@@ -359,9 +364,10 @@ thermal_generators5(nodes5) = [
         ThermalFuels.COAL,
         (min = 0.0, max = 2.0),
         (min = -1.5, max = 1.5),
-        (up = 0.015, down = 0.015),
+        (up = 0.015 * 2.5, down = 0.015 * 2.5),
         (up = 2.0, down = 1.0),
         ThreePartCost((0.0, 4000.0), 0.0, 4.0, 2.0),
+        100.0,
     ),
     ThermalStandard(
         "Brighton",
@@ -375,9 +381,90 @@ thermal_generators5(nodes5) = [
         ThermalFuels.COAL,
         (min = 0.0, max = 6.0),
         (min = -4.50, max = 4.50),
-        (up = 0.015, down = 0.015),
+        (up = 0.015 * 7.5, down = 0.015 * 7.5),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 1000.0), 0.0, 1.5, 0.75),
+        100.0,
+    ),
+];
+
+thermal_generators5_pwl(nodes5) = [
+    ThermalStandard(
+        "Test PWL",
+        true,
+        true,
+        nodes5[1],
+        1.70,
+        0.20,
+        2.2125,
+        PrimeMovers.ST,
+        ThermalFuels.COAL,
+        (min = 0.0, max = 1.70),
+        (min = -1.275, max = 1.275),
+        (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
+        (up = 2.0, down = 1.0),
+        ThreePartCost(
+            VariableCost([(0.0, 0.5), (290.1, 0.8), (582.72, 1.2), (894.1, 1.70)]),
+            0.0,
+            1.5,
+            0.75,
+        ),
+        100.0,
+    ),
+];
+
+thermal_pglib_generators5(nodes5) = [
+    ThermalMultiStart(
+        "115_STEAM_1",
+        true,
+        true,
+        nodes5[1],
+        0.05,
+        0.010,
+        0.12,
+        PrimeMovers.ST,
+        ThermalFuels.COAL,
+        (min = 0.05, max = 0.12),
+        (min = -0.30, max = 0.30),
+        (up = 0.2 * 0.12, down = 0.2 * 0.12),
+        (startup = 0.05, shutdown = 0.05),
+        (up = 4.0, down = 2.0),
+        (hot = 2.0, warm = 4.0, cold = 12.0),
+        3,
+        MultiStartCost(
+            VariableCost([(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)]),
+            897.29,
+            0.0,
+            (hot = 393.28, warm = 455.37, cold = 703.76),
+            0.0,
+        ),
+        100.0,
+    ),
+    ThermalMultiStart(
+        "101_CT_1",
+        true,
+        true,
+        nodes5[1],
+        0.08,
+        0.020,
+        0.12,
+        PrimeMovers.ST,
+        ThermalFuels.COAL,
+        (min = 0.08, max = 0.20),
+        (min = -0.30, max = 0.30),
+        (up = 0.2 * 0.12, down = 0.2 * 0.12),
+        (startup = 0.08, shutdown = 0.08),
+        (up = 1.0, down = 1.0),
+        (hot = 1.0, warm = 999.0, cold = 999.0),
+        1,
+        MultiStartCost(
+            VariableCost([(0.0, 0.08), (391.45, 0.012), (783.74, 0.016), (1212.28, 0.20)]),
+            1085.78,
+            0.0,
+            (hot = 51.75, warm = PSY.START_COST, cold = PSY.START_COST),
+            0.0,
+        ),
+        100.0,
     ),
 ];
 
@@ -393,6 +480,7 @@ renewable_generators5(nodes5) = [
         (min = 0.0, max = 0.0),
         1.0,
         TwoPartCost(22.0, 0.0),
+        100.0,
     ),
     RenewableDispatch(
         "WindBusB",
@@ -405,6 +493,7 @@ renewable_generators5(nodes5) = [
         (min = 0.0, max = 0.0),
         1.0,
         TwoPartCost(22.0, 0.0),
+        100.0,
     ),
     RenewableDispatch(
         "WindBusC",
@@ -417,6 +506,7 @@ renewable_generators5(nodes5) = [
         (min = -0.800, max = 0.800),
         1.0,
         TwoPartCost(22.0, 0.0),
+        100.0,
     ),
 ];
 
@@ -427,12 +517,13 @@ hydro_generators5(nodes5) = [
         nodes5[2],
         0.0,
         0.0,
-        0.600,
+        0.6,
         PrimeMovers.HY,
         (min = 0.0, max = 60.0),
         (min = 0.0, max = 60.0),
         nothing,
         nothing,
+        100.0,
     ),
     HydroEnergyReservoir(
         "HydroEnergyReservoir",
@@ -440,13 +531,14 @@ hydro_generators5(nodes5) = [
         nodes5[3],
         0.0,
         0.0,
-        0.600,
+        0.6,
         PrimeMovers.HY,
         (min = 0.0, max = 60.0),
         (min = 0.0, max = 60.0),
-        (up = 10.0, down = 10.0),
+        (up = 10.0 * 0.6, down = 10.0 * 0.6),
         nothing,
         TwoPartCost(15.0, 0.0),
+        100.0,
         1.0,
         0.2,
         0.5,
@@ -455,18 +547,19 @@ hydro_generators5(nodes5) = [
 
 battery5(nodes5) = [GenericBattery(
     name = "Bat",
-    primemover = PrimeMovers.BA,
+    prime_mover = PrimeMovers.BA,
     available = true,
     bus = nodes5[1],
-    energy = 5.0,
-    capacity = (min = 5.0, max = 100.0),
-    rating = 70,
-    activepower = 10.0,
-    inputactivepowerlimits = (min = 0.0, max = 50.0),
-    outputactivepowerlimits = (min = 0.0, max = 50.0),
-    reactivepower = 0.0,
-    reactivepowerlimits = (min = -50.0, max = 50.0),
+    initial_energy = 5.0,
+    state_of_charge_limits = (min = 5.0, max = 100.0),
+    rating = 70.0,
+    active_power = 10.0,
+    input_active_power_limits = (min = 0.0, max = 50.0),
+    output_active_power_limits = (min = 0.0, max = 50.0),
     efficiency = (in = 0.80, out = 0.90),
+    reactive_power = 0.0,
+    reactive_power_limits = (min = -50.0, max = 50.0),
+    base_power = 100.0,
 )];
 
 loadbus2_ts_DA = [
@@ -551,9 +644,39 @@ loadbus4_ts_DA = [
 ]
 
 loads5(nodes5) = [
-    PowerLoad("Bus2", true, nodes5[2], LoadModels.ConstantPower, 3.0, 0.9861, 3.0, 0.9861),
-    PowerLoad("Bus3", true, nodes5[3], LoadModels.ConstantPower, 3.0, 0.9861, 3.0, 0.9861),
-    PowerLoad("Bus4", true, nodes5[4], LoadModels.ConstantPower, 4.0, 1.3147, 4.0, 1.3147),
+    PowerLoad(
+        "Bus2",
+        true,
+        nodes5[2],
+        LoadModels.ConstantPower,
+        3.0,
+        0.9861,
+        100.0,
+        3.0,
+        0.9861,
+    ),
+    PowerLoad(
+        "Bus3",
+        true,
+        nodes5[3],
+        LoadModels.ConstantPower,
+        3.0,
+        0.9861,
+        100.0,
+        3.0,
+        0.9861,
+    ),
+    PowerLoad(
+        "Bus4",
+        true,
+        nodes5[4],
+        LoadModels.ConstantPower,
+        4.0,
+        1.3147,
+        100.0,
+        4.0,
+        1.3147,
+    ),
 ];
 
 interruptible(nodes5) = [InterruptibleLoad(
@@ -565,42 +688,65 @@ interruptible(nodes5) = [InterruptibleLoad(
     0.0,
     0.10,
     0.0,
+    100.0,
     TwoPartCost(150.0, 2400.0),
 )]
+
+ORDC_cost =
+    TwoPartCost([(9000.0, 0.0), (6000.0, 0.2), (500.0, 0.4), (10.0, 0.6), (0.0, 0.8)], 0.0)
 
 reserve5(thermal_generators5) = [
     VariableReserve{ReserveUp}(
         "Reserve1",
         true,
         0.6,
-        maximum([gen.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.001,
+        maximum([gen.active_power_limits[:max] for gen in thermal_generators5]) .* 0.001,
     ),
     VariableReserve{ReserveDown}(
         "Reserve2",
         true,
         0.3,
-        maximum([gen.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.005,
+        maximum([gen.active_power_limits[:max] for gen in thermal_generators5]) .* 0.005,
     ),
     VariableReserve{ReserveUp}(
         "Reserve11",
         true,
         0.8,
-        maximum([gen.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.001,
+        maximum([gen.active_power_limits[:max] for gen in thermal_generators5]) .* 0.001,
     ),
+    ReserveDemandCurve{ReserveUp}("ORDC1", true, 0.6, ORDC_cost),
 ]
 
 reserve5_re(renewable_generators5) = [
     VariableReserve{ReserveUp}("Reserve3", true, 30, 100),
     VariableReserve{ReserveDown}("Reserve4", true, 5, 50),
+    ReserveDemandCurve{ReserveUp}("ORDC2", true, 0.6, ORDC_cost),
 ]
 reserve5_hy(hydro_generators5) = [
     VariableReserve{ReserveUp}("Reserve5", true, 30, 100),
     VariableReserve{ReserveDown}("Reserve6", true, 5, 50),
+    ReserveDemandCurve{ReserveUp}("ORDC3", true, 0.6, ORDC_cost),
 ]
 
 reserve5_il(interruptible_loads) = [
     VariableReserve{ReserveUp}("Reserve7", true, 30, 100),
     VariableReserve{ReserveDown}("Reserve8", true, 5, 50),
+    ReserveDemandCurve{ReserveUp}("ORDC3", true, 0.6, ORDC_cost),
+]
+
+function make_ordc_cost(cost::TwoPartCost)
+    var_cost = PSY.get_cost(PSY.get_variable(cost))
+    flatten_array = Array(collect(Iterators.flatten(var_cost))')
+    name = collect(Iterators.flatten([
+        (Symbol("cost_bp$(ix)"), Symbol("load_bp$ix")) for ix in 1:length(var_cost)
+    ]))
+    return flatten_array, name
+end
+
+data_array, col_names = make_ordc_cost(ORDC_cost)
+ORDC_cost_ts = [
+    TimeArray(DayAhead, repeat(data_array, 24), col_names),
+    TimeArray(DayAhead + Day(1), repeat(data_array, 24), col_names),
 ]
 
 Reserve_ts = [TimeArray(DayAhead, rand(24)), TimeArray(DayAhead + Day(1), rand(24))]

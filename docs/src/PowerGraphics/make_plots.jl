@@ -111,10 +111,11 @@ PG.fuel_plot(re_results, c_sys5_re; save = path, stair = true);
 # 3.4 FORECAST PLOTS
 path = mkdir(joinpath(pwd(), "plots-4"));
 PG.plot_reserves(op_results; save = path);
-PG.plot_demand(op_results; save = path, title = "Example Demand Plot");
+PG.plot_demand(re_results; save = path, title = "Example Demand Plot");
 PG.plot_demand(system; save = path, title = "Example Demand Plot From System");
 initial_time = Dates.DateTime(2024, 01, 01, 02, 0, 0);
 horizon = 6;
+
 PG.plot_demand(
     system;
     horizon = horizon,
@@ -122,14 +123,16 @@ PG.plot_demand(
     save = path,
     title = "Example Demand Plot Subsection",
 );
+
 PG.plot_demand(
     system;
     aggregate = PSY.System,
     save = path,
     title = "Example Demand Plot by Type",
 );
-PG.plot_demand(system; stair = true, title = "Example Stair Demand Plot", save = path);
 
+PG.plot_demand(system; stair = true, title = "Example Stair Demand Plot", save = path);
+#
 colors = [:orange :pink :blue :red :grey]
 PG.plot_demand(
     system;
@@ -137,14 +140,39 @@ PG.plot_demand(
     save = path,
     title = "Example Demand Plot with Different Colors",
 );
+
 PG.plot_demand(system; title = "Example Demand Plot with Title", save = path);
 
 # 3.5
 
 path = mkdir(joinpath(pwd(), "plots-50"));
 
-PG.plot_variable(op_results, "P__ThermalStandard"; save = path, format = "png");
-#
+PG.plot_variable(op_results, "P__ThermalStandard"; save = path);
+path = mkdir(joinpath(pwd(), "plots-53"));
+
+p = PG.plot_variable(re_results, "P__ThermalStandard");
+PG.plot_variable(p, re_results, "P__RenewableDispatch"; title = "overlay", save = path);
+path = mkdir(joinpath(pwd(), "plots-54"));
+PG.plot_dataframe(
+    re_results.variable_values[:P__ThermalStandard],
+    re_results.time_stamp;
+    save = path,
+);
+path = mkdir(joinpath(pwd(), "plots-55"));
+
+p2 = PG.plot_dataframe(
+    re_results.variable_values[:P__ThermalStandard],
+    re_results.time_stamp,
+);
+PG.plot_dataframe(
+    p2,
+    re_results.variable_values[:P__RenewableDispatch],
+    re_results.time_stamp;
+    title = "overlay",
+    save = path,
+    format = "png",
+);
+
 variables = [Symbol("P__ThermalStandard")]
 path = mkdir(joinpath(pwd(), "plots-51"));
 

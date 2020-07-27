@@ -2,12 +2,36 @@
 
 # See [How to set up plots](3.0_set_up_plots.md) to get started
 
+# ## How to plot a single dataframe
+
+# ```julia
+# plots = plot_dataframe(dataframe, time_range)
+# ```
+# ![this one](plots-54/Generation.png)
+
+# ## How to plot a single dataframe overlayed on an existing plot
+
+# ```julia
+# plot = plot_variable(dataframe_1, time_range)
+# plot_2 = plot_variable(plot, dataframe_2, time_range)
+# ```
+# ![this one](plots-55/overlay.png)
+
 # ## How to plot a single variable
 
 # ```julia
 # plots = plot_variable(results, "P__ThermalStandard")
 # ```
-# ![this one](plots-50/P__ThermalStandard_Stack.png)
+# ![this one](plots-50/P__ThermalStandard.png)
+
+# ## How to plot a single variable overlayed on an existing plot
+
+# ```julia
+# plot = plot_variable(results, "P__ThermalStandard")
+# plot_2 = plot_variable(plot, results, "P__RenewableDispatch")
+# ```
+# ![this one](plots-53/overlay.png)
+
 
 # ## To plot only a couple of variables from the collected results:
 # ### Define the variables to be plotted

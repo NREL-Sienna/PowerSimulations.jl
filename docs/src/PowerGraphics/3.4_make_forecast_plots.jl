@@ -16,8 +16,6 @@
 
 # ![this one](plots-4/Stack_Up_Reserves.png)
 # ![this one](plots-4/Stack_Down_Reserves.png)
-# ![this one](plots-4/Bar_Up_Reserves.png)
-# ![this one](plots-4/Bar_Down_Reserves.png)
 
 # # Make demand plots from results
 
