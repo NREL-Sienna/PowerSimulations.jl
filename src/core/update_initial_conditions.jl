@@ -53,19 +53,22 @@ function calculate_ic_quantity(
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.ThermalGen}
     if isnothing(cache)
-         status_change_to_on =
+        status_change_to_on =
             get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
-         status_change_to_off =
+        status_change_to_off =
             get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
-         status_remains_off = get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
-         status_remains_on = get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
+        status_remains_off =
+            get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
+        status_remains_on =
+            get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
     else
         last_status = time_cache[:status]
-         status_change_to_on =
+        status_change_to_on =
             get_condition(ic) <= ABSOLUTE_TOLERANCE && last_status >= ABSOLUTE_TOLERANCE
-         status_change_to_off =
+        status_change_to_off =
             get_condition(ic) >= ABSOLUTE_TOLERANCE && last_status <= ABSOLUTE_TOLERANCE
-         status_remains_off = get_condition(ic) <= ABSOLUTE_TOLERANCE && last_status <= ABSOLUTE_TOLERANCE
+        status_remains_off =
+            get_condition(ic) <= ABSOLUTE_TOLERANCE && last_status <= ABSOLUTE_TOLERANCE
     end
 
     if status_change_to_off || status_remains_off
@@ -82,7 +85,6 @@ function calculate_ic_quantity(
         @assert false
     end
 end
-
 
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},

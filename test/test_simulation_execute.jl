@@ -275,19 +275,26 @@ function test_load_simulation(file_path::String)
         end
 
         @testset "Test verify initial condition feedforward for consecutive ED to UC" begin
-        vars_names = [PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
+            vars_names = [PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
             variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[1])[24]
-            initial_conditions_power =
-                get_initial_conditions(PSI.get_psi_container(sim, "UC"), PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard))
-            initial_conditions_status =
-                get_initial_conditions(PSI.get_psi_container(sim, "UC"), PSI.ICKey(PSI.DeviceStatus, PSY.ThermalStandard))
+            initial_conditions_power = get_initial_conditions(
+                PSI.get_psi_container(sim, "UC"),
+                PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard),
+            )
+            initial_conditions_status = get_initial_conditions(
+                PSI.get_psi_container(sim, "UC"),
+                PSI.ICKey(PSI.DeviceStatus, PSY.ThermalStandard),
+            )
             for (ix, ic) in enumerate(initial_conditions_power)
-                raw_result =
-                    Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
                 initial_cond_power = value(PSI.get_value(ic))
                 initial_cond_status = value(PSI.get_value(initial_conditions_status[ix]))
                 device_min = PSY.get_active_power_limits(PSI.get_device(ic)).min
-                @test isapprox(raw_result, (initial_cond_power + initial_cond_status*device_min); atol = 1e-2)
+                @test isapprox(
+                    raw_result,
+                    (initial_cond_power + initial_cond_status * device_min);
+                    atol = 1e-2,
+                )
             end
         end
 
