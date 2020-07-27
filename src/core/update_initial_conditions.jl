@@ -53,25 +53,44 @@ function calculate_ic_quantity(
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.ThermalGen}
     if isnothing(cache)
-        status_change_to_on =
+         status_change_to_on =
             get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
-        status_change_to_off =
+         status_change_to_off =
             get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
+         status_remains_off = get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
+         status_remains_on = get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
     else
         last_status = time_cache[:status]
-        status_change_to_on =
+         status_change_to_on =
             get_condition(ic) <= ABSOLUTE_TOLERANCE && last_status >= ABSOLUTE_TOLERANCE
-        status_change_to_off =
+         status_change_to_off =
             get_condition(ic) >= ABSOLUTE_TOLERANCE && last_status <= ABSOLUTE_TOLERANCE
+         status_remains_off = get_condition(ic) <= ABSOLUTE_TOLERANCE && last_status <= ABSOLUTE_TOLERANCE
     end
 
-    if status_change_to_on
-        return ic.device.active_power_limits.min
-    elseif status_change_to_off
+    if status_change_to_off || status_remains_off
         return 0.0
+    elseif status_change_to_on
+        return 0.0
+    elseif status_remains_on || status_change_to_on
+        dev = get_device(ic)
+        min = PSY.get_active_power_limits(dev).min
+        power_above_min = var_value - min
+        @assert power_above_min >= -ABSOLUTE_TOLERANCE
+        return power_above_min
     else
-        return var_value
+        @assert false
     end
+end
+
+
+function calculate_ic_quantity(
+    ::ICKey{DevicePower, T},
+    ic::InitialCondition,
+    var_value::Float64,
+    ::Union{Nothing, AbstractCache},
+) where {T <: PSY.Device}
+    return var_value
 end
 
 function calculate_ic_quantity(
@@ -79,7 +98,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
-) where {T <: PSY.Component}
+) where {T <: PSY.Device}
 
     name = device_name(ic)
     energy_cache = cache_value(cache, name)
@@ -102,7 +121,7 @@ function _make_initial_conditions!(
     parameters = model_has_parameters(psi_container)
     ic_container = get_initial_conditions(psi_container)
     if !has_initial_conditions(ic_container, key)
-        @debug "Setting $(key.ic_type) initial conditions for the status of all devices $(T) based on system data"
+        @debug "Setting $(key.ic_type) initial conditions for all devices $(T) based on system data"
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(ic_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
@@ -110,18 +129,19 @@ function _make_initial_conditions!(
             val = parameters ? PJ.add_parameter(psi_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             ini_conds[ix] = ic
-            @debug "set initial condition" key ic val
+            @debug "set initial condition" key ic val_
         end
     else
         ini_conds = get_initial_conditions(ic_container, key)
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
-            @debug "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
-            val = get_val_func(dev, key)
+            @debug "Setting $(key.ic_type) initial conditions device $(PSY.get_name(dev)) based on system data"
+            val_ = get_val_func(dev, key)
+            val = parameters ? PJ.add_parameter(psi_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             push!(ini_conds, ic)
-            @debug "set initial condition" key ic val
+            @debug "set initial condition" key ic val_
         end
     end
 
@@ -161,6 +181,7 @@ function output_init(
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
         _get_active_power_output_above_min_value,
+        #TimeStatusChange,
     )
 
     return
@@ -336,7 +357,10 @@ function _get_active_power_output_above_min_value(device, key)
     if !PSY.get_status(device)
         return 0.0
     end
-    return PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
+    power_above_min = PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
+    PSY.get_name(device)
+    @assert power_above_min >= -ABSOLUTE_TOLERANCE
+    return power_above_min
 end
 
 function _get_initial_energy_value(device, key)
