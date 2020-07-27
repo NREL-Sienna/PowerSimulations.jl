@@ -631,7 +631,7 @@ thermal_generators5_uc_testing(nodes) = [
     ThermalStandard(
         "Alta",
         true,
-        true,
+        false,
         nodes[1],
         0.0,
         0.0,
@@ -648,7 +648,7 @@ thermal_generators5_uc_testing(nodes) = [
     ThermalStandard(
         "Park City",
         true,
-        true,
+        false,
         nodes[1],
         0.0,
         0.0,
@@ -682,7 +682,7 @@ thermal_generators5_uc_testing(nodes) = [
     ThermalStandard(
         "Sundance",
         true,
-        true,
+        false,
         nodes[4],
         0.0,
         0.00,
