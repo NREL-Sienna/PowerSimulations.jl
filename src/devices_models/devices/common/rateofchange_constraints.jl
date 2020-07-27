@@ -47,9 +47,9 @@ function device_linear_rateofchange!(
     for r in rate_data
         name = get_name(r)
         ic_status_value = get_value(get_ic_status(r))
-        @show "add rate_of_change_constraint" name ic_status_value
+        @debug "add rate_of_change_constraint" name ic_status_value
         ic_p_above_min_value = get_value(get_ic_power_above_min(r))
-        @show "add rate_of_change_constraint" name ic_p_above_min_value
+        @debug "add rate_of_change_constraint" name ic_p_above_min_value
         @assert (parameters && isa(ic_status_value, PJ.ParameterRef)) || !parameters
         @assert (parameters && isa(ic_p_above_min_value, PJ.ParameterRef)) || !parameters
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
@@ -165,9 +165,9 @@ function device_mixedinteger_rateofchange!(
     for r in rate_data
         name = get_name(r)
         ic_status_value = get_value(get_ic_status(r))
-        @show "add rate_of_change_constraint" name ic_status_value
+        @debug "add rate_of_change_constraint" name ic_status_value
         ic_p_above_min_value = get_value(get_ic_power_above_min(r))
-        @show "add rate_of_change_constraint" name ic_p_above_min_value
+        @debug "add rate_of_change_constraint" name ic_p_above_min_value
         @assert (parameters && isa(ic_status_value, PJ.ParameterRef)) || !parameters
         @assert (parameters && isa(ic_p_above_min_value, PJ.ParameterRef)) || !parameters
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
