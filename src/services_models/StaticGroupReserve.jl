@@ -1,3 +1,4 @@
+struct GroupReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
 """
 This function checks if the variables for reserves were created
@@ -13,12 +14,13 @@ function check_activeservice_variables(
 end
 
 ################################## Reserve Requirement Constraint ##########################
-# This function can be generalized later for any constraint of type Sum(req_var) >= requirement,
-# it will only need to be specific to the names and get forecast string.
+"""
+This function creates teh requirement constraint that will be attained by the apropriate services
+"""
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    model::ServiceModel{SR, RangeReserve},
+    model::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
 ) where {SR <: PSY.StaticGroupReserve}
     parameters = model_has_parameters(psi_container)
@@ -64,31 +66,5 @@ function service_requirement_constraint!(
             )
         end
     end
-    return
-end
-
-# function modify_device_model!(
-#     devices_template::Dict{Symbol, DeviceModel},
-#     service_model::ServiceModel{<:PSY.Reserve, RangeReserve},
-#     contributing_devices::Vector{<:PSY.Device},
-# )
-#     device_types = unique(typeof.(contributing_devices))
-#     for dt in device_types
-#         for (device_model_name, device_model) in devices_template
-#             # add message here when it exists
-#             device_model.device_type != dt && continue
-#             service_model in device_model.services && continue
-#             push!(device_model.services, service_model)
-#         end
-#     end
-
-#     return
-# end
-
-function include_service!(
-    constraint_data::DeviceRange,
-    services,
-    ::ServiceModel{SR, <:AbstractReservesFormulation},
-) where {SR <: PSY.StaticGroupReserve}
     return
 end

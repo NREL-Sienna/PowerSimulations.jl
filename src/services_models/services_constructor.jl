@@ -177,20 +177,11 @@ function construct_service!(
     psi_container::PSIContainer,
     services::IS.FlattenIteratorWrapper{SR},
     services_mapping::PSY.ServiceContributingDevicesMapping,
-    model::ServiceModel{SR, RangeReserve},
+    model::ServiceModel{SR, GroupReserve},
     devices_template::Dict{Symbol, DeviceModel},
 ) where {SR <: PSY.StaticGroupReserve}
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
-
-    # incompatible_device_types = Vector{DataType}()
-    # for model in values(devices_template)
-    #     formulation = get_formulation(model)
-    #     if formulation == FixedOutput
-    #         @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
-    #         push!(incompatible_device_types, get_device_type(model))
-    #     end
-    # end
 
     if model_has_parameters(psi_container)
         container = add_param_container!(
@@ -210,16 +201,11 @@ function construct_service!(
                 type = typeof(service),
                 name = PSY.get_name(service),
             )].contributing_devices
-        # if !isempty(incompatible_device_types)
-        #     contributing_devices =
-        #         [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
-        # end
 
-        #Variables
+        # Variables
         check_activeservice_variables(psi_container, contributing_devices)
         # Constraints
         service_requirement_constraint!(psi_container, service, model, contributing_devices)
-        # modify_device_model!(devices_template, model, contributing_devices)
     end
     return
 end
