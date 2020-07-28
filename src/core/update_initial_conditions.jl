@@ -71,10 +71,10 @@ function calculate_ic_quantity(
             get_condition(ic) >= min_power && var_value >= ABSOLUTE_TOLERANCE
     else
         # If the min is 0.0 this calculation doesn't matter
+        name = device_name(ic)
+        time_cache = cache_value(cache, name)
+        series = time_cache[:series]
         if min_power > 0.0
-            name = device_name(ic)
-            time_cache = cache_value(cache, name)
-            series = time_cache[:series]
             current = min(time_cache[:current], length(series))
             current_status = isapprox(series[current], 1.0; atol = ABSOLUTE_TOLERANCE)
             previous_status = isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
@@ -386,7 +386,6 @@ function _get_active_power_output_above_min_value(device, key)
         return 0.0
     end
     power_above_min = PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
-    PSY.get_name(device)
     @assert power_above_min >= -ABSOLUTE_TOLERANCE
     return power_above_min
 end
