@@ -282,7 +282,7 @@ function test_load_simulation(file_path::String)
                 initial_conditions =
                     get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
                 for ic in initial_conditions
-                    @show name = PSI.device_name(ic)
+                    name = PSI.device_name(ic)
                     raw_result = Feather.read(variable_ref)[end, Symbol(name)] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond; atol = 1e-2)
