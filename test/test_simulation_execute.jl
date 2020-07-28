@@ -275,26 +275,18 @@ function test_load_simulation(file_path::String)
         end
 
         @testset "Test verify initial condition feedforward for consecutive ED to UC" begin
+            ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
             vars_names = [PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
-            variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[1])[24]
-            initial_conditions_power = get_initial_conditions(
-                PSI.get_psi_container(sim, "UC"),
-                PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard),
-            )
-            initial_conditions_status = get_initial_conditions(
-                PSI.get_psi_container(sim, "UC"),
-                PSI.ICKey(PSI.DeviceStatus, PSY.ThermalStandard),
-            )
-            for (ix, ic) in enumerate(initial_conditions_power)
-                raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
-                initial_cond_power = value(PSI.get_value(ic))
-                initial_cond_status = value(PSI.get_value(initial_conditions_status[ix]))
-                device_min = PSY.get_active_power_limits(PSI.get_device(ic)).min
-                @test isapprox(
-                    raw_result,
-                    (initial_cond_power + initial_cond_status * device_min);
-                    atol = 1e-2,
-                )
+            for (ik, key) in enumerate(ic_keys)
+                variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
+                initial_conditions =
+                    get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
+                for ic in initial_conditions
+                    @show name = PSI.device_name(ic)
+                    raw_result = Feather.read(variable_ref)[end, Symbol(name)] # last value of last hour
+                    initial_cond = value(PSI.get_value(ic))
+                    @test isapprox(raw_result, initial_cond; atol = 1e-2)
+                end
             end
         end
 
@@ -660,10 +652,8 @@ function test_load_simulation(file_path::String)
                     name,
                     24,
                 ]
-            cache = PSI.get_cache(
-                sim_cache,
-                PSI.CacheKey(TimeStatusChange, PSY.ThermalStandard),
-            ).value[name]
+            cache =
+                PSI.get_cache(sim_cache, TimeStatusChange, PSY.ThermalStandard).value[name]
             @test JuMP.value(var) == cache[:status]
         end
 

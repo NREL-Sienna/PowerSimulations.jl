@@ -466,16 +466,21 @@ end
 function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{D},
-) where {
-    T <: PSY.ThermalGen,
-    D <: Union{ThermalBasicUnitCommitment, AbstractThermalDispatchFormulation},
-}
+    ::Type{ThermalBasicUnitCommitment},
+) where {T <: PSY.ThermalGen}
     status_init(psi_container, devices)
     output_init(psi_container, devices)
     return
 end
 
+function initial_conditions!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::Type{D},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
+    output_init(psi_container, devices)
+    return
+end
 ########################### Ramp/Rate of Change Constraints ################################
 """
 This function gets the data for the generators for ramping constraints of thermal generators
@@ -492,10 +497,7 @@ function _get_data_for_rocc(
         minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
     end
 
-    initial_conditions_power = get_initial_conditions(psi_container, ICKey(DevicePower, T))
-    initial_conditions_status =
-        get_initial_conditions(psi_container, ICKey(DeviceStatus, T))
-
+    initial_conditions_power = get_initial_conditions(psi_container, DevicePower, T)
     lenght_devices_power = length(initial_conditions_power)
     data = Vector{DeviceRampConstraintInfo}(undef, lenght_devices_power)
     idx = 0
@@ -518,14 +520,7 @@ function _get_data_for_rocc(
                 up = ramp_limits.up * minutes_per_period,
                 down = ramp_limits.down * minutes_per_period,
             )
-            @assert ic.device == initial_conditions_status[ix].device
-            data[idx] = DeviceRampConstraintInfo(
-                name,
-                p_lims,
-                ic,
-                initial_conditions_status[ix],
-                ramp,
-            )
+            data[idx] = DeviceRampConstraintInfo(name, p_lims, ic, ramp)
         end
     end
     if idx < lenght_devices_power
