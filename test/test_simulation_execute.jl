@@ -282,8 +282,8 @@ function test_load_simulation(file_path::String)
                 initial_conditions =
                     get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
                 for ic in initial_conditions
-                    raw_result =
-                        Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                    name = PSI.device_name(ic)
+                    raw_result = Feather.read(variable_ref)[end, Symbol(name)] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond; atol = 1e-2)
                 end
@@ -652,10 +652,8 @@ function test_load_simulation(file_path::String)
                     name,
                     24,
                 ]
-            cache = PSI.get_cache(
-                sim_cache,
-                PSI.CacheKey(TimeStatusChange, PSY.ThermalStandard),
-            ).value[name]
+            cache =
+                PSI.get_cache(sim_cache, TimeStatusChange, PSY.ThermalStandard).value[name]
             @test JuMP.value(var) == cache[:status]
         end
 

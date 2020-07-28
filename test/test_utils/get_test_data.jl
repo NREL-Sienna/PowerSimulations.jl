@@ -626,11 +626,12 @@ end
 # Solitude and Brighton have binding time_dn constraints.
 # Sundance has non-binding Time Down constraint at an Hourly Resolution
 # Alta, Park City and Brighton start at 0.
+
 thermal_generators5_uc_testing(nodes) = [
     ThermalStandard(
         "Alta",
         true,
-        true,
+        false,
         nodes[1],
         0.0,
         0.0,
@@ -647,7 +648,7 @@ thermal_generators5_uc_testing(nodes) = [
     ThermalStandard(
         "Park City",
         true,
-        true,
+        false,
         nodes[1],
         0.0,
         0.0,
@@ -681,7 +682,7 @@ thermal_generators5_uc_testing(nodes) = [
     ThermalStandard(
         "Sundance",
         true,
-        true,
+        false,
         nodes[4],
         0.0,
         0.00,
@@ -713,6 +714,63 @@ thermal_generators5_uc_testing(nodes) = [
         100.0,
     ),
 ];
+
+function build_sys_ramp_testing(; kwargs...)
+    node = Bus(1, "nodeA", "REF", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
+    DA_ramp = collect(
+        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+            "1/1/2024  4:00:00",
+            "d/m/y  H:M:S",
+        ),
+    )
+    gen_ramp = [
+        ThermalStandard(
+            "Alta",
+            true,
+            true,
+            node,
+            0.20, # Active power
+            0.010,
+            0.5,
+            PrimeMovers.ST,
+            ThermalFuels.COAL,
+            (min = 0.0, max = 0.40),
+            nothing,
+            nothing,
+            nothing,
+            ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            100.0,
+        ),
+        ThermalStandard(
+            "Park City",
+            true,
+            true,
+            node,
+            0.70, # Active Power
+            0.20,
+            2.0,
+            PrimeMovers.ST,
+            ThermalFuels.COAL,
+            (min = 0.7, max = 2.20),
+            nothing,
+            (up = 0.010625 * 2.0, down = 0.010625 * 2.0),
+            nothing,
+            ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            100.0,
+        ),
+    ]
+    ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
+    load_forecast_ramp =
+        Deterministic("get_max_active_power", TimeArray(DA_ramp, ramp_load))
+    ramp_test_sys = System(100.0)
+    add_component!(ramp_test_sys, node)
+    add_component!(ramp_test_sys, load)
+    add_component!(ramp_test_sys, gen_ramp[1])
+    add_component!(ramp_test_sys, gen_ramp[2])
+    add_forecast!(ramp_test_sys, load, load_forecast_ramp)
+    return ramp_test_sys
+end
 
 function build_c_sys5_uc(; kwargs...)
     nodes = nodes5()
@@ -1155,6 +1213,11 @@ TEST_SYSTEMS = Dict(
     "c_sys5_reg" => (
         description = "5-bus with regulation devices and AGC",
         build = build_c_sys5_reg,
+        time_series_in_memory = true,
+    ),
+    "c_ramp_test" => (
+        description = "1-bus for ramp testing",
+        build = build_sys_ramp_testing,
         time_series_in_memory = true,
     ),
 )
