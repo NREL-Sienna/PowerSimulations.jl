@@ -305,11 +305,18 @@ function get_stage_cache_definition(s::Simulation, stage::String)
     return cache_ref
 end
 
-function get_cache(s::Simulation, key::CacheKey)
-    c = get(s.internal.simulation_cache, key, nothing)
-    isnothing(c) &&
-        throw(ArgumentError("Cache with key $(key) not present in the simulation"))
+function get_cache(simulation_cache::Dict{<:CacheKey, AbstractCache}, key::CacheKey)
+    c = get(simulation_cache, key, nothing)
+    isnothing(c) && @debug("Cache with key $(key) not present in the simulation")
     return c
+end
+
+function get_cache(
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
+    ::Type{T},
+    ::Type{D},
+) where {T <: AbstractCache, D <: PSY.Device}
+    return get_cache(simulation_cache, CacheKey(T, D))
 end
 
 function get_cache(
@@ -317,7 +324,7 @@ function get_cache(
     ::Type{T},
     ::Type{D},
 ) where {T <: AbstractCache, D <: PSY.Device}
-    return get_cache(s, CacheKey(T, D))
+    return get_cache(s.internal.simulation_cache, CacheKey(T, D))
 end
 
 function _check_forecasts_sequence(sim::Simulation)
@@ -597,18 +604,16 @@ function initial_condition_update!(
     ::IntraStageChronology,
     sim::Simulation,
 )
+    # TODO: Replace this convoluted way to get information with access to data store
+    simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
         name = device_name(ic)
         interval_chronology =
             get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
-        if isnothing(ic.cache_type)
-            cache = nothing
-        else
-            cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
-        end
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        # We pass the simulation cache instead of the whole simulation to avoid definition dependencies. All the inputs to calculate_ic_quantity are defined before the simulation object
+        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache)
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
@@ -630,7 +635,10 @@ function initial_condition_update!(
     ::InterStageChronology,
     sim::Simulation,
 )
+    # TODO: Replace this convoluted way to get information with access to data store
+    simulation_cache = sim.internal.simulation_cache
     execution_index = get_execution_order(sim)
+    execution_count = get_execution_count(stage)
     for ic in initial_conditions
         name = device_name(ic)
         current_ix = get_current_execution_index(sim)
@@ -652,12 +660,7 @@ function initial_condition_update!(
             name,
             ic.update_ref,
         )
-        if isnothing(ic.cache_type)
-            cache = nothing
-        else
-            cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
-        end
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache)
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
@@ -669,7 +672,6 @@ function initial_condition_update!(
             get_number(stage),
         )
     end
-
     return
 end
 
@@ -683,25 +685,37 @@ end
 ################################Cache Update################################################
 # TODO: Need to be careful here if 2 stages modify the same cache. This function might need
 # dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
+"""
+TimeStatusChange Cache is updated by calculating the final status of the stage before running again. It only stores the final status and time at status once the remaining stages have been completed.
+"""
 function update_cache!(
     sim::Simulation,
-    key::CacheKey{TimeStatusChange, D},
+    ::CacheKey{TimeStatusChange, D},
     stage::Stage,
 ) where {D <: PSY.Device}
-    c = get_cache(sim, key)
+    # TODO: Remove debug statements and use recorder here
+    c = get_cache(sim, TimeStatusChange, D)
     increment = get_increment(sim, stage, c)
     variable = get_variable(stage.internal.psi_container, c.ref)
-    for t in 1:get_end_of_interval_step(stage), name in variable.axes[1]
-        device_status = JuMP.value(variable[name, t])
-        @debug name, device_status
-        if c.value[name][:status] == device_status
-            c.value[name][:count] += increment
-            @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
-        else
-            c.value[name][:status] != device_status
-            c.value[name][:count] = increment
-            c.value[name][:status] = device_status
-            @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
+    t_range = 1:get_end_of_interval_step(stage)
+    for name in variable.axes[1]
+        #Store the initial condition
+        c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
+        c.value[name][:series][1] = c.value[name][:status]
+        c.value[name][:current] = 2
+        for t in t_range
+            # Implemented this way because JuMPDenseAxisArrays doesn't support pasing a ranges Array[name, 1:n]
+            device_status = JuMP.value.(variable[name, t])
+            c.value[name][:series][t + 1] = device_status
+            if c.value[name][:status] == device_status
+                c.value[name][:count] += increment
+                @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
+            else
+                @assert c.value[name][:status] != device_status
+                c.value[name][:count] = increment
+                c.value[name][:status] = device_status
+                @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
+            end
         end
     end
 
@@ -719,10 +733,10 @@ end
 
 function update_cache!(
     sim::Simulation,
-    key::CacheKey{StoredEnergy, D},
+    ::CacheKey{StoredEnergy, D},
     stage::Stage,
 ) where {D <: PSY.Device}
-    c = get_cache(sim, key)
+    c = get_cache(sim, StoredEnergy, D)
     variable = get_variable(stage.internal.psi_container, c.ref)
     t = get_end_of_interval_step(stage)
     for name in variable.axes[1]
@@ -913,6 +927,7 @@ function _execute!(sim::Simulation; kwargs...)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
                             run_stage(stage, sim.internal.current_time, raw_results_path)
+                            sim.internal.run_count[step][stage_number] += 1
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
                             _update_caches!(sim, stage)
@@ -922,8 +937,6 @@ function _execute!(sim::Simulation; kwargs...)
                                 _apply_warm_start!(stage)
                             end
                         end
-                        sim.internal.run_count[step][stage_number] += 1
-                        sim.internal.date_ref[stage_number] += stage_interval
                     end
                     IS.@record :simulation_status SimulationStageEvent(
                         sim.internal.current_time,
@@ -931,6 +944,7 @@ function _execute!(sim::Simulation; kwargs...)
                         stage_number,
                         "done",
                     )
+                    sim.internal.date_ref[stage_number] += stage_interval
                 end
                 IS.@record :simulation_status SimulationStepEvent(
                     sim.internal.current_time,

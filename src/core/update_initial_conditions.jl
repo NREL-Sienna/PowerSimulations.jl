@@ -5,8 +5,9 @@ function calculate_ic_quantity(
     ::ICKey{TimeDurationON, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::TimeStatusChange,
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.Component}
+    cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     time_cache = cache_value(cache, name)
 
@@ -23,8 +24,9 @@ function calculate_ic_quantity(
     ::ICKey{TimeDurationOFF, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::TimeStatusChange,
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.Component}
+    cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     time_cache = cache_value(cache, name)
 
@@ -41,46 +43,57 @@ function calculate_ic_quantity(
     ::ICKey{DeviceStatus, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.Component}
-    return isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    current_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    return current_status
 end
 
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.ThermalGen}
+    cache = get_cache(simulation_cache, TimeStatusChange, T)
+    # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
+    dev = get_device(ic)
+    min_power = PSY.get_active_power_limits(dev).min
     if isnothing(cache)
-        status_change_to_on =
-            get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
-        status_change_to_off =
-            get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
-        status_remains_off =
-            get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
-        status_remains_on =
-            get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
+        # Transitions can't be calculated without cache
+        status_change_to_on = get_condition(ic) <= min_power && var_value >= ABSOLUTE_TOLERANCE
+        status_change_to_off = get_condition(ic) >= min_power && var_value <= ABSOLUTE_TOLERANCE
+        status_remains_off = get_condition(ic) <= min_power && var_value <= ABSOLUTE_TOLERANCE
+        status_remains_on = get_condition(ic) >= min_power && var_value >= ABSOLUTE_TOLERANCE
     else
-        last_status = time_cache[:status]
-        status_change_to_on =
-            get_condition(ic) <= ABSOLUTE_TOLERANCE && last_status >= ABSOLUTE_TOLERANCE
-        status_change_to_off =
-            get_condition(ic) >= ABSOLUTE_TOLERANCE && last_status <= ABSOLUTE_TOLERANCE
-        status_remains_off =
-            get_condition(ic) <= ABSOLUTE_TOLERANCE && last_status <= ABSOLUTE_TOLERANCE
+        # If the min is 0.0 this calculation doesn't matter
+        if min_power > 0.0
+            name = device_name(ic)
+            time_cache = cache_value(cache, name)
+            series = time_cache[:series]
+            current = min(time_cache[:current], length(series))
+            urrent_status =
+                isapprox(series[current], 1.0; atol = ABSOLUTE_TOLERANCE)
+            previous_status =
+                isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
+            status_change_to_on = current_status && !previous_status
+            status_change_to_off = !current_status && previous_status
+            status_remains_on = current_status && previous_status
+            status_remains_off = !current_status && !previous_status
+        else
+            status_remains_on = true
+        end
+        time_cache[:current] += 1
     end
 
-    if status_change_to_off || status_remains_off
+    if status_remains_off
+        return 0.0
+    elseif status_change_to_off
         return 0.0
     elseif status_change_to_on
-        return 0.0
-    elseif status_remains_on || status_change_to_on
-        dev = get_device(ic)
-        min = PSY.get_active_power_limits(dev).min
-        power_above_min = var_value - min
-        @assert power_above_min >= -ABSOLUTE_TOLERANCE
-        return power_above_min
+        return min_power
+    elseif status_remains_on
+        return var_value
     else
         @assert false
     end
@@ -90,7 +103,7 @@ function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
     ic::InitialCondition,
     var_value::Float64,
-    ::Union{Nothing, AbstractCache},
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.Device}
     return var_value
 end
@@ -99,9 +112,9 @@ function calculate_ic_quantity(
     ::ICKey{EnergyLevel, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.Device}
-
+    cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     energy_cache = cache_value(cache, name)
     if energy_cache != var_value
@@ -182,11 +195,22 @@ function output_init(
         devices,
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
-        _get_active_power_output_above_min_value,
-        #TimeStatusChange,
+        _get_active_power_output_value,
     )
-
     return
+end
+
+function output_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DevicePower, PSY.ThermalMultiStart),
+        _make_initial_condition_active_power,
+        _get_active_power_output_above_min_value,
+    )
 end
 
 function duration_init(
