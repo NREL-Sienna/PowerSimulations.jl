@@ -711,7 +711,6 @@ function update_cache!(
                 c.value[name][:count] += increment
                 @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
             else
-                @assert c.value[name][:status] != device_status
                 c.value[name][:count] = increment
                 c.value[name][:status] = device_status
                 @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
