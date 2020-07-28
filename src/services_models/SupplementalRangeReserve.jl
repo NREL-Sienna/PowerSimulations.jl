@@ -1,5 +1,6 @@
 struct SupplementalRangeReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
+"""Adds the offline active service variables related to the SupplementalStaticReserve."""
 function offline_activeservice_variables!(
     psi_container::PSIContainer,
     service::SR,
@@ -16,6 +17,7 @@ function offline_activeservice_variables!(
 end
 
 ################################## Reserve Requirement Constraint ##########################
+"""Creates the service requirement of SupplementalStaticReserve (Which can be attained by online and offline devices)."""
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
@@ -68,6 +70,7 @@ function service_requirement_constraint!(
     return
 end
 
+"""adds services to device model"""
 function modify_device_model!(
     devices_template::Dict{Symbol, DeviceModel},
     service_model::ServiceModel{<:PSY.SupplementalStaticReserve, SupplementalRangeReserve},

@@ -5,11 +5,15 @@ struct SupplementalThermalDispatch <: AbstractThermalDispatchFormulation end
 struct SupplementalThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct SupplementalThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 
-########################### Active Dispatch Variables ######################################
+########################### Offline Service Limit ######################################
 const OFFLINE_ACTIVE_RANGE = "offline_activerange"
 const OFFLINE_ACTIVE_RANGE_LB = "offline_activerange_lb"
 const OFFLINE_ACTIVE_RANGE_UB = "offline_activerange_ub"
 
+"""
+Calls add_offline_device_services! to get references of offline active service variables (from SupplementalStaticReserve),
+and calls offline_device_semicontinuousrange! to limit those variables to `limit*(1-ON)` .
+"""
 function offline_activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -36,6 +40,9 @@ function offline_activepower_constraints!(
     return
 end
 
+"""
+Limits SupplementalStaticReserve offline active service variables: `Pmin*(1-ON) <= poff <= Pmax*(1-ON)` .
+"""
 function offline_device_semicontinuousrange!(
     psi_container::PSIContainer,
     range_data::Vector{DeviceRange},
@@ -81,6 +88,7 @@ function offline_device_semicontinuousrange!(
 
 end
 
+"""Adds offline service variables references to additional_terms_ub"""
 function include_offline_service!(
     constraint_data::DeviceRange,
     services,
@@ -95,6 +103,7 @@ function include_offline_service!(
     return
 end
 
+"""Adds offline service variables references to additional_terms_lb"""
 function include_offline_service!(
     constraint_data::DeviceRange,
     services,
@@ -109,6 +118,10 @@ function include_offline_service!(
     return
 end
 
+"""
+Calls include_offline_service! to include SupplementalStaticReserve 
+offline service variables references in additional_terms_ub and additional_terms_lb.
+"""
 function add_offline_device_services!(
     constraint_data::RangeConstraintsData,
     device::D,

@@ -73,6 +73,9 @@ function construct_service!(
     return
 end
 
+```
+Constructs service (adds variables and constraints) for SupplementalStaticReserve.
+```
 function construct_service!(
     psi_container::PSIContainer,
     services::IS.FlattenIteratorWrapper{SR},
