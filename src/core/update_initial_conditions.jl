@@ -61,10 +61,14 @@ function calculate_ic_quantity(
     min_power = PSY.get_active_power_limits(dev).min
     if isnothing(cache)
         # Transitions can't be calculated without cache
-        status_change_to_on = get_condition(ic) <= min_power && var_value >= ABSOLUTE_TOLERANCE
-        status_change_to_off = get_condition(ic) >= min_power && var_value <= ABSOLUTE_TOLERANCE
-        status_remains_off = get_condition(ic) <= min_power && var_value <= ABSOLUTE_TOLERANCE
-        status_remains_on = get_condition(ic) >= min_power && var_value >= ABSOLUTE_TOLERANCE
+        status_change_to_on =
+            get_condition(ic) <= min_power && var_value >= ABSOLUTE_TOLERANCE
+        status_change_to_off =
+            get_condition(ic) >= min_power && var_value <= ABSOLUTE_TOLERANCE
+        status_remains_off =
+            get_condition(ic) <= min_power && var_value <= ABSOLUTE_TOLERANCE
+        status_remains_on =
+            get_condition(ic) >= min_power && var_value >= ABSOLUTE_TOLERANCE
     else
         # If the min is 0.0 this calculation doesn't matter
         if min_power > 0.0
@@ -72,10 +76,8 @@ function calculate_ic_quantity(
             time_cache = cache_value(cache, name)
             series = time_cache[:series]
             current = min(time_cache[:current], length(series))
-            urrent_status =
-                isapprox(series[current], 1.0; atol = ABSOLUTE_TOLERANCE)
-            previous_status =
-                isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
+            urrent_status = isapprox(series[current], 1.0; atol = ABSOLUTE_TOLERANCE)
+            previous_status = isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
             status_change_to_on = current_status && !previous_status
             status_change_to_off = !current_status && previous_status
             status_remains_on = current_status && previous_status
