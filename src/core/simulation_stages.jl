@@ -242,7 +242,7 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
     device_axes = Set((
         PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
     ),)
-    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, device_axes)
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}}(undef, device_axes)
 
     for ic in ini_cond_on
         device_name = PSY.get_name(ic.device)
