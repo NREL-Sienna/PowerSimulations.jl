@@ -7,8 +7,6 @@
 # Set up Power Graphics:
 # ```julia
 # import PowerGraphics
-# using Plots
-# using PlotlyJS
 # const PG = PowerGraphics
 # ```
 

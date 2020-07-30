@@ -4,8 +4,6 @@
 
 # ```julia
 # using PowerGraphics
-# using Plots
-# using PlotlyJS
 # const PG = PowerGraphics
 # ```
 

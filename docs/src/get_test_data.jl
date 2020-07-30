@@ -7,7 +7,7 @@ const PSY = PowerSystems
 Cbc_optimizer = optimizer_with_attributes(Cbc.Optimizer)
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
 base_dir = string(dirname(dirname(pathof(PowerSimulations))))
-DATA_DIR = joinpath(base_dir, "docs/src")
+DATA_DIR = joinpath(base_dir, "test/test_data")
 include(joinpath(DATA_DIR, "data_5bus_pu.jl"))
 #include(joinpath(DATA_DIR, "data_14bus_pu.jl"))
 file_path = joinpath(pwd(), "Documentation_folder")

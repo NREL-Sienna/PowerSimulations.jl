@@ -10,8 +10,6 @@
 
 # ```julia
 # using PowerGraphics
-# using Plots
-# using PlotlyJS
 # using PowerSystems
 # const PSY = PowerSystems
 # const PG = PowerGraphics
