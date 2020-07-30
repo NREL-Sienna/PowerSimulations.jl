@@ -1,12 +1,9 @@
 import PowerGraphics
 using PowerSystems
-using Plots
-using PlotlyJS
 const PG = PowerGraphics
 include("../../src/get_test_data.jl")
 
 # 3.0
-Plots.gr()
 
 path = mkdir(joinpath(pwd(), "plots-01"));
 PG.stack_plot(re_results; save = path, display = false, title = "Example GR Plot");
@@ -75,7 +72,6 @@ path = mkdir(joinpath(pwd(), "plots-24"));
 PG.bar_plot(re_results; save = path, title = title);
 
 # 3.3
-Plots.gr();
 
 path = mkdir(joinpath(pwd(), "plots-3"));
 PG.fuel_plot(re_results, c_sys5_re; save = path, title = "Example Fuel Plot");
@@ -193,7 +189,6 @@ results_two =
 
 path = mkdir(joinpath(pwd(), "plots-6"));
 PG.stack_plot([results_one, results_two]; save = path, title = "Comparison");
-Plots.gr()
 #
 PG.fuel_plot([results_one, results_two], c_sys5_re; save = path, title = "Comparison");
 #
