@@ -333,7 +333,7 @@ function initial_range_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
@@ -455,7 +455,7 @@ end
 function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    device_formulation::Type{D},
+    ::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
     status_init(psi_container, devices)
     output_init(psi_container, devices)
@@ -466,7 +466,7 @@ end
 function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    device_formulation::Type{ThermalBasicUnitCommitment},
+    ::Type{ThermalBasicUnitCommitment},
 ) where {T <: PSY.ThermalGen}
     status_init(psi_container, devices)
     output_init(psi_container, devices)
@@ -476,75 +476,29 @@ end
 function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    device_formulation::Type{D},
+    ::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
     output_init(psi_container, devices)
     return
 end
-
 ########################### Ramp/Rate of Change Constraints ################################
 """
-This function gets the data for the generators
+This function gets the data for the generators for ramping constraints of thermal generators
 """
 function _get_data_for_rocc(
-    initial_conditions::Vector{InitialCondition},
-    resolution::Dates.TimePeriod,
-)
+    psi_container::PSIContainer,
+    ::Type{T},
+) where {T <: PSY.ThermalGen}
+    resolution = model_resolution(psi_container)
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
-        throw(ArgumentError("Resolutions values under 1-minute are not supported"))
-    end
-    lenght_devices = length(initial_conditions)
-    ini_conds = Vector{InitialCondition}(undef, lenght_devices)
-    ramp_params = Vector{UpDown}(undef, lenght_devices)
-    minmax_params = Vector{MinMax}(undef, lenght_devices)
-    idx = 0
-    for ic in initial_conditions
-        g = ic.device
-        name = PSY.get_name(g)
-        non_binding_up = false
-        non_binding_down = false
-        ramp_limits = PSY.get_ramp_limits(g)
-        if !isnothing(ramp_limits)
-            p_lims = PSY.get_active_power_limits(g)
-            max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
-                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
-                continue
-            else
-                idx += 1
-            end
-            ini_conds[idx] = ic
-            ramp_params[idx] = (
-                up = ramp_limits.up * minutes_per_period,
-                down = ramp_limits.down * minutes_per_period,
-            )
-            minmax_params[idx] = p_lims
-        end
-    end
-    if idx < lenght_devices
-        deleteat!(ini_conds, (idx + 1):lenght_devices)
-        deleteat!(ramp_params, (idx + 1):lenght_devices)
-        deleteat!(minmax_params, (idx + 1):lenght_devices)
-    end
-    return ini_conds, ramp_params, minmax_params
-end
-
-"""
-This function gets the data for the generators for PGLIB formulation
-"""
-function _get_data_for_rocc_pglib(
-    initial_conditions_power::Vector{InitialCondition},
-    resolution::Dates.TimePeriod,
-)
-    if resolution > Dates.Minute(1)
-        minutes_per_period = Dates.value(Dates.Minute(resolution))
-    else
+        @warn("Not all formulations support under 1-minute resolutions. Exercise caution.")
         minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
     end
+
+    initial_conditions_power = get_initial_conditions(psi_container, DevicePower, T)
     lenght_devices_power = length(initial_conditions_power)
-    ini_conds = Vector{InitialCondition}(undef, lenght_devices_power)
     data = Vector{DeviceRampConstraintInfo}(undef, lenght_devices_power)
     idx = 0
     for (ix, ic) in enumerate(initial_conditions_power)
@@ -562,19 +516,17 @@ function _get_data_for_rocc_pglib(
             else
                 idx += 1
             end
-            ini_conds[idx] = ic
             ramp = (
                 up = ramp_limits.up * minutes_per_period,
                 down = ramp_limits.down * minutes_per_period,
             )
-            data[idx] = DeviceRampConstraintInfo(name, p_lims, ramp)
+            data[idx] = DeviceRampConstraintInfo(name, p_lims, ic, ramp)
         end
     end
     if idx < lenght_devices_power
-        deleteat!(ini_conds, (idx + 1):lenght_devices_power)
         deleteat!(data, (idx + 1):lenght_devices_power)
     end
-    return ini_conds, data
+    return data
 end
 
 """
@@ -584,22 +536,16 @@ function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    resolution = model_resolution(psi_container)
-    key = ICKey(DevicePower, T)
-    initial_conditions = get_initial_conditions(psi_container, key)
-    rate_data = _get_data_for_rocc(initial_conditions, resolution)
-    ini_conds, ramp_params, minmax_params =
-        _get_data_for_rocc(initial_conditions, resolution)
-    if !isempty(ini_conds)
+    data = _get_data_for_rocc(psi_container, T)
+    if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_mixedinteger_rateofchange!(
             psi_container,
-            (ramp_params, minmax_params),
-            ini_conds,
+            data,
             make_constraint_name(RAMP, T),
             (
                 make_variable_name(ActivePowerVariable, T),
@@ -617,7 +563,7 @@ function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     T <: PSY.ThermalGen,
@@ -625,17 +571,12 @@ function ramp_constraints!(
     S <: PM.AbstractPowerModel,
 }
     time_steps = model_time_steps(psi_container)
-    resolution = model_resolution(psi_container)
-    initial_conditions = get_initial_conditions(psi_container, ICKey(DevicePower, T))
-    rate_data = _get_data_for_rocc(initial_conditions, resolution)
-    ini_conds, ramp_params, minmax_params =
-        _get_data_for_rocc(initial_conditions, resolution)
-    if !isempty(ini_conds)
+    data = _get_data_for_rocc(psi_container, T)
+    if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange!(
             psi_container,
-            ramp_params,
-            ini_conds,
+            data,
             make_constraint_name(RAMP, T),
             make_variable_name(ActivePowerVariable, T),
         )
@@ -648,26 +589,21 @@ end
 function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    model::DeviceModel{T, ThermalMultiStartUnitCommitment},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {S <: PM.AbstractPowerModel}
-
+) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    resolution = model_resolution(psi_container)
-    key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
-    initial_conditions = get_initial_conditions(psi_container, key_power)
-    ic_power = get_initial_conditions(psi_container, key_power)
-    ini_conds, constaint_data = _get_data_for_rocc_pglib(ic_power, resolution)
+    data = _get_data_for_rocc(psi_container, T)
 
-    for (ix, ic) in enumerate(ini_conds)
-        add_device_services!(constaint_data[ix], ic.device, model)
+    # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
+    for r in data
+        add_device_services!(r, r.ic_status.device, model)
     end
-    if !isempty(ini_conds)
+    if !isempty(data)
         device_multistart_rateofchange!(
             psi_container,
             constaint_data,
-            ini_conds,
             make_constraint_name(RAMP, PSY.ThermalMultiStart),
             make_variable_name(ActivePowerVariable, PSY.ThermalMultiStart),
         )
@@ -895,7 +831,7 @@ function startup_time_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
@@ -929,7 +865,7 @@ function startup_type_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
@@ -988,7 +924,7 @@ function startup_initial_condition_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
@@ -1019,7 +955,7 @@ function must_run_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
@@ -1094,7 +1030,7 @@ function time_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     parameters = model_has_parameters(psi_container)
@@ -1140,7 +1076,7 @@ function time_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, ThermalMultiStartUnitCommitment},
-    system_formulation::Type{S},
+    ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     parameters = model_has_parameters(psi_container)

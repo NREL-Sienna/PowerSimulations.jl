@@ -21,5 +21,6 @@ function get_condition(p::InitialCondition{PJ.ParameterRef})
     return PJ.value(p.value)
 end
 
+get_device(ic::InitialCondition) = ic.device
 get_value(ic::InitialCondition) = ic.value
 device_name(ic::InitialCondition) = PSY.get_name(ic.device)

@@ -5,8 +5,9 @@ function calculate_ic_quantity(
     ::ICKey{TimeDurationON, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::TimeStatusChange,
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.Component}
+    cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     time_cache = cache_value(cache, name)
 
@@ -23,8 +24,9 @@ function calculate_ic_quantity(
     ::ICKey{TimeDurationOFF, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::TimeStatusChange,
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.Component}
+    cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     time_cache = cache_value(cache, name)
 
@@ -41,29 +43,70 @@ function calculate_ic_quantity(
     ::ICKey{DeviceStatus, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.Component}
-    return isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    current_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    return current_status
 end
 
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
 ) where {T <: PSY.ThermalGen}
-    status_change_to_on =
-        get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
-    status_change_to_off =
-        get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
-    if status_change_to_on
-        return ic.device.active_power_limits.min
+    cache = get_cache(simulation_cache, TimeStatusChange, T)
+    # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
+    dev = get_device(ic)
+    min_power = PSY.get_active_power_limits(dev).min
+    if isnothing(cache)
+        # Transitions can't be calculated without cache
+        status_change_to_on =
+            get_condition(ic) <= min_power && var_value >= ABSOLUTE_TOLERANCE
+        status_change_to_off =
+            get_condition(ic) >= min_power && var_value <= ABSOLUTE_TOLERANCE
+        status_remains_off =
+            get_condition(ic) <= min_power && var_value <= ABSOLUTE_TOLERANCE
+        status_remains_on =
+            get_condition(ic) >= min_power && var_value >= ABSOLUTE_TOLERANCE
+    else
+        # If the min is 0.0 this calculation doesn't matter
+        name = device_name(ic)
+        time_cache = cache_value(cache, name)
+        series = time_cache[:series]
+        if min_power > 0.0
+            current = min(time_cache[:current], length(series))
+            current_status = isapprox(series[current], 1.0; atol = ABSOLUTE_TOLERANCE)
+            previous_status = isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
+            status_change_to_on = current_status && !previous_status
+            status_change_to_off = !current_status && previous_status
+            status_remains_on = current_status && previous_status
+            status_remains_off = !current_status && !previous_status
+        else
+            status_remains_on = true
+        end
+        time_cache[:current] += 1
     end
 
-    if status_change_to_off
+    if status_remains_off
         return 0.0
+    elseif status_change_to_off
+        return 0.0
+    elseif status_change_to_on
+        return min_power
+    elseif status_remains_on
+        return var_value
+    else
+        @assert false
     end
+end
 
+function calculate_ic_quantity(
+    ::ICKey{DevicePower, T},
+    ic::InitialCondition,
+    var_value::Float64,
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
+) where {T <: PSY.Device}
     return var_value
 end
 
@@ -71,9 +114,9 @@ function calculate_ic_quantity(
     ::ICKey{EnergyLevel, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
-) where {T <: PSY.Component}
-
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
+) where {T <: PSY.Device}
+    cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     energy_cache = cache_value(cache, name)
     if energy_cache != var_value
@@ -95,7 +138,7 @@ function _make_initial_conditions!(
     parameters = model_has_parameters(psi_container)
     ic_container = get_initial_conditions(psi_container)
     if !has_initial_conditions(ic_container, key)
-        @debug "Setting $(key.ic_type) initial conditions for the status of all devices $(T) based on system data"
+        @debug "Setting $(key.ic_type) initial conditions for all devices $(T) based on system data"
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(ic_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
@@ -103,18 +146,19 @@ function _make_initial_conditions!(
             val = parameters ? PJ.add_parameter(psi_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             ini_conds[ix] = ic
-            @debug "set initial condition" key ic val
+            @debug "set initial condition" key ic val_
         end
     else
         ini_conds = get_initial_conditions(ic_container, key)
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
-            @debug "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
-            val = get_val_func(dev, key)
+            @debug "Setting $(key.ic_type) initial conditions device $(PSY.get_name(dev)) based on system data"
+            val_ = get_val_func(dev, key)
+            val = parameters ? PJ.add_parameter(psi_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             push!(ini_conds, ic)
-            @debug "set initial condition" key ic val
+            @debug "set initial condition" key ic val_
         end
     end
 
@@ -122,6 +166,7 @@ function _make_initial_conditions!(
     return
 end
 
+######################### Initialize Functions for ThermalGen ##############################
 """
 Status Init is always calculated based on the Power Output of the device
 This is to make it easier to calculate when the previous model doesn't
@@ -154,7 +199,6 @@ function output_init(
         _make_initial_condition_active_power,
         _get_active_power_output_value,
     )
-
     return
 end
 
@@ -169,8 +213,6 @@ function output_init(
         _make_initial_condition_active_power,
         _get_active_power_output_above_min_value,
     )
-
-    return
 end
 
 function duration_init(
@@ -340,8 +382,12 @@ function _get_active_power_output_value(device, key)
 end
 
 function _get_active_power_output_above_min_value(device, key)
-    return PSY.get_status(device) ?
-           PSY.get_active_power(device) - PSY.get_active_power_limits(device).min : 0.0
+    if !PSY.get_status(device)
+        return 0.0
+    end
+    power_above_min = PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
+    @assert power_above_min >= -ABSOLUTE_TOLERANCE
+    return power_above_min
 end
 
 function _get_initial_energy_value(device, key)
@@ -371,8 +417,11 @@ function _get_ref_active_power(
     ::Type{T},
     container::InitialConditions,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
-           UpdateRef{T}(ACTIVE_POWER, "get_active_power")
+    if get_use_parameters(container)
+        return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
+    else
+        return UpdateRef{T}(ACTIVE_POWER, "get_active_power")
+    end
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}

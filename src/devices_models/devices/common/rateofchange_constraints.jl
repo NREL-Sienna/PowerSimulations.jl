@@ -29,8 +29,7 @@ If t > 1:
 """
 function device_linear_rateofchange!(
     psi_container::PSIContainer,
-    rate_data::Vector{UpDown},
-    initial_conditions::Vector{InitialCondition},
+    rate_data::Vector{DeviceRampConstraintInfo},
     cons_name::Symbol,
     var_name::Symbol,
 )
@@ -41,34 +40,64 @@ function device_linear_rateofchange!(
 
     variable = get_variable(psi_container, var_name)
 
-    set_name = (device_name(ic) for ic in initial_conditions)
+    set_name = (get_name(r) for r in rate_data)
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
-    for (ix, ic) in enumerate(initial_conditions)
-        name = device_name(ic)
-        @assert (
-            parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
-        ) || !parameters
+    for r in rate_data
+        name = get_name(r)
+        ic_power = get_value(get_ic_power(r))
+        @debug "add rate_of_change_constraint" name ic_power
+        @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
+        expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
+        for val in r.additional_terms_ub
+            JuMP.add_to_expression!(
+                expression_ub,
+                get_variable(psi_container, val)[name, 1],
+            )
+        end
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[ix].up
+            expression_ub - ic_power <= r.ramp_limits.up
         )
+        expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
+        for val in r.additional_terms_lb
+            JuMP.add_to_expression!(
+                expression_lb,
+                get_variable(psi_container, val)[name, 1],
+                1.0,
+            )
+        end
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            get_value(initial_conditions[ix]) - variable[name, 1] <= rate_data[ix].down
+            ic_power - expression_lb <= r.ramp_limits.down
         )
     end
 
-    for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
-        name = device_name(ic)
+    for t in time_steps[2:end], r in rate_data
+        name = get_name(r)
+        expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+        for val in r.additional_terms_ub
+            JuMP.add_to_expression!(
+                expression_ub,
+                get_variable(psi_container, val)[name, t],
+            )
+        end
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t] - variable[name, t - 1] <= rate_data[ix].up
+            expression_ub - variable[name, t - 1] <= r.ramp_limits.up
         )
+        expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+        for val in r.additional_terms_lb
+            JuMP.add_to_expression!(
+                expression_lb,
+                get_variable(psi_container, val)[name, t],
+                1.0,
+            )
+        end
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t - 1] - variable[name, t] <= rate_data[ix].down
+            variable[name, t - 1] - expression_lb <= r.ramp_limits.down
         )
     end
 
@@ -111,8 +140,7 @@ If t > 1:
 """
 function device_mixedinteger_rateofchange!(
     psi_container::PSIContainer,
-    rate_data::Tuple{Vector{UpDown}, Vector{MinMax}},
-    initial_conditions::Vector{InitialCondition},
+    rate_data::Vector{DeviceRampConstraintInfo},
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
@@ -125,38 +153,68 @@ function device_mixedinteger_rateofchange!(
     varstart = get_variable(psi_container, var_names[2])
     varstop = get_variable(psi_container, var_names[3])
 
-    set_name = (device_name(ic) for ic in initial_conditions)
+    set_name = (get_name(r) for r in rate_data)
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
-    for (ix, ic) in enumerate(initial_conditions)
-        @assert (
-            parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
-        ) || !parameters
-        name = device_name(ic)
+    for r in rate_data
+        name = get_name(r)
+        ic_power = get_value(get_ic_power(r))
+        @debug "add rate_of_change_constraint" name ic_power
+        @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
+        expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
+        for val in r.additional_terms_ub
+            JuMP.add_to_expression!(
+                expression_ub,
+                get_variable(psi_container, val)[name, 1],
+            )
+        end
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, 1] - get_value(initial_conditions[ix]) <=
-            rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, 1]
+            expression_ub - (ic_power) <=
+            r.ramp_limits.up + r.limits.max * varstart[name, 1]
         )
+        expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
+        for val in r.additional_terms_lb
+            JuMP.add_to_expression!(
+                expression_lb,
+                get_variable(psi_container, val)[name, 1],
+                1.0,
+            )
+        end
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            get_value(initial_conditions[ix]) - variable[name, 1] <=
-            rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, 1]
+            (ic_power) - expression_lb <=
+            r.ramp_limits.down + r.limits.min * varstop[name, 1]
         )
     end
 
-    for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
-        name = device_name(ic)
+    for t in time_steps[2:end], r in rate_data
+        name = get_name(r)
+        expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+        for val in r.additional_terms_ub
+            JuMP.add_to_expression!(
+                expression_ub,
+                get_variable(psi_container, val)[name, t],
+            )
+        end
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t] - variable[name, t - 1] <=
-            rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, t]
+            expression_ub - variable[name, t - 1] <=
+            r.ramp_limits.up + r.limits.max * varstart[name, 1]
         )
+        expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+        for val in r.additional_terms_lb
+            JuMP.add_to_expression!(
+                expression_lb,
+                get_variable(psi_container, val)[name, t],
+                1.0,
+            )
+        end
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t - 1] - variable[name, t] <=
-            rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, t]
+            variable[name, t - 1] - expression_lb <=
+            r.ramp_limits.down + r.limits.min * varstop[name, t]
         )
     end
 
@@ -198,7 +256,6 @@ If t > 1:
 function device_multistart_rateofchange!(
     psi_container::PSIContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
-    initial_conditions::Vector{InitialCondition},
     cons_name::Symbol,
     var_name::Symbol,
 )
@@ -208,14 +265,15 @@ function device_multistart_rateofchange!(
 
     variable = get_variable(psi_container, var_name)
 
-    set_name = (device_name(ic) for ic in initial_conditions[:, 1])
+    set_name = (get_name(r) for r in rate_data)
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
-    for (ix, ic) in enumerate(initial_conditions)
-        name = device_name(ic)
+    for r in rate_data
+        name = get_name(r)
+        ic_power = get_value(get_ic_power(r))
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in rate_data[ix].additional_terms_ub
+        for val in r.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_ub,
                 get_variable(psi_container, val)[name, 1],
@@ -223,10 +281,10 @@ function device_multistart_rateofchange!(
         end
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            expression_ub - ic.value <= rate_data[ix].ramp_limits.up
+            expression_ub - (ic_power) <= r.ramp_limits.up
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in rate_data[ix].additional_terms_lb
+        for val in r.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
                 get_variable(psi_container, val)[name, 1],
@@ -235,14 +293,14 @@ function device_multistart_rateofchange!(
         end
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            ic.value - expression_lb <= rate_data[ix].ramp_limits.down
+            (ic_power) - expression_lb <= r.ramp_limits.down
         )
     end
 
-    for t in time_steps[2:end], (ix, d) in enumerate(rate_data)
-        name = d.name
+    for t in time_steps[2:end], r in rate_data
+        name = get_name(r)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in d.additional_terms_ub
+        for val in r.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_ub,
                 get_variable(psi_container, val)[name, t],
@@ -250,10 +308,10 @@ function device_multistart_rateofchange!(
         end
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            expression_ub - variable[name, t - 1] <= d.ramp_limits.up
+            expression_ub - variable[name, t - 1] <= r.ramp_limits.up
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in d.additional_terms_lb
+        for val in r.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
                 get_variable(psi_container, val)[name, t],
@@ -262,7 +320,7 @@ function device_multistart_rateofchange!(
         end
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t - 1] - expression_lb <= d.ramp_limits.down
+            variable[name, t - 1] - expression_lb <= r.ramp_limits.down
         )
     end
 

@@ -365,71 +365,20 @@ UC_devices = Dict{Symbol, DeviceModel}(
 )
 # Testing Ramping Constraint
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
-    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
-    DA_ramp = collect(
-        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
-            "1/1/2024  4:00:00",
-            "d/m/y  H:M:S",
-        ),
-    )
-    gen_ramp = [
-        ThermalStandard(
-            "Alta",
-            true,
-            true,
-            node,
-            0.20,
-            0.010,
-            0.5,
-            PrimeMovers.ST,
-            ThermalFuels.COAL,
-            (min = 0.0, max = 0.40),
-            nothing,
-            nothing,
-            nothing,
-            ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
-            100.0,
-        ),
-        ThermalStandard(
-            "Park City",
-            true,
-            true,
-            node,
-            0.70,
-            0.20,
-            2.0,
-            PrimeMovers.ST,
-            ThermalFuels.COAL,
-            (min = 0.7, max = 2.20),
-            nothing,
-            (up = 0.010625 * 2.0, down = 0.010625 * 2.0),
-            nothing,
-            ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
-            100.0,
-        ),
-    ]
-    ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
-    load_forecast_ramp =
-        Deterministic("get_max_active_power", TimeArray(DA_ramp, ramp_load))
-    ramp_test_sys = System(100.0)
-    add_component!(ramp_test_sys, node)
-    add_component!(ramp_test_sys, load)
-    add_component!(ramp_test_sys, gen_ramp[1])
-    add_component!(ramp_test_sys, gen_ramp[2])
-    add_forecast!(ramp_test_sys, load, load_forecast_ramp)
-
+    ramp_test_sys = build_system("c_ramp_test")
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, ED_devices, branches, services)
-    ED = OperationsProblem(
-        TestOpProblem,
-        template,
-        ramp_test_sys;
-        optimizer = Cbc_optimizer,
-        use_parameters = true,
-    )
-    psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
-    moi_tests(ED, true, 10, 0, 20, 10, 5, false)
+    for p in [true, false]
+        ED = OperationsProblem(
+            TestOpProblem,
+            template,
+            ramp_test_sys;
+            optimizer = Cbc_optimizer,
+            use_parameters = p,
+        )
+        psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
+        moi_tests(ED, p, 10, 0, 20, 10, 5, false)
+    end
 end
 
 # Testing Duration Constraints
