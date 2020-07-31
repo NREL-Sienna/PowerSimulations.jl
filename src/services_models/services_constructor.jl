@@ -171,7 +171,7 @@ function construct_service!(
 end
 
 """
-    construct_service! for group reserve
+    Constructs a service for StaticGroupReserve.
 """
 function construct_service!(
     psi_container::PSIContainer,
@@ -209,4 +209,3 @@ function construct_service!(
     end
     return
 end
-
