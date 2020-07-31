@@ -8,7 +8,7 @@ function check_activeservice_variables(
     contributing_services::Vector{<:PSY.Service},
 )
     for service in contributing_services
-        # Should pop and error if no such variable exists
+        # Should pop an error if no such variable exists
         reserve_variable = get_variable(psi_container, variable_name(PSY.get_name(service), typeof(service)))
     end
     return
