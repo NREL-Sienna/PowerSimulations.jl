@@ -16,7 +16,7 @@ end
 
 ################################## Reserve Requirement Constraint ##########################
 """
-This function creates teh requirement constraint that will be attained by the apropriate services
+This function creates the requirement constraint that will be attained by the apropriate services
 """
 function service_requirement_constraint!(
     psi_container::PSIContainer,
