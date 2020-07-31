@@ -1,5 +1,5 @@
 """
-This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
     psi_container::PSIContainer,
