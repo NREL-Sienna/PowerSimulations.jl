@@ -84,6 +84,9 @@ function calculate_ic_quantity(
             status_remains_off = !current_status && !previous_status
         else
             status_remains_on = true
+            status_remains_off = false
+            status_change_to_off = false
+            status_change_to_on = false
         end
         time_cache[:current] += 1
     end
