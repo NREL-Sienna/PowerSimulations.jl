@@ -128,7 +128,7 @@ end
 ############################# Initial Conditions Initialization ############################
 function _make_initial_conditions!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    devices::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
     key::ICKey,
     make_ic_func::Function, # Function to make the initial condition object
     get_val_func::Function, # Function to get the value from the device to intialize
@@ -319,7 +319,7 @@ end
 
 function area_control_init(
     psi_container::PSIContainer,
-    services::IS.FlattenIteratorWrapper{PSY.AGC},
+    services::Vector{PSY.AGC},
 )
     key = ICKey(AreaControlError, PSY.AGC)
     _make_initial_conditions!(

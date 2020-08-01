@@ -240,7 +240,7 @@ end
 
 function smooth_ace_pid!(
     psi_container::PSIContainer,
-    services::IS.FlattenIteratorWrapper{PSY.AGC},
+    services::Vector{PSY.AGC},
 )
     time_steps = model_time_steps(psi_container)
     area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
