@@ -755,10 +755,10 @@ function update_parameter!(
     stage::Stage,
     sim::Simulation,
 ) where {T <: PSY.Component}
-    devices = get_available_components(T, stage.sys)
+    components = get_available_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
-    for d in devices
+    for d in components
         # RECORDER TODO: Parameter Update from forecast
         forecast = PSY.get_forecast(
             PSY.Deterministic,
@@ -768,10 +768,39 @@ function update_parameter!(
             horizon,
         )
         ts_vector = TS.values(PSY.get_data(forecast))
-        device_name = PSY.get_name(d)
-        for (ix, val) in enumerate(get_parameter_array(container)[device_name, :])
+        component_name = PSY.get_name(d)
+        for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
             value = ts_vector[ix]
             JuMP.fix(val, value)
+        end
+    end
+
+    return
+end
+
+function update_parameter!(
+    param_reference::UpdateRef{T},
+    container::ParameterContainer,
+    stage::Stage,
+    sim::Simulation,
+) where {T <: PSY.Service}
+    # RECORDER TODO: Parameter Update from forecast
+    components = get_available_components(T, stage.sys)
+    initial_forecast_time = get_simulation_time(sim, get_number(stage))
+    horizon = length(model_time_steps(stage.internal.psi_container))
+    param_array = get_parameter_array(container)
+    for ix in axes(param_array)[1]
+        service = PSY.get_component(T, stage.sys, ix)
+        forecast = PSY.get_forecast(
+            PSY.Deterministic,
+            service,
+            initial_forecast_time,
+            get_accessor_func(param_reference),
+            horizon,
+        )
+        ts_vector = TS.values(PSY.get_data(forecast))
+        for (jx, value) in enumerate(ts_vector)
+            JuMP.fix(get_parameter_array(container)[ix, jx], value)
         end
     end
 
