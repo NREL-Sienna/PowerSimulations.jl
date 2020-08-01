@@ -8,7 +8,7 @@ function construct_services!(
     for service_model in values(services_template)
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = service_model.service_type[]
-        if validate_available_services(service_model.service_type, services, sys)
+        if validate_services!(service_model.service_type, services, sys)
             construct_service!(
                 psi_container,
                 services,
@@ -66,10 +66,8 @@ function construct_service!(
             contributing_devices =
                 [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
         end
-        if isempty(contributing_devices)
-            @warn("The contributing devices for service $(PSY.get_name(service)) is empty, cinsider removing the service from the system")
-            continue
-        end
+        #Services without contributing devices should have been filtered out in the validation
+        @assert !isempty(contributing_devices)
         #Variables
         add_variables!(ActiveServiceVariable, psi_container, service, contributing_devices)
         # Constraints

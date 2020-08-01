@@ -6,7 +6,7 @@ function validate_available_devices(device::Type{D}, devices) where {D <: PSY.De
     return true
 end
 
-function validate_available_services(
+function validate_services!(
     service::Type{S},
     services::Vector{S},
     sys::PSY.System,
@@ -24,7 +24,9 @@ function validate_available_services(
             name = PSY.get_name(s),
         )].contributing_devices)
             push!(services, s)
+            continue
         end
+        @warn("The contributing devices for service $(PSY.get_name(service)) is empty, consider removing the service from the system")
     end
     return true
 end
