@@ -30,8 +30,12 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(psi_container)
-    names = (PSY.get_name(s) for s in services)
-
+    names = [
+        key.name
+        for
+        (key, val) in services_mapping if
+        key.type == SR && !isempty(val.contributing_devices)
+    ]
     incompatible_device_types = Vector{DataType}()
     for model in values(devices_template)
         formulation = get_formulation(model)
@@ -62,15 +66,15 @@ function construct_service!(
 
     for service in services
         contributing_devices =
-            services_mapping[(
-                type = typeof(service),
-                name = PSY.get_name(service),
-            )].contributing_devices
+            services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
         if !isempty(incompatible_device_types)
             contributing_devices =
                 [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
         end
-
+        if isempty(contributing_devices)
+            @warn("The contributing devices for service $(PSY.get_name(service)) is empty, cinsider removing the service from the system")
+            continue
+        end
         #Variables
         add_variables!(ActiveServiceVariable, psi_container, service, contributing_devices)
         # Constraints
