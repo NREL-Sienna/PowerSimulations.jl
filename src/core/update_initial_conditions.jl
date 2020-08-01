@@ -317,10 +317,7 @@ function storage_energy_init(
     return
 end
 
-function area_control_init(
-    psi_container::PSIContainer,
-    services::Vector{PSY.AGC},
-)
+function area_control_init(psi_container::PSIContainer, services::Vector{PSY.AGC})
     key = ICKey(AreaControlError, PSY.AGC)
     _make_initial_conditions!(
         psi_container,

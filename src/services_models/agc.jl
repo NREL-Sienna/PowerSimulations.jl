@@ -238,10 +238,7 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     return
 end
 
-function smooth_ace_pid!(
-    psi_container::PSIContainer,
-    services::Vector{PSY.AGC},
-)
+function smooth_ace_pid!(psi_container::PSIContainer, services::Vector{PSY.AGC})
     time_steps = model_time_steps(psi_container)
     area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
     RAW_ACE = add_expression_container!(psi_container, :RAW_ACE, area_names, time_steps)

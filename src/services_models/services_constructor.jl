@@ -124,7 +124,6 @@ function construct_service!(
     sys::PSY.System,
     ::ServiceModel{PSY.AGC, T},
     devices_template::Dict{Symbol, DeviceModel},
-
 ) where {T <: AbstractAGCFormulation}
     #Order is important in the addition of these variables
     for device_model in devices_template
