@@ -1,3 +1,17 @@
+function get_incompatible_devices(devices_template::Dict{Symbol, DeviceModel})
+    incompatible_device_types = Vector{DataType}()
+    for model in values(devices_template)
+        formulation = get_formulation(model)
+        if formulation == FixedOutput
+            if !isempty(get_services(model))
+                @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
+            end
+            push!(incompatible_device_types, get_device_type(model))
+        end
+    end
+    return incompatible_device_types
+end
+
 function construct_services!(
     psi_container::PSIContainer,
     sys::PSY.System,
@@ -5,16 +19,23 @@ function construct_services!(
     devices_template::Dict{Symbol, DeviceModel},
 )
     isempty(services_template) && return
+    incompatible_device_types = get_incompatible_devices(devices_template)
     for service_model in values(services_template)
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = service_model.service_type[]
-        if validate_services!(service_model.service_type, services, sys)
+        if validate_services!(
+            service_model.service_type,
+            services,
+            incompatible_device_types,
+            sys,
+        )
             construct_service!(
                 psi_container,
                 services,
                 sys,
                 service_model,
                 devices_template,
+                incompatible_device_types,
             )
         end
     end
@@ -27,20 +48,11 @@ function construct_service!(
     sys::PSY.System,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(psi_container)
     names = [PSY.get_name(s) for s in services]
-    incompatible_device_types = Vector{DataType}()
-    for model in values(devices_template)
-        formulation = get_formulation(model)
-        if formulation == FixedOutput
-            if !isempty(get_services(model))
-                @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
-            end
-            push!(incompatible_device_types, get_device_type(model))
-        end
-    end
 
     if model_has_parameters(psi_container)
         container = add_param_container!(
@@ -86,6 +98,7 @@ function construct_service!(
     sys::PSY.System,
     model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(psi_container)
@@ -104,6 +117,10 @@ function construct_service!(
                 type = typeof(service),
                 name = PSY.get_name(service),
             )].contributing_devices
+        if !isempty(incompatible_device_types)
+            contributing_devices =
+                [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
+        end
         #Variables
         add_variables!(ActiveServiceVariable, psi_container, service, contributing_devices)
         # Constraints
@@ -122,6 +139,7 @@ function construct_service!(
     sys::PSY.System,
     ::ServiceModel{PSY.AGC, T},
     devices_template::Dict{Symbol, DeviceModel},
+    ::Vector{<:DataType},
 ) where {T <: AbstractAGCFormulation}
     #Order is important in the addition of these variables
     for device_model in devices_template
