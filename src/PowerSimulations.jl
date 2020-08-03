@@ -306,6 +306,7 @@ include("services_models/agc.jl")
 include("services_models/reserves.jl")
 include("services_models/service_slacks.jl")
 include("services_models/services_constructor.jl")
+include("services_models/StaticReserveGroup.jl")
 
 #Network models
 include("network_models/copperplate_model.jl")
