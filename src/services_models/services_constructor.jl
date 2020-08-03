@@ -171,7 +171,7 @@ function construct_service!(
 end
 
 """
-    Constructs a service for StaticGroupReserve.
+    Constructs a service for StaticReserveGroup.
 """
 function construct_service!(
     psi_container::PSIContainer,
@@ -179,7 +179,7 @@ function construct_service!(
     services_mapping::PSY.ServiceContributingDevicesMapping,
     model::ServiceModel{SR, GroupReserve},
     devices_template::Dict{Symbol, DeviceModel},
-) where {SR <: PSY.StaticGroupReserve}
+) where {SR <: PSY.StaticReserveGroup}
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
 

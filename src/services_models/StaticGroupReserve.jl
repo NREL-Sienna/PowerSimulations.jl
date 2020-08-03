@@ -23,7 +23,7 @@ function service_requirement_constraint!(
     service::SR,
     model::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
-) where {SR <: PSY.StaticGroupReserve}
+) where {SR <: PSY.StaticReserveGroup}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
