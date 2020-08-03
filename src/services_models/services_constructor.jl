@@ -202,7 +202,7 @@ function construct_service!(
                 name = PSY.get_name(service),
             )].contributing_devices
 
-        # Variables
+        # check if variables exist
         check_activeservice_variables(psi_container, contributing_devices)
         # Constraints
         service_requirement_constraint!(psi_container, service, model, contributing_devices)
