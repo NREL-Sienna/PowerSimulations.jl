@@ -1,3 +1,6 @@
+"""
+Construct model for HydroGen with RunOfRiver Dispatch Formulation
+"""
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
@@ -45,6 +48,9 @@ function construct_device!(
     return
 end
 
+"""
+Construct model for HydroGen with ReservoirFlow Dispatch Formulation
+"""
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
@@ -89,41 +95,10 @@ function construct_device!(
     return
 end
 
-#=
-# All Hydro UC formulations are currently not supported
-function construct_device!(
-    psi_container::PSIContainer,
-    sys::PSY.System,
-    model::DeviceModel{H,D},
-    ::Type{S};
-
-) where {H<:PSY.HydroGen,D<:AbstractHydroUnitCommitment,S<:PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
-
-    #Variables
-    active_power_variables!(psi_container, devices)
-    reactive_power_variables!(psi_container, devices)
-
-    #Initial Conditions
-    initial_conditions!(psi_container, devices, model.formulation)
-
-    #Constraints
-    active_power_constraints!(psi_container, devices, model, S,get_feedforward(model))
-    reactive_power_constraints!(psi_container, devices, model, S,get_feedforward(model))
-    commitment_constraints!(psi_container, devices, model, S,get_feedforward(model))
-    feedforward!(psi_container, H,get_feedforward(model))
-
-    #Cost Function
-    cost_function(psi_container, devices, D, S)
-
-    return
-end
-=#
-
+"""
+Construct model for HydroGen with RunOfRiver Dispatch Formulation
+with only Active Power.
+"""
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
@@ -153,6 +128,92 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    feedforward!(psi_container, devices, model, get_feedforward(model))
+
+    #Cost Function
+    cost_function(psi_container, devices, D, S)
+
+    return
+end
+
+"""
+Construct model for HydroGen with RunOfRiver Commitment Formulation
+"""
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H, D},
+    ::Type{S},
+) where {
+    H <: PSY.HydroGen,
+    D <: HydroCommitmentRunOfRiver,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(H, sys)
+
+    if !validate_available_devices(H, devices)
+        return
+    end
+
+    #Variables
+    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(OnVariable, psi_container, devices)
+
+    #Constraints
+    add_constraints!(
+        RangeConstraint,
+        ActivePowerVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    commit_hydro_active_power_ub!(psi_container, devices, model, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
+
+    #Cost Function
+    cost_function(psi_container, devices, D, S)
+
+    return
+end
+
+"""
+Construct model for HydroGen with RunOfRiver Commitment Formulation
+with only Active Power.
+"""
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H, D},
+    ::Type{S},
+) where {
+    H <: PSY.HydroGen,
+    D <: HydroCommitmentRunOfRiver,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(H, sys)
+
+    if !validate_available_devices(H, devices)
+        return
+    end
+
+    #Variables
+    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(ReactivePowerVariable, psi_container, devices)
+    add_variables!(OnVariable, psi_container, devices)
+
+    #Constraints
+    add_constraints!(
+        RangeConstraint,
+        ActivePowerVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    commit_hydro_active_power_ub!(psi_container, devices, model, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function

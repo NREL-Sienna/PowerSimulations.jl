@@ -5,6 +5,7 @@ abstract type AbstractHydroReservoirFormulation <: AbstractHydroDispatchFormulat
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 struct HydroDispatchReservoirFlow <: AbstractHydroReservoirFormulation end
 struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
+struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 #=
 # Commenting out all Unit Commitment formulations as all Hydro UC
 # formulations are currently not supported
@@ -57,24 +58,20 @@ function AddVariableSpec(
     )
 end
 
-#=
-function inflow_variables!(
+"""
+This function add the variables for power generation commitment to the model
+"""
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable!(
-        psi_container,
-        devices,
-        make_variable_name(INFLOW, H),
-        false;
-        ub_value = d -> PSY.get_inflow(d),
-        lb_value = d -> 0.0,
-    )
-
-    return
+) where {T <: OnVariable, U <: PSY.HydroGen}
+    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
 end
-=#
 
+"""
+This function add the spillage variable for storage models
+"""
 function AddVariableSpec(
     ::Type{T},
     ::Type{U},
@@ -213,6 +210,28 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractHydroUnitCommitment},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Nothing,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.HydroGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
+            bin_variable_names = [make_variable_name(OnVariable, T)],
+            limits_func = x -> PSY.get_active_power_limits(x),
+            constraint_func = device_semicontinuousrange,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
+    )
+end
+
 #=
 # All Hydro UC formulations are currently not supported
 function active_power_constraints!(
@@ -268,6 +287,35 @@ function active_power_constraints!(
 end
 =#
 ######################## Inflow constraints ############################
+
+function commit_hydro_active_power_ub!(
+    psi_container::PSIContainer,
+    devices,
+    model::DeviceModel{V, W},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
+    use_parameters = model_has_parameters(psi_container)
+    use_forecasts = model_uses_forecasts(psi_container)
+    if use_parameters || use_forecasts
+        spec = DeviceRangeConstraintSpec(;
+            timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
+                constraint_name = make_constraint_name(
+                    RangeConstraint,
+                    ActivePowerVariable,
+                    V,
+                ),
+                variable_name = make_variable_name(ActivePowerVariable, V),
+                parameter_name = use_parameters ? ACTIVE_POWER : nothing,
+                forecast_label = "get_max_active_power",
+                multiplier_func = x -> PSY.get_max_active_power(x),
+                constraint_func = use_parameters ? device_timeseries_param_ub! :
+                                      device_timeseries_ub!,
+            ),
+        )
+        device_range_constraints!(psi_container, devices, model, feedforward, spec)
+    end
+end
+
 #=
 # TODO: Determine if this is useful for ROR formulation ?
 function inflow_constraints!(

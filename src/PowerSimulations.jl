@@ -48,7 +48,7 @@ export RenewableConstantPowerFactor
 export HydroDispatchRunOfRiver
 export HydroDispatchReservoirFlow
 export HydroDispatchReservoirStorage
-# export HydroCommitmentRunOfRiver
+export HydroCommitmentRunOfRiver
 # export HydroCommitmentReservoirFlow
 # export HydroCommitmentReservoirStorage
 ######## Renewable Formulations ########
