@@ -21,7 +21,7 @@ This function creates the requirement constraint that will be attained by the ap
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    model::ServiceModel{SR, GroupReserve},
+    ::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
 ) where {SR <: PSY.StaticReserveGroup}
     parameters = model_has_parameters(psi_container)

@@ -176,9 +176,10 @@ end
 function construct_service!(
     psi_container::PSIContainer,
     services::IS.FlattenIteratorWrapper{SR},
-    services_mapping::PSY.ServiceContributingDevicesMapping,
+    ::PSY.System,
     model::ServiceModel{SR, GroupReserve},
-    devices_template::Dict{Symbol, DeviceModel},
+    ::Dict{Symbol, DeviceModel},
+    ::Vector{<:DataType}
 ) where {SR <: PSY.StaticReserveGroup}
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
@@ -196,16 +197,12 @@ function construct_service!(
     add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
 
     for service in services
-        contributing_devices =
-            services_mapping[(
-                type = typeof(service),
-                name = PSY.get_name(service),
-            )].contributing_devices
+        contributing_services = get_contributing_services(service)
 
         # check if variables exist
-        check_activeservice_variables(psi_container, contributing_devices)
+        check_activeservice_variables(psi_container, contributing_services)
         # Constraints
-        service_requirement_constraint!(psi_container, service, model, contributing_devices)
+        service_requirement_constraint!(psi_container, service, model, contributing_services)
     end
     return
 end
