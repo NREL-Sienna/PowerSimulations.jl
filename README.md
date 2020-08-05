@@ -33,8 +33,8 @@ For example, an annual production cost modeling simulation can be created by for
 
 ```julia
 julia> ]
-(v1.3) pkg> add PowerSystems
-(v1.3) pkg> add PowerSimulations
+(v1.5) pkg> add PowerSystems
+(v1.5) pkg> add PowerSimulations
 ```
 ## Usage
 
