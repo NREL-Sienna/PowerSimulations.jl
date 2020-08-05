@@ -389,24 +389,26 @@ thermal_generators5(nodes5) = [
 
 thermal_generators5_pwl(nodes5) = [
     ThermalStandard(
-        "Test PWL",
-        true,
-        true,
-        nodes5[1],
-        1.70,
-        0.20,
-        2.2125,
-        (min = 0.0, max = 1.70),
-        (min = -1.275, max = 1.275),
-        (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
-        (up = 2.0, down = 1.0),
-        ThreePartCost(
+        name =                  "Test PWL",
+        available =             true,
+        status =                true,
+        bus =                   nodes5[1],
+        active_power =          1.70,
+        reactive_power =        0.20,
+        rating =                2.2125,
+        prime_mover =           PrimeMovers.ST,
+        fuel =                  ThermalFuels.COAL,
+        active_power_limits =   (min = 0.0, max = 1.70),
+        reactive_power_limits = (min = -1.275, max = 1.275),
+        ramp_limits =           (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
+        time_limits =           (up = 2.0, down = 1.0),
+        operation_cost =    ThreePartCost(
             VariableCost([(0.0, 0.5), (290.1, 0.8), (582.72, 1.2), (894.1, 1.70)]),
             0.0,
             1.5,
             0.75,
         ),
-        100.0,
+        base_power = 100.0,
     ),
 ];
 
