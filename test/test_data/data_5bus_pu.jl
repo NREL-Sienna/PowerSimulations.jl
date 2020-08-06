@@ -757,7 +757,7 @@ hydro_timeseries_DA = [
 
 budget_aux = zeros(24)
 budget_aux[1] = 0.01
-budget_aux[end] = 0.5 
+budget_aux[end] = 0.5
 hydro_budget_DA = [
     [TimeSeries.TimeArray(DayAhead, budget_aux)],
     [TimeSeries.TimeArray(DayAhead + Day(1), budget_aux .* 1.2)],

@@ -523,7 +523,7 @@ function energy_budget_constraints!(
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_d = 
+        constraint_d =
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)
         constraint_data[ix] = constraint_d
     end
@@ -569,7 +569,7 @@ function device_energy_budget_param_ub(
             PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[end])
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1] 
+            sum([variable[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1]
         )
     end
 

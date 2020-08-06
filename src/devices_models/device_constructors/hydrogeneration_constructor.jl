@@ -134,7 +134,7 @@ function construct_device!(
     else
         @warn "No Forecasts: Ignoring energy constraints"
     end
-    
+
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
@@ -168,7 +168,7 @@ function construct_device!(
     else
         @warn "No Forecasts: Ignoring energy constraints"
     end
-    
+
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
@@ -228,11 +228,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{H, D},
     ::Type{S},
-) where {
-    H <: PSY.HydroGen,
-    D <: HydroCommitmentRunOfRiver,
-    S <: PM.AbstractPowerModel,
-}
+) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
     if !validate_available_devices(H, devices)
@@ -306,7 +302,6 @@ function construct_device!(
     return
 end
 
-
 """
 Construct model for HydroGen with ReservoirBudget Commitment Formulation
 """
@@ -315,11 +310,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{H, D},
     ::Type{S},
-) where {
-    H <: PSY.HydroGen,
-    D <: HydroCommitmentReservoirBudget,
-    S <: PM.AbstractPowerModel,
-}
+) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
     if !validate_available_devices(H, devices)
@@ -403,8 +394,6 @@ function construct_device!(
     return
 end
 
-
-
 #=
 function construct_device!(
     psi_container::PSIContainer,
@@ -438,8 +427,6 @@ function construct_device!(
     return
 end
 =#
-
-
 
 # Currently no Hydro device supports a Unit commiment formulation
 #=
