@@ -92,7 +92,7 @@ function template_economic_dispatch(; kwargs...)
             :Generators => DeviceModel(PSY.ThermalStandard, ThermalRampLimited),
             :RE => DeviceModel(PSY.RenewableDispatch, RenewableFullDispatch),
             :DistRE => DeviceModel(PSY.RenewableFix, FixedOutput),
-            :Hydro => DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchReservoirFlow),
+            :Hydro => DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchReservoirBudget),
             :HydroROR => DeviceModel(PSY.HydroDispatch, FixedOutput),
             :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
             :ILoads => DeviceModel(PSY.InterruptibleLoad, InterruptiblePowerLoad),

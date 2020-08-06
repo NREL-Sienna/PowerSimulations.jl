@@ -3,9 +3,10 @@ abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
 abstract type AbstractHydroReservoirFormulation <: AbstractHydroDispatchFormulation end
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
-struct HydroDispatchReservoirFlow <: AbstractHydroReservoirFormulation end
+struct HydroDispatchReservoirBudget <: AbstractHydroReservoirFormulation end
 struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
+struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 #=
 # Commenting out all Unit Commitment formulations as all Hydro UC
 # formulations are currently not supported
@@ -499,99 +500,102 @@ function cost_function(
     return
 end
 
-##################################### Water/Energy Limit Constraint ############################
-function energy_limit_constraints!(
+##################################### Water/Energy Budget Constraint ############################
+function energy_budget_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+    model::DeviceModel{H, <:AbstractHydroFormulation},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::IntegralLimitFF,
 ) where {H <: PSY.HydroGen}
     return
 end
 
-function energy_limit_constraints!(
+function energy_budget_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+    model::DeviceModel{H, <:AbstractHydroFormulation},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen}
 
-    forecast_label = "get_storage_capacity"
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    forecast_label = "get_hydro_budget"
+    constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info =
+        constraint_d = 
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)
-        add_device_services!(constraint_info.range, d, model)
-        constraint_infos[ix] = constraint_info
+        constraint_data[ix] = constraint_d
     end
 
     if model_has_parameters(psi_container)
-        device_energy_limit_param_ub(
+        device_energy_budget_param_ub(
             psi_container,
-            constraint_infos,
-            make_constraint_name(ENERGY_LIMIT, H),
+            constraint_data,
+            make_constraint_name(ENERGY_BUDGET, H),
             UpdateRef{H}(ENERGY_BUDGET, forecast_label),
             make_variable_name(ACTIVE_POWER, H),
         )
     else
-        device_energy_limit_ub(
+        device_energy_budget_ub(
             psi_container,
-            constraint_infos,
-            make_constraint_name(ENERGY_LIMIT),
+            constraint_data,
+            make_constraint_name(ENERGY_BUDGET),
             make_variable_name(ACTIVE_POWER, H),
         )
     end
 end
 
-function device_energy_limit_param_ub(
+function device_energy_budget_param_ub(
     psi_container::PSIContainer,
-    energy_limit_data::Vector{DeviceTimeSeriesConstraintInfo},
+    energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
     param_reference::UpdateRef,
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
+    resolution = model_resolution(psi_container)
+    inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     variable = get_variable(psi_container, var_name)
-    set_name = (get_name(r) for r in energy_limit_data)
+    set_name = (get_name(r) for r in energy_budget_data)
     constraint = add_cons_container!(psi_container, cons_name, set_name)
     container = add_param_container!(psi_container, param_reference, set_name, 1)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
-    for constraint_info in energy_limit_data
+    for constraint_info in energy_budget_data
         name = get_name(constraint_info)
-        multiplier[name, 1] = constraint_info.multiplier
+        multiplier[name, 1] = constraint_info.multiplier * inv_dt
         param[name, 1] =
-            PJ.add_parameter(psi_container.JuMPmodel, sum(constraint_info.timeseries))
+            PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[end])
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1]
+            sum([variable[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1] 
         )
     end
 
     return
 end
 
-function device_energy_limit_ub(
+function device_energy_budget_ub(
     psi_container::PSIContainer,
-    energy_limit_constraints::Vector{DeviceTimeSeriesConstraintInfo},
+    energy_budget_constraints::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
-    names = (get_name(x) for x in energy_limit_constraints)
+    names = (get_name(x) for x in energy_budget_constraints)
     constraint = add_cons_container!(psi_container, cons_name, names)
 
-    for constraint_info in energy_limit_constraints
+    for constraint_info in energy_budget_constraints
         name = get_name(constraint_info)
+        resolution = model_resolution(psi_container)
+        inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
         forecast = constraint_info.timeseries
-        multiplier = constraint_info.multiplier
+        multiplier = constraint_info.multiplier * inv_dt
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable[name, t] for t in time_steps]) <= multiplier * sum(forecast)
+            sum([variable[name, t] for t in time_steps]) <= multiplier * forecast[end]
         )
     end
 

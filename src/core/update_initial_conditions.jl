@@ -434,7 +434,7 @@ function _get_ref_reservoir_energy(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "get_storage_capacity")
+           UpdateRef{T}(ENERGY, "get_hydro_budget")
 end
 function _get_ref_ace_error(::Type{PSY.AGC}, container::InitialConditions)
     T = PSY.AGC

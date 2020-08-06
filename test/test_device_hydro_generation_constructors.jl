@@ -176,8 +176,8 @@ end
 
 end
 
-@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirFlow Formulations" begin
-    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow)
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirBudget Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirBudget)
     c_sys5_hy_uc = build_system("c_sys5_hy_uc")
 
     # Parameters Testing
@@ -206,8 +206,8 @@ end
 
 end
 
-@testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroDispatchReservoirFlow Formulations" begin
-    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow)
+@testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroDispatchReservoirBudget Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirBudget)
     c_sys5_hy_uc = build_system("c_sys5_hy_uc")
 
     # Parameters Testing
