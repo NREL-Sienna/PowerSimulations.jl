@@ -519,7 +519,7 @@ hydro_generators5(nodes5) = [
         0.6,
         PrimeMovers.HY,
         (min = 0.1, max = 3.0),
-        (min = 0.1, max = 3.0),
+        (min = -1.5, max = 1.5),
         nothing,
         nothing,
         100.0,
@@ -530,17 +530,17 @@ hydro_generators5(nodes5) = [
         nodes5[3],
         0.0,
         0.0,
-        0.6,
+        4.0,
         PrimeMovers.HY,
-        (min = 0.0, max = 60.0),
-        (min = 0.0, max = 60.0),
-        (up = 10.0 * 0.6, down = 10.0 * 0.6),
+        (min = 0.1, max = 3.0),
+        (min = -1.5, max = 1.5),
+        (up = 1.0, down = 1.0),
         nothing,
         TwoPartCost(15.0, 0.0),
         100.0,
-        1.0,
-        0.2,
+        50.0, # 50 pu * hr (i.e. 5 GWh)
         0.5,
+        25.0,
     ),
 ];
 
@@ -754,6 +754,14 @@ hydro_timeseries_DA = [
     [TimeSeries.TimeArray(DayAhead, wind_ts_DA)],
     [TimeSeries.TimeArray(DayAhead + Day(1), wind_ts_DA)],
 ];
+
+budget_aux = zeros(24)
+budget_aux[1] = 0.01
+budget_aux[end] = 0.5 
+hydro_budget_DA = [
+    [TimeSeries.TimeArray(DayAhead, budget_aux)],
+    [TimeSeries.TimeArray(DayAhead + Day(1), budget_aux .* 1.2)],
+]
 
 RealTime = collect(
     DateTime("1/1/2024 0:00:00", "d/m/y H:M:S"):Minute(5):DateTime(
