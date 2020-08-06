@@ -9,7 +9,10 @@ function check_activeservice_variables(
 )
     for service in contributing_services
         # Should pop an error if no such variable exists
-        reserve_variable = get_variable(psi_container, variable_name(PSY.get_name(service), typeof(service)))
+        reserve_variable = get_variable(
+            psi_container,
+            variable_name(PSY.get_name(service), typeof(service)),
+        )
     end
     return
 end
@@ -31,7 +34,10 @@ function service_requirement_constraint!(
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
-    reserve_variables = [get_variable(psi_container, variable_name(PSY.get_name(r), typeof(r))) for r in contributing_services]
+    reserve_variables = [
+        get_variable(psi_container, variable_name(PSY.get_name(r), typeof(r)))
+        for r in contributing_services
+    ]
 
     if use_forecast_data
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
@@ -56,14 +62,18 @@ function service_requirement_constraint!(
                 PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t] * requirement)
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                sum(sum(reserve_variable[:, t]) for reserve_variable in reserve_variables) >= param[name, t]
+                sum(
+                    sum(reserve_variable[:, t]) for reserve_variable in reserve_variables
+                ) >= param[name, t]
             )
         end
     else
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                sum(sum(reserve_variable[:, t]) for reserve_variable in reserve_variables) >= ts_vector[t] * requirement
+                sum(
+                    sum(reserve_variable[:, t]) for reserve_variable in reserve_variables
+                ) >= ts_vector[t] * requirement
             )
         end
     end

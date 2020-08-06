@@ -179,7 +179,7 @@ function construct_service!(
     ::PSY.System,
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
-    ::Vector{<:DataType}
+    ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
@@ -202,7 +202,12 @@ function construct_service!(
         # check if variables exist
         check_activeservice_variables(psi_container, contributing_services)
         # Constraints
-        service_requirement_constraint!(psi_container, service, model, contributing_services)
+        service_requirement_constraint!(
+            psi_container,
+            service,
+            model,
+            contributing_services,
+        )
     end
     return
 end
