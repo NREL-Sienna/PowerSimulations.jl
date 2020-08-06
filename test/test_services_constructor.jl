@@ -198,10 +198,10 @@ end
         push!(contributing_services, service)
     end
     groupservice = StaticReserveGroup{ReserveDown}(;
-        name="init",
-        available=true,
-        requirement=0.0,
-        ext=Dict{String, Any}(),
+        name = "init",
+        available = true,
+        requirement = 0.0,
+        ext = Dict{String, Any}(),
     )
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
