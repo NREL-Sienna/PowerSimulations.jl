@@ -172,3 +172,42 @@ end
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, false, 720, 0, 480, 0, 384, false)
 end
+
+@testset "Test GroupReserve from Thermal Dispatch" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+        :GroupReserve => ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    services = get_components(Service, c_sys5_uc)
+    contributing_services = Vector{Service}()
+    for service in sevices
+        push!(contributing_services, service)
+    end
+    groupservice = StaticReserveGroup{ReserveDown}(;
+        name="init",
+        available=true,
+        requirement=0.0,
+        ext=Dict{String, Any}(),
+    )
+    add_service!(c_sys5_uc, groupservice, contributing_services)
+
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
+        moi_tests(op_problem, p, 648, 0, 120, 216, 72, false)
+    end
+end
