@@ -253,7 +253,6 @@ end
     moi_tests(op_problem, false, 48, 0, 48, 24, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-
     # No Forecast - No Parameters Testing
     op_problem = OperationsProblem(
         TestOpProblem,
@@ -425,7 +424,6 @@ end
 
 end
 
-
 #=
 # All Hydro UC formulations are currently not supported
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentRunOfRiver Formulations" begin
@@ -509,7 +507,6 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end
-
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
