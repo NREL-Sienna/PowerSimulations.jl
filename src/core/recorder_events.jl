@@ -52,8 +52,8 @@ struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     initial_condition_type::String
     device_type::String
     device_name::String
-    previous_value::Float64
     val::Float64
+    previous_value::Float64
     stage_number::Int
 end
 
