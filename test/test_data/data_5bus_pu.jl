@@ -511,36 +511,46 @@ renewable_generators5(nodes5) = [
 
 hydro_generators5(nodes5) = [
     HydroDispatch(
-        "HydroDispatch",
-        true,
-        nodes5[2],
-        0.0,
-        0.0,
-        0.6,
-        PrimeMovers.HY,
-        (min = 0.1, max = 3.0),
-        (min = -1.5, max = 1.5),
-        nothing,
-        nothing,
-        100.0,
+        name = "HydroDispatch",
+        available = true,
+        bus = nodes5[2],
+        active_power = 0.0,
+        reactive_power = 0.0,
+        #rating = 4.0,
+        rating = 0.6,
+        prime_mover = PrimeMovers.HY,
+        #active_power_limits = (min = 0.0, max = 3.0),
+        #reactive_power_limits = (min = -1.5, max = 1.5),
+        active_power_limits = (min = 0.0, max = 60.0),
+        reactive_power_limits = (min = 0.0, max = 60.0),
+        ramp_limits = nothing,
+        time_limits = nothing,
+        base_power = 100.0,
     ),
     HydroEnergyReservoir(
-        "HydroEnergyReservoir",
-        true,
-        nodes5[3],
-        0.0,
-        0.0,
-        4.0,
-        PrimeMovers.HY,
-        (min = 0.1, max = 3.0),
-        (min = -1.5, max = 1.5),
-        (up = 1.0, down = 1.0),
-        nothing,
-        TwoPartCost(15.0, 0.0),
-        100.0,
-        50.0, # 50 pu * hr (i.e. 5 GWh)
-        0.5,
-        25.0,
+        name = "HydroEnergyReservoir",
+        available = true,
+        bus = nodes5[3],
+        active_power = 0.0,
+        reactive_power = 0.0,
+        #rating = 4.0,
+        rating = 0.5,
+        prime_mover = PrimeMovers.HY,
+        #active_power_limits = (min = 0.1, max = 3.0),
+        #reactive_power_limits = (min = -1.5, max = 1.5),
+        active_power_limits = (min = 0.0, max = 60.0),
+        reactive_power_limits = (min = 0.0, max = 60.0),
+        #ramp_limits = (up = 1.0, down = 1.0),
+        ramp_limits = (up = 10.0 * 0.6, down = 10.0 * 0.6),
+        time_limits = nothing,
+        operation_cost = TwoPartCost(15.0, 0.0),
+        base_power = 100.0,
+        storage_capacity = 1.0, # 50 pu * hr (i.e. 5 GWh)
+        inflow = 0.2,
+        initial_storage = 0.5,
+        #storage_capacity = 50.0, # 50 pu * hr (i.e. 5 GWh)
+        #inflow = 0.5,
+        #initial_storage = 25.0,
     ),
 ];
 
@@ -755,13 +765,17 @@ hydro_timeseries_DA = [
     [TimeSeries.TimeArray(DayAhead + Day(1), wind_ts_DA)],
 ];
 
-budget_aux = zeros(24)
-budget_aux[1] = 0.01
-budget_aux[end] = 0.5
+#budget_aux = zeros(24)
+#budget_aux[end] = 0.5
+#hydro_budget_DA = [
+#    [TimeSeries.TimeArray(DayAhead, budget_aux)],
+#    [TimeSeries.TimeArray(DayAhead + Day(1), budget_aux .* 1.2)],
+#]
+
 hydro_budget_DA = [
-    [TimeSeries.TimeArray(DayAhead, budget_aux)],
-    [TimeSeries.TimeArray(DayAhead + Day(1), budget_aux .* 1.2)],
-]
+    [TimeSeries.TimeArray(DayAhead, wind_ts_DA)],
+    [TimeSeries.TimeArray(DayAhead + Day(1), wind_ts_DA)],
+];
 
 RealTime = collect(
     DateTime("1/1/2024 0:00:00", "d/m/y H:M:S"):Minute(5):DateTime(
