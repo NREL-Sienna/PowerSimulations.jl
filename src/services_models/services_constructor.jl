@@ -25,10 +25,13 @@ function construct_services!(
     service_models = if isnothing(groupservice_key)
         collect(values(services_template))
     else
-        [setdiff(
-            collect(values(services_template)),
+        [
+            setdiff(
+                collect(values(services_template)),
+                [services_template[groupservice_key]],
+            )
             [services_template[groupservice_key]]
-        ); [services_template[groupservice_key]]]
+        ]
     end
     for service_model in service_models
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"

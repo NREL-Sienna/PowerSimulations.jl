@@ -46,7 +46,7 @@ function validate_services!(
     end
 
     for s in services_
-        contributing_services= PSY.get_contributing_services(s)
+        contributing_services = PSY.get_contributing_services(s)
         if isempty(contributing_services)
             @warn("The contributing services for group service $(PSY.get_name(service)) is empty, consider removing the group service from the system")
         else

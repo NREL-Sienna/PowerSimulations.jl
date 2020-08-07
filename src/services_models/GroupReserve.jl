@@ -9,11 +9,8 @@ function check_activeservice_variables(
 )
     for service in contributing_services
         # Should pop an error if no such variable exists
-        reserve_variable = get_variable(
-            psi_container,
-            PSY.get_name(service), 
-            typeof(service),
-        )
+        reserve_variable =
+            get_variable(psi_container, PSY.get_name(service), typeof(service))
     end
     return
 end
@@ -61,12 +58,15 @@ function service_requirement_constraint!(
         for t in time_steps
             param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
             if use_slacks
-                resource_expression = sum(
-                    sum(reserve_variable[:, t]) for reserve_variable in reserve_variables
+                resource_expression =
+                    sum(
+                        sum(reserve_variable[:, t])
+                        for reserve_variable in reserve_variables
                     ) + slack_vars[t]
             else
                 resource_expression = sum(
-                    sum(reserve_variable[:, t]) for reserve_variable in reserve_variables)
+                    sum(reserve_variable[:, t]) for reserve_variable in reserve_variables
+                )
             end
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
