@@ -405,7 +405,7 @@ function energy_balance_constraint!(
     end
 
     if parameters
-        energy_balance_external_input_param!(
+        energy_balance_hydro_param!(
             psi_container,
             get_initial_conditions(psi_container, key),
             constraint_infos,
@@ -418,7 +418,7 @@ function energy_balance_constraint!(
             UpdateRef{H}(INFLOW, forecast_label),
         )
     else
-        energy_balance_external_input!(
+        energy_balance_hydro!(
             psi_container,
             get_initial_conditions(psi_container, key),
             constraint_infos,
@@ -566,7 +566,7 @@ function device_energy_budget_param_ub(
         name = get_name(constraint_info)
         multiplier[name, 1] = constraint_info.multiplier * inv_dt
         param[name, 1] =
-            PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[end])
+            PJ.add_parameter(psi_container.JuMPmodel, sum(constraint_info.timeseries))
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
             sum([variable[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1]
@@ -595,7 +595,7 @@ function device_energy_budget_ub(
         multiplier = constraint_info.multiplier * inv_dt
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable[name, t] for t in time_steps]) <= multiplier * forecast[end]
+            sum([variable[name, t] for t in time_steps]) <= multiplier * sum(forecast)
         )
     end
 

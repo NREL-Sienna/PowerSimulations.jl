@@ -117,7 +117,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
-) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
     if !validate_available_devices(H, devices)
@@ -152,7 +152,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
-) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
     if !validate_available_devices(H, devices)
@@ -179,14 +179,13 @@ end
 
 """
 Construct model for HydroGen with ReservoirStorage Dispatch Formulation
-with only Active Power
 """
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
-) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
     if !validate_available_devices(H, devices)
@@ -211,6 +210,49 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
+
+    #Cost Function
+    cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
+
+    return
+end
+
+"""
+Construct model for HydroGen with ReservoirStorage Dispatch Formulation
+with only Active Power
+"""
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H, HydroDispatchReservoirStorage},
+    ::Type{S},
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(H, sys)
+
+    if !validate_available_devices(H, devices)
+        return
+    end
+
+    #Variables
+    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(EnergyVariable, psi_container, devices)
+    add_variables!(SpillageVariable, psi_container, devices)
+
+    #Initial Conditions
+    storage_energy_init(psi_container, devices)
+
+    #Constraints
+    #add_constraints!(
+    #    RangeConstraint,
+    #    ActivePowerVariable,
+    #    psi_container,
+    #    devices,
+    #    model,
+    #    S,
+    #    get_feedforward(model),
+    #)
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
