@@ -21,10 +21,15 @@ function construct_services!(
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
     # group service needs to be constructed last
-    service_models = [setdiff(
-        collect(values(services_template)),
-        [services_template[findfirst(x -> x.formulation == GroupReserve, services_template)]]
-    ); [services_template[findfirst(x -> x.formulation == GroupReserve, services_template)]]]
+    groupservice_key = findfirst(x -> x.formulation == GroupReserve, services_template)
+    service_models = if isnothing(groupservice_key)
+        collect(values(services_template))
+    else
+        [setdiff(
+            collect(values(services_template)),
+            [services_template[groupservice_key]]
+        ); [services_template[groupservice_key]]]
+    end
     for service_model in service_models
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = service_model.service_type[]
