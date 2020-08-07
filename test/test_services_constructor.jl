@@ -194,7 +194,7 @@ end
     c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
     services = get_components(Service, c_sys5_uc)
     contributing_services = Vector{Service}()
-    for service in sevices
+    for service in services
         push!(contributing_services, service)
     end
     groupservice = StaticReserveGroup{ReserveDown}(;

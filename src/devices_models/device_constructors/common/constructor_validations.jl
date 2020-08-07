@@ -32,3 +32,26 @@ function validate_services!(
     end
     return true
 end
+
+function validate_services!(
+    service::Type{S},
+    services::Vector{S},
+    ::Vector{<:DataType},
+    sys::PSY.System,
+) where {S <: PSY.StaticReserveGroup}
+    services_ = PSY.get_components(S, sys)
+    if isempty(services_)
+        @warn("The data doesn't include services of type $(service), consider changing the service models")
+        return false
+    end
+
+    for s in services_
+        contributing_services= PSY.get_contributing_services(s)
+        if isempty(contributing_services)
+            @warn("The contributing services for group service $(PSY.get_name(service)) is empty, consider removing the group service from the system")
+        else
+            push!(services, s)
+        end
+    end
+    return true
+end

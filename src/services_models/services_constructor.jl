@@ -20,7 +20,12 @@ function construct_services!(
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
-    for service_model in values(services_template)
+    # group service needs to be constructed last
+    service_models = [setdiff(
+        collect(values(services_template)),
+        [services_template[findfirst(x -> x.formulation == GroupReserve, services_template)]]
+    ); [services_template[findfirst(x -> x.formulation == GroupReserve, services_template)]]]
+    for service_model in service_models
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = service_model.service_type[]
         if validate_services!(
@@ -175,7 +180,7 @@ end
 """
 function construct_service!(
     psi_container::PSIContainer,
-    services::IS.FlattenIteratorWrapper{SR},
+    services::Vector{SR},
     ::PSY.System,
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
@@ -194,10 +199,15 @@ function construct_service!(
         get_parameter_array(container)
     end
 
-    add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
+    add_cons_container!(
+        psi_container,
+        make_constraint_name(REQUIREMENT, SR),
+        names,
+        time_steps,
+    )
 
     for service in services
-        contributing_services = get_contributing_services(service)
+        contributing_services = PSY.get_contributing_services(service)
 
         # check if variables exist
         check_activeservice_variables(psi_container, contributing_services)
