@@ -194,6 +194,7 @@ function construct_device!(
 
     #Variables
     add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(ReactivePowerVariable, psi_container, devices)
     add_variables!(EnergyVariable, psi_container, devices)
     add_variables!(SpillageVariable, psi_container, devices)
 
@@ -243,16 +244,6 @@ function construct_device!(
     #Initial Conditions
     storage_energy_init(psi_container, devices)
 
-    #Constraints
-    #add_constraints!(
-    #    RangeConstraint,
-    #    ActivePowerVariable,
-    #    psi_container,
-    #    devices,
-    #    model,
-    #    S,
-    #    get_feedforward(model),
-    #)
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
@@ -286,6 +277,16 @@ function construct_device!(
     add_constraints!(
         RangeConstraint,
         ActivePowerVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    #Constraints
+    add_constraints!(
+        RangeConstraint,
+        ReactivePowerVariable,
         psi_container,
         devices,
         model,
@@ -368,6 +369,15 @@ function construct_device!(
     add_constraints!(
         RangeConstraint,
         ActivePowerVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        RangeConstraint,
+        ReactivePowerVariable,
         psi_container,
         devices,
         model,

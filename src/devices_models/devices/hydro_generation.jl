@@ -233,6 +233,32 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractHydroUnitCommitment},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Nothing,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.HydroGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ReactivePowerVariable,
+                T,
+            ),
+            variable_name = make_variable_name(ReactivePowerVariable, T),
+            bin_variable_names = [make_variable_name(OnVariable, T)],
+            limits_func = x -> PSY.get_active_power_limits(x),
+            constraint_func = device_semicontinuousrange,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
+    )
+end
+
 #=
 # All Hydro UC formulations are currently not supported
 function active_power_constraints!(
