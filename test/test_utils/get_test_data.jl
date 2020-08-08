@@ -588,7 +588,7 @@ function build_c_sys5_reg(; kwargs...)
         delta_t = 4,
         area = first(get_components(Area, c_sys5_reg)),
     )
-    add_component!(c_sys5_reg, AGC_service)
+    #add_component!(c_sys5_reg, AGC_service)
     if get(kwargs, :add_forecasts, true)
         for t in 1:2
             for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_reg))
@@ -608,15 +608,17 @@ function build_c_sys5_reg(; kwargs...)
         end
     end
 
+    contributing_devices = Vector()
     for g in get_components(Generator, c_sys5_reg)
         droop = isa(g, ThermalStandard) ? 0.04 * PSY.get_base_power(g) :
             0.05 * PSY.get_base_power(g)
         p_factor = (up = 1.0, dn = 1.0)
         t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
         add_component!(c_sys5_reg, t)
-        add_service!(c_sys5_reg, t, AGC_service)
+        push!(contributing_devices, t)
         @assert has_forecasts(t)
     end
+    add_service!(c_sys5_reg, AGC_service, contributing_devices)
     return c_sys5_reg
 end
 
