@@ -32,6 +32,7 @@ function service_requirement_constraint!(
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, make_constraint_name(REQUIREMENT, SR))
+    use_slacks = get_services_slack_variables(psi_container.settings)
     reserve_variables = [
         get_variable(psi_container, PSY.get_name(r), typeof(r))
         for r in contributing_services
