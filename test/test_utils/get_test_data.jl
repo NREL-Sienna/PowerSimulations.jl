@@ -614,7 +614,7 @@ function build_c_sys5_reg(; kwargs...)
         p_factor = (up = 1.0, dn = 1.0)
         t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
         add_component!(c_sys5_reg, t)
-        add_service!(t, AGC_service)
+        add_service!(c_sys5_reg, t, AGC_service)
         @assert has_forecasts(t)
     end
     return c_sys5_reg
