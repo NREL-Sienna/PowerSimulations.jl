@@ -129,11 +129,7 @@ function construct_device!(
     add_variables!(ReactivePowerVariable, psi_container, devices)
 
     #Energy Budget Constraint
-    if model_uses_forecasts(psi_container)
-        energy_budget_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    else
-        @warn "No Forecasts: Ignoring energy constraints"
-    end
+    energy_budget_constraints!(psi_container, devices, model, S, get_feedforward(model))
 
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
@@ -163,11 +159,7 @@ function construct_device!(
     add_variables!(ActivePowerVariable, psi_container, devices)
 
     #Energy Budget Constraint
-    if model_uses_forecasts(psi_container)
-        energy_budget_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    else
-        @warn "No Forecasts: Ignoring energy constraints"
-    end
+    energy_budget_constraints!(psi_container, devices, model, S, get_feedforward(model))
 
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
@@ -200,18 +192,9 @@ function construct_device!(
 
     #Initial Conditions
     storage_energy_init(psi_container, devices)
-
-    #Constraints
-    add_constraints!(
-        RangeConstraint,
-        ActivePowerVariable,
-        psi_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    #Energy Balance Constraint
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
+
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
@@ -243,7 +226,7 @@ function construct_device!(
 
     #Initial Conditions
     storage_energy_init(psi_container, devices)
-
+    #Energy Balance Constraint
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 

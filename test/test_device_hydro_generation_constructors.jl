@@ -325,7 +325,7 @@ end
         use_forecast_data = false,
     )
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 1, 0, 0, 0, 0, false)
+    moi_tests(op_problem, false, 1, 0, 1, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end
@@ -355,7 +355,7 @@ end
         use_forecast_data = false,
     )
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 2, 0, 0, 0, 0, false)
+    moi_tests(op_problem, false, 2, 0, 1, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end
@@ -423,6 +423,70 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end
+
+#########################################
+### RESERVOIR STORAGE DISPATCH TESTS ####
+#########################################
+
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    c_sys5_hyd = build_system("c_sys5_hyd")
+
+    # Parameters Testing
+    op_problem =
+        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, true, 72, 0, 0, 0, 24, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Parameters Testing
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd)
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, false, 72, 0, 0, 0, 24, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Forecast - No Parameters Testing
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_forecast_data = false,
+    )
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, false, 3, 0, 0, 0, 1, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+end
+
+@testset "Hydro ACPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    c_sys5_hyd = build_system("c_sys5_hyd")
+
+    # Parameters Testing
+    op_problem =
+        OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, true, 96, 0, 0, 0, 24, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Parameters Testing
+    op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_hyd)
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, false, 96, 0, 0, 0, 24, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Forecast - No Parameters Testing
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        ACPPowerModel,
+        c_sys5_hyd;
+        use_forecast_data = false,
+    )
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, false, 4, 0, 0, 0, 1, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+end
+
+
 
 #=
 # All Hydro UC formulations are currently not supported
