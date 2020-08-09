@@ -50,7 +50,7 @@ export HydroDispatchReservoirBudget
 export HydroDispatchReservoirStorage
 export HydroCommitmentRunOfRiver
 export HydroCommitmentReservoirBudget
-# export HydroCommitmentReservoirStorage
+export HydroCommitmentReservoirStorage
 ######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation

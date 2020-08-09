@@ -7,6 +7,7 @@ struct HydroDispatchReservoirBudget <: AbstractHydroReservoirFormulation end
 struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
+struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 #=
 # Commenting out all Unit Commitment formulations as all Hydro UC
 # formulations are currently not supported
@@ -408,10 +409,13 @@ end
 function energy_balance_constraint!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, HydroDispatchReservoirStorage},
+    model::DeviceModel{H, S},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HydroEnergyReservoir}
+) where {
+    H <: PSY.HydroEnergyReservoir,
+    S <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage},
+}
     key = ICKey(EnergyLevel, H)
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
