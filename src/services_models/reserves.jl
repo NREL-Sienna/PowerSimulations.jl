@@ -48,7 +48,7 @@ function service_requirement_constraint!(
     reserve_variable = get_variable(psi_container, name, SR)
     use_slacks = get_services_slack_variables(psi_container.settings)
 
-    if use_forecast_data && has_forecasts(typeof(service))
+    if use_forecast_data && PSY.has_forecasts(typeof(service))
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
             PSY.Deterministic,
             service,
