@@ -38,7 +38,7 @@ function service_requirement_constraint!(
         for r in contributing_services
     ]
 
-    if use_forecast_data && PSY.has_forecasts(typeof(service))
+    if use_forecast_data && PSY.has_forecasts(service)
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
             PSY.Deterministic,
             service,
