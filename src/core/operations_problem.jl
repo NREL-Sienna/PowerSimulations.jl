@@ -544,7 +544,9 @@ function write_data(psi_container::PSIContainer, save_path::AbstractString; kwar
             if isempty(variable)
                 @debug "$(k) is empty, not writing $file_path"
             else
-                file_type.write(file_path, variable)
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write feather variable" begin
+                    file_type.write(file_path, variable)
+                end
             end
         end
     end

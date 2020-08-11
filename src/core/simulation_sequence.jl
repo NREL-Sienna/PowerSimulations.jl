@@ -177,6 +177,7 @@ mutable struct SimulationSequence
     ini_cond_chronology::InitialConditionChronology
     cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
+    executions_by_stage::Dict{String, Int}
     current_execution_index::Int64
 
     function SimulationSequence(;
@@ -203,6 +204,8 @@ mutable struct SimulationSequence
         if length(order) == 1
             ini_cond_chronology = IntraStageChronology()
         end
+        execution_order = _get_execution_order_vector(order, _intervals, step_resolution)
+        executions_by_stage = _get_num_executions_by_stage(order, execution_order)
         new(
             horizons,
             step_resolution,
@@ -212,11 +215,22 @@ mutable struct SimulationSequence
             feedforward,
             ini_cond_chronology,
             cache,
-            _get_execution_order_vector(order, _intervals, step_resolution),
+            execution_order,
+            executions_by_stage,
             0,
         )
 
     end
+end
+
+function _get_num_executions_by_stage(order, execution_order)
+    # TODO DT: make test
+    executions_by_stage = Dict(x => 0 for x in values(order))
+    for stage_number in execution_order
+        executions_by_stage[order[stage_number]] += 1
+    end
+
+    return executions_by_stage
 end
 
 function get_stage_horizon(s::SimulationSequence, stage::String)

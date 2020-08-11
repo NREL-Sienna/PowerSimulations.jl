@@ -6,18 +6,21 @@ abstract type AbstractSimulationStatusEvent <: IS.AbstractRecorderEvent end
 struct SimulationStepEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
+    time_step::Int
     step::Int
     status::String
 end
 
 function SimulationStepEvent(
     simulation_time::Dates.DateTime,
+    time_step::Int,
     step::Int,
     status::AbstractString,
 )
     return SimulationStepEvent(
         IS.RecorderEventCommon("SimulationStepEvent"),
         simulation_time,
+        time_step,
         step,
         status,
     )
@@ -26,6 +29,7 @@ end
 struct SimulationStageEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
+    time_step::Int
     step::Int
     stage::Int
     status::String
@@ -33,6 +37,7 @@ end
 
 function SimulationStageEvent(
     simulation_time::Dates.DateTime,
+    time_step::Int,
     step::Int,
     stage::Int,
     status::AbstractString,
@@ -40,6 +45,7 @@ function SimulationStageEvent(
     return SimulationStageEvent(
         IS.RecorderEventCommon("SimulationStageEvent"),
         simulation_time,
+        time_step,
         step,
         stage,
         status,
@@ -49,6 +55,7 @@ end
 struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
+    time_step::Int
     initial_condition_type::String
     device_type::String
     device_name::String
@@ -59,6 +66,7 @@ end
 
 function InitialConditionUpdateEvent(
     simulation_time,
+    time_step,
     key::ICKey,
     ic::InitialCondition,
     val::Float64,
@@ -68,6 +76,7 @@ function InitialConditionUpdateEvent(
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
         simulation_time,
+        time_step,
         string(key.ic_type),
         string(key.device_type),
         device_name(ic),
@@ -81,6 +90,7 @@ struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     category::String
     simulation_time::Dates.DateTime
+    time_step::Int
     parameter_type::String
     device_name::String
     previous_value::Float64
@@ -92,6 +102,7 @@ end
 function ParameterUpdateEvent(
     category::String,
     simulation_time::Dates.DateTime,
+    time_step::Int,
     update_ref::UpdateRef{JuMP.VariableRef},
     device_name::String,
     val::Float64,
@@ -103,6 +114,7 @@ function ParameterUpdateEvent(
         IS.RecorderEventCommon("ParameterUpdateEvent"),
         category,
         simulation_time,
+        time_step,
         string(update_ref.access_ref),
         device_name,
         previous_value,

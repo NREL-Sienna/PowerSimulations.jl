@@ -100,6 +100,7 @@ export GenericOpProblem
 export UnitCommitmentProblem
 export EconomicDispatchProblem
 #export OptimalPowerFlow
+export HdfSimulationStore
 
 # Functions
 ## Construction Exports
@@ -250,6 +251,7 @@ import Feather
 import JSON
 import CSV
 import SHA
+import HDF5
 
 include("core/definitions.jl")
 
@@ -272,6 +274,7 @@ include("core/parameters.jl")
 include("core/variables.jl")
 include("core/constraints.jl")
 include("core/cache.jl")
+include("core/optimizer_stats.jl")
 include("core/initial_condition_types.jl")
 include("core/initial_condition.jl")
 include("core/initial_conditions.jl")
@@ -281,6 +284,9 @@ include("core/psi_container.jl")
 include("core/update_initial_conditions.jl")
 include("core/operations_problem_results.jl")
 include("core/operations_problem.jl")
+include("core/simulation_store.jl")
+include("core/hdf_simulation_store.jl")
+include("core/simulation_store_factory.jl")
 include("core/simulation_stages.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
