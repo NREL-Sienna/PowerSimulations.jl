@@ -12,11 +12,14 @@ mutable struct SimulationInternal
     stages_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
+    time_step_ref::Dict{Int, Int}
     date_range::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     current_time::Dates.DateTime
+    time_step::Int
     reset::Bool
     compiled_status::BUILD_STATUS
     simulation_cache::Dict{<:CacheKey, AbstractCache}
+    store::SimulationStore  # TODO DT: change to abstract
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
@@ -64,6 +67,7 @@ function SimulationInternal(
     foreach(x -> push!(unique_recorders, x), recorders)
 
     init_time = Dates.now()
+    time_step = 1
     return SimulationInternal(
         logs_dir,
         models_dir,
@@ -73,11 +77,14 @@ function SimulationInternal(
         length(stages_keys),
         count_dict,
         Dict{Int, Dates.DateTime}(),
+        Dict{Int, Int}(),
         (init_time, init_time),
         init_time,
+        time_step,
         true,
         false,
         Dict{CacheKey, AbstractCache}(),
+        make_simulation_store(simulation_dir),
         collect(unique_recorders),
         console_level,
         file_level,
@@ -283,6 +290,10 @@ get_stages_quantity(s::Simulation) = s.internal.stages_count
 
 function get_simulation_time(s::Simulation, stage_number::Int)
     return s.internal.date_ref[stage_number]
+end
+
+function get_simulation_time_step(s::Simulation, stage_number::Int)
+    return s.internal.time_step_ref[stage_number]
 end
 
 get_ini_cond_chronology(s::Simulation) = s.sequence.ini_cond_chronology
@@ -498,9 +509,12 @@ function _build_stages!(sim::Simulation)
             stage.internal.stage_path =
                 joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
             mkpath(stage.internal.stage_path)
+            # TODO DT: might need to clear items in the store
+            # TODO DT: create HDF groups
             build!(stage, initial_time, horizon, stage_interval)
             _populate_caches!(sim, stage_name)
             sim.internal.date_ref[stage_number] = initial_time
+            sim.internal.time_step_ref[stage_number] = 1
         end
     end
     _check_required_ini_cond_caches(sim)
@@ -583,6 +597,7 @@ function _build!(sim::Simulation)
         stage_interval = get_stage_interval(sim, stage_name)
         stage.internal.executions = Int(get_step_resolution(sim.sequence) / stage_interval)
         stage.internal.number = stage_number
+        stage.internal.name = stage_name
         _attach_feedforward!(sim, stage_name)
     end
     _assign_feedforward_chronologies(sim)
@@ -618,6 +633,7 @@ function initial_condition_update!(
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             sim.internal.current_time,
+            sim.internal.time_step,
             ini_cond_key,
             ic,
             quantity,
@@ -665,6 +681,7 @@ function initial_condition_update!(
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             sim.internal.current_time,
+            sim.internal.time_step,
             ini_cond_key,
             ic,
             quantity,
@@ -896,10 +913,12 @@ function execute!(sim::Simulation; kwargs...)
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
     try
+        open(sim.internal.store, "r+")
         return Logging.with_logger(logger) do
             _execute!(sim; kwargs...)
         end
     finally
+        close(sim.internal.store)
         unregister_recorders!(sim.internal)
         close(logger)
     end
@@ -917,17 +936,23 @@ function _execute!(sim::Simulation; kwargs...)
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
         execution_order = get_execution_order(sim)
+        steps = get_steps(sim)
+        num_executions = steps * length(execution_order)
+        _initialize_stage_storage!(sim)
+        initialize_optimizer_stats_storage!(sim.internal.store, num_executions)
         for step in 1:get_steps(sim)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
                 IS.@record :simulation_status SimulationStepEvent(
                     sim.internal.current_time,
+                    sim.internal.time_step,
                     step,
                     "start",
                 )
                 for (ix, stage_number) in enumerate(execution_order)
                     IS.@record :simulation_status SimulationStageEvent(
                         sim.internal.current_time,
+                        sim.internal.time_step,
                         step,
                         stage_number,
                         "start",
@@ -941,6 +966,7 @@ function _execute!(sim::Simulation; kwargs...)
                         stage_interval = get_stage_interval(sim, stage_name)
                         run_name = "step-$(step)-stage-$(stage_name)"
                         sim.internal.current_time = sim.internal.date_ref[stage_number]
+                        sim.internal.time_step = sim.internal.time_step_ref[stage_number]
                         sim.sequence.current_execution_index = ix
                         @info "Starting run $run_name $(sim.internal.current_time)"
                         raw_results_path = joinpath(
@@ -954,7 +980,8 @@ function _execute!(sim::Simulation; kwargs...)
                             !(step == 1 && ix == 1) && update_stage!(stage, sim)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
-                            run_stage(stage, sim.internal.current_time, raw_results_path)
+                            stage_name = get_stage_name(sim, stage)
+                            run_stage(step, stage, sim.internal.current_time, sim.internal.time_step, raw_results_path, sim.internal.store)
                             sim.internal.run_count[step][stage_number] += 1
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
@@ -968,14 +995,17 @@ function _execute!(sim::Simulation; kwargs...)
                     end
                     IS.@record :simulation_status SimulationStageEvent(
                         sim.internal.current_time,
+                        sim.internal.time_step,
                         step,
                         stage_number,
                         "done",
                     )
                     sim.internal.date_ref[stage_number] += stage_interval
+                    sim.internal.time_step_ref[stage_number] += 1
                 end
                 IS.@record :simulation_status SimulationStepEvent(
                     sim.internal.current_time,
+                    sim.internal.time_step,
                     step,
                     "done",
                 )
@@ -987,6 +1017,81 @@ function _execute!(sim::Simulation; kwargs...)
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
     serialize_sim_output(sim_results)
     return sim_results
+end
+
+function _initialize_stage_storage!(sim::Simulation)
+    sequence = sim.sequence
+    execution_order = sequence.execution_order
+    executions_by_stage = sequence.executions_by_stage
+    horizons = sequence.horizons
+    intervals = sequence.intervals
+    order = sequence.order
+
+    # TODO DT: make this a struct in simulation_store.jl
+    # Keep it free-form until we settle on fields
+    requirements = Dict(
+        "order" => [order[x] for x in sort!(collect(keys(order)))],
+        "step_resolution_ms" => convert(Dates.Millisecond, sequence.step_resolution).value,
+        "per_stage_metadata" => Dict(
+            "executions" => executions_by_stage,
+            "horizons" => horizons,
+            "intervals_ms" => Dict(
+               k => convert(Dates.Millisecond, v[1]).value for (k, v) in intervals
+            ),
+        ),
+        "per_stage_data" => Dict(
+            "duals" => Dict{String,Dict}(),
+            "parameters" => Dict{String,Dict}(),
+            "variables" => Dict{String,Dict}(),
+        ),
+    )
+    per_stage = requirements["per_stage_data"]
+
+    for (stage_name, num_executions) in sequence.executions_by_stage
+        stage = sim.stages[stage_name]
+        psi_container = get_psi_container(stage)
+        horizon = horizons[stage_name]
+        num_executions = executions_by_stage[stage_name]
+        duals = get_constraint_duals(psi_container.settings)
+        parameters = get_parameters(psi_container)
+        variables = get_variables(psi_container)
+
+        if !haskey(per_stage["duals"], stage_name)
+            per_stage["duals"][stage_name] = Dict()
+        end
+        if !haskey(per_stage["parameters"], stage_name)
+            per_stage["parameters"][stage_name] = Dict()
+        end
+        if !haskey(per_stage["variables"], stage_name)
+            per_stage["variables"][stage_name] = Dict()
+        end
+        for name in duals
+            array = get_constraint(psi_container, name)
+            @assert length(array.axes) == 1
+            per_stage["duals"][stage_name][name] = Dict(
+                "num_rows" => horizon * num_executions * get_steps(sim),
+                "columns" => [string(name)],
+            )
+        end
+        for (parameter_name, param_container) in parameters
+            # TODO DT: why are we skipping these?
+            !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
+            param_array = get_parameter_array(param_container)
+            per_stage["parameters"][stage_name][parameter_name] = Dict(
+                "num_rows" => horizon * num_executions * get_steps(sim),
+                "columns" => collect(axes(param_array)[1]),
+            )
+        end
+        for (variable_name, var_array) in variables
+            per_stage["variables"][stage_name][variable_name] = Dict(
+                "num_rows" => horizon * num_executions * get_steps(sim),
+                "columns" => collect(axes(var_array)[1]),
+            )
+        end
+    end
+
+    @debug "initialized stage requirements" requirements
+    initialize_stage_storage!(sim.internal.store, requirements)
 end
 
 struct SimulationSerializationWrapper
