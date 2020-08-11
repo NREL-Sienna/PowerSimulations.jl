@@ -441,6 +441,11 @@ The Parameters are initialized using the upper boundary values of the provided v
 # LaTeX
 
 `` \sum_{t} x \leq param^{max}``
+TO DO: New formulation when DataStore available
+`` \sum_{t} x * DeltaT_lower \leq param^{max} * DeltaT_upper ``
+TO DO: New formulation when Commitment is considered: SemiContinuousFF
+    `` P_LL - P_max * ON_upper <= 0.0 ``
+    `` P_LL - P_min * ON_upper >= 0.0 ``
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
