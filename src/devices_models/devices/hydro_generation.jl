@@ -8,14 +8,12 @@ struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
-#=
-# Commenting out all Unit Commitment formulations as all Hydro UC
-# formulations are currently not supported
-struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
-struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
-struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
-=#
+
 ########################### Hydro generation variables #################################
+
+"""
+This function add the variables for active power to the model
+"""
 function AddVariableSpec(
     ::Type{T},
     ::Type{U},
@@ -31,6 +29,9 @@ function AddVariableSpec(
     )
 end
 
+"""
+This function add the variables for reactive power to the model
+"""
 function AddVariableSpec(
     ::Type{T},
     ::Type{U},
@@ -46,6 +47,9 @@ function AddVariableSpec(
     )
 end
 
+"""
+This function add the variables for energy storage to the model
+"""
 function AddVariableSpec(
     ::Type{T},
     ::Type{U},
@@ -87,46 +91,9 @@ function AddVariableSpec(
 end
 
 """
-This function add the variables for power generation commitment to the model
+This function define the range constraint specs for the
+reactive power for dispatch formulations.
 """
-#=
-function commitment_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    time_steps = model_time_steps(psi_container)
-    var_names = [make_variable_name(ON, H), make_variable_name(START, H), make_variable_name(STOP, H)]
-
-    for v in var_names
-        add_variable!(psi_container, devices, v, true)
-    end
-
-    return
-end
-
-# All Hydro UC formulations are currently not supported
-### Constraints for Thermal Generation without commitment variables ####
-"""
-This function adds the Commitment Status constraint when there are CommitmentVariables
-"""
-function commitment_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H,D},
-    system_formulation::Type{S},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {H<:PSY.HydroGen,D<:AbstractHydroUnitCommitment,S<:PM.AbstractPowerModel}
-    device_commitment!(
-        psi_container,
-        get_initial_conditions(psi_container, ICKey(DeviceStatus, H)),
-        constraint_name(COMMITMENT, H),
-        (make_variable_name(START, H), make_variable_name(STOP, H), make_variable_name(ON, H)),
-    )
-
-    return
-end
-=#
-####################################### Reactive Power Constraints #########################
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ReactivePowerVariable},
@@ -152,6 +119,10 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+"""
+This function define the range constraint specs for the
+active power for dispatch Run of River formulations.
+"""
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
@@ -191,6 +162,10 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+"""
+This function define the range constraint specs for the
+active power for dispatch Reservoir formulations.
+"""
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
@@ -212,6 +187,10 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+"""
+This function define the range constraint specs for the
+active power for commitment formulations (semi continuous).
+"""
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
@@ -234,6 +213,10 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+"""
+This function define the range constraint specs for the
+reactive power for commitment formulations (semi continuous).
+"""
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ReactivePowerVariable},
@@ -260,62 +243,13 @@ function DeviceRangeConstraintSpec(
     )
 end
 
-#=
-# All Hydro UC formulations are currently not supported
-function active_power_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H,<:AbstractHydroUnitCommitment},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {H<:PSY.HydroGen}
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
+######################## RoR constraints ############################
 
-    ts_data_active, constraint_infos = get_time_series(
-        psi_container,
-        devices,
-        model,
-        x -> PSY.get_active_power_limits(x),
-    )
-
-    if !parameters && !use_forecast_data
-        device_semicontinuousrange(
-            RangeConstraintSpecInternal(
-                psi_container,
-                constraint_infos,
-                constraint_name(ACTIVE_RANGE, H),
-                make_variable_name(ACTIVE_POWER, H),
-                make_variable_name(ON, H),
-            )
-        )
-        return
-    end
-
-    if parameters
-        device_timeseries_ub_bigM(
-            psi_container,
-            ts_data_active,
-            constraint_name(ACTIVE_RANGE, H),
-            make_variable_name(ACTIVE_POWER, H),
-            UpdateRef{H}(ON, "get_max_active_power"),
-            make_variable_name(ON, H),
-        )
-    else
-        device_timeseries_ub_bin(
-            psi_container,
-            ts_data_active,
-            constraint_name(ACTIVE_RANGE, H),
-            make_variable_name(ACTIVE_POWER, H),
-            make_variable_name(ON, H),
-        )
-    end
-
-    return
-end
-=#
-######################## Inflow constraints ############################
-
+"""
+This function define the range constraint specs for the
+reactive power for Commitment Run of River formulation.
+    `` P <= multiplier * P_max ``
+"""
 function commit_hydro_active_power_ub!(
     psi_container::PSIContainer,
     devices,
@@ -344,68 +278,12 @@ function commit_hydro_active_power_ub!(
     end
 end
 
-#=
-# TODO: Determine if this is useful for ROR formulation ?
-function inflow_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H,<:AbstractHydroDispatchFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {H<:PSY.HydroGen}
-
-    return
-end
-
-function inflow_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{PSY.HydroEnergyReservoir,HydroDispatchReservoirStorage},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {H<:PSY.HydroGen}
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-
-    ts_data_inflow, constraint_infos = _get_inflow_time_series(
-        psi_container,
-        devices,
-        model,
-        x -> (min = 0.0, max = PSY.get_inflow(x)),
-    )
-
-    if !parameters && !use_forecast_data
-        device_range(
-            psi_container,
-            RangeConstraintSpecInternal(
-                constraint_infos,
-                constraint_name(INFLOW_RANGE, H),
-                make_variable_name(INFLOW, H),
-            )
-        )
-        return
-    end
-
-    if parameters
-        device_timeseries_param_ub!(psi_container,
-                            ts_data_inflow,
-                            constraint_name(INFLOW_RANGE, H),
-                            UpdateRef{H}(INFLOW_RANGE, "get_inflow"),
-                            make_variable_name(INFLOW, H))
-    else
-        device_timeseries_ub(
-            psi_container,
-            ts_data_inflow,
-            constraint_name(INFLOW_RANGE, H),
-            make_variable_name(INFLOW, H),
-        )
-    end
-
-    return
-end
-=#
 ######################## Energy balance constraints ############################
 
+"""
+This function define the constraints for the water level (or state of charge)
+for the Hydro Reservoir.
+"""
 function energy_balance_constraint!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -541,6 +419,12 @@ function energy_budget_constraints!(
     return
 end
 
+"""
+This function define the budget constraint for the
+active power budget formulation.
+
+`` sum(P[t]) <= Budget ``
+"""
 function energy_budget_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -576,6 +460,10 @@ function energy_budget_constraints!(
     end
 end
 
+"""
+This function define the budget constraint (using params)
+for the active power budget formulation.
+"""
 function device_energy_budget_param_ub(
     psi_container::PSIContainer,
     energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
@@ -606,6 +494,10 @@ function device_energy_budget_param_ub(
     return
 end
 
+"""
+This function define the budget constraint
+for the active power budget formulation.
+"""
 function device_energy_budget_ub(
     psi_container::PSIContainer,
     energy_budget_constraints::Vector{DeviceTimeSeriesConstraintInfo},
