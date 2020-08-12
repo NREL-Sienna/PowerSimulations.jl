@@ -8,8 +8,11 @@ function check_activeservice_variables(
     contributing_services::Vector{<:PSY.Service},
 )
     for service in contributing_services
-        # Should pop an error if no such variable exists
-        get_variable(psi_container, ActiveServiceVariable, typeof(service))
+        var = get(psi_container.variables, make_variable_name(ActiveServiceVariable, typeof(service)), nothing)
+        if isnothing(var)
+            @error "contributing service $name is not stored" sort!(get_variable_names(psi_container))
+            throw(IS.InvalidValue("variable $name is not stored"))
+        end
     end
     return
 end
