@@ -9,8 +9,7 @@ function check_activeservice_variables(
 )
     for service in contributing_services
         # Should pop an error if no such variable exists
-        reserve_variable =
-            get_variable(psi_container, PSY.get_name(service), typeof(service))
+        get_variable(psi_container, PSY.get_name(service), typeof(service))
     end
     return
 end
