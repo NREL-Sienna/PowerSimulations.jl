@@ -1171,29 +1171,26 @@ function cost_function(
         d::PSY.ThermalGen,
         cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
     )
-        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        if !haskey(psi_container.variables, :PWL_cost_vars)
-            time_steps = model_time_steps(psi_container)
-            container = add_var_container!(
-                psi_container,
-                :PWL_cost_vars,
-                [PSY.get_name(d)],
-                time_steps,
-                1:length(cost_component);
-                sparse = true,
-            )
-        else
-            container = get_variable(psi_container, :PWL_cost_vars)
+        export_pwl_vars = get_export_pwl_vars(psi_container.settings)
+        if export_pwl_vars
+            if !haskey(psi_container.variables, :PWL_cost_vars)
+                time_steps = model_time_steps(psi_container)
+                container = add_var_container!(
+                    psi_container,
+                    :PWL_cost_vars,
+                    [PSY.get_name(d)],
+                    time_steps,
+                    1:length(cost_component);
+                    sparse = true,
+                )
+            else
+                container = get_variable(psi_container, :PWL_cost_vars)
+            end
         end
+
+        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
         for (t, var) in enumerate(variable[PSY.get_name(d), :])
-            pwlvars = JuMP.@variable(
-                psi_container.JuMPmodel,
-                [i = 1:length(cost_component)],
-                base_name = "{$(variable)}_{pwl}",
-                start = 0.0,
-                lower_bound = 0.0,
-                upper_bound = PSY.get_breakpoint_upperbounds(cost_component)[i]
-            )
+            ### equiv of _pwl_cost!
             slopes = PSY.get_slopes(cost_component)
             first_pair = cost_component.cost[1]
             if slopes[1] != 0.0
@@ -1203,21 +1200,35 @@ function cost_function(
                         COST_EPSILON * first_pair[2]
                     ) / (first_pair[1] * first_pair[2])
             end
-            if slopes[1] < 0 || slopes[1] <= slopes[2]
+            if slopes[1] < 0 || slopes[1] > slopes[2]
                 throw(IS.ConflictingInputsError("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
             end
-            for (ix, pwlvar) in enumerate(pwlvars)
-                JuMP.add_to_expression!(gen_cost, slopes[ix] * pwlvar)
-                container[(PSY.get_name(d), t, ix)] = pwlvar
-            end
+            g_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
 
+            pwlvars = JuMP.@variable(
+                psi_container.JuMPmodel,
+                [i = 1:length(cost_component)],
+                base_name = "{$(var)}_{pwl}",
+                start = 0.0,
+                lower_bound = 0.0,
+                upper_bound = PSY.get_breakpoint_upperbounds(cost_component)[i]
+            )
+            for (ix, pwlvar) in enumerate(pwlvars)
+                JuMP.add_to_expression!(g_cost, slopes[ix] * pwlvar)
+            end
             c = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
+                var == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
             )
-            JuMP.add_to_expression!(gen_cost, c)
+
+            if export_pwl_vars
+                for (ix, v) in enumberate(pwlvars)
+                    container[(PSY.get_name(d), t, ix)] = v
+                end
+            end
+            JuMP.add_to_expression!(gen_cost, g_cost)
         end
-        return sign * gen_cost * d
+        return gen_cost * dt
     end
 
     for d in devices
