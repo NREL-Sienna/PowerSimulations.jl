@@ -1215,17 +1215,14 @@ function cost_function(
             )
             for (ix, pwlvar) in enumerate(pwlvars)
                 JuMP.add_to_expression!(g_cost, slopes[ix] * pwlvar)
+                if export_pwl_vars
+                    container[(PSY.get_name(d), t, ix)] = pwlvar
+                end
             end
             c = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 var == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
             )
-
-            if export_pwl_vars
-                for (ix, v) in enumberate(pwlvars)
-                    container[(PSY.get_name(d), t, ix)] = v
-                end
-            end
             JuMP.add_to_expression!(gen_cost, g_cost)
         end
         return gen_cost * dt
