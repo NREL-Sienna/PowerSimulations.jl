@@ -46,6 +46,9 @@ makedocs(
             "Plot Multiple Results" => "howto/3.6_plot_multiple_results.md",
         ],
         "Simulation Recorder" => "man/simulation_recorder.md",
+        "Model References" => Any[
+            "Hydro Models" => "ref/hydro.md"
+        ],
         "API" => Any["PowerSimulations" => "api/PowerSimulations.md"],
     ],
 )
