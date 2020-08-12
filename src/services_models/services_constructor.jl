@@ -195,7 +195,7 @@ function construct_service!(
     ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
     time_steps = model_time_steps(psi_container)
-    names = (PSY.get_name(s) for s in services)
+    names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(psi_container)
         container = add_param_container!(
