@@ -211,3 +211,48 @@ end
         moi_tests(op_problem, p, 648, 0, 120, 240, 72, false)
     end
 end
+
+@testset "Test GroupReserve Errors" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+        :GroupReserve => ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    services = get_components(Service, c_sys5_uc)
+    contributing_services = Vector{Service}()
+    for service in services
+        push!(contributing_services, service)
+    end
+    groupservice = StaticReserveGroup{ReserveDown}(;
+        name = "init",
+        available = true,
+        requirement = 0.0,
+        ext = Dict{String, Any}(),
+    )
+    add_service!(c_sys5_uc, groupservice, contributing_services)
+
+    off_service = VariableReserve{ReserveUp}(
+        "Reserveoff",
+        true,
+        0.6,
+        10,
+    )
+    push!(groupservice.contributing_services, off_service)
+    
+    @test_throws InfrastructureSystems.InvalidValue op_problem =
+        OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = false)
+    
+end
