@@ -64,9 +64,9 @@ function service_requirement_constraint!(
         )
         for t in time_steps
             param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
-            resource_expression = GenericAffExpr{Float64, VariableRef}()
+            resource_expression = JuMP.GenericAffExpr{Float64, VariableRef}()
             for reserve_variable in reserve_variables
-                add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
+                JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
             end
             if use_slacks
                 resource_expression += slack_vars[t]
@@ -78,9 +78,9 @@ function service_requirement_constraint!(
         end
     else
         for t in time_steps
-            resource_expression = GenericAffExpr{Float64, VariableRef}()
+            resource_expression = JuMP.GenericAffExpr{Float64, VariableRef}()
             for reserve_variable in reserve_variables
-                add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
+                JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
             end
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
