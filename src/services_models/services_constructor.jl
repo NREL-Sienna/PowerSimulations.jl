@@ -20,20 +20,8 @@ function construct_services!(
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
-    # group service needs to be constructed last
-    groupservice_key = findfirst(x -> x.formulation == GroupReserve, services_template)
-    service_models = if isnothing(groupservice_key)
-        collect(values(services_template))
-    else
-        [
-            setdiff(
-                collect(values(services_template)),
-                [services_template[groupservice_key]],
-            )
-            [services_template[groupservice_key]]
-        ]
-    end
-    for service_model in service_models
+    
+    function _construct_valid_services!(service_model::ServiceModel)
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = service_model.service_type[]
         if validate_services!(
@@ -51,7 +39,17 @@ function construct_services!(
                 incompatible_device_types,
             )
         end
+    end    
+
+    groupservice = nothing
+    for (key, service_model) in service_models
+        if service_model.formulation === GroupReserve  # group service needs to be constructed last
+            groupservice = key
+            continue
+        end
+        _construct_valid_services!(service_model)
     end
+    groupservice === nothing || _construct_valid_services!(service_models[groupservice])
     return
 end
 
