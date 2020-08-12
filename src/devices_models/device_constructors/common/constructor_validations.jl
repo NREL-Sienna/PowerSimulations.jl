@@ -53,8 +53,5 @@ function validate_services!(
             push!(services, s)
         end
     end
-    if isempty(services)
-        return false
-    end
-    return true
+    return !isempty(services)
 end
