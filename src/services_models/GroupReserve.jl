@@ -9,11 +9,8 @@ function check_activeservice_variables(
 )
     for service in contributing_services
         name = PSY.get_name(service)
-        var = get(
-            psi_container.variables,
-            make_variable_name(name, typeof(service)),
-            nothing,
-        )
+        var =
+            get(psi_container.variables, make_variable_name(name, typeof(service)), nothing)
         if isnothing(var)
             @error "contributing service $name is not stored" sort!(get_variable_names(
                 psi_container,

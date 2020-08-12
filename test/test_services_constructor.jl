@@ -244,15 +244,10 @@ end
     )
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
-    off_service = VariableReserve{ReserveUp}(
-        "Reserveoff",
-        true,
-        0.6,
-        10,
-    )
+    off_service = VariableReserve{ReserveUp}("Reserveoff", true, 0.6, 10)
     push!(groupservice.contributing_services, off_service)
-    
+
     @test_throws InfrastructureSystems.InvalidValue op_problem =
         OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = false)
-    
+
 end
