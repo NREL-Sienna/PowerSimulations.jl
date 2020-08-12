@@ -42,14 +42,15 @@ function construct_services!(
     end
 
     groupservice = nothing
-    for (key, service_model) in service_models
+
+    for (key, service_model) in services_template
         if service_model.formulation === GroupReserve  # group service needs to be constructed last
             groupservice = key
             continue
         end
         _construct_valid_services!(service_model)
     end
-    groupservice === nothing || _construct_valid_services!(service_models[groupservice])
+    groupservice === nothing || _construct_valid_services!(services_template[groupservice])
     return
 end
 
