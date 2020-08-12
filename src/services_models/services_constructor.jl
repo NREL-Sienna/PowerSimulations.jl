@@ -73,7 +73,6 @@ function construct_service!(
             names,
             time_steps,
         )
-        get_parameter_array(container)
     end
 
     add_cons_container!(
@@ -203,7 +202,6 @@ function construct_service!(
             names,
             time_steps,
         )
-        get_parameter_array(container)
     end
 
     add_cons_container!(
