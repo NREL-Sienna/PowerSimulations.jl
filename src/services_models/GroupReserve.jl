@@ -8,9 +8,15 @@ function check_activeservice_variables(
     contributing_services::Vector{<:PSY.Service},
 )
     for service in contributing_services
-        var = get(psi_container.variables, make_variable_name(ActiveServiceVariable, typeof(service)), nothing)
+        var = get(
+            psi_container.variables,
+            make_variable_name(ActiveServiceVariable, typeof(service)),
+            nothing,
+        )
         if isnothing(var)
-            @error "contributing service $name is not stored" sort!(get_variable_names(psi_container))
+            @error "contributing service $name is not stored" sort!(get_variable_names(
+                psi_container,
+            ))
             throw(IS.InvalidValue("variable $name is not stored"))
         end
     end
@@ -60,13 +66,13 @@ function service_requirement_constraint!(
         )
         for t in time_steps
             param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
-            resource_expression = GenericAffExpr{Float64,VariableRef}()
+            resource_expression = GenericAffExpr{Float64, VariableRef}()
             for reserve_variable in reserve_variables
                 add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
             end
             if use_slacks
                 resource_expression += slack_vars[t]
-            end     
+            end
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 resource_expression >= param[name, t] * requirement
@@ -74,12 +80,13 @@ function service_requirement_constraint!(
         end
     else
         for t in time_steps
-            resource_expression = GenericAffExpr{Float64,VariableRef}()
+            resource_expression = GenericAffExpr{Float64, VariableRef}()
             for reserve_variable in reserve_variables
                 add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
             end
             constraint[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,resource_expression >= ts_vector[t] * requirement
+                psi_container.JuMPmodel,
+                resource_expression >= ts_vector[t] * requirement
             )
         end
     end
