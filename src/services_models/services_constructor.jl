@@ -20,7 +20,7 @@ function construct_services!(
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
-    
+
     function _construct_valid_services!(service_model::ServiceModel)
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = service_model.service_type[]
@@ -39,7 +39,7 @@ function construct_services!(
                 incompatible_device_types,
             )
         end
-    end    
+    end
 
     groupservice = nothing
     for (key, service_model) in service_models
