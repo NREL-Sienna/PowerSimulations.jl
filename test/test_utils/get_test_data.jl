@@ -346,7 +346,7 @@ function build_c_sys5_hyd(; kwargs...)
                 add_forecast!(
                     c_sys5_hyd,
                     h,
-                    Deterministic("get_storage_capacity", hydro_timeseries_DA[t][ix]),
+                    Deterministic("get_hydro_budget", hydro_budget_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
