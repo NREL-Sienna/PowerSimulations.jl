@@ -20,7 +20,8 @@ function construct_services!(
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
-    for service_model in values(services_template)
+
+    function _construct_valid_services!(service_model::ServiceModel)
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = service_model.service_type[]
         if validate_services!(
@@ -39,6 +40,17 @@ function construct_services!(
             )
         end
     end
+
+    groupservice = nothing
+
+    for (key, service_model) in services_template
+        if service_model.formulation === GroupReserve  # group service needs to be constructed last
+            groupservice = key
+            continue
+        end
+        _construct_valid_services!(service_model)
+    end
+    groupservice === nothing || _construct_valid_services!(services_template[groupservice])
     return
 end
 
@@ -61,7 +73,6 @@ function construct_service!(
             names,
             time_steps,
         )
-        get_parameter_array(container)
     end
 
     add_cons_container!(
@@ -168,4 +179,50 @@ function construct_service!(
     area_control_init(psi_container, services)
     smooth_ace_pid!(psi_container, services)
     aux_constraints!(psi_container, sys)
+end
+
+"""
+    Constructs a service for StaticReserveGroup.
+"""
+function construct_service!(
+    psi_container::PSIContainer,
+    services::Vector{SR},
+    ::PSY.System,
+    model::ServiceModel{SR, GroupReserve},
+    ::Dict{Symbol, DeviceModel},
+    ::Vector{<:DataType},
+) where {SR <: PSY.StaticReserveGroup}
+    time_steps = model_time_steps(psi_container)
+    names = [PSY.get_name(s) for s in services]
+
+    if model_has_parameters(psi_container)
+        container = add_param_container!(
+            psi_container,
+            UpdateRef{SR}("service_requirement", "get_requirement"),
+            names,
+            time_steps,
+        )
+    end
+
+    add_cons_container!(
+        psi_container,
+        make_constraint_name(REQUIREMENT, SR),
+        names,
+        time_steps,
+    )
+
+    for service in services
+        contributing_services = PSY.get_contributing_services(service)
+
+        # check if variables exist
+        check_activeservice_variables(psi_container, contributing_services)
+        # Constraints
+        service_requirement_constraint!(
+            psi_container,
+            service,
+            model,
+            contributing_services,
+        )
+    end
+    return
 end

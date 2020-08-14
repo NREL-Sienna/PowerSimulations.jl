@@ -25,6 +25,7 @@ export ServiceModel
 export RangeReserve
 export StepwiseCostReserve
 export PIDSmoothACE
+export GroupReserve
 ######## Branch Models ########
 export StaticLine
 export StaticLineBounds
@@ -304,6 +305,7 @@ include("devices_models/devices/regulation_device.jl")
 #Services Models
 include("services_models/agc.jl")
 include("services_models/reserves.jl")
+include("services_models/GroupReserve.jl")
 include("services_models/service_slacks.jl")
 include("services_models/services_constructor.jl")
 
