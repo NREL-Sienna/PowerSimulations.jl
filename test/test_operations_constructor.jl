@@ -134,8 +134,8 @@ end
     c_sys5 = build_system("c_sys5")
     c_sys5_re = build_system("c_sys5_re")
     c_sys5_bat = build_system("c_sys5_bat")
-    c_sys5_pwl = build_system("c_sys5_pwl_ed")
-    systems = [c_sys5, c_sys5_re, c_sys5_bat, c_sys5_pwl]
+    c_sys5_pwl_ed = build_system("c_sys5_pwl_ed")
+    systems = [c_sys5, c_sys5_re, c_sys5_bat, c_sys5_pwl_ed]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             devices = Dict{Symbol, DeviceModel}(
