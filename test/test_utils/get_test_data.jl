@@ -842,7 +842,7 @@ end
 
 function build_c_sys5_pwl_uc(; kwargs...)
     c_sys5_uc = build_c_sys5_uc(; kwargs...)
-    thermal = thermal_generators5_pwl(nodes5())
+    thermal = thermal_generators5_pwl(collect(get_components(Bus, c_sys5_uc)))
     for d in thermal
         PSY.add_component!(c_sys5_uc, d)
     end
@@ -901,7 +901,7 @@ end
 
 function build_c_sys5_pwl_ed(; kwargs...)
     c_sys5_ed = build_c_sys5_ed(; kwargs...)
-    thermal = thermal_generators5_pwl(nodes5())
+    thermal = thermal_generators5_pwl(collect(get_components(Bus, c_sys5_ed)))
     for d in thermal
         PSY.add_component!(c_sys5_ed, d)
     end
