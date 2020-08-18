@@ -53,7 +53,7 @@ function energy_balance(
         # Create the PGAE outside of the constraint definition
         balance =
             initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
-            (varout[name, 1]) * fraction_of_hour / eff_out
+            (varout[name, 1]) * fraction_of_hour * eff_out
         constraint[name, 1] =
             JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
 
@@ -67,7 +67,7 @@ function energy_balance(
             psi_container.JuMPmodel,
             varenergy[name, t] ==
             varenergy[name, t - 1] + varin[name, t] * eff_in * fraction_of_hour -
-            (varout[name, t]) * fraction_of_hour / eff_out
+            (varout[name, t]) * fraction_of_hour * eff_out
         )
     end
 
