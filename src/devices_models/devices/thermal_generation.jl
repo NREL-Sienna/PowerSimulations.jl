@@ -1189,18 +1189,18 @@ function cost_function(
         end
 
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        for (t, var) in enumerate(variable[PSY.get_name(d), :])
-            ### equiv of _pwl_cost!
-            slopes = PSY.get_slopes(cost_component)
-            first_pair = cost_component.cost[1]
-            if slopes[1] != 0.0
-                # sets first slope such that the y intercept is epsilon larger than the y intercept of the second slope to ensure convexity
-                slopes[1] = (first_pair[2] * slopes[2] - COST_EPSILON) / first_pair[2]
-            end
+        slopes = PSY.get_slopes(cost_component)
+        first_pair = cost_component.cost[1]
+        if slopes[1] != 0.0
+            # sets first slope such that the y intercept is epsilon larger than the y intercept of the second slope to ensure convexity
+            slopes[1] = (first_pair[2] * slopes[2] - COST_EPSILON) / first_pair[2]
+        end
 
-            if any(slopes .< 0) || !_pwlparamcheck(slopes)
-                throw(IS.ConflictingInputsError("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
-            end
+        if any(slopes .< 0) || !_pwlparamcheck(slopes)
+            throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
+        end
+
+        for (t, var) in enumerate(variable[PSY.get_name(d), :])
             g_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
 
             pwlvars = JuMP.@variable(
