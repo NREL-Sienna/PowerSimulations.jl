@@ -1194,13 +1194,11 @@ function cost_function(
             slopes = PSY.get_slopes(cost_component)
             first_pair = cost_component.cost[1]
             if slopes[1] != 0.0
-                slopes[1] =
-                    (
-                        first_pair[1]^2 - slopes[1] * first_pair[2] +
-                        COST_EPSILON * first_pair[2]
-                    ) / (first_pair[1] * first_pair[2])
+                # sets first slope such that the y intercept is epsilon larger than the y intercept of the second slope to ensure convexity
+                slopes[1] = (first_pair[2] * slopes[2] - COST_EPSILON) / first_pair[2]
             end
-            if slopes[1] < 0 || slopes[1] > slopes[2]
+@show slopes
+            if any(slopes .< 0) || !_pwlparamcheck(slopes)
                 throw(IS.ConflictingInputsError("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
             end
             g_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()

@@ -115,9 +115,13 @@ Returns ```flag```
 
 * cost_::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwlparamcheck(cost_)
-    flag = true
+function _pwlparamcheck(cost_::PSY.VariableCost{NTuple{2, Float64}})
     slopes = PSY.get_slopes(cost_)
+    return _pwlparamcheck(slopes)
+end
+
+function _pwlparamcheck(slopes::Array{Float64,1})
+    flag = true
     # First element of the array is the average cost at P_min
     for ix in 2:(length(slopes) - 1)
         if slopes[ix] > slopes[ix + 1]
