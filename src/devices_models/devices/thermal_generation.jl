@@ -1196,7 +1196,7 @@ function cost_function(
             slopes[1] = (first_pair[2] * slopes[2] - COST_EPSILON) / first_pair[2]
         end
 
-        if any(slopes .< 0) || !_pwlparamcheck(slopes)
+        if any(slopes .< 0) || slopes[1] > slopes[2] || !_pwlparamcheck(slopes)
             throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
         end
 
