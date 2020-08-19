@@ -657,7 +657,7 @@ function turbine_temperature(
     hot_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "hot")
     warm_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "warm")
 
-    names = (st.name for st in startup_data)
+    names = (get_component_name(st) for st in startup_data)
 
     con = [
         add_cons_container!(psi_container, hot_name, names, time_steps; sparse = true),
@@ -668,7 +668,7 @@ function turbine_temperature(
     for t in time_steps, st in startup_data
         for ix in 1:(st.startup_types - 1)
             if t >= st.time_limits[ix + 1]
-                name = st.name
+                name = get_component_name(st)
                 con[ix][name, t] = JuMP.@constraint(
                     psi_container.JuMPmodel,
                     start_vars[ix][name, t] <= sum(
@@ -802,7 +802,7 @@ function device_startup_initial_condition(
     )
 
     for t in time_steps, (ix, d) in enumerate(data)
-        name = d.name
+        name = get_component_name(d)
         ic = initial_conditions[ix]
         for st in 1:(d.startup_types - 1)
             var = varstarts[st]

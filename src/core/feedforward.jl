@@ -234,7 +234,7 @@ function ub_ff(
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for constraint_info in constraint_infos
-        name = get_name(constraint_info)
+        name = get_component_name(constraint_info)
         value = JuMP.upper_bound(variable[name, 1])
         param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
         for t in time_steps
@@ -304,7 +304,7 @@ function range_ff(
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for constraint_info in constraint_infos
-        name = get_name(constraint_info)
+        name = get_component_name(constraint_info)
         param_lb[name] =
             PJ.add_parameter(psi_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
         param_ub[name] =
@@ -383,7 +383,7 @@ function semicontinuousrange_ff(
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
 
     for constraint_info in constraint_infos
-        name = get_name(constraint_info)
+        name = get_component_name(constraint_info)
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
         @debug "SemiContinuousFF" name ub_value lb_value

@@ -218,7 +218,7 @@ function set_variable_bounds!(
 ) where {T <: PSY.Component}
     var = get_variable(psi_container, var_type, T)
     for t in model_time_steps(psi_container), bound in bounds
-        _var = var[bound.name, t]
+        _var = var[get_component_name(bound), t]
         JuMP.set_upper_bound(_var, bound.limits.max)
         JuMP.set_lower_bound(_var, bound.limits.min)
     end

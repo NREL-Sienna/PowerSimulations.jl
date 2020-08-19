@@ -15,7 +15,7 @@ function lazy_lb!(psi_container::PSIContainer, inputs::TimeSeriesConstraintSpecI
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         if constraint_info.range.limits.min > -Inf &&
            !isempty(constraint_info.range.additional_terms_lb)
             con_lb[ci_name, :].data .= JuMP.AffExpr(0.0)
@@ -61,7 +61,7 @@ function device_timeseries_ub!(
     lazy_add_lb = false
 
     for constraint_info in inputs.constraint_infos
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
             for val in constraint_info.range.additional_terms_ub
@@ -111,7 +111,7 @@ function device_timeseries_lb!(
     constraint = add_cons_container!(psi_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         for t in time_steps
             expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
             for val in constraint_info.range.additional_terms_lb
@@ -158,7 +158,7 @@ function device_timeseries_param_ub!(
     lazy_add_lb = false
 
     for constraint_info in inputs.constraint_infos
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
             for val in constraint_info.range.additional_terms_ub
@@ -213,7 +213,7 @@ function device_timeseries_param_lb!(
     param = get_parameter_array(container)
 
     for constraint_info in inputs.constraint_infos
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         for t in time_steps
             expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
             for val in constraint_info.range.additional_terms_lb
@@ -262,7 +262,7 @@ function device_timeseries_ub_bin!(
     names = (get_name(x) for x in inputs.constraint_infos)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     for constraint_info in inputs.constraint_infos
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         for t in time_steps
             forecast = constraint_info.timeseries[t]
             multiplier = constraint_info.multiplier
@@ -317,7 +317,7 @@ function device_timeseries_ub_bigM!(
     param = get_parameter_array(container)
 
     for constraint_info in inputs.constraint_infos
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
             for val in constraint_info.range.additional_terms_ub
