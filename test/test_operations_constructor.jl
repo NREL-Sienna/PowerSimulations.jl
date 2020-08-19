@@ -164,7 +164,8 @@ end
             :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
         )
         branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
-        template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+        template =
+            OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
         @test_throws IS.InvalidValue OperationsProblem(
             TestOpProblem,
             template,
