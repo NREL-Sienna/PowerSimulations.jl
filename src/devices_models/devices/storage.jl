@@ -265,8 +265,8 @@ function energy_balance_constraint!(
         efficiency_data,
         make_constraint_name(ENERGY_LIMIT, St),
         (
-            make_variable_name(ACTIVE_POWER_OUT, St),
             make_variable_name(ACTIVE_POWER_IN, St),
+            make_variable_name(ACTIVE_POWER_OUT, St),
             make_variable_name(ENERGY, St),
         ),
     )
