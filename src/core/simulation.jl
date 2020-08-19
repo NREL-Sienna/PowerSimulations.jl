@@ -1012,7 +1012,7 @@ Return the serialized simulation directory name that is created.
    throw an exception.
 """
 function serialize(simulation::Simulation; path = ".", force = false)
-    directory = joinpath(path, "simulation-$(simulation.name)")
+    directory = joinpath(path, "simulation-$(get_name(simulation))")
     stages = Dict{String, StageSerializationWrapper}()
 
     orig = pwd()
@@ -1051,10 +1051,10 @@ function serialize(simulation::Simulation; path = ".", force = false)
         simulation.initial_time,
         simulation.sequence,
         simulation.simulation_folder,
-        simulation.name,
+        get_name(simulation),
     )
     Serialization.serialize(filename, obj)
-    @info "Serialized simulation" simulation.name directory
+    @info "Serialized simulation" get_name(simulation) directory
     return directory
 end
 
