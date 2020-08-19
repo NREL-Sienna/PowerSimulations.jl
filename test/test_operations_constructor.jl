@@ -157,6 +157,24 @@ end
         end
     end
 
+    @testset "Operation Model CopperPlatePowerModel - ThermalDispatchNoMin - c_sys5_pwl_ed_nonconvex" begin
+        c_sys5_pwl_ed_nonconvex = build_system("c_sys5_pwl_ed_nonconvex")
+        devices = Dict{Symbol, DeviceModel}(
+            :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
+            :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+        )
+        branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
+        template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+        @test_throws IS.InvalidValue OperationsProblem(
+            TestOpProblem,
+            template,
+            c_sys5_pwl_ed_nonconvex;
+            use_parameters = true,
+            PTDF = build_PTDF5(),
+            export_pwl_vars = true,
+        )
+    end
+
     @testset "Operations template constructors" begin
         c_sys5 = build_system("c_sys5")
         op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)

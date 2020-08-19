@@ -908,6 +908,15 @@ function build_c_sys5_pwl_ed(; kwargs...)
     return c_sys5_ed
 end
 
+function build_c_sys5_pwl_ed_nonconvex(; kwargs...)
+    c_sys5_ed = build_c_sys5_ed(; kwargs...)
+    thermal = thermal_generators5_pwl_nonconvex(collect(get_components(Bus, c_sys5_ed)))
+    for d in thermal
+        PSY.add_component!(c_sys5_ed, d)
+    end
+    return c_sys5_ed
+end
+
 function build_init(gens, data)
     init = Vector{InitialCondition}(undef, length(collect(gens)))
     for (ix, g) in enumerate(gens)
@@ -1208,8 +1217,13 @@ TEST_SYSTEMS = Dict(
         time_series_in_memory = true,
     ),
     "c_sys5_pwl_ed" => (
-        description = "5-bus with SOS cost function",
+        description = "5-bus with pwl cost function",
         build = build_c_sys5_pwl_ed,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_pwl_ed_nonconvex" => (
+        description = "5-bus with SOS cost function",
+        build = build_c_sys5_pwl_ed_nonconvex,
         time_series_in_memory = true,
     ),
     "c_sys5_reg" => (
