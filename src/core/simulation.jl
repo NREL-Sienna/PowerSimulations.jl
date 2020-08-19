@@ -213,7 +213,7 @@ end
                 )
 
 """
-mutable struct Simulation
+mutable struct Simulation <: IS.InfrastructureSystemsType
     steps::Int
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     initial_time::Union{Nothing, Dates.DateTime}
@@ -287,7 +287,7 @@ end
 
 get_ini_cond_chronology(s::Simulation) = s.sequence.ini_cond_chronology
 get_stage_name(s::Simulation, stage::Stage) = get_stage_name(s.sequence, stage)
-get_name(s::Simulation) = s.name
+IS.get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
