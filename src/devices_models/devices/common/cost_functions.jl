@@ -120,7 +120,7 @@ function _pwlparamcheck(cost_::PSY.VariableCost{NTuple{2, Float64}})
     return _pwlparamcheck(slopes)
 end
 
-function _pwlparamcheck(slopes::Array{Float64,1})
+function _pwlparamcheck(slopes::Array{Float64, 1})
     flag = true
     # First element of the array is the average cost at P_min
     for ix in 2:(length(slopes) - 1)

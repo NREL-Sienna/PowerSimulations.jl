@@ -1197,7 +1197,7 @@ function cost_function(
                 # sets first slope such that the y intercept is epsilon larger than the y intercept of the second slope to ensure convexity
                 slopes[1] = (first_pair[2] * slopes[2] - COST_EPSILON) / first_pair[2]
             end
-@show slopes
+
             if any(slopes .< 0) || !_pwlparamcheck(slopes)
                 throw(IS.ConflictingInputsError("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
             end
