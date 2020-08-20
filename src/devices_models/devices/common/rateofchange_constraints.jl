@@ -40,12 +40,12 @@ function device_linear_rateofchange!(
 
     variable = get_variable(psi_container, var_name)
 
-    set_name = (get_name(r) for r in rate_data)
+    set_name = (get_component_name(r) for r in rate_data)
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
     for r in rate_data
-        name = get_name(r)
+        name = get_component_name(r)
         ic_power = get_value(get_ic_power(r))
         @debug "add rate_of_change_constraint" name ic_power
         @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
@@ -75,7 +75,7 @@ function device_linear_rateofchange!(
     end
 
     for t in time_steps[2:end], r in rate_data
-        name = get_name(r)
+        name = get_component_name(r)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_ub
             JuMP.add_to_expression!(
@@ -153,12 +153,12 @@ function device_mixedinteger_rateofchange!(
     varstart = get_variable(psi_container, var_names[2])
     varstop = get_variable(psi_container, var_names[3])
 
-    set_name = (get_name(r) for r in rate_data)
+    set_name = (get_component_name(r) for r in rate_data)
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
     for r in rate_data
-        name = get_name(r)
+        name = get_component_name(r)
         ic_power = get_value(get_ic_power(r))
         @debug "add rate_of_change_constraint" name ic_power
         @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
@@ -190,7 +190,7 @@ function device_mixedinteger_rateofchange!(
     end
 
     for t in time_steps[2:end], r in rate_data
-        name = get_name(r)
+        name = get_component_name(r)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_ub
             JuMP.add_to_expression!(
@@ -265,12 +265,12 @@ function device_multistart_rateofchange!(
 
     variable = get_variable(psi_container, var_name)
 
-    set_name = (get_name(r) for r in rate_data)
+    set_name = (get_component_name(r) for r in rate_data)
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
     for r in rate_data
-        name = get_name(r)
+        name = get_component_name(r)
         ic_power = get_value(get_ic_power(r))
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in r.additional_terms_ub
@@ -298,7 +298,7 @@ function device_multistart_rateofchange!(
     end
 
     for t in time_steps[2:end], r in rate_data
-        name = get_name(r)
+        name = get_component_name(r)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_ub
             JuMP.add_to_expression!(

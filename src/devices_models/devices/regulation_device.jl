@@ -75,7 +75,7 @@ function add_constraints!(
     var_name_up = make_variable_name(DeltaActivePowerUpVariable, T)
     var_up = get_variable(psi_container, var_name_up)
 
-    names = (PSY.get_name(g) for g in devices)
+    names = (PSY.get_component_name(g) for g in devices)
     time_steps = model_time_steps(psi_container)
 
     up = Symbol("regulation_limits_up_$(T)")
@@ -101,7 +101,7 @@ function add_constraints!(
     end
 
     for d in constraint_infos
-        name = get_name(d)
+        name = get_component_name(d)
         limits = get_limits(d)
         for t in time_steps
             rating = parameters ? multiplier[name, t] : d.multiplier
@@ -154,7 +154,7 @@ function add_constraints!(
     end
 
     for d in constraint_infos
-        name = get_name(d)
+        name = get_component_name(d)
         limits = get_limits(d)
         for t in time_steps
             rating = parameters ? multiplier[name, t] : d.multiplier

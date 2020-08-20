@@ -721,12 +721,12 @@ function device_start_type_constraint(
         get_variable(psi_container, var_names[3]),
     ]
 
-    set_name = (d.name for d in data)
+    set_name = (get_component_name(d) for d in data)
     con = add_cons_container!(psi_container, cons_name, set_name, time_steps)
 
     for t in time_steps, d in data
         # constraint (16)
-        name = d.name
+        name = get_component_name(d)
         con[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varstart[name, t] == sum(start_vars[ix][name, t] for ix in 1:(d.startup_types))
