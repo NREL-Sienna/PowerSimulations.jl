@@ -449,10 +449,10 @@ function add_pm_con_refs!(
     time_steps = model_time_steps(psi_container)
     bus_dict = psi_container.pm.ext[:PMmap].bus
 
-    pm_con_names = (
+    pm_con_names = [
         k for
         k in keys(psi_container.pm.con[:nw][1]) if !isempty(PM.con(psi_container.pm, 1, k))
-    )
+    ]
 
     pm_con_map = PMconmap(system_formulation)
     for (pm_v, ps_v) in pm_con_map[PSY.Bus]

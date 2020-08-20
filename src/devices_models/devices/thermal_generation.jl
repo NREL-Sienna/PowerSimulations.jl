@@ -775,7 +775,7 @@ function device_startup_initial_condition(
     time_steps = model_time_steps(psi_container)
     T = length(time_steps)
 
-    set_name = (device_name(ic) for ic in initial_conditions)
+    set_name = [device_name(ic) for ic in initial_conditions]
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     varbin = get_variable(psi_container, bin_name)

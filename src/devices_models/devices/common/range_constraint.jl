@@ -337,7 +337,7 @@ function device_multistart_range_ic(
     time_steps = model_time_steps(psi_container)
     varstop = get_variable(psi_container, var_name)
 
-    set_name = (device_name(ic) for ic in initial_conditions[:, 1])
+    set_name = [device_name(ic) for ic in initial_conditions[:, 1]]
     con = add_cons_container!(psi_container, cons_name, set_name)
 
     for (ix, ic) in enumerate(initial_conditions[:, 1])
