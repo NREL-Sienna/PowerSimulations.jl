@@ -38,7 +38,7 @@ where limits in constraint_infos.
 
 `` limits^{min} \leq x \leq limits^{max}, \text{ otherwise } ``
 """
-function device_range(psi_container::PSIContainer, inputs::RangeConstraintSpecInternal)
+function device_range!(psi_container::PSIContainer, inputs::RangeConstraintSpecInternal)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, inputs.variable_name)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
@@ -101,7 +101,7 @@ where limits in constraint_infos.
 
 `` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin}, \text{ otherwise } ``
 """
-function device_semicontinuousrange(
+function device_semicontinuousrange!(
     psi_container::PSIContainer,
     inputs::RangeConstraintSpecInternal,
 )
@@ -175,7 +175,7 @@ where limits in constraint_infos.
 
 `` limits^{min} (1 - x^{bin} ) \leq x^{cts} \leq limits^{max} (1 - x^{bin} ), \text{ otherwise } ``
 """
-function reserve_device_semicontinuousrange(
+function reserve_device_semicontinuousrange!(
     psi_container::PSIContainer,
     inputs::RangeConstraintSpecInternal,
 )
@@ -251,7 +251,7 @@ where limits and lag_ramp_limits is in range_data.
 * var_name::Symbol : the name of the continuous variable
 * binvar_names::Symbol : the names of the binary variables
 """
-function device_multistart_range(
+function device_multistart_range!(
     psi_container::PSIContainer,
     inputs::RangeConstraintSpecInternal,
 )
@@ -327,7 +327,7 @@ where limits in range_data.
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : name of the shutdown variable
 """
-function device_multistart_range_ic(
+function device_multistart_range_ic!(
     psi_container::PSIContainer,
     range_data::Vector{DeviceMultiStartRangeConstraintsInfo},
     initial_conditions::Matrix{InitialCondition},## 1 is initial power, 2 is initial status

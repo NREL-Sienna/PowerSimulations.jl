@@ -113,7 +113,7 @@ function DeviceRangeConstraintSpec(
             ),
             variable_name = make_variable_name(ReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(x),
-            constraint_func = device_range,
+            constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -143,7 +143,7 @@ function DeviceRangeConstraintSpec(
                 ),
                 variable_name = make_variable_name(ActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
-                constraint_func = device_range,
+                constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
             ),
         )
@@ -181,7 +181,7 @@ function DeviceRangeConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
             variable_name = make_variable_name(ActivePowerVariable, T),
             limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_range,
+            constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -207,7 +207,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ActivePowerVariable, T),
             bin_variable_names = [make_variable_name(OnVariable, T)],
             limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_semicontinuousrange,
+            constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -237,7 +237,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ReactivePowerVariable, T),
             bin_variable_names = [make_variable_name(OnVariable, T)],
             limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_semicontinuousrange,
+            constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )

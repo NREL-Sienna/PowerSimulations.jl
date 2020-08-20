@@ -73,9 +73,9 @@ Users of this function must implement a method for
 Users may also implement custom active_power_constraints! methods.
 """
 function add_constraints!(
+    psi_container::PSIContainer,
     ::Type{T},
     ::Type{U},
-    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
@@ -143,9 +143,9 @@ function device_range_constraints!(
     end
 
     if !isnothing(range_constraint_spec)
-        _apply_range_constraint_spec(
-            range_constraint_spec,
+        _apply_range_constraint_spec!(
             psi_container,
+            range_constraint_spec,
             devices,
             model,
             ff_affected_variables,
@@ -153,9 +153,9 @@ function device_range_constraints!(
     end
 
     if !isnothing(timeseries_range_constraint_spec)
-        _apply_timeseries_range_constraint_spec(
-            timeseries_range_constraint_spec,
+        _apply_timeseries_range_constraint_spec!(
             psi_container,
+            timeseries_range_constraint_spec,
             devices,
             model,
             ff_affected_variables,
@@ -167,9 +167,9 @@ function device_range_constraints!(
     end
 end
 
-function _apply_range_constraint_spec(
-    spec,
+function _apply_range_constraint_spec!(
     psi_container,
+    spec,
     devices::IS.FlattenIteratorWrapper{T},
     model,
     ff_affected_variables,
@@ -215,9 +215,9 @@ function _apply_range_constraint_spec(
     return
 end
 
-function _apply_timeseries_range_constraint_spec(
-    spec,
+function _apply_timeseries_range_constraint_spec!(
     psi_container,
+    spec,
     devices::IS.FlattenIteratorWrapper{T},
     model,
     ff_affected_variables,

@@ -15,23 +15,23 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(ActivePowerVariable, psi_container, devices)
-    add_variables!(ReactivePowerVariable, psi_container, devices)
+    add_variables!(psi_container, ActivePowerVariable, devices)
+    add_variables!(psi_container, ReactivePowerVariable, devices)
 
     #Constraints
     add_constraints!(
+        psi_container,
         RangeConstraint,
         ActivePowerVariable,
-        psi_container,
         devices,
         model,
         S,
         get_feedforward(model),
     )
     add_constraints!(
+        psi_container,
         RangeConstraint,
         ReactivePowerVariable,
-        psi_container,
         devices,
         model,
         S,
@@ -63,13 +63,13 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(psi_container, ActivePowerVariable, devices)
 
     #Constraints
     add_constraints!(
+        psi_container,
         RangeConstraint,
         ActivePowerVariable,
-        psi_container,
         devices,
         model,
         S,
@@ -96,24 +96,24 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(ActivePowerVariable, psi_container, devices)
-    add_variables!(ReactivePowerVariable, psi_container, devices)
-    add_variables!(OnVariable, psi_container, devices)
+    add_variables!(psi_container, ActivePowerVariable, devices)
+    add_variables!(psi_container, ReactivePowerVariable, devices)
+    add_variables!(psi_container, OnVariable, devices)
 
     #Constraints
     add_constraints!(
+        psi_container,
         RangeConstraint,
         ActivePowerVariable,
-        psi_container,
         devices,
         model,
         S,
         get_feedforward(model),
     )
     add_constraints!(
+        psi_container,
         RangeConstraint,
         ReactivePowerVariable,
-        psi_container,
         devices,
         model,
         S,
@@ -140,14 +140,14 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(ActivePowerVariable, psi_container, devices)
-    add_variables!(OnVariable, psi_container, devices)
+    add_variables!(psi_container, ActivePowerVariable, devices)
+    add_variables!(psi_container, OnVariable, devices)
 
     #Constraints
     add_constraints!(
+        psi_container,
         RangeConstraint,
         ActivePowerVariable,
-        psi_container,
         devices,
         model,
         S,

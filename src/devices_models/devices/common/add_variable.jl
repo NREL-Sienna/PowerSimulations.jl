@@ -48,8 +48,8 @@ end
 Add variables to the PSIContainer for any component.
 """
 function add_variables!(
-    ::Type{T},
     psi_container::PSIContainer,
+    ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
 ) where {T <: VariableType, U <: PSY.Component}
     _add_variables!(psi_container, devices, AddVariableSpec(T, U, psi_container))
@@ -59,8 +59,8 @@ end
 Add variables to the PSIContainer for a service.
 """
 function add_variables!(
-    ::Type{T},
     psi_container::PSIContainer,
+    ::Type{T},
     service::U,
     contributing_devices::Vector{V},
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
