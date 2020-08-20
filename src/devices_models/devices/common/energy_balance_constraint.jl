@@ -106,7 +106,7 @@ function energy_balance_hydro_param!(
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     fraction_of_hour = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    name_index = (get_component_name(d) for d in inflow_data)
+    name_index = [get_component_name(d) for d in inflow_data]
 
     varspill = get_variable(psi_container, var_names[1])
     varout = get_variable(psi_container, var_names[2])
@@ -175,7 +175,7 @@ function energy_balance_hydro!(
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    name_index = (get_component_name(d) for d in inflow_data)
+    name_index = [get_component_name(d) for d in inflow_data]
 
     varspill = get_variable(psi_container, var_names[1])
     varout = get_variable(psi_container, var_names[2])

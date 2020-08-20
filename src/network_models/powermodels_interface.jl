@@ -374,7 +374,7 @@ function add_pm_var_refs!(
         if pm_v in pm_var_names
             container = PSI.container_spec(
                 psi_container.JuMPmodel,
-                (PSY.get_name(b) for b in values(bus_dict)),
+                [PSY.get_name(b) for b in values(bus_dict)],
                 time_steps,
             )
             assign_variable!(psi_container, ps_v, PSY.Bus, container)
@@ -426,7 +426,7 @@ function add_pm_var_refs!(
                     var_name = getfield(ps_v, dir)
                     container = PSI.container_spec(
                         psi_container.JuMPmodel,
-                        (PSY.get_name(d[2]) for d in devices),
+                        [PSY.get_name(d[2]) for d in devices],
                         time_steps,
                     )
                     assign_variable!(psi_container, var_name, d_type, container)
@@ -449,10 +449,11 @@ function add_pm_con_refs!(
     time_steps = model_time_steps(psi_container)
     bus_dict = psi_container.pm.ext[:PMmap].bus
 
-    pm_con_names = (
-        k for
+    pm_con_names = [
+        k
+        for
         k in keys(psi_container.pm.con[:nw][1]) if !isempty(PM.con(psi_container.pm, 1, k))
-    )
+    ]
 
     pm_con_map = PMconmap(system_formulation)
     for (pm_v, ps_v) in pm_con_map[PSY.Bus]
@@ -460,7 +461,7 @@ function add_pm_con_refs!(
             container = PSI.add_cons_container!(
                 psi_container,
                 make_constraint_name(ps_v, PSY.Bus),
-                (PSY.get_name(b) for b in values(bus_dict)),
+                [PSY.get_name(b) for b in values(bus_dict)],
                 time_steps,
             )
             for t in time_steps, (pm_bus, bus) in bus_dict

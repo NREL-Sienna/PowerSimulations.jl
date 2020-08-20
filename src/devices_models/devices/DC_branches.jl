@@ -23,7 +23,7 @@ function flow_variables!(
     var_name = make_variable_name(FLOW_ACTIVE_POWER, B)
     container = container_spec(
         psi_container.JuMPmodel,
-        (PSY.get_name(d) for d in devices),
+        [PSY.get_name(d) for d in devices],
         time_steps,
     )
     assign_variable!(psi_container, FLOW_ACTIVE_POWER, B, container)
@@ -67,7 +67,7 @@ function branch_rate_constraints!(
     var = get_variable(psi_container, FLOW_ACTIVE_POWER, B)
     time_steps = model_time_steps(psi_container)
     constraint_val =
-        JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
+        JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
     assign_constraint!(psi_container, FLOW_ACTIVE_POWER, B, constraint_val)
     for t in time_steps, d in devices
         min_rate = max(
@@ -100,7 +100,7 @@ function branch_rate_constraints!(
         var = get_variable(psi_container, var_type, B)
         time_steps = model_time_steps(psi_container)
         constraint_val =
-            JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
+            JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
         assign_constraint!(psi_container, cons_type, B, constraint_val)
         time_steps = model_time_steps(psi_container)
 
@@ -140,7 +140,7 @@ function branch_rate_constraints!(
     )
         var = get_variable(psi_container, var_type, B)
         constraint_val =
-            JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
+            JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
         assign_constraint!(psi_container, cons_type, B, constraint_val)
 
         for t in time_steps, d in devices

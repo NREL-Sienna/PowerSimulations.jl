@@ -374,7 +374,7 @@ function semicontinuousrange_ff(
     variable = get_variable(psi_container, var_name)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
-    set_name = (get_component_name(ci) for ci in constraint_infos)
+    set_name = [get_component_name(ci) for ci in constraint_infos]
     @assert axes[2] == time_steps
     container = add_param_container!(psi_container, param_reference, set_name)
     multiplier = get_multiplier_array(container)

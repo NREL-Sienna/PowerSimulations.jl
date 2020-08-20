@@ -54,7 +54,7 @@ function device_duration_retrospective!(
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    set_names = (device_name(ic) for ic in initial_duration[:, 1])
+    set_names = [device_name(ic) for ic in initial_duration[:, 1]]
     con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(psi_container, name_down, set_names, time_steps)
 
@@ -148,7 +148,7 @@ function device_duration_look_ahead!(
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    set_names = (device_name(ic) for ic in initial_duration[:, 1])
+    set_names = [device_name(ic) for ic in initial_duration[:, 1]]
     con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(psi_container, name_down, set_names, time_steps)
 
@@ -249,7 +249,7 @@ function device_duration_parameters!(
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    set_names = (device_name(ic) for ic in initial_duration[:, 1])
+    set_names = [device_name(ic) for ic in initial_duration[:, 1]]
     con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(psi_container, name_down, set_names, time_steps)
 
@@ -357,7 +357,7 @@ function device_duration_compact_retrospective!(
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    set_names = (device_name(ic) for ic in initial_duration[:, 1])
+    set_names = [device_name(ic) for ic in initial_duration[:, 1]]
     con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(psi_container, name_down, set_names, time_steps)
     total_time_steps = length(time_steps)

@@ -40,7 +40,7 @@ function device_linear_rateofchange!(
 
     variable = get_variable(psi_container, var_name)
 
-    set_name = (get_component_name(r) for r in rate_data)
+    set_name = [get_component_name(r) for r in rate_data]
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
@@ -153,7 +153,7 @@ function device_mixedinteger_rateofchange!(
     varstart = get_variable(psi_container, var_names[2])
     varstop = get_variable(psi_container, var_names[3])
 
-    set_name = (get_component_name(r) for r in rate_data)
+    set_name = [get_component_name(r) for r in rate_data]
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
@@ -265,7 +265,7 @@ function device_multistart_rateofchange!(
 
     variable = get_variable(psi_container, var_name)
 
-    set_name = (get_component_name(r) for r in rate_data)
+    set_name = [get_component_name(r) for r in rate_data]
     con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 

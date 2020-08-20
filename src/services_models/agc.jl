@@ -129,7 +129,7 @@ function AddVariableSpec(
 end
 
 function balancing_auxiliary_variables!(psi_container, sys)
-    area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
+    area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
     time_steps = model_time_steps(psi_container)
     R_up_emergency = JuMPVariableArray(undef, area_names, time_steps)
     R_dn_emergency = JuMPVariableArray(undef, area_names, time_steps)
@@ -167,7 +167,7 @@ end
 
 function absolute_value_lift(psi_container::PSIContainer, areas)
     time_steps = model_time_steps(psi_container)
-    area_names = (PSY.get_name(a) for a in areas)
+    area_names = [PSY.get_name(a) for a in areas]
     container_lb = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "absolute_value_lb", container_lb)
     container_ub = JuMPConstraintArray(undef, area_names, time_steps)
@@ -195,7 +195,7 @@ Expression for the power deviation given deviation in the frequency. This expres
 function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.System)
     time_steps = model_time_steps(psi_container)
     services = PSY.get_components(PSY.AGC, sys)
-    area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
+    area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
     frequency_response = 0.0
     for area in PSY.get_components(PSY.Area, sys)
         frequency_response += PSY.get_load_response(area)
@@ -240,7 +240,7 @@ end
 
 function smooth_ace_pid!(psi_container::PSIContainer, services::Vector{PSY.AGC})
     time_steps = model_time_steps(psi_container)
-    area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
+    area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
     RAW_ACE = add_expression_container!(psi_container, :RAW_ACE, area_names, time_steps)
     SACE = get_variable(psi_container, SmoothACE, PSY.Area)
     SACE_pid = JuMPConstraintArray(undef, area_names, time_steps)
@@ -284,7 +284,7 @@ end
 
 function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     time_steps = model_time_steps(psi_container)
-    area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
+    area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
     aux_equation = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "balance_aux", aux_equation)
     area_mismatch = get_variable(psi_container, :area_mismatch)

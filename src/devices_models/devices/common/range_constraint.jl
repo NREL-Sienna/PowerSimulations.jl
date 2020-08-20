@@ -43,7 +43,7 @@ function device_range(psi_container::PSIContainer, inputs::RangeConstraintSpecIn
     variable = get_variable(psi_container, inputs.variable_name)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_component_name(x) for x in inputs.constraint_infos)
+    names = [get_component_name(x) for x in inputs.constraint_infos]
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
@@ -111,7 +111,7 @@ function device_semicontinuousrange(
     varbin = get_variable(psi_container, inputs.bin_variable_names[1])
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_component_name(x) for x in inputs.constraint_infos)
+    names = [get_component_name(x) for x in inputs.constraint_infos]
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
@@ -186,7 +186,7 @@ function reserve_device_semicontinuousrange(
 
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_component_name(x) for x in inputs.constraint_infos)
+    names = [get_component_name(x) for x in inputs.constraint_infos]
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
@@ -264,7 +264,7 @@ function device_multistart_range(
 
     on_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     off_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    names = (get_component_name(x) for x in inputs.constraint_infos)
+    names = [get_component_name(x) for x in inputs.constraint_infos]
     con_on = add_cons_container!(psi_container, on_name, names, time_steps)
     con_off = add_cons_container!(psi_container, off_name, names, time_steps)
 
@@ -337,7 +337,7 @@ function device_multistart_range_ic(
     time_steps = model_time_steps(psi_container)
     varstop = get_variable(psi_container, var_name)
 
-    set_name = (device_name(ic) for ic in initial_conditions[:, 1])
+    set_name = [device_name(ic) for ic in initial_conditions[:, 1]]
     con = add_cons_container!(psi_container, cons_name, set_name)
 
     for (ix, ic) in enumerate(initial_conditions[:, 1])
