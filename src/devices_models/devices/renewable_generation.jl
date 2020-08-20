@@ -76,7 +76,7 @@ function custom_reactive_power_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{RenewableConstantPowerFactor},
 ) where {T <: PSY.RenewableGen}
-    names = (PSY.get_name(d) for d in devices)
+    names = [PSY.get_name(d) for d in devices]
     time_steps = model_time_steps(psi_container)
     p_var = get_variable(psi_container, ACTIVE_POWER, T)
     q_var = get_variable(psi_container, REACTIVE_POWER, T)

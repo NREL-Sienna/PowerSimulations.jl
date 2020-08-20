@@ -75,7 +75,7 @@ function add_constraints!(
     var_name_up = make_variable_name(DeltaActivePowerUpVariable, T)
     var_up = get_variable(psi_container, var_name_up)
 
-    names = (PSY.get_name(g) for g in devices)
+    names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(psi_container)
 
     up = Symbol("regulation_limits_up_$(T)")
@@ -128,7 +128,7 @@ function add_constraints!(
     var_name_dn = make_variable_name(DeltaActivePowerDownVariable, T)
     var_dn = get_variable(psi_container, var_name_dn)
 
-    names = (PSY.get_name(g) for g in devices)
+    names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(psi_container)
 
     dn = Symbol("regulation_limits_dn_$(T)")
@@ -180,7 +180,7 @@ function add_constraints!(
     var_name_up = make_variable_name(DeltaActivePowerUpVariable, T)
     var_up = get_variable(psi_container, var_name_up)
 
-    names = (PSY.get_name(g) for g in devices)
+    names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(psi_container)
 
     up = Symbol("regulation_limits_up_$(T)")
@@ -209,7 +209,7 @@ function add_constraints!(
     var_name_dn = make_variable_name(DeltaActivePowerDownVariable, T)
     var_dn = get_variable(psi_container, var_name_dn)
 
-    names = (PSY.get_name(g) for g in devices)
+    names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(psi_container)
 
     dn = Symbol("regulation_limits_dn_$(T)")
@@ -237,7 +237,7 @@ function ramp_constraints!(
     R_dn = get_variable(psi_container, DeltaActivePowerDownVariable, T)
 
     resolution = Dates.value(Dates.Second(model_resolution(psi_container)))
-    names = (PSY.get_name(g) for g in devices)
+    names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(psi_container)
 
     container_up = add_cons_container!(psi_container, :ramp_limits_up, names, time_steps)
@@ -277,7 +277,7 @@ function participation_assignment!(
     area_reserve_up = get_variable(psi_container, DeltaActivePowerUpVariable, PSY.Area)
     area_reserve_dn = get_variable(psi_container, DeltaActivePowerDownVariable, PSY.Area)
 
-    component_names = (PSY.get_name(d) for d in devices)
+    component_names = [PSY.get_name(d) for d in devices]
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
     participation_assignment_dn = JuMPConstraintArray(undef, component_names, time_steps)
     assign_constraint!(

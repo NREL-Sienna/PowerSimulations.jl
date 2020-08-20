@@ -153,7 +153,7 @@ function add_variable!(
     variable = add_var_container!(
         psi_container,
         var_name,
-        (PSY.get_name(d) for d in devices),
+        [PSY.get_name(d) for d in devices],
         time_steps,
     )
 

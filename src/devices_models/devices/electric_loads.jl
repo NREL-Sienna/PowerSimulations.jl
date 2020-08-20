@@ -68,7 +68,7 @@ function custom_reactive_power_constraints!(
     ::Type{<:AbstractControllablePowerLoadFormulation},
 ) where {T <: PSY.ElectricLoad}
     time_steps = model_time_steps(psi_container)
-    constraint = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
+    constraint = JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
     assign_constraint!(psi_container, REACTIVE, T, constraint)
 
     for t in time_steps, d in devices
