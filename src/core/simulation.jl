@@ -213,7 +213,7 @@ end
                 )
 
 """
-mutable struct Simulation <: IS.InfrastructureSystemsType
+mutable struct Simulation
     steps::Int
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     initial_time::Union{Nothing, Dates.DateTime}
