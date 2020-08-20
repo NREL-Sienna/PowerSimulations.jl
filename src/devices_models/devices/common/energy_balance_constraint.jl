@@ -106,7 +106,7 @@ function energy_balance_hydro_param!(
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     fraction_of_hour = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    name_index = (get_name(d) for d in inflow_data)
+    name_index = (get_component_name(d) for d in inflow_data)
 
     varspill = get_variable(psi_container, var_names[1])
     varout = get_variable(psi_container, var_names[2])
@@ -117,7 +117,7 @@ function energy_balance_hydro_param!(
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, d) in enumerate(inflow_data)
-        name = get_name(d)
+        name = get_component_name(d)
         multiplier[name, 1] = d.multiplier
         paraminflow[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
         exp =
@@ -175,7 +175,7 @@ function energy_balance_hydro!(
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    name_index = (get_name(d) for d in inflow_data)
+    name_index = (get_component_name(d) for d in inflow_data)
 
     varspill = get_variable(psi_container, var_names[1])
     varout = get_variable(psi_container, var_names[2])
@@ -184,7 +184,7 @@ function energy_balance_hydro!(
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, d) in enumerate(inflow_data)
-        name = get_name(d)
+        name = get_component_name(d)
         constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[name, 1] ==

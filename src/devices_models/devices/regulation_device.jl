@@ -101,7 +101,7 @@ function add_constraints!(
     end
 
     for d in constraint_infos
-        name = get_name(d)
+        name = get_component_name(d)
         limits = get_limits(d)
         for t in time_steps
             rating = parameters ? multiplier[name, t] : d.multiplier
@@ -154,7 +154,7 @@ function add_constraints!(
     end
 
     for d in constraint_infos
-        name = get_name(d)
+        name = get_component_name(d)
         limits = get_limits(d)
         for t in time_steps
             rating = parameters ? multiplier[name, t] : d.multiplier

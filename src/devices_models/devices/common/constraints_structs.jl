@@ -1,11 +1,14 @@
 abstract type AbstractConstraintInfo end
+
+get_component_name(d::AbstractConstraintInfo) = d.component_name
+
 abstract type AbstractRangeConstraintInfo <: AbstractConstraintInfo end
 abstract type AbstractRampConstraintInfo <: AbstractConstraintInfo end
 abstract type AbstractStartConstraintInfo <: AbstractConstraintInfo end
 
 """ Data Container to construct range constraints"""
 struct DeviceRangeConstraintInfo <: AbstractRangeConstraintInfo
-    name::String
+    component_name::String
     limits::MinMax
     additional_terms_ub::Vector{Symbol}
     additional_terms_lb::Vector{Symbol}
@@ -24,7 +27,7 @@ function DeviceRangeConstraintInfo(name::String)
     )
 end
 
-get_name(d::DeviceRangeConstraintInfo) = d.name
+get_component_name(d::DeviceRangeConstraintInfo) = d.component_name
 
 struct DeviceTimeSeriesConstraintInfo
     bus_number::Int
@@ -41,7 +44,7 @@ struct DeviceTimeSeriesConstraintInfo
     end
 end
 
-get_name(d::DeviceTimeSeriesConstraintInfo) = d.range.name
+get_component_name(d::DeviceTimeSeriesConstraintInfo) = get_component_name(d.range)
 get_limits(d::DeviceTimeSeriesConstraintInfo) = d.range.limits
 get_timeseries(d::DeviceTimeSeriesConstraintInfo) = d.timeseries
 
@@ -69,7 +72,7 @@ function DeviceTimeSeriesConstraintInfo(
 end
 
 struct DeviceMultiStartRangeConstraintsInfo <: AbstractRangeConstraintInfo
-    name::String
+    component_name::String
     limits::PSY.Min_Max
     lag_ramp_limits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}
     additional_terms_ub::Vector{Symbol}# [:R1, :R2]
@@ -77,12 +80,12 @@ struct DeviceMultiStartRangeConstraintsInfo <: AbstractRangeConstraintInfo
 end
 
 function DeviceMultiStartRangeConstraintsInfo(
-    name::String,
+    component_name::String,
     limits::PSY.Min_Max,
     lag_ramp_limits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}},
 )
     return DeviceMultiStartRangeConstraintsInfo(
-        name,
+        component_name,
         limits,
         lag_ramp_limits,
         Vector{Symbol}(),
@@ -92,7 +95,7 @@ end
 
 function DeviceMultiStartRangeConstraintsInfo(name::String)
     return DeviceMultiStartRangeConstraintsInfo(
-        name,
+        component_name,
         (min = -Inf, max = Inf),
         (startup = Inf, shutdown = Inf),
         Vector{Symbol}(),
@@ -101,7 +104,7 @@ function DeviceMultiStartRangeConstraintsInfo(name::String)
 end
 
 struct DeviceRampConstraintInfo <: AbstractRampConstraintInfo
-    name::String
+    component_name::String
     limits::PSI.MinMax
     ic_power::InitialCondition
     ramp_limits::PSI.UpDown
@@ -110,13 +113,13 @@ struct DeviceRampConstraintInfo <: AbstractRampConstraintInfo
 end
 
 function DeviceRampConstraintInfo(
-    name::String,
+    component_name::String,
     limits::PSY.Min_Max,
     ic_power::InitialCondition,
     ramp_limits::PSI.UpDown,
 )
     return DeviceRampConstraintInfo(
-        name,
+        component_name,
         limits,
         ic_power,
         ramp_limits,
@@ -127,14 +130,13 @@ end
 
 function DeviceRampConstraintInfo(name::String, ic_power::InitialCondition)
     return DeviceRampConstraintInfo(
-        name,
+        component_name,
         (min = -Inf, max = Inf),
         ic_power,
         (up = Inf, down = Inf),
     )
 end
 
-get_name(d::DeviceRampConstraintInfo) = d.name
 get_limits(d::DeviceRampConstraintInfo) = d.limits
 get_ic_power(d::DeviceRampConstraintInfo) = d.ic_power
 get_ramp_limits(d::DeviceRampConstraintInfo) = d.ramp_limits
@@ -142,12 +144,12 @@ get_additional_terms_ub(d::DeviceRampConstraintInfo) = d.additional_terms_ub
 get_additional_terms_lb(d::DeviceRampConstraintInfo) = d.additional_terms_lb
 
 struct DeviceStartUpConstraintInfo <: AbstractStartConstraintInfo
-    name::String
+    component_name::String
     time_limits::StartUpStages
     startup_types::Int
 end
 
 struct DeviceStartTypesConstraintInfo <: AbstractStartConstraintInfo
-    name::String
+    component_name::String
     startup_types::Int
 end

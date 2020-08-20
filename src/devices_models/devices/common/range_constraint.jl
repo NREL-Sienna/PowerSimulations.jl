@@ -43,12 +43,12 @@ function device_range(psi_container::PSIContainer, inputs::RangeConstraintSpecIn
     variable = get_variable(psi_container, inputs.variable_name)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_name(x) for x in inputs.constraint_infos)
+    names = (get_component_name(x) for x in inputs.constraint_infos)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos, t in time_steps
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
         for val in constraint_info.additional_terms_ub
             JuMP.add_to_expression!(
@@ -111,14 +111,14 @@ function device_semicontinuousrange(
     varbin = get_variable(psi_container, inputs.bin_variable_names[1])
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_name(x) for x in inputs.constraint_infos)
+    names = (get_component_name(x) for x in inputs.constraint_infos)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos, t in time_steps
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         if JuMP.has_lower_bound(varcts[ci_name, t])
             JuMP.set_lower_bound(varcts[ci_name, t], 0.0)
         end
@@ -186,14 +186,14 @@ function reserve_device_semicontinuousrange(
 
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = (x.name for x in inputs.constraint_infos)
+    names = (get_component_name(x) for x in inputs.constraint_infos)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos, t in time_steps
-        ci_name = get_name(constraint_info)
+        ci_name = get_component_name(constraint_info)
         if JuMP.has_lower_bound(varcts[ci_name, t])
             JuMP.set_lower_bound(varcts[ci_name, t], 0.0)
         end
@@ -264,40 +264,41 @@ function device_multistart_range(
 
     on_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     off_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    names = (x.name for x in inputs.constraint_infos)
+    names = (get_component_name(x) for x in inputs.constraint_infos)
     con_on = add_cons_container!(psi_container, on_name, names, time_steps)
     con_off = add_cons_container!(psi_container, off_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos, t in time_steps
-        if JuMP.has_lower_bound(varp[constraint_info.name, t])
-            JuMP.set_lower_bound(varp[constraint_info.name, t], 0.0)
+        if JuMP.has_lower_bound(varp[get_component_name(constraint_info), t])
+            JuMP.set_lower_bound(varp[get_component_name(constraint_info), t], 0.0)
         end
-        expression_products = JuMP.AffExpr(0.0, varp[constraint_info.name, t] => 1.0)
+        expression_products =
+            JuMP.AffExpr(0.0, varp[get_component_name(constraint_info), t] => 1.0)
         for val in constraint_info.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_products,
-                get_variable(psi_container, val)[constraint_info.name, t],
+                get_variable(psi_container, val)[get_component_name(constraint_info), t],
             )
         end
-        con_on[constraint_info.name, t] = JuMP.@constraint(
+        con_on[get_component_name(constraint_info), t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             expression_products <=
             (constraint_info.limits.max - constraint_info.limits.min) *
-            varstatus[constraint_info.name, t] -
-            max(constraint_info.limits.max - constraint_info.lag_ramp_limits.startup, 0) * varon[constraint_info.name, t]
+            varstatus[get_component_name(constraint_info), t] -
+            max(constraint_info.limits.max - constraint_info.lag_ramp_limits.startup, 0) * varon[get_component_name(constraint_info), t]
         )
         if t == length(time_steps)
             continue
         else
-            con_off[constraint_info.name, t] = JuMP.@constraint(
+            con_off[get_component_name(constraint_info), t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 expression_products <=
                 (constraint_info.limits.max - constraint_info.limits.min) *
-                varstatus[constraint_info.name, t] -
+                varstatus[get_component_name(constraint_info), t] -
                 max(
                     constraint_info.limits.max - constraint_info.lag_ramp_limits.shutdown,
                     0,
-                ) * varoff[constraint_info.name, t + 1]
+                ) * varoff[get_component_name(constraint_info), t + 1]
             )
         end
     end
@@ -345,7 +346,7 @@ function device_multistart_range_ic(
         val = max(data.limits.max - data.lag_ramp_limits.shutdown, 0)
         con[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            val * varstop[data.name, 1] <=
+            val * varstop[get_component_name(data), 1] <=
             initial_conditions[ix, 2].value * (data.limits.max - data.limits.min) -
             ic.value
         )

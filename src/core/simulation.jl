@@ -287,7 +287,7 @@ end
 
 get_ini_cond_chronology(s::Simulation) = s.sequence.ini_cond_chronology
 get_stage_name(s::Simulation, stage::Stage) = get_stage_name(s.sequence, stage)
-get_name(s::Simulation) = s.name
+IS.get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
@@ -1012,7 +1012,7 @@ Return the serialized simulation directory name that is created.
    throw an exception.
 """
 function serialize(simulation::Simulation; path = ".", force = false)
-    directory = joinpath(path, "simulation-$(simulation.name)")
+    directory = joinpath(path, "simulation-$(get_name(simulation))")
     stages = Dict{String, StageSerializationWrapper}()
 
     orig = pwd()
@@ -1051,10 +1051,10 @@ function serialize(simulation::Simulation; path = ".", force = false)
         simulation.initial_time,
         simulation.sequence,
         simulation.simulation_folder,
-        simulation.name,
+        get_name(simulation),
     )
     Serialization.serialize(filename, obj)
-    @info "Serialized simulation" simulation.name directory
+    @info "Serialized simulation" get_name(simulation) directory
     return directory
 end
 

@@ -475,13 +475,13 @@ function device_energy_budget_param_ub(
     resolution = model_resolution(psi_container)
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     variable = get_variable(psi_container, var_name)
-    set_name = (get_name(r) for r in energy_budget_data)
+    set_name = (get_component_name(r) for r in energy_budget_data)
     constraint = add_cons_container!(psi_container, cons_name, set_name)
     container = add_param_container!(psi_container, param_reference, set_name, 1)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     for constraint_info in energy_budget_data
-        name = get_name(constraint_info)
+        name = get_component_name(constraint_info)
         multiplier[name, 1] = constraint_info.multiplier * inv_dt
         param[name, 1] =
             PJ.add_parameter(psi_container.JuMPmodel, sum(constraint_info.timeseries))
@@ -506,11 +506,11 @@ function device_energy_budget_ub(
 )
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
-    names = (get_name(x) for x in energy_budget_constraints)
+    names = (get_component_name(x) for x in energy_budget_constraints)
     constraint = add_cons_container!(psi_container, cons_name, names)
 
     for constraint_info in energy_budget_constraints
-        name = get_name(constraint_info)
+        name = get_component_name(constraint_info)
         resolution = model_resolution(psi_container)
         inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
         forecast = constraint_info.timeseries
