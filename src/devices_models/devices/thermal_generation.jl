@@ -657,7 +657,7 @@ function turbine_temperature(
     hot_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "hot")
     warm_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "warm")
 
-    names = (get_component_name(st) for st in startup_data)
+    names = [get_component_name(st) for st in startup_data]
 
     con = [
         add_cons_container!(psi_container, hot_name, names, time_steps; sparse = true),
@@ -721,7 +721,7 @@ function device_start_type_constraint(
         get_variable(psi_container, var_names[3]),
     ]
 
-    set_name = (get_component_name(d) for d in data)
+    set_name = [get_component_name(d) for d in data]
     con = add_cons_container!(psi_container, cons_name, set_name, time_steps)
 
     for t in time_steps, d in data
