@@ -74,18 +74,18 @@ PG.bar_plot(re_results; save = path, title = title);
 # 3.3
 
 path = mkdir(joinpath(pwd(), "plots-3"));
-PG.fuel_plot(re_results, c_sys5_re; save = path, title = "Example Fuel Plot");
-PG.fuel_plot(re_results, c_sys5_re; save = path, load = true, title = "Fuel Plot with Load");
+PG.fuel_plot(re_results, system; save = path, title = "Example Fuel Plot");
+PG.fuel_plot(re_results, system; save = path, load = true, title = "Fuel Plot with Load");
 PG.fuel_plot(
     re_results,
-    c_sys5_re;
+    system;
     save = path,
     curtailment = true,
     title = "Fuel Plot with Curtailment",
 );
 PG.fuel_plot(
     op_results,
-    c_sys5_re;
+    system;
     reserves = true,
     save = path,
     title = "Example Fuel Plot with Reserves",
@@ -94,15 +94,15 @@ PG.fuel_plot(
 colors = [:pink :green :blue :magenta :black]
 PG.fuel_plot(
     re_results,
-    c_sys5_re;
+    system;
     seriescolor = colors,
     save = path,
     title = "Example Fuel Plot with Other Colors",
 );
 
 title = "Example of a Title";
-PG.fuel_plot(re_results, c_sys5_re; save = path, title = title);
-PG.fuel_plot(re_results, c_sys5_re; save = path, stair = true);
+PG.fuel_plot(re_results, system; save = path, title = title);
+PG.fuel_plot(re_results, system; save = path, stair = true);
 
 # 3.4 FORECAST PLOTS
 path = mkdir(joinpath(pwd(), "plots-4"));
@@ -182,15 +182,13 @@ results_subset = PG.sort_data(op_results; Variables = selected_variables);
 PG.stack_plot(results_subset; save = path, title = "Selected Variables Plot");
 
 # 3.6
-results_one =
-    PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true);
-results_two =
-    PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true);
+results_one = PSI.run_economic_dispatch(system; optimizer = solver, use_parameters = true);
+results_two = PSI.run_economic_dispatch(system; optimizer = solver, use_parameters = true);
 
 path = mkdir(joinpath(pwd(), "plots-6"));
 PG.stack_plot([results_one, results_two]; save = path, title = "Comparison");
 #
-PG.fuel_plot([results_one, results_two], c_sys5_re; save = path, title = "Comparison");
+PG.fuel_plot([results_one, results_two], system; save = path, title = "Comparison");
 #
 variables = [Symbol("P__ThermalStandard")]
 PG.stack_plot(
