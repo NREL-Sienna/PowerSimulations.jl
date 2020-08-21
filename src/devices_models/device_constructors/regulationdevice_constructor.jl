@@ -18,26 +18,26 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
-    add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
-    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, devices)
-    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, devices)
+    add_variables!(psi_container, DeltaActivePowerUpVariable, devices)
+    add_variables!(psi_container, DeltaActivePowerDownVariable, devices)
+    add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, devices)
+    add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
     add_constraints!(
+        psi_container,
         RangeConstraint,
         DeltaActivePowerUpVariable,
-        psi_container,
         devices,
         model,
         S,
         get_feedforward(model),
     )
     add_constraints!(
+        psi_container,
         RangeConstraint,
         DeltaActivePowerDownVariable,
-        psi_container,
         devices,
         model,
         S,
@@ -69,26 +69,26 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
-    add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
-    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, devices)
-    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, devices)
+    add_variables!(psi_container, DeltaActivePowerUpVariable, devices)
+    add_variables!(psi_container, DeltaActivePowerDownVariable, devices)
+    add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, devices)
+    add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
     add_constraints!(
+        psi_container,
         RangeConstraint,
         DeltaActivePowerUpVariable,
-        psi_container,
         devices,
         model,
         S,
         get_feedforward(model),
     )
     add_constraints!(
+        psi_container,
         RangeConstraint,
         DeltaActivePowerDownVariable,
-        psi_container,
         devices,
         model,
         S,

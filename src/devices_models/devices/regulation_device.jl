@@ -63,9 +63,9 @@ function AddVariableSpec(
 end
 
 function add_constraints!(
+    psi_container::PSIContainer,
     ::Type{RangeConstraint},
     ::Type{DeltaActivePowerUpVariable},
-    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
@@ -116,9 +116,9 @@ function add_constraints!(
 end
 
 function add_constraints!(
+    psi_container::PSIContainer,
     ::Type{RangeConstraint},
     ::Type{DeltaActivePowerDownVariable},
-    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
@@ -169,9 +169,9 @@ function add_constraints!(
 end
 
 function add_constraints!(
+    psi_container::PSIContainer,
     ::Type{RangeConstraint},
     ::Type{DeltaActivePowerUpVariable},
-    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
     ::Type{AreaBalancePowerModel},
@@ -198,9 +198,9 @@ function add_constraints!(
 end
 
 function add_constraints!(
+    psi_container::PSIContainer,
     ::Type{RangeConstraint},
     ::Type{DeltaActivePowerDownVariable},
-    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
     ::Type{AreaBalancePowerModel},

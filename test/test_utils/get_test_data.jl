@@ -101,16 +101,8 @@ end
 
 function build_c_sys5(; kwargs...)
     nodes = nodes5()
-    c_sys5 = System(
-        nodes,
-        thermal_generators5(nodes),
-        loads5(nodes),
-        branches5(nodes),
-        nothing,
-        100.0,
-        nothing,
-        nothing,
-    )
+    c_sys5 =
+        System(100.0, nodes, thermal_generators5(nodes), loads5(nodes), branches5(nodes))
 
     if get(kwargs, :add_forecasts, true)
         for t in 1:2
@@ -130,14 +122,11 @@ end
 function build_c_sys5_ml(; kwargs...)
     nodes = nodes5()
     c_sys5_ml = System(
+        100.0,
         nodes,
         thermal_generators5(nodes),
         loads5(nodes),
-        branches5(nodes),
-        nothing,
-        100.0,
-        nothing,
-        nothing;
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -159,14 +148,11 @@ end
 function build_c_sys14(; kwargs...)
     nodes = nodes14()
     c_sys14 = System(
+        100.0,
         nodes,
         thermal_generators14(nodes),
         loads14(nodes),
-        branches14(nodes),
-        nothing,
-        100.0,
-        nothing,
-        nothing;
+        branches14(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -186,14 +172,12 @@ end
 function build_c_sys5_re(; kwargs...)
     nodes = nodes5()
     c_sys5_re = System(
-        nodes,
-        vcat(thermal_generators5(nodes), renewable_generators5(nodes)),
-        loads5(nodes),
-        branches5(nodes),
-        nothing,
         100.0,
-        nothing,
-        nothing;
+        nodes,
+        thermal_generators5(nodes),
+        renewable_generators5(nodes),
+        loads5(nodes),
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -243,14 +227,11 @@ end
 function build_c_sys5_re_only(; kwargs...)
     nodes = nodes5()
     c_sys5_re_only = System(
+        100.0,
         nodes,
         renewable_generators5(nodes),
         loads5(nodes),
-        branches5(nodes),
-        nothing,
-        100.0,
-        nothing,
-        nothing;
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -279,14 +260,12 @@ end
 function build_c_sys5_hy(; kwargs...)
     nodes = nodes5()
     c_sys5_hy = System(
-        nodes,
-        vcat(thermal_generators5(nodes), hydro_generators5(nodes)[1]),
-        loads5(nodes),
-        branches5(nodes),
-        nothing,
         100.0,
-        nothing,
-        nothing;
+        nodes,
+        thermal_generators5(nodes),
+        [hydro_generators5(nodes)[1]],
+        loads5(nodes),
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -315,14 +294,12 @@ end
 function build_c_sys5_hyd(; kwargs...)
     nodes = nodes5()
     c_sys5_hyd = System(
-        nodes,
-        vcat(thermal_generators5(nodes), hydro_generators5(nodes)[2]),
-        loads5(nodes),
-        branches5(nodes),
-        nothing,
         100.0,
-        nothing,
-        nothing;
+        nodes,
+        thermal_generators5(nodes),
+        [hydro_generators5(nodes)[2]],
+        loads5(nodes),
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -395,14 +372,13 @@ function build_c_sys5_bat(; kwargs...)
     time_series_in_memory = get(kwargs, :time_series_in_memory, true)
     nodes = nodes5()
     c_sys5_bat = System(
+        100.0,
         nodes,
-        vcat(thermal_generators5(nodes), renewable_generators5(nodes)),
+        thermal_generators5(nodes),
+        renewable_generators5(nodes),
         loads5(nodes),
         branches5(nodes),
-        battery5(nodes),
-        100.0,
-        nothing,
-        nothing;
+        battery5(nodes);
         time_series_in_memory = time_series_in_memory,
     )
 
@@ -444,14 +420,12 @@ end
 function build_c_sys5_il(; kwargs...)
     nodes = nodes5()
     c_sys5_il = System(
+        100.0,
         nodes,
         thermal_generators5(nodes),
-        vcat(loads5(nodes), interruptible(nodes)),
-        branches5(nodes),
-        nothing,
-        100.0,
-        nothing,
-        nothing;
+        loads5(nodes),
+        interruptible(nodes),
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -501,14 +475,12 @@ end
 function build_c_sys5_dc(; kwargs...)
     nodes = nodes5()
     c_sys5_dc = System(
-        nodes,
-        vcat(thermal_generators5(nodes), renewable_generators5(nodes)),
-        loads5(nodes),
-        branches5_dc(nodes),
-        nothing,
         100.0,
-        nothing,
-        nothing;
+        nodes,
+        thermal_generators5(nodes),
+        renewable_generators5(nodes),
+        loads5(nodes),
+        branches5_dc(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -537,14 +509,11 @@ end
 function build_c_sys14_dc(; kwargs...)
     nodes = nodes14()
     c_sys14_dc = System(
+        100.0,
         nodes,
         thermal_generators14(nodes),
         loads14(nodes),
-        branches14_dc(nodes),
-        nothing,
-        100.0,
-        nothing,
-        nothing;
+        branches14_dc(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -564,16 +533,8 @@ end
 function build_c_sys5_reg(; kwargs...)
     nodes = nodes5()
 
-    c_sys5_reg = System(
-        nodes,
-        thermal_generators5(nodes),
-        loads5(nodes),
-        branches5(nodes),
-        nothing,
-        100.0,
-        nothing,
-        nothing,
-    )
+    c_sys5_reg =
+        System(100.0, nodes, thermal_generators5(nodes), loads5(nodes), branches5(nodes))
 
     area = Area("1")
     add_component!(c_sys5_reg, area)
@@ -777,14 +738,11 @@ end
 function build_c_sys5_uc(; kwargs...)
     nodes = nodes5()
     c_sys5_uc = System(
+        100.0,
         nodes,
         thermal_generators5_uc_testing(nodes),
         loads5(nodes),
-        branches5(nodes),
-        nothing,
-        100.0,
-        nothing,
-        nothing;
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -852,14 +810,13 @@ end
 function build_c_sys5_ed(; kwargs...)
     nodes = nodes5()
     c_sys5_ed = System(
-        nodes,
-        vcat(thermal_generators5_uc_testing(nodes), renewable_generators5(nodes)),
-        vcat(loads5(nodes), interruptible(nodes)),
-        branches5(nodes),
-        nothing,
         100.0,
-        nothing,
-        nothing;
+        nodes,
+        thermal_generators5_uc_testing(nodes),
+        renewable_generators5(nodes),
+        loads5(nodes),
+        interruptible(nodes),
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -933,18 +890,13 @@ end
 function build_c_sys5_hy_uc(; kwargs...)
     nodes = nodes5()
     c_sys5_hy_uc = System(
-        nodes,
-        vcat(
-            thermal_generators5_uc_testing(nodes),
-            hydro_generators5(nodes),
-            renewable_generators5(nodes),
-        ),
-        loads5(nodes),
-        branches5(nodes),
-        nothing,
         100.0,
-        nothing,
-        nothing;
+        nodes,
+        thermal_generators5_uc_testing(nodes),
+        hydro_generators5(nodes),
+        renewable_generators5(nodes),
+        loads5(nodes),
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -1008,18 +960,14 @@ end
 function build_c_sys5_hy_ed(; kwargs...)
     nodes = nodes5()
     c_sys5_hy_ed = System(
-        nodes,
-        vcat(
-            thermal_generators5_uc_testing(nodes),
-            hydro_generators5(nodes),
-            renewable_generators5(nodes),
-        ),
-        vcat(loads5(nodes), interruptible(nodes)),
-        branches5(nodes),
-        nothing,
         100.0,
-        nothing,
-        nothing;
+        nodes,
+        thermal_generators5_uc_testing(nodes),
+        hydro_generators5(nodes),
+        renewable_generators5(nodes),
+        loads5(nodes),
+        interruptible(nodes),
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
@@ -1114,14 +1062,12 @@ end
 function build_c_sys5_pglib(; kwargs...)
     nodes = nodes5()
     c_sys5_uc = System(
-        nodes,
-        vcat(thermal_generators5_uc_testing(nodes), thermal_pglib_generators5(nodes)),
-        loads5(nodes),
-        branches5(nodes),
-        nothing,
         100.0,
-        nothing,
-        nothing;
+        nodes,
+        thermal_generators5_uc_testing(nodes),
+        thermal_pglib_generators5(nodes),
+        loads5(nodes),
+        branches5(nodes);
         time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 

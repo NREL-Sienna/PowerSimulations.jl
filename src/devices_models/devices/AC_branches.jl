@@ -86,7 +86,7 @@ function branch_rate_constraints!(
     feedforward::Nothing,
 ) where {B <: PSY.ACBranch}
     constraint_infos = _get_constraint_data(devices)
-    device_range(
+    device_range!(
         psi_container,
         RangeConstraintSpecInternal(
             constraint_infos,
@@ -148,7 +148,7 @@ function branch_flow_constraints!(
         minmax = (min = -1 * limit, max = limit)
         constraint_infos[ix] = DeviceRangeConstraintInfo(PSY.get_name(d), minmax)
     end
-    device_range(
+    device_range!(
         psi_container,
         RangeConstraintSpecInternal(
             constraint_infos,
@@ -185,7 +185,7 @@ function branch_flow_constraints!(
         from[ix] = DeviceRangeConstraintInfo(names[ix], limit_values_TF[ix])
     end
 
-    device_range(
+    device_range!(
         psi_container,
         RangeConstraintSpecInternal(
             to,
@@ -193,7 +193,7 @@ function branch_flow_constraints!(
             make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLine),
         ),
     )
-    device_range(
+    device_range!(
         psi_container,
         RangeConstraintSpecInternal(
             from,

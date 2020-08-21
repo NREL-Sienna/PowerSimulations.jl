@@ -83,7 +83,7 @@ function DeviceRangeConstraintSpec(
             ),
             variable_name = make_variable_name(ActivePowerOutVariable, T),
             limits_func = x -> PSY.get_output_active_power_limits(x),
-            constraint_func = device_range,
+            constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -108,7 +108,7 @@ function DeviceRangeConstraintSpec(
             ),
             variable_name = make_variable_name(ActivePowerInVariable, T),
             limits_func = x -> PSY.get_input_active_power_limits(x),
-            constraint_func = device_range,
+            constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -134,7 +134,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ActivePowerOutVariable, T),
             bin_variable_names = [make_variable_name(ReserveVariable, T)],
             limits_func = x -> PSY.get_output_active_power_limits(x),
-            constraint_func = reserve_device_semicontinuousrange,
+            constraint_func = reserve_device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -160,7 +160,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ActivePowerInVariable, T),
             bin_variable_names = [make_variable_name(ReserveVariable, T)],
             limits_func = x -> PSY.get_input_active_power_limits(x),
-            constraint_func = reserve_device_semicontinuousrange,
+            constraint_func = reserve_device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -170,9 +170,9 @@ end
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
 function add_constraints!(
+    psi_container::PSIContainer,
     ::Type{<:RangeConstraint},
     ::Type{ReactivePowerVariable},
-    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St, D},
     ::Type{S},
@@ -185,7 +185,7 @@ function add_constraints!(
         constraint_infos[ix] = DeviceRangeConstraintInfo(name, limits)
     end
 
-    device_range(
+    device_range!(
         psi_container,
         RangeConstraintSpecInternal(
             constraint_infos,
@@ -224,7 +224,7 @@ function energy_capacity_constraints!(
         constraint_infos[ix] = constraint_info
     end
 
-    device_range(
+    device_range!(
         psi_container,
         RangeConstraintSpecInternal(
             constraint_infos,

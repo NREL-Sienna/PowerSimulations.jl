@@ -4,7 +4,7 @@ struct PIDSmoothACE <: AbstractAGCFormulation end
 """
 Steady State deviation of the frequency
 """
-function add_variables!(::Type{SteadyStateFrequencyDeviation}, psi_container::PSIContainer)
+function add_variables!(psi_container::PSIContainer, ::Type{SteadyStateFrequencyDeviation})
     variable_name = make_variable_name(SteadyStateFrequencyDeviation)
     time_steps = model_time_steps(psi_container)
     variable = add_var_container!(psi_container, variable_name, time_steps)

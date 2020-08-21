@@ -201,7 +201,7 @@ function DeviceRangeConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
             variable_name = make_variable_name(ActivePowerVariable, T),
             limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_range,
+            constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -226,7 +226,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ActivePowerVariable, T),
             bin_variable_names = [make_variable_name(OnVariable, T)],
             limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_semicontinuousrange,
+            constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -251,7 +251,7 @@ function DeviceRangeConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
             variable_name = make_variable_name(ActivePowerVariable, T),
             limits_func = x -> (min = 0.0, max = PSY.get_active_power_limits(x).max),
-            constraint_func = device_range,
+            constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
         custom_psi_container_func = custom_active_power_constraints!,
@@ -300,7 +300,7 @@ function DeviceRangeConstraintSpec(
                 make_variable_name(StartVariable, T),
                 make_variable_name(StopVariable, T),
             ],
-            constraint_func = device_multistart_range,
+            constraint_func = device_multistart_range!,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
             lag_limits_func = PSY.get_power_trajectory,
         ),
@@ -357,7 +357,7 @@ function initial_range_constraints!(
     end
 
     if !isempty(ini_conds)
-        device_multistart_range_ic(
+        device_multistart_range_ic!(
             psi_container,
             constraint_data,
             ini_conds,
@@ -392,7 +392,7 @@ function DeviceRangeConstraintSpec(
             ),
             variable_name = make_variable_name(ReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(x),
-            constraint_func = device_range,
+            constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
@@ -421,7 +421,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ReactivePowerVariable, T),
             bin_variable_names = [make_variable_name(OnVariable, T)],
             limits_func = x -> PSY.get_reactive_power_limits(x),
-            constraint_func = device_semicontinuousrange,
+            constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
