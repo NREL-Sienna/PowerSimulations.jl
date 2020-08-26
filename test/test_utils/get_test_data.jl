@@ -1059,6 +1059,97 @@ function build_c_sys5_hy_ed(; kwargs...)
     return c_sys5_hy_ed
 end
 
+
+function build_c_sys5_phes_ed(; kwargs...)
+    nodes = nodes5()
+    c_sys5_phes_ed = System(
+        100.0,
+        nodes,
+        thermal_generators5_uc_testing(nodes),
+        phes5(nodes),
+        renewable_generators5(nodes),
+        loads5(nodes),
+        interruptible(nodes),
+        branches5(nodes);
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
+    )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_phes_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(
+                        c_sys5_phes_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
+                end
+            end
+            for (ix, l) in enumerate(get_components(HydroGen, c_sys5_phes_ed))
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(
+                        c_sys5_phes_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
+                end
+            end
+            for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_phes_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(
+                        c_sys5_phes_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
+                end
+            end
+            for (ix, l) in enumerate(get_components(HydroPumpedStorage, c_sys5_phes_ed))
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(
+                        c_sys5_phes_ed,
+                        l,
+                        Deterministic("get_storage_capacity", data),
+                    )
+                end
+            end
+            for (ix, l) in enumerate(get_components(Union{HydroEnergyReservoir, HydroPumpedStorage}, c_sys5_phes_ed))
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix] .* 0.8, hour, hour(ini_time[1]))
+                    add_forecast!(c_sys5_phes_ed, l, Deterministic("get_inflow", data))
+                end
+            end
+            for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_phes_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(
+                        c_sys5_phes_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
+                end
+            end
+        end
+    end
+
+    return c_sys5_phes_ed
+end
+
 function build_c_sys5_pglib(; kwargs...)
     nodes = nodes5()
     c_sys5_uc = System(
@@ -1132,6 +1223,8 @@ TEST_SYSTEMS = Dict(
     ),
     "c_sys5_hy_ed" =>
         (description = "", build = build_c_sys5_hy_ed, time_series_in_memory = true),
+    "c_sys5_phes_ed" =>
+        (description = "", build = build_c_sys5_phes_ed, time_series_in_memory = true),
     "c_sys5_hy_uc" =>
         (description = "", build = build_c_sys5_hy_uc, time_series_in_memory = true),
     "c_sys5_hyd" =>

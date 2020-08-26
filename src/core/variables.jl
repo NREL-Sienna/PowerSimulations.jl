@@ -21,6 +21,7 @@ const THETA = "theta"
 const VM = "Vm"
 const WARM_START = "start_warm"
 const LIFT = "z"
+const ACTIVE_POWER_PUMP = "Ppump"
 
 abstract type VariableType end
 

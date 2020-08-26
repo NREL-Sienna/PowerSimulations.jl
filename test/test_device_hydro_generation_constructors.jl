@@ -360,6 +360,71 @@ end
 
 end
 
+
+#########################################
+#### PUMPED STORAGE DISPATCH TESTS ####
+#########################################
+
+@testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStorage Formulations" begin
+    model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
+    c_sys5_phes_ed = build_system("c_sys5_phes_ed")
+
+    # Parameters Testing
+    op_problem =
+        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_phes_ed; use_parameters = true)
+    construct_device!(op_problem, :PHES, model)
+    moi_tests(op_problem, true, 48, 0, 36, 36, 12, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Parameters Testing
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_phes_ed)
+    construct_device!(op_problem, :PHES, model)
+    moi_tests(op_problem, false, 48, 0, 36, 36, 12, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Forecast - No Parameters Testing
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_phes_ed;
+        use_forecast_data = false,
+    )
+    construct_device!(op_problem, :PHES, model)
+    moi_tests(op_problem, false, 4, 0, 3, 3, 1, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+end
+
+@testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStoragewReservation Formulations" begin
+    model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStoragewReservation)
+    c_sys5_phes_ed = build_system("c_sys5_phes_ed")
+
+    # Parameters Testing
+    op_problem =
+        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_phes_ed; use_parameters = true)
+    construct_device!(op_problem, :PHES, model)
+    moi_tests(op_problem, true, 60, 0, 36, 36, 12, true)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Parameters Testing
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_phes_ed)
+    construct_device!(op_problem, :PHES, model)
+    moi_tests(op_problem, false, 60, 0, 36, 36, 12, true)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Forecast - No Parameters Testing
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_phes_ed;
+        use_forecast_data = false,
+    )
+    construct_device!(op_problem, :PHES, model)
+    moi_tests(op_problem, false, 5, 0, 3, 3, 1, true)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+end
+
 #########################################
 ### RESERVOIR BUDGET COMMITMENT TESTS ###
 #########################################

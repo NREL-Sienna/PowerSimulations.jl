@@ -381,6 +381,10 @@ function _get_active_power_output_value(device, key)
     return PSY.get_active_power(device)
 end
 
+function _get_active_power_output_value(device::T, key) where {T <: PSY.HydroGen}
+    return PSY.get_active_power(device)
+end
+
 function _get_active_power_output_above_min_value(device, key)
     if !PSY.get_status(device)
         return 0.0

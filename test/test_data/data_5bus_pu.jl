@@ -568,7 +568,7 @@ hydro_generators5(nodes5) = [
         #ramp_limits = (up = 1.0, down = 1.0),
         ramp_limits = (up = 10.0 * 0.6, down = 10.0 * 0.6),
         time_limits = nothing,
-        operation_cost = TwoPartCost(15.0, 0.0),
+        operation_cost = ThreePartCost(15.0, 0.0, 11.0, 2.0),
         base_power = 100.0,
         storage_capacity = 1.0, # 50 pu * hr (i.e. 5 GWh)
         inflow = 0.2,
@@ -577,6 +577,32 @@ hydro_generators5(nodes5) = [
         #inflow = 0.5,
         #initial_storage = 25.0,
     ),
+];
+
+phes5(nodes5) = [HydroPumpedStorage(
+    name = "HydroPumpedStorage",
+    available = true,
+    bus = nodes5[3],
+    active_power = 0.0,
+    reactive_power = 0.0,
+    rating = 0.5,
+    base_power = 100.0,
+    prime_mover = PrimeMovers.HY,
+    active_power_limits = (min = 0.0, max = 60.0),
+    reactive_power_limits = (min = 0.0, max = 60.0),
+    ramp_limits = (up = 10.0 * 0.6, down = 10.0 * 0.6),
+    time_limits = nothing,
+    operation_cost = ThreePartCost(15.0, 0.0, 11.0, 2.0),
+    rating_pump = 0.2,
+    active_power_limits_pump = (min = 0.0, max = 10.0),
+    reactive_power_limits_pump = (min = 0.0, max = 10.0),
+    ramp_limits_pump = (up = 10.0 * 0.6, down = 10.0 * 0.6),
+    time_limits_pump = nothing,
+    storage_capacity = 1.0, # 50 pu * hr (i.e. 5 GWh)
+    inflow = 0.2,
+    initial_storage = 0.5,
+    pump_efficiency = 1.0
+),
 ];
 
 battery5(nodes5) = [GenericBattery(
