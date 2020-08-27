@@ -1119,30 +1119,26 @@ function time_constraints!(
 end
 
 ########################### Cost Function Calls#############################################
+
+"""
+General Cost function for Thermal Generators
+"""
 function cost_function(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{<:AbstractThermalDispatchFormulation},
+    ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    if !isnothing(feedforward)
-        #Setting kwarg for PWL
-        add_to_setting_ext!(
-            psi_container,
-            "parameter_on",
-            make_variable_name(OnVariable, T),
-        )
+    for d in devices
+        add_to_cost!(psi_container, PSY.get_operation_cost(d), PSY.get_name(d), T)
     end
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(ActivePowerVariable, T),
-        :variable,
-    )
     return
 end
 
+"""
+Cost function for generators formulated as No-Min
+"""
 function cost_function(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -1156,17 +1152,16 @@ function cost_function(
 
     # uses the same cost function whenever there is NO PWL
     function _ps_cost!(d::PSY.ThermalGen, cost_component::PSY.VariableCost)
-        return ps_cost!(
+        return variable_cost!(
             psi_container,
             make_variable_name(ActivePowerVariable, T),
             PSY.get_name(d),
             cost_component,
-            dt,
             1.0,
         )
     end
 
-    # This function modified the PWL cost data when present
+    # TODO: Refactor this function
     function _ps_cost!(
         d::PSY.ThermalGen,
         cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
@@ -1238,145 +1233,6 @@ function cost_function(
         end
     end
 
-    return
-end
-
-function cost_function(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{<:AbstractThermalFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen}
-    #Setting kwarg for PWL
-    add_to_setting_ext!(psi_container, "variable_on", make_variable_name(OnVariable, T))
-
-    #Variable Cost component
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(ActivePowerVariable, T),
-        :variable,
-    )
-
-    #Commitment Cost Components
-    add_to_cost!(psi_container, devices, make_variable_name(StartVariable, T), :startup)
-    add_to_cost!(psi_container, devices, make_variable_name(StopVariable, T), :shutdn)
-    add_to_cost!(psi_container, devices, make_variable_name(OnVariable, T), :fixed)
-    return
-end
-
-function cost_function(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    ::Type{ThermalMultiStartUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-)
-    resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
-    #Variable Cost component
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        :no_load,
-    )
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        :fixed,
-    )
-
-    function _ps_cost!(
-        d::PSY.ThermalMultiStart,
-        cost_component::PSY.VariableCost,
-        var_name::Symbol,
-        bin_var::Symbol,
-        dt::Float64,
-        sign::Float64 = 1.0,
-    )
-        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        index = PSY.get_name(d)
-        cost_array = cost_component.cost
-        all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
-        variable = get_variable(psi_container, var_name)[index, :]
-        bin = get_variable(psi_container, bin_var)[index, :]
-        if !haskey(psi_container.variables, :PWL_cost_vars)
-            time_steps = model_time_steps(psi_container)
-            container = add_var_container!(
-                psi_container,
-                :PWL_cost_vars,
-                [index],
-                time_steps,
-                1:length(cost_component);
-                sparse = true,
-            )
-        else
-            container = get_variable(psi_container, :PWL_cost_vars)
-        end
-        for (t, var) in enumerate(variable)
-            c, pwl_vars = _pwlgencost_sos!(psi_container, var, cost_array, bin[t])
-            for (ix, v) in enumerate(pwl_vars)
-                container[(index, t, ix)] = v
-            end
-            JuMP.add_to_expression!(gen_cost, c)
-        end
-
-        return sign * gen_cost * dt
-    end
-
-    for d in devices
-        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
-        cost_expression = _ps_cost!(
-            d,
-            cost_component,
-            make_variable_name(ActivePowerVariable, PSY.ThermalMultiStart),
-            make_variable_name(OnVariable, PSY.ThermalMultiStart),
-            dt,
-        )
-        T_ce = typeof(cost_expression)
-        T_cf = typeof(psi_container.cost_function)
-        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
-            psi_container.cost_function += cost_expression
-        else
-            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
-        end
-    end
-
-    ## Start up cost
-    function _ps_cost!(d::PSY.ThermalMultiStart, cost_component::StartUpStages)
-        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        startup_var = (HotStartVariable, WarmStartVariable, ColdStartVariable)
-        for st in 1:PSY.get_start_types(d)
-            JuMP.add_to_expression!(
-                gen_cost,
-                ps_cost!(
-                    psi_container,
-                    make_variable_name(startup_var[st], PSY.ThermalMultiStart),
-                    PSY.get_name(d),
-                    cost_component[st],
-                    dt,
-                    1.0,
-                ),
-            )
-        end
-        return gen_cost
-
-    end
-
-    for d in devices
-        cost_component = PSY.get_startup(PSY.get_operation_cost(d))
-        cost_expression = _ps_cost!(d, cost_component)
-        T_ce = typeof(cost_expression)
-        T_cf = typeof(psi_container.cost_function)
-        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
-            psi_container.cost_function += cost_expression
-        else
-            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
-        end
-    end
     return
 end
 
