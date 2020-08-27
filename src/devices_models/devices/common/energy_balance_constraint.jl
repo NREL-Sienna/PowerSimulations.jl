@@ -206,7 +206,6 @@ function energy_balance_hydro!(
     return
 end
 
-
 @doc raw"""
 Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple for pumped hydro
 # Constraints
@@ -258,8 +257,8 @@ function energy_balance_hydro_param!(
         exp =
             initial_conditions[ix].value +
             (
-                multiplier[name, 1] * paraminflow[name, 1] + varin[name, 1] - varspill[name, 1] -
-                varout[name, 1]
+                multiplier[name, 1] * paraminflow[name, 1] + varin[name, 1] -
+                varspill[name, 1] - varout[name, 1]
             ) * fraction_of_hour
         constraint[name, 1] =
             JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == exp)
@@ -270,8 +269,8 @@ function energy_balance_hydro_param!(
             exp =
                 varenergy[name, t - 1] +
                 (
-                    d.multiplier * paraminflow[name, 1] + varin[name, t] - varspill[name, t] -
-                    varout[name, t]
+                    d.multiplier * paraminflow[name, 1] + varin[name, t] -
+                    varspill[name, t] - varout[name, t]
                 ) * fraction_of_hour
             constraint[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, t] == exp)
@@ -326,8 +325,10 @@ function energy_balance_hydro!(
             psi_container.JuMPmodel,
             varenergy[name, 1] ==
             initial_conditions[ix].value +
-            (d.multiplier * d.timeseries[1] + varin[name, 1] - varspill[name, 1] - varout[name, 1]) *
-            fraction_of_hour
+            (
+                d.multiplier * d.timeseries[1] + varin[name, 1] - varspill[name, 1] -
+                varout[name, 1]
+            ) * fraction_of_hour
         )
 
         for t in time_steps[2:end]
@@ -335,8 +336,9 @@ function energy_balance_hydro!(
                 psi_container.JuMPmodel,
                 varenergy[name, t] ==
                 varenergy[name, t - 1] +
-                (d.multiplier * d.timeseries[t] + varin[name, t] - varspill[name, t] - varout[name, t]) *
-                fraction_of_hour
+                (
+                    d.multiplier * d.timeseries[t] + varin[name, t] - varspill[name, t] - varout[name, t]
+                ) * fraction_of_hour
             )
         end
     end

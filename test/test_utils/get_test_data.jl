@@ -1059,7 +1059,6 @@ function build_c_sys5_hy_ed(; kwargs...)
     return c_sys5_hy_ed
 end
 
-
 function build_c_sys5_phes_ed(; kwargs...)
     nodes = nodes5()
     c_sys5_phes_ed = System(
@@ -1124,7 +1123,10 @@ function build_c_sys5_phes_ed(; kwargs...)
                     )
                 end
             end
-            for (ix, l) in enumerate(get_components(Union{HydroEnergyReservoir, HydroPumpedStorage}, c_sys5_phes_ed))
+            for (ix, l) in enumerate(get_components(
+                Union{HydroEnergyReservoir, HydroPumpedStorage},
+                c_sys5_phes_ed,
+            ))
                 ta = hydro_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])

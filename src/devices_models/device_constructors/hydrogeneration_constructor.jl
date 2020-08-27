@@ -583,7 +583,6 @@ function construct_device!(
     return
 end
 
-
 """
 Construct model for HydroPumpedStorage with PumpedStorage Dispatch Formulation with
 reservation constraint with only Active Power
@@ -606,7 +605,6 @@ function construct_device!(
     add_variables!(psi_container, EnergyVariable, devices)
     add_variables!(psi_container, SpillageVariable, devices)
     add_variables!(psi_container, ReserveVariable, devices)
-
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, HydroDispatchPumpedStorage)

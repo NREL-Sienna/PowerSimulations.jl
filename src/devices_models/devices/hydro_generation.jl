@@ -339,7 +339,6 @@ function DeviceRangeConstraintSpec(
     )
 end
 
-
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerOutVariable},
@@ -545,7 +544,7 @@ function energy_balance_constraint!(
                 make_variable_name(SPILLAGE, H),
                 make_variable_name(ACTIVE_POWER_OUT, H),
                 make_variable_name(ENERGY, H),
-                make_variable_name(ACTIVE_POWER_IN, H)
+                make_variable_name(ACTIVE_POWER_IN, H),
             ),
         )
     end
@@ -743,7 +742,11 @@ function energy_capacity_constraints!(
     model::DeviceModel{H, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HydroGen, D <: Union{HydroDispatchPumpedStorage, HydroDispatchPumpedStoragewReservation}, S <: PM.AbstractPowerModel}
+) where {
+    H <: PSY.HydroGen,
+    D <: Union{HydroDispatchPumpedStorage, HydroDispatchPumpedStoragewReservation},
+    S <: PM.AbstractPowerModel,
+}
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)

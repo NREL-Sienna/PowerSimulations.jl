@@ -360,7 +360,6 @@ end
 
 end
 
-
 #########################################
 #### PUMPED STORAGE DISPATCH TESTS ####
 #########################################
@@ -370,8 +369,12 @@ end
     c_sys5_phes_ed = build_system("c_sys5_phes_ed")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_phes_ed; use_parameters = true)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_phes_ed;
+        use_parameters = true,
+    )
     construct_device!(op_problem, :PHES, model)
     moi_tests(op_problem, true, 48, 0, 36, 36, 12, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -400,8 +403,12 @@ end
     c_sys5_phes_ed = build_system("c_sys5_phes_ed")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_phes_ed; use_parameters = true)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_phes_ed;
+        use_parameters = true,
+    )
     construct_device!(op_problem, :PHES, model)
     moi_tests(op_problem, true, 60, 0, 36, 36, 12, true)
     psi_checkobjfun_test(op_problem, GAEVF)
