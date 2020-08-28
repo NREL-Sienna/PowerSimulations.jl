@@ -94,8 +94,8 @@ end
 function cost_function!(
     psi_container::PSIContainer,
     service::SR,
-    ::ServiceModel{SR, AbstractReservesFormulation},
-) where {SR <: PSY.Reserve}
+    ::ServiceModel{SR, T},
+) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     reserve = get_variable(psi_container, PSY.get_name(service), SR)
     for r in reserve
         JuMP.add_to_expression!(psi_container.cost_function, r, 1.0)
