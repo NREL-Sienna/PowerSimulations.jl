@@ -381,7 +381,7 @@ function NodalExpressionSpec(
 end
 
 ##################################### Hydro generation cost ############################
-function cost_function(
+function cost_function!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.HydroEnergyReservoir},
     device_formulation::Type{D},
@@ -398,7 +398,7 @@ function cost_function(
     return
 end
 
-function cost_function(
+function cost_function!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::Type{D},

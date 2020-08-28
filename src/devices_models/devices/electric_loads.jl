@@ -191,7 +191,7 @@ function NodalExpressionSpec(
 end
 
 ############################## FormulationControllable Load Cost ###########################
-function cost_function(
+function cost_function!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{L},
     ::Type{DispatchablePowerLoad},
@@ -207,7 +207,7 @@ function cost_function(
     return
 end
 
-function cost_function(
+function cost_function!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{L},
     ::Type{InterruptiblePowerLoad},

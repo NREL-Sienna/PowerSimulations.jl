@@ -1119,27 +1119,27 @@ function time_constraints!(
 end
 
 ########################### Cost Function Calls#############################################
+# These functions are custom implementations of the cost data. In the file cost_functions.jl there are default implementations. Define these only if needed.
 
-"""
-General Cost function for Thermal Generators
-"""
-function cost_function(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{<:AbstractThermalFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen}
-    for d in devices
-        add_to_cost!(psi_container, PSY.get_operation_cost(d), PSY.get_name(d), T)
-    end
-    return
+function AddCostSpec(::Type{T},
+                     ::Type{U},
+                     psi_container::PSIContainer,
+) where {T <: PSY.ThermalGen, U <: AbstractThermalFormulation}
+
+    return AddCostSpec(;
+            variable_name = make_variable_name(ActivePowerVariable, T),
+            has_status_variable = has_on_variable(psi_container, T),
+            has_status_parameter = has_on_variable(psi_container, T),
+            sos_status = NO_VARIABLE,
+            sign = 1.0,
+            cost_component=nothing
+    )
 end
 
 """
 Cost function for generators formulated as No-Min
 """
-function cost_function(
+function cost_function!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{ThermalDispatchNoMin},

@@ -48,7 +48,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -97,7 +97,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -150,7 +150,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -193,7 +193,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -243,7 +243,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -283,7 +283,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -332,7 +332,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S, get_feedforward(model))
+    cost_function!(psi_container, devices, D, S, get_feedforward(model))
 
     return
 end
@@ -371,7 +371,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -452,7 +452,7 @@ function construct_device!(
     initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -506,7 +506,7 @@ function construct_device!(
     initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
 end
