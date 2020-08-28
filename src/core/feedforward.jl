@@ -28,8 +28,8 @@ struct Consecutive <: FeedForwardChronology end
 struct FullHorizon <: FeedForwardChronology end
 
 struct Range <: FeedForwardChronology
-    range::UnitRange{Int64}
-    function Range(; range::UnitRange{Int64})
+    range::UnitRange{Int}
+    function Range(; range::UnitRange{Int})
         new(range)
     end
 end
