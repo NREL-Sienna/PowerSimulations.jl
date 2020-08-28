@@ -30,8 +30,8 @@ function AddCostSpec(
     ::Type{<:T},
     ::Type{<:U},
     ::PSIContainer,
-) where {T <: PSY.OperationalCost, U <: PSY.Component}
-    error("AddVariableSpec is not implemented for $T / $U")
+) where {T <: PSY.Component, U <: AbstractDeviceFormulation}
+    error("AddCostSpec is not implemented for $T / $U")
 end
 
 """
