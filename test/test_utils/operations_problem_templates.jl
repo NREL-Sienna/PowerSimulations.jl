@@ -108,7 +108,7 @@ devices = Dict(
 template_pwl_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 
-function PSI._jump_value(int::Int64)
+function PSI._jump_value(int::Int)
     @warn("This is for testing purposes only.")
     return int
 end
@@ -134,7 +134,7 @@ function _test_html_print_methods(list::Array)
 end
 
 struct FakeStagesStruct
-    stages::Dict{Int64, Int64}
+    stages::Dict{Int, Int}
 end
 function Base.show(io::IO, struct_stages::FakeStagesStruct)
     PSI._print_inter_stages(io, struct_stages.stages)
