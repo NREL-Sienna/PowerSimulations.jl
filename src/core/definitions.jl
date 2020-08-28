@@ -61,7 +61,6 @@ const MAX_START_STAGES = 3
 const OBJECTIVE_FUNCTION_POSITIVE = 1.0
 const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
 
-
 # Interface limitations
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,

@@ -1121,18 +1121,19 @@ end
 ########################### Cost Function Calls#############################################
 # These functions are custom implementations of the cost data. In the file cost_functions.jl there are default implementations. Define these only if needed.
 
-function AddCostSpec(::Type{T},
-                     ::Type{U},
-                     psi_container::PSIContainer,
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
+    psi_container::PSIContainer,
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalFormulation}
 
     return AddCostSpec(;
-            variable_name = make_variable_name(ActivePowerVariable, T),
-            has_status_variable = has_on_variable(psi_container, T),
-            has_status_parameter = has_on_variable(psi_container, T),
-            sos_status = NO_VARIABLE,
-            sign = 1.0,
-            cost_component=nothing
+        variable_name = make_variable_name(ActivePowerVariable, T),
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_variable(psi_container, T),
+        sos_status = NO_VARIABLE,
+        sign = 1.0,
+        cost_component = nothing,
     )
 end
 
