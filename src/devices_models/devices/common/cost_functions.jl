@@ -13,8 +13,8 @@ function AddCostSpec(;
     has_status_parameter = false,
     sos_status = NO_VARIABLE,
     sign = OBJECTIVE_FUNCTION_POSITIVE,
-    cost_component=nothing
-    )
+    cost_component = nothing,
+)
 
     return AddCostSpec(
         variable_name,
@@ -38,7 +38,7 @@ end
 Add variables to the PSIContainer for a service.
 """
 function cost_function!(
-   psi_container::PSIContainer,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
@@ -75,11 +75,7 @@ end
 function has_on_parameter(psi_container::PSIContainer, ::Type{T})
     T <: PSY.Component
     #get_variable can't be used because the default behavior is to error if variables is not present
-    return !isnothing(get(
-        psi_container.parameters,
-        encode_symbol(T, OnVariable),
-        nothing,
-    ))
+    return !isnothing(get(psi_container.parameters, encode_symbol(T, OnVariable), nothing))
 end
 
 function _get_pwl_vars_container(psi_container::PSIContainer)
