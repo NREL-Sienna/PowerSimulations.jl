@@ -36,8 +36,8 @@ end
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    ::ServiceModel{SR, AbstractReservesFormulation},
-) where {SR <: PSY.Reserve}
+    ::ServiceModel{SR, T},
+) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
