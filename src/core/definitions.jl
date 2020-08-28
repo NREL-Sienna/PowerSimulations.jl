@@ -37,6 +37,12 @@ const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
     EMPTY = 0
 end
 
+@enum SOS_STATUS_VARIABLE begin
+    NO_VARIABLE = 1
+    PARAMETER = 2
+    VARIABLE = 3
+end
+
 # Settings constants
 const UNSET_HORIZON = 0
 const UNSET_INI_TIME = Dates.DateTime(0)
@@ -52,6 +58,9 @@ const SECONDS_IN_MINUTE = 60.0
 const MINUTES_IN_HOUR = 60.0
 const SECONDS_IN_HOUR = 3600.0
 const MAX_START_STAGES = 3
+const OBJECTIVE_FUNCTION_POSITIVE = 1.0
+const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
+
 
 # Interface limitations
 const OPERATIONS_ACCEPTED_KWARGS = [
