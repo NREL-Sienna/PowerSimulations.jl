@@ -36,7 +36,7 @@ end
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    ::ServiceModel{SR, RangeReserve},
+    ::ServiceModel{SR, AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
@@ -94,7 +94,7 @@ end
 function cost_function!(
     psi_container::PSIContainer,
     service::SR,
-    ::ServiceModel{SR, RangeReserve},
+    ::ServiceModel{SR, AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve}
     reserve = get_variable(psi_container, PSY.get_name(service), SR)
     for r in reserve
