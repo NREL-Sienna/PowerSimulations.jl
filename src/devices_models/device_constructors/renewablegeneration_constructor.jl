@@ -40,7 +40,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, D, S)
 
     return
 end
@@ -77,7 +77,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, D, S)
 
     return
 end
