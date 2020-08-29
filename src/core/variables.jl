@@ -4,7 +4,11 @@ const ACTIVE_POWER_OUT = "Pout"
 const AREA_MISMATCH = "area_mismatch"
 const COLD_START = "start_cold"
 const ENERGY = "E"
+const ENERGY_UP = "Eup"
+const ENERGY_DOWN = "Edown"
 const ENERGY_BUDGET = "energy_budget"
+const ENERGY_BUDGET_UP = "energy_budget_up"
+const ENERGY_BUDGET_DOWN = "energy_budget_down"
 const FLOW_ACTIVE_POWER = "Fp"
 const HOT_START = "start_hot"
 const INFLOW = "In"
@@ -73,6 +77,17 @@ struct EnergyVariable <: VariableType end
 
 function make_variable_name(::Type{EnergyVariable}, ::Type{T}) where {T <: PSY.Device}
     return encode_symbol(T, "E")
+end
+
+struct EnergyVariableUp <: VariableType end
+
+function make_variable_name(::Type{EnergyVariableUp}, ::Type{T}) where {T <: PSY.Device}
+    return encode_symbol(T, "Eup")
+end
+struct EnergyVariableDown <: VariableType end
+
+function make_variable_name(::Type{EnergyVariableDown}, ::Type{T}) where {T <: PSY.Device}
+    return encode_symbol(T, "Edown")
 end
 
 struct HotStartVariable <: VariableType end

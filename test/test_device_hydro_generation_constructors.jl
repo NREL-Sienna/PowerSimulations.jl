@@ -366,7 +366,35 @@ end
 
 @testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStorage Formulations" begin
     model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
-    c_sys5_phes_ed = build_system("c_sys5_phes_ed")
+    c_sys5_phes_ed = build_system("c_sys5_hy_ed") # while serialization is broken, create the hy_ed sys and then add the phes component
+
+    # TODO: remove this when PHES serialization works
+    add_component!(c_sys5_phes_ed,
+        HydroPumpedStorage(
+            name = "HydroPumpedStorage",
+            available = true,
+            bus = get_component(Bus, c_sys5_phes_ed, "nodeC"),
+            active_power = 0.0,
+            reactive_power = 0.0,
+            rating = 0.5,
+            base_power = 100.0,
+            prime_mover = PrimeMovers.HY,
+            active_power_limits = (min = 0.0, max = 60.0),
+            reactive_power_limits = (min = 0.0, max = 60.0),
+            ramp_limits = (up = 10.0 * 0.6, down = 10.0 * 0.6),
+            time_limits = nothing,
+            operation_cost = ThreePartCost(15.0, 0.0, 11.0, 2.0),
+            rating_pump = 0.2,
+            active_power_limits_pump = (min = 0.0, max = 10.0),
+            reactive_power_limits_pump = (min = 0.0, max = 10.0),
+            ramp_limits_pump = (up = 10.0 * 0.6, down = 10.0 * 0.6),
+            time_limits_pump = nothing,
+            storage_capacity = (up = 1.0, down = 1.0), # 50 pu * hr (i.e. 5 GWh)
+            inflow = 0.2,
+            initial_storage = (up = 0.5, down = 0.5),
+            storage_target = (up = 0.75, down = 0.75),
+            pump_efficiency = 1.0,
+        ))
 
     # Parameters Testing
     op_problem = OperationsProblem(
