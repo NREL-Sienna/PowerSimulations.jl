@@ -57,7 +57,7 @@ function cost_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Union{Nothing, AbstractAffectFeedForward}=nothing,
 ) where {T <: PSY.Component, U <: AbstractDeviceFormulation}
     spec = AddCostSpec(T, U, psi_container)
     @debug T, spec
@@ -310,8 +310,12 @@ function add_to_cost!(
     component_name::String,
 )
     @debug "TwoPartCost" component_name
-    variable_cost = spec.variable_cost(cost_data)
-    variable_cost!(psi_container, spec, component_name, variable_cost)
+    if !(spec.variable_cost === nothing)
+        variable_cost = spec.variable_cost(cost_data)
+        variable_cost!(psi_container, spec, component_name, variable_cost)
+    else
+        @warn "No variable cost defined for $component_name"
+    end
 
     if spec.has_status_variable
         @debug "Fixed cost" component_name
@@ -481,6 +485,22 @@ function add_to_cost!(
 
     # Here goes the services bids
 
+    return
+end
+
+@doc raw"""
+Adds to the cost function cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
+
+    # Arguments
+
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* var_name::Symbol: The variable name
+* component_name::String: The component_name of the variable container
+* cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
+"""
+function variable_cost!(::PSIContainer, ::AddCostSpec, component_name::String, ::Nothing,
+)
+    @debug "Empty Variable Cost" component_name
     return
 end
 
