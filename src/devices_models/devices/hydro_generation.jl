@@ -380,34 +380,6 @@ function NodalExpressionSpec(
     )
 end
 
-##################################### Hydro generation cost ############################
-function cost_function!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.HydroEnergyReservoir},
-    device_formulation::Type{D},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-) where {D <: AbstractHydroFormulation}
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(ACTIVE_POWER, PSY.HydroEnergyReservoir),
-        :fixed,
-        -1.0,
-    )
-
-    return
-end
-
-function cost_function!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    device_formulation::Type{D},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-) where {D <: AbstractHydroFormulation, H <: PSY.HydroGen}
-
-    return
-end
-
 ##################################### Water/Energy Budget Constraint ############################
 function energy_budget_constraints!(
     psi_container::PSIContainer,
@@ -522,4 +494,18 @@ function device_energy_budget_ub(
     end
 
     return
+end
+
+##################################### Hydro generation cost ############################
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: PSY.HydroGen, U <: AbstractHydroFormulation}
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        fixed_cost = PSY.get_fixed,
+        multiplier = OBJECTIVE_FUNCTION_NEGATIVE
+    )
 end
