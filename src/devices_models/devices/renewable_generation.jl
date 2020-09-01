@@ -164,7 +164,7 @@ end
 function AddCostSpec(
     ::Type{T},
     ::Type{U},
-    psi_container::PSIContainer,
+    ::PSIContainer,
 ) where {T <: PSY.RenewableDispatch, U <: AbstractRenewableDispatchFormulation}
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
