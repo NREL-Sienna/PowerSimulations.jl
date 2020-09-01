@@ -196,10 +196,11 @@ function AddCostSpec(
     ::Type{DispatchablePowerLoad},
     ::PSIContainer,
 ) where {T <: PSY.ControllableLoad}
+    cost_function = x -> isnothing(x) ? 1.0 : PSY.get_variable(x)
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
-        component_type = T
-        fixed_cost = PSY.get_fixed,
+        component_type = T,
+        variable_cost = cost_function,
         multiplier = OBJECTIVE_FUNCTION_NEGATIVE
     )
 end
@@ -207,11 +208,13 @@ end
 function AddCostSpec(
     ::Type{T},
     ::Type{InterruptiblePowerLoad},
+    ::PSIContainer,
 ) where {T <: PSY.ControllableLoad}
+    cost_function = x -> isnothing(x) ? 1.0 : PSY.get_fixed(x)
       return AddCostSpec(;
         variable_type = OnVariable,
-        component_type = T
-        fixed_cost = PSY.get_fixed,
+        component_type = T,
+        fixed_cost = cost_function,
         multiplier = OBJECTIVE_FUNCTION_NEGATIVE
     )
 end
