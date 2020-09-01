@@ -1126,16 +1126,59 @@ function AddCostSpec(
     ::Type{U},
     psi_container::PSIContainer,
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalFormulation}
-
     return AddCostSpec(;
-        variable_name = make_variable_name(ActivePowerVariable, T),
+        variable_type = ActivePowerVariable,
+        component_type = T,
         has_status_variable = has_on_variable(psi_container, T),
-        has_status_parameter = has_on_variable(psi_container, T),
-        sos_status = NO_VARIABLE,
-        sign = 1.0,
-        cost_component = nothing,
+        has_status_parameter = has_on_parameter(psi_container, T),
+        variable_cost = PSY.get_variable,
+        start_up_cost = PSY.get_start_up,
+        shut_down_cost = PSY.get_shut_down,
+        fixed_cost = PSY.get_fixed,
+        sos_status = VARIABLE
     )
 end
+
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
+    if has_on_parameter(psi_container, T)
+        sos_status = PARAMETER
+    else
+        sos_status = NO_VARIABLE
+    end
+
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        variable_cost = PSY.get_variable,
+        fixed_cost = PSY.get_fixed,
+        sos_status = sos_status
+    )
+end
+
+function AddCostSpec(
+    ::Type{T},
+    ::Type{ThermalMultiStartUnitCommitment},
+    psi_container::PSIContainer,
+) where {T <: PSY.ThermalGen}
+    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        #variable_cost = PSY.get_variable, uses SOS by default
+        shut_down_cost = PSY.get_shut_down,
+        fixed_cost = fixed_cost_func,
+        sos_status = VARIABLE
+    )
+end
+
 
 """
 Cost function for generators formulated as No-Min
@@ -1158,7 +1201,6 @@ function cost_function!(
             make_variable_name(ActivePowerVariable, T),
             PSY.get_name(d),
             cost_component,
-            1.0,
         )
     end
 
@@ -1225,13 +1267,7 @@ function cost_function!(
     for d in devices
         cost_component = PSY.get_variable(PSY.get_operation_cost(d))
         cost_expression = _ps_cost!(d, cost_component)
-        T_ce = typeof(cost_expression)
-        T_cf = typeof(psi_container.cost_function)
-        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
-            psi_container.cost_function += cost_expression
-        else
-            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
-        end
+        _add_to_cost_expression!(psi_container, cost_expression)
     end
 
     return
