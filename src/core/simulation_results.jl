@@ -67,8 +67,9 @@ references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
 """
 function make_references(sim::Simulation, date_run::String)
-    sim.internal.date_ref[1] = sim.initial_time
-    sim.internal.date_ref[2] = sim.initial_time
+    for stage_number in keys(sim.internal.date_ref)
+        sim.internal.date_ref[stage_number] = sim.initial_time
+    end
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
         stage = sim.stages[stage_name]
