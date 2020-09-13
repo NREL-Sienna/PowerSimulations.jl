@@ -1260,8 +1260,8 @@ function cost_function(
     )
 
     #Commitment Cost Components
-    add_to_cost!(psi_container, devices, make_variable_name(StartVariable, T), :startup)
-    add_to_cost!(psi_container, devices, make_variable_name(StopVariable, T), :shutdn)
+    add_to_cost!(psi_container, devices, make_variable_name(StartVariable, T), :start_up)
+    add_to_cost!(psi_container, devices, make_variable_name(StopVariable, T), :shut_down)
     add_to_cost!(psi_container, devices, make_variable_name(OnVariable, T), :fixed)
     return
 end
