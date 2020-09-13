@@ -546,7 +546,6 @@ function construct_device!(
     add_variables!(psi_container, EnergyVariableDown, devices)
     add_variables!(psi_container, SpillageVariable, devices)
 
-
     #Constraints
     add_constraints!(
         psi_container,
@@ -569,9 +568,6 @@ function construct_device!(
 
     #Initial Conditions
     storage_energy_init(psi_container, devices)
-
-    #Energy Budget Constraint
-    energy_budget_constraints!(psi_container, devices, model, S, get_feedforward(model))
 
     # Energy Balanace limits
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
@@ -603,12 +599,10 @@ function construct_device!(
     #Variables
     add_variables!(psi_container, ActivePowerInVariable, devices)
     add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(psi_container, EnergyVariableUp, devices)
+    add_variables!(psi_container, EnergyVariableDown, devices)
     add_variables!(psi_container, SpillageVariable, devices)
     add_variables!(psi_container, ReserveVariable, devices)
-
-    #Initial Conditions
-    initial_conditions!(psi_container, devices, HydroDispatchPumpedStorage)
 
     #Constraints
     add_constraints!(
@@ -633,14 +627,13 @@ function construct_device!(
     #Initial Conditions
     storage_energy_init(psi_container, devices)
 
-    energy_budget_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, devices, model, get_feedforward(model))
-
     # Energy Balanace limits
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
 
+    feedforward!(psi_container, devices, model, get_feedforward(model))
+
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
+    cost_function(psi_container, devices, HydroDispatchReservoirBudget, S)
 
     return
 end

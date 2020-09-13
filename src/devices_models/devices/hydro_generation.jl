@@ -60,7 +60,7 @@ function AddVariableSpec(
     return AddVariableSpec(;
         variable_name = make_variable_name(T, U),
         binary = false,
-        initial_value_func = x -> PSY.get_initial_storage(x) ,
+        initial_value_func = x -> PSY.get_initial_storage(x),
         lb_value_func = x -> 0.0,
         ub_value_func = x -> PSY.get_storage_capacity(x),
     )
@@ -487,8 +487,11 @@ function energy_balance_constraint!(
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_inflow(x), ts_vector)
+        constraint_info = DeviceTimeSeriesConstraintInfo(
+            d,
+            x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
+            ts_vector,
+        )
         add_device_services!(constraint_info.range, d, model)
         constraint_infos[ix] = constraint_info
     end
@@ -544,41 +547,69 @@ function energy_balance_constraint!(
         throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
-    forecast_label = "get_inflow"
+    forecast_label_in = "get_inflow"
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_inflow(x), ts_vector)
+        ts_vector = get_time_series(psi_container, d, forecast_label_in)
+        constraint_info = DeviceTimeSeriesConstraintInfo(
+            d,
+            x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
+            ts_vector,
+        )
         add_device_services!(constraint_info.range, d, model)
         constraint_infos[ix] = constraint_info
+    end
+
+    forecast_label_out = "get_outflow"
+    constraint_infos_outflow =
+        Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        ts_vector = get_time_series(psi_container, d, forecast_label_out)
+        constraint_info = DeviceTimeSeriesConstraintInfo(
+            d,
+            x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
+            ts_vector,
+        )
+        add_device_services!(constraint_info.range, d, model)
+        constraint_infos_outflow[ix] = constraint_info
     end
 
     if parameters
         energy_balance_hydro_param!(
             psi_container,
             get_initial_conditions(psi_container, key),
-            constraint_infos,
-            make_constraint_name(ENERGY_CAPACITY_UP, H),
+            (constraint_infos, constraint_infos_outflow),
+            (
+                make_constraint_name(ENERGY_CAPACITY_UP, H),
+                make_constraint_name(ENERGY_CAPACITY_DOWN, H),
+            ),
             (
                 make_variable_name(SPILLAGE, H),
                 make_variable_name(ACTIVE_POWER_OUT, H),
                 make_variable_name(ENERGY_UP, H),
                 make_variable_name(ACTIVE_POWER_IN, H),
+                make_variable_name(ENERGY_DOWN, H),
             ),
-            UpdateRef{H}(INFLOW, forecast_label),
+            (
+                UpdateRef{H}(INFLOW, forecast_label_in),
+                UpdateRef{H}(OUTFLOW, forecast_label_out),
+            ),
         )
     else
         energy_balance_hydro!(
             psi_container,
             get_initial_conditions(psi_container, key),
-            constraint_infos,
-            make_constraint_name(ENERGY_CAPACITY_UP, H),
+            (constraint_infos, constraint_infos_outflow),
+            (
+                make_constraint_name(ENERGY_CAPACITY_UP, H),
+                make_constraint_name(ENERGY_CAPACITY_DOWN, H),
+            ),
             (
                 make_variable_name(SPILLAGE, H),
                 make_variable_name(ACTIVE_POWER_OUT, H),
                 make_variable_name(ENERGY_UP, H),
                 make_variable_name(ACTIVE_POWER_IN, H),
+                make_variable_name(ENERGY_DOWN, H),
             ),
         )
     end
@@ -713,13 +744,12 @@ function device_energy_budget_param_ub(
     energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
     param_reference::UpdateRef,
-    var_names::Tuple{Symbol, Symbol},
+    var_names::Symbol,
 )
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
-    variable_out = get_variable(psi_container, var_names[1])
-    variable_in = get_variable(psi_container, var_names[2])
+    variable_out = get_variable(psi_container, var_names)
     set_name = [get_component_name(r) for r in energy_budget_data]
     constraint = add_cons_container!(psi_container, cons_name, set_name)
     container = add_param_container!(psi_container, param_reference, set_name, 1)
@@ -732,7 +762,7 @@ function device_energy_budget_param_ub(
             PJ.add_parameter(psi_container.JuMPmodel, sum(constraint_info.timeseries))
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable_out[name, t] - variable_in[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1]
+            sum([variable_out[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1]
         )
     end
 
@@ -747,11 +777,10 @@ function device_energy_budget_ub(
     psi_container::PSIContainer,
     energy_budget_constraints::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol},
+    var_names::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    variable_out = get_variable(psi_container, var_names[1])
-    variable_in = get_variable(psi_container, var_names[2])
+    variable_out = get_variable(psi_container, var_names)
     names = [get_component_name(x) for x in energy_budget_constraints]
     constraint = add_cons_container!(psi_container, cons_name, names)
 
@@ -763,52 +792,9 @@ function device_energy_budget_ub(
         multiplier = constraint_info.multiplier * inv_dt
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable_out[name, t] - variable_in[name, t] for t in time_steps]) <= multiplier * sum(forecast)
+            sum([variable_out[name, t] for t in time_steps]) <= multiplier * sum(forecast)
         )
     end
 
     return
-end
-
-"""
-This function define the budget constraint for the
-active power budget formulation.
-
-`` sum(P[t]) <= Budget ``
-"""
-function energy_budget_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HydroPumpedStorage}
-
-    forecast_label = "get_hydro_budget"
-    constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_d =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x).up, ts_vector)
-        constraint_data[ix] = constraint_d
-    end
-
-    if model_has_parameters(psi_container)
-        device_energy_budget_param_ub(
-            psi_container,
-            constraint_data,
-            make_constraint_name(ENERGY_BUDGET_UP, H),
-            UpdateRef{H}(ENERGY_BUDGET_UP, forecast_label),
-            (make_variable_name(ACTIVE_POWER_OUT, H),
-            make_variable_name(ACTIVE_POWER_IN, H)),
-        )
-    else
-        device_energy_budget_ub(
-            psi_container,
-            constraint_data,
-            make_constraint_name(ENERGY_BUDGET_UP),
-            (make_variable_name(ACTIVE_POWER_OUT, H),
-            make_variable_name(ACTIVE_POWER_IN, H)),
-        )
-    end
 end
