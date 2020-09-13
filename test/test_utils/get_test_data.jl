@@ -1121,6 +1121,8 @@ function build_c_sys5_phes_ed(; kwargs...)
                         l,
                         Deterministic("get_storage_capacity", data),
                     )
+                    add_forecast!(c_sys5_phes_ed, l, Deterministic("get_outflow", data))
+
                 end
             end
             for (ix, l) in enumerate(get_components(
