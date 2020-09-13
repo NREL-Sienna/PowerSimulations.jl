@@ -394,7 +394,12 @@ function _make_initial_condition_reservoir_energy_up(
     value,
     cache = nothing,
 ) where {T <: PSY.Component}
-    return InitialCondition(device, _get_ref_reservoir_energy_up(T, container), value, cache)
+    return InitialCondition(
+        device,
+        _get_ref_reservoir_energy_up(T, container),
+        value,
+        cache,
+    )
 end
 
 function _make_initial_condition_reservoir_energy_down(
@@ -403,7 +408,12 @@ function _make_initial_condition_reservoir_energy_down(
     value,
     cache = nothing,
 ) where {T <: PSY.Component}
-    return InitialCondition(device, _get_ref_reservoir_energy_down(T, container), value, cache)
+    return InitialCondition(
+        device,
+        _get_ref_reservoir_energy_down(T, container),
+        value,
+        cache,
+    )
 end
 
 function _make_initial_condition_area_control(
