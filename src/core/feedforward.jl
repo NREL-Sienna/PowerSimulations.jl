@@ -666,6 +666,7 @@ function feedforward_update!(
         IS.@record :simulation ParameterUpdateEvent(
             "FeedForward",
             current_time,
+            1,  # TODO DT
             param_reference,
             device_name,
             var_value,

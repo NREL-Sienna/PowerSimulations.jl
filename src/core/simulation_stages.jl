@@ -1,6 +1,8 @@
 ######## Internal Simulation Object Structs ########
+# TODO DT: add stage name
 mutable struct StageInternal
     number::Int
+    name::String
     executions::Int
     execution_count::Int
     end_of_interval_step::Int
@@ -16,6 +18,7 @@ mutable struct StageInternal
     ext::Dict{String, Any}
     function StageInternal(
         number,
+        name,
         executions,
         execution_count,
         psi_container;
@@ -23,6 +26,7 @@ mutable struct StageInternal
     )
         new(
             number,
+            name,
             executions,
             execution_count,
             0,
@@ -56,7 +60,7 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         settings::PSISettings,
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
-        internal = StageInternal(0, 0, 0, PSIContainer(sys, settings, jump_model))
+        internal = StageInternal(0, "", 0, 0, PSIContainer(sys, settings, jump_model))
         new{M}(template, sys, internal)
     end
 end
@@ -132,6 +136,7 @@ get_executions(s::Stage) = s.internal.executions
 get_sys(s::Stage) = s.sys
 get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
+get_name(s::Stage) = s.internal.name
 get_psi_container(s::Stage) = s.internal.psi_container
 get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
 warm_start_enabled(s::Stage) = get_warm_start(s.internal.psi_container.settings)
@@ -186,9 +191,12 @@ function build!(
 end
 
 function run_stage(
+    step::Int,
     stage::Stage{M},
     start_time::Dates.DateTime,
+    time_step::Int,
     results_path::String,
+    store::SimulationStore,
 ) where {M <: PowerSimulationsOperationsProblem}
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
@@ -211,6 +219,12 @@ function run_stage(
     # if is_milp(stage.internal.psi_container)
     _export_model_result(stage, start_time, results_path)
     _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
+
+    # HDF exports
+    append_model_results!(store, step, time_step, stage)
+    stats = OptimizerStats(step, get_number(stage), time_step, stage.internal.psi_container.JuMPmodel)
+    append_optimizer_stats!(store, stats)
+
     stage.internal.execution_count += 1
     # Reset execution count
     if stage.internal.execution_count == stage.internal.executions

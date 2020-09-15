@@ -52,6 +52,9 @@ const SECONDS_IN_MINUTE = 60.0
 const MINUTES_IN_HOUR = 60.0
 const SECONDS_IN_HOUR = 3600.0
 const MAX_START_STAGES = 3
+const KiB = 1024
+const MiB = KiB * KiB
+const GiB = MiB * KiB
 
 # Interface limitations
 const OPERATIONS_ACCEPTED_KWARGS = [
