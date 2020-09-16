@@ -62,7 +62,7 @@ function AddVariableSpec(
     psi_container::PSIContainer,
 ) where {T <: ReactivePowerVariable, U <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
-        initial_value_func = d -> PSY.get_active_power(d)
+        initial_value_func = d -> PSY.get_reactive_power(d)
     else
         initial_value_func = nothing
     end
@@ -84,24 +84,36 @@ function AddVariableSpec(
     ::Type{U},
     psi_container::PSIContainer,
 ) where {T <: OnVariable, U <: PSY.ThermalGen}
-    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
+    if get_warm_start(psi_container.settings)
+        initial_value_func = x -> (PSY.get_active_power(x) > 0 ? 1.0 : 0.0)
+    else
+        initial_value_func = nothing
+    end
+    return AddVariableSpec(;
+        variable_name = make_variable_name(T, U),
+        initial_value_func = initial_value_func,
+        binary = true,
+    )
 end
 
 function AddVariableSpec(
     ::Type{T},
     ::Type{U},
     psi_container::PSIContainer,
-) where {T <: Union{StartVariable, StopVariable}, U <: PSY.ThermalGen}
-    if get_warm_start(psi_container.settings)
-        initial_value_func = x -> (PSY.get_active_power(x) > 0 ? 1.0 : 0.0)
-    else
-        initial_value_func = nothing
-    end
+) where {T <: StopVariable, U <: PSY.ThermalGen}
+    AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
+end
 
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {T <: StartVariable, U <: PSY.ThermalGen}
     AddVariableSpec(;
         variable_name = make_variable_name(T, U),
-        binary = true,
-        initial_value_func = initial_value_func,
+        binary = true, # TODO: This variable could be relaxed. Consider this as a different formulation
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> 1.0,
     )
 end
 
@@ -1135,7 +1147,7 @@ function AddCostSpec(
         start_up_cost = PSY.get_start_up,
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = PSY.get_fixed,
-        sos_status = VARIABLE
+        sos_status = VARIABLE,
     )
 end
 
@@ -1157,7 +1169,7 @@ function AddCostSpec(
         has_status_parameter = has_on_parameter(psi_container, T),
         variable_cost = PSY.get_variable,
         fixed_cost = PSY.get_fixed,
-        sos_status = sos_status
+        sos_status = sos_status,
     )
 end
 
@@ -1175,10 +1187,9 @@ function AddCostSpec(
         #variable_cost = PSY.get_variable, uses SOS by default
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
-        sos_status = VARIABLE
+        sos_status = VARIABLE,
     )
 end
-
 
 """
 Cost function for generators formulated as No-Min
