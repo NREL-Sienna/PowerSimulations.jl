@@ -201,7 +201,7 @@ function AddCostSpec(
         variable_type = ActivePowerVariable,
         component_type = T,
         variable_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_NEGATIVE
+        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
     )
 end
 
@@ -211,10 +211,10 @@ function AddCostSpec(
     ::PSIContainer,
 ) where {T <: PSY.ControllableLoad}
     cost_function = x -> isnothing(x) ? 1.0 : PSY.get_fixed(x)
-      return AddCostSpec(;
+    return AddCostSpec(;
         variable_type = OnVariable,
         component_type = T,
         fixed_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_NEGATIVE
+        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
     )
 end

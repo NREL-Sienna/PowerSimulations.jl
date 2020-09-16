@@ -168,10 +168,10 @@ function AddCostSpec(
 ) where {T <: PSY.RenewableDispatch, U <: AbstractRenewableDispatchFormulation}
     # TODO: remove once cost_function is required
     cost_function = x -> isnothing(x) ? 1.0 : PSY.get_variable(x)
-return AddCostSpec(;
+    return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,
         variable_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_NEGATIVE
+        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
     )
 end

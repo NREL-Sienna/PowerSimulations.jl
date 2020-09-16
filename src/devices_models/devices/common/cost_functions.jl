@@ -57,7 +57,7 @@ function cost_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward}=nothing,
+    feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
 ) where {T <: PSY.Component, U <: AbstractDeviceFormulation}
     spec = AddCostSpec(T, U, psi_container)
     @debug T, spec
@@ -449,7 +449,7 @@ function add_to_cost!(
 
     if !isnothing(spec.start_up_cost)
         # Start-up costs
-       @debug "start up cost" component_name
+        @debug "start up cost" component_name
         for (st, var_type) in
             enumerate((HotStartVariable, WarmStartVariable, ColdStartVariable))
             var_name = make_variable_name(var_type, spec.component_type)
@@ -471,7 +471,6 @@ function add_to_cost!(
             PSY.get_no_load(cost_data) * spec.multiplier,
         )
     end
-
 
     if !isnothing(spec.shut_down_cost)
         @debug "Shut down cost" component_name
@@ -498,8 +497,7 @@ Adds to the cost function cost terms for sum of variables with common factor to 
 * component_name::String: The component_name of the variable container
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 """
-function variable_cost!(::PSIContainer, ::AddCostSpec, component_name::String, ::Nothing,
-)
+function variable_cost!(::PSIContainer, ::AddCostSpec, component_name::String, ::Nothing)
     @debug "Empty Variable Cost" component_name
     return
 end

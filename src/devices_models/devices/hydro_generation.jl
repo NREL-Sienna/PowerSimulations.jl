@@ -507,7 +507,7 @@ function AddCostSpec(
         variable_type = ActivePowerVariable,
         component_type = T,
         fixed_cost = x -> 1.0,
-        multiplier = OBJECTIVE_FUNCTION_NEGATIVE
+        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
     )
 end
 
@@ -524,6 +524,6 @@ function AddCostSpec(
         component_type = T,
         fixed_cost = PSY.get_fixed,
         variable_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_POSITIVE
+        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
