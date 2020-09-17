@@ -410,13 +410,13 @@ end
         use_parameters = true,
     )
     construct_device!(op_problem, :PHES, model)
-    moi_tests(op_problem, true, 60, 0, 36, 36, 12, true)
+    moi_tests(op_problem, true, 72, 0, 24, 24, 24, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_phes_ed)
     construct_device!(op_problem, :PHES, model)
-    moi_tests(op_problem, false, 60, 0, 36, 36, 12, true)
+    moi_tests(op_problem, false, 72, 0, 24, 24, 24, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -427,7 +427,7 @@ end
         use_forecast_data = false,
     )
     construct_device!(op_problem, :PHES, model)
-    moi_tests(op_problem, false, 5, 0, 3, 3, 1, true)
+    moi_tests(op_problem, false, 6, 0, 2, 2, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end

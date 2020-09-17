@@ -185,7 +185,6 @@ function energy_balance_hydro!(
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
-        @show d.multiplier , d.timeseries[1], initial_conditions[ix].value
         constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[name, 1] ==

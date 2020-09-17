@@ -1367,7 +1367,7 @@ function cost_function(
     end
 
     for d in devices
-        cost_component = PSY.get_startup(PSY.get_operation_cost(d))
+        cost_component = PSY.get_start_up(PSY.get_operation_cost(d))
         cost_expression = _ps_cost!(d, cost_component)
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
