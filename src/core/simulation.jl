@@ -365,10 +365,9 @@ function _assign_feedforward_chronologies(sim::Simulation)
             source_stage = get_stage(sim, stage_number)
             source_stage_resolution =
                 IS.time_period_conversion(PSY.get_forecasts_resolution(source_stage.sys))
-            # This line keeps track of the executions of a stage relative to other stages.
-            # This might be needed in the future to run multiple stages. For now it is disabled
-            #destination_stage.internal.synchronized_executions[stage_number] =
-            #Int(source_stage_resolution / destination_stage_interval)
+            execution_wait_count = Int(source_stage_resolution / destination_stage_interval)
+            set_execution_wait_count!(get_trigger(chron), execution_wait_count)
+            reset_trigger_count!(get_trigger(chron))
         end
     end
     return

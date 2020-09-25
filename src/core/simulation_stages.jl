@@ -212,7 +212,7 @@ function run_stage(
     _export_model_result(stage, start_time, results_path)
     _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
     stage.internal.execution_count += 1
-    # Reset execution count
+    # Reset execution count at the end of step
     if stage.internal.execution_count == stage.internal.executions
         stage.internal.execution_count = 0
     end
