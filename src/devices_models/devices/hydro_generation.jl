@@ -452,7 +452,7 @@ function commit_hydro_active_power_ub!(
                 forecast_label = "get_max_active_power",
                 multiplier_func = x -> PSY.get_max_active_power(x),
                 constraint_func = use_parameters ? device_timeseries_param_ub! :
-                                      device_timeseries_ub!,
+                                  device_timeseries_ub!,
             ),
         )
         device_range_constraints!(psi_container, devices, model, feedforward, spec)
@@ -462,7 +462,7 @@ end
 ######################## Energy balance constraints ############################
 
 """
-This function define the constraints for the water level (or state of charge)
+This function defines the constraints for the water level (or state of charge)
 for the Hydro Reservoir.
 """
 function energy_balance_constraint!(
@@ -483,38 +483,57 @@ function energy_balance_constraint!(
         throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
-    forecast_label = "get_inflow"
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    inflow_forecast_label = "get_inflow"
+    target_forecast_label = "get_storage_target"
+    constraint_infos_inflow = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info = DeviceTimeSeriesConstraintInfo(
+        ts_vector_inflow = get_time_series(psi_container, d, inflow_forecast_label)
+        constraint_info_inflow = DeviceTimeSeriesConstraintInfo(
             d,
             x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
-            ts_vector,
+            ts_vector_inflow,
         )
-        add_device_services!(constraint_info.range, d, model)
-        constraint_infos[ix] = constraint_info
+        add_device_services!(constraint_info_inflow.range, d, model)
+        constraint_infos_inflow[ix] = constraint_info_inflow
+
+        ts_vector_target = get_time_series(psi_container, d, target_forecast_label)
+        constraint_info_target = DeviceTimeSeriesConstraintInfo(
+            d,
+            x -> PSY.get_storage_target(x),
+            ts_vector_target,
+        )
+        constraint_infos_target[ix] = constraint_info_target
     end
 
     if parameters
         energy_balance_hydro_param!(
             psi_container,
             get_initial_conditions(psi_container, key),
-            constraint_infos,
-            make_constraint_name(ENERGY_CAPACITY, H),
+            (constraint_infos_inflow, constraint_infos_target),
+            (
+                make_constraint_name(ENERGY_CAPACITY, H),
+                make_constraint_name(ENERGY_TARGET, H),
+            ),
             (
                 make_variable_name(SPILLAGE, H),
                 make_variable_name(ACTIVE_POWER, H),
                 make_variable_name(ENERGY, H),
             ),
-            UpdateRef{H}(INFLOW, forecast_label),
+            (
+                UpdateRef{H}(INFLOW, inflow_forecast_label),
+                UpdateRef{H}(TARGET, target_forecast_label),
+            ),
         )
     else
         energy_balance_hydro!(
             psi_container,
             get_initial_conditions(psi_container, key),
-            constraint_infos,
-            make_constraint_name(ENERGY_CAPACITY, H),
+            (constraint_infos_inflow, constraint_infos_target),
+            (
+                make_constraint_name(ENERGY_CAPACITY, H),
+                make_constraint_name(ENERGY_TARGET, H),
+            ),
             (
                 make_variable_name(SPILLAGE, H),
                 make_variable_name(ACTIVE_POWER, H),
@@ -526,7 +545,7 @@ function energy_balance_constraint!(
 end
 
 """
-This function define the constraints for the water level (or state of charge)
+This function defines the constraints for the water level (or state of charge)
 for the HydroPumpedStorage.
 """
 function energy_balance_constraint!(
@@ -679,7 +698,6 @@ function cost_function(
     device_formulation::Type{D},
     system_formulation::Type{<:PM.AbstractPowerModel},
 ) where {D <: AbstractHydroFormulation, H <: PSY.HydroGen}
-
     return
 end
 
@@ -707,7 +725,6 @@ function energy_budget_constraints!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen}
-
     forecast_label = "get_hydro_budget"
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
