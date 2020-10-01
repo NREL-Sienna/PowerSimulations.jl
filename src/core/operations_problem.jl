@@ -175,7 +175,6 @@ function OperationsProblem{M}(
         sys,
         PSIContainer(T, sys, settings, jump_model),
     )
-
 end
 
 """

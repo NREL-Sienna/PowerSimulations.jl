@@ -127,7 +127,6 @@ end
             )
         end
     end
-
 end
 
 @testset "Solving ED With PowerModels with linear convex models" begin
@@ -161,14 +160,11 @@ end
                 test_results[sys],
                 10000,
             )
-
         end
     end
-
 end
 
 @testset "Operation Model Constructors with Slacks" begin
-
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
 
     thermal_gens = [ThermalDispatch]
@@ -253,7 +249,6 @@ end
             )
         end
     end
-
 end
 
 @testset "Solving ED Hydro System using Dispatch Run of River" begin

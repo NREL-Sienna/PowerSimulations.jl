@@ -318,7 +318,6 @@ function participation_assignment!(
             JuMP.add_to_expression!(expr_up[area_name, t], -1 * R_up_emergency[name, t])
             JuMP.add_to_expression!(expr_dn[area_name, t], -1 * R_dn_emergency[name, t])
         end
-
     end
 
     return

@@ -21,7 +21,6 @@ function _organize_model(
             end
         end
     end
-
 end
 
 """

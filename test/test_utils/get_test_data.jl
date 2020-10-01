@@ -333,6 +333,13 @@ function build_c_sys5_hyd(; kwargs...)
                     Deterministic("get_inflow", hydro_timeseries_DA[t][ix] .* 0.8),
                 )
             end
+            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
+                add_forecast!(
+                    c_sys5_hyd,
+                    h,
+                    Deterministic("get_storage_target", hydro_timeseries_DA[t][ix] .* 0.5),
+                )
+            end
         end
     end
 
@@ -571,7 +578,8 @@ function build_c_sys5_reg(; kwargs...)
 
     contributing_devices = Vector()
     for g in get_components(Generator, c_sys5_reg)
-        droop = isa(g, ThermalStandard) ? 0.04 * PSY.get_base_power(g) :
+        droop =
+            isa(g, ThermalStandard) ? 0.04 * PSY.get_base_power(g) :
             0.05 * PSY.get_base_power(g)
         p_factor = (up = 1.0, dn = 1.0)
         t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
@@ -792,7 +800,6 @@ function build_c_sys5_uc(; kwargs...)
                 PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
             )
         end
-
     end
 
     return c_sys5_uc
@@ -1122,7 +1129,6 @@ function build_c_sys5_phes_ed(; kwargs...)
                         Deterministic("get_storage_capacity", data),
                     )
                     add_forecast!(c_sys5_phes_ed, l, Deterministic("get_outflow", data))
-
                 end
             end
             for (ix, l) in enumerate(get_components(

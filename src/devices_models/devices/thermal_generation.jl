@@ -336,7 +336,6 @@ function initial_range_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
@@ -834,7 +833,6 @@ function startup_time_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     constraint_data = Vector{DeviceStartUpConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -927,7 +925,6 @@ function startup_initial_condition_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key_off = ICKey(TimeDurationOFF, PSY.ThermalMultiStart)
@@ -989,7 +986,6 @@ function _get_data_for_tdc(
     initial_conditions_off::Vector{InitialCondition},
     resolution::Dates.TimePeriod,
 )
-
     steps_per_hour = 60 / Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1 / steps_per_hour
     lenght_devices_on = length(initial_conditions_on)
@@ -1363,7 +1359,6 @@ function cost_function(
             )
         end
         return gen_cost
-
     end
 
     for d in devices

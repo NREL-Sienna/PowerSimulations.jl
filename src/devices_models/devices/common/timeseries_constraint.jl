@@ -234,7 +234,6 @@ function device_timeseries_param_lb!(
     end
 
     return
-
 end
 
 @doc raw"""

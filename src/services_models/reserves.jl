@@ -108,7 +108,6 @@ function service_requirement_constraint!(
     service::SR,
     ::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.Reserve}
-
     initial_time = model_initial_time(psi_container)
     @debug initial_time
     time_steps = model_time_steps(psi_container)
@@ -132,7 +131,6 @@ function cost_function!(
     service::SR,
     ::Type{StepwiseCostReserve},
 ) where {SR <: PSY.Reserve}
-
     use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
     @debug initial_time

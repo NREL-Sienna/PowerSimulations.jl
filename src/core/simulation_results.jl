@@ -185,7 +185,6 @@ function _read_references(
     references::Dict,
     time_length::Int,
 )
-
     for name in list
         date_df = references[stage][name]
         step_df = DataFrames.DataFrame(

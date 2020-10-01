@@ -309,7 +309,6 @@ function test_sequence_build(file_path::String)
             simulation_folder = file_path,
         )
         @test_throws IS.InvalidValue build!(sim)
-
     end
 
     @testset "Create Stages with kwargs and custom models" begin

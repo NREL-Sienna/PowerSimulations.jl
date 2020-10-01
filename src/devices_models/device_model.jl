@@ -7,7 +7,6 @@ function _check_device_formulation(
     if !isconcretetype(D)
         throw(ArgumentError("The device model must contain only concrete types, $(D) is an Abstract Type"))
     end
-
 end
 
 """

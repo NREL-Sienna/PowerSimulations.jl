@@ -59,7 +59,6 @@ services = Dict{Symbol, ServiceModel}()
         balance_slack_variables = true,
     )
     moi_tests(op_problem, false, 168, 0, 120, 120, 24, false)
-
 end
 
 @testset "Test optimization debugging functions" begin
@@ -108,7 +107,6 @@ end
 end
 
 @testset "Operation Model Constructors with Parameters" begin
-
     networks = [
         CopperPlatePowerModel,
         StandardPTDFModel,

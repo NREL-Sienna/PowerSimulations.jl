@@ -244,7 +244,6 @@ function ub_ff(
             end
             con_ub[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
-
         end
     end
     return
@@ -673,6 +672,5 @@ function feedforward_update!(
             destination_stage,
             source_stage,
         )
-
     end
 end

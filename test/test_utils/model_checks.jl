@@ -11,7 +11,6 @@ function moi_tests(
     equalto::Int,
     binary::Bool,
 )
-
     JuMPmodel = op_problem.psi_container.JuMPmodel
     @test (:params in keys(JuMPmodel.ext)) == params
     @test JuMP.num_variables(JuMPmodel) == vars
@@ -23,7 +22,6 @@ function moi_tests(
           binary
 
     return
-
 end
 
 function psi_constraint_test(

@@ -130,7 +130,6 @@ function _create_cache(
     ic_key::ICKey{TimeDurationON, T},
     caches::Union{Nothing, Vector{<:AbstractCache}},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
         cache = TimeStatusChange(T, ON)
@@ -143,7 +142,6 @@ function _create_cache(
     ic_key::ICKey{TimeDurationOFF, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
         cache = TimeStatusChange(T, ON)
@@ -156,7 +154,6 @@ function _create_cache(
     ic_key::ICKey{EnergyLevel, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
         cache = StoredEnergy(T, ENERGY)
@@ -583,7 +580,8 @@ function _build!(sim::Simulation)
             throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         end
         stage_interval = get_stage_interval(sim, stage_name)
-        step_resolution = stage_number == 1 ? get_step_resolution(sim.sequence) :
+        step_resolution =
+            stage_number == 1 ? get_step_resolution(sim.sequence) :
             get_stage_interval(sim.sequence, sim.sequence.order[stage_number - 1])
         stage.internal.executions = Int(step_resolution / stage_interval)
         stage.internal.number = stage_number
