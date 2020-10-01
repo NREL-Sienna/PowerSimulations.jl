@@ -161,18 +161,17 @@ function NodalExpressionSpec(
 end
 
 ##################################### renewable generation cost ############################
-function cost_function(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
-    ::Type{D},
-    ::Type{<:PM.AbstractPowerModel},
-) where {D <: AbstractRenewableDispatchFormulation}
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(ACTIVE_POWER, PSY.RenewableDispatch),
-        :fixed,
-        -1.0,
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: PSY.RenewableDispatch, U <: AbstractRenewableDispatchFormulation}
+    # TODO: remove once cost_function is required
+    cost_function = x -> isnothing(x) ? 1.0 : PSY.get_variable(x)
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        variable_cost = cost_function,
+        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
     )
-    return
 end

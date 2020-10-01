@@ -191,28 +191,30 @@ function NodalExpressionSpec(
 end
 
 ############################## FormulationControllable Load Cost ###########################
-function cost_function(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
+function AddCostSpec(
+    ::Type{T},
     ::Type{DispatchablePowerLoad},
-    ::Type{<:PM.AbstractPowerModel},
-) where {L <: PSY.ControllableLoad}
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(ACTIVE_POWER, L),
-        :variable,
-        -1.0,
+    ::PSIContainer,
+) where {T <: PSY.ControllableLoad}
+    cost_function = x -> isnothing(x) ? 1.0 : PSY.get_variable(x)
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        variable_cost = cost_function,
+        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
     )
-    return
 end
 
-function cost_function(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
+function AddCostSpec(
+    ::Type{T},
     ::Type{InterruptiblePowerLoad},
-    ::Type{<:PM.AbstractPowerModel},
-) where {L <: PSY.ControllableLoad}
-    add_to_cost!(psi_container, devices, make_variable_name(ON, L), :fixed, -1.0)
-    return
+    ::PSIContainer,
+) where {T <: PSY.ControllableLoad}
+    cost_function = x -> isnothing(x) ? 1.0 : PSY.get_fixed(x)
+    return AddCostSpec(;
+        variable_type = OnVariable,
+        component_type = T,
+        fixed_cost = cost_function,
+        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+    )
 end
