@@ -3,6 +3,7 @@ using Dates
 using Random
 Random.seed!(123)
 using PowerSystems
+const PSY = PowerSystems
 
 DayAhead = collect(
     DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(

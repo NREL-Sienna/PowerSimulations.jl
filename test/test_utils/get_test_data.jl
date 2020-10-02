@@ -105,14 +105,13 @@ function build_c_sys5(; kwargs...)
         System(100.0, nodes, thermal_generators5(nodes), loads5(nodes), branches5(nodes))
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5))
-                add_forecast!(
-                    c_sys5,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
+            add_time_series!(c_sys5, l, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -131,14 +130,13 @@ function build_c_sys5_ml(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ml))
-                add_forecast!(
-                    c_sys5_ml,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ml))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
+            add_time_series!(c_sys5_ml, l, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -157,12 +155,11 @@ function build_c_sys14(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
+        forecast_data = SortedDict{Dates.DateTime, TimeArray}()
         for (ix, l) in enumerate(get_components(PowerLoad, c_sys14))
-            add_forecast!(
-                c_sys14,
-                l,
-                Deterministic("get_max_active_power", timeseries_DA14[ix]),
-            )
+            ini_time = timestamp(timeseries_DA14[ix])[1]
+            forecast_data[ini_time] = timeseries_DA14[ix]
+            add_time_series!(c_sys14, l, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -182,21 +179,21 @@ function build_c_sys5_re(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re))
-                add_forecast!(
-                    c_sys5_re,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re))
-                add_forecast!(
-                    c_sys5_re,
-                    r,
-                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
-                )
+            add_time_series!(c_sys5_re, l, Deterministic("max_active_power", forecast_data))
+        end
+        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = ren_timeseries_DA[t][ix]
             end
+            add_time_series!(c_sys5_re, r, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -209,16 +206,21 @@ function build_c_sys5_re(; kwargs...)
             [collect(get_components(RenewableDispatch, c_sys5_re))[end]],
         )
         add_service!(c_sys5_re, reserve_re[3], get_components(RenewableDispatch, c_sys5_re))
-        for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
-            add_forecast!(c_sys5_re, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                forecast_data[ini_time] = Reserve_ts[t]
+            end
+            add_time_series!(c_sys5_re, serv, Deterministic("requirement", forecast_data))
         end
-        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_re)
-            add_forecast!(
-                c_sys5_re,
-                serv,
-                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
-            )
-        end
+        #for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_re)
+        #    add_time_series!(
+        #        c_sys5_re,
+        #        serv,
+        #        PiecewiseFunction("variable", 5, ORDC_cost_ts[t]),
+        #    )
+        #end
     end
 
     return c_sys5_re
@@ -236,21 +238,29 @@ function build_c_sys5_re_only(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re_only))
-                add_forecast!(
-                    c_sys5_re_only,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re_only))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re_only))
-                add_forecast!(
-                    c_sys5_re_only,
-                    r,
-                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
-                )
+            add_time_series!(
+                c_sys5_re_only,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re_only))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = ren_timeseries_DA[t][ix]
             end
+            add_time_series!(
+                c_sys5_re_only,
+                r,
+                Deterministic("max_active_power", forecast_data),
+            )
         end
     end
 
@@ -270,21 +280,21 @@ function build_c_sys5_hy(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy))
-                add_forecast!(
-                    c_sys5_hy,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hy))
-                add_forecast!(
-                    c_sys5_hy,
-                    h,
-                    Deterministic("get_max_active_power", hydro_timeseries_DA[t][ix]),
-                )
+            add_time_series!(c_sys5_hy, l, Deterministic("max_active_power", forecast_data))
+        end
+        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_hy))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = ren_timeseries_DA[t][ix]
             end
+            add_time_series!(c_sys5_hy, l, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -304,35 +314,45 @@ function build_c_sys5_hyd(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hyd))
-                add_forecast!(
-                    c_sys5_hyd,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hyd))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
-                add_forecast!(
-                    c_sys5_hyd,
-                    h,
-                    Deterministic("get_max_active_power", hydro_timeseries_DA[t][ix]),
-                )
+            add_time_series!(
+                c_sys5_hyd,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(hydro_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = hydro_timeseries_DA[t][ix]
             end
-            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
-                add_forecast!(
-                    c_sys5_hyd,
-                    h,
-                    Deterministic("get_hydro_budget", hydro_budget_DA[t][ix]),
-                )
+            add_time_series!(
+                c_sys5_hyd,
+                h,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(hydro_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = hydro_timeseries_DA[t][ix]
             end
-            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
-                add_forecast!(
-                    c_sys5_hyd,
-                    h,
-                    Deterministic("get_inflow", hydro_timeseries_DA[t][ix] .* 0.8),
-                )
+            add_time_series!(c_sys5_hyd, h, Deterministic("hydro_budget", forecast_data))
+        end
+        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(hydro_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = hydro_timeseries_DA[t][ix] .* 0.8
             end
+            add_time_series!(c_sys5_hyd, h, Deterministic("inflow", forecast_data))
         end
     end
 
@@ -353,16 +373,21 @@ function build_c_sys5_hyd(; kwargs...)
             reserve_hy[3],
             get_components(HydroEnergyReservoir, c_sys5_hyd),
         )
-        for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
-            add_forecast!(c_sys5_hyd, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                forecast_data[ini_time] = Reserve_ts[t]
+            end
+            add_time_series!(c_sys5_hyd, serv, Deterministic("requirement", forecast_data))
         end
-        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_hyd)
-            add_forecast!(
-                c_sys5_hyd,
-                serv,
-                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
-            )
-        end
+        #for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_hyd)
+        #    add_time_series!(
+        #        c_sys5_hyd,
+        #        serv,
+        #        PiecewiseFunction("variable", 5, ORDC_cost_ts[t]),
+        #    )
+        #end
     end
 
     return c_sys5_hyd
@@ -383,14 +408,17 @@ function build_c_sys5_bat(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_bat))
-                add_forecast!(
-                    c_sys5_bat,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_bat))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
+            add_time_series!(
+                c_sys5_bat,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
         end
     end
 
@@ -402,16 +430,21 @@ function build_c_sys5_bat(; kwargs...)
         add_service!(c_sys5_bat, reserve_bat[1], get_components(GenericBattery, c_sys5_bat))
         add_service!(c_sys5_bat, reserve_bat[2], get_components(GenericBattery, c_sys5_bat))
         add_service!(c_sys5_bat, reserve_bat[3], get_components(GenericBattery, c_sys5_bat))
-        for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
-            add_forecast!(c_sys5_bat, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                forecast_data[ini_time] = Reserve_ts[t]
+            end
+            add_time_series!(c_sys5_bat, serv, Deterministic("requirement", forecast_data))
         end
-        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_bat)
-            add_forecast!(
-                c_sys5_bat,
-                serv,
-                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
-            )
-        end
+        #for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_bat)
+        #    add_time_series!(
+        #        c_sys5_bat,
+        #        serv,
+        #        PiecewiseFunction("variable", 5, ORDC_cost_ts[t]),
+        #    )
+        #end
     end
 
     return c_sys5_bat
@@ -430,21 +463,21 @@ function build_c_sys5_il(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_il))
-                add_forecast!(
-                    c_sys5_il,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_il))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_il))
-                add_forecast!(
-                    c_sys5_il,
-                    i,
-                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
-                )
+            add_time_series!(c_sys5_il, l, Deterministic("max_active_power", forecast_data))
+        end
+        for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_il))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Iload_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = Iload_timeseries_DA[t][ix]
             end
+            add_time_series!(c_sys5_il, i, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -457,16 +490,22 @@ function build_c_sys5_il(; kwargs...)
             [collect(get_components(InterruptibleLoad, c_sys5_il))[end]],
         )
         add_service!(c_sys5_il, reserve_il[3], get_components(InterruptibleLoad, c_sys5_il))
-        for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
-            add_forecast!(c_sys5_il, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                forecast_data[ini_time] = Reserve_ts[t]
+            end
+            add_time_series!(c_sys5_il, serv, Deterministic("requirement", forecast_data))
+
         end
-        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_il)
-            add_forecast!(
-                c_sys5_il,
-                serv,
-                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
-            )
-        end
+        #for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_il)
+        #    add_time_series!(
+        #        c_sys5_il,
+        #        serv,
+        #        PiecewiseFunction("variable", 5, ORDC_cost_ts[t]),
+        #    )
+        #end
     end
 
     return c_sys5_il
@@ -485,22 +524,23 @@ function build_c_sys5_dc(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_dc))
-                add_forecast!(
-                    c_sys5_dc,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_dc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_dc))
-                add_forecast!(
-                    c_sys5_dc,
-                    r,
-                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
-                )
-            end
+            add_time_series!(c_sys5_dc, l, Deterministic("max_active_power", forecast_data))
         end
+        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_dc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = ren_timeseries_DA[t][ix]
+            end
+            add_time_series!(c_sys5_dc, r, Deterministic("max_active_power", forecast_data))
+        end
+
     end
 
     return c_sys5_dc
@@ -518,11 +558,14 @@ function build_c_sys14_dc(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
+        forecast_data = SortedDict{Dates.DateTime, TimeArray}()
         for (ix, l) in enumerate(get_components(PowerLoad, c_sys14_dc))
-            add_forecast!(
+            ini_time = timestamp(timeseries_DA14[ix])[1]
+            forecast_data[ini_time] = timeseries_DA14[ix]
+            add_time_series!(
                 c_sys14_dc,
                 l,
-                Deterministic("get_max_active_power", timeseries_DA14[ix]),
+                Deterministic("max_active_power", forecast_data),
             )
         end
     end
@@ -551,33 +594,41 @@ function build_c_sys5_reg(; kwargs...)
     )
     #add_component!(c_sys5_reg, AGC_service)
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_reg))
-                add_forecast!(
-                    c_sys5_reg,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_reg))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (_, l) in enumerate(get_components(ThermalStandard, c_sys5_reg))
-                add_forecast!(
-                    c_sys5_reg,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][1]),
-                )
+            add_time_series!(
+                c_sys5_reg,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (_, l) in enumerate(get_components(ThermalStandard, c_sys5_reg))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][1])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][1]
             end
+            add_time_series!(
+                c_sys5_reg,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
         end
     end
 
     contributing_devices = Vector()
     for g in get_components(Generator, c_sys5_reg)
-        droop = isa(g, ThermalStandard) ? 0.04 * PSY.get_base_power(g) :
+        droop =
+            isa(g, ThermalStandard) ? 0.04 * PSY.get_base_power(g) :
             0.05 * PSY.get_base_power(g)
         p_factor = (up = 1.0, dn = 1.0)
         t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
         add_component!(c_sys5_reg, t)
         push!(contributing_devices, t)
-        @assert has_forecasts(t)
     end
     add_service!(c_sys5_reg, AGC_service, contributing_devices)
     return c_sys5_reg
@@ -724,14 +775,13 @@ function build_sys_ramp_testing(; kwargs...)
         ),
     ]
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
-    load_forecast_ramp =
-        Deterministic("get_max_active_power", TimeArray(DA_ramp, ramp_load))
+    load_forecast_ramp = Deterministic("max_active_power", TimeArray(DA_ramp, ramp_load))
     ramp_test_sys = System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)
     add_component!(ramp_test_sys, gen_ramp[1])
     add_component!(ramp_test_sys, gen_ramp[2])
-    add_forecast!(ramp_test_sys, load, load_forecast_ramp)
+    add_time_series!(ramp_test_sys, load, load_forecast_ramp)
     return ramp_test_sys
 end
 
@@ -747,28 +797,29 @@ function build_c_sys5_uc(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
-                add_forecast!(
-                    c_sys5_uc,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
-                add_forecast!(
-                    c_sys5_uc,
-                    r,
-                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
-                )
+            add_time_series!(c_sys5_uc, l, Deterministic("max_active_power", forecast_data))
+        end
+        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = ren_timeseries_DA[t][ix]
             end
-            for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_uc))
-                add_forecast!(
-                    c_sys5_uc,
-                    i,
-                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
-                )
+            add_time_series!(c_sys5_uc, r, Deterministic("max_active_power", forecast_data))
+        end
+        for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Iload_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = Iload_timeseries_DA[t][ix]
             end
+            add_time_series!(c_sys5_uc, r, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -782,16 +833,21 @@ function build_c_sys5_uc(; kwargs...)
         )
         add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalStandard, c_sys5_uc))
         add_service!(c_sys5_uc, reserve_uc[4], get_components(ThermalStandard, c_sys5_uc))
-        for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
-            add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                forecast_data[ini_time] = Reserve_ts[t]
+            end
+            add_time_series!(c_sys5_uc, serv, Deterministic("requirement", forecast_data))
         end
-        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_uc)
-            add_forecast!(
-                c_sys5_uc,
-                serv,
-                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
-            )
-        end
+        #for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_uc)
+        #    add_time_series!(
+        #        c_sys5_uc,
+        #        serv,
+        #        PiecewiseFunction("variable", 5, ORDC_cost_ts[t]),
+        #    )
+        #end
 
     end
 
@@ -821,35 +877,41 @@ function build_c_sys5_ed(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2 # loop over days
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ed))
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ed))
+            for t in 1:2 # loop over days
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                    add_forecast!(c_sys5_ed, l, Deterministic("get_max_active_power", data))
+                    forecast_data[ini_time[1]] = data
                 end
             end
+            add_time_series!(c_sys5_ed, l, Deterministic("max_active_power", forecast_data))
         end
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_ed))
+        for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_ed))
+            for t in 1:2 # loop over days
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                    add_forecast!(c_sys5_ed, l, Deterministic("get_max_active_power", data))
+                    forecast_data[ini_time[1]] = data
                 end
             end
+            add_time_series!(c_sys5_ed, l, Deterministic("max_active_power", forecast_data))
         end
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_ed))
+        for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_ed))
+            for t in 1:2 # loop over days
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                    add_forecast!(c_sys5_ed, l, Deterministic("get_max_active_power", data))
+                    forecast_data[ini_time[1]] = data
                 end
             end
+            add_time_series!(c_sys5_ed, l, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -901,56 +963,85 @@ function build_c_sys5_hy_uc(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_uc))
-                add_forecast!(
-                    c_sys5_hy_uc,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
-                add_forecast!(
-                    c_sys5_hy_uc,
-                    h,
-                    Deterministic("get_max_active_power", hydro_timeseries_DA[t][ix]),
-                )
+            add_time_series!(
+                c_sys5_hy_uc,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(hydro_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = hydro_timeseries_DA[t][ix]
             end
-            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
-                add_forecast!(
-                    c_sys5_hy_uc,
-                    h,
-                    Deterministic("get_storage_capacity", hydro_timeseries_DA[t][ix]),
-                )
+            add_time_series!(
+                c_sys5_hy_uc,
+                h,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(hydro_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = hydro_timeseries_DA[t][ix]
             end
-            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
-                add_forecast!(
-                    c_sys5_hy_uc,
-                    h,
-                    Deterministic("get_inflow", hydro_timeseries_DA[t][ix] .* 0.8),
-                )
+            add_time_series!(
+                c_sys5_hy_uc,
+                h,
+                Deterministic("storage_capacity", forecast_data),
+            )
+        end
+        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(hydro_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = hydro_timeseries_DA[t][ix] .* 0.8
             end
-            for (ix, h) in enumerate(get_components(HydroDispatch, c_sys5_hy_uc))
-                add_forecast!(
-                    c_sys5_hy_uc,
-                    h,
-                    Deterministic("get_max_active_power", hydro_timeseries_DA[t][ix]),
-                )
+            add_time_series!(c_sys5_hy_uc, h, Deterministic("inflow", forecast_data))
+        end
+        for (ix, h) in enumerate(get_components(HydroDispatch, c_sys5_hy_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(hydro_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = hydro_timeseries_DA[t][ix]
             end
-            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_hy_uc))
-                add_forecast!(
-                    c_sys5_hy_uc,
-                    r,
-                    Deterministic("get_max_active_power", ren_timeseries_DA[t][ix]),
-                )
+            add_time_series!(
+                c_sys5_hy_uc,
+                h,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_hy_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = ren_timeseries_DA[t][ix]
             end
-            for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_uc))
-                add_forecast!(
-                    c_sys5_hy_uc,
-                    i,
-                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
-                )
+            add_time_series!(
+                c_sys5_hy_uc,
+                r,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Iload_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = Iload_timeseries_DA[t][ix]
             end
+            add_time_series!(
+                c_sys5_hy_uc,
+                i,
+                Deterministic("max_active_power", forecast_data),
+            )
         end
     end
 
@@ -972,87 +1063,104 @@ function build_c_sys5_hy_ed(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_ed))
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_ed))
+            for t in 1:2 # loop over days
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
-                for i in 1:length(ta)
-                    ini_time = timestamp(ta[i])
-                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_hy_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
+                for i in 1:length(ta) # loop over hours
+                    ini_time = timestamp(ta[i]) #get the hour
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
+                    forecast_data[ini_time[1]] = data
                 end
             end
-            for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+            add_time_series!(
+                c_sys5_hy_ed,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = hydro_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_hy_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
+                    forecast_data[ini_time[1]] = data
                 end
             end
-            for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_hy_ed))
+            add_time_series!(
+                c_sys5_hy_ed,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_hy_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_hy_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
+                    forecast_data[ini_time[1]] = data
                 end
             end
-            for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+            add_time_series!(
+                c_sys5_hy_ed,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = hydro_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_hy_ed,
-                        l,
-                        Deterministic("get_storage_capacity", data),
-                    )
+                    forecast_data[ini_time[1]] = data
                 end
             end
-            for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+            add_time_series!(
+                c_sys5_hy_ed,
+                l,
+                Deterministic("storage_capacity", forecast_data),
+            )
+        end
+        for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = hydro_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix] .* 0.8, hour, hour(ini_time[1]))
-                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_inflow", data))
+                    forecast_data[ini_time[1]] = data
                 end
             end
-            for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_ed))
+            add_time_series!(c_sys5_hy_ed, l, Deterministic("inflow", forecast_data))
+        end
+        for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_hy_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
+                    forecast_data[ini_time[1]] = data
                 end
             end
-            for (ix, l) in enumerate(get_components(HydroDispatch, c_sys5_hy_ed))
+            add_time_series!(c_sys5_hy_ed, l, Deterministic("max_active_power", forecast_data))
+        end
+        for (ix, l) in enumerate(get_components(HydroDispatch, c_sys5_hy_ed))
+            for t in 1:2
                 ta = hydro_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_hy_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
+                    forecast_data[ini_time[1]] = data
                 end
             end
+            add_time_series!(c_sys5_hy_ed, l, Deterministic("max_active_power", forecast_data))
         end
     end
 
@@ -1072,14 +1180,17 @@ function build_c_sys5_pglib(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
-                add_forecast!(
-                    c_sys5_uc,
-                    l,
-                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
-                )
+        forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
+            for t in 1:2
+                ini_time = timestamp(load_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
+        add_time_series!(
+            c_sys5_uc,
+            l,
+            Deterministic("max_active_power", forecast_data),
+        )
         end
     end
 
@@ -1092,8 +1203,13 @@ function build_c_sys5_pglib(; kwargs...)
             [collect(get_components(ThermalStandard, c_sys5_uc))[end]],
         )
         add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalStandard, c_sys5_uc))
-        for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
-            add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                forecast_data[ini_time] = Reserve_ts[t]
+            end
+            add_time_series!(c_sys5_uc, serv, Deterministic("requirement", forecast_data))
         end
     end
 
