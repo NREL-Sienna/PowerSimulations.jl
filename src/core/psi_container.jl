@@ -17,8 +17,8 @@ mutable struct PSIContainer
         settings::PSISettings,
         jump_model::Union{Nothing, JuMP.AbstractModel},
     )
-        PSY.check_forecast_consistency(sys)
-        resolution = PSY.get_forecasts_resolution(sys)
+        #PSY.check_forecast_consistency(sys)
+        resolution = PSY.get_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
         new(
             jump_model,
