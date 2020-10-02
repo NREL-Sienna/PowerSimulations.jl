@@ -384,7 +384,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     sim_ini_time = get_initial_time(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
-        PSY.check_forecast_consistency(stage_system)
+        #PSY.check_forecast_consistency(stage_system)
         interval = PSY.get_forecasts_interval(stage_system)
         horizon = get_stage_horizon(get_sequence(sim), stage_name)
         seq_interval = get_stage_interval(get_sequence(sim), stage_name)
