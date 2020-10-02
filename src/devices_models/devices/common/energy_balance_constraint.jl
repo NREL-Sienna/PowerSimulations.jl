@@ -134,13 +134,13 @@ function energy_balance_hydro_param!(
     param_inflow = get_parameter_array(container_inflow)
     multiplier_inflow = get_multiplier_array(container_inflow)
     container_target =
-        add_param_container!(psi_container, target_param_reference, name_index)
+        add_param_container!(psi_container, target_param_reference, name_index, 1)
     param_target = get_parameter_array(container_target)
     multiplier_target = get_multiplier_array(container_target)
 
     balance_constraint =
         add_cons_container!(psi_container, balance_cons_name, name_index, time_steps)
-    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index)
+    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index, 1)
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
@@ -171,10 +171,10 @@ function energy_balance_hydro_param!(
 
     for (ix, d) in enumerate(target_data)
         name = get_component_name(d)
-        param_target[name] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[end])
-        target_constraint[name] = JuMP.@constraint(
+        param_target[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[end])
+        target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            varenergy[name, time_steps[end]] >= d.multiplier * param_target[name]
+            varenergy[name, time_steps[end]] >= d.multiplier * param_target[name, 1]
         )
     end
 
@@ -235,7 +235,7 @@ function energy_balance_hydro!(
 
     balance_constraint =
         add_cons_container!(psi_container, balance_cons_name, name_index, time_steps)
-    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index)
+    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index, 1)
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
@@ -260,7 +260,7 @@ function energy_balance_hydro!(
 
     for (ix, d) in enumerate(target_data)
         name = get_component_name(d)
-        target_constraint[name] = JuMP.@constraint(
+        target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[name, time_steps[end]] >=
             d.multiplier * d.timeseries[time_steps[end]]
