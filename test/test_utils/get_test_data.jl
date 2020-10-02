@@ -878,8 +878,8 @@ function build_c_sys5_ed(; kwargs...)
 
     if get(kwargs, :add_forecasts, true)
         for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ed))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2 # loop over days
-                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
@@ -890,8 +890,8 @@ function build_c_sys5_ed(; kwargs...)
             add_time_series!(c_sys5_ed, l, Deterministic("max_active_power", forecast_data))
         end
         for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_ed))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2 # loop over days
-                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
@@ -902,8 +902,8 @@ function build_c_sys5_ed(; kwargs...)
             add_time_series!(c_sys5_ed, l, Deterministic("max_active_power", forecast_data))
         end
         for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_ed))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2 # loop over days
-                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
