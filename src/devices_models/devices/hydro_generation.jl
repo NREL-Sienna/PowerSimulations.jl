@@ -271,7 +271,7 @@ function commit_hydro_active_power_ub!(
                 forecast_label = "get_max_active_power",
                 multiplier_func = x -> PSY.get_max_active_power(x),
                 constraint_func = use_parameters ? device_timeseries_param_ub! :
-                                      device_timeseries_ub!,
+                                  device_timeseries_ub!,
             ),
         )
         device_range_constraints!(psi_container, devices, model, feedforward, spec)

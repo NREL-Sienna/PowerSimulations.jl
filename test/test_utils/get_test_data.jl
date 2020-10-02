@@ -1149,7 +1149,11 @@ function build_c_sys5_hy_ed(; kwargs...)
                     forecast_data[ini_time[1]] = data
                 end
             end
-            add_time_series!(c_sys5_hy_ed, l, Deterministic("max_active_power", forecast_data))
+            add_time_series!(
+                c_sys5_hy_ed,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
         end
         for (ix, l) in enumerate(get_components(HydroDispatch, c_sys5_hy_ed))
             for t in 1:2
@@ -1160,7 +1164,11 @@ function build_c_sys5_hy_ed(; kwargs...)
                     forecast_data[ini_time[1]] = data
                 end
             end
-            add_time_series!(c_sys5_hy_ed, l, Deterministic("max_active_power", forecast_data))
+            add_time_series!(
+                c_sys5_hy_ed,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
         end
     end
 
@@ -1186,11 +1194,7 @@ function build_c_sys5_pglib(; kwargs...)
                 ini_time = timestamp(load_timeseries_DA[t][ix])[1]
                 forecast_data[ini_time] = load_timeseries_DA[t][ix]
             end
-        add_time_series!(
-            c_sys5_uc,
-            l,
-            Deterministic("max_active_power", forecast_data),
-        )
+            add_time_series!(c_sys5_uc, l, Deterministic("max_active_power", forecast_data))
         end
     end
 
