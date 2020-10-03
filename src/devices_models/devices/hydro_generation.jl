@@ -500,7 +500,7 @@ function energy_balance_constraint!(
         ts_vector_target = get_time_series(psi_container, d, target_forecast_label)
         constraint_info_target = DeviceTimeSeriesConstraintInfo(
             d,
-            x -> PSY.get_storage_target(x),
+            x -> PSY.get_storage_target(x) * PSY.get_storage_capacity(x),
             ts_vector_target,
         )
         constraint_infos_target[ix] = constraint_info_target
