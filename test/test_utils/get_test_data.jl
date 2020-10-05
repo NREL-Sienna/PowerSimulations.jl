@@ -288,13 +288,13 @@ function build_c_sys5_hy(; kwargs...)
             end
             add_time_series!(c_sys5_hy, l, Deterministic("max_active_power", forecast_data))
         end
-        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_hy))
+        for (ix, r) in enumerate(get_components(HydroGen, c_sys5_hy))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
                 ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
                 forecast_data[ini_time] = ren_timeseries_DA[t][ix]
             end
-            add_time_series!(c_sys5_hy, l, Deterministic("max_active_power", forecast_data))
+            add_time_series!(c_sys5_hy, r, Deterministic("max_active_power", forecast_data))
         end
     end
 
