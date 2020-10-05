@@ -732,12 +732,6 @@ thermal_generators5_uc_testing(nodes) = [
 function build_sys_ramp_testing(; kwargs...)
     node = Bus(1, "nodeA", "REF", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
     load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
-    DA_ramp = collect(
-        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
-            "1/1/2024  4:00:00",
-            "d/m/y  H:M:S",
-        ),
-    )
     gen_ramp = [
         ThermalStandard(
             name = "Alta",
@@ -774,8 +768,15 @@ function build_sys_ramp_testing(; kwargs...)
             base_power = 100.0,
         ),
     ]
+    DA_ramp = collect(
+        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+            "1/1/2024  4:00:00",
+            "d/m/y  H:M:S",
+        ),
+    )
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
-    load_forecast_ramp = Deterministic("max_active_power", TimeArray(DA_ramp, ramp_load))
+    ts_dict = SortedDict(DA_ramp[1] => ramp_load)
+    load_forecast_ramp = Deterministic("max_active_power", ts_dict; resolution = Hour(1))
     ramp_test_sys = System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)

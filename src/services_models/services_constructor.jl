@@ -69,7 +69,7 @@ function construct_service!(
     if model_has_parameters(psi_container)
         container = add_param_container!(
             psi_container,
-            UpdateRef{SR}("service_requirement", "get_requirement"),
+            UpdateRef{SR}("service_requirement", "requirement"),
             names,
             time_steps,
         )
@@ -198,7 +198,7 @@ function construct_service!(
     if model_has_parameters(psi_container)
         container = add_param_container!(
             psi_container,
-            UpdateRef{SR}("service_requirement", "get_requirement"),
+            UpdateRef{SR}("service_requirement", "requirement"),
             names,
             time_steps,
         )

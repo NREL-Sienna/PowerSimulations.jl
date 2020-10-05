@@ -971,7 +971,7 @@ function must_run_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    forecast_label = "get_must_run"
+    forecast_label = "must_run"
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = ones(time_steps[end])
@@ -1292,7 +1292,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.ThermalGen}
     return NodalExpressionSpec(
-        "get_max_active_power",
+        "max_active_power",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,

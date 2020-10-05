@@ -527,7 +527,7 @@ end
 # Function to create a dictionary for the time series of the simulation
 function get_time_stamps(op_problem::OperationsProblem)
     initial_time = model_initial_time(get_psi_container(op_problem))
-    interval = PSY.get_resolution(op_problem.sys)
+    interval = PSY.get_time_series_resolution(op_problem.sys)
     horizon = get_horizon(get_settings(get_psi_container(op_problem)))
     range_time = collect(initial_time:interval:(initial_time + interval .* horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])

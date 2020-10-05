@@ -154,7 +154,7 @@ function DeviceRangeConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
             variable_name = make_variable_name(ActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-            forecast_label = "get_max_active_power",
+            forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -268,7 +268,7 @@ function commit_hydro_active_power_ub!(
                 ),
                 variable_name = make_variable_name(ActivePowerVariable, V),
                 parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-                forecast_label = "get_max_active_power",
+                forecast_label = "max_active_power",
                 multiplier_func = x -> PSY.get_max_active_power(x),
                 constraint_func = use_parameters ? device_timeseries_param_ub! :
                                   device_timeseries_ub!,
@@ -302,7 +302,7 @@ function energy_balance_constraint!(
         throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
-    forecast_label = "get_inflow"
+    forecast_label = "inflow"
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
@@ -372,7 +372,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.HydroGen}
     return NodalExpressionSpec(
-        "get_max_active_power",
+        "max_active_power",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,
@@ -405,7 +405,7 @@ function energy_budget_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen}
 
-    forecast_label = "get_hydro_budget"
+    forecast_label = "hydro_budget"
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)

@@ -111,7 +111,7 @@ function DeviceRangeConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
             variable_name = make_variable_name(ActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-            forecast_label = "get_max_active_power",
+            forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -152,7 +152,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ActivePowerVariable, T),
             bin_variable_name = make_variable_name(OnVariable, T),
             parameter_name = use_parameters ? ON : nothing,
-            forecast_label = "get_max_active_power",
+            forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_ub_bigM! :
                               device_timeseries_ub_bin!,
@@ -168,7 +168,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
-        "get_max_active_power",
+        "max_active_power",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
         -1.0,
@@ -182,7 +182,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
-        "get_max_active_power",
+        "max_active_power",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         -1.0,

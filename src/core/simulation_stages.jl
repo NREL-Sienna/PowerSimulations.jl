@@ -137,7 +137,7 @@ get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
 warm_start_enabled(s::Stage) = get_warm_start(s.internal.psi_container.settings)
 get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
-get_resolution(s::Stage) = IS.time_period_conversion(PSY.get_resolution(s.sys))
+get_resolution(s::Stage) = IS.time_period_conversion(PSY.get_time_series_resolution(s.sys))
 get_settings(s::Stage) = get_psi_container(s).settings
 
 function reset!(stage::Stage{M}) where {M <: AbstractOperationsProblem}

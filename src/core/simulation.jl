@@ -364,7 +364,7 @@ function _assign_feedforward_chronologies(sim::Simulation)
             destination_stage.internal.chronolgy_dict[stage_number] = chron
             source_stage = get_stage(sim, stage_number)
             source_stage_resolution =
-                IS.time_period_conversion(PSY.get_resolution(source_stage.sys))
+                IS.time_period_conversion(PSY.get_time_series_resolution(source_stage.sys))
             # This line keeps track of the executions of a stage relative to other stages.
             # This might be needed in the future to run multiple stages. For now it is disabled
             #destination_stage.internal.synchronized_executions[stage_number] =

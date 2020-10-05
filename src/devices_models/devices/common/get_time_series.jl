@@ -7,20 +7,16 @@ function get_time_series(
     @debug initial_time
     use_forecast_data = model_uses_forecasts(psi_container)
     time_steps = model_time_steps(psi_container)
-    has_forecasts = PSY.has_forecasts(device)
-    if use_forecast_data && !has_forecasts
-        @warn "$(summary(device)) does not have forecasts and model is specified as using forecasts)"
-    end
-    if use_forecast_data && has_forecasts
-        forecast = PSY.get_forecast(
+    if use_forecast_data
+        forecast = PSY.get_time_series_values(
             PSY.Deterministic,
             device,
-            initial_time,
-            forecast_label,
-            length(time_steps),
+            forecast_label;
+            start_time = initial_time,
+            len = length(time_steps),
         )
-        return ts_vector = TS.values(PSY.get_data(forecast))
+        return forecast
     else
-        return ts_vector = ones(time_steps[end])
+        return ones(time_steps[end])
     end
 end
