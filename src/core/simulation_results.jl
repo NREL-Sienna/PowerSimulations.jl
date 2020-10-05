@@ -148,7 +148,7 @@ IS.get_base_power(result::SimulationResults) = result.base_power
 IS.get_variables(result::SimulationResults) = result.variable_values
 IS.get_total_cost(result::SimulationResults) = result.total_cost
 IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
-get_time_stamp(result::SimulationResults) = result.time_stamp
+get_timestamp(result::SimulationResults) = result.time_stamp
 get_duals(result::SimulationResults) = result.dual_values
 IS.get_parameters(result::SimulationResults) = result.parameter_values
 
@@ -528,7 +528,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     end
     write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_log(IS.get_total_cost(res), folder_path)
-    write_data(get_time_stamp(res), folder_path, "time_stamp"; file_type = CSV, kwargs...)
+    write_data(get_timestamp(res), folder_path, "time_stamp"; file_type = CSV, kwargs...)
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
     write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
     files = readdir(folder_path)

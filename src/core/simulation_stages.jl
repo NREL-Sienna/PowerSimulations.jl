@@ -277,7 +277,7 @@ function get_initial_cache(cache::StoredEnergy, stage::Stage)
     return value_array
 end
 
-function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
+function get_timestamps(stage::Stage, start_time::Dates.DateTime)
     resolution = get_resolution(stage)
     horizon = stage.internal.psi_container.time_steps[end]
     range_time = collect(start_time:resolution:(start_time + resolution * horizon))
@@ -305,7 +305,7 @@ function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_pat
     write_data(stage, save_path)
     write_data(duals, save_path; duals = true)
     write_data(get_parameters_value(stage.internal.psi_container), save_path; params = true)
-    write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    write_data(get_timestamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return

@@ -237,7 +237,7 @@ export get_variables
 export get_dual_values
 export get_total_cost
 export get_optimizer_log
-export get_time_stamp
+export get_timestamp
 export write_results
 import PowerModels
 import TimerOutputs
