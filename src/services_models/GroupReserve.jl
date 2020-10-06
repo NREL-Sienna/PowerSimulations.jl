@@ -36,17 +36,7 @@ function service_requirement_constraint!(
         for r in contributing_services
     ]
 
-    if use_forecast_data
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
-            PSY.Deterministic,
-            service,
-            initial_time,
-            "requirement",
-            length(time_steps),
-        )))
-    else
-        ts_vector = ones(time_steps[end])
-    end
+    ts_vector = get_time_series(psi_container, service, "requirement")
 
     requirement = PSY.get_requirement(service)
     if parameters
