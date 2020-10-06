@@ -1201,86 +1201,27 @@ function cost_function!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    variable = get_variable(psi_container, ActivePowerVariable, T)
-
-    # uses the same cost function whenever there is NO PWL
-    function _ps_cost!(d::PSY.ThermalGen, cost_component::PSY.VariableCost)
-        return variable_cost!(
-            psi_container,
-            make_variable_name(ActivePowerVariable, T),
-            PSY.get_name(d),
-            cost_component,
-        )
-    end
-
-    # TODO: Refactor this function
-    function _ps_cost!(
-        d::PSY.ThermalGen,
-        cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
+    no_min_spec = AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
     )
-        export_pwl_vars = get_export_pwl_vars(psi_container.settings)
-        if export_pwl_vars
-            if !haskey(psi_container.variables, :PWL_cost_vars)
-                time_steps = model_time_steps(psi_container)
-                container = add_var_container!(
-                    psi_container,
-                    :PWL_cost_vars,
-                    [PSY.get_name(d)],
-                    time_steps,
-                    1:length(cost_component);
-                    sparse = true,
-                )
-            else
-                container = get_variable(psi_container, :PWL_cost_vars)
-            end
-        end
 
-        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        slopes = PSY.get_slopes(cost_component)
+    for g in devices
+        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
+        slopes = PSY.get_slopes(cost_)
         first_pair = cost_component.cost[1]
         if slopes[1] != 0.0
             # sets first slope such that the y intercept is epsilon larger than the y intercept of the second slope to ensure convexity
             slopes[1] = (first_pair[2] * slopes[2] - COST_EPSILON) / first_pair[2]
         end
-
-        if any(slopes .< 0) || slopes[1] > slopes[2] || !_pwlparamcheck(slopes)
+        if any(slopes .< 0) || !pwlparamcheck(slopes)
             throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
         end
-
-        for (t, var) in enumerate(variable[PSY.get_name(d), :])
-            g_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-
-            pwlvars = JuMP.@variable(
-                psi_container.JuMPmodel,
-                [i = 1:length(cost_component)],
-                base_name = "{$(var)}_{pwl}",
-                start = 0.0,
-                lower_bound = 0.0,
-                upper_bound = PSY.get_breakpoint_upperbounds(cost_component)[i]
-            )
-            for (ix, pwlvar) in enumerate(pwlvars)
-                JuMP.add_to_expression!(g_cost, slopes[ix] * pwlvar)
-                if export_pwl_vars
-                    container[(PSY.get_name(d), t, ix)] = pwlvar
-                end
-            end
-            c = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                var == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
-            )
-            JuMP.add_to_expression!(gen_cost, g_cost)
-        end
-        return gen_cost * dt
+        component_name = PSY.get_name(g)
+        pwl_gencost_linear!(psi_container, no_min_spec, component_name, slopes)
     end
-
-    for d in devices
-        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
-        cost_expression = _ps_cost!(d, cost_component)
-        _add_to_cost_expression!(psi_container, cost_expression)
-    end
-
     return
 end
 

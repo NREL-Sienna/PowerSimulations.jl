@@ -108,13 +108,24 @@ end
 function _get_pwl_vars_container(psi_container::PSIContainer)
     if !haskey(psi_container.variables, :PWL_cost_vars)
         time_steps = model_time_steps(psi_container)
-        contents = Dict{Tuple{String, String, Any}, Any}()
+        contents = Dict{Tuple{String, Int, Int}, Any}()
         container = JuMP.Containers.SparseAxisArray(contents)
         assign_variable!(psi_container, :PWL_cost_vars, container)
     else
         container = get_variable(psi_container, :PWL_cost_vars)
     end
     return container
+end
+
+function slope_convexity_check(slopes::Vector{Float64})
+    flag = true
+    for ix in 1:(length(slopes) - 1)
+        if slopes[ix] > slopes[ix + 1]
+            @debug slopes
+            return flag = false
+        end
+    end
+    return flag
 end
 
 @doc raw"""
@@ -126,17 +137,11 @@ Returns ```flag```
 
 * cost_ : container for quadratic and linear factors
 """
-function _pwlparamcheck(cost_)
+function pwlparamcheck(cost_)
     slopes = PSY.get_slopes(cost_)
-    flag = true
-    # First element of the array is the average cost at P_min
-    for ix in 2:(length(slopes) - 1)
-        if slopes[ix] > slopes[ix + 1]
-            @debug slopes
-            return flag = false
-        end
-    end
-    return flag
+    # First element of the return is the average cost at P_min.
+    # Shouldn't be passed for convexity check
+    return slope_convexity_check(slopes[2:end])
 end
 
 function linear_gen_cost!(
@@ -176,7 +181,7 @@ Returns ```gen_cost```
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_data::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwl_gencost_sos!(
+function pwl_gencost_sos!(
     psi_container::PSIContainer,
     spec::AddCostSpec,
     component_name::String,
@@ -263,7 +268,7 @@ Returns ```gen_cost```
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_data::Vector{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwl_gencost_linear!(
+function pwl_gencost_linear!(
     psi_container::PSIContainer,
     spec::AddCostSpec,
     component_name::String,
@@ -410,7 +415,7 @@ function add_to_cost!(
     variable_cost_data = PSY.get_cost(PSY.get_variable(cost_data))
     if !all(iszero.(last.(variable_cost_data)))
         gen_cost =
-            _pwl_gencost_sos!(psi_container, spec, component_name, variable_cost_data)
+            pwl_gencost_sos!(psi_container, spec, component_name, variable_cost_data)
         add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
     else
         @debug "No Variable Cost associated with $(component_name)"
@@ -614,13 +619,13 @@ function variable_cost!(
     end
 
     var_name = make_variable_name(spec.variable_type, spec.component_type)
-    if !_pwlparamcheck(cost_component)
+    if !pwlparamcheck(cost_component)
         @warn("The cost function provided for $(var_name) device is not compatible with a linear PWL cost function.
         An SOS-2 formulation will be added to the model.
         This will result in additional binary variables added to the model.")
-        gen_cost = _pwl_gencost_sos!(psi_container, spec, component_name, cost_data)
+        gen_cost = pwl_gencost_sos!(psi_container, spec, component_name, cost_data)
     else
-        gen_cost = _pwl_gencost_linear!(psi_container, spec, component_name, cost_data)
+        gen_cost = pwl_gencost_linear!(psi_container, spec, component_name, cost_data)
     end
     add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
     return
