@@ -1,6 +1,6 @@
 function get_time_series(
     psi_container::PSIContainer,
-    device::PSY.Device,
+    component::PSY.Component,
     forecast_label::String,
 )
     initial_time = model_initial_time(psi_container)
@@ -10,12 +10,12 @@ function get_time_series(
     if use_forecast_data
         forecast = PSY.get_time_series_values(
             PSY.Deterministic,
-            device,
+            component,
             forecast_label;
             start_time = initial_time,
             len = length(time_steps),
         )
-        return Array{Float64}(forecast...)
+        return forecast
     else
         return ones(time_steps[end])
     end
