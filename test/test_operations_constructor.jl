@@ -137,7 +137,7 @@ end
     c_sys5_pwl_ed = build_system("c_sys5_pwl_ed")
     systems = [c_sys5, c_sys5_re, c_sys5_bat, c_sys5_pwl_ed]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
-        @testset "Operation Model $(net) - $(thermal) - $(system)" begin
+        @testset "Operation Model $(net) - $(thermal)" begin
             devices = Dict{Symbol, DeviceModel}(
                 :Generators => DeviceModel(ThermalStandard, thermal),
                 :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -175,7 +175,7 @@ end
             PTDF = build_PTDF5(),
             export_pwl_vars = true,
         )
-    end
+end
 @testset "Operations template constructors" begin
     c_sys5 = build_system("c_sys5")
     op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)

@@ -1197,7 +1197,7 @@ Cost function for generators formulated as No-Min
 function cost_function!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{ThermalDispatchNoMin},
+    ::DeviceModel{T, ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
@@ -1209,18 +1209,31 @@ function cost_function!(
     )
 
     for g in devices
-        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
-        slopes = PSY.get_slopes(cost_)
-        first_pair = cost_component.cost[1]
-        if slopes[1] != 0.0
-            # sets first slope such that the y intercept is epsilon larger than the y intercept of the second slope to ensure convexity
-            slopes[1] = (first_pair[2] * slopes[2] - COST_EPSILON) / first_pair[2]
-        end
-        if any(slopes .< 0) || !pwlparamcheck(slopes)
-            throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
-        end
         component_name = PSY.get_name(g)
-        pwl_gencost_linear!(psi_container, no_min_spec, component_name, slopes)
+        op_cost = PSY.get_operation_cost(g)
+        cost_component = PSY.get_variable(op_cost)
+        if isa(cost_component, PSY.VariableCost{Array{Tuple{Float64,Float64},1}})
+            @debug "PWL cost function detected for device $(component_name) using ThermalDispatchNoMin"
+            slopes = PSY.get_slopes(cost_component)
+            if any(slopes .< 0) || !pwlparamcheck(cost_component)
+                throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost."))
+            end
+            if slopes[1] != 0.0
+                @debug "PWL has no 0.0 intercept for generator $(PSY.get_name(g))"
+                # adds a first intercept a x = 0.0 and Y below the intercept of the first tuple to make convex equivalent
+                first_pair = PSY.get_cost(cost_component)[1]
+                cost_function_data = deepcopy(cost_component.cost)
+                intercept_point = (0.0, first_pair - COST_EPSILON)
+                cost_function_data = vcat(intercept_point, cost_function_data)
+                corrected_slopes = PSY.get_slopes(cost_function_data)
+                @assert slope_convexity_check(slopes)
+            else
+                cost_function_data = cost_component.cost
+            end
+            pwl_gencost_linear!(psi_container, no_min_spec, component_name, cost_function_data)
+        else
+            add_to_cost!(psi_container, no_min_spec, op_cost, component_name)
+        end
     end
     return
 end

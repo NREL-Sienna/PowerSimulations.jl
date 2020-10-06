@@ -15,7 +15,7 @@ function get_time_series(
             start_time = initial_time,
             len = length(time_steps),
         )
-        return forecast
+        return Array{Float64}(forecast...)
     else
         return ones(time_steps[end])
     end

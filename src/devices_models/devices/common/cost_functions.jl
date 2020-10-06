@@ -224,7 +224,7 @@ function pwl_gencost_sos!(
             )
             if export_pwl_vars
                 container = _get_pwl_vars_container(psi_container)
-                container[(component_name, t, i)] = pwlvar[i]
+                container[(component_name, t, i)] = pwlvars[i]
             end
             JuMP.add_to_expression!(gen_cost, cost_data[i][1] * pwlvars[i])
         end
