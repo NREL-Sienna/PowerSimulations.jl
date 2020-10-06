@@ -156,8 +156,9 @@ end
             @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == p
         end
     end
+end
 
-    @testset "Operation Model CopperPlatePowerModel - ThermalDispatchNoMin - c_sys5_pwl_ed_nonconvex" begin
+@testset "Operation Model CopperPlatePowerModel - ThermalDispatchNoMin - c_sys5_pwl_ed_nonconvex" begin
         c_sys5_pwl_ed_nonconvex = build_system("c_sys5_pwl_ed_nonconvex")
         devices = Dict{Symbol, DeviceModel}(
             :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
@@ -175,16 +176,14 @@ end
             export_pwl_vars = true,
         )
     end
-
-    @testset "Operations template constructors" begin
-        c_sys5 = build_system("c_sys5")
-        op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
-        op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
-        moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
-        moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
-        ED = PSI.run_economic_dispatch(c_sys5; optimizer = fast_lp_optimizer)
-        UC = PSI.run_unit_commitment(c_sys5; optimizer = fast_lp_optimizer)
-        @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
-        @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
-    end
+@testset "Operations template constructors" begin
+    c_sys5 = build_system("c_sys5")
+    op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
+    op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
+    moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
+    moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
+    ED = PSI.run_economic_dispatch(c_sys5; optimizer = fast_lp_optimizer)
+    UC = PSI.run_unit_commitment(c_sys5; optimizer = fast_lp_optimizer)
+    @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
+    @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
 end
