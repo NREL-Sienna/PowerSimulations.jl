@@ -432,8 +432,7 @@ end
 
     duration_load = [0.3, 0.6, 0.8, 0.7, 1.7, 0.9, 0.7]
     load_data = SortedDict(DA_dur[1] => TimeArray(DA_dur, duration_load))
-    load_forecast_dur =
-        Deterministic("max_active_power", load_data)
+    load_forecast_dur = Deterministic("max_active_power", load_data)
     duration_test_sys = System(100.0)
     add_component!(duration_test_sys, node)
     add_component!(duration_test_sys, load)
@@ -509,7 +508,7 @@ end
     ini_time = DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S")
     cost_sos_load = [[1.3, 2.1], [1.3, 2.1]]
     for (ix, date) in enumerate(range(ini_time; length = 2, step = Hour(1)))
-       DA_load_forecast[date] = TimeArray([date, date + Hour(1)], cost_sos_load[ix])
+        DA_load_forecast[date] = TimeArray([date, date + Hour(1)], cost_sos_load[ix])
     end
     load_forecast_cost_sos = Deterministic("max_active_power", DA_load_forecast)
     cost_test_sys = System(100.0)
@@ -586,7 +585,7 @@ end
     ini_time = DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S")
     cost_sos_load = [[1.3, 2.1], [1.3, 2.1]]
     for (ix, date) in enumerate(range(ini_time; length = 2, step = Hour(1)))
-       DA_load_forecast[date] = TimeArray([date, date + Hour(1)], cost_sos_load[ix])
+        DA_load_forecast[date] = TimeArray([date, date + Hour(1)], cost_sos_load[ix])
     end
     load_forecast_cost_sos = Deterministic("max_active_power", DA_load_forecast)
     cost_test_sos_sys = System(100.0)

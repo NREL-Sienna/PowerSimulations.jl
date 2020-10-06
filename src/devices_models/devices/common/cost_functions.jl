@@ -414,8 +414,7 @@ function add_to_cost!(
     # Original implementation had SOS by default
     variable_cost_data = PSY.get_cost(PSY.get_variable(cost_data))
     if !all(iszero.(last.(variable_cost_data)))
-        gen_cost =
-            pwl_gencost_sos!(psi_container, spec, component_name, variable_cost_data)
+        gen_cost = pwl_gencost_sos!(psi_container, spec, component_name, variable_cost_data)
         add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
     else
         @debug "No Variable Cost associated with $(component_name)"

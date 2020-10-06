@@ -1212,7 +1212,7 @@ function cost_function!(
         component_name = PSY.get_name(g)
         op_cost = PSY.get_operation_cost(g)
         cost_component = PSY.get_variable(op_cost)
-        if isa(cost_component, PSY.VariableCost{Array{Tuple{Float64,Float64},1}})
+        if isa(cost_component, PSY.VariableCost{Array{Tuple{Float64, Float64}, 1}})
             @debug "PWL cost function detected for device $(component_name) using ThermalDispatchNoMin"
             slopes = PSY.get_slopes(cost_component)
             if any(slopes .< 0) || !pwlparamcheck(cost_component)
@@ -1230,7 +1230,12 @@ function cost_function!(
             else
                 cost_function_data = cost_component.cost
             end
-            pwl_gencost_linear!(psi_container, no_min_spec, component_name, cost_function_data)
+            pwl_gencost_linear!(
+                psi_container,
+                no_min_spec,
+                component_name,
+                cost_function_data,
+            )
         else
             add_to_cost!(psi_container, no_min_spec, op_cost, component_name)
         end

@@ -66,7 +66,6 @@ function Base.show(io::IO, sim::Simulation)
     println(io, "Simulation()")
 end
 
-
 function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
     println(io, "\nResults")
     println(io, "========\n")
