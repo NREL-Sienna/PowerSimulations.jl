@@ -205,7 +205,8 @@ function build_c_sys5_re(; kwargs...)
             reserve_re[2],
             [collect(get_components(RenewableDispatch, c_sys5_re))[end]],
         )
-        add_service!(c_sys5_re, reserve_re[3], get_components(RenewableDispatch, c_sys5_re))
+        # ORDC
+        #add_service!(c_sys5_re, reserve_re[3], get_components(RenewableDispatch, c_sys5_re))
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
@@ -430,7 +431,8 @@ function build_c_sys5_bat(; kwargs...)
         ))
         add_service!(c_sys5_bat, reserve_bat[1], get_components(GenericBattery, c_sys5_bat))
         add_service!(c_sys5_bat, reserve_bat[2], get_components(GenericBattery, c_sys5_bat))
-        add_service!(c_sys5_bat, reserve_bat[3], get_components(GenericBattery, c_sys5_bat))
+        # ORDC
+        #add_service!(c_sys5_bat, reserve_bat[3], get_components(GenericBattery, c_sys5_bat))
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
@@ -490,7 +492,8 @@ function build_c_sys5_il(; kwargs...)
             reserve_il[2],
             [collect(get_components(InterruptibleLoad, c_sys5_il))[end]],
         )
-        add_service!(c_sys5_il, reserve_il[3], get_components(InterruptibleLoad, c_sys5_il))
+        # ORDC
+        #add_service!(c_sys5_il, reserve_il[3], get_components(InterruptibleLoad, c_sys5_il))
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
