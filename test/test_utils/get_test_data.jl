@@ -209,7 +209,7 @@ function build_c_sys5_re(; kwargs...)
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                ini_time = timestamp(Reserve_ts[ix])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_re, serv, Deterministic("requirement", forecast_data))
@@ -368,15 +368,16 @@ function build_c_sys5_hyd(; kwargs...)
             reserve_hy[2],
             [collect(get_components(HydroEnergyReservoir, c_sys5_hyd))[end]],
         )
-        add_service!(
-            c_sys5_hyd,
-            reserve_hy[3],
-            get_components(HydroEnergyReservoir, c_sys5_hyd),
-        )
+        # ORDC curve
+        #add_service!(
+        #    c_sys5_hyd,
+        #    reserve_hy[3],
+        #    get_components(HydroEnergyReservoir, c_sys5_hyd),
+        #)
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                ini_time = timestamp(Reserve_ts[ix])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_hyd, serv, Deterministic("requirement", forecast_data))
@@ -433,7 +434,7 @@ function build_c_sys5_bat(; kwargs...)
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                ini_time = timestamp(Reserve_ts[ix])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_bat, serv, Deterministic("requirement", forecast_data))
@@ -493,7 +494,7 @@ function build_c_sys5_il(; kwargs...)
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                ini_time = timestamp(Reserve_ts[ix])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_il, serv, Deterministic("requirement", forecast_data))
@@ -833,11 +834,12 @@ function build_c_sys5_uc(; kwargs...)
             [collect(get_components(ThermalStandard, c_sys5_uc))[end]],
         )
         add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalStandard, c_sys5_uc))
-        add_service!(c_sys5_uc, reserve_uc[4], get_components(ThermalStandard, c_sys5_uc))
-        for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
+        # ORDC Curve
+        #add_service!(c_sys5_uc, reserve_uc[4], get_components(ThermalStandard, c_sys5_uc))
+        for serv in get_components(VariableReserve, c_sys5_uc)
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                ini_time = timestamp(Reserve_ts[t])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_uc, serv, Deterministic("requirement", forecast_data))
@@ -1211,7 +1213,7 @@ function build_c_sys5_pglib(; kwargs...)
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[t][ix])[1]
+                ini_time = timestamp(Reserve_ts[ix])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_uc, serv, Deterministic("requirement", forecast_data))
