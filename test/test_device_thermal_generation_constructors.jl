@@ -597,7 +597,7 @@ end
     add_time_series!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
     for g in gens_cost_sos
-        @test PSI._pwlparamcheck(PSY.get_operation_cost(g).variable) == false
+        @test PSI.pwlparamcheck(PSY.get_operation_cost(g).variable) == false
     end
 
     template =
