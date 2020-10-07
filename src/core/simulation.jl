@@ -342,9 +342,6 @@ function _check_forecasts_sequence(sim::Simulation)
 end
 
 function _check_feedforward_chronologies(sim::Simulation)
-    if isempty(sim.sequence.feedforward_chronologies)
-        @info("No Feedforward Chronologies defined")
-    end
     for (key, chron) in sim.sequence.feedforward_chronologies
         check_chronology!(sim, key, chron)
     end
@@ -754,14 +751,14 @@ function update_parameter!(
     horizon = length(model_time_steps(stage.internal.psi_container))
     for d in components
         # RECORDER TODO: Parameter Update from forecast
-        forecast = PSY.get_forecast(
+        # TODO: Improve file read performance
+        ts_vector = PSY.get_time_series_values(
             PSY.Deterministic,
             d,
-            initial_forecast_time,
-            get_accessor_func(param_reference),
-            horizon,
+            get_data_label(param_reference);
+            start_time = initial_forecast_time,
+            len = horizon,
         )
-        ts_vector = TS.values(PSY.get_data(forecast))
         component_name = PSY.get_name(d)
         for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
             value = ts_vector[ix]
@@ -785,12 +782,12 @@ function update_parameter!(
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, stage.sys, ix)
-        forecast = PSY.get_forecast(
+        forecast = PSY.get_time_series_values(
             PSY.Deterministic,
             service,
-            initial_forecast_time,
-            get_accessor_func(param_reference),
-            horizon,
+            get_data_label(param_reference);
+            start_time = initial_forecast_time,
+            len = horizon,
         )
         ts_vector = TS.values(PSY.get_data(forecast))
         for (jx, value) in enumerate(ts_vector)
