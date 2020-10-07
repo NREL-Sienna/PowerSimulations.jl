@@ -12,7 +12,7 @@ IS.get_base_power(result::OperationsProblemResults) = result.base_power
 IS.get_variables(result::OperationsProblemResults) = result.variable_values
 IS.get_total_cost(result::OperationsProblemResults) = result.total_cost
 IS.get_optimizer_log(results::OperationsProblemResults) = results.optimizer_log
-get_timestamp(result::OperationsProblemResults) = result.time_stamp
+IS.get_timestamp(result::OperationsProblemResults) = result.time_stamp
 get_duals(result::OperationsProblemResults) = result.dual_values
 IS.get_parameters(result::OperationsProblemResults) = result.parameter_values
 
