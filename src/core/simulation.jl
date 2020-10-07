@@ -381,14 +381,12 @@ function _get_simulation_initial_times!(sim::Simulation)
         system_interval = PSY.get_forecast_interval(stage_system)
         stage_interval = get_stage_interval(get_sequence(sim), stage_name)
         if system_interval != stage_interval
-            throw(IS.ConflictingInputsError("Simulation interval ($stage_interval) and
-                    forecast interval ($system_interval) definitions are not compatible"))
+            throw(IS.ConflictingInputsError("Simulation interval ($stage_interval) and forecast interval ($system_interval) definitions are not compatible"))
         end
         stage_horizon = get_stage_horizon(get_sequence(sim), stage_name)
         system_horizon = PSY.get_forecast_horizon(stage_system)
         if stage_horizon > system_horizon
-            throw(IS.ConflictingInputsError("Simulation horizon ($stage_horizon) and
-                    forecast horizon ($system_horizon) definitions are not compatible"))
+            throw(IS.ConflictingInputsError("Simulation horizon ($stage_horizon) and forecast horizon ($system_horizon) definitions are not compatible"))
         end
         stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
         for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
@@ -779,14 +777,13 @@ function update_parameter!(
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, stage.sys, ix)
-        forecast = PSY.get_time_series_values(
+        ts_vector = PSY.get_time_series_values(
             PSY.Deterministic,
             service,
             get_data_label(param_reference);
             start_time = initial_forecast_time,
             len = horizon,
         )
-        ts_vector = TS.values(PSY.get_data(forecast))
         for (jx, value) in enumerate(ts_vector)
             JuMP.fix(get_parameter_array(container)[ix, jx], value)
         end
