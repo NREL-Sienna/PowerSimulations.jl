@@ -1,7 +1,7 @@
 """Reference for parameters update when present"""
 struct UpdateRef{T}
     access_ref::Symbol
-    accessor_func::Union{Nothing, String}
+    data_label::Union{Nothing, String}
 end
 
 function UpdateRef{T}(name::Symbol) where {T <: Union{JuMP.VariableRef, PJ.ParameterRef}}
@@ -10,9 +10,9 @@ end
 
 function UpdateRef{T}(
     name::AbstractString,
-    accessor_func::Union{Nothing, String} = nothing,
+    data_label::Union{Nothing, String} = nothing,
 ) where {T <: Union{JuMP.VariableRef, PJ.ParameterRef}}
-    return UpdateRef{T}(Symbol(name), accessor_func)
+    return UpdateRef{T}(Symbol(name), data_label)
 end
 
 function UpdateRef{T}(
@@ -24,16 +24,16 @@ end
 
 function UpdateRef{T}(
     name::AbstractString,
-    accessor_func::AbstractString,
+    data_label::AbstractString,
 ) where {T <: PSY.Component}
     # Combine these three fields together in order to guarantee uniqueness.
-    return UpdateRef{T}(encode_symbol(T, name, accessor_func), accessor_func)
+    return UpdateRef{T}(encode_symbol(T, name, data_label), data_label)
 end
 
-function get_accessor_func(ref::UpdateRef{T}) where {T <: PSY.Component}
-    if isnothing(ref.accessor_func)
-        throw(IS.InvalidValue("accessor_func is not defined for $ref"))
+function get_data_label(ref::UpdateRef{T}) where {T <: PSY.Component}
+    if isnothing(ref.data_label)
+        throw(IS.InvalidValue("data_label is not defined for $ref"))
     end
 
-    return ref.accessor_func
+    return ref.data_label
 end
