@@ -384,28 +384,22 @@ function _get_simulation_initial_times!(sim::Simulation)
     sim_ini_time = get_initial_time(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
-        #PSY.check_forecast_consistency(stage_system)
-        interval = PSY.get_forecasts_interval(stage_system)
-        horizon = get_stage_horizon(get_sequence(sim), stage_name)
-        seq_interval = get_stage_interval(get_sequence(sim), stage_name)
-        if PSY.are_forecasts_contiguous(stage_system)
-            stage_initial_times[stage_number] =
-                PSY.generate_initial_times(stage_system, seq_interval, horizon)
-            if isempty(stage_initial_times[stage_number])
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
-                        forecast interval ($interval) definitions are not compatible"))
-            end
-        else
-            stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
-            interval = PSY.get_forecasts_interval(stage_system)
-            if interval != seq_interval
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
-                        forecast interval ($interval) definitions are not compatible"))
-            end
-            for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
-                if !(element + interval == stage_initial_times[stage_number][ix + 1])
-                    throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
-                end
+        system_interval = PSY.get_forecast_interval(stage_system)
+        stage_interval = get_stage_interval(get_sequence(sim), stage_name)
+        if system_interval != stage_interval
+            throw(IS.ConflictingInputsError("Simulation interval ($stage_interval) and
+                    forecast interval ($system_interval) definitions are not compatible"))
+        end
+        stage_horizon = get_stage_horizon(get_sequence(sim), stage_name)
+        system_horizon = PSY.get_forecast_horizon(stage_system)
+        if stage_horizon > system_horizon
+            throw(IS.ConflictingInputsError("Simulation horizon ($stage_horizon) and
+                    forecast horizon ($system_horizon) definitions are not compatible"))
+        end
+        stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
+        for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
+            if !(element + system_interval == stage_initial_times[stage_number][ix + 1])
+                throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
             end
         end
         if !isnothing(sim_ini_time) &&
