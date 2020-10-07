@@ -14,7 +14,8 @@ function SimulationResultsReference(sim::Simulation; kwargs...)
         stage = get_stage(sim, stage_name)
         interval = get_stage_interval(sim, stage_name)
         resolution = PSY.get_time_series_resolution(get_sys(stage))
-        chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
+        _resolution = IS.time_period_conversion(resolution)
+        chronologies["stage-$stage_name"] = convert(Int, (interval / _resolution))
         base_powers[stage_name] = PSY.get_base_power(sim.stages[stage_name].sys)
     end
     return SimulationResultsReference(
