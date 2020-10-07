@@ -43,6 +43,11 @@ end
     VARIABLE = 3
 end
 
+@enum STAGE_STATUS begin
+    SUCESSFUL_RUN = 0
+    FAILED_RUN = 1
+end
+
 # Settings constants
 const UNSET_HORIZON = 0
 const UNSET_INI_TIME = Dates.DateTime(0)

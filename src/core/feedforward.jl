@@ -1,3 +1,27 @@
+mutable struct UpdateTrigger
+    execution_wait_count::Int
+    current_count::Int
+end
+
+function set_execution_wait_count!(trigger::UpdateTrigger, val::Int)
+    trigger.execution_wait_count = val
+    return
+end
+
+function increase_count!(trigger::UpdateTrigger)
+    trigger.current_count += 1
+    return
+end
+
+function trigger_update(trigger::UpdateTrigger)
+    return trigger.current_count == trigger.execution_wait_count
+end
+
+function reset_trigger_count!(trigger::UpdateTrigger)
+    trigger.current_count = 0
+    return
+end
+
 ############################Chronologies For FeedForward###################################
 @doc raw"""
     Synchronize(periods::Int)
@@ -6,31 +30,45 @@ Defines the co-ordination of time between Two stages.
 # Arguments
 - `periods::Int`: Number of time periods to grab data from
 """
-struct Synchronize <: FeedForwardChronology
+mutable struct Synchronize <: FeedForwardChronology
     periods::Int
+    current::Int
+    trigger::UpdateTrigger
     function Synchronize(; periods)
-        new(periods)
+        new(periods, 0, UpdateTrigger(-1, -1))
     end
 end
 # TODO: Add DocString
 """
     RecedingHorizon(period::Int)
 """
-struct RecedingHorizon <: FeedForwardChronology
+mutable struct RecedingHorizon <: FeedForwardChronology
     periods::Int
+    trigger::UpdateTrigger
     function RecedingHorizon(; periods::Int = 1)
-        new(periods)
+        new(periods, UpdateTrigger(-1, -1))
     end
 end
 
-struct Consecutive <: FeedForwardChronology end
+mutable struct Consecutive <: FeedForwardChronology
+    trigger::UpdateTrigger
+    function Consecutive()
+        new(UpdateTrigger(-1, -1))
+    end
+end
 
-struct FullHorizon <: FeedForwardChronology end
+mutable struct FullHorizon <: FeedForwardChronology
+    trigger::UpdateTrigger
+    function FullHorizon()
+        new(UpdateTrigger(-1, -1))
+    end
+end
 
-struct Range <: FeedForwardChronology
+mutable struct Range <: FeedForwardChronology
     range::UnitRange{Int}
+    trigger::UpdateTrigger
     function Range(; range::UnitRange{Int})
-        new(range)
+        new(range, UpdateTrigger(-1, -1))
     end
 end
 
@@ -568,13 +606,13 @@ end
 #########################FeedForward Variables Updating#####################################
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(
-    ::RecedingHorizon,
+    chron::RecedingHorizon,
     stages::Pair{Stage{T}, Stage{U}},
     device_name::AbstractString,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    step = axes(variable)[2][1]
+    step = axes(variable)[2][chron.periods]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
         return round(JuMP.value(var))
@@ -600,13 +638,14 @@ function get_stage_variable(
 end
 
 function get_stage_variable(
-    ::Synchronize,
+    chron::Synchronize,
     stages::Pair{Stage{T}, Stage{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    step = axes(variable)[2][stages.second.internal.execution_count + 1]
+    @show (stages.second.internal.execution_count / get_trigger(chron).execution_wait_count) + 1
+    step = axes(variable)[2][(Int(stages.second.internal.execution_count / get_trigger(chron).execution_wait_count) + 1)]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
         return round(JuMP.value(var))
@@ -645,6 +684,8 @@ function get_stage_variable(
     end
 end
 
+
+
 function feedforward_update!(
     destination_stage::Stage,
     source_stage::Stage,
@@ -653,24 +694,31 @@ function feedforward_update!(
     param_array::JuMPParamArray,
     current_time::Dates.DateTime,
 )
-    for device_name in axes(param_array)[1]
-        var_value = get_stage_variable(
-            chronology,
-            (source_stage => destination_stage),
-            device_name,
-            param_reference,
-        )
-        previous_value = PJ.value(param_array[device_name])
-        PJ.fix(param_array[device_name], var_value)
-        IS.@record :simulation ParameterUpdateEvent(
-            "FeedForward",
-            current_time,
-            param_reference,
-            device_name,
-            var_value,
-            previous_value,
-            destination_stage,
-            source_stage,
-        )
+    trigger = get_trigger(chronology)
+    increase_count!(trigger)
+    if trigger_update(trigger)
+        for device_name in axes(param_array)[1]
+            var_value = get_stage_variable(
+                chronology,
+                (source_stage => destination_stage),
+                device_name,
+                param_reference,
+            )
+            previous_value = PJ.value(param_array[device_name])
+            PJ.fix(param_array[device_name], var_value)
+            IS.@record :simulation ParameterUpdateEvent(
+                "FeedForward",
+                current_time,
+                param_reference,
+                device_name,
+                var_value,
+                previous_value,
+                destination_stage,
+                source_stage,
+            )
+
+        end
+        reset_trigger_count!(trigger)
     end
+    return
 end

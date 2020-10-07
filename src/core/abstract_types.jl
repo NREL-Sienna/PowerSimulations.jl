@@ -4,5 +4,8 @@ abstract type AbstractAffectFeedForward end
 
 abstract type AbstractCache end
 abstract type FeedForwardChronology end
+
+get_trigger(val::FeedForwardChronology) = val.trigger
+
 abstract type AbstractOperationsProblem end
 abstract type PowerSimulationsOperationsProblem <: AbstractOperationsProblem end
