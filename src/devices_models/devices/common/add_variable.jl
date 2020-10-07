@@ -186,7 +186,6 @@ function add_variable!(
     end
 
     return
-
 end
 
 @doc raw"""

@@ -501,7 +501,6 @@ function build_c_sys5_il(; kwargs...)
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_il, serv, Deterministic("requirement", forecast_data))
-
         end
         #for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_il)
         #    add_time_series!(
@@ -544,7 +543,6 @@ function build_c_sys5_dc(; kwargs...)
             end
             add_time_series!(c_sys5_dc, r, Deterministic("max_active_power", forecast_data))
         end
-
     end
 
     return c_sys5_dc

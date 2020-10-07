@@ -42,7 +42,6 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
     end
 
     return
-
 end
 
 function instantiate_bfp_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
@@ -80,7 +79,6 @@ function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
     end
 
     return
-
 end
 
 function instantiate_vip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
@@ -113,7 +111,6 @@ function constraint_power_balance_ni_expr(
     constraint_power_balance_ni_expr(pm, nw, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
 
     return
-
 end
 
 ""
@@ -141,7 +138,6 @@ function constraint_power_balance_ni_expr(
     )
 
     return
-
 end
 
 ""
@@ -167,7 +163,6 @@ function constraint_current_balance_ni_expr(
     constraint_current_balance_ni_expr(pm, nw, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
 
     return
-
 end
 
 ""
@@ -195,7 +190,6 @@ function constraint_current_balance_ni_expr(
     )
 
     return
-
 end
 
 "active power only models ignore reactive power variables"
@@ -222,7 +216,6 @@ function constraint_power_balance_ni_expr(
     )
 
     return
-
 end
 
 ""
@@ -232,7 +225,6 @@ function powermodels_network!(
     sys::PSY.System,
     instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
@@ -252,7 +244,6 @@ function powermodels_network!(
     psi_container.pm.ext[:PMmap] = PM_map
 
     return
-
 end
 
 ""
@@ -262,7 +253,6 @@ function powermodels_network!(
     sys::PSY.System,
     instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractActivePowerModel}
-
     time_steps = model_time_steps(psi_container)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
@@ -280,7 +270,6 @@ function powermodels_network!(
     psi_container.pm.ext[:PMmap] = PM_map
 
     return
-
 end
 
 #### PM accessor functions ########
@@ -358,7 +347,6 @@ function add_pm_var_refs!(
     system_formulation::Type{S},
     sys::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     bus_dict = psi_container.pm.ext[:PMmap].bus
     ACbranch_dict = psi_container.pm.ext[:PMmap].arcs
@@ -403,7 +391,6 @@ function add_pm_var_refs!(
         pm_var_names,
         time_steps,
     )
-
 end
 
 function add_pm_var_refs!(
@@ -415,7 +402,6 @@ function add_pm_var_refs!(
     pm_var_names::Base.KeySet,
     time_steps::UnitRange{Int},
 )
-
     for d_type in Set(device_types)
         devices = [d for d in pm_map if typeof(d[2]) == d_type]
         for (pm_v, ps_v) in pm_var_map[d_class]
@@ -445,7 +431,6 @@ function add_pm_con_refs!(
     system_formulation::Type{S},
     sys::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     bus_dict = psi_container.pm.ext[:PMmap].bus
 

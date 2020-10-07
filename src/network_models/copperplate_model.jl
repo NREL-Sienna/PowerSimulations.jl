@@ -1,5 +1,4 @@
 function copper_plate(psi_container::PSIContainer, expression::Symbol, bus_count::Int)
-
     time_steps = model_time_steps(psi_container)
     remove_undef!(psi_container.expressions[expression])
 
@@ -14,5 +13,4 @@ function copper_plate(psi_container::PSIContainer, expression::Symbol, bus_count
     end
 
     return
-
 end

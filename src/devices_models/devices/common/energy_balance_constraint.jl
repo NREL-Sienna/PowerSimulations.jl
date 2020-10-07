@@ -56,7 +56,6 @@ function energy_balance(
             (varout[name, 1]) * fraction_of_hour / eff_out
         constraint[name, 1] =
             JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
-
     end
 
     for t in time_steps[2:end], (ix, name) in enumerate(name_index)

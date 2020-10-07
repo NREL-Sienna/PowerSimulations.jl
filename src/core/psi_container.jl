@@ -43,7 +43,6 @@ function PSIContainer(
     settings::PSISettings,
     jump_model::Union{Nothing, JuMP.AbstractModel},
 ) where {T <: PM.AbstractPowerModel}
-
     container = PSIContainer(sys, settings, jump_model)
     psi_container_init!(container, T, sys)
     return container

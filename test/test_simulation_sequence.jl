@@ -66,7 +66,6 @@
 
     @test isa(test_sequence.ini_cond_chronology, IntraStageChronology)
     @test test_sequence.execution_order == [1]
-
 end
 
 @testset "Test if Horizon and interval result in a discontinuous simulation" begin

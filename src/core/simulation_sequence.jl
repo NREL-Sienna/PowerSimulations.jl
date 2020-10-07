@@ -122,7 +122,6 @@ function _check_chronology_consistency(
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology},
     ini_cond_chronology::InitialConditionChronology,
 )
-
     if isempty(feedforward_chronologies)
         @warn("No Feedforward Chronologies have been defined. This configuration assummes that there is no information passing between stages")
     end
@@ -215,7 +214,6 @@ mutable struct SimulationSequence
             _get_execution_order_vector(order, _intervals, step_resolution),
             0,
         )
-
     end
 end
 

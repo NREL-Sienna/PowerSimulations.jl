@@ -154,7 +154,6 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{Flo
         return DataFrames.DataFrame(var = result)
 
     elseif length(axes(input_array)) == 2
-
         result = Array{Float64, length(input_array.axes)}(
             undef,
             length(input_array.axes[2]),
@@ -196,7 +195,6 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{Flo
     else
         error("Dimension Number $(length(axes(input_array))) not Supported")
     end
-
 end
 
 function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
@@ -208,7 +206,6 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
 
         return DataFrames.DataFrame(var = result)
     elseif length(axes(input_array)) == 2
-
         result = Array{Float64, length(input_array.axes)}(
             undef,
             length(input_array.axes[2]),
@@ -249,7 +246,6 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
         @warn("Dimension Number $(length(axes(input_array))) not Supported, returning empty DataFrame")
         return DataFrames.DataFrame()
     end
-
 end
 
 function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray)

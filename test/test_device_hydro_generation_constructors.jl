@@ -39,7 +39,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with FixedOutput formulations" begin
@@ -69,7 +68,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 ###################################
@@ -121,7 +119,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 2, 0, 2, 2, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchRunOfRiver formulations" begin
@@ -151,7 +148,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 1, 0, 1, 1, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroDispatchRunOfRiver formulations" begin
@@ -181,7 +177,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 2, 0, 2, 2, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 ###################################
@@ -233,7 +228,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 3, 0, 2, 2, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentRunOfRiver formulations" begin
@@ -263,7 +257,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 2, 0, 1, 1, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroCommitmentRunOfRiver formulations" begin
@@ -293,7 +286,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 3, 0, 2, 2, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 #########################################
@@ -327,7 +319,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 1, 0, 1, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroDispatchReservoirBudget Formulations" begin
@@ -357,7 +348,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 2, 0, 1, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 #########################################
@@ -391,7 +381,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 2, 0, 2, 1, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroCommitmentReservoirBudget Formulations" begin
@@ -421,7 +410,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 3, 0, 3, 2, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 #########################################
