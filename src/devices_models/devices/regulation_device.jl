@@ -83,7 +83,7 @@ function add_constraints!(
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, "get_max_active_power")
+        ts_vector = get_time_series(psi_container, d, "max_active_power")
         constraint_info = DeviceTimeSeriesConstraintInfo(
             d,
             x -> PSY.get_max_active_power(x),
@@ -136,7 +136,7 @@ function add_constraints!(
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, "get_max_active_power")
+        ts_vector = get_time_series(psi_container, d, "max_active_power")
         constraint_info = DeviceTimeSeriesConstraintInfo(
             d,
             x -> PSY.get_max_active_power(x),
@@ -318,7 +318,6 @@ function participation_assignment!(
             JuMP.add_to_expression!(expr_up[area_name, t], -1 * R_up_emergency[name, t])
             JuMP.add_to_expression!(expr_dn[area_name, t], -1 * R_dn_emergency[name, t])
         end
-
     end
 
     return
@@ -364,7 +363,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.StaticInjection}
     return NodalExpressionSpec(
-        "get_max_active_power",
+        "max_active_power",
         make_variable_name(ActivePowerVariable, T),
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,

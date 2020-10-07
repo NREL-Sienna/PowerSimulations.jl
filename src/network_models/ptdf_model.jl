@@ -60,7 +60,6 @@ function ptdf_networkflow(
                 flow_variable[name, t],
                 1.0,
             )
-
         end
 
         for b in buses

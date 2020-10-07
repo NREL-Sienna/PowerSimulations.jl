@@ -130,7 +130,6 @@ function _create_cache(
     ic_key::ICKey{TimeDurationON, T},
     caches::Union{Nothing, Vector{<:AbstractCache}},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
         cache = TimeStatusChange(T, ON)
@@ -143,7 +142,6 @@ function _create_cache(
     ic_key::ICKey{TimeDurationOFF, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
         cache = TimeStatusChange(T, ON)
@@ -156,7 +154,6 @@ function _create_cache(
     ic_key::ICKey{EnergyLevel, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
         cache = StoredEnergy(T, ENERGY)
@@ -342,9 +339,6 @@ function _check_forecasts_sequence(sim::Simulation)
 end
 
 function _check_feedforward_chronologies(sim::Simulation)
-    if isempty(sim.sequence.feedforward_chronologies)
-        @info("No Feedforward Chronologies defined")
-    end
     for (key, chron) in sim.sequence.feedforward_chronologies
         check_chronology!(sim, key, chron)
     end
@@ -383,28 +377,20 @@ function _get_simulation_initial_times!(sim::Simulation)
     sim_ini_time = get_initial_time(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
-        PSY.check_forecast_consistency(stage_system)
-        interval = PSY.get_forecasts_interval(stage_system)
-        horizon = get_stage_horizon(get_sequence(sim), stage_name)
-        seq_interval = get_stage_interval(get_sequence(sim), stage_name)
-        if PSY.are_forecasts_contiguous(stage_system)
-            stage_initial_times[stage_number] =
-                PSY.generate_initial_times(stage_system, seq_interval, horizon)
-            if isempty(stage_initial_times[stage_number])
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
-                        forecast interval ($interval) definitions are not compatible"))
-            end
-        else
-            stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
-            interval = PSY.get_forecasts_interval(stage_system)
-            if interval != seq_interval
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
-                        forecast interval ($interval) definitions are not compatible"))
-            end
-            for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
-                if !(element + interval == stage_initial_times[stage_number][ix + 1])
-                    throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
-                end
+        system_interval = PSY.get_forecast_interval(stage_system)
+        stage_interval = get_stage_interval(get_sequence(sim), stage_name)
+        if system_interval != stage_interval
+            throw(IS.ConflictingInputsError("Simulation interval ($stage_interval) and forecast interval ($system_interval) definitions are not compatible"))
+        end
+        stage_horizon = get_stage_horizon(get_sequence(sim), stage_name)
+        system_horizon = PSY.get_forecast_horizon(stage_system)
+        if stage_horizon > system_horizon
+            throw(IS.ConflictingInputsError("Simulation horizon ($stage_horizon) and forecast horizon ($system_horizon) definitions are not compatible"))
+        end
+        stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
+        for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
+            if !(element + system_interval == stage_initial_times[stage_number][ix + 1])
+                throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
             end
         end
         if !isnothing(sim_ini_time) &&
@@ -759,14 +745,14 @@ function update_parameter!(
     horizon = length(model_time_steps(stage.internal.psi_container))
     for d in components
         # RECORDER TODO: Parameter Update from forecast
-        forecast = PSY.get_forecast(
+        # TODO: Improve file read performance
+        ts_vector = PSY.get_time_series_values(
             PSY.Deterministic,
             d,
-            initial_forecast_time,
-            get_accessor_func(param_reference),
-            horizon,
+            get_data_label(param_reference);
+            start_time = initial_forecast_time,
+            len = horizon,
         )
-        ts_vector = TS.values(PSY.get_data(forecast))
         component_name = PSY.get_name(d)
         for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
             value = ts_vector[ix]
@@ -790,14 +776,13 @@ function update_parameter!(
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, stage.sys, ix)
-        forecast = PSY.get_forecast(
+        ts_vector = PSY.get_time_series_values(
             PSY.Deterministic,
             service,
-            initial_forecast_time,
-            get_accessor_func(param_reference),
-            horizon,
+            get_data_label(param_reference);
+            start_time = initial_forecast_time,
+            len = horizon,
         )
-        ts_vector = TS.values(PSY.get_data(forecast))
         for (jx, value) in enumerate(ts_vector)
             JuMP.fix(get_parameter_array(container)[ix, jx], value)
         end

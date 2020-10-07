@@ -46,17 +46,7 @@ function service_requirement_constraint!(
     reserve_variable = get_variable(psi_container, name, SR)
     use_slacks = get_services_slack_variables(psi_container.settings)
 
-    if use_forecast_data && PSY.has_forecasts(service)
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
-            PSY.Deterministic,
-            service,
-            initial_time,
-            "get_requirement",
-            length(time_steps),
-        )))
-    else
-        ts_vector = ones(time_steps[end])
-    end
+    ts_vector = get_time_series(psi_container, service, "requirement")
 
     use_slacks && (slack_vars = reserve_slacks(psi_container, name))
 
@@ -64,7 +54,7 @@ function service_requirement_constraint!(
     if parameters
         param = get_parameter_array(
             psi_container,
-            UpdateRef{SR}(SERVICE_REQUIREMENT, "get_requirement"),
+            UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"),
         )
         for t in time_steps
             param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
@@ -165,7 +155,7 @@ function cost_function!(
             PSY.PiecewiseFunction,
             service,
             initial_time,
-            "get_variable",
+            "variable",
             length(time_steps),
         )))
 

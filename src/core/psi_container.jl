@@ -17,8 +17,8 @@ mutable struct PSIContainer
         settings::PSISettings,
         jump_model::Union{Nothing, JuMP.AbstractModel},
     )
-        PSY.check_forecast_consistency(sys)
-        resolution = PSY.get_forecasts_resolution(sys)
+        #PSY.check_forecast_consistency(sys)
+        resolution = PSY.get_time_series_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
         new(
             jump_model,
@@ -43,7 +43,6 @@ function PSIContainer(
     settings::PSISettings,
     jump_model::Union{Nothing, JuMP.AbstractModel},
 ) where {T <: PM.AbstractPowerModel}
-
     container = PSIContainer(sys, settings, jump_model)
     psi_container_init!(container, T, sys)
     return container
@@ -155,11 +154,11 @@ function psi_container_init!(
     end
 
     if get_initial_time(settings) == UNSET_INI_TIME
-        set_initial_time!(settings, PSY.get_forecasts_initial_time(sys))
+        set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
     end
 
     if get_horizon(settings) == UNSET_HORIZON
-        set_horizon!(settings, PSY.get_forecasts_horizon(sys))
+        set_horizon!(settings, PSY.get_forecast_horizon(sys))
     end
 
     if use_forecasts

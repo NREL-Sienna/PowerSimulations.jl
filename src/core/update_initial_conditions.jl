@@ -420,13 +420,13 @@ function _get_ref_active_power(
     if get_use_parameters(container)
         return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
     else
-        return UpdateRef{T}(ACTIVE_POWER, "get_active_power")
+        return UpdateRef{T}(ACTIVE_POWER, "active_power")
     end
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "get_initial_energy")
+           UpdateRef{T}(ENERGY, "initial_energy")
 end
 
 function _get_ref_reservoir_energy(
@@ -434,10 +434,10 @@ function _get_ref_reservoir_energy(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "get_hydro_budget")
+           UpdateRef{T}(ENERGY, "hydro_budget")
 end
 function _get_ref_ace_error(::Type{PSY.AGC}, container::InitialConditions)
     T = PSY.AGC
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "ACE") :
-           UpdateRef{T}("ACE", "get_initial_ace")
+           UpdateRef{T}("ACE", "initial_ace")
 end

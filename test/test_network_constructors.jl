@@ -160,7 +160,6 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
     end
-
 end
 
 @testset "Network Solve AC-PF PowerModels StandardACPModel" begin
@@ -239,9 +238,7 @@ end
         construct_device!(ps_model, :Line, line_model)
         construct_device!(ps_model, :DCLine, dc_line)
         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
-
     end
-
 end
 
 @testset "Network AC-PF PowerModels non-convex models" begin
@@ -264,7 +261,6 @@ end
         construct_device!(ps_model, :Line, line_model)
         @test !isnothing(ps_model.psi_container.pm)
     end
-
 end
 
 @testset "Network AC-PF PowerModels quadratic loss approximations models" begin
@@ -285,7 +281,6 @@ end
         construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.psi_container.pm)
     end
-
 end
 
 @testset "Network AC-PF PowerModels quadratic relaxations models" begin
@@ -306,7 +301,6 @@ end
         construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.psi_container.pm)
     end
-
 end
 
 @testset "Network Unsupported Power Model Formulations" begin
@@ -319,11 +313,9 @@ end
 
         @test_throws ArgumentError construct_network!(ps_model, network)
     end
-
 end
 
 @testset "All PowerModels models" begin
-
     networks = [
         (PM.ACPPowerModel, fast_ipopt_optimizer),
         (PM.ACRPowerModel, fast_ipopt_optimizer),
@@ -358,5 +350,4 @@ end
         construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.psi_container.pm)
     end
-
 end

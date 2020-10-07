@@ -31,7 +31,6 @@ function test_load_simulation(file_path::String)
         stage_single = PSI.get_stage(sim_single, "ED")
         @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
               [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
     end
 
     stage_info = Dict(
@@ -439,7 +438,6 @@ function test_load_simulation(file_path::String)
         _test_html_print_methods([res])
     end
     @testset "Test print methods of sequence ascii art" begin
-
         sequence_2 = SimulationSequence(
             order = Dict(1 => "UC", 2 => "ED"),
             step_resolution = Hour(1),
@@ -540,7 +538,6 @@ function test_load_simulation(file_path::String)
         stage_12 = FakeStagesStruct(Dict(1 => 1, 2 => 12, 3 => 5, 4 => 6))
         list = [stage_1, stage_3, stage_4, stage_12]
         _test_plain_print_methods(list)
-
     end
 
     ####################

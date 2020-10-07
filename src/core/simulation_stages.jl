@@ -137,7 +137,7 @@ get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
 warm_start_enabled(s::Stage) = get_warm_start(s.internal.psi_container.settings)
 get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
-get_resolution(s::Stage) = IS.time_period_conversion(PSY.get_forecasts_resolution(s.sys))
+get_resolution(s::Stage) = IS.time_period_conversion(PSY.get_time_series_resolution(s.sys))
 get_settings(s::Stage) = get_psi_container(s).settings
 
 function reset!(stage::Stage{M}) where {M <: AbstractOperationsProblem}
@@ -277,7 +277,7 @@ function get_initial_cache(cache::StoredEnergy, stage::Stage)
     return value_array
 end
 
-function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
+function get_timestamps(stage::Stage, start_time::Dates.DateTime)
     resolution = get_resolution(stage)
     horizon = stage.internal.psi_container.time_steps[end]
     range_time = collect(start_time:resolution:(start_time + resolution * horizon))
@@ -305,7 +305,7 @@ function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_pat
     write_data(stage, save_path)
     write_data(duals, save_path; duals = true)
     write_data(get_parameters_value(stage.internal.psi_container), save_path; params = true)
-    write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    write_data(get_timestamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return

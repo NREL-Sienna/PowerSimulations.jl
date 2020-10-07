@@ -431,14 +431,14 @@ end
     ]
 
     duration_load = [0.3, 0.6, 0.8, 0.7, 1.7, 0.9, 0.7]
-    load_forecast_dur =
-        Deterministic("get_max_active_power", TimeArray(DA_dur, duration_load))
+    load_data = SortedDict(DA_dur[1] => TimeArray(DA_dur, duration_load))
+    load_forecast_dur = Deterministic("max_active_power", load_data)
     duration_test_sys = System(100.0)
     add_component!(duration_test_sys, node)
     add_component!(duration_test_sys, load)
     add_component!(duration_test_sys, gens_dur[1])
     add_component!(duration_test_sys, gens_dur[2])
-    add_forecast!(duration_test_sys, load, load_forecast_dur)
+    add_time_series!(duration_test_sys, load, load_forecast_dur)
 
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
@@ -503,21 +503,20 @@ end
             base_power = 100.0,
         ),
     ]
-    DA_cost = collect(
-        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
-            "1/1/2024  1:00:00",
-            "d/m/y  H:M:S",
-        ),
-    )
-    cost_load = [1.3, 2.1]
-    load_forecast_cost =
-        Deterministic("get_max_active_power", TimeArray(DA_cost, cost_load))
+
+    DA_load_forecast = SortedDict{Dates.DateTime, TimeArray}()
+    ini_time = DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S")
+    cost_sos_load = [[1.3, 2.1], [1.3, 2.1]]
+    for (ix, date) in enumerate(range(ini_time; length = 2, step = Hour(1)))
+        DA_load_forecast[date] = TimeArray([date, date + Hour(1)], cost_sos_load[ix])
+    end
+    load_forecast_cost_sos = Deterministic("max_active_power", DA_load_forecast)
     cost_test_sys = System(100.0)
     add_component!(cost_test_sys, node)
     add_component!(cost_test_sys, load)
     add_component!(cost_test_sys, gens_cost[1])
     add_component!(cost_test_sys, gens_cost[2])
-    add_forecast!(cost_test_sys, load, load_forecast_cost)
+    add_time_series!(cost_test_sys, load, load_forecast_cost_sos)
 
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
@@ -582,24 +581,22 @@ end
             base_power = 100.0,
         ),
     ]
-    DA_cost_sos = collect(
-        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
-            "1/1/2024  1:00:00",
-            "d/m/y  H:M:S",
-        ),
-    )
-    cost_sos_load = [1.3, 2.1]
-    load_forecast_cost_sos =
-        Deterministic("get_max_active_power", TimeArray(DA_cost_sos, cost_sos_load))
+    DA_load_forecast = SortedDict{Dates.DateTime, TimeArray}()
+    ini_time = DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S")
+    cost_sos_load = [[1.3, 2.1], [1.3, 2.1]]
+    for (ix, date) in enumerate(range(ini_time; length = 2, step = Hour(1)))
+        DA_load_forecast[date] = TimeArray([date, date + Hour(1)], cost_sos_load[ix])
+    end
+    load_forecast_cost_sos = Deterministic("max_active_power", DA_load_forecast)
     cost_test_sos_sys = System(100.0)
     add_component!(cost_test_sos_sys, node)
     add_component!(cost_test_sos_sys, load)
     add_component!(cost_test_sos_sys, gens_cost_sos[1])
     add_component!(cost_test_sos_sys, gens_cost_sos[2])
-    add_forecast!(cost_test_sos_sys, load, load_forecast_cost_sos)
+    add_time_series!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
     for g in gens_cost_sos
-        @test PSI._pwlparamcheck(PSY.get_operation_cost(g).variable) == false
+        @test PSI.pwlparamcheck(PSY.get_operation_cost(g).variable) == false
     end
 
     template =

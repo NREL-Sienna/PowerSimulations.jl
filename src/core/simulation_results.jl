@@ -13,8 +13,9 @@ function SimulationResultsReference(sim::Simulation; kwargs...)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
         interval = get_stage_interval(sim, stage_name)
-        resolution = PSY.get_forecasts_resolution(get_sys(stage))
-        chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
+        resolution = PSY.get_time_series_resolution(get_sys(stage))
+        _resolution = IS.time_period_conversion(resolution)
+        chronologies["stage-$stage_name"] = convert(Int, (interval / _resolution))
         base_powers[stage_name] = PSY.get_base_power(sim.stages[stage_name].sys)
     end
     return SimulationResultsReference(
@@ -148,7 +149,7 @@ IS.get_base_power(result::SimulationResults) = result.base_power
 IS.get_variables(result::SimulationResults) = result.variable_values
 IS.get_total_cost(result::SimulationResults) = result.total_cost
 IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
-IS.get_time_stamp(result::SimulationResults) = result.time_stamp
+get_timestamp(result::SimulationResults) = result.time_stamp
 get_duals(result::SimulationResults) = result.dual_values
 IS.get_parameters(result::SimulationResults) = result.parameter_values
 
@@ -184,7 +185,6 @@ function _read_references(
     references::Dict,
     time_length::Int,
 )
-
     for name in list
         date_df = references[stage][name]
         step_df = DataFrames.DataFrame(
@@ -528,13 +528,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     end
     write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_log(IS.get_total_cost(res), folder_path)
-    write_data(
-        IS.get_time_stamp(res),
-        folder_path,
-        "time_stamp";
-        file_type = CSV,
-        kwargs...,
-    )
+    write_data(get_timestamp(res), folder_path, "time_stamp"; file_type = CSV, kwargs...)
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
     write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
     files = readdir(folder_path)

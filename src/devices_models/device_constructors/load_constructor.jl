@@ -43,7 +43,6 @@ function construct_device!(
     cost_function!(psi_container, devices, model, S)
 
     return
-
 end
 
 function construct_device!(
