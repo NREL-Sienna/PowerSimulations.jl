@@ -358,7 +358,7 @@ function _assign_feedforward_chronologies(sim::Simulation)
             destination_stage.internal.chronolgy_dict[stage_number] = chron
             source_stage = get_stage(sim, stage_number)
             source_stage_resolution =
-                IS.time_period_conversion(PSY.get_forecasts_resolution(source_stage.sys))
+                IS.time_period_conversion(PSY.get_time_series_resolution(source_stage.sys))
             execution_wait_count = Int(source_stage_resolution / destination_stage_interval)
             set_execution_wait_count!(get_trigger(chron), execution_wait_count)
             reset_trigger_count!(get_trigger(chron))
@@ -442,7 +442,7 @@ function _check_steps(
         forecast_count = length(stage_initial_times[stage_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
-            desired amount of simulation steps ($(sim.steps*stage.internal.execution_count))."))
+            desired amount of simulation steps ($(sim.steps*get_execution_count(stage)))."))
         end
     end
     return

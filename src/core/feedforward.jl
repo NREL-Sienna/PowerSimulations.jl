@@ -22,6 +22,10 @@ function reset_trigger_count!(trigger::UpdateTrigger)
     return
 end
 
+function get_execution_wait_count(trigger::UpdateTrigger)
+    return trigger.execution_wait_count
+end
+
 ############################Chronologies For FeedForward###################################
 @doc raw"""
     Synchronize(periods::Int)
@@ -644,8 +648,10 @@ function get_stage_variable(
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    @show (stages.second.internal.execution_count / get_trigger(chron).execution_wait_count) + 1
-    step = axes(variable)[2][(Int(stages.second.internal.execution_count / get_trigger(chron).execution_wait_count) + 1)]
+    e_count = get_count(stages.second)
+    wait_count = get_execution_wait_count(get_trigger(chron))
+    index = (floor(e_count / wait_count) + 1)
+    step = axes(variable)[2][Int(index)]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
         return round(JuMP.value(var))
@@ -684,8 +690,6 @@ function get_stage_variable(
     end
 end
 
-
-
 function feedforward_update!(
     destination_stage::Stage,
     source_stage::Stage,
@@ -716,7 +720,6 @@ function feedforward_update!(
                 destination_stage,
                 source_stage,
             )
-
         end
         reset_trigger_count!(trigger)
     end
