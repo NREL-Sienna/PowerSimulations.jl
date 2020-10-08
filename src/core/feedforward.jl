@@ -648,7 +648,7 @@ function get_stage_variable(
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    e_count = get_count(stages.second)
+    e_count = get_execution_count(stages.second)
     wait_count = get_execution_wait_count(get_trigger(chron))
     index = (floor(e_count / wait_count) + 1)
     step = axes(variable)[2][Int(index)]
