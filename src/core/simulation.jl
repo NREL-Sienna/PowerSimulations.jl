@@ -746,12 +746,19 @@ function update_parameter!(
     for d in components
         # RECORDER TODO: Parameter Update from forecast
         # TODO: Improve file read performance
-        ts_vector = PSY.get_time_series_values(
+        forecast = PSY.get_time_series(
             PSY.Deterministic,
             d,
             get_data_label(param_reference);
             start_time = initial_forecast_time,
+            count = 1,
+        )
+        ts_vector = IS.get_time_series_values(
+            d,
+            forecast,
+            initial_forecast_time;
             len = horizon,
+            ignore_scaling_factors = true,
         )
         component_name = PSY.get_name(d)
         for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
@@ -776,12 +783,19 @@ function update_parameter!(
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, stage.sys, ix)
-        ts_vector = PSY.get_time_series_values(
+        forecast = PSY.get_time_series(
             PSY.Deterministic,
             service,
             get_data_label(param_reference);
             start_time = initial_forecast_time,
+            count = 1,
+        )
+        ts_vector = IS.get_time_series_values(
+            service,
+            forecast,
+            initial_forecast_time;
             len = horizon,
+            ignore_scaling_factors = true,
         )
         for (jx, value) in enumerate(ts_vector)
             JuMP.fix(get_parameter_array(container)[ix, jx], value)
