@@ -134,7 +134,7 @@ function energy_balance_hydro_param!(
     param_inflow = get_parameter_array(container_inflow)
     multiplier_inflow = get_multiplier_array(container_inflow)
     container_target =
-        add_param_container!(psi_container, target_param_reference, name_index, 1)
+        add_param_container!(psi_container, target_param_reference, name_index, time_steps)
     param_target = get_parameter_array(container_target)
     multiplier_target = get_multiplier_array(container_target)
 
@@ -176,7 +176,7 @@ function energy_balance_hydro_param!(
         end
         target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            varenergy[name, time_steps[end]] >= d.multiplier * param_target[name, end]
+            varenergy[name, time_steps[end]] >= d.multiplier * param_target[name, time_steps[end]]
         )
     end
 
