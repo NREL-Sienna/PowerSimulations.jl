@@ -8,7 +8,7 @@ function set_execution_wait_count!(trigger::UpdateTrigger, val::Int)
     return
 end
 
-function increase_count!(trigger::UpdateTrigger)
+function update_count!(trigger::UpdateTrigger)
     trigger.current_count += 1
     return
 end
@@ -19,6 +19,11 @@ end
 
 function reset_trigger_count!(trigger::UpdateTrigger)
     trigger.current_count = 0
+    return
+end
+
+function initialize_trigger_count!(trigger::UpdateTrigger)
+    trigger.current_count = trigger.execution_wait_count
     return
 end
 
@@ -699,7 +704,6 @@ function feedforward_update!(
     current_time::Dates.DateTime,
 )
     trigger = get_trigger(chronology)
-    increase_count!(trigger)
     if trigger_update(trigger)
         for device_name in axes(param_array)[1]
             var_value = get_stage_variable(
@@ -710,7 +714,7 @@ function feedforward_update!(
             )
             previous_value = PJ.value(param_array[device_name])
             PJ.fix(param_array[device_name], var_value)
-            IS.@record :simulation ParameterUpdateEvent(
+            IS.@record :simulation FeedForwardUpdateEvent(
                 "FeedForward",
                 current_time,
                 param_reference,
@@ -723,5 +727,6 @@ function feedforward_update!(
         end
         reset_trigger_count!(trigger)
     end
+    update_count!(trigger)
     return
 end
