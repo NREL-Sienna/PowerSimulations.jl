@@ -171,10 +171,12 @@ function energy_balance_hydro_param!(
 
     for (ix, d) in enumerate(target_data)
         name = get_component_name(d)
-        param_target[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[end])
+        for t in time_steps
+            param_target[name, t] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
+        end
         target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            varenergy[name, time_steps[end]] >= d.multiplier * param_target[name, 1]
+            varenergy[name, time_steps[end]] >= d.multiplier * param_target[name, end]
         )
     end
 
