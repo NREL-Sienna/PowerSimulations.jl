@@ -166,6 +166,8 @@ function build!(
     set_initial_time!(settings, initial_time)
     stage.internal.built = IN_PROGRESS
     psi_container = get_psi_container(stage)
+    # TODO: Abstract the code to just require implementation of _build(). The user shouldn't need
+    # to re-implement all the code in this function
     _build!(psi_container, stage.template, stage.sys)
     @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
     stage_resolution = get_resolution(stage)

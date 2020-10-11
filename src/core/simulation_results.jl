@@ -83,9 +83,9 @@ function make_result_reference(
     sim::Simulation,
 ) where {T <: PowerSimulationsOperationsProblem}
     stage_number = get_number(stage)
-    stage_name = get_stage_name(sim, stage)
     stage_container = get_psi_container(stage)
     variables = Dict{Symbol, Any}()
+    stage_name = get_stage_name(sim, stage)
     interval = get_stage_interval(sim, stage_name)
     variable_names = (collect(keys(stage_container.variables)))
     if !is_milp(get_psi_container(stage))
@@ -110,12 +110,12 @@ function make_result_reference(
                 full_path = joinpath(
                     sim.internal.raw_dir,
                     "step-$(s)-stage-$(stage_name)",
-                    replace_chars("$(sim.internal.current_time)", ":", "-"),
+                    replace_chars("$(get_current_time(sim))", ":", "-"),
                     "$(name).feather",
                 )
                 if isfile(full_path)
                     date_df = DataFrames.DataFrame(
-                        Date = sim.internal.current_time,
+                        Date = get_current_time(sim),
                         Step = "step-$(s)",
                         File_Path = full_path,
                     )

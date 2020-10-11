@@ -253,6 +253,7 @@ get_initial_time(s::Simulation) = s.initial_time
 get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
+get_current_time(s::Simulation) = s.internal.current_time
 
 function get_base_powers(s::Simulation)
     base_powers = Dict()
@@ -361,7 +362,7 @@ function _assign_feedforward_chronologies(sim::Simulation)
                 IS.time_period_conversion(PSY.get_time_series_resolution(source_stage.sys))
             execution_wait_count = Int(source_stage_resolution / destination_stage_interval)
             set_execution_wait_count!(get_trigger(chron), execution_wait_count)
-            reset_trigger_count!(get_trigger(chron))
+            initialize_trigger_count!(get_trigger(chron))
         end
     end
     return
@@ -598,11 +599,11 @@ function initial_condition_update!(
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
         # We pass the simulation cache instead of the whole simulation to avoid definition dependencies. All the inputs to calculate_ic_quantity are defined before the simulation object
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache)
+        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, resolution)
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
-            sim.internal.current_time,
+            get_current_time(sim),
             ini_cond_key,
             ic,
             quantity,
@@ -624,6 +625,8 @@ function initial_condition_update!(
     simulation_cache = sim.internal.simulation_cache
     execution_index = get_execution_order(sim)
     execution_count = get_execution_count(stage)
+    stage_name = get_stage_name(sim, stage)
+    interval = get_stage_interval(sim, stage_name)
     for ic in initial_conditions
         name = device_name(ic)
         current_ix = get_current_execution_index(sim)
@@ -645,11 +648,11 @@ function initial_condition_update!(
             name,
             ic.update_ref,
         )
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache)
+        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
-            sim.internal.current_time,
+            get_current_time(sim),
             ini_cond_key,
             ic,
             quantity,
@@ -670,9 +673,6 @@ end
 ################################Cache Update################################################
 # TODO: Need to be careful here if 2 stages modify the same cache. This function might need
 # dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
-"""
-TimeStatusChange Cache is updated by calculating the final status of the stage before running again. It only stores the final status and time at status once the remaining stages have been completed.
-"""
 function update_cache!(
     sim::Simulation,
     ::CacheKey{TimeStatusChange, D},
@@ -687,7 +687,8 @@ function update_cache!(
         #Store the initial condition
         c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
         c.value[name][:series][1] = c.value[name][:status]
-        c.value[name][:current] = 2
+        c.value[name][:current] = 1
+        c.value[name][:elapsed] = Dates.Second(0)
         for t in t_range
             # Implemented this way because JuMPDenseAxisArrays doesn't support pasing a ranges Array[name, 1:n]
             device_status = JuMP.value.(variable[name, t])
@@ -821,7 +822,7 @@ function update_parameter!(
             chronology,
             param_reference,
             param_array,
-            sim.internal.current_time,
+            get_current_time(sim),
         )
     end
 
@@ -919,13 +920,13 @@ function _execute!(sim::Simulation; kwargs...)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
                 IS.@record :simulation_status SimulationStepEvent(
-                    sim.internal.current_time,
+                    get_current_time(sim),
                     step,
                     "start",
                 )
                 for (ix, stage_number) in enumerate(execution_order)
                     IS.@record :simulation_status SimulationStageEvent(
-                        sim.internal.current_time,
+                        get_current_time(sim),
                         step,
                         stage_number,
                         "start",
@@ -940,11 +941,11 @@ function _execute!(sim::Simulation; kwargs...)
                         run_name = "step-$(step)-stage-$(stage_name)"
                         sim.internal.current_time = sim.internal.date_ref[stage_number]
                         sim.sequence.current_execution_index = ix
-                        @info "Starting run $run_name $(sim.internal.current_time)"
+                        @info "Starting run $run_name $(get_current_time(sim))"
                         raw_results_path = joinpath(
                             sim.internal.raw_dir,
                             run_name,
-                            replace_chars("$(sim.internal.current_time)", ":", "-"),
+                            replace_chars("$(get_current_time(sim))", ":", "-"),
                         )
                         mkpath(raw_results_path)
                         # Is first run of first stage? Yes -> don't update stage
@@ -952,7 +953,7 @@ function _execute!(sim::Simulation; kwargs...)
                             !(step == 1 && ix == 1) && update_stage!(stage, sim)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
-                            run_stage(stage, sim.internal.current_time, raw_results_path)
+                            run_stage(stage, get_current_time(sim), raw_results_path)
                             sim.internal.run_count[step][stage_number] += 1
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
@@ -965,7 +966,7 @@ function _execute!(sim::Simulation; kwargs...)
                         end
                     end
                     IS.@record :simulation_status SimulationStageEvent(
-                        sim.internal.current_time,
+                        get_current_time(sim),
                         step,
                         stage_number,
                         "done",
@@ -973,7 +974,7 @@ function _execute!(sim::Simulation; kwargs...)
                     sim.internal.date_ref[stage_number] += stage_interval
                 end
                 IS.@record :simulation_status SimulationStepEvent(
-                    sim.internal.current_time,
+                    get_current_time(sim),
                     step,
                     "done",
                 )
