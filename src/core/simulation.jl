@@ -438,8 +438,10 @@ function _check_steps(
     for (stage_number, stage_name) in sim.sequence.order
         stage = sim.stages[stage_name]
         execution_counts = get_executions(stage)
-        @assert length(findall(x -> x == stage_number, sim.sequence.execution_order)) ==
-                execution_counts
+        transitions =
+            sim.sequence.execution_order[vcat(1, diff(sim.sequence.execution_order)) .== 1]
+        @assert length(findall(x -> x == stage_number, sim.sequence.execution_order)) /
+                length(findall(x -> x == stage_number, transitions)) == execution_counts
         forecast_count = length(stage_initial_times[stage_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
@@ -567,7 +569,10 @@ function _build!(sim::Simulation)
             throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         end
         stage_interval = get_stage_interval(sim, stage_name)
-        stage.internal.executions = Int(get_step_resolution(sim.sequence) / stage_interval)
+        step_resolution =
+            stage_number == 1 ? get_step_resolution(sim.sequence) :
+            get_stage_interval(sim.sequence, sim.sequence.order[stage_number - 1])
+        stage.internal.executions = Int(step_resolution / stage_interval)
         stage.internal.number = stage_number
         _attach_feedforward!(sim, stage_name)
     end

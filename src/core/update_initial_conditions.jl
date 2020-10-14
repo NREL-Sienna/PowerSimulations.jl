@@ -339,6 +339,33 @@ function storage_energy_init(
     return
 end
 
+function storage_energy_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.HydroPumpedStorage}
+    key_up = ICKey(EnergyLevelUP, T)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        key_up,
+        _make_initial_condition_reservoir_energy_up,
+        _get_reservoir_energy_value_up,
+        StoredEnergy,
+    )
+
+    key_down = ICKey(EnergyLevelDOWN, T)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        key_down,
+        _make_initial_condition_reservoir_energy_down,
+        _get_reservoir_energy_value_down,
+        StoredEnergy,
+    )
+
+    return
+end
+
 function area_control_init(psi_container::PSIContainer, services::Vector{PSY.AGC})
     key = ICKey(AreaControlError, PSY.AGC)
     _make_initial_conditions!(
@@ -380,6 +407,34 @@ function _make_initial_condition_reservoir_energy(
     return InitialCondition(device, _get_ref_reservoir_energy(T, container), value, cache)
 end
 
+function _make_initial_condition_reservoir_energy_up(
+    container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T <: PSY.Component}
+    return InitialCondition(
+        device,
+        _get_ref_reservoir_energy_up(T, container),
+        value,
+        cache,
+    )
+end
+
+function _make_initial_condition_reservoir_energy_down(
+    container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T <: PSY.Component}
+    return InitialCondition(
+        device,
+        _get_ref_reservoir_energy_down(T, container),
+        value,
+        cache,
+    )
+end
+
 function _make_initial_condition_area_control(
     container,
     device::PSY.AGC,
@@ -400,6 +455,10 @@ function _get_active_power_output_value(device, key)
     return PSY.get_active_power(device)
 end
 
+function _get_active_power_output_value(device::T, key) where {T <: PSY.HydroGen}
+    return PSY.get_active_power(device)
+end
+
 function _get_active_power_output_above_min_value(device, key)
     if !PSY.get_status(device)
         return 0.0
@@ -415,6 +474,14 @@ end
 
 function _get_reservoir_energy_value(device, key)
     return PSY.get_initial_storage(device)
+end
+
+function _get_reservoir_energy_value_up(device, key)
+    return PSY.get_initial_storage(device).up
+end
+
+function _get_reservoir_energy_value_down(device, key)
+    return PSY.get_initial_storage(device).down
 end
 
 function _get_ace_error(device, key)
@@ -455,6 +522,23 @@ function _get_ref_reservoir_energy(
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "hydro_budget")
 end
+
+function _get_ref_reservoir_energy_up(
+    ::Type{T},
+    container::InitialConditions,
+) where {T <: PSY.Component}
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY_UP) :
+           UpdateRef{T}(ENERGY_UP, "get_hydro_budget")
+end
+
+function _get_ref_reservoir_energy_down(
+    ::Type{T},
+    container::InitialConditions,
+) where {T <: PSY.Component}
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY_DOWN) :
+           UpdateRef{T}(ENERGY_DOWN, "get_hydro_budget")
+end
+
 function _get_ref_ace_error(::Type{PSY.AGC}, container::InitialConditions)
     T = PSY.AGC
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "ACE") :

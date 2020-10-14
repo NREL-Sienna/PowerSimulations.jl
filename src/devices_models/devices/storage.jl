@@ -134,7 +134,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ActivePowerOutVariable, T),
             bin_variable_names = [make_variable_name(ReserveVariable, T)],
             limits_func = x -> PSY.get_output_active_power_limits(x),
-            constraint_func = reserve_device_semicontinuousrange!,
+            constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )

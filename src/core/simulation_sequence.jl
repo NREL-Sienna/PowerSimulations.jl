@@ -155,8 +155,8 @@ end
 
 # TODO: Add DocString
 @doc raw"""
-    SimulationSequence(initial_time::Union{Dates.DateTime, Nothing}
-                        horizons::Dict{String, Int}
+    SimulationSequence(horizons::Dict{String, Int}
+                        step_resolution::Dates.TimePeriod
                         intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
                         order::Dict{Int, String}
                         feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
