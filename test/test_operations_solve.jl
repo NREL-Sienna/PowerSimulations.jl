@@ -544,7 +544,7 @@ end
 
     @testset "test constraint duals in the operations problem" begin
         name = PSI.make_constraint_name("CopperPlateBalance")
-        for i in 1:ncol(get_timestamp(res))
+        for i in 1:ncol(IS.get_timestamp(res))
             dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
             @test isapprox(dual, get_duals(res)[name][i, 1])
         end

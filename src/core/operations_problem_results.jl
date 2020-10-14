@@ -128,7 +128,7 @@ function IS.write_results(results::PSIResults, folder_path::String; kwargs...)
     end
     write_data(IS.get_base_power(results), folder_path)
     write_optimizer_log(results.optimizer_log, folder_path)
-    write_data(get_timestamp(results), folder_path, "time_stamp"; kwargs...)
+    write_data(IS.get_timestamp(results), folder_path, "time_stamp"; kwargs...)
     files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
@@ -178,7 +178,7 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
     end
     write_optimizer_log(results.optimizer_log, folder_path)
     write_data(
-        get_timestamp(results),
+        IS.get_timestamp(results),
         folder_path,
         "time_stamp";
         file_type = CSV,

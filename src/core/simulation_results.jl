@@ -528,7 +528,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     end
     write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_log(IS.get_total_cost(res), folder_path)
-    write_data(get_timestamp(res), folder_path, "time_stamp"; file_type = CSV, kwargs...)
+    write_data(IS.get_timestamp(res), folder_path, "time_stamp"; file_type = CSV, kwargs...)
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
     write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
     files = readdir(folder_path)

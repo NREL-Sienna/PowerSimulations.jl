@@ -230,6 +230,7 @@ import InfrastructureSystems:
     get_total_cost,
     get_optimizer_log,
     write_results,
+    get_timestamp,
     get_name
 export get_name
 export get_base_power

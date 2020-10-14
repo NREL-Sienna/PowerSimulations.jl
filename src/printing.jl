@@ -70,7 +70,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
     println(io, "========\n")
     println(io, "Variables")
     println(io, "=========\n")
-    times = get_timestamp(results)
+    times = IS.get_timestamp(results)
     variables = IS.get_variables(results)
     if (length(keys(variables)) > 5)
         for (k, v) in variables
@@ -129,7 +129,7 @@ end
 function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     println(io, "<h1>Results</h1>")
     println(io, "<h2>Variables</h2>")
-    times = get_timestamp(results)
+    times = IS.get_timestamp(results)
     variables = IS.get_variables(results)
     if (length(keys(variables)) > 5)
         for (k, v) in variables
