@@ -145,7 +145,7 @@ struct SimulationResults <: PSIResults
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
-IS.get_base_power(result::SimulationResults) = result.base_power
+get_model_base_power(result::SimulationResults) = result.base_power
 IS.get_variables(result::SimulationResults) = result.variable_values
 IS.get_total_cost(result::SimulationResults) = result.total_cost
 IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
@@ -517,14 +517,14 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     for (k, v) in IS.get_variables(res)
         start = decode_symbol(k)[1]
         if start !== "ON" || start !== "START" || start !== "STOP"
-            variables_export[k] = IS.get_base_power(res) .* v
+            variables_export[k] = get_model_base_power(res) .* v
         else
             variables_export[k] = v
         end
     end
     parameters_export = Dict()
     for (p, v) in IS.get_parameters(res)
-        parameters_export[p] = IS.get_base_power(res) .* v
+        parameters_export[p] = get_model_base_power(res) .* v
     end
     write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_log(IS.get_total_cost(res), folder_path)

@@ -208,7 +208,7 @@ get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
-get_base_power(op_problem::OperationsProblem) = PSY.get_base_power(op_problem.sys)
+get_model_base_power(op_problem::OperationsProblem) = PSY.get_base_power(op_problem.sys)
 get_jump_model(op_problem::OperationsProblem) = get_jump_model(op_problem.psi_container)
 
 function reset!(op_problem::OperationsProblem)
@@ -486,7 +486,7 @@ function solve!(
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
-    base_power = get_base_power(op_problem)
+    base_power = get_model_base_power(op_problem)
     merge!(optimizer_log, timed_log)
 
     results = OperationsProblemResults(

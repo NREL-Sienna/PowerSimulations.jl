@@ -8,7 +8,7 @@ struct OperationsProblemResults <: PSIResults
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
-IS.get_base_power(result::OperationsProblemResults) = result.base_power
+get_model_base_power(result::OperationsProblemResults) = result.base_power
 IS.get_variables(result::OperationsProblemResults) = result.variable_values
 IS.get_total_cost(result::OperationsProblemResults) = result.total_cost
 IS.get_optimizer_log(results::OperationsProblemResults) = results.optimizer_log
@@ -126,7 +126,7 @@ function IS.write_results(results::PSIResults, folder_path::String; kwargs...)
     if !isempty(IS.get_parameters(results))
         write_data(IS.get_parameters(results), folder_path; params = true, kwargs...)
     end
-    write_data(IS.get_base_power(results), folder_path)
+    write_data(get_model_base_power(results), folder_path)
     write_optimizer_log(results.optimizer_log, folder_path)
     write_data(IS.get_timestamp(results), folder_path, "time_stamp"; kwargs...)
     files = readdir(folder_path)
@@ -148,7 +148,7 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
     for (k, v) in IS.get_variables(results)
         start = decode_symbol(k)[1]
         if start !== "ON" || start !== "START" || start != "STOP"
-            export_variables[k] = IS.get_base_power(results) .* v
+            export_variables[k] = get_model_base_power(results) .* v
         else
             export_variables[k] = v
         end
@@ -166,7 +166,7 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
     export_parameters = Dict()
     if !isempty(IS.get_parameters(results))
         for (p, v) in IS.get_parameters(results)
-            export_parameters[p] = IS.get_base_power(results) .* v
+            export_parameters[p] = get_model_base_power(results) .* v
         end
         write_data(
             export_parameters,
