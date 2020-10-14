@@ -479,7 +479,7 @@ function solve!(
     vars_result = get_variables_value(op_problem)
     param_values = get_parameters_value(get_psi_container(op_problem))
     optimizer_log = get_optimizer_log(op_problem)
-    time_stamp = IS.get_timestamps(op_problem)
+    time_stamp = get_timestamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     base_power = PSY.get_base_power(op_problem.sys)
     dual_result = get_dual_values(op_problem)

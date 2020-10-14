@@ -778,7 +778,7 @@ function build_sys_ramp_testing(; kwargs...)
     )
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
     ts_dict = SortedDict(DA_ramp[1] => ramp_load)
-    load_forecast_ramp = Deterministic("max_active_power", ts_dict; resolution = Hour(1))
+    load_forecast_ramp = Deterministic("max_active_power", ts_dict, Hour(1))
     ramp_test_sys = System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)
