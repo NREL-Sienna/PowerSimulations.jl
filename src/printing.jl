@@ -60,28 +60,17 @@ end
 function Base.show(io::IO, psi_container::PSIContainer)
     println(io, "PSIContainer()")
 end
-#=
-function Base.show(io::IO, op_problem::SimulationSequence)
-    # Here ASCII Art
-    println(io, "SimulationSequence()")
-end
-=#
+
 function Base.show(io::IO, sim::Simulation)
     println(io, "Simulation()")
 end
-#=
-function Base.show(io::IO, results::OperationsProblemResults)
-    println(io, "Results Model")
- end
-
-=#
 
 function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
     println(io, "\nResults")
     println(io, "========\n")
     println(io, "Variables")
     println(io, "=========\n")
-    times = IS.get_time_stamp(results)
+    times = IS.get_timestamp(results)
     variables = IS.get_variables(results)
     if (length(keys(variables)) > 5)
         for (k, v) in variables
@@ -140,7 +129,7 @@ end
 function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     println(io, "<h1>Results</h1>")
     println(io, "<h2>Variables</h2>")
-    times = IS.get_time_stamp(results)
+    times = IS.get_timestamp(results)
     variables = IS.get_variables(results)
     if (length(keys(variables)) > 5)
         for (k, v) in variables
@@ -244,7 +233,7 @@ function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsRef
 end
 
 function _count_stages(sequence::Array)
-    stages = Dict{Int64, Int64}()
+    stages = Dict{Int, Int}()
     stage = 1
     count = 0
     for i in 1:length(sequence)
@@ -314,7 +303,7 @@ function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
         end
     end
 end
-function _print_inter_stages(io::IO, stages::Dict{Int64, Int64})
+function _print_inter_stages(io::IO, stages::Dict{Int, Int})
     list = sort!(collect(keys(stages)))
     for i in list
         num = stages[i]
@@ -364,7 +353,7 @@ function _print_inter_stages(io::IO, stages::Dict{Int64, Int64})
     end
 end
 
-function _print_intra_stages(io::IO, stages::Dict{Int64, Int64})
+function _print_intra_stages(io::IO, stages::Dict{Int, Int})
     list = sort!(collect(keys(stages)))
     for i in list
         num = stages[i]

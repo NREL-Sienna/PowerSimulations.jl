@@ -176,7 +176,7 @@ mutable struct SimulationSequence
     ini_cond_chronology::InitialConditionChronology
     cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
-    current_execution_index::Int64
+    current_execution_index::Int
 
     function SimulationSequence(;
         horizons::Dict{String, Int},

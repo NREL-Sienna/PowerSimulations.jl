@@ -40,7 +40,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, model, S)
 
     return
 end
@@ -77,7 +77,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, model, S)
 
     return
 end
@@ -85,7 +85,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{R, FixedOutput},
+    ::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(R, sys)
@@ -102,7 +102,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.RenewableFix, D},
+    ::DeviceModel{PSY.RenewableFix, D},
     ::Type{S},
 ) where {D <: AbstractRenewableDispatchFormulation, S <: PM.AbstractPowerModel}
     @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to FixedOutput")
@@ -115,7 +115,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.RenewableFix, FixedOutput},
+    ::DeviceModel{PSY.RenewableFix, FixedOutput},
     ::Type{S},
 ) where {S <: PM.AbstractPowerModel}
     devices = get_available_components(PSY.RenewableFix, sys)

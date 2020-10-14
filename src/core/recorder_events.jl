@@ -77,7 +77,7 @@ function InitialConditionUpdateEvent(
     )
 end
 
-struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
+struct FeedForwardUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     category::String
     simulation_time::Dates.DateTime
@@ -89,7 +89,7 @@ struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
     source::Int
 end
 
-function ParameterUpdateEvent(
+function FeedForwardUpdateEvent(
     category::String,
     simulation_time::Dates.DateTime,
     update_ref::UpdateRef{JuMP.VariableRef},
@@ -99,8 +99,8 @@ function ParameterUpdateEvent(
     destination_stage::Stage,
     source_stage::Stage,
 )
-    return ParameterUpdateEvent(
-        IS.RecorderEventCommon("ParameterUpdateEvent"),
+    return FeedForwardUpdateEvent(
+        IS.RecorderEventCommon("FeedForwardUpdateEvent"),
         category,
         simulation_time,
         string(update_ref.access_ref),

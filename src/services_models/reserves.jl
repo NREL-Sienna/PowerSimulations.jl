@@ -31,13 +31,11 @@ function AddVariableSpec(
 end
 
 ################################## Reserve Requirement Constraint ##########################
-# This function can be generalized later for any constraint of type Sum(req_var) >= requirement,
-# it will only need to be specific to the names and get forecast string.
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    ::ServiceModel{SR, RangeReserve},
-) where {SR <: PSY.Reserve}
+    ::ServiceModel{SR, T},
+) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
@@ -48,17 +46,7 @@ function service_requirement_constraint!(
     reserve_variable = get_variable(psi_container, name, SR)
     use_slacks = get_services_slack_variables(psi_container.settings)
 
-    if use_forecast_data && PSY.has_forecasts(service)
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
-            PSY.Deterministic,
-            service,
-            initial_time,
-            "get_requirement",
-            length(time_steps),
-        )))
-    else
-        ts_vector = ones(time_steps[end])
-    end
+    ts_vector = get_time_series(psi_container, service, "requirement")
 
     use_slacks && (slack_vars = reserve_slacks(psi_container, name))
 
@@ -66,7 +54,7 @@ function service_requirement_constraint!(
     if parameters
         param = get_parameter_array(
             psi_container,
-            UpdateRef{SR}(SERVICE_REQUIREMENT, "get_requirement"),
+            UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"),
         )
         for t in time_steps
             param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
@@ -94,8 +82,8 @@ end
 function cost_function!(
     psi_container::PSIContainer,
     service::SR,
-    ::ServiceModel{SR, RangeReserve},
-) where {SR <: PSY.Reserve}
+    ::ServiceModel{SR, T},
+) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     reserve = get_variable(psi_container, PSY.get_name(service), SR)
     for r in reserve
         JuMP.add_to_expression!(psi_container.cost_function, r, 1.0)
@@ -126,6 +114,24 @@ function service_requirement_constraint!(
     return
 end
 
+function _convert_to_variablecost(val::TS.TimeArray)
+    cost_col = Vector{Symbol}()
+    load_col = Vector{Symbol}()
+    variable_costs = Vector{Array{NTuple{2, Float64}}}()
+    col_names = TS.colnames(val)
+    for c in col_names
+        if occursin("cost_bp", String(c))
+            push!(cost_col, c)
+        elseif occursin("load_bp", String(c))
+            push!(load_col, c)
+        end
+    end
+    for row in DataFrames.eachrow(DataFrames.DataFrame(val))
+        push!(variable_costs, [Tuple(row[[c, l]]) for (c, l) in zip(cost_col, load_col)])
+    end
+    return variable_costs
+end
+
 function cost_function!(
     psi_container::PSIContainer,
     service::SR,
@@ -149,7 +155,7 @@ function cost_function!(
             PSY.PiecewiseFunction,
             service,
             initial_time,
-            "get_variable",
+            "variable",
             length(time_steps),
         )))
 
@@ -189,24 +195,6 @@ function cost_function!(
         JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
     end
     return
-end
-
-function _convert_to_variablecost(val::TS.TimeArray)
-    cost_col = Vector{Symbol}()
-    load_col = Vector{Symbol}()
-    variable_costs = Vector{Array{NTuple{2, Float64}}}()
-    col_names = TS.colnames(val)
-    for c in col_names
-        if occursin("cost_bp", String(c))
-            push!(cost_col, c)
-        elseif occursin("load_bp", String(c))
-            push!(load_col, c)
-        end
-    end
-    for row in DataFrames.eachrow(DataFrames.DataFrame(val))
-        push!(variable_costs, [Tuple(row[[c, l]]) for (c, l) in zip(cost_col, load_col)])
-    end
-    return variable_costs
 end
 
 function modify_device_model!(

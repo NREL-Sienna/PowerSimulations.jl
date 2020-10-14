@@ -3,6 +3,7 @@ using Dates
 using Random
 Random.seed!(123)
 using PowerSystems
+const PSY = PowerSystems
 
 DayAhead = collect(
     DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
@@ -777,24 +778,24 @@ reserve5(thermal_generators5) = [
         0.8,
         maximum([gen.active_power_limits[:max] for gen in thermal_generators5]) .* 0.001,
     ),
-    ReserveDemandCurve{ReserveUp}("ORDC1", true, 0.6, ORDC_cost),
+    #ReserveDemandCurve{ReserveUp}("ORDC1", true, 0.6, ORDC_cost),
 ]
 
 reserve5_re(renewable_generators5) = [
     VariableReserve{ReserveUp}("Reserve3", true, 30, 100),
     VariableReserve{ReserveDown}("Reserve4", true, 5, 50),
-    ReserveDemandCurve{ReserveUp}("ORDC2", true, 0.6, ORDC_cost),
+    #ReserveDemandCurve{ReserveUp}("ORDC2", true, 0.6, ORDC_cost),
 ]
 reserve5_hy(hydro_generators5) = [
     VariableReserve{ReserveUp}("Reserve5", true, 30, 100),
     VariableReserve{ReserveDown}("Reserve6", true, 5, 50),
-    ReserveDemandCurve{ReserveUp}("ORDC3", true, 0.6, ORDC_cost),
+    #ReserveDemandCurve{ReserveUp}("ORDC3", true, 0.6, ORDC_cost),
 ]
 
 reserve5_il(interruptible_loads) = [
     VariableReserve{ReserveUp}("Reserve7", true, 30, 100),
     VariableReserve{ReserveDown}("Reserve8", true, 5, 50),
-    ReserveDemandCurve{ReserveUp}("ORDC3", true, 0.6, ORDC_cost),
+    #ReserveDemandCurve{ReserveUp}("ORDC3", true, 0.6, ORDC_cost),
 ]
 
 function make_ordc_cost(cost::TwoPartCost)

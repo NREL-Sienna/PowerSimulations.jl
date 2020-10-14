@@ -63,7 +63,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -104,7 +104,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -134,7 +134,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirBudget, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -164,7 +164,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirBudget, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -198,7 +198,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -231,7 +231,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -280,7 +280,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -323,7 +323,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -373,7 +373,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -418,7 +418,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, D, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -473,7 +473,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end
@@ -518,7 +518,7 @@ function construct_device!(
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
+    cost_function!(psi_container, devices, model, S, nothing)
 
     return
 end

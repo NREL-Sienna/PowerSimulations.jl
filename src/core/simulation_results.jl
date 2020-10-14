@@ -13,8 +13,9 @@ function SimulationResultsReference(sim::Simulation; kwargs...)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
         interval = get_stage_interval(sim, stage_name)
-        resolution = PSY.get_forecasts_resolution(get_sys(stage))
-        chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
+        resolution = PSY.get_time_series_resolution(get_sys(stage))
+        _resolution = IS.time_period_conversion(resolution)
+        chronologies["stage-$stage_name"] = convert(Int, (interval / _resolution))
         base_powers[stage_name] = PSY.get_base_power(sim.stages[stage_name].sys)
     end
     return SimulationResultsReference(
@@ -83,9 +84,9 @@ function make_result_reference(
     sim::Simulation,
 ) where {T <: PowerSimulationsOperationsProblem}
     stage_number = get_number(stage)
-    stage_name = get_stage_name(sim, stage)
     stage_container = get_psi_container(stage)
     variables = Dict{Symbol, Any}()
+    stage_name = get_stage_name(sim, stage)
     interval = get_stage_interval(sim, stage_name)
     variable_names = (collect(keys(stage_container.variables)))
     if !is_milp(get_psi_container(stage))
@@ -110,12 +111,12 @@ function make_result_reference(
                 full_path = joinpath(
                     sim.internal.raw_dir,
                     "step-$(s)-stage-$(stage_name)",
-                    replace_chars("$(sim.internal.current_time)", ":", "-"),
+                    replace_chars("$(get_current_time(sim))", ":", "-"),
                     "$(name).feather",
                 )
                 if isfile(full_path)
                     date_df = DataFrames.DataFrame(
-                        Date = sim.internal.current_time,
+                        Date = get_current_time(sim),
                         Step = "step-$(s)",
                         File_Path = full_path,
                     )
@@ -149,7 +150,7 @@ IS.get_base_power(result::SimulationResults) = result.base_power
 IS.get_variables(result::SimulationResults) = result.variable_values
 IS.get_total_cost(result::SimulationResults) = result.total_cost
 IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
-IS.get_time_stamp(result::SimulationResults) = result.time_stamp
+IS.get_timestamp(result::SimulationResults) = result.time_stamp
 get_duals(result::SimulationResults) = result.dual_values
 IS.get_parameters(result::SimulationResults) = result.parameter_values
 
@@ -528,13 +529,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     end
     write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_log(IS.get_total_cost(res), folder_path)
-    write_data(
-        IS.get_time_stamp(res),
-        folder_path,
-        "time_stamp";
-        file_type = CSV,
-        kwargs...,
-    )
+    write_data(IS.get_timestamp(res), folder_path, "time_stamp"; file_type = CSV, kwargs...)
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
     write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
     files = readdir(folder_path)

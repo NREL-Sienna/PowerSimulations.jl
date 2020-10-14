@@ -6,6 +6,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
+    elapsed_period::Dates.Period
 ) where {T <: PSY.Component}
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
@@ -25,6 +26,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
+    elapsed_period::Dates.Period
 ) where {T <: PSY.Component}
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
@@ -44,6 +46,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
+    elapsed_period::Dates.Period
 ) where {T <: PSY.Component}
     current_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     return current_status
@@ -54,6 +57,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
+    elapsed_period::Dates.Period
 ) where {T <: PSY.ThermalGen}
     cache = get_cache(simulation_cache, TimeStatusChange, T)
     # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
@@ -74,21 +78,33 @@ function calculate_ic_quantity(
         name = device_name(ic)
         time_cache = cache_value(cache, name)
         series = time_cache[:series]
+        elapsed_time = time_cache[:elapsed]
         if min_power > 0.0
-            current = min(time_cache[:current], length(series))
+            #off set by one since the first is the original initial conditions. Series is size
+            # horizon + 1
+            current = min(time_cache[:current] + 1, length(series)) # HACK
             current_status = isapprox(series[current], 1.0; atol = ABSOLUTE_TOLERANCE)
-            previous_status = isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
-            status_change_to_on = current_status && !previous_status
-            status_change_to_off = !current_status && previous_status
-            status_remains_on = current_status && previous_status
-            status_remains_off = !current_status && !previous_status
+            # exception for the first time period and last.
+            if current == 1
+               previous_status = current_status
+            else
+               previous_status = isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
+            end
+             status_change_to_on = current_status && !previous_status
+             status_change_to_off = !current_status && previous_status
+             status_remains_on = current_status && previous_status
+             status_remains_off = !current_status && !previous_status
         else
             status_remains_on = true
             status_remains_off = false
             status_change_to_off = false
             status_change_to_on = false
         end
-        time_cache[:current] += 1
+        time_cache[:elapsed] += elapsed_period
+        if time_cache[:elapsed] == cache.units
+            time_cache[:current] += 1
+            time_cache[:elapsed] = Dates.Second(0)
+        end
     end
 
     if status_remains_off
@@ -109,6 +125,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
+    elapsed_period::Dates.Period
 ) where {T <: PSY.Device}
     return var_value
 end
@@ -118,7 +135,9 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
+    elapsed_period::Dates.Period
 ) where {T <: PSY.Device}
+
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     energy_cache = cache_value(cache, name)
@@ -487,13 +506,13 @@ function _get_ref_active_power(
     if get_use_parameters(container)
         return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
     else
-        return UpdateRef{T}(ACTIVE_POWER, "get_active_power")
+        return UpdateRef{T}(ACTIVE_POWER, "active_power")
     end
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "get_initial_energy")
+           UpdateRef{T}(ENERGY, "initial_energy")
 end
 
 function _get_ref_reservoir_energy(
@@ -501,7 +520,7 @@ function _get_ref_reservoir_energy(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "get_hydro_budget")
+           UpdateRef{T}(ENERGY, "hydro_budget")
 end
 
 function _get_ref_reservoir_energy_up(
@@ -523,5 +542,5 @@ end
 function _get_ref_ace_error(::Type{PSY.AGC}, container::InitialConditions)
     T = PSY.AGC
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "ACE") :
-           UpdateRef{T}("ACE", "get_initial_ace")
+           UpdateRef{T}("ACE", "initial_ace")
 end

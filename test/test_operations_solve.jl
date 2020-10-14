@@ -489,7 +489,7 @@ function test_write_functions(file_path, op_problem, res)
         c_sys5_re = build_system("c_sys5_re")
         system = op_problem.sys
         params =
-            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__get_max_active_power__PowerLoad])
+            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__max_active_power__PowerLoad])
         params = PSI.axis_array_to_dataframe(params)
         devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
         multiplier = [PSY.get_active_power(devices[1])]
@@ -544,7 +544,7 @@ end
 
     @testset "test constraint duals in the operations problem" begin
         name = PSI.make_constraint_name("CopperPlateBalance")
-        for i in 1:ncol(get_time_stamp(res))
+        for i in 1:ncol(IS.get_timestamp(res))
             dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
             @test isapprox(dual, get_duals(res)[name][i, 1])
         end

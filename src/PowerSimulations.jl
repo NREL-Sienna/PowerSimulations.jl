@@ -231,8 +231,8 @@ import InfrastructureSystems:
     get_variables,
     get_total_cost,
     get_optimizer_log,
-    get_time_stamp,
     write_results,
+    get_timestamp,
     get_name
 export get_name
 export get_base_power
@@ -240,7 +240,7 @@ export get_variables
 export get_dual_values
 export get_total_cost
 export get_optimizer_log
-export get_time_stamp
+export get_timestamp
 export write_results
 import PowerModels
 import TimerOutputs

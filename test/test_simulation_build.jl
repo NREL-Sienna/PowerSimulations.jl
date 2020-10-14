@@ -185,7 +185,7 @@ function test_sequence_build(file_path::String)
             mktempdir(),
             PSI.get_name(sim),
         )
-        @test_throws IS.ConflictingInputsError PSI._get_simulation_initial_times!(sim)
+        @test_throws IS.ConflictingInputsError build!(sim)
     end
 
     @testset "Test too many steps for forecast" begin

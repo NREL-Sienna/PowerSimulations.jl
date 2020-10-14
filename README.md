@@ -3,6 +3,7 @@
 [![Build Status](https://img.shields.io/travis/com/NREL-SIIP/PowerSimulations.jl/master.svg)](https://travis-ci.com/NREL-SIIP/PowerSimulations.jl)
 [![codecov](https://codecov.io/gh/NREL-SIIP/PowerSimulations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL-SIIP/PowerSimulations.jl)
 [![Documentation](https://github.com/NREL-SIIP/PowerSimulations.jl/workflows/Documentation/badge.svg)](https://nrel-siip.github.io/PowerSimulations.jl/latest)
+[![DOI](https://zenodo.org/badge/109443246.svg)](https://zenodo.org/badge/latestdoi/109443246)
 [<img src="https://img.shields.io/badge/slack-@SIIP/PSI-blue.svg?logo=slack">](https://join.slack.com/t/nrel-siip/shared_invite/zt-glam9vdu-o8A9TwZTZqqNTKHa7q3BpQ)
 
 ## The current implementation of the functionalities can be seen in the test codes.
