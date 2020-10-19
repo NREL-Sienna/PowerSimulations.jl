@@ -6,7 +6,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
-    elapsed_period::Dates.Period
+    elapsed_period::Dates.Period,
 ) where {T <: PSY.Component}
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
@@ -26,7 +26,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
-    elapsed_period::Dates.Period
+    elapsed_period::Dates.Period,
 ) where {T <: PSY.Component}
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
@@ -46,7 +46,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
-    elapsed_period::Dates.Period
+    elapsed_period::Dates.Period,
 ) where {T <: PSY.Component}
     current_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     return current_status
@@ -57,7 +57,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
-    elapsed_period::Dates.Period
+    elapsed_period::Dates.Period,
 ) where {T <: PSY.ThermalGen}
     cache = get_cache(simulation_cache, TimeStatusChange, T)
     # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
@@ -86,14 +86,15 @@ function calculate_ic_quantity(
             current_status = isapprox(series[current], 1.0; atol = ABSOLUTE_TOLERANCE)
             # exception for the first time period and last.
             if current == 1
-               previous_status = current_status
+                previous_status = current_status
             else
-               previous_status = isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
+                previous_status =
+                    isapprox(series[current - 1], 1.0; atol = ABSOLUTE_TOLERANCE)
             end
-             status_change_to_on = current_status && !previous_status
-             status_change_to_off = !current_status && previous_status
-             status_remains_on = current_status && previous_status
-             status_remains_off = !current_status && !previous_status
+            status_change_to_on = current_status && !previous_status
+            status_change_to_off = !current_status && previous_status
+            status_remains_on = current_status && previous_status
+            status_remains_off = !current_status && !previous_status
         else
             status_remains_on = true
             status_remains_off = false
@@ -125,7 +126,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
-    elapsed_period::Dates.Period
+    elapsed_period::Dates.Period,
 ) where {T <: PSY.Device}
     return var_value
 end
@@ -135,9 +136,8 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
-    elapsed_period::Dates.Period
+    elapsed_period::Dates.Period,
 ) where {T <: PSY.Device}
-
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     energy_cache = cache_value(cache, name)

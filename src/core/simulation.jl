@@ -604,7 +604,8 @@ function initial_condition_update!(
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
         # We pass the simulation cache instead of the whole simulation to avoid definition dependencies. All the inputs to calculate_ic_quantity are defined before the simulation object
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, resolution)
+        quantity =
+            calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, resolution)
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
@@ -653,7 +654,8 @@ function initial_condition_update!(
             name,
             ic.update_ref,
         )
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
+        quantity =
+            calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
