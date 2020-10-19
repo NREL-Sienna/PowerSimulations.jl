@@ -32,7 +32,7 @@ get_component_name(d::DeviceRangeConstraintInfo) = d.component_name
 struct DeviceTimeSeriesConstraintInfo
     bus_number::Int
     multiplier::Float64
-    timeseries::Vector{Float64}
+    timeseries::AbstractVector{Float64}
     range::DeviceRangeConstraintInfo
     function DeviceTimeSeriesConstraintInfo(
         bus_number,
@@ -51,7 +51,7 @@ get_timeseries(d::DeviceTimeSeriesConstraintInfo) = d.timeseries
 function DeviceTimeSeriesConstraintInfo(
     device::PSY.Device,
     multiplier_function::Function,
-    ts_vector::Vector{Float64},
+    ts_vector::AbstractVector{Float64},
     get_constraint_values::Union{Function, Nothing} = nothing,
 )
     name = PSY.get_name(device)
