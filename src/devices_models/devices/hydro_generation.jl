@@ -482,7 +482,7 @@ function energy_balance_constraint!(
     if !has_initial_conditions(psi_container.initial_conditions, key)
         throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
-  
+
     inflow_forecast_label = "inflow"
     target_forecast_label = "storage_target"
     constraint_infos_inflow = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
@@ -566,7 +566,7 @@ function energy_balance_constraint!(
         throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
-    forecast_label_in = "get_inflow"
+    forecast_label_in = "inflow"
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label_in)
@@ -579,7 +579,7 @@ function energy_balance_constraint!(
         constraint_infos[ix] = constraint_info
     end
 
-    forecast_label_out = "get_outflow"
+    forecast_label_out = "outflow"
     constraint_infos_outflow =
         Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)

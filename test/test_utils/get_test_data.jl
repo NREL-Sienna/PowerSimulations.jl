@@ -356,7 +356,11 @@ function build_c_sys5_hyd(; kwargs...)
                 forecast_data_target[ini_time] = hydro_timeseries_DA[t][ix] .* 0.5
             end
             add_time_series!(c_sys5_hyd, h, Deterministic("inflow", forecast_data_inflow))
-            add_time_series!(c_sys5_hyd, h, Deterministic("storage_target", forecast_data_target))
+            add_time_series!(
+                c_sys5_hyd,
+                h,
+                Deterministic("storage_target", forecast_data_target),
+            )
         end
     end
 
@@ -628,8 +632,7 @@ function build_c_sys5_reg(; kwargs...)
     contributing_devices = Vector()
     for g in get_components(Generator, c_sys5_reg)
         droop =
-            isa(g, ThermalStandard) ? 0.04 * get_base_power(g) :
-            0.05 * get_base_power(g)
+            isa(g, ThermalStandard) ? 0.04 * get_base_power(g) : 0.05 * get_base_power(g)
         p_factor = (up = 1.0, dn = 1.0)
         t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
         add_component!(c_sys5_reg, t)
@@ -1196,79 +1199,98 @@ function build_c_sys5_phes_ed(; kwargs...)
     )
 
     if get(kwargs, :add_forecasts, true)
-        for t in 1:2
-            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_phes_ed))
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_phes_ed))
+            for t in 1:2 # loop over days
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
-                for i in 1:length(ta)
-                    ini_time = timestamp(ta[i])
-                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_phes_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
+                for i in 1:length(ta) # loop over hours
+                    ini_time = timestamp(ta[i]) #get the hour
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
+                    forecast_data[ini_time[1]] = data
                 end
             end
-            for (ix, l) in enumerate(get_components(HydroGen, c_sys5_phes_ed))
-                ta = hydro_timeseries_DA[t][ix]
-                for i in 1:length(ta)
-                    ini_time = timestamp(ta[i])
-                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_phes_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
-                end
-            end
-            for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_phes_ed))
-                ta = load_timeseries_DA[t][ix]
-                for i in 1:length(ta)
-                    ini_time = timestamp(ta[i])
-                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_phes_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
-                end
-            end
-            for (ix, l) in enumerate(get_components(HydroPumpedStorage, c_sys5_phes_ed))
-                ta = hydro_timeseries_DA[t][ix]
-                for i in 1:length(ta)
-                    ini_time = timestamp(ta[i])
-                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_phes_ed,
-                        l,
-                        Deterministic("get_storage_capacity", data),
-                    )
-                    add_forecast!(c_sys5_phes_ed, l, Deterministic("get_outflow", data))
-                end
-            end
-            for (ix, l) in enumerate(get_components(
-                Union{HydroEnergyReservoir, HydroPumpedStorage},
+            add_time_series!(
                 c_sys5_phes_ed,
-            ))
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, l) in enumerate(get_components(HydroGen, c_sys5_phes_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    forecast_data[ini_time[1]] = data
+                end
+            end
+            add_time_series!(
+                c_sys5_phes_ed,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_phes_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    forecast_data[ini_time[1]] = data
+                end
+            end
+            add_time_series!(
+                c_sys5_phes_ed,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
+        end
+        for (ix, l) in enumerate(get_components(HydroPumpedStorage, c_sys5_phes_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    forecast_data[ini_time[1]] = data
+                end
+            end
+            add_time_series!(
+                c_sys5_phes_ed,
+                l,
+                Deterministic("storage_capacity", forecast_data),
+            )
+        end
+        for (ix, l) in enumerate(get_components(HydroPumpedStorage, c_sys5_phes_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = hydro_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix] .* 0.8, hour, hour(ini_time[1]))
-                    add_forecast!(c_sys5_phes_ed, l, Deterministic("get_inflow", data))
+                    forecast_data[ini_time[1]] = data
                 end
             end
-            for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_phes_ed))
+            add_time_series!(c_sys5_phes_ed, l, Deterministic("inflow", forecast_data))
+            add_time_series!(c_sys5_phes_ed, l, Deterministic("outflow", forecast_data))
+        end
+        for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_phes_ed))
+            for t in 1:2
+                forecast_data = SortedDict{Dates.DateTime, TimeArray}()
                 ta = load_timeseries_DA[t][ix]
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(
-                        c_sys5_phes_ed,
-                        l,
-                        Deterministic("get_max_active_power", data),
-                    )
+                    forecast_data[ini_time[1]] = data
                 end
             end
+            add_time_series!(
+                c_sys5_phes_ed,
+                l,
+                Deterministic("max_active_power", forecast_data),
+            )
         end
     end
 
