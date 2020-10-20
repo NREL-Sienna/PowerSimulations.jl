@@ -1350,7 +1350,7 @@ TEST_SYSTEMS = Dict(
         time_series_in_memory = true,
     ),
     "c_sys14_dc" =>
-        (description = "", build = build_c_sys14_dc, time_series_in_memory = true),
+        (description = "14-bus system with DC line", build = build_c_sys14_dc, time_series_in_memory = true),
     "c_sys5" => (
         description = "5-bus system",
         build = build_c_sys5,

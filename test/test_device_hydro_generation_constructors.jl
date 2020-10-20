@@ -2,9 +2,11 @@
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type HydroEnergyReservoir, consider changing the device models"
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, build_system("c_sys5"))
+    c_sys5 = build_system("c_sys5")
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Hydro, model)
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, build_system("c_sys14"))
+    c_sys14 = build_system("c_sys14")
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Hydro, model)
 end
 
@@ -356,7 +358,7 @@ end
 
 @testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStorage Formulations" begin
     model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
-    c_sys5_phes_ed = build_c_sys5_phes_ed(time_series_in_memory = true) # while serialization is broken
+    c_sys5_phes_ed = build_system("c_sys5_phes_ed")
 
     # Parameters Testing
     op_problem = OperationsProblem(
