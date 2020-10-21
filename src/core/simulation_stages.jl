@@ -211,7 +211,7 @@ function run_stage(
     end
     # TODO: Add Fallback when optimization fails
     # if is_milp(stage.internal.psi_container)
-    _export_model_result(stage, start_time, results_path)
+    export_model_result(stage, start_time, results_path)
     _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
     stage.internal.execution_count += 1
     # Reset execution count at the end of step
@@ -294,7 +294,7 @@ function write_data(stage::Stage, save_path::AbstractString; kwargs...)
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
-function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
+function export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
     duals = Dict()
     if is_milp(stage.internal.psi_container)
         @warn("Stage $(stage.internal.number) is an MILP, duals can't be exported")
