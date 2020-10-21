@@ -210,9 +210,8 @@ function run_stage(
         end
     end
     # TODO: Add Fallback when optimization fails
-    # if is_milp(stage.internal.psi_container)
     export_model_result(stage, start_time, results_path)
-    _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
+    export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
     stage.internal.execution_count += 1
     # Reset execution count at the end of step
     if stage.internal.execution_count == stage.internal.executions

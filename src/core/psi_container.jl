@@ -473,16 +473,22 @@ function is_milp(container::PSIContainer)
     return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 
-function _export_optimizer_log(
+function export_optimizer_log(
     optimizer_log::Dict{Symbol, Any},
     psi_container::PSIContainer,
     path::String,
 )
-    optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] =
         Int(JuMP.termination_status(psi_container.JuMPmodel))
     optimizer_log[:primal_status] = Int(JuMP.primal_status(psi_container.JuMPmodel))
     optimizer_log[:dual_status] = Int(JuMP.dual_status(psi_container.JuMPmodel))
+
+    if optimizer_log[:primal_status] == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
+    else
+        optimizer_log[:obj_value] = Inf
+    end
+
     try
         optimizer_log[:solve_time] = MOI.get(psi_container.JuMPmodel, MOI.SolveTime())
     catch
