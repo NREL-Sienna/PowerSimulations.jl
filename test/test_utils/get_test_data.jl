@@ -210,7 +210,7 @@ function build_c_sys5_re(; kwargs...)
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[ix])[1]
+                ini_time = timestamp(Reserve_ts[t])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_re, serv, Deterministic("requirement", forecast_data))
@@ -385,7 +385,7 @@ function build_c_sys5_hyd(; kwargs...)
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[ix])[1]
+                ini_time = timestamp(Reserve_ts[t])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_hyd, serv, Deterministic("requirement", forecast_data))
@@ -404,7 +404,10 @@ end
 
 function build_c_sys5_bat(; kwargs...)
     time_series_in_memory = get(kwargs, :time_series_in_memory, true)
-    nodes = nodes5()
+    #add_forecasts = get(kwargs, :add_forecasts, true)
+    #c_sys5_bat = build_c_sys5_re(; time_series_in_memory = time_series_in_memory, add_forecasts = add_forecasts, add_reserves = false)
+    #[add_component!(c_sys5_bat, b) for b in battery5(nodes5())];
+
     c_sys5_bat = System(
         100.0,
         nodes,
@@ -429,12 +432,20 @@ function build_c_sys5_bat(; kwargs...)
                 Deterministic("max_active_power", forecast_data),
             )
         end
+        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_bat))
+            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            for t in 1:2
+                ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
+                forecast_data[ini_time] = ren_timeseries_DA[t][ix]
+            end
+            add_time_series!(c_sys5_bat, r, Deterministic("max_active_power", forecast_data))
+        end
     end
 
     if get(kwargs, :add_reserves, false)
         reserve_bat = reserve5_re(get_components(
             RenewableDispatch,
-            build_c_sys5_re(; time_series_in_memory = time_series_in_memory),
+            c_sys5_bat,
         ))
         add_service!(c_sys5_bat, reserve_bat[1], get_components(GenericBattery, c_sys5_bat))
         add_service!(c_sys5_bat, reserve_bat[2], get_components(GenericBattery, c_sys5_bat))
@@ -443,7 +454,7 @@ function build_c_sys5_bat(; kwargs...)
         for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[ix])[1]
+                ini_time = timestamp(Reserve_ts[t])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_bat, serv, Deterministic("requirement", forecast_data))
