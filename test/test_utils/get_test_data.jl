@@ -404,10 +404,7 @@ end
 
 function build_c_sys5_bat(; kwargs...)
     time_series_in_memory = get(kwargs, :time_series_in_memory, true)
-    #add_forecasts = get(kwargs, :add_forecasts, true)
-    #c_sys5_bat = build_c_sys5_re(; time_series_in_memory = time_series_in_memory, add_forecasts = add_forecasts, add_reserves = false)
-    #[add_component!(c_sys5_bat, b) for b in battery5(nodes5())];
-
+    nodes = nodes5()
     c_sys5_bat = System(
         100.0,
         nodes,
