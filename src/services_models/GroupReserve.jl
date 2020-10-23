@@ -36,10 +36,7 @@ function service_requirement_constraint!(
         for r in contributing_services
     ]
 
-    # TODO: should we make a get_time_series method for the StaticReserveGroup that handles the following two lines?
-    ts_vectors =
-        [get_time_series(psi_container, s, "requirement") for s in contributing_services]
-    ts_vector = sum(hcat(ts_vectors...), dims = 2)
+    ts_vector = get_time_series(psi_container, service, "requirement")
 
     requirement = PSY.get_requirement(service)
     if parameters
