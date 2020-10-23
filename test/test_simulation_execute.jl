@@ -10,10 +10,10 @@ function test_load_simulation(file_path::String)
         Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
 
     single_sequence = SimulationSequence(
-        step_resolution = Hour(1),
+        step_resolution = Hour(24),
         order = Dict(1 => "ED"),
-        horizons = Dict("ED" => 12),
-        intervals = Dict("ED" => (Hour(1), Consecutive())),
+        horizons = Dict("ED" => 24),
+        intervals = Dict("ED" => (Hour(24), Consecutive())),
         ini_cond_chronology = IntraStageChronology(),
     )
 
@@ -31,7 +31,6 @@ function test_load_simulation(file_path::String)
         stage_single = PSI.get_stage(sim_single, "ED")
         @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
               [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
     end
 
     stage_info = Dict(
@@ -355,12 +354,12 @@ function test_load_simulation(file_path::String)
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
-        step_resolution = Hour(1),
+        step_resolution = Hour(24),
         feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon()),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict(
-            "UC" => (Hour(1), RecedingHorizon()),
-            "ED" => (Minute(5), RecedingHorizon()),
+            "UC" => (Hour(24), RecedingHorizon()),
+            "ED" => (Minute(60), RecedingHorizon()),
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
@@ -439,7 +438,6 @@ function test_load_simulation(file_path::String)
         _test_html_print_methods([res])
     end
     @testset "Test print methods of sequence ascii art" begin
-
         sequence_2 = SimulationSequence(
             order = Dict(1 => "UC", 2 => "ED"),
             step_resolution = Hour(1),
@@ -540,7 +538,6 @@ function test_load_simulation(file_path::String)
         stage_12 = FakeStagesStruct(Dict(1 => 1, 2 => 12, 3 => 5, 4 => 6))
         list = [stage_1, stage_3, stage_4, stage_12]
         _test_plain_print_methods(list)
-
     end
 
     ####################

@@ -17,8 +17,8 @@ mutable struct PSIContainer
         settings::PSISettings,
         jump_model::Union{Nothing, JuMP.AbstractModel},
     )
-        PSY.check_forecast_consistency(sys)
-        resolution = PSY.get_forecasts_resolution(sys)
+        #PSY.check_forecast_consistency(sys)
+        resolution = PSY.get_time_series_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
         new(
             jump_model,
@@ -43,7 +43,6 @@ function PSIContainer(
     settings::PSISettings,
     jump_model::Union{Nothing, JuMP.AbstractModel},
 ) where {T <: PM.AbstractPowerModel}
-
     container = PSIContainer(sys, settings, jump_model)
     psi_container_init!(container, T, sys)
     return container
@@ -155,11 +154,11 @@ function psi_container_init!(
     end
 
     if get_initial_time(settings) == UNSET_INI_TIME
-        set_initial_time!(settings, PSY.get_forecasts_initial_time(sys))
+        set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
     end
 
     if get_horizon(settings) == UNSET_HORIZON
-        set_horizon!(settings, PSY.get_forecasts_horizon(sys))
+        set_horizon!(settings, PSY.get_forecast_horizon(sys))
     end
 
     if use_forecasts
@@ -474,16 +473,22 @@ function is_milp(container::PSIContainer)
     return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 
-function _export_optimizer_log(
+function export_optimizer_log(
     optimizer_log::Dict{Symbol, Any},
     psi_container::PSIContainer,
     path::String,
 )
-    optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] =
         Int(JuMP.termination_status(psi_container.JuMPmodel))
     optimizer_log[:primal_status] = Int(JuMP.primal_status(psi_container.JuMPmodel))
     optimizer_log[:dual_status] = Int(JuMP.dual_status(psi_container.JuMPmodel))
+
+    if optimizer_log[:primal_status] == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
+    else
+        optimizer_log[:obj_value] = Inf
+    end
+
     try
         optimizer_log[:solve_time] = MOI.get(psi_container.JuMPmodel, MOI.SolveTime())
     catch

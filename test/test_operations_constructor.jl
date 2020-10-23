@@ -59,7 +59,6 @@ services = Dict{Symbol, ServiceModel}()
         balance_slack_variables = true,
     )
     moi_tests(op_problem, false, 168, 0, 120, 120, 24, false)
-
 end
 
 @testset "Test optimization debugging functions" begin
@@ -108,7 +107,6 @@ end
 end
 
 @testset "Operation Model Constructors with Parameters" begin
-
     networks = [
         CopperPlatePowerModel,
         StandardPTDFModel,
@@ -137,7 +135,7 @@ end
     c_sys5_pwl_ed = build_system("c_sys5_pwl_ed")
     systems = [c_sys5, c_sys5_re, c_sys5_bat, c_sys5_pwl_ed]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
-        @testset "Operation Model $(net) - $(thermal) - $(system)" begin
+        @testset "Operation Model $(net) - $(thermal)" begin
             devices = Dict{Symbol, DeviceModel}(
                 :Generators => DeviceModel(ThermalStandard, thermal),
                 :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -156,35 +154,33 @@ end
             @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == p
         end
     end
+end
 
-    @testset "Operation Model CopperPlatePowerModel - ThermalDispatchNoMin - c_sys5_pwl_ed_nonconvex" begin
-        c_sys5_pwl_ed_nonconvex = build_system("c_sys5_pwl_ed_nonconvex")
-        devices = Dict{Symbol, DeviceModel}(
-            :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
-            :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-        )
-        branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
-        template =
-            OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-        @test_throws IS.InvalidValue OperationsProblem(
-            TestOpProblem,
-            template,
-            c_sys5_pwl_ed_nonconvex;
-            use_parameters = true,
-            PTDF = build_PTDF5(),
-            export_pwl_vars = true,
-        )
-    end
-
-    @testset "Operations template constructors" begin
-        c_sys5 = build_system("c_sys5")
-        op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
-        op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
-        moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
-        moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
-        ED = PSI.run_economic_dispatch(c_sys5; optimizer = fast_lp_optimizer)
-        UC = PSI.run_unit_commitment(c_sys5; optimizer = fast_lp_optimizer)
-        @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
-        @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
-    end
+@testset "Operation Model CopperPlatePowerModel - ThermalDispatchNoMin - c_sys5_pwl_ed_nonconvex" begin
+    c_sys5_pwl_ed_nonconvex = build_system("c_sys5_pwl_ed_nonconvex")
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    @test_throws IS.InvalidValue OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5_pwl_ed_nonconvex;
+        use_parameters = true,
+        PTDF = build_PTDF5(),
+        export_pwl_vars = true,
+    )
+end
+@testset "Operations template constructors" begin
+    c_sys5 = build_system("c_sys5")
+    op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
+    op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
+    moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
+    moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
+    ED = PSI.run_economic_dispatch(c_sys5; optimizer = fast_lp_optimizer)
+    UC = PSI.run_unit_commitment(c_sys5; optimizer = fast_lp_optimizer)
+    @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
+    @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
 end

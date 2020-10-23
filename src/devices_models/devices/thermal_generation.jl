@@ -62,7 +62,7 @@ function AddVariableSpec(
     psi_container::PSIContainer,
 ) where {T <: ReactivePowerVariable, U <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
-        initial_value_func = d -> PSY.get_active_power(d)
+        initial_value_func = d -> PSY.get_reactive_power(d)
     else
         initial_value_func = nothing
     end
@@ -84,24 +84,36 @@ function AddVariableSpec(
     ::Type{U},
     psi_container::PSIContainer,
 ) where {T <: OnVariable, U <: PSY.ThermalGen}
-    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
+    if get_warm_start(psi_container.settings)
+        initial_value_func = x -> (PSY.get_active_power(x) > 0 ? 1.0 : 0.0)
+    else
+        initial_value_func = nothing
+    end
+    return AddVariableSpec(;
+        variable_name = make_variable_name(T, U),
+        initial_value_func = initial_value_func,
+        binary = true,
+    )
 end
 
 function AddVariableSpec(
     ::Type{T},
     ::Type{U},
     psi_container::PSIContainer,
-) where {T <: Union{StartVariable, StopVariable}, U <: PSY.ThermalGen}
-    if get_warm_start(psi_container.settings)
-        initial_value_func = x -> (PSY.get_active_power(x) > 0 ? 1.0 : 0.0)
-    else
-        initial_value_func = nothing
-    end
+) where {T <: StopVariable, U <: PSY.ThermalGen}
+    AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
+end
 
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {T <: StartVariable, U <: PSY.ThermalGen}
     AddVariableSpec(;
         variable_name = make_variable_name(T, U),
-        binary = true,
-        initial_value_func = initial_value_func,
+        binary = true, # TODO: This variable could be relaxed. Consider this as a different formulation
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> 1.0,
     )
 end
 
@@ -336,7 +348,6 @@ function initial_range_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
@@ -834,7 +845,6 @@ function startup_time_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     constraint_data = Vector{DeviceStartUpConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -927,7 +937,6 @@ function startup_initial_condition_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key_off = ICKey(TimeDurationOFF, PSY.ThermalMultiStart)
@@ -959,7 +968,7 @@ function must_run_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    forecast_label = "get_must_run"
+    forecast_label = "must_run"
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = ones(time_steps[end])
@@ -989,7 +998,6 @@ function _get_data_for_tdc(
     initial_conditions_off::Vector{InitialCondition},
     resolution::Dates.TimePeriod,
 )
-
     steps_per_hour = 60 / Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1 / steps_per_hour
     lenght_devices_on = length(initial_conditions_on)
@@ -1119,262 +1127,113 @@ function time_constraints!(
 end
 
 ########################### Cost Function Calls#############################################
-function cost_function(
+# These functions are custom implementations of the cost data. In the file cost_functions.jl there are default implementations. Define these only if needed.
+
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{<:AbstractThermalDispatchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen}
-    if !isnothing(feedforward)
-        #Setting kwarg for PWL
-        add_to_setting_ext!(
-            psi_container,
-            "parameter_on",
-            make_variable_name(OnVariable, T),
-        )
-    end
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(ActivePowerVariable, T),
-        :variable,
+) where {T <: PSY.ThermalGen, U <: AbstractThermalFormulation}
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        variable_cost = PSY.get_variable,
+        start_up_cost = PSY.get_start_up,
+        shut_down_cost = PSY.get_shut_down,
+        fixed_cost = PSY.get_fixed,
+        sos_status = VARIABLE,
     )
-    return
 end
 
-function cost_function(
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{ThermalDispatchNoMin},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen}
-    resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    variable = get_variable(psi_container, ActivePowerVariable, T)
-
-    # uses the same cost function whenever there is NO PWL
-    function _ps_cost!(d::PSY.ThermalGen, cost_component::PSY.VariableCost)
-        return ps_cost!(
-            psi_container,
-            make_variable_name(ActivePowerVariable, T),
-            PSY.get_name(d),
-            cost_component,
-            dt,
-            1.0,
-        )
+) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
+    if has_on_parameter(psi_container, T)
+        sos_status = PARAMETER
+    else
+        sos_status = NO_VARIABLE
     end
 
-    # This function modified the PWL cost data when present
-    function _ps_cost!(
-        d::PSY.ThermalGen,
-        cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        variable_cost = PSY.get_variable,
+        fixed_cost = PSY.get_fixed,
+        sos_status = sos_status,
     )
-        export_pwl_vars = get_export_pwl_vars(psi_container.settings)
-        if export_pwl_vars
-            if !haskey(psi_container.variables, :PWL_cost_vars)
-                time_steps = model_time_steps(psi_container)
-                container = add_var_container!(
-                    psi_container,
-                    :PWL_cost_vars,
-                    [PSY.get_name(d)],
-                    time_steps,
-                    1:length(cost_component);
-                    sparse = true,
-                )
-            else
-                container = get_variable(psi_container, :PWL_cost_vars)
-            end
-        end
-
-        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        slopes = PSY.get_slopes(cost_component)
-        first_pair = cost_component.cost[1]
-        if slopes[1] != 0.0
-            # sets first slope such that the y intercept is epsilon larger than the y intercept of the second slope to ensure convexity
-            slopes[1] = (first_pair[2] * slopes[2] - COST_EPSILON) / first_pair[2]
-        end
-
-        if any(slopes .< 0) || slopes[1] > slopes[2] || !_pwlparamcheck(slopes)
-            throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
-        end
-
-        for (t, var) in enumerate(variable[PSY.get_name(d), :])
-            g_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-
-            pwlvars = JuMP.@variable(
-                psi_container.JuMPmodel,
-                [i = 1:length(cost_component)],
-                base_name = "{$(var)}_{pwl}",
-                start = 0.0,
-                lower_bound = 0.0,
-                upper_bound = PSY.get_breakpoint_upperbounds(cost_component)[i]
-            )
-            for (ix, pwlvar) in enumerate(pwlvars)
-                JuMP.add_to_expression!(g_cost, slopes[ix] * pwlvar)
-                if export_pwl_vars
-                    container[(PSY.get_name(d), t, ix)] = pwlvar
-                end
-            end
-            c = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                var == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
-            )
-            JuMP.add_to_expression!(gen_cost, g_cost)
-        end
-        return gen_cost * dt
-    end
-
-    for d in devices
-        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
-        cost_expression = _ps_cost!(d, cost_component)
-        T_ce = typeof(cost_expression)
-        T_cf = typeof(psi_container.cost_function)
-        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
-            psi_container.cost_function += cost_expression
-        else
-            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
-        end
-    end
-
-    return
 end
 
-function cost_function(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{<:AbstractThermalFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen}
-    #Setting kwarg for PWL
-    add_to_setting_ext!(psi_container, "variable_on", make_variable_name(OnVariable, T))
-
-    #Variable Cost component
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(ActivePowerVariable, T),
-        :variable,
-    )
-
-    #Commitment Cost Components
-    add_to_cost!(psi_container, devices, make_variable_name(StartVariable, T), :startup)
-    add_to_cost!(psi_container, devices, make_variable_name(StopVariable, T), :shutdn)
-    add_to_cost!(psi_container, devices, make_variable_name(OnVariable, T), :fixed)
-    return
-end
-
-function cost_function(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+function AddCostSpec(
+    ::Type{T},
     ::Type{ThermalMultiStartUnitCommitment},
+    psi_container::PSIContainer,
+) where {T <: PSY.ThermalGen}
+    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        #variable_cost = PSY.get_variable, uses SOS by default
+        shut_down_cost = PSY.get_shut_down,
+        fixed_cost = fixed_cost_func,
+        sos_status = VARIABLE,
+    )
+end
+
+"""
+Cost function for generators formulated as No-Min
+"""
+function cost_function!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-)
-    resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
-    #Variable Cost component
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        :no_load,
-    )
-    add_to_cost!(
-        psi_container,
-        devices,
-        make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        :fixed,
+) where {T <: PSY.ThermalGen}
+    no_min_spec = AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
     )
 
-    function _ps_cost!(
-        d::PSY.ThermalMultiStart,
-        cost_component::PSY.VariableCost,
-        var_name::Symbol,
-        bin_var::Symbol,
-        dt::Float64,
-        sign::Float64 = 1.0,
-    )
-        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        index = PSY.get_name(d)
-        cost_array = cost_component.cost
-        all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
-        variable = get_variable(psi_container, var_name)[index, :]
-        bin = get_variable(psi_container, bin_var)[index, :]
-        if !haskey(psi_container.variables, :PWL_cost_vars)
-            time_steps = model_time_steps(psi_container)
-            container = add_var_container!(
-                psi_container,
-                :PWL_cost_vars,
-                [index],
-                time_steps,
-                1:length(cost_component);
-                sparse = true,
-            )
-        else
-            container = get_variable(psi_container, :PWL_cost_vars)
-        end
-        for (t, var) in enumerate(variable)
-            c, pwl_vars = _pwlgencost_sos!(psi_container, var, cost_array, bin[t])
-            for (ix, v) in enumerate(pwl_vars)
-                container[(index, t, ix)] = v
+    for g in devices
+        component_name = PSY.get_name(g)
+        op_cost = PSY.get_operation_cost(g)
+        cost_component = PSY.get_variable(op_cost)
+        if isa(cost_component, PSY.VariableCost{Array{Tuple{Float64, Float64}, 1}})
+            @debug "PWL cost function detected for device $(component_name) using ThermalDispatchNoMin"
+            slopes = PSY.get_slopes(cost_component)
+            if any(slopes .< 0) || !pwlparamcheck(cost_component)
+                throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost."))
             end
-            JuMP.add_to_expression!(gen_cost, c)
-        end
-
-        return sign * gen_cost * dt
-    end
-
-    for d in devices
-        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
-        cost_expression = _ps_cost!(
-            d,
-            cost_component,
-            make_variable_name(ActivePowerVariable, PSY.ThermalMultiStart),
-            make_variable_name(OnVariable, PSY.ThermalMultiStart),
-            dt,
-        )
-        T_ce = typeof(cost_expression)
-        T_cf = typeof(psi_container.cost_function)
-        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
-            psi_container.cost_function += cost_expression
-        else
-            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
-        end
-    end
-
-    ## Start up cost
-    function _ps_cost!(d::PSY.ThermalMultiStart, cost_component::StartUpStages)
-        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        startup_var = (HotStartVariable, WarmStartVariable, ColdStartVariable)
-        for st in 1:PSY.get_start_types(d)
-            JuMP.add_to_expression!(
-                gen_cost,
-                ps_cost!(
-                    psi_container,
-                    make_variable_name(startup_var[st], PSY.ThermalMultiStart),
-                    PSY.get_name(d),
-                    cost_component[st],
-                    dt,
-                    1.0,
-                ),
+            if slopes[1] != 0.0
+                @debug "PWL has no 0.0 intercept for generator $(PSY.get_name(g))"
+                # adds a first intercept a x = 0.0 and Y below the intercept of the first tuple to make convex equivalent
+                first_pair = PSY.get_cost(cost_component)[1]
+                cost_function_data = deepcopy(cost_component.cost)
+                intercept_point = (0.0, first_pair - COST_EPSILON)
+                cost_function_data = vcat(intercept_point, cost_function_data)
+                corrected_slopes = PSY.get_slopes(cost_function_data)
+                @assert slope_convexity_check(slopes)
+            else
+                cost_function_data = cost_component.cost
+            end
+            pwl_gencost_linear!(
+                psi_container,
+                no_min_spec,
+                component_name,
+                cost_function_data,
             )
-        end
-        return gen_cost
-
-    end
-
-    for d in devices
-        cost_component = PSY.get_startup(PSY.get_operation_cost(d))
-        cost_expression = _ps_cost!(d, cost_component)
-        T_ce = typeof(cost_expression)
-        T_cf = typeof(psi_container.cost_function)
-        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
-            psi_container.cost_function += cost_expression
         else
-            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
+            add_to_cost!(psi_container, no_min_spec, op_cost, component_name)
         end
     end
     return
@@ -1388,7 +1247,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.ThermalGen}
     return NodalExpressionSpec(
-        "get_max_active_power",
+        "max_active_power",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,

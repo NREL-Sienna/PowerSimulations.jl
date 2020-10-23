@@ -66,7 +66,6 @@ function construct_device!(
     D <: AbstractStorageFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-
     devices = get_available_components(St, sys)
 
     if !validate_available_devices(St, devices)

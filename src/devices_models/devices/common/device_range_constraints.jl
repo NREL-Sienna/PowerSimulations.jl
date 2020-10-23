@@ -242,7 +242,7 @@ function _apply_timeseries_range_constraint_spec!(
         variable_name,
         spec.bin_variable_name,
         isnothing(spec.parameter_name) ? nothing :
-            UpdateRef{T}(spec.parameter_name, spec.forecast_label),
+        UpdateRef{T}(spec.parameter_name, spec.forecast_label),
     )
     spec.constraint_func(psi_container, ts_inputs)
     return

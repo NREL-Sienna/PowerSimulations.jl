@@ -36,23 +36,14 @@ function service_requirement_constraint!(
         for r in contributing_services
     ]
 
-    if use_forecast_data && PSY.has_forecasts(service)
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
-            PSY.Deterministic,
-            service,
-            initial_time,
-            "get_requirement",
-            length(time_steps),
-        )))
-    else
-        ts_vector = ones(time_steps[end])
-    end
+    ts_vectors = [get_time_series(psi_container, s, "requirement") for s in contributing_services]
+    ts_vector = sum(hcat(ts_vectors...), dims = 2)
 
     requirement = PSY.get_requirement(service)
     if parameters
         param = get_parameter_array(
             psi_container,
-            UpdateRef{SR}(SERVICE_REQUIREMENT, "get_requirement"),
+            UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"),
         )
         for t in time_steps
             param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])

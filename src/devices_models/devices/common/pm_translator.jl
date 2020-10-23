@@ -211,7 +211,6 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
 end
 
 function pass_to_pm(sys::PSY.System, time_periods::Int)
-
     ac_lines, dc_lines, PMmap_ac, PMmap_dc = get_branches_to_pm(sys)
     buses = PSY.get_components(PSY.Bus, sys)
     pm_buses, PMmap_buses = get_buses_to_pm(buses)
