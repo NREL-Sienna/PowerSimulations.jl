@@ -146,11 +146,12 @@ branches = Dict()
 services = Dict()
 devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+    :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-    :HydroEnergyReservoir =>
+    :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),    :HydroEnergyReservoir =>
         DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage),
 )
-template_hydro_st_standard_uc =
+template_hydro_st_uc =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 
 ## ED with HydroEnergyReservoir Model Ref

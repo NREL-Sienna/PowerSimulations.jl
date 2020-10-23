@@ -435,15 +435,16 @@ function build_c_sys5_bat(; kwargs...)
                 ini_time = timestamp(ren_timeseries_DA[t][ix])[1]
                 forecast_data[ini_time] = ren_timeseries_DA[t][ix]
             end
-            add_time_series!(c_sys5_bat, r, Deterministic("max_active_power", forecast_data))
+            add_time_series!(
+                c_sys5_bat,
+                r,
+                Deterministic("max_active_power", forecast_data),
+            )
         end
     end
 
     if get(kwargs, :add_reserves, false)
-        reserve_bat = reserve5_re(get_components(
-            RenewableDispatch,
-            c_sys5_bat,
-        ))
+        reserve_bat = reserve5_re(get_components(RenewableDispatch, c_sys5_bat))
         add_service!(c_sys5_bat, reserve_bat[1], get_components(GenericBattery, c_sys5_bat))
         add_service!(c_sys5_bat, reserve_bat[2], get_components(GenericBattery, c_sys5_bat))
         # ORDC
@@ -1015,6 +1016,11 @@ function build_c_sys5_hy_uc(; kwargs...)
                 h,
                 Deterministic("storage_capacity", forecast_data),
             )
+            add_time_series!(
+                c_sys5_hy_uc,
+                h,
+                Deterministic("storage_target", forecast_data),
+            )
         end
         for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
@@ -1142,6 +1148,11 @@ function build_c_sys5_hy_ed(; kwargs...)
                 c_sys5_hy_ed,
                 l,
                 Deterministic("storage_capacity", forecast_data),
+            )
+            add_time_series!(
+                c_sys5_hy_ed,
+                l,
+                Deterministic("storage_target", forecast_data),
             )
         end
         for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
@@ -1357,8 +1368,11 @@ TEST_SYSTEMS = Dict(
         build = build_c_sys14,
         time_series_in_memory = true,
     ),
-    "c_sys14_dc" =>
-        (description = "14-bus system with DC line", build = build_c_sys14_dc, time_series_in_memory = true),
+    "c_sys14_dc" => (
+        description = "14-bus system with DC line",
+        build = build_c_sys14_dc,
+        time_series_in_memory = true,
+    ),
     "c_sys5" => (
         description = "5-bus system",
         build = build_c_sys5,

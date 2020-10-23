@@ -591,7 +591,7 @@ function test_load_simulation(file_path::String)
         stages_definition = Dict(
             "UC" => Stage(
                 GenericOpProblem,
-                template_hydro_st_standard_uc,
+                template_hydro_st_uc,
                 #template_uc,
                 c_sys5_hy_uc,
                 #c_sys5_uc,
