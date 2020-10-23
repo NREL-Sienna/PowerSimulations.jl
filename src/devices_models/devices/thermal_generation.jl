@@ -1226,14 +1226,18 @@ function cost_function!(
             else
                 cost_function_data = cost_component.cost
             end
-            pwl_gencost_linear!(
-                psi_container,
-                no_min_spec,
-                component_name,
-                cost_function_data,
-            )
+            time_steps = model_time_steps(psi_container)
+            for t in time_steps
+                pwl_gencost_linear!(
+                    psi_container,
+                    no_min_spec,
+                    component_name,
+                    cost_function_data,
+                    t,
+                )
+            end
         else
-            add_to_cost!(psi_container, no_min_spec, op_cost, component_name)
+            add_to_cost!(psi_container, no_min_spec, op_cost, g)
         end
     end
     return
