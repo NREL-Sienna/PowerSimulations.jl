@@ -148,7 +148,8 @@ devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-    :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),    :HydroEnergyReservoir =>
+    :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
+    :HydroEnergyReservoir =>
         DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage),
 )
 template_hydro_st_uc =
