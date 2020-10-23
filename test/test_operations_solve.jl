@@ -397,10 +397,7 @@ end
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
-    PTDF_ref = IdDict{System, PTDF}(
-        c_sys5 => build_PTDF5(),
-        c_sys5_dc => build_PTDF5_dc(),
-    )
+    PTDF_ref = IdDict{System, PTDF}(c_sys5 => build_PTDF5(), c_sys5_dc => build_PTDF5_dc())
 
     for net in networks, p in parameters_value, sys in systems
         @info("Test solve UC with $(net) network")
