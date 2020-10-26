@@ -318,10 +318,10 @@ end
     networks = [ACPPowerModel, DCPPowerModel]
     models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
     test_results = Dict{Any, Float64}(
-        (ACPPowerModel, HydroDispatchReservoirBudget) => 296125.0,
-        (DCPPowerModel, HydroDispatchReservoirBudget) => 294795.0,
-        (ACPPowerModel, HydroDispatchReservoirStorage) => 330862.0,
-        (DCPPowerModel, HydroDispatchReservoirStorage) => 329531.0,
+        (ACPPowerModel, HydroDispatchReservoirBudget) => 338977.0,
+        (DCPPowerModel, HydroDispatchReservoirBudget) => 337646.0,
+        (ACPPowerModel, HydroDispatchReservoirStorage) => 303157.0,
+        (DCPPowerModel, HydroDispatchReservoirStorage) => 301826.0,
     )
     parameters_value = [true, false]
 
@@ -357,8 +357,8 @@ end
     net = DCPPowerModel
     models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
     test_results = Dict{Any, Float64}(
-        HydroCommitmentReservoirBudget => 294795.0,
-        HydroCommitmentReservoirStorage => 329531.0,
+        HydroCommitmentReservoirBudget => 337646.0,
+        HydroCommitmentReservoirStorage => 301826.0,
     )
 
     for mod in models, p in parameters_value
