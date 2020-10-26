@@ -216,15 +216,16 @@ function build_c_sys5_re(; kwargs...)
             add_time_series!(c_sys5_re, serv, Deterministic("requirement", forecast_data))
         end
         for (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_re))
-            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            forecast_data = SortedDict{Dates.DateTime, Vector{IS.PWL}}()
             for t in 1:2
                 ini_time = timestamp(ORDC_cost_ts[t])[1]
-                forecast_data[ini_time] = ORDC_cost_ts[t]
+                forecast_data[ini_time] = TimeSeries.values(ORDC_cost_ts[t])
             end
+            resolution = timestamp(ORDC_cost_ts[1])[2] - timestamp(ORDC_cost_ts[1])[1]
             set_variable_cost!(
                 c_sys5_re,
                 serv,
-                Deterministic("variable_cost", forecast_data),
+                Deterministic("variable_cost", forecast_data, resolution),
             )
         end
     end
@@ -396,15 +397,16 @@ function build_c_sys5_hyd(; kwargs...)
             add_time_series!(c_sys5_hyd, serv, Deterministic("requirement", forecast_data))
         end
         for (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_hyd))
-            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            forecast_data = SortedDict{Dates.DateTime, Vector{IS.PWL}}()
             for t in 1:2
                 ini_time = timestamp(ORDC_cost_ts[t])[1]
-                forecast_data[ini_time] = ORDC_cost_ts[t]
+                forecast_data[ini_time] = TimeSeries.values(ORDC_cost_ts[t])
             end
+            resolution = timestamp(ORDC_cost_ts[1])[2] - timestamp(ORDC_cost_ts[1])[1]
             set_variable_cost!(
                 c_sys5_hyd,
                 serv,
-                Deterministic("variable_cost", forecast_data),
+                Deterministic("variable_cost", forecast_data, resolution),
             )
         end
     end
@@ -468,15 +470,16 @@ function build_c_sys5_bat(; kwargs...)
             add_time_series!(c_sys5_bat, serv, Deterministic("requirement", forecast_data))
         end
         for (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_bat))
-            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            forecast_data = SortedDict{Dates.DateTime, Vector{IS.PWL}}()
             for t in 1:2
                 ini_time = timestamp(ORDC_cost_ts[t])[1]
-                forecast_data[ini_time] = ORDC_cost_ts[t]
+                forecast_data[ini_time] = TimeSeries.values(ORDC_cost_ts[t])
             end
+            resolution = timestamp(ORDC_cost_ts[1])[2] - timestamp(ORDC_cost_ts[1])[1]
             set_variable_cost!(
                 c_sys5_bat,
                 serv,
-                Deterministic("variable_cost", forecast_data),
+                Deterministic("variable_cost", forecast_data, resolution),
             )
         end
     end
@@ -534,15 +537,16 @@ function build_c_sys5_il(; kwargs...)
             add_time_series!(c_sys5_il, serv, Deterministic("requirement", forecast_data))
         end
         for (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_il))
-            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            forecast_data = SortedDict{Dates.DateTime, Vector{IS.PWL}}()
             for t in 1:2
                 ini_time = timestamp(ORDC_cost_ts[t])[1]
-                forecast_data[ini_time] = ORDC_cost_ts[t]
+                forecast_data[ini_time] = TimeSeries.values(ORDC_cost_ts[t])
             end
+            resolution = timestamp(ORDC_cost_ts[1])[2] - timestamp(ORDC_cost_ts[1])[1]
             set_variable_cost!(
                 c_sys5_il,
                 serv,
-                Deterministic("variable_cost", forecast_data),
+                Deterministic("variable_cost", forecast_data, resolution),
             )
         end
     end
@@ -881,15 +885,16 @@ function build_c_sys5_uc(; kwargs...)
             add_time_series!(c_sys5_uc, serv, Deterministic("requirement", forecast_data))
         end
         for (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_uc))
-            forecast_data = SortedDict{Dates.DateTime, TimeArray}()
+            forecast_data = SortedDict{Dates.DateTime, Vector{IS.PWL}}()
             for t in 1:2
                 ini_time = timestamp(ORDC_cost_ts[t])[1]
-                forecast_data[ini_time] = ORDC_cost_ts[t]
+                forecast_data[ini_time] = TimeSeries.values(ORDC_cost_ts[t])
             end
+            resolution = timestamp(ORDC_cost_ts[1])[2] - timestamp(ORDC_cost_ts[1])[1]
             set_variable_cost!(
                 c_sys5_uc,
                 serv,
-                Deterministic("variable_cost", forecast_data),
+                Deterministic("variable_cost", forecast_data, resolution),
             )
         end
     end
