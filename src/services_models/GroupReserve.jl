@@ -44,11 +44,9 @@ function service_requirement_constraint!(
         if use_slacks
             resource_expression += slack_vars[t]
         end
-        constraint[name, t] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            resource_expression >= requirement
-        )
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, resource_expression >= requirement)
     end
-    
+
     return
 end
