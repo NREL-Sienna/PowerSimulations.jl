@@ -208,7 +208,7 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
-        moi_tests(op_problem, p, 648, 0, 120, 240, 72, false)
+        moi_tests(op_problem, p, 384, 0, 120, 216, 24, false)
     end
 end
 

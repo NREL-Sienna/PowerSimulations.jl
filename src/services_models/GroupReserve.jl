@@ -24,7 +24,6 @@ function service_requirement_constraint!(
     contributing_services::Vector{<:PSY.Service},
 ) where {SR <: PSY.StaticReserveGroup}
     parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
     @debug initial_time
     time_steps = model_time_steps(psi_container)
@@ -36,42 +35,18 @@ function service_requirement_constraint!(
         for r in contributing_services
     ]
 
-    # TODO: should we make a get_time_series method for the StaticReserveGroup that handles the following two lines?
-    ts_vectors =
-        [get_time_series(psi_container, s, "requirement") for s in contributing_services]
-    ts_vector = sum(hcat(ts_vectors...), dims = 2)
-
     requirement = PSY.get_requirement(service)
-    if parameters
-        param = get_parameter_array(
-            psi_container,
-            UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"),
-        )
-        for t in time_steps
-            param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
-            resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
-            for reserve_variable in reserve_variables
-                JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
-            end
-            if use_slacks
-                resource_expression += slack_vars[t]
-            end
-            constraint[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                resource_expression >= param[name, t] * requirement
-            )
+    for t in time_steps
+        resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
+        for reserve_variable in reserve_variables
+            JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
         end
-    else
-        for t in time_steps
-            resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
-            for reserve_variable in reserve_variables
-                JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
-            end
-            constraint[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                resource_expression >= ts_vector[t] * requirement
-            )
+        if use_slacks
+            resource_expression += slack_vars[t]
         end
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, resource_expression >= requirement)
     end
+
     return
 end
