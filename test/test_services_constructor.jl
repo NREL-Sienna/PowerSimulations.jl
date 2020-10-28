@@ -262,3 +262,25 @@ end
         )
     )
 end
+
+@testset "Test StaticReserve" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :UpReserve => ServiceModel(StaticReserve{ReserveUp}, RangeReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_uc = build_system("c_sys5_uc")
+    static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)
+    add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
+    op_problem = OperationsProblem(TestOpProblem, model_template, c_sys5_uc)
+    @test typeof(op_problem) <: OperationsProblem
+end
