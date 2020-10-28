@@ -139,7 +139,7 @@ function construct_service!(
         modify_device_model!(devices_template, model, contributing_devices)
 
         # Cost Function
-        cost_function!(psi_container, service, model.formulation)
+        cost_function!(psi_container, service, model)
     end
     return
 end

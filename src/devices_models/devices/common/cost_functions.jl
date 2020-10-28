@@ -9,8 +9,7 @@ struct AddCostSpec
     start_up_cost::Union{Nothing, Function}
     shut_down_cost::Union{Nothing, Function}
     fixed_cost::Union{Nothing, Function}
-    # Not Currently in use. For future extensions
-    addtional_linear_terms::Dict{String, Function}
+    addtional_linear_terms::Dict{String, Symbol}
 end
 
 function AddCostSpec(;
@@ -24,7 +23,7 @@ function AddCostSpec(;
     start_up_cost = nothing,
     shut_down_cost = nothing,
     fixed_cost = nothing,
-    addtional_linear_terms = Dict{String, Function}(),
+    addtional_linear_terms = Dict{String, Symbol}(),
 )
     return AddCostSpec(
         variable_type,
@@ -49,6 +48,17 @@ function AddCostSpec(
     error("AddCostSpec is not implemented for $T / $U")
 end
 
+set_addtional_linear_terms!(spec::AddCostSpec, key, value) =
+    spec.addtional_linear_terms[key] = value
+
+function add_service_variables!(spec::AddCostSpec, services)
+    for service in services
+        name = PSY.get_name(service)
+        set_addtional_linear_terms!(spec, name, make_variable_name(name, typeof(service)))
+    end
+    return
+end
+
 """
 Add variables to the PSIContainer for a service.
 """
@@ -59,10 +69,12 @@ function cost_function!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
 ) where {T <: PSY.Component, U <: AbstractDeviceFormulation}
-    spec = AddCostSpec(T, U, psi_container)
-    @debug T, spec
     for d in devices
-        add_to_cost!(psi_container, spec, PSY.get_operation_cost(d), PSY.get_name(d))
+        spec = AddCostSpec(T, U, psi_container)
+        @debug T, spec
+        services = PSY.get_services(d)
+        add_service_variables!(spec, services)
+        add_to_cost!(psi_container, spec, PSY.get_operation_cost(d), d)
     end
     return
 end
@@ -149,10 +161,11 @@ function linear_gen_cost!(
     var_name::Symbol,
     component_name::String,
     linear_term::Float64,
+    time_period::Int,
 )
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    variable = get_variable(psi_container, var_name)[component_name, :]
+    variable = get_variable(psi_container, var_name)[component_name, time_period]
     gen_cost = sum(variable) * linear_term
     add_to_cost_expression!(psi_container, gen_cost * dt)
     return
@@ -186,59 +199,58 @@ function pwl_gencost_sos!(
     spec::AddCostSpec,
     component_name::String,
     cost_data::Vector{NTuple{2, Float64}},
+    time_period::Int,
 )
     var_name = make_variable_name(spec.variable_type, spec.component_type)
-    variable = get_variable(psi_container, var_name)[component_name, :]
+    variable = get_variable(psi_container, var_name)[component_name, time_period]
     settings_ext = get_ext(get_settings(psi_container))
     export_pwl_vars = get_export_pwl_vars(psi_container.settings)
     @debug export_pwl_vars
     total_gen_cost = JuMP.AffExpr(0.0)
 
     if spec.sos_status == NO_VARIABLE
-        time_steps = model_time_steps(psi_container)
-        bin = ones(length(time_steps))
+        bin = 1.0
         @debug("Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)")
     elseif spec.sos_status == PARAMETER
         param_key = encode_symbol(OnVariable, string(spec.component_type))
         bin =
-            get_parameter_container(psi_container, param_name).parameter_array[component_name]
+            get_parameter_container(psi_container, param_key).parameter_array[component_name]
         @debug("Using Piecewise Linear cost function with parameter $(param_key)")
     elseif spec.sos_status == VARIABLE
         var_key = make_variable_name(OnVariable, spec.component_type)
-        bin = get_variable(psi_container, var_key)[component_name, :]
+        bin = get_variable(psi_container, var_key)[component_name, time_period]
         @debug("Using Piecewise Linear cost function with variable $(var_key)")
     else
         @assert false
     end
 
-    for (t, var) in enumerate(variable)
-        gen_cost = JuMP.AffExpr(0.0)
-        pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data))
-        for i in 1:length(cost_data)
-            pwlvars[i] = JuMP.@variable(
-                psi_container.JuMPmodel,
-                base_name = "{$(var)}_{sos}",
-                start = 0.0,
-                lower_bound = 0.0,
-                upper_bound = 1.0
-            )
-            if export_pwl_vars
-                container = _get_pwl_vars_container(psi_container)
-                container[(component_name, t, i)] = pwlvars[i]
-            end
-            JuMP.add_to_expression!(gen_cost, cost_data[i][1] * pwlvars[i])
+    gen_cost = JuMP.AffExpr(0.0)
+    pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data))
+    for i in 1:length(cost_data)
+        pwlvars[i] = JuMP.@variable(
+            psi_container.JuMPmodel,
+            base_name = "{$(variable)}_{sos}",
+            start = 0.0,
+            lower_bound = 0.0,
+            upper_bound = 1.0
+        )
+        if export_pwl_vars
+            container = _get_pwl_vars_container(psi_container)
+            container[(component_name, time_period, i)] = pwlvars[i]
         end
-        JuMP.@constraint(psi_container.JuMPmodel, sum(pwlvars) == bin[t])
-        JuMP.@constraint(
-            psi_container.JuMPmodel,
-            pwlvars in MOI.SOS2(collect(1:length(pwlvars)))
-        )
-        JuMP.@constraint(
-            psi_container.JuMPmodel,
-            var == sum([var_ * cost_data[ix][2] for (ix, var_) in enumerate(pwlvars)])
-        )
-        JuMP.add_to_expression!(total_gen_cost, gen_cost)
+        JuMP.add_to_expression!(gen_cost, cost_data[i][1] * pwlvars[i])
     end
+    JuMP.@constraint(psi_container.JuMPmodel, sum(pwlvars) == bin)
+    JuMP.@constraint(
+        psi_container.JuMPmodel,
+        pwlvars in MOI.SOS2(collect(1:length(pwlvars)))
+    )
+    JuMP.@constraint(
+        psi_container.JuMPmodel,
+        variable == sum([var_ * cost_data[ix][2] for (ix, var_) in enumerate(pwlvars)])
+    )
+    JuMP.add_to_expression!(total_gen_cost, gen_cost)
+
     return total_gen_cost
 end
 
@@ -273,35 +285,34 @@ function pwl_gencost_linear!(
     spec::AddCostSpec,
     component_name::String,
     cost_data::Vector{NTuple{2, Float64}},
+    time_period::Int,
 )
     var_name = make_variable_name(spec.variable_type, spec.component_type)
-    variable = get_variable(psi_container, var_name)[component_name, :]
+    variable = get_variable(psi_container, var_name)[component_name, time_period]
     settings_ext = get_ext(get_settings(psi_container))
     export_pwl_vars = get_export_pwl_vars(psi_container.settings)
     @debug export_pwl_vars
     total_gen_cost = JuMP.AffExpr(0.0)
 
-    for (t, var) in enumerate(variable)
-        gen_cost = JuMP.AffExpr(0.0)
-        total_gen = JuMP.AffExpr(0.0)
-        for i in 1:length(cost_data)
-            pwlvar = JuMP.@variable(
-                psi_container.JuMPmodel,
-                base_name = "{$(var)}_{pwl}",
-                start = 0.0,
-                lower_bound = 0.0,
-                upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i]
-            )
-            if export_pwl_vars
-                container = _get_pwl_vars_container(psi_container)
-                container[(component_name, t, i)] = pwlvar
-            end
-            JuMP.add_to_expression!(gen_cost, PSY.get_slopes(cost_data)[i] * pwlvar)
-            JuMP.add_to_expression!(total_gen, pwlvar)
+    gen_cost = JuMP.AffExpr(0.0)
+    total_gen = JuMP.AffExpr(0.0)
+    for i in 1:length(cost_data)
+        pwlvar = JuMP.@variable(
+            psi_container.JuMPmodel,
+            base_name = "{$(variable)}_{pwl}",
+            start = 0.0,
+            lower_bound = 0.0,
+            upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i]
+        )
+        if export_pwl_vars
+            container = _get_pwl_vars_container(psi_container)
+            container[(component_name, time_period, i)] = pwlvar
         end
-        JuMP.@constraint(psi_container.JuMPmodel, var == total_gen)
-        JuMP.add_to_expression!(total_gen_cost, gen_cost)
+        JuMP.add_to_expression!(gen_cost, PSY.get_slopes(cost_data)[i] * pwlvar)
+        JuMP.add_to_expression!(total_gen, pwlvar)
     end
+    JuMP.@constraint(psi_container.JuMPmodel, variable == total_gen)
+    JuMP.add_to_expression!(total_gen_cost, gen_cost)
     return total_gen_cost
 end
 
@@ -312,21 +323,31 @@ function add_to_cost!(
     psi_container::PSIContainer,
     spec::AddCostSpec,
     cost_data::PSY.TwoPartCost,
-    component_name::String,
+    component::PSY.Component,
 )
+    component_name = PSY.get_name(component)
+    time_steps = model_time_steps(psi_container)
     @debug "TwoPartCost" component_name
     if !(spec.variable_cost === nothing)
         variable_cost = spec.variable_cost(cost_data)
-        variable_cost!(psi_container, spec, component_name, variable_cost)
+        for t in time_steps
+            variable_cost!(psi_container, spec, component_name, variable_cost, t)
+        end
     else
         @warn "No variable cost defined for $component_name"
     end
 
-    if spec.has_status_variable
+    if !isnothing(spec.fixed_cost) && spec.has_status_variable
         @debug "Fixed cost" component_name
-        on_var = get_variable(psi_container, OnVariable, spec.component_type)
-        fixed_cost = linear_gen_cost!(psi_container, spec, component_name, spec.fixed_cost)
-        add_to_cost_expression!(psi_container, fixed_cost)
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(OnVariable, spec.component_type),
+                component_name,
+                spec.fixed_cost,
+                t,
+            )
+        end
     end
     return
 end
@@ -338,42 +359,55 @@ function add_to_cost!(
     psi_container::PSIContainer,
     spec::AddCostSpec,
     cost_data::PSY.ThreePartCost,
-    component_name::String,
+    component::PSY.Component,
 )
+    component_name = PSY.get_name(component)
     @debug "ThreePartCost" component_name
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     variable_cost = PSY.get_variable(cost_data)
-    variable_cost!(psi_container, spec, component_name, variable_cost)
+    time_steps = model_time_steps(psi_container)
+    for t in time_steps
+        variable_cost!(psi_container, spec, component_name, variable_cost, t)
+    end
 
     if !isnothing(spec.start_up_cost)
         @debug "Start up cost" component_name
-        linear_gen_cost!(
-            psi_container,
-            make_variable_name(StartVariable, spec.component_type),
-            component_name,
-            spec.start_up_cost(cost_data) * spec.multiplier,
-        )
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(StartVariable, spec.component_type),
+                component_name,
+                spec.start_up_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
     end
 
     if !isnothing(spec.shut_down_cost)
         @debug "Shut down cost" component_name
-        linear_gen_cost!(
-            psi_container,
-            make_variable_name(StopVariable, spec.component_type),
-            component_name,
-            spec.shut_down_cost(cost_data) * spec.multiplier,
-        )
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(StopVariable, spec.component_type),
+                component_name,
+                spec.shut_down_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
     end
 
     if !isnothing(spec.fixed_cost) && spec.has_status_variable
         @debug "Fixed cost" component_name
-        linear_gen_cost!(
-            psi_container,
-            make_variable_name(OnVariable, spec.component_type),
-            component_name,
-            spec.fixed_cost(cost_data) * spec.multiplier,
-        )
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(OnVariable, spec.component_type),
+                component_name,
+                spec.fixed_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
     end
 
     return
@@ -386,36 +420,47 @@ function add_to_cost!(
     psi_container::PSIContainer,
     spec::AddCostSpec,
     cost_data::PSY.MultiStartCost,
-    component_name::String,
+    component::PSY.Component,
 )
+    component_name = PSY.get_name(component)
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    time_steps = model_time_steps(psi_container)
 
     if !isnothing(spec.fixed_cost) && spec.has_status_variable
         @debug "Fixed cost" component_name
-        linear_gen_cost!(
-            psi_container,
-            make_variable_name(OnVariable, spec.component_type),
-            component_name,
-            spec.fixed_cost(cost_data) * spec.multiplier,
-        )
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(OnVariable, spec.component_type),
+                component_name,
+                spec.fixed_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
     end
 
     if !isnothing(spec.shut_down_cost)
         @debug "Shut down cost" component_name
-        linear_gen_cost!(
-            psi_container,
-            make_variable_name(StopVariable, spec.component_type),
-            component_name,
-            spec.shut_down_cost(cost_data) * spec.multiplier,
-        )
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(StopVariable, spec.component_type),
+                component_name,
+                spec.shut_down_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
     end
 
     # Original implementation had SOS by default
     variable_cost_data = PSY.get_cost(PSY.get_variable(cost_data))
     if !all(iszero.(last.(variable_cost_data)))
-        gen_cost = pwl_gencost_sos!(psi_container, spec, component_name, variable_cost_data)
-        add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
+        for t in time_steps
+            gen_cost =
+                pwl_gencost_sos!(psi_container, spec, component_name, variable_cost_data, t)
+            add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
+        end
     else
         @debug "No Variable Cost associated with $(component_name)"
     end
@@ -425,12 +470,15 @@ function add_to_cost!(
     for (st, var_type) in
         enumerate((HotStartVariable, WarmStartVariable, ColdStartVariable))
         var_name = make_variable_name(var_type, spec.component_type)
-        linear_gen_cost!(
-            psi_container,
-            var_name,
-            component_name,
-            start_cost_data[st] * spec.multiplier,
-        )
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                var_name,
+                component_name,
+                start_cost_data[st] * spec.multiplier,
+                t,
+            )
+        end
     end
 
     return
@@ -443,13 +491,20 @@ function add_to_cost!(
     psi_container::PSIContainer,
     spec::AddCostSpec,
     cost_data::PSY.MarketBidCost,
-    component_name::String,
+    component::PSY.Component,
 )
+    component_name = PSY.get_name(component)
     @debug "Market Bid" component_name
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    variable_cost = PSY.get_variable(cost_data)
-    variable_cost!(psi_container, spec, component_name, variable_cost)
+    time_steps = model_time_steps(psi_container)
+    initial_time = model_initial_time(psi_container)
+    # TODO: Use mthods from PowerSystems to eliminate this step
+    variable_cost_forecast = get_time_series(psi_container, component, "variable_cost")
+    variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
+    for t in time_steps
+        variable_cost!(psi_container, spec, component_name, variable_cost_forecast[t], t)
+    end
 
     if !isnothing(spec.start_up_cost)
         # Start-up costs
@@ -457,37 +512,94 @@ function add_to_cost!(
         for (st, var_type) in
             enumerate((HotStartVariable, WarmStartVariable, ColdStartVariable))
             var_name = make_variable_name(var_type, spec.component_type)
-            linear_gen_cost!(
-                psi_container,
-                var_name,
-                component_name,
-                start_cost_data[st] * spec.multiplier,
-            )
+            for t in time_steps
+                linear_gen_cost!(
+                    psi_container,
+                    var_name,
+                    component_name,
+                    spec.start_up_cost[st] * spec.multiplier,
+                    t,
+                )
+            end
         end
     end
 
     if spec.has_status_variable
         @debug "no_load cost" component_name
-        linear_gen_cost!(
-            psi_container,
-            make_variable_name(OnVariable, spec.component_type),
-            component_name,
-            PSY.get_no_load(cost_data) * spec.multiplier,
-        )
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(OnVariable, spec.component_type),
+                component_name,
+                PSY.get_no_load(cost_data) * spec.multiplier,
+                t,
+            )
+        end
     end
 
     if !isnothing(spec.shut_down_cost)
         @debug "Shut down cost" component_name
-        linear_gen_cost!(
-            psi_container,
-            make_variable_name(StopVariable, spec.component_type),
-            component_name,
-            spec.shut_down_cost(cost_data) * spec.multiplier,
-        )
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(StopVariable, spec.component_type),
+                component_name,
+                spec.shut_down_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
     end
 
-    # Here goes the services bids
+    #Service Cost Bid
+    ancillary_services = PSY.get_ancillary_services(cost_data)
+    for service in ancillary_services
+        add_service_bid_cost!(psi_container, spec, component, service)
+    end
+    return
+end
 
+function add_service_bid_cost!(
+    psi_container::PSIContainer,
+    spec::AddCostSpec,
+    component::PSY.Component,
+    service::PSY.Service,
+)
+    return
+end
+
+function add_service_bid_cost!(
+    psi_container::PSIContainer,
+    spec::AddCostSpec,
+    component::PSY.Component,
+    service::PSY.Reserve{T},
+) where {T <: PSY.ReserveDirection}
+    # TODO: Use mthods from PowerSystems to eliminate this step
+    forecast_data = get_time_series(psi_container, component, PSY.get_name(service))
+    forecast_data = map(PSY.VariableCost, forecast_data)
+    time_steps = model_time_steps(psi_container)
+    if eltype(forecast_data) == PSY.VariableCost{Float64}
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                spec.addtional_linear_terms[PSY.get_name(service)],
+                PSY.get_name(component),
+                forecast_data,
+                t,
+            )
+        end
+    else
+        error("Current version only supports linear cost bid for services, please change the forecast data for $(PSY.get_name(service))")
+    end
+    return
+end
+
+function add_service_bid_cost!(
+    psi_container::PSIContainer,
+    spec::AddCostSpec,
+    component::PSY.Component,
+    service::PSY.ReserveDemandCurve{T},
+) where {T <: PSY.ReserveDirection}
+    error("Current version doesn't supports cost bid for  ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))")
     return
 end
 
@@ -501,7 +613,13 @@ Adds to the cost function cost terms for sum of variables with common factor to 
 * component_name::String: The component_name of the variable container
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 """
-function variable_cost!(::PSIContainer, ::AddCostSpec, component_name::String, ::Nothing)
+function variable_cost!(
+    ::PSIContainer,
+    ::AddCostSpec,
+    component_name::String,
+    ::Nothing,
+    ::Int,
+)
     @debug "Empty Variable Cost" component_name
     return
 end
@@ -521,11 +639,18 @@ function variable_cost!(
     spec::AddCostSpec,
     component_name::String,
     cost_component::PSY.VariableCost{Float64},
+    time_period::Int,
 )
     @debug "Linear Variable Cost" component_name
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     cost_data = PSY.get_cost(cost_component)
-    linear_gen_cost!(psi_container, var_name, component_name, cost_data * spec.multiplier)
+    linear_gen_cost!(
+        psi_container,
+        var_name,
+        component_name,
+        cost_data * spec.multiplier,
+        time_period,
+    )
     return
 end
 
@@ -555,6 +680,7 @@ function variable_cost!(
     spec::AddCostSpec,
     component_name::String,
     cost_component::PSY.VariableCost{NTuple{2, Float64}},
+    time_period::Int,
 )
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     cost_data = PSY.get_cost(cost_component)
@@ -562,7 +688,7 @@ function variable_cost!(
         @debug "Quadratic Variable Cost" component_name
         resolution = model_resolution(psi_container)
         dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-        variable = get_variable(psi_container, var_name)[component_name, :]
+        variable = get_variable(psi_container, var_name)[component_name, time_period]
         gen_cost = sum(variable .^ 2) * cost_data[1] + sum(variable) * cost_data[2]
         add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
     else
@@ -572,6 +698,7 @@ function variable_cost!(
             var_name,
             component_name,
             cost_data[2] * spec.multiplier,
+            time_period,
         )
     end
     return
@@ -606,6 +733,7 @@ function variable_cost!(
     spec::AddCostSpec,
     component_name::String,
     cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
+    time_period::Int,
 )
     @debug "PWL Variable Cost" component_name
     resolution = model_resolution(psi_container)
@@ -622,9 +750,11 @@ function variable_cost!(
         @warn("The cost function provided for $(var_name) device is not compatible with a linear PWL cost function.
         An SOS-2 formulation will be added to the model.
         This will result in additional binary variables added to the model.")
-        gen_cost = pwl_gencost_sos!(psi_container, spec, component_name, cost_data)
+        gen_cost =
+            pwl_gencost_sos!(psi_container, spec, component_name, cost_data, time_period)
     else
-        gen_cost = pwl_gencost_linear!(psi_container, spec, component_name, cost_data)
+        gen_cost =
+            pwl_gencost_linear!(psi_container, spec, component_name, cost_data, time_period)
     end
     add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
     return
