@@ -79,6 +79,36 @@ function service_requirement_constraint!(
     return
 end
 
+function service_requirement_constraint!(
+    psi_container::PSIContainer,
+    service::SR,
+    ::ServiceModel{SR, T},
+) where {SR <: PSY.StaticReserve, T <: AbstractReservesFormulation}
+    parameters = model_has_parameters(psi_container)
+    initial_time = model_initial_time(psi_container)
+    @debug initial_time
+    time_steps = model_time_steps(psi_container)
+    name = PSY.get_name(service)
+    constraint = get_constraint(psi_container, make_constraint_name(REQUIREMENT, SR))
+    reserve_variable = get_variable(psi_container, name, SR)
+    use_slacks = get_services_slack_variables(psi_container.settings)
+
+    use_slacks && (slack_vars = reserve_slacks(psi_container, name))
+
+    requirement = PSY.get_requirement(service)
+    for t in time_steps
+        resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
+        JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
+        if use_slacks
+            resource_expression += slack_vars[t]
+        end
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, resource_expression >= requirement)
+    end
+
+    return
+end
+
 function cost_function!(
     psi_container::PSIContainer,
     service::SR,
