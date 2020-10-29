@@ -1,6 +1,9 @@
 using Cbc
 using PowerSimulations
 using PowerSystems
+using DataStructures
+using InfrastructureSystems
+const IS = InfrastructureSystems
 const PSI = PowerSimulations
 const PSY = PowerSystems
 Cbc_optimizer = optimizer_with_attributes(Cbc.Optimizer)

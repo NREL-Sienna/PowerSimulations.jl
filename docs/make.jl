@@ -3,12 +3,13 @@ using PowerSystems
 using PowerSimulations
 using Literate
 using PowerGraphics
+using DataStructures
 const PG = PowerGraphics
 
 folders = Dict(
     #  "Operations" => readdir("docs/src/Operations"),
     #  "Simulations" => readdir("docs/src/Simulations"),
-    "PowerGraphics" => readdir("docs/src/PowerGraphics"),
+    # "PowerGraphics" => readdir("docs/src/PowerGraphics"),
 )
 
 for (name, folder) in folders
