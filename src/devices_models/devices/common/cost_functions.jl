@@ -508,6 +508,7 @@ function add_to_cost!(
 
     if !isnothing(spec.start_up_cost)
         # Start-up costs
+        start_cost_data = PSY.get_start_up(cost_data)
         @debug "start up cost" component_name
         for (st, var_type) in
             enumerate((HotStartVariable, WarmStartVariable, ColdStartVariable))
@@ -517,7 +518,7 @@ function add_to_cost!(
                     psi_container,
                     var_name,
                     component_name,
-                    spec.start_up_cost[st] * spec.multiplier,
+                    start_cost_data[st] * spec.multiplier,
                     t,
                 )
             end
