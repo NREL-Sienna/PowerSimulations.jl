@@ -2,7 +2,7 @@
     logfile = "testlog.txt"
     msg = "test log message"
     orig = Logging.global_logger()
-    logger = configure_logging(; filename = logfile)
+    logger = PSI.configure_logging(; filename = logfile)
 
     try
         with_logger(logger) do
