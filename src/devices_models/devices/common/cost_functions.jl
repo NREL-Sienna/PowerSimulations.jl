@@ -507,20 +507,15 @@ function add_to_cost!(
     end
 
     if !isnothing(spec.start_up_cost)
-        # Start-up costs
-        @debug "start up cost" component_name
-        for (st, var_type) in
-            enumerate((HotStartVariable, WarmStartVariable, ColdStartVariable))
-            var_name = make_variable_name(var_type, spec.component_type)
-            for t in time_steps
-                linear_gen_cost!(
-                    psi_container,
-                    var_name,
-                    component_name,
-                    spec.start_up_cost[st] * spec.multiplier,
-                    t,
-                )
-            end
+        @debug "Start up cost" component_name
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(StartVariable, spec.component_type),
+                component_name,
+                spec.start_up_cost(cost_data) * spec.multiplier,
+                t,
+            )
         end
     end
 
