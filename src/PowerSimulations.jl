@@ -149,7 +149,6 @@ export get_con_index
 export get_var_index
 export get_result_variable
 export get_variable_names
-export configure_logging
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
