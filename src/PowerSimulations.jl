@@ -254,7 +254,6 @@ include("core/definitions.jl")
 ################################################################################
 # Includes
 
-include("logging.jl")
 include("utils.jl")
 
 #Models and constructors
