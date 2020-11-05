@@ -1,6 +1,6 @@
 # PowerSimulations.jl
 
-[![Build Status](https://img.shields.io/travis/com/NREL-SIIP/PowerSimulations.jl/master.svg)](https://travis-ci.com/NREL-SIIP/PowerSimulations.jl)
+![Master - CI](https://github.com/NREL-SIIP/PowerSimulations.jl/workflows/Master%20-%20CI/badge.svg?branch=master)
 [![codecov](https://codecov.io/gh/NREL-SIIP/PowerSimulations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL-SIIP/PowerSimulations.jl)
 [![Documentation](https://github.com/NREL-SIIP/PowerSimulations.jl/workflows/Documentation/badge.svg)](https://nrel-siip.github.io/PowerSimulations.jl/latest)
 [![DOI](https://zenodo.org/badge/109443246.svg)](https://zenodo.org/badge/latestdoi/109443246)
@@ -16,26 +16,29 @@
 
 The flexible modeling framework is enabled through a modular set of capabilities that enable scalable power system analysis and exploration of new analysis methods. The modularity of PowerSimulations results from the structure of the simulations enabled by the package:
 
- - _Simulations_ define a set of problems that can be solved using numerical techniques.
+- _Simulations_ define a set of problems that can be solved using numerical techniques.
 
 For example, an annual production cost modeling simulation can be created by formulating a unit commitment model against system data to assemble a set of 365 daily time-coupled scheduling problems.
 
-### _Simulations_ enabled by PowerSimulations:
- - Production Cost Modeling
- - Load Flow and Contingency Analysis - _TODO_
+### _Simulations_ enabled by PowerSimulations
 
-### _Model_ formulations contained in PowerSimulations:
- - [Unit Commitment](https://en.wikipedia.org/wiki/Unit_commitment_problem_in_electrical_power_production)
- - [Economic Dispatch](https://en.wikipedia.org/wiki/Economic_dispatch)
+- Production Cost Modeling
+- Load Flow and Contingency Analysis - _TODO_
 
-## Installation
+### _Model_ formulations contained in PowerSimulations
+
+- [Unit Commitment](https://en.wikipedia.org/wiki/Unit_commitment_problem_in_electrical_power_production)
+- [Economic Dispatch](https://en.wikipedia.org/wiki/Economic_dispatch)
+
+### Installation
 
 ```julia
 julia> ]
 (v1.5) pkg> add PowerSystems
 (v1.5) pkg> add PowerSimulations
 ```
-## Usage
+
+### Usage
 
 `PowerSimulations.jl` uses [PowerSystems.jl](https://github.com/NREL/PowerSystems.jl) to handle the data used in the simulations.
 
