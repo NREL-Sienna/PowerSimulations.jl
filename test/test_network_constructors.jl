@@ -68,9 +68,9 @@ end
         c_sys14_dc => build_PTDF14_dc(),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 264],
-        c_sys14 => [600, 0, 600, 600, 816],
-        c_sys14_dc => [600, 48, 552, 552, 768],
+        c_sys5 => [264, 0, 264, 264, 168],
+        c_sys14 => [600, 0, 600, 600, 504],
+        c_sys14_dc => [600, 48, 552, 552, 456],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
