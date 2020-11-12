@@ -73,3 +73,13 @@ function psi_checksolve_test(
     @test termination_status(op_problem.psi_container.JuMPmodel) in status
     @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], expected_result, atol = tol)
 end
+
+function psi_ptdf_lmps(op_problem::OperationsProblem, ptdf)
+    res = solve!(op_problem)
+    λ = convert(Array, res.dual_values[:nodal_balance])
+    μ = convert(Array, res.dual_values[:network_flow])
+    μmax = convert(Array, res.dual_values[:RateLimit_ub__Line])
+    μmin = convert(Array, res.dual_values[:RateLimit_lb__Line])
+    lmps = (μ .+ μmin .- μmax) * ptdf.data .+ λ
+    return lmps
+end

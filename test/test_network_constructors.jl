@@ -103,6 +103,8 @@ end
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.ALMOST_OPTIMAL, MOI.OPTIMAL])
+        # TODO: add values from Bθ formulation to compare
+        psi_ptdf_lmps(ps_model, PTDF_ref[sys])
     end
 
     #PTDF input Error testing
