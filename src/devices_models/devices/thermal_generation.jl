@@ -1219,7 +1219,7 @@ function cost_function!(
                 # adds a first intercept a x = 0.0 and Y below the intercept of the first tuple to make convex equivalent
                 first_pair = PSY.get_cost(cost_component)[1]
                 cost_function_data = deepcopy(cost_component.cost)
-                intercept_point = (0.0, first_pair - COST_EPSILON)
+                intercept_point = (0.0, first_pair[2] - COST_EPSILON)
                 cost_function_data = vcat(intercept_point, cost_function_data)
                 corrected_slopes = PSY.get_slopes(cost_function_data)
                 @assert slope_convexity_check(slopes)
