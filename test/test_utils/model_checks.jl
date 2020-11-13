@@ -78,8 +78,6 @@ function psi_ptdf_lmps(op_problem::OperationsProblem, ptdf)
     res = solve!(op_problem)
     λ = convert(Array, res.dual_values[:nodal_balance])
     μ = convert(Array, res.dual_values[:network_flow])
-    μmax = convert(Array, res.dual_values[:RateLimit_ub__Line])
-    μmin = convert(Array, res.dual_values[:RateLimit_lb__Line])
-    lmps = (μ .+ μmin .- μmax) * ptdf.data .+ λ
+    lmps =  λ .- (μ * ptdf.data )
     return lmps
 end
