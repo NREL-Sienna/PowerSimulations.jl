@@ -78,6 +78,12 @@ function psi_ptdf_lmps(op_problem::OperationsProblem, ptdf)
     res = solve!(op_problem)
     λ = convert(Array, res.dual_values[:nodal_balance])
     μ = convert(Array, res.dual_values[:network_flow])
-    lmps =  λ .- (μ * ptdf.data )
-    return lmps
+    buses = get_components(Bus, op_problem.sys)
+    lmps = OrderedDict()
+    for bus in buses
+        lmps[get_name(bus)] = μ * ptdf[:, get_number(bus)]
+    end
+    lmps = DataFrame(lmps)
+    lmps = λ .- lmps
+    return lmps[!, sort(propertynames(lmps))]
 end

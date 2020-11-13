@@ -81,6 +81,7 @@ end
             optimizer = OSQP_optimizer,
             use_parameters = p,
             PTDF = PTDF_ref[sys],
+            constraint_duals = constraint_names,
         )
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
@@ -162,6 +163,46 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
     end
+end
+
+@testset "Test Locational Marginal Prices between DC lossless with PowerModels vs StandardPTDFModel" begin
+    network = [DCPPowerModel, StandardPTDFModel]
+    sys = build_system("c_sys5")
+    dual_constraint = [
+        [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)],
+        [:RateLimit_lb__Line, :RateLimit_ub__Line, :nodal_balance, :network_flow],
+    ]
+
+    parameters = [true, false]
+    ptdf = build_PTDF5()
+    lmps = []
+    for (ix, net) in enumerate(network), p in parameters
+        ps_model = OperationsProblem(
+            TestOpProblem,
+            net,
+            sys;
+            optimizer = OSQP_optimizer,
+            use_parameters = p,
+            PTDF = ptdf,
+            constraint_duals = dual_constraint[ix],
+        )
+        construct_device!(ps_model, :Thermal, thermal_model)
+        construct_device!(ps_model, :Load, load_model)
+        construct_network!(ps_model, net)
+        construct_device!(ps_model, :Line, line_model)
+        construct_device!(ps_model, :Tf, transformer_model)
+        construct_device!(ps_model, :TTf, ttransformer_model)
+        construct_device!(ps_model, :DCLine, dc_line)
+
+        if net == StandardPTDFModel
+            push!(lmps, abs.(psi_ptdf_lmps(ps_model, ptdf)))
+        else
+            res = solve!(ps_model)
+            duals = abs.(res.dual_values[:nodal_balance_active__Bus])
+            push!(lmps, duals[!, sort(propertynames(duals))])
+        end
+    end
+    @test isapprox(convert(Array, lmps[1]), convert(Array, lmps[2]), atol = 100.0)
 end
 
 @testset "Network Solve AC-PF PowerModels StandardACPModel" begin
