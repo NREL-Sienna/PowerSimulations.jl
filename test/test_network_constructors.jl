@@ -60,7 +60,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names =
-        [:RateLimit_lb__Line, :RateLimit_ub__Line, :system_balance, :network_flow]
+        [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow]
     parameters = [true, false]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => build_PTDF5(),
@@ -166,7 +166,7 @@ end
 @testset "Test Locational Marginal Prices between DC lossless with PowerModels vs StandardPTDFModel" begin
     network = [DCPPowerModel, StandardPTDFModel]
     sys = build_system("c_sys5")
-    dual_constraint = [[:nodal_balance_active__Bus], [:system_balance, :network_flow]]
+    dual_constraint = [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow]]
     services = Dict{Symbol, ServiceModel}()
     devices = Dict(:Thermal => thermal_model, :Load => load_model)
     branches = Dict{Symbol, DeviceModel}(

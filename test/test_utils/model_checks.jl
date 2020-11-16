@@ -76,7 +76,7 @@ end
 
 function psi_ptdf_lmps(op_problem::OperationsProblem, ptdf)
     res = solve!(op_problem)
-    λ = convert(Array, res.dual_values[:system_balance])
+    λ = convert(Array, res.dual_values[:CopperPlateBalance])
     μ = convert(Array, res.dual_values[:network_flow])
     buses = get_components(Bus, op_problem.sys)
     lmps = OrderedDict()
