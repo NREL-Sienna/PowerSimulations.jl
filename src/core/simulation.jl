@@ -137,7 +137,6 @@ function _create_cache(
     ic_key::ICKey{TimeDurationON, T},
     caches::Union{Nothing, Vector{<:AbstractCache}},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
         cache = TimeStatusChange(T, ON)
@@ -150,7 +149,6 @@ function _create_cache(
     ic_key::ICKey{TimeDurationOFF, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
         cache = TimeStatusChange(T, ON)
@@ -163,7 +161,6 @@ function _create_cache(
     ic_key::ICKey{EnergyLevel, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
-
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
         cache = StoredEnergy(T, ENERGY)
@@ -263,6 +260,7 @@ get_initial_time(s::Simulation) = s.initial_time
 get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
+get_current_time(s::Simulation) = s.internal.current_time
 
 function get_base_powers(s::Simulation)
     base_powers = Dict()
@@ -353,9 +351,6 @@ function _check_forecasts_sequence(sim::Simulation)
 end
 
 function _check_feedforward_chronologies(sim::Simulation)
-    if isempty(sim.sequence.feedforward_chronologies)
-        @info("No Feedforward Chronologies defined")
-    end
     for (key, chron) in sim.sequence.feedforward_chronologies
         check_chronology!(sim, key, chron)
     end
@@ -375,11 +370,10 @@ function _assign_feedforward_chronologies(sim::Simulation)
             destination_stage.internal.chronolgy_dict[stage_number] = chron
             source_stage = get_stage(sim, stage_number)
             source_stage_resolution =
-                IS.time_period_conversion(PSY.get_forecasts_resolution(source_stage.sys))
-            # This line keeps track of the executions of a stage relative to other stages.
-            # This might be needed in the future to run multiple stages. For now it is disabled
-            #destination_stage.internal.synchronized_executions[stage_number] =
-            #Int(source_stage_resolution / destination_stage_interval)
+                IS.time_period_conversion(PSY.get_time_series_resolution(source_stage.sys))
+            execution_wait_count = Int(source_stage_resolution / destination_stage_interval)
+            set_execution_wait_count!(get_trigger(chron), execution_wait_count)
+            initialize_trigger_count!(get_trigger(chron))
         end
     end
     return
@@ -395,28 +389,20 @@ function _get_simulation_initial_times!(sim::Simulation)
     sim_ini_time = get_initial_time(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
-        PSY.check_forecast_consistency(stage_system)
-        interval = PSY.get_forecasts_interval(stage_system)
-        horizon = get_stage_horizon(get_sequence(sim), stage_name)
-        seq_interval = get_stage_interval(get_sequence(sim), stage_name)
-        if PSY.are_forecasts_contiguous(stage_system)
-            stage_initial_times[stage_number] =
-                PSY.generate_initial_times(stage_system, seq_interval, horizon)
-            if isempty(stage_initial_times[stage_number])
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
-                        forecast interval ($interval) definitions are not compatible"))
-            end
-        else
-            stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
-            interval = PSY.get_forecasts_interval(stage_system)
-            if interval != seq_interval
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
-                        forecast interval ($interval) definitions are not compatible"))
-            end
-            for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
-                if !(element + interval == stage_initial_times[stage_number][ix + 1])
-                    throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
-                end
+        system_interval = PSY.get_forecast_interval(stage_system)
+        stage_interval = get_stage_interval(get_sequence(sim), stage_name)
+        if system_interval != stage_interval
+            throw(IS.ConflictingInputsError("Simulation interval ($stage_interval) and forecast interval ($system_interval) definitions are not compatible"))
+        end
+        stage_horizon = get_stage_horizon(get_sequence(sim), stage_name)
+        system_horizon = PSY.get_forecast_horizon(stage_system)
+        if stage_horizon > system_horizon
+            throw(IS.ConflictingInputsError("Simulation horizon ($stage_horizon) and forecast horizon ($system_horizon) definitions are not compatible"))
+        end
+        stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
+        for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
+            if !(element + system_interval == stage_initial_times[stage_number][ix + 1])
+                throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
             end
         end
         if !isnothing(sim_ini_time) &&
@@ -463,12 +449,14 @@ function _check_steps(
     for (stage_number, stage_name) in sim.sequence.order
         stage = sim.stages[stage_name]
         execution_counts = get_executions(stage)
-        @assert length(findall(x -> x == stage_number, sim.sequence.execution_order)) ==
-                execution_counts
+        transitions =
+            sim.sequence.execution_order[vcat(1, diff(sim.sequence.execution_order)) .== 1]
+        @assert length(findall(x -> x == stage_number, sim.sequence.execution_order)) /
+                length(findall(x -> x == stage_number, transitions)) == execution_counts
         forecast_count = length(stage_initial_times[stage_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
-            desired amount of simulation steps ($(sim.steps*stage.internal.execution_count))."))
+            desired amount of simulation steps ($(sim.steps*get_execution_count(stage)))."))
         end
     end
     return
@@ -595,7 +583,10 @@ function _build!(sim::Simulation)
             throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         end
         stage_interval = get_stage_interval(sim, stage_name)
-        stage.internal.executions = Int(get_step_resolution(sim.sequence) / stage_interval)
+        step_resolution =
+            stage_number == 1 ? get_step_resolution(sim.sequence) :
+            get_stage_interval(sim.sequence, sim.sequence.order[stage_number - 1])
+        stage.internal.executions = Int(step_resolution / stage_interval)
         stage.internal.number = stage_number
         stage.internal.name = stage_name
         _attach_feedforward!(sim, stage_name)
@@ -628,11 +619,17 @@ function initial_condition_update!(
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
         # We pass the simulation cache instead of the whole simulation to avoid definition dependencies. All the inputs to calculate_ic_quantity are defined before the simulation object
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache)
+        quantity = calculate_ic_quantity(
+            ini_cond_key,
+            ic,
+            var_value,
+            simulation_cache,
+            get_resolution(stage),
+        )
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
-            sim.internal.current_time,
+            get_current_time(sim),
             sim.internal.time_step,
             ini_cond_key,
             ic,
@@ -655,6 +652,8 @@ function initial_condition_update!(
     simulation_cache = sim.internal.simulation_cache
     execution_index = get_execution_order(sim)
     execution_count = get_execution_count(stage)
+    stage_name = get_stage_name(sim, stage)
+    interval = get_stage_interval(sim, stage_name)
     for ic in initial_conditions
         name = device_name(ic)
         current_ix = get_current_execution_index(sim)
@@ -676,11 +675,12 @@ function initial_condition_update!(
             name,
             ic.update_ref,
         )
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache)
+        quantity =
+            calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
-            sim.internal.current_time,
+            get_current_time(sim),
             sim.internal.time_step,
             ini_cond_key,
             ic,
@@ -702,9 +702,6 @@ end
 ################################Cache Update################################################
 # TODO: Need to be careful here if 2 stages modify the same cache. This function might need
 # dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
-"""
-TimeStatusChange Cache is updated by calculating the final status of the stage before running again. It only stores the final status and time at status once the remaining stages have been completed.
-"""
 function update_cache!(
     sim::Simulation,
     ::CacheKey{TimeStatusChange, D},
@@ -719,7 +716,8 @@ function update_cache!(
         #Store the initial condition
         c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
         c.value[name][:series][1] = c.value[name][:status]
-        c.value[name][:current] = 2
+        c.value[name][:current] = 1
+        c.value[name][:elapsed] = Dates.Second(0)
         for t in t_range
             # Implemented this way because JuMPDenseAxisArrays doesn't support pasing a ranges Array[name, 1:n]
             device_status = JuMP.value.(variable[name, t])
@@ -777,14 +775,21 @@ function update_parameter!(
     horizon = length(model_time_steps(stage.internal.psi_container))
     for d in components
         # RECORDER TODO: Parameter Update from forecast
-        forecast = PSY.get_forecast(
+        # TODO: Improve file read performance
+        forecast = PSY.get_time_series(
             PSY.Deterministic,
             d,
-            initial_forecast_time,
-            get_accessor_func(param_reference),
-            horizon,
+            get_data_label(param_reference);
+            start_time = initial_forecast_time,
+            count = 1,
         )
-        ts_vector = TS.values(PSY.get_data(forecast))
+        ts_vector = IS.get_time_series_values(
+            d,
+            forecast,
+            initial_forecast_time;
+            len = horizon,
+            ignore_scaling_factors = true,
+        )
         component_name = PSY.get_name(d)
         for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
             value = ts_vector[ix]
@@ -808,14 +813,20 @@ function update_parameter!(
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, stage.sys, ix)
-        forecast = PSY.get_forecast(
+        forecast = PSY.get_time_series(
             PSY.Deterministic,
             service,
-            initial_forecast_time,
-            get_accessor_func(param_reference),
-            horizon,
+            get_data_label(param_reference);
+            start_time = initial_forecast_time,
+            count = 1,
         )
-        ts_vector = TS.values(PSY.get_data(forecast))
+        ts_vector = IS.get_time_series_values(
+            service,
+            forecast,
+            initial_forecast_time;
+            len = horizon,
+            ignore_scaling_factors = true,
+        )
         for (jx, value) in enumerate(ts_vector)
             JuMP.fix(get_parameter_array(container)[ix, jx], value)
         end
@@ -840,7 +851,7 @@ function update_parameter!(
             chronology,
             param_reference,
             param_array,
-            sim.internal.current_time,
+            get_current_time(sim),
         )
     end
 
@@ -944,14 +955,14 @@ function _execute!(sim::Simulation; kwargs...)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
                 IS.@record :simulation_status SimulationStepEvent(
-                    sim.internal.current_time,
+                    get_current_time(sim),
                     sim.internal.time_step,
                     step,
                     "start",
                 )
                 for (ix, stage_number) in enumerate(execution_order)
                     IS.@record :simulation_status SimulationStageEvent(
-                        sim.internal.current_time,
+                        get_current_time(sim),
                         sim.internal.time_step,
                         step,
                         stage_number,
@@ -968,11 +979,11 @@ function _execute!(sim::Simulation; kwargs...)
                         sim.internal.current_time = sim.internal.date_ref[stage_number]
                         sim.internal.time_step = sim.internal.time_step_ref[stage_number]
                         sim.sequence.current_execution_index = ix
-                        @info "Starting run $run_name $(sim.internal.current_time)"
+                        @info "Starting run $run_name $(get_current_time(sim))"
                         raw_results_path = joinpath(
                             sim.internal.raw_dir,
                             run_name,
-                            replace_chars("$(sim.internal.current_time)", ":", "-"),
+                            replace_chars("$(get_current_time(sim))", ":", "-"),
                         )
                         mkpath(raw_results_path)
                         # Is first run of first stage? Yes -> don't update stage
@@ -981,7 +992,7 @@ function _execute!(sim::Simulation; kwargs...)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
                             stage_name = get_stage_name(sim, stage)
-                            run_stage(step, stage, sim.internal.current_time, sim.internal.time_step, raw_results_path, sim.internal.store)
+                            run_stage(step, stage, get_current_time(sim), sim.internal.time_step, raw_results_path, sim.internal.store)
                             sim.internal.run_count[step][stage_number] += 1
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
@@ -994,7 +1005,7 @@ function _execute!(sim::Simulation; kwargs...)
                         end
                     end
                     IS.@record :simulation_status SimulationStageEvent(
-                        sim.internal.current_time,
+                        get_current_time(sim),
                         sim.internal.time_step,
                         step,
                         stage_number,
@@ -1004,7 +1015,7 @@ function _execute!(sim::Simulation; kwargs...)
                     sim.internal.time_step_ref[stage_number] += 1
                 end
                 IS.@record :simulation_status SimulationStepEvent(
-                    sim.internal.current_time,
+                    get_current_time(sim),
                     sim.internal.time_step,
                     step,
                     "done",

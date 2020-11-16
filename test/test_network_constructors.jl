@@ -62,15 +62,15 @@ end
     constraint_names =
         [:RateLimit_lb__Line, :RateLimit_ub__Line, :nodal_balance, :network_flow]
     parameters = [true, false]
-    PTDF_ref = Dict{UUIDs.UUID, PTDF}(
-        IS.get_uuid(c_sys5) => build_PTDF5(),
-        IS.get_uuid(c_sys14) => build_PTDF14(),
-        IS.get_uuid(c_sys14_dc) => build_PTDF14_dc(),
+    PTDF_ref = IdDict{System, PTDF}(
+        c_sys5 => build_PTDF5(),
+        c_sys14 => build_PTDF14(),
+        c_sys14_dc => build_PTDF14_dc(),
     )
-    test_results = Dict{UUIDs.UUID, Vector{Int}}(
-        IS.get_uuid(c_sys5) => [264, 0, 264, 264, 264],
-        IS.get_uuid(c_sys14) => [600, 0, 600, 600, 816],
-        IS.get_uuid(c_sys14_dc) => [600, 48, 552, 552, 768],
+    test_results = IdDict{System, Vector{Int}}(
+        c_sys5 => [264, 0, 264, 264, 264],
+        c_sys14 => [600, 0, 600, 600, 816],
+        c_sys14_dc => [600, 48, 552, 552, 768],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
@@ -80,7 +80,7 @@ end
             sys;
             optimizer = OSQP_optimizer,
             use_parameters = p,
-            PTDF = PTDF_ref[IS.get_uuid(sys)],
+            PTDF = PTDF_ref[sys],
         )
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
@@ -93,11 +93,11 @@ end
         moi_tests(
             ps_model,
             p,
-            test_results[IS.get_uuid(sys)][1],
-            test_results[IS.get_uuid(sys)][2],
-            test_results[IS.get_uuid(sys)][3],
-            test_results[IS.get_uuid(sys)][4],
-            test_results[IS.get_uuid(sys)][5],
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
             false,
         )
         psi_constraint_test(ps_model, constraint_names)
@@ -160,7 +160,6 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
     end
-
 end
 
 @testset "Network Solve AC-PF PowerModels StandardACPModel" begin
@@ -239,9 +238,7 @@ end
         construct_device!(ps_model, :Line, line_model)
         construct_device!(ps_model, :DCLine, dc_line)
         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
-
     end
-
 end
 
 @testset "Network AC-PF PowerModels non-convex models" begin
@@ -264,7 +261,6 @@ end
         construct_device!(ps_model, :Line, line_model)
         @test !isnothing(ps_model.psi_container.pm)
     end
-
 end
 
 @testset "Network AC-PF PowerModels quadratic loss approximations models" begin
@@ -285,7 +281,6 @@ end
         construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.psi_container.pm)
     end
-
 end
 
 @testset "Network AC-PF PowerModels quadratic relaxations models" begin
@@ -306,7 +301,6 @@ end
         construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.psi_container.pm)
     end
-
 end
 
 @testset "Network Unsupported Power Model Formulations" begin
@@ -319,11 +313,9 @@ end
 
         @test_throws ArgumentError construct_network!(ps_model, network)
     end
-
 end
 
 @testset "All PowerModels models" begin
-
     networks = [
         (PM.ACPPowerModel, fast_ipopt_optimizer),
         (PM.ACRPowerModel, fast_ipopt_optimizer),
@@ -358,5 +350,4 @@ end
         construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.psi_container.pm)
     end
-
 end

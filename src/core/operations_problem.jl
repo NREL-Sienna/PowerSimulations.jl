@@ -175,7 +175,6 @@ function OperationsProblem{M}(
         sys,
         PSIContainer(T, sys, settings, jump_model),
     )
-
 end
 
 """
@@ -209,7 +208,7 @@ get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
-get_base_power(op_problem::OperationsProblem) = PSY.get_base_power(op_problem.sys)
+get_model_base_power(op_problem::OperationsProblem) = PSY.get_base_power(op_problem.sys)
 get_jump_model(op_problem::OperationsProblem) = get_jump_model(op_problem.psi_container)
 
 function reset!(op_problem::OperationsProblem)
@@ -480,14 +479,14 @@ function solve!(
     vars_result = get_variables_value(op_problem)
     param_values = get_parameters_value(get_psi_container(op_problem))
     optimizer_log = get_optimizer_log(op_problem)
-    time_stamp = get_time_stamps(op_problem)
+    time_stamp = get_timestamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     base_power = PSY.get_base_power(op_problem.sys)
     dual_result = get_dual_values(op_problem)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
-    base_power = get_base_power(op_problem)
+    base_power = get_model_base_power(op_problem)
     merge!(optimizer_log, timed_log)
 
     results = OperationsProblemResults(
@@ -525,9 +524,9 @@ function get_optimizer_log(op_m::OperationsProblem)
 end
 
 # Function to create a dictionary for the time series of the simulation
-function get_time_stamps(op_problem::OperationsProblem)
+function get_timestamps(op_problem::OperationsProblem)
     initial_time = model_initial_time(get_psi_container(op_problem))
-    interval = PSY.get_forecasts_resolution(op_problem.sys)
+    interval = PSY.get_time_series_resolution(op_problem.sys)
     horizon = get_horizon(get_settings(get_psi_container(op_problem)))
     range_time = collect(initial_time:interval:(initial_time + interval .* horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])

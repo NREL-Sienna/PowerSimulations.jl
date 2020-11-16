@@ -24,7 +24,6 @@ function service_requirement_constraint!(
     contributing_services::Vector{<:PSY.Service},
 ) where {SR <: PSY.StaticReserveGroup}
     parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
     @debug initial_time
     time_steps = model_time_steps(psi_container)
@@ -36,49 +35,18 @@ function service_requirement_constraint!(
         for r in contributing_services
     ]
 
-    if use_forecast_data && PSY.has_forecasts(service)
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
-            PSY.Deterministic,
-            service,
-            initial_time,
-            "get_requirement",
-            length(time_steps),
-        )))
-    else
-        ts_vector = ones(time_steps[end])
+    requirement = PSY.get_requirement(service)
+    for t in time_steps
+        resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
+        for reserve_variable in reserve_variables
+            JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
+        end
+        if use_slacks
+            resource_expression += slack_vars[t]
+        end
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, resource_expression >= requirement)
     end
 
-    requirement = PSY.get_requirement(service)
-    if parameters
-        param = get_parameter_array(
-            psi_container,
-            UpdateRef{SR}(SERVICE_REQUIREMENT, "get_requirement"),
-        )
-        for t in time_steps
-            param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
-            resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
-            for reserve_variable in reserve_variables
-                JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
-            end
-            if use_slacks
-                resource_expression += slack_vars[t]
-            end
-            constraint[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                resource_expression >= param[name, t] * requirement
-            )
-        end
-    else
-        for t in time_steps
-            resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
-            for reserve_variable in reserve_variables
-                JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
-            end
-            constraint[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                resource_expression >= ts_vector[t] * requirement
-            )
-        end
-    end
     return
 end

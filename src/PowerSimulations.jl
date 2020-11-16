@@ -52,6 +52,8 @@ export HydroDispatchReservoirStorage
 export HydroCommitmentRunOfRiver
 export HydroCommitmentReservoirBudget
 export HydroCommitmentReservoirStorage
+export HydroDispatchPumpedStorage
+export HydroDispatchPumpedStoragewReservation
 ######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
@@ -148,7 +150,6 @@ export get_con_index
 export get_var_index
 export get_result_variable
 export get_variable_names
-export configure_logging
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
@@ -226,20 +227,14 @@ import PowerSystems
 import InfrastructureSystems
 # so that users have access to IS.Results interfaces
 import InfrastructureSystems:
-    get_base_power,
-    get_variables,
-    get_total_cost,
-    get_optimizer_log,
-    get_time_stamp,
-    write_results,
-    get_name
+    get_variables, get_total_cost, get_optimizer_log, write_results, get_timestamp, get_name
 export get_name
-export get_base_power
+export get_model_base_power
 export get_variables
 export get_dual_values
 export get_total_cost
 export get_optimizer_log
-export get_time_stamp
+export get_timestamp
 export write_results
 import PowerModels
 import TimerOutputs
@@ -261,7 +256,6 @@ include("core/definitions.jl")
 ################################################################################
 # Includes
 
-include("logging.jl")
 include("utils.jl")
 
 #Models and constructors

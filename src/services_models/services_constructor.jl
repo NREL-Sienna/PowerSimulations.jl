@@ -69,7 +69,7 @@ function construct_service!(
     if model_has_parameters(psi_container)
         container = add_param_container!(
             psi_container,
-            UpdateRef{SR}("service_requirement", "get_requirement"),
+            UpdateRef{SR}("service_requirement", "requirement"),
             names,
             time_steps,
         )
@@ -139,7 +139,7 @@ function construct_service!(
         modify_device_model!(devices_template, model, contributing_devices)
 
         # Cost Function
-        cost_function!(psi_container, service, model.formulation)
+        cost_function!(psi_container, service, model)
     end
     return
 end
@@ -198,7 +198,7 @@ function construct_service!(
     if model_has_parameters(psi_container)
         container = add_param_container!(
             psi_container,
-            UpdateRef{SR}("service_requirement", "get_requirement"),
+            UpdateRef{SR}("service_requirement", "requirement"),
             names,
             time_steps,
         )

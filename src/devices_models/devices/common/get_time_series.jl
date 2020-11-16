@@ -1,26 +1,29 @@
 function get_time_series(
     psi_container::PSIContainer,
-    device::PSY.Device,
+    component::PSY.Component,
     forecast_label::String,
 )
     initial_time = model_initial_time(psi_container)
     @debug initial_time
     use_forecast_data = model_uses_forecasts(psi_container)
     time_steps = model_time_steps(psi_container)
-    has_forecasts = PSY.has_forecasts(device)
-    if use_forecast_data && !has_forecasts
-        @warn "$(summary(device)) does not have forecasts and model is specified as using forecasts)"
-    end
-    if use_forecast_data && has_forecasts
-        forecast = PSY.get_forecast(
+    if use_forecast_data
+        forecast = PSY.get_time_series(
             PSY.Deterministic,
-            device,
-            initial_time,
-            forecast_label,
-            length(time_steps),
+            component,
+            forecast_label;
+            start_time = initial_time,
+            count = 1,
         )
-        return ts_vector = TS.values(PSY.get_data(forecast))
+        ts_vector = IS.get_time_series_values(
+            component,
+            forecast,
+            initial_time;
+            len = length(time_steps),
+            ignore_scaling_factors = true,
+        )
+        return ts_vector
     else
-        return ts_vector = ones(time_steps[end])
+        return ones(time_steps[end])
     end
 end

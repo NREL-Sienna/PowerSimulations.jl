@@ -67,15 +67,15 @@ end
     c_sys14 = build_system("c_sys14")
     c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
-    PTDF_ref = Dict{UUIDs.UUID, PTDF}(
-        IS.get_uuid(c_sys5) => build_PTDF5(),
-        IS.get_uuid(c_sys14) => build_PTDF14(),
-        IS.get_uuid(c_sys14_dc) => build_PTDF14_dc(),
+    PTDF_ref = IdDict{System, PTDF}(
+        c_sys5 => build_PTDF5(),
+        c_sys14 => build_PTDF14(),
+        c_sys14_dc => build_PTDF14_dc(),
     )
-    test_results = Dict{UUIDs.UUID, Float64}(
-        IS.get_uuid(c_sys5) => 340000.0,
-        IS.get_uuid(c_sys14) => 142000.0,
-        IS.get_uuid(c_sys14_dc) => 142000.0,
+    test_results = IdDict{System, Float64}(
+        c_sys5 => 340000.0,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
     )
 
     @info "Test solve ED with StandardPTDFModel network"
@@ -87,9 +87,9 @@ end
                 sys;
                 optimizer = OSQP_optimizer,
                 use_parameters = p,
-                PTDF = PTDF_ref[IS.get_uuid(sys)],
+                PTDF = PTDF_ref[sys],
             )
-            psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[IS.get_uuid(sys)], 10000)
+            psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
         end
     end
 end
@@ -127,7 +127,6 @@ end
             )
         end
     end
-
 end
 
 @testset "Solving ED With PowerModels with linear convex models" begin
@@ -161,14 +160,11 @@ end
                 test_results[sys],
                 10000,
             )
-
         end
     end
-
 end
 
 @testset "Operation Model Constructors with Slacks" begin
-
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
 
     thermal_gens = [ThermalDispatch]
@@ -253,7 +249,6 @@ end
             )
         end
     end
-
 end
 
 @testset "Solving ED Hydro System using Dispatch Run of River" begin
@@ -323,10 +318,10 @@ end
     networks = [ACPPowerModel, DCPPowerModel]
     models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
     test_results = Dict{Any, Float64}(
-        (ACPPowerModel, HydroDispatchReservoirBudget) => 296125.0,
-        (DCPPowerModel, HydroDispatchReservoirBudget) => 294795.0,
-        (ACPPowerModel, HydroDispatchReservoirStorage) => 330862.0,
-        (DCPPowerModel, HydroDispatchReservoirStorage) => 329531.0,
+        (ACPPowerModel, HydroDispatchReservoirBudget) => 338977.0,
+        (DCPPowerModel, HydroDispatchReservoirBudget) => 337646.0,
+        (ACPPowerModel, HydroDispatchReservoirStorage) => 303157.0,
+        (DCPPowerModel, HydroDispatchReservoirStorage) => 301826.0,
     )
     parameters_value = [true, false]
 
@@ -362,8 +357,8 @@ end
     net = DCPPowerModel
     models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
     test_results = Dict{Any, Float64}(
-        HydroCommitmentReservoirBudget => 294795.0,
-        HydroCommitmentReservoirStorage => 329531.0,
+        HydroCommitmentReservoirBudget => 337646.0,
+        HydroCommitmentReservoirStorage => 301826.0,
     )
 
     for mod in models, p in parameters_value
@@ -402,10 +397,7 @@ end
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
-    PTDF_ref = Dict{UUIDs.UUID, PTDF}(
-        IS.get_uuid(c_sys5) => build_PTDF5(),
-        IS.get_uuid(c_sys5_dc) => build_PTDF5_dc(),
-    )
+    PTDF_ref = IdDict{System, PTDF}(c_sys5 => build_PTDF5(), c_sys5_dc => build_PTDF5_dc())
 
     for net in networks, p in parameters_value, sys in systems
         @info("Test solve UC with $(net) network")
@@ -417,7 +409,7 @@ end
                 sys;
                 optimizer = GLPK_optimizer,
                 use_parameters = p,
-                PTDF = PTDF_ref[IS.get_uuid(sys)],
+                PTDF = PTDF_ref[sys],
             )
             psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
         end
@@ -494,7 +486,7 @@ function test_write_functions(file_path, op_problem, res)
         c_sys5_re = build_system("c_sys5_re")
         system = op_problem.sys
         params =
-            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__get_max_active_power__PowerLoad])
+            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__max_active_power__PowerLoad])
         params = PSI.axis_array_to_dataframe(params)
         devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
         multiplier = [PSY.get_active_power(devices[1])]
@@ -549,7 +541,7 @@ end
 
     @testset "test constraint duals in the operations problem" begin
         name = PSI.make_constraint_name("CopperPlateBalance")
-        for i in 1:ncol(get_time_stamp(res))
+        for i in 1:ncol(IS.get_timestamp(res))
             dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
             @test isapprox(dual, get_duals(res)[name][i, 1])
         end
