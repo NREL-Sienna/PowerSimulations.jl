@@ -8,7 +8,9 @@ function ptdf_networkflow(
     time_steps = model_time_steps(psi_container)
     network_flow =
         add_cons_container!(psi_container, :network_flow, PTDF.axes[1], time_steps)
-    system_balance = add_cons_container!(psi_container, :CopperPlateBalance, time_steps)
+
+    constraint_val = JuMPConstraintArray(undef, time_steps)
+    assign_constraint!(psi_container, "CopperPlateBalance", constraint_val)
     nodal_balance_expressions = psi_container.expressions[expression]
 
     branch_types = typeof.(branches)
@@ -61,7 +63,7 @@ function ptdf_networkflow(
             )
         end
 
-        system_balance[t] = JuMP.@constraint(
+        constraint_val[t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             sum(nodal_balance_expressions[:, t]) == 0
         )
