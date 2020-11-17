@@ -16,7 +16,7 @@ construct_device!(
 construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::DeviceModel{<:PSY.Branch, <:Type{UnboundedBranches}},
+    ::DeviceModel{<:PSY.Branch, <:UnboundedBranches},
     ::Type{<:PM.AbstractPowerModel},
 ) = nothing
 
@@ -56,6 +56,13 @@ function construct_device!(
     branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
     return
 end
+
+construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    ::DeviceModel{<:PSY.ACBranch, <:UnboundedACBranches},
+    ::Type{<:PM.AbstractActivePowerModel},
+) = nothing
 
 # For AC Power only. Implements Bounds on the active power and rating constraints on the aparent power
 function construct_device!(

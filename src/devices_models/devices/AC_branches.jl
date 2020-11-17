@@ -13,6 +13,7 @@ struct StaticTransformer <: AbstractBranchFormulation end
 struct StaticTransformerBounds <: AbstractBoundedBranchFormulation end
 struct StaticTransformerUnbounded <: AbstractBranchFormulation end
 
+const UnboundedACBranches = Union{StaticLineUnbounded, StaticTransformerUnbounded}
 # Not implemented yet
 # struct TapControl <: AbstractBranchFormulation end
 # struct PhaseControl <: AbstractBranchFormulation end
