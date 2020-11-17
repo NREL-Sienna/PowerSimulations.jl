@@ -8,8 +8,9 @@ function ptdf_networkflow(
     time_steps = model_time_steps(psi_container)
     network_flow =
         add_cons_container!(psi_container, :network_flow, PTDF.axes[1], time_steps)
-    nodal_balance =
-        add_cons_container!(psi_container, :nodal_balance, PTDF.axes[2], time_steps)
+
+    constraint_val = JuMPConstraintArray(undef, time_steps)
+    assign_constraint!(psi_container, "CopperPlateBalance", constraint_val)
     nodal_balance_expressions = psi_container.expressions[expression]
 
     branch_types = typeof.(branches)
@@ -28,13 +29,15 @@ function ptdf_networkflow(
         for br in branches
             flow_variable = get_variable(psi_container, FLOW_ACTIVE_POWER, typeof(br))
             name = PSY.get_name(br)
-            flow_expression = sum(
-                PTDF[name, PSY.get_number(b)] *
-                nodal_balance_expressions[PSY.get_number(b), t] for b in buses
-            )
+            line_flow = model_has_parameters(psi_container) ? zero(PGAE) : JuMP.AffExpr(0.0)
+            for b in buses
+                bus_number = PSY.get_number(b)
+                _flow = PTDF[name, bus_number] * nodal_balance_expressions[bus_number, t]
+                JuMP.add_to_expression!(line_flow, _flow)
+            end
             network_flow[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                flow_variable[name, t] == flow_expression
+                flow_variable[name, t] == line_flow
             )
         end
 
@@ -62,13 +65,10 @@ function ptdf_networkflow(
             )
         end
 
-        for b in buses
-            number = PSY.get_number(b)
-            nodal_balance[number, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                nodal_balance_expressions[number, t] == 0
-            )
-        end
+        constraint_val[t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            sum(nodal_balance_expressions[:, t]) == 0
+        )
     end
     return
 end

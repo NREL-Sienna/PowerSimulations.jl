@@ -535,8 +535,8 @@ function get_timestamps(op_problem::OperationsProblem)
 end
 
 function write_data(psi_container::PSIContainer, save_path::AbstractString; kwargs...)
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
+    file_type = get(kwargs, :file_type, Arrow)
+    if file_type == Arrow || file_type == CSV
         for (k, v) in get_variables(psi_container)
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
             variable = axis_array_to_dataframe(v)

@@ -5,7 +5,7 @@ using PowerModels
 using InfrastructureSystems
 using DataFrames
 using Dates
-using Feather
+using Arrow
 using JuMP
 using Test
 using Ipopt

@@ -73,3 +73,17 @@ function psi_checksolve_test(
     @test termination_status(op_problem.psi_container.JuMPmodel) in status
     @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], expected_result, atol = tol)
 end
+
+function psi_ptdf_lmps(op_problem::OperationsProblem, ptdf)
+    res = solve!(op_problem)
+    λ = convert(Array, res.dual_values[:CopperPlateBalance])
+    μ = convert(Array, res.dual_values[:network_flow])
+    buses = get_components(Bus, op_problem.sys)
+    lmps = OrderedDict()
+    for bus in buses
+        lmps[get_name(bus)] = μ * ptdf[:, get_number(bus)]
+    end
+    lmps = DataFrame(lmps)
+    lmps = λ .- lmps
+    return lmps[!, sort(propertynames(lmps))]
+end

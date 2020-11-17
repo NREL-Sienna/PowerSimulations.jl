@@ -245,7 +245,7 @@ import TimeSeries
 
 #I/O Imports
 import DataFrames
-import Feather
+import Arrow
 import JSON
 import CSV
 import SHA

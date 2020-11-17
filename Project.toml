@@ -4,10 +4,10 @@ authors = ["Jose Daniel Lara", "Clayton Barrows", "Daniel Thom", "Dheepak Krishn
 version = "0.7.0"
 
 [deps]
+Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-Feather = "becb17da-46f6-5d3c-ad1b-1c5fe96bc73c"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 InfrastructureSystems = "2cd47ed4-ca9b-11e9-27f2-ab636a7671f1"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
@@ -25,9 +25,9 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
 [compat]
+Arrow = "~0.4"
 CSV = "~0.8"
-DataFrames = "~0.21"
-Feather = "~0.5"
+DataFrames = "~0.22"
 InfrastructureSystems = "1"
 JSON = "0.21"
 JuMP = "~0.21"

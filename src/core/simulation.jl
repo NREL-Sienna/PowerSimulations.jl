@@ -82,7 +82,7 @@ function SimulationInternal(
         init_time,
         time_step,
         true,
-        false,
+        EMPTY,
         Dict{CacheKey, AbstractCache}(),
         make_simulation_store(simulation_dir),
         collect(unique_recorders),

@@ -60,7 +60,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names =
-        [:RateLimit_lb__Line, :RateLimit_ub__Line, :nodal_balance, :network_flow]
+        [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow]
     parameters = [true, false]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => build_PTDF5(),
@@ -68,9 +68,9 @@ end
         c_sys14_dc => build_PTDF14_dc(),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 264],
-        c_sys14 => [600, 0, 600, 600, 816],
-        c_sys14_dc => [600, 48, 552, 552, 768],
+        c_sys5 => [264, 0, 264, 264, 168],
+        c_sys14 => [600, 0, 600, 600, 504],
+        c_sys14_dc => [600, 48, 552, 552, 456],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
@@ -81,6 +81,7 @@ end
             optimizer = OSQP_optimizer,
             use_parameters = p,
             PTDF = PTDF_ref[sys],
+            constraint_duals = constraint_names,
         )
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
@@ -160,6 +161,44 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
     end
+end
+
+@testset "Test Locational Marginal Prices between DC lossless with PowerModels vs StandardPTDFModel" begin
+    network = [DCPPowerModel, StandardPTDFModel]
+    sys = build_system("c_sys5")
+    dual_constraint = [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow]]
+    services = Dict{Symbol, ServiceModel}()
+    devices = Dict(:Thermal => thermal_model, :Load => load_model)
+    branches = Dict{Symbol, DeviceModel}(
+        :Line => line_model,
+        :Tf => transformer_model,
+        :Ttf => ttransformer_model,
+        :DCLine => dc_line,
+    )
+    parameters = [true, false]
+    ptdf = build_PTDF5()
+    LMPs = []
+    for (ix, net) in enumerate(network), p in parameters
+        template = OperationsProblemTemplate(net, devices, branches, services)
+        ps_model = OperationsProblem(
+            TestOpProblem,
+            template,
+            sys;
+            optimizer = OSQP_optimizer,
+            use_parameters = p,
+            PTDF = ptdf,
+            constraint_duals = dual_constraint[ix],
+        )
+
+        if net == StandardPTDFModel
+            push!(LMPs, abs.(psi_ptdf_lmps(ps_model, ptdf)))
+        else
+            res = solve!(ps_model)
+            duals = abs.(res.dual_values[:nodal_balance_active__Bus])
+            push!(LMPs, duals[!, sort(propertynames(duals))])
+        end
+    end
+    @test isapprox(convert(Array, LMPs[1]), convert(Array, LMPs[2]), atol = 100.0)
 end
 
 @testset "Network Solve AC-PF PowerModels StandardACPModel" begin
