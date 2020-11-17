@@ -134,7 +134,7 @@ function branch_flow_constraints!(
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{T},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PM.DCPPowerModel}
+) where {T <: PM.AbstractDCPModel}
     constraint_infos = Vector{PSI.DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         if PSY.get_flow_limits(d).to_from != PSY.get_flow_limits(d).from_to
