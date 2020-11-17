@@ -16,8 +16,22 @@ construct_device!(
 construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::DeviceModel{<:PSY.Branch, <:Type{UnboundedBranches}},
+    ::DeviceModel{<:PSY.Branch, <:UnboundedBranches},
     ::Type{<:PM.AbstractPowerModel},
+) = nothing
+
+construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{<:PSY.ACBranch, <:UnboundedBranches},
+    ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
+) = nothing
+
+construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{<:PSY.ACBranch, <:UnboundedBranches},
+    ::Type{<:PM.AbstractActivePowerModel},
 ) = nothing
 
 # For DC Power only. Implements Bounds only and constraints
