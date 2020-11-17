@@ -65,7 +65,7 @@ end
 # writing a dictionary of dataframes to files
 
 function write_data(vars_results::Dict, save_path::String; kwargs...)
-    file_type = get(kwargs, :file_type, Feather)
+    file_type = get(kwargs, :file_type, Arrow)
     if :duals in keys(kwargs)
         name = "dual_"
     elseif :params in keys(kwargs)
@@ -73,7 +73,7 @@ function write_data(vars_results::Dict, save_path::String; kwargs...)
     else
         name = ""
     end
-    if file_type == Feather || file_type == CSV
+    if file_type == Arrow || file_type == CSV
         for (k, v) in vars_results
             file_path = joinpath(save_path, "$name$k.$(lowercase("$file_type"))")
             if isempty(vars_results[k])
@@ -93,7 +93,7 @@ function write_data(
     save_path::AbstractString;
     kwargs...,
 )
-    file_type = get(kwargs, :file_type, Feather)
+    file_type = get(kwargs, :file_type, Arrow)
     for (k, v) in vars_results
         var = DataFrames.DataFrame()
         if file_type == CSV && size(time, 1) == size(v, 1)
@@ -115,8 +115,8 @@ function write_data(
     if isfile(save_path)
         save_path = dirname(save_path)
     end
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
+    file_type = get(kwargs, :file_type, Arrow)
+    if file_type == Arrow || file_type == CSV
         file_path = joinpath(save_path, "$(file_name).$(lowercase("$file_type"))")
         file_type.write(file_path, data)
     end

@@ -58,7 +58,7 @@ function load_operation_results(folder_path::AbstractString)
     files_in_folder = readdir(folder_path)
     variable_list = setdiff(
         files_in_folder,
-        ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
+        ["time_stamp.arrow", "base_power.json", "optimizer_log.json", "check.sha256"],
     )
     vars_result = Dict{Symbol, DataFrames.DataFrame}()
     dual_result = Dict{Symbol, Any}()
@@ -69,20 +69,20 @@ function load_operation_results(folder_path::AbstractString)
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        vars_result[Symbol(variable_name)] = Feather.read(file_path)
+        vars_result[Symbol(variable_name)] = DataFrame(Arrow.read(file_path))
     end
     for name in dual_names
         dual_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        dual_result[Symbol(dual_name)] = Feather.read(file_path)
+        dual_result[Symbol(dual_name)] = DataFrame(Arrow.read(file_path))
     end
     for name in param_names
         param_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        param_values[Symbol(param_name)] = Feather.read(file_path)
+        param_values[Symbol(param_name)] = DataFrame(Arrow.read(file_path))
     end
     optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
-    time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
+    time_stamp = DataFrame(Arrow.read(joinpath(folder_path, "time_stamp.arrow")))
     time_stamp = convert.(Dates.DateTime, time_stamp)
     base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
     if size(time_stamp, 1) > find_var_length(vars_result, variable_list)

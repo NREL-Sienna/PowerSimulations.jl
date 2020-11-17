@@ -112,7 +112,7 @@ function make_result_reference(
                     sim.internal.raw_dir,
                     "step-$(s)-stage-$(stage_name)",
                     replace_chars("$(get_current_time(sim))", ":", "-"),
-                    "$(name).feather",
+                    "$(name).arrow",
                 )
                 if isfile(full_path)
                     date_df = DataFrames.DataFrame(
@@ -166,7 +166,7 @@ function deserialize_sim_output(file_path::String)
         ref[stage] = Dict{Symbol, Any}()
         for variable in readdir(joinpath(path, stage))
             var = splitext(variable)[1]
-            ref[stage][Symbol(var)] = Feather.read(joinpath(path, stage, variable))
+            ref[stage][Symbol(var)] = DataFrame(Arrow.read(joinpath(path, stage, variable)))
             ref[stage][Symbol(var)][!, :Date] =
                 convert(Array{Dates.DateTime}, ref[stage][Symbol(var)][!, :Date])
         end
@@ -200,7 +200,7 @@ function _read_references(
         results[name] = DataFrames.DataFrame()
         for (ix, time) in enumerate(step_df.Date)
             file_path = step_df[ix, :File_Path]
-            var = Feather.read("$file_path")
+            var = DataFrame(Arrow..read("$file_path"))
             results[name] = vcat(results[name], var[1:time_length, :])
         end
     end
@@ -219,7 +219,7 @@ function _read_references(
         results[name] = DataFrames.DataFrame()
         for (ix, time) in enumerate(date_df.Date)
             file_path = date_df[ix, :File_Path]
-            var = Feather.read(file_path)
+            var = DataFrame(Arrow.read(file_path))
             var_length = min(time_length, size(var, 1))
             results[name] = vcat(results[name], var[1:var_length, :])
         end
@@ -228,8 +228,8 @@ function _read_references(
 end
 # internal function to remove the overlapping results and only use the most recent
 function _read_time(file_path::String, time_length::Number)
-    time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
-    temp_time_stamp = Feather.read("$time_file_path")
+    time_file_path = joinpath(dirname(file_path), "time_stamp.arrow")
+    temp_time_stamp = DataFrame(Arrow.read("$time_file_path"))
     time_stamp = temp_time_stamp[(1:time_length), :]
     time_stamp = convert.(Dates.DateTime, time_stamp)
     return time_stamp
@@ -301,7 +301,7 @@ function load_simulation_results(
         variables[(variable[l])] = DataFrames.DataFrame()
         for (ix, time) in enumerate(step_df.Date)
             file_path = step_df[ix, :File_Path]
-            var = Feather.read("$file_path")
+            var = DataFrame(Arrow.read("$file_path"))
             variables[(variable[l])] = vcat(variables[(variable[l])], var[1:time_length, :])
             if l == 1
                 time_stamp = vcat(time_stamp, _read_time(file_path, time_length))
@@ -389,7 +389,7 @@ function load_simulation_results(
         variables[(variable[l])] = DataFrames.DataFrame()
         for (ix, time) in enumerate(date_df.Date)
             file_path = date_df[ix, :File_Path]
-            var = Feather.read(file_path)
+            var = DataFrame(Arrow.read(file_path))
             variables[(variable[l])] = vcat(variables[(variable[l])], var[1:time_length, :])
             if l == 1
                 time_stamp = vcat(time_stamp, _read_time(file_path, time_length))
@@ -492,7 +492,7 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
         try
             for (i, v) in stage
                 path = mkpath(joinpath(file_path, "$k"))
-                !isempty(v) && Feather.write(joinpath(path, "$i.feather"), v)
+                !isempty(v) && Arrow.write(v, joinpath(path, "$i.arrow"))
             end
         catch
             @warn("Results Reference not compatible with serialization")
@@ -572,7 +572,7 @@ function load_results(folder_path::String)
     files_in_folder = readdir(folder_path)
     variable_list = setdiff(
         files_in_folder,
-        ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
+        ["time_stamp.arrow", "base_power.json", "optimizer_log.json", "check.sha256"],
     )
     vars_result = Dict{Symbol, DataFrames.DataFrame}()
     dual_result = Dict{Symbol, Any}()
@@ -583,20 +583,20 @@ function load_results(folder_path::String)
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        vars_result[Symbol(variable_name)] = Feather.read(file_path)
+        vars_result[Symbol(variable_name)] = DataFrame(Arrow.read(file_path))
     end
     for name in dual_names
         dual_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        dual_result[Symbol(dual_name)] = Feather.read(file_path)
+        dual_result[Symbol(dual_name)] = DataFrame(Arrow.read(file_path))
     end
     for name in param_names
         param_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        param_values[Symbol(param_name)] = Feather.read(file_path)
+        param_values[Symbol(param_name)] = DataFrame(Arrow.read(file_path))
     end
     optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
-    time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
+    time_stamp = DataFrame(Arrow.read(joinpath(folder_path, "time_stamp.arrow")))
     base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
     if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)
