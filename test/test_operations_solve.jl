@@ -424,14 +424,14 @@ function test_write_functions(file_path, op_problem, res)
         PSI.export_op_model(op_problem, file)
         PSI.write_data(op_problem, path)
         list = sort!(collect(readdir(path)))
-        @test ["P__ThermalStandard.feather", "op_problem.json"] == list
+        @test ["P__ThermalStandard.arrow", "op_problem.json"] == list
     end
 
     @testset "Test write_data functions" begin
         PSI.write_data(get_variables(res), mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
         for (k, v) in get_variables(res)
-            @test isfile(joinpath(file_path, "one", "$k.feather"))
+            @test isfile(joinpath(file_path, "one", "$k.arrow"))
         end
 
         PSI.write_data(
@@ -450,7 +450,7 @@ function test_write_functions(file_path, op_problem, res)
             mkdir(joinpath(file_path, "three")),
         )
         for (k, v) in get_variables(res)
-            @test isfile(joinpath(file_path, "three", "$k.feather"))
+            @test isfile(joinpath(file_path, "three", "$k.arrow"))
         end
 
         var_name = PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
@@ -459,15 +459,15 @@ function test_write_functions(file_path, op_problem, res)
             mkdir(joinpath(file_path, "four")),
             string(var_name),
         )
-        @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
+        @test isfile(joinpath(file_path, "four", "$(var_name).arrow"))
 
         #testing if directory is a file
         PSI.write_data(
             get_variables(res)[var_name],
-            joinpath(file_path, "four", "$(var_name).feather"),
+            joinpath(file_path, "four", "$(var_name).arrow"),
             string(var_name),
         )
-        @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
+        @test isfile(joinpath(file_path, "four", "$(var_name).arrow"))
 
         PSI.write_optimizer_log(get_optimizer_log(res), mkdir(joinpath(file_path, "five")))
         @test isfile(joinpath(file_path, "five", "optimizer_log.json"))

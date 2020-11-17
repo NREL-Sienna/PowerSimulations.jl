@@ -250,7 +250,7 @@ function test_load_simulation(file_path::String)
                     key[2],
                 ))
                 parameter = collect(values(value.(array.data)))  # [device, time] 1 is first execution
-                raw_result = Feather.read(variable_ref)
+                raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))
                 for j in 1:size(parameter, 1)
                     result = raw_result[end, j] # end is last result [time, device]
                     initial = parameter[1] # [device, time]
@@ -265,10 +265,10 @@ function test_load_simulation(file_path::String)
                 variable_list = PSI.get_variable_names(sim, name)
                 reference_1 = PSI.get_reference(sim_results, name, 1, variable_list[1])[1]
                 reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
-                time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.feather") #first line, file path
-                time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.feather")
-                time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[end, 1]) # first time
-                time_2 = convert(Dates.DateTime, Feather.read(time_file_path_2)[1, 1])
+                time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.arrow") #first line, file path
+                time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.arrow")
+                time_1 = convert(Dates.DateTime, DataFrames.DataFrame(Arrow.Table(time_file_path_1))[end, 1]) # first time
+                time_2 = convert(Dates.DateTime, DataFrames.DataFrame(Arrow.Table(time_file_path_2))[1, 1])
                 @test time_2 == time_1
             end
         end
@@ -282,7 +282,7 @@ function test_load_simulation(file_path::String)
                     get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
                 for ic in initial_conditions
                     name = PSI.device_name(ic)
-                    raw_result = Feather.read(variable_ref)[end, Symbol(name)] # last value of last hour
+                    raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))[end, Symbol(name)] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond; atol = 1e-2)
                 end
@@ -386,10 +386,10 @@ function test_load_simulation(file_path::String)
             variable_list = PSI.get_variable_names(sim, name)
             reference_1 = PSI.get_reference(sim_results, name, 1, variable_list[1])[1]
             reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
-            time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.feather") #first line, file path
-            time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.feather")
-            time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[1, 1]) # first time
-            time_2 = convert(Dates.DateTime, Feather.read(time_file_path_2)[1, 1])
+            time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.arrow") #first line, file path
+            time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.arrow")
+            time_1 = convert(Dates.DateTime, DataFrames.DataFrame(Arrow.Table(time_file_path_1))[1, 1]) # first time
+            time_2 = convert(Dates.DateTime, DataFrames.DataFrame(Arrow.Table(time_file_path_2))[1, 1])
             time_change = time_2 - time_1
             interval = PSI.get_stage_interval(PSI.get_sequence(sim), name)
             @test Dates.Hour(time_change) == Dates.Hour(interval)
@@ -401,13 +401,13 @@ function test_load_simulation(file_path::String)
         vars_names = [PSI.make_variable_name(PSI.ON, PSY.ThermalStandard)]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 2, vars_names[ik])[1]
-            raw_result = Feather.read(variable_ref)
+            raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))
             ic = PSI.get_parameter_array(PSI.get_parameter_container(
                 sim.stages["ED"].internal.psi_container,
                 Symbol(key[1]),
                 key[2],
             ))
-            for name in DataFrames.names(raw_result)
+            for name in names(raw_result)
                 result = raw_result[1, name] # first time period of results  [time, device]
                 initial = value(ic[String(name)]) # [device, time]
                 @test isapprox(initial, result, atol = 1.0e-4)
@@ -554,10 +554,10 @@ function test_load_simulation(file_path::String)
             variable_list = PSI.get_variable_names(sim, name)
             res = load_simulation_results(sim_results, name)
             write_results(res)
-            _file_path = joinpath(results_folder, "$(variable_list[1]).feather")
+            _file_path = joinpath(results_folder, "$(variable_list[1]).arrow")
             rm(_file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))
-            Feather.write(_file_path, fake_df)
+            Arrow.write(_file_path, fake_df)
             @test_logs(
                 (:error, r"hash mismatch"),
                 match_mode = :any,
@@ -573,7 +573,7 @@ function test_load_simulation(file_path::String)
             rm(check_file_path)
             time_length = sim_results.chronologies["stage-$name"]
             fake_df = DataFrames.DataFrame(:A => Array(1:time_length))
-            Feather.write(check_file_path, fake_df)
+            Arrow.write(check_file_path, fake_df)
             @test_logs(
                 (:error, r"hash mismatch"),
                 match_mode = :any,
@@ -664,7 +664,7 @@ function test_load_simulation(file_path::String)
                     get_initial_conditions(PSI.get_psi_container(sim_cache, "UC"), key)
                 for ic in initial_conditions
                     raw_result =
-                        Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                        DataFrames.DataFrame(Arrow.Table(variable_ref))[end, Symbol(PSI.device_name(ic))] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end
@@ -711,7 +711,7 @@ function test_load_simulation(file_path::String)
                     get_initial_conditions(PSI.get_psi_container(sim_single, "ED"), key)
                 for ic in initial_conditions
                     raw_result =
-                        Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                        DataFrames.DataFrame(Arrow.Table(variable_ref))[end, Symbol(PSI.device_name(ic))] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end
