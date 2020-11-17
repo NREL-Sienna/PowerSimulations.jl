@@ -1,3 +1,5 @@
+# UpdateRef needs to be substituted by a "key" to pre-define queries into the DataStore
+
 """Reference for parameters update when present"""
 struct UpdateRef{T}
     access_ref::Symbol
@@ -22,6 +24,8 @@ function UpdateRef{T}(
     return UpdateRef{T}(encode_symbol(U, name), nothing)
 end
 
+
+## This UpdateRef makes the updates from the TimeSeries
 function UpdateRef{T}(
     name::AbstractString,
     data_label::AbstractString,

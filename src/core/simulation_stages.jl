@@ -214,6 +214,7 @@ function run_stage(
         if settings.allow_fails
             @warn("Stage $(stage.internal.number) status is $(model_status)")
         else
+            # Graceful exit here when solver fails
             error("Stage $(stage.internal.number) status is $(model_status)")
         end
     end

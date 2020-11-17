@@ -764,6 +764,8 @@ function update_cache!(
 end
 
 #########################TimeSeries Data Updating###########################################
+
+# This is the function that should use the TimeSeriesCache from PSY
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
@@ -800,6 +802,7 @@ function update_parameter!(
     return
 end
 
+# This function too should use the time series cache
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
@@ -866,6 +869,8 @@ function _update_initial_conditions!(stage::Stage, sim::Simulation)
     return
 end
 
+# Parameters are updated here. UpdateRef still can be used and define if the update is done
+# from the store or the system
 function _update_parameters(stage::Stage, sim::Simulation)
     for container in iterate_parameter_containers(stage.internal.psi_container)
         update_parameter!(container.update_ref, container, stage, sim)

@@ -614,6 +614,9 @@ end
 
 #########################FeedForward Variables Updating#####################################
 # This makes the choice in which variable to get from the results.
+
+# These functions will be replaced with queries to DataStore
+
 function get_stage_variable(
     chron::RecedingHorizon,
     stages::Pair{Stage{T}, Stage{U}},
@@ -706,6 +709,7 @@ function feedforward_update!(
     trigger = get_trigger(chronology)
     if trigger_update(trigger)
         for device_name in axes(param_array)[1]
+            # Here is where we want to use the store
             var_value = get_stage_variable(
                 chronology,
                 (source_stage => destination_stage),
