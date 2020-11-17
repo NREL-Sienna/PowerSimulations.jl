@@ -12,7 +12,7 @@ function ptdf_networkflow(
     constraint_val = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "CopperPlateBalance", constraint_val)
     nodal_balance_expressions = psi_container.expressions[expression]
-    bus_count = length(buses)
+
     branch_types = typeof.(branches)
 
     remove_undef!(nodal_balance_expressions)
@@ -63,12 +63,10 @@ function ptdf_networkflow(
             )
         end
 
-        for t in time_steps
-            constraint_val[t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                sum(psi_container.expressions[expression].data[1:bus_count, t]) == 0
-            )
-        end
+        constraint_val[t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            sum(nodal_balance_expressions[:, t]) == 0
+        )
     end
     return
 end
