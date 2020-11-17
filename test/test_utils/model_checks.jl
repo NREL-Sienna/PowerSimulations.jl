@@ -98,4 +98,3 @@ function check_variable_unbounded(op_problem::OperationsProblem, var_name)
     end
     return true
 end
-
