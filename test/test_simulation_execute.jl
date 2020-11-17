@@ -570,7 +570,7 @@ function test_load_simulation(file_path::String)
             _file_path = joinpath(results_folder, "$(variable_list[1]).arrow")
             rm(_file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))
-            Arrow.write(_file_path, fake_df)
+            close(Arrow.write(_file_path, fake_df))
             @test_logs(
                 (:error, r"hash mismatch"),
                 match_mode = :any,
@@ -586,7 +586,7 @@ function test_load_simulation(file_path::String)
             rm(check_file_path)
             time_length = sim_results.chronologies["stage-$name"]
             fake_df = DataFrames.DataFrame(:A => Array(1:time_length))
-            Arrow.write(check_file_path, fake_df)
+            close(Arrow.write(check_file_path, fake_df))
             @test_logs(
                 (:error, r"hash mismatch"),
                 match_mode = :any,
