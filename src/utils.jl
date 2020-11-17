@@ -312,10 +312,11 @@ function get_available_components(
     )
 end
 
+"""
+Load the complete arrow file into a DataFrame. Not optimized for memory use
+"""
 function read_arrow_file(file::AbstractString)
-    arrow_data = open(file, "r") do io
-        Arrow.Table(io)
+    return open(file, "r") do io
+        DataFrames.DataFrame(Arrow.Table(io))
     end
-    df = DataFrames.DataFrame(arrow_data)
-    return df
 end
