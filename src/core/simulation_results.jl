@@ -493,7 +493,12 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
         try
             for (i, v) in stage
                 path = mkpath(joinpath(file_path, "$k"))
-                !isempty(v) && Arrow.write(joinpath(path, "$i.arrow"), v)
+                if !isempty(v)
+                    open(w, joinpath(path, "$i.arrow")) do io
+                        Arrow.write(io, v; file = true)
+                        close(io)
+                end
+            end
             end
         catch
             @warn("Results Reference not compatible with serialization")
