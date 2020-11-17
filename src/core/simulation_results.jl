@@ -166,8 +166,7 @@ function deserialize_sim_output(file_path::String)
         ref[stage] = Dict{Symbol, Any}()
         for variable in readdir(joinpath(path, stage))
             var = splitext(variable)[1]
-            ref[stage][Symbol(var)] =
-                read_arrow_file(joinpath(path, stage, variable))
+            ref[stage][Symbol(var)] = read_arrow_file(joinpath(path, stage, variable))
             ref[stage][Symbol(var)][!, :Date] =
                 convert(Array{Dates.DateTime}, ref[stage][Symbol(var)][!, :Date])
         end
@@ -596,8 +595,7 @@ function load_results(folder_path::String)
         param_values[Symbol(param_name)] = read_arrow_file(file_path)
     end
     optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
-    time_stamp =
-        read_arrow_file(joinpath(folder_path, "time_stamp.arrow"))
+    time_stamp = read_arrow_file(joinpath(folder_path, "time_stamp.arrow"))
     base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
     if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)
