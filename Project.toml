@@ -25,7 +25,7 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
 [compat]
 CSV = "~0.8"
-DataFrames = "~0.21"
+DataFrames = "~0.22"
 Feather = "~0.5"
 InfrastructureSystems = "1"
 JSON = "0.21"
