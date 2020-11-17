@@ -311,3 +311,11 @@ function get_available_components(
         x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),
     )
 end
+
+function read_arrow_file(file::AbstractString)
+    arrow_data = open(file, "r") do io
+        Arrow.Table(io)
+    end
+    df = DataFrames.DataFrame(arrow_data)
+    return df
+end
