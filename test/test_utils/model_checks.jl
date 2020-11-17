@@ -87,3 +87,15 @@ function psi_ptdf_lmps(op_problem::OperationsProblem, ptdf)
     lmps = λ .- lmps
     return lmps[!, sort(propertynames(lmps))]
 end
+
+function check_variable_unbounded(op_problem::OperationsProblem, var_name)
+    psi_cont = PSI.get_psi_container(op_problem)
+    variable = PSI.get_variable(psi_cont, var_name)
+    for var in variable
+        if JuMP.has_lower_bound(var) || JuMP.has_upper_bound(var)
+            return false
+        end
+    end
+    return true
+end
+
