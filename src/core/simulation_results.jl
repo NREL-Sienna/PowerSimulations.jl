@@ -166,8 +166,7 @@ function deserialize_sim_output(file_path::String)
         ref[stage] = Dict{Symbol, Any}()
         for variable in readdir(joinpath(path, stage))
             var = splitext(variable)[1]
-            ref[stage][Symbol(var)] =
-                DataFrames.DataFrame(Arrow.Table(joinpath(path, stage, variable)))
+            ref[stage][Symbol(var)] = read_arrow_file(joinpath(path, stage, variable))
             ref[stage][Symbol(var)][!, :Date] =
                 convert(Array{Dates.DateTime}, ref[stage][Symbol(var)][!, :Date])
         end
@@ -201,7 +200,7 @@ function _read_references(
         results[name] = DataFrames.DataFrame()
         for (ix, time) in enumerate(step_df.Date)
             file_path = step_df[ix, :File_Path]
-            var = DataFrames.DataFrame(Arrow.Table("$file_path"))
+            var = read_arrow_file("$file_path")
             results[name] = vcat(results[name], var[1:time_length, :])
         end
     end
@@ -220,7 +219,7 @@ function _read_references(
         results[name] = DataFrames.DataFrame()
         for (ix, time) in enumerate(date_df.Date)
             file_path = date_df[ix, :File_Path]
-            var = DataFrames.DataFrame(Arrow.Table(file_path))
+            var = read_arrow_file(file_path)
             var_length = min(time_length, size(var, 1))
             results[name] = vcat(results[name], var[1:var_length, :])
         end
@@ -230,7 +229,7 @@ end
 # internal function to remove the overlapping results and only use the most recent
 function _read_time(file_path::String, time_length::Number)
     time_file_path = joinpath(dirname(file_path), "time_stamp.arrow")
-    temp_time_stamp = DataFrames.DataFrame(Arrow.Table("$time_file_path"))
+    temp_time_stamp = read_arrow_file("$time_file_path")
     time_stamp = temp_time_stamp[(1:time_length), :]
     time_stamp = convert.(Dates.DateTime, time_stamp)
     return time_stamp
@@ -302,7 +301,7 @@ function load_simulation_results(
         variables[(variable[l])] = DataFrames.DataFrame()
         for (ix, time) in enumerate(step_df.Date)
             file_path = step_df[ix, :File_Path]
-            var = DataFrames.DataFrame(Arrow.Table("$file_path"))
+            var = read_arrow_file("$file_path")
             variables[(variable[l])] = vcat(variables[(variable[l])], var[1:time_length, :])
             if l == 1
                 time_stamp = vcat(time_stamp, _read_time(file_path, time_length))
@@ -390,7 +389,7 @@ function load_simulation_results(
         variables[(variable[l])] = DataFrames.DataFrame()
         for (ix, time) in enumerate(date_df.Date)
             file_path = date_df[ix, :File_Path]
-            var = DataFrames.DataFrame(Arrow.Table(file_path))
+            var = read_arrow_file(file_path)
             variables[(variable[l])] = vcat(variables[(variable[l])], var[1:time_length, :])
             if l == 1
                 time_stamp = vcat(time_stamp, _read_time(file_path, time_length))
@@ -583,21 +582,20 @@ function load_results(folder_path::String)
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        vars_result[Symbol(variable_name)] = DataFrames.DataFrame(Arrow.Table(file_path))
+        vars_result[Symbol(variable_name)] = read_arrow_file(file_path)
     end
     for name in dual_names
         dual_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        dual_result[Symbol(dual_name)] = DataFrames.DataFrame(Arrow.Table(file_path))
+        dual_result[Symbol(dual_name)] = read_arrow_file(file_path)
     end
     for name in param_names
         param_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        param_values[Symbol(param_name)] = DataFrames.DataFrame(Arrow.Table(file_path))
+        param_values[Symbol(param_name)] = read_arrow_file(file_path)
     end
     optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
-    time_stamp =
-        DataFrames.DataFrame(Arrow.Table(joinpath(folder_path, "time_stamp.arrow")))
+    time_stamp = read_arrow_file(joinpath(folder_path, "time_stamp.arrow"))
     base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
     if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)

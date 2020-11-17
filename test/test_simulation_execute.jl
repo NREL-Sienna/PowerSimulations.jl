@@ -250,7 +250,7 @@ function test_load_simulation(file_path::String)
                     key[2],
                 ))
                 parameter = collect(values(value.(array.data)))  # [device, time] 1 is first execution
-                raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))
+                raw_result = PSI.read_arrow_file(variable_ref)
                 for j in 1:size(parameter, 1)
                     result = raw_result[end, j] # end is last result [time, device]
                     initial = parameter[1] # [device, time]
@@ -267,14 +267,10 @@ function test_load_simulation(file_path::String)
                 reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
                 time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.arrow") #first line, file path
                 time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.arrow")
-                time_1 = convert(
-                    Dates.DateTime,
-                    DataFrames.DataFrame(Arrow.Table(time_file_path_1))[end, 1],
-                ) # first time
-                time_2 = convert(
-                    Dates.DateTime,
-                    DataFrames.DataFrame(Arrow.Table(time_file_path_2))[1, 1],
-                )
+                time_1 =
+                    convert(Dates.DateTime, PSI.read_arrow_file(time_file_path_1)[end, 1]) # first time
+                time_2 =
+                    convert(Dates.DateTime, PSI.read_arrow_file(time_file_path_2)[1, 1])
                 @test time_2 == time_1
             end
         end
@@ -288,8 +284,7 @@ function test_load_simulation(file_path::String)
                     get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
                 for ic in initial_conditions
                     name = PSI.device_name(ic)
-                    raw_result =
-                        DataFrames.DataFrame(Arrow.Table(variable_ref))[end, Symbol(name)] # last value of last hour
+                    raw_result = PSI.read_arrow_file(variable_ref)[end, Symbol(name)] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond; atol = 1e-2)
                 end
@@ -395,14 +390,8 @@ function test_load_simulation(file_path::String)
             reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
             time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.arrow") #first line, file path
             time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.arrow")
-            time_1 = convert(
-                Dates.DateTime,
-                DataFrames.DataFrame(Arrow.Table(time_file_path_1))[1, 1],
-            ) # first time
-            time_2 = convert(
-                Dates.DateTime,
-                DataFrames.DataFrame(Arrow.Table(time_file_path_2))[1, 1],
-            )
+            time_1 = convert(Dates.DateTime, PSI.read_arrow_file(time_file_path_1)[1, 1]) # first time
+            time_2 = convert(Dates.DateTime, PSI.read_arrow_file(time_file_path_2)[1, 1])
             time_change = time_2 - time_1
             interval = PSI.get_stage_interval(PSI.get_sequence(sim), name)
             @test Dates.Hour(time_change) == Dates.Hour(interval)
@@ -414,7 +403,7 @@ function test_load_simulation(file_path::String)
         vars_names = [PSI.make_variable_name(PSI.ON, PSY.ThermalStandard)]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 2, vars_names[ik])[1]
-            raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))
+            raw_result = PSI.read_arrow_file(variable_ref)
             ic = PSI.get_parameter_array(PSI.get_parameter_container(
                 sim.stages["ED"].internal.psi_container,
                 Symbol(key[1]),
@@ -676,10 +665,8 @@ function test_load_simulation(file_path::String)
                 initial_conditions =
                     get_initial_conditions(PSI.get_psi_container(sim_cache, "UC"), key)
                 for ic in initial_conditions
-                    raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))[
-                        end,
-                        Symbol(PSI.device_name(ic)),
-                    ] # last value of last hour
+                    raw_result =
+                        PSI.read_arrow_file(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end
@@ -725,10 +712,8 @@ function test_load_simulation(file_path::String)
                 initial_conditions =
                     get_initial_conditions(PSI.get_psi_container(sim_single, "ED"), key)
                 for ic in initial_conditions
-                    raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))[
-                        end,
-                        Symbol(PSI.device_name(ic)),
-                    ] # last value of last hour
+                    raw_result =
+                        PSI.read_arrow_file(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end
