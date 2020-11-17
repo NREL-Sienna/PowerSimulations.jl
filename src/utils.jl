@@ -241,7 +241,7 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
             res = DataFrames.DataFrame(hcat(third_dim, result))
             result_df = vcat(result_df, res)
         end
-        return names(result_df, names)
+        return DataFrames.rename!(result_df, names)
     else
         @warn("Dimension Number $(length(axes(input_array))) not Supported, returning empty DataFrame")
         return DataFrames.DataFrame()

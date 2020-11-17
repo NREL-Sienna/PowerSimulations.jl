@@ -573,7 +573,7 @@ function test_load_simulation(file_path::String)
             rm(check_file_path)
             time_length = sim_results.chronologies["stage-$name"]
             fake_df = DataFrames.DataFrame(:A => Array(1:time_length))
-            Arrow.write(fake_df, check_file_path)
+            Arrow.write(check_file_path, fake_df)
             @test_logs(
                 (:error, r"hash mismatch"),
                 match_mode = :any,
