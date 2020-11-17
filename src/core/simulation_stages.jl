@@ -29,7 +29,7 @@ mutable struct StageInternal
             psi_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
-            false,
+            EMPTY,
             "",
             ext,
         )

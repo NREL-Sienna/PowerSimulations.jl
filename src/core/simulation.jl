@@ -76,7 +76,7 @@ function SimulationInternal(
         (init_time, init_time),
         init_time,
         true,
-        false,
+        EMPTY,
         Dict{CacheKey, AbstractCache}(),
         collect(unique_recorders),
         console_level,
