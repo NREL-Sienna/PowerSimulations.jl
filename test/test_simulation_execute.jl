@@ -267,8 +267,14 @@ function test_load_simulation(file_path::String)
                 reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
                 time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.arrow") #first line, file path
                 time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.arrow")
-                time_1 = convert(Dates.DateTime, DataFrames.DataFrame(Arrow.Table(time_file_path_1))[end, 1]) # first time
-                time_2 = convert(Dates.DateTime, DataFrames.DataFrame(Arrow.Table(time_file_path_2))[1, 1])
+                time_1 = convert(
+                    Dates.DateTime,
+                    DataFrames.DataFrame(Arrow.Table(time_file_path_1))[end, 1],
+                ) # first time
+                time_2 = convert(
+                    Dates.DateTime,
+                    DataFrames.DataFrame(Arrow.Table(time_file_path_2))[1, 1],
+                )
                 @test time_2 == time_1
             end
         end
@@ -282,7 +288,8 @@ function test_load_simulation(file_path::String)
                     get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
                 for ic in initial_conditions
                     name = PSI.device_name(ic)
-                    raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))[end, Symbol(name)] # last value of last hour
+                    raw_result =
+                        DataFrames.DataFrame(Arrow.Table(variable_ref))[end, Symbol(name)] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond; atol = 1e-2)
                 end
@@ -388,8 +395,14 @@ function test_load_simulation(file_path::String)
             reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
             time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.arrow") #first line, file path
             time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.arrow")
-            time_1 = convert(Dates.DateTime, DataFrames.DataFrame(Arrow.Table(time_file_path_1))[1, 1]) # first time
-            time_2 = convert(Dates.DateTime, DataFrames.DataFrame(Arrow.Table(time_file_path_2))[1, 1])
+            time_1 = convert(
+                Dates.DateTime,
+                DataFrames.DataFrame(Arrow.Table(time_file_path_1))[1, 1],
+            ) # first time
+            time_2 = convert(
+                Dates.DateTime,
+                DataFrames.DataFrame(Arrow.Table(time_file_path_2))[1, 1],
+            )
             time_change = time_2 - time_1
             interval = PSI.get_stage_interval(PSI.get_sequence(sim), name)
             @test Dates.Hour(time_change) == Dates.Hour(interval)
@@ -663,8 +676,10 @@ function test_load_simulation(file_path::String)
                 initial_conditions =
                     get_initial_conditions(PSI.get_psi_container(sim_cache, "UC"), key)
                 for ic in initial_conditions
-                    raw_result =
-                        DataFrames.DataFrame(Arrow.Table(variable_ref))[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                    raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))[
+                        end,
+                        Symbol(PSI.device_name(ic)),
+                    ] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end
@@ -710,8 +725,10 @@ function test_load_simulation(file_path::String)
                 initial_conditions =
                     get_initial_conditions(PSI.get_psi_container(sim_single, "ED"), key)
                 for ic in initial_conditions
-                    raw_result =
-                        DataFrames.DataFrame(Arrow.Table(variable_ref))[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                    raw_result = DataFrames.DataFrame(Arrow.Table(variable_ref))[
+                        end,
+                        Symbol(PSI.device_name(ic)),
+                    ] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end

@@ -82,7 +82,8 @@ function load_operation_results(folder_path::AbstractString)
         param_values[Symbol(param_name)] = DataFrames.DataFrame(Arrow.Table(file_path))
     end
     optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
-    time_stamp = DataFrames.DataFrame(Arrow.Table(joinpath(folder_path, "time_stamp.arrow")))
+    time_stamp =
+        DataFrames.DataFrame(Arrow.Table(joinpath(folder_path, "time_stamp.arrow")))
     time_stamp = convert.(Dates.DateTime, time_stamp)
     base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
     if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
