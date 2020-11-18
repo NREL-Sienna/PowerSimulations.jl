@@ -1,66 +1,43 @@
 abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
-#################################################Storage Variables#################################
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ActivePowerInVariable, U <: PSY.Storage}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        sign = -1.0,
-        lb_value_func = x -> 0.0,
-    )
-end
+########################### ActivePowerInVariable, Storage #################################
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ActivePowerOutVariable, U <: PSY.Storage}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        lb_value_func = x -> 0.0,
-    )
-end
+get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = false
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ReactivePowerVariable, U <: PSY.Storage}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_reactive,
-    )
-end
+get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, _) = 0.0
+get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, _) = nothing
+get_variable_sign(::ActivePowerInVariable, d::PSY.Storage) = -1.0
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: EnergyVariable, U <: PSY.Storage}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+########################### ActivePowerOutVariable, Storage #################################
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ReserveVariable, U <: PSY.Storage}
-    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
-end
+get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = false
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
+
+get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = 0.0
+get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = nothing
+get_variable_sign(::ActivePowerOutVariable, d::PSY.Storage) = -1.0
+
+############## ReactivePowerVariable, Storage ####################
+
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = false
+
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = :nodal_balance_reactive
+
+############## EnergyVariable, Storage ####################
+
+get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}) = false
+# TODO: why isn't this defined
+# get_variable_initial_value(pv::EnergyVariable, d::PSY.Storage, settings) = PSY.get_initial_storage(d)
+get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
+# TODO: why isn't this defined
+# get_variable_upper_bound(::EnergyVariable, d::PSY.Storage, _) = PSY.get_storage_capacity(d)
+
+############## ReserveVariable, Storage ####################
+
+get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
 
 ################################## output power constraints#################################
 

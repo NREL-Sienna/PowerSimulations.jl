@@ -13,31 +13,40 @@ end
     jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
     kwargs...) where {M<:AbstractOperationsProblem,
                       T<:PM.AbstractPowerFormulation}
+
 This builds the optimization problem of type M with the specific system and template.
+
 # Arguments
+
 - `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
 - `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
 - `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
+
 # Output
+
 - `op_problem::OperationsProblem`: The operation model containing the model type, built JuMP model, Power
 Systems system.
+
 # Example
+
 ```julia
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, system)
 ```
+
 # Accepted Key Words
+
 - `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
-- `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `use_forecast_data::Bool`: If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
-- `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
-- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
+- `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+- `balance_slack_variables::Bool`: True will add slacks to the system balance constraints
+- `services_slack_variables::Bool`: True will add slacks to the services requirement constraints
 """
 function OperationsProblem(
     ::Type{M},
@@ -49,6 +58,7 @@ function OperationsProblem(
     return OperationsProblem{M}(template, sys, jump_model; kwargs...)
 end
 
+# TODO: Is this function really necessary?
 function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
@@ -60,6 +70,7 @@ function OperationsProblem{M}(
     return OperationsProblem{M}(template, sys, jump_model, settings)
 end
 
+# TODO: I think we should never call build in a constructor
 # The psi_container_init is called at the build! call in this constructor. This is meant to
 # build an operation from a template.
 function OperationsProblem{M}(
@@ -81,32 +92,41 @@ end
                     jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
+
 Return an unbuilt operation problem of type M with the specific system and network model T.
     This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
+
 # Arguments
+
 - `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
 - `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
 - `sys::PSY.System`: the system created using Power Systems
 - `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
+
 # Output
+
 - `op_problem::OperationsProblem`: The operation model containing the model type, unbuilt JuMP model, Power
 Systems system.
+
 # Example
+
 ```julia
 OpModel = OperationsProblem(MyCustomOpProblem, DCPPowerModel, system)
 model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 construct_device!(op_problem, :Thermal, model)
 ```
+
 # Accepted Key Words
+
 - `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
-- `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
-- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
+- `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+- `balance_slack_variables::Bool`: True will add slacks to the system balance constraints
+- `services_slack_variables::Bool`: True will add slacks to the services requirement constraints
 """
 function OperationsProblem(
     ::Type{M},
@@ -124,21 +144,26 @@ end
                     jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
+
 Return an unbuilt operation problem of type GenericOpProblem with the specific system and network model T.
     This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
+
 # Arguments
 - `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
 - `sys::PSY.System`: the system created using Power Systems
 - `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
+
 # Output
-- `op_problem::OperationsProblem`: The operation model containing the model type, unbuilt JuMP model, Power
-Systems system.
+- `op_problem::OperationsProblem`: The operation model containing the model type, unbuilt JuMP model, Power Systems system.
+
 # Example
+
 ```julia
 OpModel = OperationsProblem(DCPPowerModel, system)
 model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 construct_device!(op_problem, :Thermal, model)
 ```
+
 # Accepted Key Words
 - `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve

@@ -249,53 +249,17 @@ function make_variable_name(
     return encode_symbol(T, "SACE")
 end
 
-function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
-    return Symbol(join((name1, name2, IS.strip_module_name(T)), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(
-    ::Type{T},
-    name1::AbstractString,
-    name2::AbstractString,
-) where {T <: PSY.Reserve}
-    T_ = replace(IS.strip_module_name(T), "{" => "_")
-    T_ = replace(T_, "}" => "")
-    return Symbol(join((name1, name2, T_), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name1::Symbol, name2::Symbol) where {T}
-    return encode_symbol(IS.strip_module_name(T), string(name1), string(name2))
-end
-
-function encode_symbol(::Type{T}, name::AbstractString) where {T}
-    return Symbol(join((name, IS.strip_module_name(T)), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name::AbstractString) where {T <: PSY.Reserve}
-    T_ = replace(IS.strip_module_name(T), "{" => "_")
-    T_ = replace(T_, "}" => "")
-    return Symbol(join((name, T_), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name::Symbol) where {T}
-    return encode_symbol(T, string(name))
-end
-
-function encode_symbol(name::AbstractString)
-    return Symbol(name)
-end
-
-function encode_symbol(name1::AbstractString, name2::AbstractString)
-    return Symbol(join((name1, name2), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(name::Symbol)
-    return name
-end
-
-function decode_symbol(name::Symbol)
-    return split(String(name), PSI_NAME_DELIMITER)
-end
-
 make_variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
 make_variable_name(var_type) = encode_symbol(var_type)
+
+"""
+Struct to dispatch the creation of Flow Active Power Variables
+"""
+struct FlowActivePowerVariable <: VariableType end
+
+function make_variable_name(
+    ::Type{FlowActivePowerVariable},
+    ::Type{T},
+) where {T <: PSY.Component}
+    return encode_symbol(T, "Fp")
+end

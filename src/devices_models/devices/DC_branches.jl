@@ -14,9 +14,9 @@ flow_variables!(
     devices::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
 ) = nothing
 
-function flow_variables!(
+function add_variables!(
     psi_container::PSIContainer,
-    system_formulation::Type{StandardPTDFModel},
+    system_formulation::StandardPTDFModel,
     devices::IS.FlattenIteratorWrapper{B},
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)

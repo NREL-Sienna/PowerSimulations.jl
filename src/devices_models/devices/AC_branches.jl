@@ -26,14 +26,9 @@ flow_variables!(
     ::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
 ) = nothing
 
-function flow_variables!(
-    psi_container::PSIContainer,
-    ::Type{<:StandardPTDFModel},
-    devices::IS.FlattenIteratorWrapper{B},
-) where {B <: PSY.ACBranch}
-    add_variable!(psi_container, devices, make_variable_name(FLOW_ACTIVE_POWER, B), false)
-    return
-end
+add_variables!(psi_container::PSIContainer, ::StandardPTDFModel, devices::IS.FlattenIteratorWrapper{B}) where {B <: PSY.ACBranch} =  add_variable!(psi_container, FlowActivePowerVariable(), devices)
+
+get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}) = false
 
 #################################### Flow Variable Bounds ##################################################
 function _get_constraint_data(

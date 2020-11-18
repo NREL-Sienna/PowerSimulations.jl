@@ -2,65 +2,25 @@ abstract type AbstractRegulationFormulation <: AbstractDeviceFormulation end
 struct ReserveLimitedRegulation <: AbstractRegulationFormulation end
 struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 
-"""
-This function add the upwards scheduled regulation variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{DeltaActivePowerUpVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.RegulationDevice}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(DeltaActivePowerUpVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+############################ DeltaActivePowerUpVariable, RegulationDevice ###########################
 
-"""
-This function add the downwards scheduled regulation variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{DeltaActivePowerDownVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.RegulationDevice}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(DeltaActivePowerDownVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+get_variable_binary(::DeltaActivePowerUpVariable, ::Type{<:PSY.RegulationDevice}) = false
+get_variable_lower_bound(::DeltaActivePowerUpVariable, ::PSY.RegulationDevice, _) = 0.0
 
-"""
-This function add the upwards scheduled regulation variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{AdditionalDeltaActivePowerUpVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.RegulationDevice}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(AdditionalDeltaActivePowerUpVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+############################ DeltaActivePowerDownVariable, RegulationDevice ###########################
 
-"""
-This function add the variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{AdditionalDeltaActivePowerDownVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.RegulationDevice}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(AdditionalDeltaActivePowerDownVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+get_variable_binary(::DeltaActivePowerDownVariable, ::Type{<:PSY.RegulationDevice}) = false
+get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.RegulationDevice, _) = 0.0
+
+############################ AdditionalDeltaActivePowerUpVariable, RegulationDevice ###########################
+
+get_variable_binary(::AdditionalDeltaActivePowerUpVariable, ::Type{<:PSY.RegulationDevice}) = false
+get_variable_lower_bound(::AdditionalDeltaActivePowerUpVariable, ::PSY.RegulationDevice, _) = 0.0
+
+############################ AdditionalDeltaActivePowerDownVariable, RegulationDevice ###########################
+
+get_variable_binary(::AdditionalDeltaActivePowerDownVariable, ::Type{<:PSY.RegulationDevice}) = false
+get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.RegulationDevice, _) = 0.0
 
 function add_constraints!(
     psi_container::PSIContainer,

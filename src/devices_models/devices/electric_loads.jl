@@ -4,44 +4,31 @@ struct StaticPowerLoad <: AbstractLoadFormulation end
 struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
-########################### dispatchable load variables ####################################
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ActivePowerVariable, U <: PSY.ElectricLoad}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        sign = -1.0,
-        lb_value_func = x -> 0.0,
-        ub_value_func = x -> PSY.get_max_active_power(x),
-    )
-end
+########################### ElectricLoad ####################################
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ReactivePowerVariable, U <: PSY.ElectricLoad}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_reactive,
-        sign = -1.0,
-        lb_value_func = x -> 0.0,
-        ub_value_func = x -> PSY.get_max_reactive_power(x),
-    )
-end
+get_variable_sign(_, ::Type{<:PSY.ElectricLoad}) = -1.0
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: OnVariable, U <: PSY.ElectricLoad}
-    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
-end
+########################### ActivePowerVariable, ElectricLoad ####################################
+
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = false
+
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_active
+
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = 0.0
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = PSY.get_active_power(d)
+
+########################### ReactivePowerVariable, ElectricLoad ####################################
+
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}) = false
+
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_reactive
+
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, _) = 0.0
+get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, _) = PSY.get_reactive_power(d)
+
+########################### ReactivePowerVariable, ElectricLoad ####################################
+
+get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}) = true
 
 ####################################### Reactive Power Constraints #########################
 """

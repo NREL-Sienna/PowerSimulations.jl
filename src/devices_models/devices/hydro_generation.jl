@@ -11,164 +11,95 @@ struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
-########################### Hydro generation variables #################################
+########################### ActivePowerVariable, HydroGen #################################
 
-"""
-This function add the variables for active power to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ActivePowerVariable, U <: PSY.HydroGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        initial_value_func = x -> PSY.get_active_power(x),
-        lb_value_func = x -> PSY.get_active_power_limits(x).min,
-        ub_value_func = x -> PSY.get_active_power_limits(x).max,
-    )
-end
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = false
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
 
-"""
-This function add the variables for reactive power to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ReactivePowerVariable, U <: PSY.HydroGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_reactive,
-        initial_value_func = x -> PSY.get_reactive_power(x),
-        lb_value_func = x -> PSY.get_reactive_power_limits(x).min,
-        ub_value_func = x -> PSY.get_reactive_power_limits(x).max,
-    )
-end
+get_variable_initial_value(pv::ActivePowerVariable, d::PSY.HydroGen, settings) =
+    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::WarmStartVariable) = PSY.get_active_power(d)
+get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::ColdStartVariable) = nothing
 
-"""
-This function add the variables for energy storage to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: EnergyVariable, U <: PSY.HydroGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        initial_value_func = x -> PSY.get_initial_storage(x),
-        lb_value_func = x -> 0.0,
-        ub_value_func = x -> PSY.get_storage_capacity(x),
-    )
-end
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).min
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).max
 
-"""
-This function add the variables for upper energy storage to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: EnergyVariableUp, U <: PSY.HydroGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        initial_value_func = x -> PSY.get_initial_storage(x).up,
-        lb_value_func = x -> 0.0,
-        ub_value_func = x -> PSY.get_storage_capacity(x).up,
-    )
-end
+############## ReactivePowerVariable, HydroGen ####################
 
-"""
-This function add the variables for lower energy storage to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: EnergyVariableDown, U <: PSY.HydroGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        initial_value_func = x -> PSY.get_initial_storage(x).down,
-        lb_value_func = x -> 0.0,
-        ub_value_func = x -> PSY.get_storage_capacity(x).down,
-    )
-end
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}) = false
 
-"""
-This function add the variables for active power withdrawl to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ActivePowerInVariable, U <: PSY.HydroGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        sign = -1.0,
-        lb_value_func = x -> 0.0,
-    )
-end
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_reactive
 
-"""
-This function add the variables for active power injection to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ActivePowerOutVariable, U <: PSY.HydroGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        lb_value_func = x -> 0.0,
-    )
-end
+get_variable_initial_value(pv::ReactivePowerVariable, d::PSY.HydroGen, settings) =
+get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(::ReactivePowerVariable, d::PSY.HydroGen, ::WarmStartVariable) = PSY.get_active_power(d)
+get_variable_initial_value(::ReactivePowerVariable, d::PSY.HydroGen, ::ColdStartVariable) = nothing
 
-"""
-This function add the variables for power generation commitment to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {T <: OnVariable, U <: PSY.HydroGen}
-    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
-end
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).min
+get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).max
 
-"""
-This function add the spillage variable for storage models
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: SpillageVariable, U <: PSY.HydroGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
 
-"""
-This function adds the reservation variable for storage models
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ReserveVariable, U <: PSY.HydroGen}
-    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
-end
+############## EnergyVariable, HydroGen ####################
+
+get_variable_binary(::EnergyVariable, ::Type{<:PSY.HydroGen}) = false
+get_variable_initial_value(pv::EnergyVariable, d::PSY.HydroGen, settings) = PSY.get_initial_storage(d)
+get_variable_lower_bound(::EnergyVariable, d::PSY.HydroGen, _) = 0.0
+get_variable_upper_bound(::EnergyVariable, d::PSY.HydroGen, _) = PSY.get_storage_capacity(d)
+
+########################### EnergyVariableUp, HydroGen #################################
+
+get_variable_binary(::EnergyVariableUp, ::Type{<:PSY.HydroGen}) = false
+
+get_variable_initial_value(pv::EnergyVariableUp, d::PSY.HydroGen, settings) = PSY.get_initial_storage(d).up
+
+get_variable_lower_bound(::EnergyVariableUp, d::PSY.HydroGen, _) = 0.0
+get_variable_upper_bound(::EnergyVariableUp, d::PSY.HydroGen, _) = PSY.get_storage_capacity(d).up
+
+########################### EnergyVariableDown, HydroGen #################################
+
+get_variable_binary(::EnergyVariableDown, ::Type{<:PSY.HydroGen}) = false
+
+get_variable_initial_value(pv::EnergyVariableDown, d::PSY.HydroGen, settings) = PSY.get_initial_storage(d).down
+
+get_variable_lower_bound(::EnergyVariableDown, d::PSY.HydroGen, _) = 0.0
+get_variable_upper_bound(::EnergyVariableDown, d::PSY.HydroGen, _) = PSY.get_storage_capacity(d).down
+
+########################### ActivePowerInVariable, HydroGen #################################
+
+get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}) = false
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
+
+get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HydroGen, _) = 0.0
+get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HydroGen, _) = nothing
+get_variable_sign(::ActivePowerInVariable, d::PSY.HydroGen) = -1.0
+
+########################### ActivePowerOutVariable, HydroGen #################################
+
+get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}) = false
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
+
+get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HydroGen, _) = 0.0
+get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HydroGen, _) = nothing
+get_variable_sign(::ActivePowerOutVariable, d::PSY.HydroGen) = -1.0
+
+############## OnVariable, HydroGen ####################
+
+get_variable_binary(::OnVariable, ::Type{<:PSY.HydroGen}) = true
+
+get_variable_initial_value(pv::OnVariable, d::PSY.HydroGen, settings) =
+    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(::OnVariable, d::PSY.HydroGen, ::WarmStartVariable) = PSY.get_active_power(d) > 0 ? 1.0 : 0.0
+get_variable_initial_value(::OnVariable, d::PSY.HydroGen, ::ColdStartVariable) = nothing
+
+############## SpillageVariable, HydroGen ####################
+
+get_variable_binary(::SpillageVariable, ::Type{<:PSY.HydroGen}) = false
+get_variable_lower_bound(::SpillageVariable, d::PSY.HydroGen, _) = 0.0
+
+############## ReserveVariable, HydroGen ####################
+
+get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroGen}) = true
+get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroPumpedStorage}) = true
 
 """
 This function define the range constraint specs for the

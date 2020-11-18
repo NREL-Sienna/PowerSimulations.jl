@@ -2,33 +2,17 @@ abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
-"""
-This function add the variables for reserves to the model
-"""
-function AddVariableSpec(
-    ::Type{ActiveServiceVariable},
-    ::PSIContainer,
-    service::T,
-) where {T <: PSY.Reserve}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(PSY.get_name(service), T),
-        binary = false,
-        lb_value_func = x -> 0,
-        devices_filter_func = x -> PSY.get_available(x),
-    )
-end
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ServiceRequirementVariable, U <: PSY.ReserveDemandCurve}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+
+############################### ActiveServiceVariable, Reserve #########################################
+
+get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}) = false
+get_variable_lower_bound(::ActiveServiceVariable, d::PSY.Reserve, _) = 0.0
+
+############################### ServiceRequirementVariable, ReserveDemandCurve ################################
+
+get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}) = false
+get_variable_lower_bound(::ServiceRequirementVariable, d::PSY.ReserveDemandCurve, _) = 0.0
 
 ################################## Reserve Requirement Constraint ##########################
 function service_requirement_constraint!(
