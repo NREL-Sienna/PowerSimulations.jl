@@ -624,13 +624,7 @@ function feedforward!(
     parameter_ref = UpdateRef{JuMP.VariableRef}(var)
     for prefix in get_affected_parameters(ff_model)
         var_name = make_variable_name(prefix, T)
-        include_parameters!(
-            psi_container,
-            devices,
-            parameter_ref,
-            expression_name,
-            1.0,
-        )
+        include_parameters!(psi_container, devices, parameter_ref, expression_name, 1.0)
     end
     return
 end

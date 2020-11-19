@@ -16,7 +16,7 @@ function NodalExpressionSpec(
     ::Type{T},
     ::Type{U},
     use_forecasts::Bool,
-    ::Union{Nothing, <:AbstractAffectFeedForward}
+    ::Union{Nothing, <:AbstractAffectFeedForward},
 ) where {T <: PSY.Device, U <: PM.AbstractPowerModel}
     error("NodalExpressionSpec is not implemented for type $T/$U")
 end
@@ -61,7 +61,13 @@ function _nodal_expression!(
     use_forecast_data = model_uses_forecasts(psi_container)
     spec = NodalExpressionSpec(T, U, use_forecast_data, feedforward)
     if !isnothing(feedforward)
-        feedforward!(psi_container, devices, x -> PSY.get_max_active_power(x), expression_name, feedforward)
+        feedforward!(
+            psi_container,
+            devices,
+            x -> PSY.get_max_active_power(x),
+            expression_name,
+            feedforward,
+        )
     else
         forecast_label = use_forecast_data ? spec.forecast_label : ""
         constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))

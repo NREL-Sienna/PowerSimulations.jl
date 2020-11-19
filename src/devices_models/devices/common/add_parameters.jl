@@ -49,7 +49,6 @@ function include_parameters!(
     return container
 end
 
-
 function include_parameters!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -71,13 +70,7 @@ function include_parameters!(
         mult[PSY.get_name(r)] = multiplier
         bus_number = PSY.get_number(PSY.get_bus(r))
         for t in time_steps
-            add_to_expression!(
-                expr,
-                bus_number,
-                t,
-                param[PSY.get_name(r)],
-                multiplier,
-            )
+            add_to_expression!(expr, bus_number, t, param[PSY.get_name(r)], multiplier)
         end
     end
     return container
