@@ -361,9 +361,11 @@ function NodalExpressionSpec(
     ::Type{<:PSY.RegulationDevice{T}},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
 ) where {T <: PSY.StaticInjection}
     return NodalExpressionSpec(
         "max_active_power",
+        feedforward,
         make_variable_name(ActivePowerVariable, T),
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,

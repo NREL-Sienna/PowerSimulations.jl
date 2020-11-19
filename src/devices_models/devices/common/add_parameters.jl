@@ -48,3 +48,37 @@ function include_parameters!(
     end
     return container
 end
+
+
+function include_parameters!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    param_reference::UpdateRef,
+    expression_name::Symbol,
+    multiplier::Float64 = 1.0,
+) where {T <: PSY.StaticInjection}
+    @assert model_has_parameters(psi_container)
+    time_steps = model_time_steps(psi_container)
+    names = [PSY.get_name(r) for r in devices]
+    @debug "adding" param_reference "parameter"
+    container = add_param_container!(psi_container, param_reference, names)
+    param = get_parameter_array(container)
+    mult = get_multiplier_array(container)
+    expr = get_expression(psi_container, expression_name)
+    for r in devices
+        param[PSY.get_name(r)] =
+            PJ.add_parameter(psi_container.JuMPmodel, PSY.get_active_power(r))
+        mult[PSY.get_name(r)] = multiplier
+        bus_number = PSY.get_number(PSY.get_bus(r))
+        for t in time_steps
+            add_to_expression!(
+                expr,
+                bus_number,
+                t,
+                param[PSY.get_name(r)],
+                multiplier,
+            )
+        end
+    end
+    return container
+end

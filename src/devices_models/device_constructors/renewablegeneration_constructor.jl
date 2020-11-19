@@ -85,7 +85,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::DeviceModel{R, FixedOutput},
+    model::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(R, sys)
@@ -94,7 +94,7 @@ function construct_device!(
         return
     end
 
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(psi_container, devices, S, get_feedforward(model))
 
     return
 end
@@ -115,7 +115,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::DeviceModel{PSY.RenewableFix, FixedOutput},
+    model::DeviceModel{PSY.RenewableFix, FixedOutput},
     ::Type{S},
 ) where {S <: PM.AbstractPowerModel}
     devices = get_available_components(PSY.RenewableFix, sys)
@@ -124,7 +124,7 @@ function construct_device!(
         return
     end
 
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(psi_container, devices, S, get_feedforward(model))
 
     return
 end

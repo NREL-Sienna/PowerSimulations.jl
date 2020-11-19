@@ -664,9 +664,11 @@ function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
     use_forecasts::Bool,
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
 ) where {T <: PSY.HydroGen}
     return NodalExpressionSpec(
         "max_active_power",
+        feedforward,
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
         1.0,
@@ -678,9 +680,11 @@ function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
 ) where {T <: PSY.HydroGen}
     return NodalExpressionSpec(
         "max_active_power",
+        feedforward,
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,

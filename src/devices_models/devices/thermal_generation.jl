@@ -1324,9 +1324,27 @@ function NodalExpressionSpec(
     ::Type{T},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
     return NodalExpressionSpec(
         "max_active_power",
+        feedforward,
+        ACTIVE_POWER,
+        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
+        1.0,
+        T,
+    )
+end
+
+function NodalExpressionSpec(
+    ::Type{T},
+    ::Type{<:PM.AbstractPowerModel},
+    use_forecasts::Bool,
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
+    return NodalExpressionSpec(
+        "max_active_power",
+        feedforward,
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,

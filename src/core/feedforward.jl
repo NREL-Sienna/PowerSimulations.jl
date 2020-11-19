@@ -223,8 +223,6 @@ function IntegralLimitFF(; variable_source_stage, affected_variables)
     return IntegralLimitFF(variable_source_stage, affected_variables, nothing)
 end
 
-get_variable_source_stage(p::IntegralLimitFF) = p.variable_source_stage
-
 struct ParameterFF <: AbstractAffectFeedForward
     variable_source_stage::Symbol
     affected_parameters::Any
@@ -236,6 +234,9 @@ end
 function ParameterFF(; variable_source_stage, affected_parameters)
     return ParameterFF(variable_source_stage, affected_parameters)
 end
+
+get_variable_source_stage(p::Union{IntegralLimitFF, ParameterFF}) = p.variable_source_stage
+get_affected_parameters(p::ParameterFF) = p.affected_parameters
 
 ####################### Feed Forward Affects ###############################################
 
@@ -610,6 +611,28 @@ function feedforward!(
             var_name,
         )
     end
+end
+
+function feedforward!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    peak_value_function::Function,
+    expression_name::Symbol,
+    ff_model::ParameterFF,
+) where {T <: PSY.StaticInjection}
+    var = make_variable_name(get_variable_source_stage(ff_model), T)
+    parameter_ref = UpdateRef{JuMP.VariableRef}(var)
+    for prefix in get_affected_parameters(ff_model)
+        var_name = make_variable_name(prefix, T)
+        include_parameters!(
+            psi_container,
+            devices,
+            parameter_ref,
+            expression_name,
+            1.0,
+        )
+    end
+    return
 end
 
 #########################FeedForward Variables Updating#####################################

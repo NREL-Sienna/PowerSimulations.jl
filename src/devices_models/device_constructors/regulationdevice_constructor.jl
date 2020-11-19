@@ -24,7 +24,7 @@ function construct_device!(
     add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, devices)
 
     #Constraints
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(psi_container, devices, S, get_feedforward(model))
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -75,7 +75,7 @@ function construct_device!(
     add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, devices)
 
     #Constraints
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(psi_container, devices, S, get_feedforward(model))
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -116,6 +116,6 @@ function construct_device!(
     if !validate_available_devices(T, devices)
         return
     end
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(psi_container, devices, S, get_feedforward(model))
     return
 end

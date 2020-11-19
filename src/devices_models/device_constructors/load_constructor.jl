@@ -172,7 +172,7 @@ function construct_device!(
         return
     end
 
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(psi_container, devices, S, get_feedforward(model))
 
     return
 end
