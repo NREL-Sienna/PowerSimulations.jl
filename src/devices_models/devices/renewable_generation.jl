@@ -37,7 +37,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractDeviceFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}

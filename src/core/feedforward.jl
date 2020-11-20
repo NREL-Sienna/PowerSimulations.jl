@@ -616,10 +616,10 @@ end
 function feedforward!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    peak_value_function::Function,
     expression_name::Symbol,
     ff_model::ParameterFF,
-) where {T <: PSY.StaticInjection}
+    ::Type{U}
+) where {T <: PSY.StaticInjection,  U <: PM.AbstractActivePowerModel}
     var = make_variable_name(get_variable_source_stage(ff_model), T)
     parameter_ref = UpdateRef{JuMP.VariableRef}(var)
     for prefix in get_affected_parameters(ff_model)
@@ -628,6 +628,23 @@ function feedforward!(
     end
     return
 end
+
+function feedforward!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    expression_name::Symbol,
+    ff_model::ParameterFF,
+    ::Type{U}
+) where {T <: PSY.StaticInjection,  U <: PM.AbstractPowerModel}
+    # var = make_variable_name(get_variable_source_stage(ff_model), T)
+    # parameter_ref = UpdateRef{JuMP.VariableRef}(var)
+    # for prefix in get_affected_parameters(ff_model)
+    #     var_name = make_variable_name(prefix, T)
+    #     include_parameters!(psi_container, devices, parameter_ref, expression_name, 1.0)
+    # end
+    return
+end
+
 
 #########################FeedForward Variables Updating#####################################
 # This makes the choice in which variable to get from the results.

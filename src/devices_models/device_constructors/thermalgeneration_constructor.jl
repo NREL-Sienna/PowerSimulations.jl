@@ -387,11 +387,37 @@ function construct_device!(
     if !validate_available_devices(T, devices)
         return
     end
-
     nodal_expression!(psi_container, devices, S, get_feedforward(model))
 
     return
 end
+
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T, FixedOutput},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    devices = get_available_components(T, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+    add_variables!(psi_container, ReactivePowerVariable, devices)
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+        nothing,
+    )
+    nodal_expression!(psi_container, devices, S, get_feedforward(model))
+
+    return
+end
+
 
 function construct_device!(
     psi_container::PSIContainer,

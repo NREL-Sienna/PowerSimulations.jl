@@ -390,7 +390,32 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ReactivePowerVariable,
+                T,
+            ),
+            variable_name = make_variable_name(ReactivePowerVariable, T),
+            limits_func = x -> PSY.get_reactive_power_limits(x),
+            constraint_func = device_range!,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
+    )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{FixedOutput},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.ThermalGen}
@@ -418,7 +443,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.ThermalGen}
@@ -1338,7 +1363,7 @@ end
 
 function NodalExpressionSpec(
     ::Type{T},
-    ::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
     feedforward::Union{Nothing, <:AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
@@ -1347,6 +1372,22 @@ function NodalExpressionSpec(
         feedforward,
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
+        1.0,
+        T,
+    )
+end
+
+function NodalExpressionSpec(
+    ::Type{T},
+    ::Type{<:PM.AbstractPowerModel},
+    use_forecasts::Bool,
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
+    return NodalExpressionSpec(
+        "max_reactive_power",
+        feedforward,
+        REACTIVE_POWER,
+        use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
         1.0,
         T,
     )

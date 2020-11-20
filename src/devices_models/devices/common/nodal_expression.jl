@@ -59,14 +59,15 @@ function _nodal_expression!(
     # Run the Active Power Loop.
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
+    @show U, T, feedforward
     spec = NodalExpressionSpec(T, U, use_forecast_data, feedforward)
     if !isnothing(feedforward)
         feedforward!(
             psi_container,
             devices,
-            x -> PSY.get_max_active_power(x),
             expression_name,
             feedforward,
+            U,
         )
     else
         forecast_label = use_forecast_data ? spec.forecast_label : ""
