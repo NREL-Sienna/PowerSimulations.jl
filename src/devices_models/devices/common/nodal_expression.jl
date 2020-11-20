@@ -62,13 +62,7 @@ function _nodal_expression!(
     @show U, T, feedforward
     spec = NodalExpressionSpec(T, U, use_forecast_data, feedforward)
     if !isnothing(feedforward)
-        feedforward!(
-            psi_container,
-            devices,
-            expression_name,
-            feedforward,
-            U,
-        )
+        feedforward!(psi_container, devices, expression_name, feedforward, U)
     else
         forecast_label = use_forecast_data ? spec.forecast_label : ""
         constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))

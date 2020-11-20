@@ -618,8 +618,8 @@ function feedforward!(
     devices::IS.FlattenIteratorWrapper{T},
     expression_name::Symbol,
     ff_model::ParameterFF,
-    ::Type{U}
-) where {T <: PSY.StaticInjection,  U <: PM.AbstractActivePowerModel}
+    ::Type{U},
+) where {T <: PSY.StaticInjection, U <: PM.AbstractActivePowerModel}
     var = make_variable_name(get_variable_source_stage(ff_model), T)
     parameter_ref = UpdateRef{JuMP.VariableRef}(var)
     for prefix in get_affected_parameters(ff_model)
@@ -634,8 +634,8 @@ function feedforward!(
     devices::IS.FlattenIteratorWrapper{T},
     expression_name::Symbol,
     ff_model::ParameterFF,
-    ::Type{U}
-) where {T <: PSY.StaticInjection,  U <: PM.AbstractPowerModel}
+    ::Type{U},
+) where {T <: PSY.StaticInjection, U <: PM.AbstractPowerModel}
     # var = make_variable_name(get_variable_source_stage(ff_model), T)
     # parameter_ref = UpdateRef{JuMP.VariableRef}(var)
     # for prefix in get_affected_parameters(ff_model)
@@ -644,7 +644,6 @@ function feedforward!(
     # end
     return
 end
-
 
 #########################FeedForward Variables Updating#####################################
 # This makes the choice in which variable to get from the results.
