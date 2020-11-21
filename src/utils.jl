@@ -250,7 +250,6 @@ end
 
 function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray)
     column_names = unique([(k[1], k[3]) for k in keys(input_array.data)])
-    result_df = DataFrames.DataFrame()
     array_values = Vector{Vector{Float64}}(undef, length(column_names))
     for (ix, col) in enumerate(column_names)
         res = values(filter(v -> first(v)[[1, 3]] == col, input_array.data))
