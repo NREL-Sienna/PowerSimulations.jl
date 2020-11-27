@@ -25,7 +25,6 @@ const START = "start"
 const STOP = "stop"
 const THETA = "theta"
 const VM = "Vm"
-const WARM_START = "start_warm"
 const LIFT = "z"
 const ACTIVE_POWER_PUMP = "Ppump"
 
@@ -69,11 +68,25 @@ function make_variable_name(
     return encode_symbol(T, "Pout")
 end
 
+struct HotStartVariable <: VariableType end
+
+function make_variable_name(::Type{HotStartVariable}, ::Type{T}) where {T <: PSY.Device}
+    return encode_symbol(T, "start_hot")
+end
+
+struct WarmStartVariable <: VariableType end
+
+function make_variable_name(::Type{WarmStartVariable}, ::Type{T}) where {T <: PSY.Device}
+    return encode_symbol(T, "start_warm")
+end
+
 struct ColdStartVariable <: VariableType end
 
 function make_variable_name(::Type{ColdStartVariable}, ::Type{T}) where {T <: PSY.Device}
     return encode_symbol(T, "start_cold")
 end
+
+start_types = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 struct EnergyVariable <: VariableType end
 
@@ -90,12 +103,6 @@ struct EnergyVariableDown <: VariableType end
 
 function make_variable_name(::Type{EnergyVariableDown}, ::Type{T}) where {T <: PSY.Device}
     return encode_symbol(T, "Edown")
-end
-
-struct HotStartVariable <: VariableType end
-
-function make_variable_name(::Type{HotStartVariable}, ::Type{T}) where {T <: PSY.Device}
-    return encode_symbol(T, "start_hot")
 end
 
 struct LiftVariable <: VariableType end
@@ -151,22 +158,14 @@ struct StartVariable <: VariableType end
 function make_variable_name(::Type{StartVariable}, ::Type{T}) where {T <: PSY.Device}
     return encode_symbol(T, "start")
 end
-
 struct StopVariable <: VariableType end
 
 function make_variable_name(::Type{StopVariable}, ::Type{T}) where {T <: PSY.Device}
     return encode_symbol(T, "stop")
 end
 
-struct WarmStartVariable <: VariableType end
-
-function make_variable_name(::Type{WarmStartVariable}, ::Type{T}) where {T <: PSY.Device}
-    return encode_symbol(T, WARM_START)
-end
-
 ##### AGC Variables #####
 struct SteadyStateFrequencyDeviation <: VariableType end
-
 function make_variable_name(::Type{SteadyStateFrequencyDeviation})
     return encode_symbol("Δf")
 end
