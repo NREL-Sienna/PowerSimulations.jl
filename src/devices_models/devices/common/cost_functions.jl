@@ -572,7 +572,7 @@ function add_to_cost!(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     time_steps = model_time_steps(psi_container)
     initial_time = model_initial_time(psi_container)
-    # TODO: Use mthods from PowerSystems to eliminate this step
+    # TODO: Use methods from PowerSystems to eliminate this step
     variable_cost_forecast = get_time_series(psi_container, component, "variable_cost")
     variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
     for t in time_steps
@@ -642,7 +642,7 @@ function add_service_bid_cost!(
     component::PSY.Component,
     service::PSY.Reserve{T},
 ) where {T <: PSY.ReserveDirection}
-    # TODO: Use mthods from PowerSystems to eliminate this step
+    # TODO: Use methods from PowerSystems to eliminate this step
     forecast_data = get_time_series(psi_container, component, PSY.get_name(service))
     forecast_data = map(PSY.VariableCost, forecast_data)
     time_steps = model_time_steps(psi_container)
