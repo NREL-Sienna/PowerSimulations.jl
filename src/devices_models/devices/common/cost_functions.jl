@@ -414,7 +414,7 @@ function add_to_cost!(
 end
 
 """
-Adds to the models costs represented by PowerSystems Multi-Start costs
+Adds to the models costs represented by PowerSystems Multi-Start costs.
 """
 function add_to_cost!(
     psi_container::PSIContainer,
@@ -467,8 +467,7 @@ function add_to_cost!(
 
     # Start-up costs
     start_cost_data = PSY.get_start_up(cost_data)
-    for (st, var_type) in
-        enumerate((HotStartVariable, WarmStartVariable, ColdStartVariable))
+    for (st, var_type) in enumerate(start_types)
         var_name = make_variable_name(var_type, spec.component_type)
         for t in time_steps
             linear_gen_cost!(
@@ -485,13 +484,14 @@ function add_to_cost!(
 end
 
 """
-Adds to the models costs represented by PowerSystems Market-Bid costs
+Adds to the models costs represented by PowerSystems Market-Bid costs. Implementation for
+devices PSY.ThermalMultiStart
 """
 function add_to_cost!(
     psi_container::PSIContainer,
     spec::AddCostSpec,
     cost_data::PSY.MarketBidCost,
-    component::PSY.Component,
+    component::PSY.ThermalMultiStart,
 )
     component_name = PSY.get_name(component)
     @debug "Market Bid" component_name
@@ -507,13 +507,87 @@ function add_to_cost!(
     end
 
     if !isnothing(spec.start_up_cost)
-        @debug "Start up cost" component_name
+        start_cost_data = spec.start_up_cost(cost_data)
+        for (st, var_type) in enumerate(start_types)
+            var_name = make_variable_name(var_type, spec.component_type)
+            for t in time_steps
+                linear_gen_cost!(
+                    psi_container,
+                    var_name,
+                    component_name,
+                    start_cost_data[st] * spec.multiplier,
+                    t,
+                )
+            end
+        end
+    end
+
+    if spec.has_status_variable
+        @debug "no_load cost" component_name
         for t in time_steps
             linear_gen_cost!(
                 psi_container,
-                make_variable_name(StartVariable, spec.component_type),
+                make_variable_name(OnVariable, spec.component_type),
                 component_name,
-                spec.start_up_cost(cost_data) * spec.multiplier,
+                PSY.get_no_load(cost_data) * spec.multiplier,
+                t,
+            )
+        end
+    end
+
+    if !isnothing(spec.shut_down_cost)
+        @debug "Shut down cost" component_name
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                make_variable_name(StopVariable, spec.component_type),
+                component_name,
+                spec.shut_down_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
+    end
+
+    #Service Cost Bid
+    ancillary_services = PSY.get_ancillary_services(cost_data)
+    for service in ancillary_services
+        add_service_bid_cost!(psi_container, spec, component, service)
+    end
+    return
+end
+
+"""
+Adds to the models costs represented by PowerSystems Market-Bid costs. Default implementation for any PSY.Component. Uses by default the cost in of the cold stages for
+start up costs.
+"""
+function add_to_cost!(
+    psi_container::PSIContainer,
+    spec::AddCostSpec,
+    cost_data::PSY.MarketBidCost,
+    component::PSY.Component,
+)
+    component_name = PSY.get_name(component)
+    @debug "Market Bid" component_name
+    resolution = model_resolution(psi_container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    time_steps = model_time_steps(psi_container)
+    initial_time = model_initial_time(psi_container)
+    # TODO: Use methods from PowerSystems to eliminate this step
+    variable_cost_forecast = get_time_series(psi_container, component, "variable_cost")
+    variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
+    for t in time_steps
+        variable_cost!(psi_container, spec, component_name, variable_cost_forecast[t], t)
+    end
+
+    if !isnothing(spec.start_up_cost)
+        start_cost_data = spec.start_up_cost(cost_data)
+        var_name = make_variable_name(StartVariable, spec.component_type)
+        for t in time_steps
+            linear_gen_cost!(
+                psi_container,
+                var_name,
+                component_name,
+                start_cost_data.cold * spec.multiplier,
                 t,
             )
         end
@@ -568,7 +642,7 @@ function add_service_bid_cost!(
     component::PSY.Component,
     service::PSY.Reserve{T},
 ) where {T <: PSY.ReserveDirection}
-    # TODO: Use mthods from PowerSystems to eliminate this step
+    # TODO: Use methods from PowerSystems to eliminate this step
     forecast_data = get_time_series(psi_container, component, PSY.get_name(service))
     forecast_data = map(PSY.VariableCost, forecast_data)
     time_steps = model_time_steps(psi_container)
@@ -594,7 +668,7 @@ function add_service_bid_cost!(
     component::PSY.Component,
     service::PSY.ReserveDemandCurve{T},
 ) where {T <: PSY.ReserveDirection}
-    error("Current version doesn't supports cost bid for  ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))")
+    error("Current version doesn't supports cost bid for ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))")
     return
 end
 
