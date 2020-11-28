@@ -1392,6 +1392,295 @@ function build_c_sys5_pglib(; kwargs...)
     return c_sys5_uc
 end
 
+function build_sos_test_sys(; kwargs...)
+    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
+    gens_cost_sos = [
+        ThermalStandard(
+            name = "Alta",
+            available = true,
+            status = true,
+            bus = node,
+            active_power = 0.52,
+            reactive_power = 0.010,
+            rating = 0.5,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.22, max = 0.55),
+            reactive_power_limits = nothing,
+            time_limits = nothing,
+            ramp_limits = nothing,
+            operation_cost = ThreePartCost(
+                [(1122.43, 0.22), (1617.43, 0.33), (1742.48, 0.44), (2075.88, 0.55)],
+                0.0,
+                5665.23,
+                0.0,
+            ),
+            base_power = 100.0,
+        ),
+        ThermalStandard(
+            name = "Park City",
+            available = true,
+            status = true,
+            bus = node,
+            active_power = 0.62,
+            reactive_power = 0.20,
+            rating = 2.2125,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.62, max = 1.55),
+            reactive_power_limits = nothing,
+            time_limits = nothing,
+            ramp_limits = nothing,
+            operation_cost = ThreePartCost(
+                [(1500.19, 0.62), (2132.59, 0.929), (2829.875, 1.24), (2831.444, 1.55)],
+                0.0,
+                5665.23,
+                0.0,
+            ),
+            base_power = 100.0,
+        ),
+    ]
+
+    #Checks the data remains non-convex
+    for g in gens_cost_sos
+        @assert PSI.pwlparamcheck(PSY.get_operation_cost(g).variable) == false
+    end
+
+    DA_load_forecast = SortedDict{Dates.DateTime, TimeArray}()
+    ini_time = DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S")
+    cost_sos_load = [[1.3, 2.1], [1.3, 2.1]]
+    for (ix, date) in enumerate(range(ini_time; length = 2, step = Hour(1)))
+        DA_load_forecast[date] = TimeArray([date, date + Hour(1)], cost_sos_load[ix])
+    end
+    load_forecast_cost_sos = Deterministic("max_active_power", DA_load_forecast)
+    cost_test_sos_sys =
+        System(100.0; time_series_in_memory = get(kwargs, :time_series_in_memory, true))
+    add_component!(cost_test_sos_sys, node)
+    add_component!(cost_test_sos_sys, load)
+    add_component!(cost_test_sos_sys, gens_cost_sos[1])
+    add_component!(cost_test_sos_sys, gens_cost_sos[2])
+    add_time_series!(cost_test_sos_sys, load, load_forecast_cost_sos)
+
+    return cost_test_sos_sys
+end
+
+function build_pwl_test_sys(; kwargs...)
+    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
+    gens_cost = [
+        ThermalStandard(
+            name = "Alta",
+            available = true,
+            status = true,
+            bus = node,
+            active_power = 0.52,
+            reactive_power = 0.010,
+            rating = 0.5,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.22, max = 0.55),
+            reactive_power_limits = nothing,
+            time_limits = nothing,
+            ramp_limits = nothing,
+            operation_cost = ThreePartCost(
+                [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
+                532.44,
+                5665.23,
+                0.0,
+            ),
+            base_power = 100.0,
+        ),
+        ThermalStandard(
+            name = "Park City",
+            available = true,
+            status = true,
+            bus = node,
+            active_power = 0.62,
+            reactive_power = 0.20,
+            rating = 221.25,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.62, max = 1.55),
+            reactive_power_limits = nothing,
+            time_limits = nothing,
+            ramp_limits = nothing,
+            operation_cost = ThreePartCost(
+                [(1264.80, 0.62), (1897.20, 0.93), (2594.4787, 1.24), (3433.04, 1.55)],
+                235.397,
+                5665.23,
+                0.0,
+            ),
+            base_power = 100.0,
+        ),
+    ]
+
+    DA_load_forecast = SortedDict{Dates.DateTime, TimeArray}()
+    ini_time = DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S")
+    cost_sos_load = [[1.3, 2.1], [1.3, 2.1]]
+    for (ix, date) in enumerate(range(ini_time; length = 2, step = Hour(1)))
+        DA_load_forecast[date] = TimeArray([date, date + Hour(1)], cost_sos_load[ix])
+    end
+    load_forecast_cost_sos = Deterministic("max_active_power", DA_load_forecast)
+    cost_test_sys =
+        System(100.0; time_series_in_memory = get(kwargs, :time_series_in_memory, true))
+    add_component!(cost_test_sys, node)
+    add_component!(cost_test_sys, load)
+    add_component!(cost_test_sys, gens_cost[1])
+    add_component!(cost_test_sys, gens_cost[2])
+    add_time_series!(cost_test_sys, load, load_forecast_cost_sos)
+    return cost_test_sys
+end
+
+function build_duration_test_sys(; kwargs...)
+    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
+    DA_dur = collect(
+        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+            "1/1/2024  6:00:00",
+            "d/m/y  H:M:S",
+        ),
+    )
+    gens_dur = [
+        ThermalStandard(
+            name = "Alta",
+            available = true,
+            status = true,
+            bus = node,
+            active_power = 0.40,
+            reactive_power = 0.010,
+            rating = 0.5,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.3, max = 0.9),
+            reactive_power_limits = nothing,
+            ramp_limits = nothing,
+            time_limits = (up = 4, down = 2),
+            operation_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            base_power = 100.0,
+            time_at_status = 2.0,
+        ),
+        ThermalStandard(
+            name = "Park City",
+            available = true,
+            status = false,
+            bus = node,
+            active_power = 1.70,
+            reactive_power = 0.20,
+            rating = 2.2125,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.7, max = 2.2),
+            reactive_power_limits = nothing,
+            ramp_limits = nothing,
+            time_limits = (up = 6, down = 4),
+            operation_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            base_power = 100.0,
+            time_at_status = 3.0,
+        ),
+    ]
+
+    duration_load = [0.3, 0.6, 0.8, 0.7, 1.7, 0.9, 0.7]
+    load_data = SortedDict(DA_dur[1] => TimeArray(DA_dur, duration_load))
+    load_forecast_dur = Deterministic("max_active_power", load_data)
+    duration_test_sys =
+        System(100.0; time_series_in_memory = get(kwargs, :time_series_in_memory, true))
+    add_component!(duration_test_sys, node)
+    add_component!(duration_test_sys, load)
+    add_component!(duration_test_sys, gens_dur[1])
+    add_component!(duration_test_sys, gens_dur[2])
+    add_time_series!(duration_test_sys, load, load_forecast_dur)
+
+    return duration_test_sys
+end
+
+function build_pwl_marketbid_sys(; kwargs...)
+    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
+    gens_cost = [
+        ThermalStandard(
+            name = "Alta",
+            available = true,
+            status = true,
+            bus = node,
+            active_power = 0.52,
+            reactive_power = 0.010,
+            rating = 0.5,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.22, max = 0.55),
+            reactive_power_limits = nothing,
+            time_limits = nothing,
+            ramp_limits = nothing,
+            operation_cost = MarketBidCost(
+                no_load = 0.0,
+                start_up = (hot = 0.0, warm = 0.0, cold = 0.0),
+                shut_down = 0.0,
+            ),
+            base_power = 100.0,
+        ),
+        ThermalMultiStart(
+        name = "115_STEAM_1",
+        available = true,
+        status = true,
+        bus = node,
+        active_power = 0.05,
+        reactive_power = 0.010,
+        rating = 0.12,
+        prime_mover = PrimeMovers.ST,
+        fuel = ThermalFuels.COAL,
+        active_power_limits = (min = 0.05, max = 0.12),
+        reactive_power_limits = (min = -0.30, max = 0.30),
+        ramp_limits = (up = 0.2 * 0.12, down = 0.2 * 0.12),
+        power_trajectory = (startup = 0.05, shutdown = 0.05),
+        time_limits = (up = 4.0, down = 2.0),
+        start_time_limits = (hot = 2.0, warm = 4.0, cold = 12.0),
+        start_types = 3,
+        operation_cost = MarketBidCost(
+                no_load = 0.0,
+                start_up = (hot = 393.28, warm = 455.37, cold = 703.76),
+                shut_down = 0.0,
+            ),
+        base_power = 100.0,
+    ),
+    ]
+    ini_time = DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S")
+    DA_load_forecast = Dict{Dates.DateTime, TimeArray}()
+    market_bid_gen1_data =  Dict(ini_time => [
+        [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
+        [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)]
+        ],
+        ini_time + Hour(1)=> [
+        [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
+        [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
+        ]
+    )
+    market_bid_gen1 = Deterministic(name = "variable_cost", data = market_bid_gen1_data, resolution = Hour(1))
+    market_bid_gen2_data =  Dict(ini_time => [
+        [(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)],
+        [(0.0, 0.05), (300.1, 0.0733), (600.72, 0.0967), (900.1, 0.120)],],
+        ini_time + Hour(1)=> [
+        [(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)],
+        [(0.0, 0.05), (300.1, 0.0733), (600.72, 0.0967), (900.1, 0.120)],]
+    )
+    market_bid_gen2 = Deterministic(name = "variable_cost", data = market_bid_gen2_data, resolution = Hour(1))
+    market_bid_load = [[1.3, 2.1], [1.3, 2.1]]
+    for (ix, date) in enumerate(range(ini_time; length = 2, step = Hour(1)))
+        DA_load_forecast[date] = TimeArray([date, date + Hour(1)], market_bid_load[ix])
+    end
+    load_forecast_cost_market_bid = Deterministic("max_active_power", DA_load_forecast)
+    cost_test_sys =
+        System(100.0; time_series_in_memory = get(kwargs, :time_series_in_memory, true));
+    add_component!(cost_test_sys, node)
+    add_component!(cost_test_sys, load)
+    add_component!(cost_test_sys, gens_cost[1])
+    add_component!(cost_test_sys, gens_cost[2])
+    add_time_series!(cost_test_sys, load, load_forecast_cost_market_bid)
+    set_variable_cost!(cost_test_sys, gens_cost[1], market_bid_gen1)
+    set_variable_cost!(cost_test_sys, gens_cost[2], market_bid_gen2)
+    return cost_test_sys
+end
+
 TEST_SYSTEMS = Dict(
     "c_sys14" => (
         description = "14-bus system",
@@ -1479,6 +1768,26 @@ TEST_SYSTEMS = Dict(
         build = build_sys_ramp_testing,
         time_series_in_memory = true,
     ),
+    "c_duration_test" => (
+        description = "1 Bus for durantion testing",
+        build = build_duration_test_sys,
+        time_series_in_memory = true,
+    ),
+    "c_linear_pwl_test" => (
+        description = "1 Bus lineal PWL linear testing",
+        build = build_pwl_test_sys,
+        time_series_in_memory = true,
+    ),
+    "c_sos_pwl_test" => (
+        description = "1 Bus lineal PWL sos testing",
+        build = build_sos_test_sys,
+        time_series_in_memory = true,
+    ),
+    "c_market_bid_cost" => (
+        description = "1 bus system with MarketBidCost Model",
+        build = build_pwl_marketbid_sys,
+        time_series_in_memory = true
+    )
 )
 
 build_PTDF5() = PTDF(build_system("c_sys5"))
