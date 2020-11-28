@@ -1620,57 +1620,69 @@ function build_pwl_marketbid_sys(; kwargs...)
             base_power = 100.0,
         ),
         ThermalMultiStart(
-        name = "115_STEAM_1",
-        available = true,
-        status = true,
-        bus = node,
-        active_power = 0.05,
-        reactive_power = 0.010,
-        rating = 0.12,
-        prime_mover = PrimeMovers.ST,
-        fuel = ThermalFuels.COAL,
-        active_power_limits = (min = 0.05, max = 0.12),
-        reactive_power_limits = (min = -0.30, max = 0.30),
-        ramp_limits = (up = 0.2 * 0.12, down = 0.2 * 0.12),
-        power_trajectory = (startup = 0.05, shutdown = 0.05),
-        time_limits = (up = 4.0, down = 2.0),
-        start_time_limits = (hot = 2.0, warm = 4.0, cold = 12.0),
-        start_types = 3,
-        operation_cost = MarketBidCost(
+            name = "115_STEAM_1",
+            available = true,
+            status = true,
+            bus = node,
+            active_power = 0.05,
+            reactive_power = 0.010,
+            rating = 0.12,
+            prime_mover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            active_power_limits = (min = 0.05, max = 0.12),
+            reactive_power_limits = (min = -0.30, max = 0.30),
+            ramp_limits = (up = 0.2 * 0.12, down = 0.2 * 0.12),
+            power_trajectory = (startup = 0.05, shutdown = 0.05),
+            time_limits = (up = 4.0, down = 2.0),
+            start_time_limits = (hot = 2.0, warm = 4.0, cold = 12.0),
+            start_types = 3,
+            operation_cost = MarketBidCost(
                 no_load = 0.0,
                 start_up = (hot = 393.28, warm = 455.37, cold = 703.76),
                 shut_down = 0.0,
             ),
-        base_power = 100.0,
-    ),
+            base_power = 100.0,
+        ),
     ]
     ini_time = DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S")
     DA_load_forecast = Dict{Dates.DateTime, TimeArray}()
-    market_bid_gen1_data =  Dict(ini_time => [
-        [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
-        [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)]
+    market_bid_gen1_data = Dict(
+        ini_time => [
+            [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
+            [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
         ],
-        ini_time + Hour(1)=> [
-        [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
-        [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
-        ]
+        ini_time + Hour(1) => [
+            [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
+            [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
+        ],
     )
-    market_bid_gen1 = Deterministic(name = "variable_cost", data = market_bid_gen1_data, resolution = Hour(1))
-    market_bid_gen2_data =  Dict(ini_time => [
-        [(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)],
-        [(0.0, 0.05), (300.1, 0.0733), (600.72, 0.0967), (900.1, 0.120)],],
-        ini_time + Hour(1)=> [
-        [(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)],
-        [(0.0, 0.05), (300.1, 0.0733), (600.72, 0.0967), (900.1, 0.120)],]
+    market_bid_gen1 = Deterministic(
+        name = "variable_cost",
+        data = market_bid_gen1_data,
+        resolution = Hour(1),
     )
-    market_bid_gen2 = Deterministic(name = "variable_cost", data = market_bid_gen2_data, resolution = Hour(1))
+    market_bid_gen2_data = Dict(
+        ini_time => [
+            [(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)],
+            [(0.0, 0.05), (300.1, 0.0733), (600.72, 0.0967), (900.1, 0.120)],
+        ],
+        ini_time + Hour(1) => [
+            [(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)],
+            [(0.0, 0.05), (300.1, 0.0733), (600.72, 0.0967), (900.1, 0.120)],
+        ],
+    )
+    market_bid_gen2 = Deterministic(
+        name = "variable_cost",
+        data = market_bid_gen2_data,
+        resolution = Hour(1),
+    )
     market_bid_load = [[1.3, 2.1], [1.3, 2.1]]
     for (ix, date) in enumerate(range(ini_time; length = 2, step = Hour(1)))
         DA_load_forecast[date] = TimeArray([date, date + Hour(1)], market_bid_load[ix])
     end
     load_forecast_cost_market_bid = Deterministic("max_active_power", DA_load_forecast)
     cost_test_sys =
-        System(100.0; time_series_in_memory = get(kwargs, :time_series_in_memory, true));
+        System(100.0; time_series_in_memory = get(kwargs, :time_series_in_memory, true))
     add_component!(cost_test_sys, node)
     add_component!(cost_test_sys, load)
     add_component!(cost_test_sys, gens_cost[1])
@@ -1786,8 +1798,8 @@ TEST_SYSTEMS = Dict(
     "c_market_bid_cost" => (
         description = "1 bus system with MarketBidCost Model",
         build = build_pwl_marketbid_sys,
-        time_series_in_memory = true
-    )
+        time_series_in_memory = true,
+    ),
 )
 
 build_PTDF5() = PTDF(build_system("c_sys5"))

@@ -428,7 +428,8 @@ end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin
     sys = build_system("c_market_bid_cost")
-    UC_devices[:MSGenerators] = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
+    UC_devices[:MSGenerators] =
+        DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(
@@ -438,5 +439,5 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-     moi_tests(UC, true, 38, 0, 18, 8, 13, true)
+    moi_tests(UC, true, 38, 0, 18, 8, 13, true)
 end
