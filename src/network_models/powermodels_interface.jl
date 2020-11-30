@@ -456,3 +456,70 @@ function add_pm_con_refs!(
         end
     end
 end
+
+function get_bus_bytype(sys::PSY.System, type::PSY.BusTypes.BusType)
+    buses = PSY.get_components(PSY.Bus, sys)
+    return filter(x -> PSY.get_bustype(x) == type, collect(buses))
+end
+
+function add_pv_constraint!(
+    psi_container::PSIContainer,
+    ::Type{T},
+    sys::PSY.System,
+) where {T <: PM.AbstractPowerModel}
+    buses = get_bus_bytype(sys, PSY.BusTypes.PV)
+    voltage_magnitude_constraint!(psi_container, buses)
+    return
+end
+
+function add_pq_constraint(psi_container::PSIContainer,
+    sys::PSY.System,
+    ::Type{T};) where {T <: PM.AbstractPowerModel}
+
+    return
+end
+
+function voltage_magnitude_constraint!(
+    psi_container::PSIContainer,
+    devices::Array{T},
+) where {T <: PSY.Bus}
+    vm = get_variable(psi_container, make_variable_name(VM, T))
+    time_steps = model_time_steps(psi_container)
+    name_set = PSY.get_name.(devices)
+    constraint = add_cons_container!(
+        psi_container,
+        make_constraint_name(VOLTAGE_MAGNITUDE, T),
+        name_set,
+        time_steps,
+    )
+
+    for t in time_steps, (ix, bus) in enumerate(devices)
+        name = PSY.get_name(bus)
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, vm[name, t] == PSY.get_magnitude(bus))
+    end
+    return
+end
+
+## Not using this currently
+function reactive_power_restriction_constraint!(
+    psi_container::PSIContainer,
+    devices::Array{T},
+) where {T <: PSY.Device}
+    vm = get_variable(psi_container, make_variable_name(REACTIVE_POWER, T))
+    time_steps = model_time_steps(psi_container)
+    name_set = PSY.get_name.(devices)
+    constraint = add_cons_container!(
+        psi_container,
+        make_constraint_name(REACTIVE_POWER_FIX, T),
+        name_set,
+        time_steps,
+    )
+
+    for t in time_steps, (ix, d) in enumerate(devices)
+        name = PSY.get_name(d)
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, vm[name, t] == PSY.get_reactive_power(d))
+    end
+    return
+end

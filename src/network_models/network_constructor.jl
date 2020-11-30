@@ -77,6 +77,7 @@ function construct_network!(
     powermodels_network!(psi_container, T, sys, instantiate_model)
     add_pm_var_refs!(psi_container, T, sys)
     add_pm_con_refs!(psi_container, T, sys)
+    add_pv_constraint!(psi_container, T, sys)
     return
 end
 

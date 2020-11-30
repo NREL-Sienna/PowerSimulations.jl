@@ -6,7 +6,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{H, FixedOutput},
     ::Type{S},
-) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
+) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
     if !validate_available_devices(H, devices)
@@ -14,6 +14,32 @@ function construct_device!(
     end
 
     nodal_expression!(psi_container, devices, S, get_feedforward(model))
+
+    return
+end
+
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H, FixedOutput},
+    ::Type{S},
+) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
+    devices = get_available_components(H, sys)
+
+    if !validate_available_devices(H, devices)
+        return
+    end
+    add_variables!(psi_container, ReactivePowerVariable, devices)
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel, get_feedforward(model))
 
     return
 end

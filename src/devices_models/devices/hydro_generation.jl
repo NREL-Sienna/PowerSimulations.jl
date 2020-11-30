@@ -199,6 +199,31 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{FixedOutput},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, <:AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.HydroGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ReactivePowerVariable,
+                T,
+            ),
+            variable_name = make_variable_name(ReactivePowerVariable, T),
+            limits_func = x -> PSY.get_reactive_power_limits(x),
+            constraint_func = device_range!,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
+    )
+end
+
 """
 This function define the range constraint specs for the
 active power for dispatch Run of River formulations.

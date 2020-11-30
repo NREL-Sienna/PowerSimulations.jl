@@ -52,6 +52,8 @@ const MUST_RUN = "must_run"
 const MUST_RUN_LB = "must_run_lb"
 const NODAL_BALANCE_ACTIVE = "nodal_balance_active"
 const NODAL_BALANCE_REACTIVE = "nodal_balance_reactive"
+const VOLTAGE_MAGNITUDE = "voltage_magnitude"
+const REACTIVE_POWER_FIX = "reactive_power_fix"
 
 abstract type ConstraintType end
 
