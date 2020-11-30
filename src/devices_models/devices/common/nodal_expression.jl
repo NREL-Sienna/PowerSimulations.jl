@@ -58,7 +58,8 @@ function _nodal_expression!(
     forecast_label = use_forecast_data ? spec.forecast_label : ""
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
+        ts_vector::Vector{Float64} = get_time_series(psi_container, d, forecast_label)
+        @debug "building constraint info" get_name(d), summary(ts_vector)
         constraint_info =
             DeviceTimeSeriesConstraintInfo(d, spec.peak_value_function, ts_vector)
         constraint_infos[ix] = constraint_info
