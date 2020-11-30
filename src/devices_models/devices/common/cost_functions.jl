@@ -499,11 +499,21 @@ function add_to_cost!(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     time_steps = model_time_steps(psi_container)
     initial_time = model_initial_time(psi_container)
-    # TODO: Use mthods from PowerSystems to eliminate this step
-    variable_cost_forecast = get_time_series(psi_container, component, "variable_cost")
-    variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
+    variable_cost_forecast = PSY.get_variable_cost(
+        component,
+        PSY.get_operation_cost(component);
+        start_time = initial_time,
+        len = length(time_steps),
+    )
+    variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     for t in time_steps
-        variable_cost!(psi_container, spec, component_name, variable_cost_forecast[t], t)
+        variable_cost!(
+            psi_container,
+            spec,
+            component_name,
+            variable_cost_forecast_values[t],
+            t,
+        )
     end
 
     if !isnothing(spec.start_up_cost)
@@ -572,11 +582,21 @@ function add_to_cost!(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     time_steps = model_time_steps(psi_container)
     initial_time = model_initial_time(psi_container)
-    # TODO: Use methods from PowerSystems to eliminate this step
-    variable_cost_forecast = get_time_series(psi_container, component, "variable_cost")
-    variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
+    variable_cost_forecast = PSY.get_variable_cost(
+        component,
+        PSY.get_operation_cost(component);
+        start_time = initial_time,
+        len = length(time_steps),
+    )
+    variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     for t in time_steps
-        variable_cost!(psi_container, spec, component_name, variable_cost_forecast[t], t)
+        variable_cost!(
+            psi_container,
+            spec,
+            component_name,
+            variable_cost_forecast_values[t],
+            t,
+        )
     end
 
     if !isnothing(spec.start_up_cost)
@@ -642,17 +662,23 @@ function add_service_bid_cost!(
     component::PSY.Component,
     service::PSY.Reserve{T},
 ) where {T <: PSY.ReserveDirection}
-    # TODO: Use methods from PowerSystems to eliminate this step
-    forecast_data = get_time_series(psi_container, component, PSY.get_name(service))
-    forecast_data = map(PSY.VariableCost, forecast_data)
     time_steps = model_time_steps(psi_container)
-    if eltype(forecast_data) == PSY.VariableCost{Float64}
+    initial_time = model_initial_time(psi_container)
+    forecast_data = PSY.get_services_bid(
+        component,
+        PSY.get_operation_cost(component),
+        service;
+        start_time = initial_time,
+        len = length(time_steps),
+    )
+    forecast_data_values = TimeSeries.values(forecast_data)
+    if eltype(forecast_data_values) == PSY.VariableCost{Float64}
         for t in time_steps
             linear_gen_cost!(
                 psi_container,
                 spec.addtional_linear_terms[PSY.get_name(service)],
                 PSY.get_name(component),
-                forecast_data,
+                forecast_data_values,
                 t,
             )
         end
