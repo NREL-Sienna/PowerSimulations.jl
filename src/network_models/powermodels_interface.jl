@@ -472,10 +472,11 @@ function add_pv_constraint!(
     return
 end
 
-function add_pq_constraint(psi_container::PSIContainer,
+function add_pq_constraint(
+    psi_container::PSIContainer,
     sys::PSY.System,
-    ::Type{T};) where {T <: PM.AbstractPowerModel}
-
+    ::Type{T};,
+) where {T <: PM.AbstractPowerModel}
     return
 end
 
@@ -518,8 +519,10 @@ function reactive_power_restriction_constraint!(
 
     for t in time_steps, (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
-        constraint[name, t] =
-            JuMP.@constraint(psi_container.JuMPmodel, vm[name, t] == PSY.get_reactive_power(d))
+        constraint[name, t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            vm[name, t] == PSY.get_reactive_power(d)
+        )
     end
     return
 end

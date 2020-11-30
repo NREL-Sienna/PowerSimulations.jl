@@ -120,7 +120,12 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel, get_feedforward(model))
+    nodal_expression!(
+        psi_container,
+        devices,
+        PM.AbstractActivePowerModel,
+        get_feedforward(model),
+    )
 
     return
 end
