@@ -251,21 +251,32 @@ import JSON
 import CSV
 import SHA
 
-include("core/definitions.jl")
+# PowerModels exports
+export ACPPowerModel
+export ACRPowerModel
+export ACTPowerModel
+export DCPPowerModel
+export NFAPowerModel
+export DCPLLPowerModel
+export LPACCPowerModel
+export SOCWRPowerModel
+export SOCWRConicPowerModel
+export QCRMPowerModel
+export QCLSPowerModel
 
 ################################################################################
 # Includes
 
 include("utils.jl")
 
+include("core/definitions.jl")
+
 #Models and constructors
 include("core/results.jl")
 include("core/abstract_types.jl")
 include("core/aux_structs.jl")
 
-include("services_models/services_model.jl")
-include("devices_models/device_model.jl")
-include("network_models/networks.jl")
+include("core/models.jl")
 
 include("core/parameters.jl")
 include("core/variables.jl")
@@ -283,7 +294,22 @@ include("core/operations_problem.jl")
 include("core/simulation_stages.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
-include("devices_models/devices/common.jl")
+
+include("devices_models/devices/common/constraints_structs.jl")
+include("devices_models/devices/common/cost_functions.jl")
+include("devices_models/devices/common/range_constraint.jl")
+include("devices_models/devices/common/add_variable.jl")
+include("devices_models/devices/common/add_parameters.jl")
+include("devices_models/devices/common/rating_constraints.jl")
+include("devices_models/devices/common/rateofchange_constraints.jl")
+include("devices_models/devices/common/duration_constraints.jl")
+include("devices_models/devices/common/commitment_constraint.jl")
+include("devices_models/devices/common/timeseries_constraint.jl")
+include("devices_models/devices/common/expressionarray_algebra.jl")
+include("devices_models/devices/common/pm_translator.jl")
+include("devices_models/devices/common/energy_balance_constraint.jl")
+include("devices_models/devices/common/get_time_series.jl")
+
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
 include("core/recorder_events.jl")

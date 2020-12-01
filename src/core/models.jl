@@ -1,3 +1,14 @@
+
+### Services
+
+abstract type AbstractServiceFormulation end
+
+mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
+    service_type::Type{D}
+    formulation::Type{B}
+end
+
+
 abstract type AbstractDeviceFormulation end
 struct FixedOutput <: AbstractDeviceFormulation end
 
@@ -8,6 +19,8 @@ function _check_device_formulation(
         throw(ArgumentError("The device model must contain only concrete types, $(D) is an Abstract Type"))
     end
 end
+
+### Device models
 
 """
     DeviceModel(::Type{D}, ::Type{B}) where {D<:PSY.Device,
@@ -54,3 +67,54 @@ get_device_type(m::DeviceModel) = m.device_type
 get_formulation(m::DeviceModel) = m.formulation
 get_feedforward(m::DeviceModel) = m.feedforward
 get_services(m::Union{DeviceModel, Nothing}) = isnothing(m) ? nothing : m.services
+
+### Network models
+
+struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
+struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end
+struct StandardPTDFModel <: PM.AbstractDCPModel end
+
+#================================================
+    # exact non-convex models
+    ACPPowerModel, ACRPowerModel, ACTPowerModel
+
+    # linear approximations
+    DCPPowerModel, NFAPowerModel
+
+    # quadratic approximations
+    DCPLLPowerModel, LPACCPowerModel
+
+    # quadratic relaxations
+    SOCWRPowerModel, SOCWRConicPowerModel,
+    SOCBFPowerModel, SOCBFConicPowerModel,
+    QCRMPowerModel, QCLSPowerModel,
+
+    # sdp relaxations
+    SDPWRMPowerModel, SparseSDPWRMPowerModel
+================================================#
+
+##### Exact Non-Convex Models #####
+import PowerModels: ACPPowerModel
+
+import PowerModels: ACRPowerModel
+
+import PowerModels: ACTPowerModel
+
+##### Linear Approximations #####
+import PowerModels: DCPPowerModel
+
+import PowerModels: NFAPowerModel
+
+##### Quadratic Approximations #####
+import PowerModels: DCPLLPowerModel
+
+import PowerModels: LPACCPowerModel
+
+##### Quadratic Relaxations #####
+import PowerModels: SOCWRPowerModel
+
+import PowerModels: SOCWRConicPowerModel
+
+import PowerModels: QCRMPowerModel
+
+import PowerModels: QCLSPowerModel
