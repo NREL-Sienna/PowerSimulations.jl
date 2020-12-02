@@ -1,8 +1,6 @@
 isdefined(Base, :__precompile__) && __precompile__()
 module PowerSimulations
 
-using InteractiveUtils
-
 #################################################################################
 # Exports
 
