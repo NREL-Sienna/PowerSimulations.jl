@@ -223,7 +223,7 @@ function commitment_variables!(
         OnVariable(),
         devices,
     )
-    varstatus = get_variable(psi_container, OnVariable, PSY.ThermalMultiStart)
+    var_status = get_variable(psi_container, OnVariable, PSY.ThermalMultiStart)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))
@@ -231,7 +231,7 @@ function commitment_variables!(
             get_expression(psi_container, :nodal_balance_active),
             bus_number,
             t,
-            varstatus[name, t],
+            var_status[name, t],
             PSY.get_active_power_limits(d).min,
         )
     end

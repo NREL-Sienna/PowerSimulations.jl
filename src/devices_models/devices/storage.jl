@@ -29,11 +29,7 @@ get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = :
 ############## EnergyVariable, Storage ####################
 
 get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}) = false
-# TODO: why isn't this defined
-# get_variable_initial_value(pv::EnergyVariable, d::PSY.Storage, settings) = PSY.get_initial_storage(d)
 get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
-# TODO: why isn't this defined
-# get_variable_upper_bound(::EnergyVariable, d::PSY.Storage, _) = PSY.get_storage_capacity(d)
 
 ############## ReserveVariable, Storage ####################
 
