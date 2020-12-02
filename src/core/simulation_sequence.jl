@@ -130,7 +130,7 @@ function _check_chronology_consistency(
             @warn("Single stage detected, the default Initial Condition Chronology is IntraStageChronology(), other values will be ignored.")
         end
     end
-    #TODO: Add more consistency checks
+    # TODO: Add more consistency checks
     return
 end
 

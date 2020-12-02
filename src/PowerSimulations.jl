@@ -14,7 +14,7 @@ export OperationsProblemTemplate
 export InitialCondition
 export SimulationSequence
 
-#Network Relevant Exports
+# Network Relevant Exports
 export StandardPTDFModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel
@@ -39,7 +39,7 @@ export FlowMonitoredLine
 export HVDCLossless
 export HVDCDispatch
 export HVDCUnbounded
-#export VoltageSourceDC
+# export VoltageSourceDC
 ######## Load Models ########
 export StaticPowerLoad
 export InterruptiblePowerLoad
@@ -100,11 +100,11 @@ export EnergyLevel
 export TimeStatusChange
 export StoredEnergy
 
-#operation_models
+# operation_models
 export GenericOpProblem
 export UnitCommitmentProblem
 export EconomicDispatchProblem
-#export OptimalPowerFlow
+# export OptimalPowerFlow
 
 # Functions
 ## Construction Exports
@@ -216,7 +216,7 @@ export INFLOW_RANGE
 # Imports
 import Logging
 import Serialization
-#Modeling Imports
+# Modeling Imports
 import JuMP
 # so that users do not need to import JuMP to use a solver with PowerModels
 import JuMP: optimizer_with_attributes
@@ -240,11 +240,11 @@ export write_results
 import PowerModels
 import TimerOutputs
 
-#TimeStamp Management Imports
+# TimeStamp Management Imports
 import Dates
 import TimeSeries
 
-#I/O Imports
+# I/O Imports
 import DataFrames
 import Arrow
 import JSON
@@ -265,13 +265,26 @@ export QCRMPowerModel
 export QCLSPowerModel
 
 ################################################################################
+
+# Type Alias From other Packages
+const PM = PowerModels
+const PSY = PowerSystems
+const PSI = PowerSimulations
+const IS = InfrastructureSystems
+const MOI = MathOptInterface
+const MOIU = MathOptInterface.Utilities
+const PJ = ParameterJuMP
+const MOPFM = MOI.FileFormats.Model
+const TS = TimeSeries
+
+################################################################################
 # Includes
 
 include("utils.jl")
 
 include("core/definitions.jl")
 
-#Models and constructors
+# Models and constructors
 include("core/results.jl")
 include("core/abstract_types.jl")
 include("core/aux_structs.jl")
@@ -314,7 +327,7 @@ include("core/feedforward.jl")
 include("core/simulation_results.jl")
 include("core/recorder_events.jl")
 
-#Device Modeling components
+# Device Modeling components
 include("devices_models/devices/common/device_range_constraints.jl")
 include("devices_models/devices/common/nodal_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
@@ -326,21 +339,21 @@ include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
 
-#Services Models
+# Services Models
 include("services_models/agc.jl")
 include("services_models/reserves.jl")
 include("services_models/GroupReserve.jl")
 include("services_models/service_slacks.jl")
 include("services_models/services_constructor.jl")
 
-#Network models
+# Network models
 include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
 include("network_models/ptdf_model.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 
-#Device constructors
+# Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")
 include("devices_models/device_constructors/thermalgeneration_constructor.jl")
 include("devices_models/device_constructors/hydrogeneration_constructor.jl")
@@ -350,11 +363,12 @@ include("devices_models/device_constructors/load_constructor.jl")
 include("devices_models/device_constructors/storage_constructor.jl")
 include("devices_models/device_constructors/regulationdevice_constructor.jl")
 
-#Network constructors
+# Network constructors
 include("network_models/network_constructor.jl")
 
-#Templates
+# Templates
 include("operations_problems_templates.jl")
+
 # Printing
 include("printing.jl")
 

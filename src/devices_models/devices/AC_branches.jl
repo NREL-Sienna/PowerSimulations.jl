@@ -1,14 +1,14 @@
-#Generic Branch Models
+# Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
 abstract type AbstractBoundedBranchFormulation <: AbstractBranchFormulation end
 
-#Abstract Line Models
+# Abstract Line Models
 struct StaticLine <: AbstractBranchFormulation end
 struct StaticLineBounds <: AbstractBoundedBranchFormulation end
 struct StaticLineUnbounded <: AbstractBranchFormulation end
 struct FlowMonitoredLine <: AbstractBranchFormulation end
 
-#Abstract Transformer Models
+# Abstract Transformer Models
 struct StaticTransformer <: AbstractBranchFormulation end
 struct StaticTransformerBounds <: AbstractBoundedBranchFormulation end
 struct StaticTransformerUnbounded <: AbstractBranchFormulation end

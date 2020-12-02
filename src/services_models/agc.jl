@@ -31,41 +31,40 @@ get_variable_lower_bound(::DeltaActivePowerUpVariable, ::PSY.Area, _) = 0.0
 get_variable_binary(::DeltaActivePowerDownVariable, ::Type{<:PSY.Area}) = false
 get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, _) = 0.0
 
-########################## , ###########################
+########################## AdditionalDeltaPowerUpVariable, Area ###########################
 
-#= Commented out since not in use. These functions will substitute balancing_auxiliary_variables!
-"""
-This function add the upwards scheduled regulation variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{AdditionalDeltaActivePowerUpVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.Area}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(AdditionalDeltaActivePowerUpVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-        expression_name = :emergency_up,
-    )
-end
-
-"""
-This function add the variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{AdditionalDeltaActivePowerDownVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.Area}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(AdditionalDeltaActivePowerDownVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-        expression_name = :emergency_dn,
-    )
-end
-=#
+# Commented out since not in use. These functions will substitute balancing_auxiliary_variables!
+# """
+# This function add the upwards scheduled regulation variables for power generation output to the model
+# """
+# function AddVariableSpec(
+#     ::Type{AdditionalDeltaActivePowerUpVariable},
+#     ::Type{U},
+#     psi_container::PSIContainer,
+# ) where {U <: PSY.Area}
+#     return AddVariableSpec(;
+#         variable_name = make_variable_name(AdditionalDeltaActivePowerUpVariable, U),
+#         binary = false,
+#         lb_value_func = x -> 0.0,
+#         expression_name = :emergency_up,
+#     )
+# end
+#
+# """
+# This function add the variables for power generation output to the model
+# """
+# function AddVariableSpec(
+#     ::Type{AdditionalDeltaActivePowerDownVariable},
+#     ::Type{U},
+#     psi_container::PSIContainer,
+# ) where {U <: PSY.Area}
+#     return AddVariableSpec(;
+#         variable_name = make_variable_name(AdditionalDeltaActivePowerDownVariable, U),
+#         binary = false,
+#         lb_value_func = x -> 0.0,
+#         expression_name = :emergency_dn,
+#     )
+# end
 
 ########################## AreaMismatchVariable, Area ###########################
 

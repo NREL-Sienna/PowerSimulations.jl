@@ -17,13 +17,13 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, DeltaActivePowerUpVariable, devices)
     add_variables!(psi_container, DeltaActivePowerDownVariable, devices)
     add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, devices)
     add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, devices)
 
-    #Constraints
+    # Constraints
     nodal_expression!(psi_container, devices, S)
     add_constraints!(
         psi_container,
@@ -68,13 +68,13 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, DeltaActivePowerUpVariable, devices)
     add_variables!(psi_container, DeltaActivePowerDownVariable, devices)
     add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, devices)
     add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, devices)
 
-    #Constraints
+    # Constraints
     nodal_expression!(psi_container, devices, S)
     add_constraints!(
         psi_container,

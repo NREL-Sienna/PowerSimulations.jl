@@ -12,7 +12,7 @@ mutable struct SimulationInternal
     stages_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
-    date_range::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
+    date_range::NTuple{2, Dates.DateTime} # Inital Time of the first forecast and Inital Time of the last forecast
     current_time::Dates.DateTime
     reset::Bool
     compiled_status::BUILD_STATUS
@@ -581,9 +581,9 @@ function _build!(sim::Simulation)
     _build_stages!(sim)
 end
 
-#Defined here because it requires Stage and Simulation to defined
+# Defined here because it requires Stage and Simulation to defined
 
-#############################Interfacing Functions##########################################
+############################# Interfacing Functions ##########################################
 # These are the functions that the user will have to implement to update a custom IC Chron #
 # or custom InitialConditionType #
 
@@ -682,7 +682,7 @@ function _update_caches!(sim::Simulation, stage::Stage)
     return
 end
 
-################################Cache Update################################################
+################################ Cache Update ################################################
 # TODO: Need to be careful here if 2 stages modify the same cache. This function might need
 # dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
 function update_cache!(
@@ -696,7 +696,7 @@ function update_cache!(
     variable = get_variable(stage.internal.psi_container, c.ref)
     t_range = 1:get_end_of_interval_step(stage)
     for name in variable.axes[1]
-        #Store the initial condition
+        # Store the initial condition
         c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
         c.value[name][:series][1] = c.value[name][:status]
         c.value[name][:current] = 1
@@ -746,7 +746,7 @@ function update_cache!(
     return
 end
 
-#########################TimeSeries Data Updating###########################################
+######################### TimeSeries Data Updating###########################################
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
@@ -873,7 +873,7 @@ function _update_stage!(stage::Stage, sim::Simulation)
     return
 end
 
-#############################Interfacing Functions##########################################
+############################# Interfacing Functions##########################################
 ## These are the functions that the user will have to implement to update a custom stage ###
 """ Generic Stage update function for most problems with no customization"""
 function update_stage!(

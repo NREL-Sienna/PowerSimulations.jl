@@ -344,7 +344,7 @@ function energy_balance_hydro_param!(
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
-        pump_eff = 1.0 #TODO: get pump efficiency PSY.get_pump_efficiency(d)
+        pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
         multiplier_inflow[name, 1] = d.multiplier
         param_inflow[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
         exp =
@@ -372,7 +372,7 @@ function energy_balance_hydro_param!(
 
     for (ix, d) in enumerate(outflow_data)
         name = get_component_name(d)
-        pump_eff = 1.0 #TODO: get pump efficiency PSY.get_pump_efficiency(d)
+        pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
         multiplier_outflow[name, 1] = d.multiplier
         param_outflow[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
         exp =
@@ -454,7 +454,7 @@ function energy_balance_hydro!(
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
-        pump_eff = 1.0 #TODO: get pump efficiency PSY.get_pump_efficiency(d)
+        pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
         constraint_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy_up[name, 1] ==
@@ -480,7 +480,7 @@ function energy_balance_hydro!(
 
     for (ix, d) in enumerate(outflow_data)
         name = get_component_name(d)
-        pump_eff = 1.0 #TODO: get pump efficiency PSY.get_pump_efficiency(d)
+        pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
         constraint_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy_down[name, 1] ==

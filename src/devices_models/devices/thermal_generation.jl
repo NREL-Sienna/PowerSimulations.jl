@@ -1098,7 +1098,7 @@ function AddCostSpec(
         component_type = T,
         has_status_variable = has_on_variable(psi_container, T),
         has_status_parameter = has_on_parameter(psi_container, T),
-        #variable_cost = PSY.get_variable, uses SOS by default
+        # variable_cost = PSY.get_variable, uses SOS by default
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
         sos_status = VARIABLE,

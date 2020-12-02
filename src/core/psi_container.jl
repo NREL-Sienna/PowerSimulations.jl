@@ -18,7 +18,7 @@ mutable struct PSIContainer
         settings::PSISettings,
         jump_model::Union{Nothing, JuMP.AbstractModel},
     )
-        #PSY.check_forecast_consistency(sys)
+        # PSY.check_forecast_consistency(sys)
         resolution = PSY.get_time_series_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
         new(
@@ -212,7 +212,7 @@ model_has_parameters(psi_container::PSIContainer) =
 model_uses_forecasts(psi_container::PSIContainer) =
     get_use_forecast_data(psi_container.settings)
 model_initial_time(psi_container::PSIContainer) = get_initial_time(psi_container.settings)
-#Internal Variables, Constraints and Parameters accessors
+# Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
 get_parameters(psi_container::PSIContainer) = psi_container.parameters

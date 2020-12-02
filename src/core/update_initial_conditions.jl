@@ -1,4 +1,4 @@
-#########################Initial Condition Updating#########################################
+######################### Initial Condition Updating #########################################
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
 function calculate_ic_quantity(

@@ -262,7 +262,7 @@ function powermodels_network!(
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] =
             psi_container.expressions[:nodal_balance_active][PSY.get_number(bus), t]
-        #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
+        # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
     psi_container.pm =
@@ -368,7 +368,7 @@ function add_pm_var_refs!(
             assign_variable!(psi_container, ps_v, PSY.Bus, container)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                container[name, t] = PM.var(psi_container.pm, t, pm_v)[pm_bus] #pm_vars[pm_v][pm_bus]
+                container[name, t] = PM.var(psi_container.pm, t, pm_v)[pm_bus] # pm_vars[pm_v][pm_bus]
             end
         end
     end

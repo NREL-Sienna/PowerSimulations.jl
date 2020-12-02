@@ -98,7 +98,7 @@ function has_on_variable(
     ::Type{T};
     variable_type = OnVariable,
 ) where {T <: PSY.Component}
-    #get_variable can't be used because the default behavior is to error if variables is not present
+    # get_variable can't be used because the default behavior is to error if variables is not present
     return !isnothing(get(
         psi_container.variables,
         make_variable_name(variable_type, T),
@@ -645,7 +645,7 @@ function add_to_cost!(
         end
     end
 
-    #Service Cost Bid
+    # Service Cost Bid
     ancillary_services = PSY.get_ancillary_services(cost_data)
     for service in ancillary_services
         add_service_bid_cost!(psi_container, spec, component, service)
