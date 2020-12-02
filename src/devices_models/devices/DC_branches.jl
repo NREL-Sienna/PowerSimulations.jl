@@ -10,13 +10,13 @@ const UnboundedBranches =
 #################################### Branch Variables ##################################################
 flow_variables!(
     psi_container::PSIContainer,
-    system_formulation::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractPowerModel},
     devices::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
 ) = nothing
 
 function add_variables!(
     psi_container::PSIContainer,
-    system_formulation::StandardPTDFModel,
+    ::StandardPTDFModel,
     devices::IS.FlattenIteratorWrapper{B},
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
@@ -61,7 +61,7 @@ function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractDCLineFormulation},
-    system_formulation::Type{<:PM.AbstractDCPModel},
+    ::Type{<:PM.AbstractDCPModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
     var = get_variable(psi_container, FLOW_ACTIVE_POWER, B)
@@ -90,7 +90,7 @@ function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, HVDCLossless},
-    system_formulation::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
     for (var_type, cons_type) in zip(
@@ -127,7 +127,7 @@ function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractDCLineFormulation},
-    system_formulation::Union{
+    ::Union{
         Type{<:PM.AbstractActivePowerModel},
         Type{<:PM.AbstractPowerModel},
     },
