@@ -331,37 +331,31 @@ function _check_state(store::HdfSimulationStore)
     end
 end
 
-function _compute_chunk_count(
-    num_rows,
-    num_columns,
-    dtype;
-    max_chunk_bytes = DEFAULT_MAX_CHUNK_BYTES,
-)
-    # Is there a library function for this?
-    num_bytes = 0
-    if dtype == Float64
-        num_bytes = 8
-    elseif dtype == Float32
-        num_bytes = 4
-    elseif dtype == Int64
-        num_bytes = 8
-    elseif dtype == Int32
-        num_bytes = 4
+function _compute_chunk_count(dims, dtype; max_chunk_bytes = DEFAULT_MAX_CHUNK_BYTES)
+    bytes_per_element = sizeof(dtype)
+
+    if length(dims) == 2
+        size_row = dims[1] * bytes_per_element
+    elseif length(dims) == 3
+        size_row = dims[1] * dims[2] * bytes_per_element
+    elseif length(dims) == 4
+        size_row = dims[1] * dims[2] * dims[3] * bytes_per_element
     else
-        error("unsupported dtype=$dtype")
+        error("unsupported dims = $dims")
     end
 
-    size_row = num_bytes * num_columns
-    chunk_count = minimum((trunc(max_chunk_bytes / size_row), num_rows))
+    chunk_count = minimum((trunc(max_chunk_bytes / size_row), dims[end]))
     if chunk_count == 0
         error(
             "HDF Max Chunk Bytes is smaller than the size of a row. Please increase it. " *
-            "max_chunk_bytes=$max_chunk_bytes num_columns=$num_columns " *
+            "max_chunk_bytes=$max_chunk_bytes dims=$dims " *
             "size_row=$size_row",
         )
     end
 
-    return chunk_count
+    chunk_dims = [x for x in dims]
+    chunk_dims[end] = chunk_count
+    return chunk_dims
 end
 
 function _create_dataset(group, name, reqs)
@@ -372,12 +366,9 @@ function _create_dataset(group, name, reqs)
         HDF5.dataspace(reqs["dims"]),
         # We are choosing to optimize read performance in the first implementation.
         # Compression would slow that down.
-        #"chunk",
-        #(_compute_chunk_count(num_rows, num_columns, Float64), num_columns),
-        #"shuffle",
-        #(),
-        #"deflate",
-        #4,
+        #chunk = _compute_chunk_count(reqs["dims"], Float64),
+        #shuffle = (),
+        #deflate = 3,
     )
     @debug "Created dataset for" group name size(dataset)
     return dataset
