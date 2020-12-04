@@ -927,10 +927,9 @@ function execute!(sim::Simulation; kwargs...)
             return Logging.with_logger(logger) do
                 _execute!(sim, store; kwargs...)
             end
+            log_cache_hit_percentages(store)
         end
     finally
-        close_handle!(sim.internal.store)
-        log_cache_hit_percentages(sim.internal.store)
         unregister_recorders!(sim.internal)
         close(logger)
     end
