@@ -1029,13 +1029,12 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
             end
         end
         flush(store)
-        #sim_results = SimulationResultsReference(sim)
+        sim_results = SimulationResultsReference(sim)
     end
 
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
-    #serialize_sim_output(sim_results)
-    #return sim_results
-    return nothing
+    serialize_sim_output(sim_results)
+    return sim_results
 end
 
 function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
@@ -1082,7 +1081,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         end
 
         for (name, param_container) in parameters
-            # TODO DT: why are we skipping these?
+            # TODO JD: this needs improvement
             !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
             array = get_parameter_array(param_container)
             reqs.parameters[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)

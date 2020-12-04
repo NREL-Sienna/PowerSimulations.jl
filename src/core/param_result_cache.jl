@@ -44,7 +44,7 @@ function Base.empty!(cache::ParamResultCache)
 end
 
 """
-Adds the result to the cache.
+Adds thrame result to the cache.
 Return true if the cache needs to be flushed.
 """
 function add_result!(cache::ParamResultCache, timestamp, array, system_cache_is_full)
