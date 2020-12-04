@@ -357,3 +357,12 @@ function get_available_components(
         x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),
     )
 end
+
+"""
+Load the complete arrow file into a DataFrame. Not optimized for memory use
+"""
+function read_arrow_file(file::AbstractString)
+    return open(file, "r") do io
+        DataFrames.DataFrame(Arrow.Table(io))
+    end
+end

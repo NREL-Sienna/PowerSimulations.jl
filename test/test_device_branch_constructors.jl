@@ -80,3 +80,19 @@ end
     @test isapprox(fp, limits.from_to, atol = 1e-3)
     @test isapprox(fp, rate, atol = 1e-3)
 end
+
+@testset "DC PowerFlow Static Unbounded Line Branch Flow" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLineUnbounded))
+    template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
+    system = build_system("c_sys5_ml")
+    op_problem_m =
+        OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
+    @test check_variable_unbounded(
+        op_problem_m,
+        PSI.make_variable_name(FLOW_ACTIVE_POWER, Line),
+    )
+end
