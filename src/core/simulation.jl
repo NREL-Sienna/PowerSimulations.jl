@@ -19,7 +19,6 @@ mutable struct SimulationInternal
     reset::Bool
     compiled_status::BUILD_STATUS
     simulation_cache::Dict{<:CacheKey, AbstractCache}
-    store::SimulationStore  # TODO DT: change to abstract
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
@@ -84,7 +83,6 @@ function SimulationInternal(
         true,
         EMPTY,
         Dict{CacheKey, AbstractCache}(),
-        make_simulation_store(simulation_dir),
         collect(unique_recorders),
         console_level,
         file_level,
@@ -497,8 +495,6 @@ function _build_stages!(sim::Simulation)
             stage.internal.stage_path =
                 joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
             mkpath(stage.internal.stage_path)
-            # TODO DT: might need to clear items in the store
-            # TODO DT: create HDF groups
             build!(stage, initial_time, horizon, stage_interval)
             _populate_caches!(sim, stage_name)
             sim.internal.date_ref[stage_number] = initial_time
@@ -901,6 +897,8 @@ function update_stage!(
     return
 end
 
+_get_simulation_store_open_func(sim::Simulation) = h5_store_open
+
 """
     execute!(sim::Simulation; kwargs...)
 
@@ -923,19 +921,22 @@ function execute!(sim::Simulation; kwargs...)
     file_mode = "a"
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
+    open_func = _get_simulation_store_open_func(sim)
     try
-        open(sim.internal.store, "r+")
-        return Logging.with_logger(logger) do
-            _execute!(sim; kwargs...)
+        open_func(dirname(sim.internal.logs_dir), "w") do store
+            return Logging.with_logger(logger) do
+                _execute!(sim, store; kwargs...)
+            end
         end
     finally
-        close(sim.internal.store)
+        close_handle!(sim.internal.store)
+        log_cache_hit_percentages(sim.internal.store)
         unregister_recorders!(sim.internal)
         close(logger)
     end
 end
 
-function _execute!(sim::Simulation; kwargs...)
+function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
     if sim.internal.reset
         sim.internal.reset = false
     elseif sim.internal.reset == false
@@ -949,8 +950,8 @@ function _execute!(sim::Simulation; kwargs...)
         execution_order = get_execution_order(sim)
         steps = get_steps(sim)
         num_executions = steps * length(execution_order)
-        _initialize_stage_storage!(sim)
-        initialize_optimizer_stats_storage!(sim.internal.store, num_executions)
+        _initialize_stage_storage!(sim, store, cache_size_mib)
+        initialize_optimizer_stats_storage!(store, num_executions)
         for step in 1:get_steps(sim)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
@@ -992,7 +993,13 @@ function _execute!(sim::Simulation; kwargs...)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
                             stage_name = get_stage_name(sim, stage)
-                            run_stage(step, stage, get_current_time(sim), sim.internal.time_step, raw_results_path, sim.internal.store)
+                            run_stage(
+                                step,
+                                stage,
+                                get_current_time(sim),
+                                raw_results_path,
+                                store,
+                            )
                             sim.internal.run_count[step][stage_number] += 1
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
@@ -1022,15 +1029,17 @@ function _execute!(sim::Simulation; kwargs...)
                 )
             end
         end
-        sim_results = SimulationResultsReference(sim)
+        flush(store)
+        #sim_results = SimulationResultsReference(sim)
     end
 
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
-    serialize_sim_output(sim_results)
-    return sim_results
+    #serialize_sim_output(sim_results)
+    #return sim_results
+    return nothing
 end
 
-function _initialize_stage_storage!(sim::Simulation)
+function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
     sequence = sim.sequence
     execution_order = sequence.execution_order
     executions_by_stage = sequence.executions_by_stage
@@ -1038,71 +1047,112 @@ function _initialize_stage_storage!(sim::Simulation)
     intervals = sequence.intervals
     order = sequence.order
 
-    # TODO DT: make this a struct in simulation_store.jl
-    # Keep it free-form until we settle on fields
-    requirements = Dict(
-        "order" => [order[x] for x in sort!(collect(keys(order)))],
-        "step_resolution_ms" => convert(Dates.Millisecond, sequence.step_resolution).value,
-        "per_stage_metadata" => Dict(
-            "executions" => executions_by_stage,
-            "horizons" => horizons,
-            "intervals_ms" => Dict(
-               k => convert(Dates.Millisecond, v[1]).value for (k, v) in intervals
-            ),
-        ),
-        "per_stage_data" => Dict(
-            "duals" => Dict{String,Dict}(),
-            "parameters" => Dict{String,Dict}(),
-            "variables" => Dict{String,Dict}(),
-        ),
-    )
-    per_stage = requirements["per_stage_data"]
-
-    for (stage_name, num_executions) in sequence.executions_by_stage
+    stages = OrderedDict{Symbol, SimulationStoreStageParams}()
+    stage_reqs = Dict{Symbol, SimulationStoreStageRequirements}()
+    stage_order = [order[x] for x in sort!(collect(keys(order)))]
+    num_param_containers = 0
+    rules = CacheFlushRules(max_size = cache_size_mib * MiB)
+    for stage_name in stage_order
+        num_executions = executions_by_stage[stage_name]
+        horizon = horizons[stage_name]
         stage = sim.stages[stage_name]
         psi_container = get_psi_container(stage)
-        horizon = horizons[stage_name]
-        num_executions = executions_by_stage[stage_name]
         duals = get_constraint_duals(psi_container.settings)
         parameters = get_parameters(psi_container)
         variables = get_variables(psi_container)
+        num_rows = num_executions * get_steps(sim)
 
-        if !haskey(per_stage["duals"], stage_name)
-            per_stage["duals"][stage_name] = Dict()
-        end
-        if !haskey(per_stage["parameters"], stage_name)
-            per_stage["parameters"][stage_name] = Dict()
-        end
-        if !haskey(per_stage["variables"], stage_name)
-            per_stage["variables"][stage_name] = Dict()
-        end
+        # TODO DT: not sure this is correct
+        resolution = intervals[stage_name][1]
+        stage_params = SimulationStoreStageParams(num_executions, horizon, resolution)
+        reqs = SimulationStoreStageRequirements()
+
+        # TODO DT: configuration of keep_in_cache and priority are not correct
+        stage_sym = Symbol(stage_name)
         for name in duals
             array = get_constraint(psi_container, name)
-            @assert length(array.axes) == 1
-            per_stage["duals"][stage_name][name] = Dict(
-                "num_rows" => horizon * num_executions * get_steps(sim),
-                "columns" => [string(name)],
+            reqs.duals[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
+            add_rule!(
+                rules,
+                stage_sym,
+                CONTAINER_TYPE_DUALS,
+                name,
+                false,
+                CachePrioritys.LOW,
             )
         end
-        for (parameter_name, param_container) in parameters
+
+        for (name, param_container) in parameters
             # TODO DT: why are we skipping these?
             !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
-            param_array = get_parameter_array(param_container)
-            per_stage["parameters"][stage_name][parameter_name] = Dict(
-                "num_rows" => horizon * num_executions * get_steps(sim),
-                "columns" => collect(axes(param_array)[1]),
+            array = get_parameter_array(param_container)
+            reqs.parameters[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
+            add_rule!(
+                rules,
+                stage_sym,
+                CONTAINER_TYPE_PARAMETERS,
+                name,
+                false,
+                CachePrioritys.LOW,
             )
         end
-        for (variable_name, var_array) in variables
-            per_stage["variables"][stage_name][variable_name] = Dict(
-                "num_rows" => horizon * num_executions * get_steps(sim),
-                "columns" => collect(axes(var_array)[1]),
+
+        for (name, array) in variables
+            reqs.variables[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
+            add_rule!(
+                rules,
+                stage_sym,
+                CONTAINER_TYPE_VARIABLES,
+                name,
+                true,
+                CachePrioritys.HIGH,
             )
         end
+
+        stages[stage_sym] = stage_params
+        stage_reqs[stage_sym] = reqs
+
+        num_param_containers +=
+            length(reqs.duals) + length(reqs.parameters) + length(reqs.variables)
     end
 
-    @debug "initialized stage requirements" requirements
-    initialize_stage_storage!(sim.internal.store, requirements)
+    store_params = SimulationStoreParams(
+        get_initial_time(sim),
+        sequence.step_resolution,
+        get_steps(sim),
+        stages,
+    )
+    @debug "initialized stage requirements" store_params
+    initialize_stage_storage!(store, store_params, stage_reqs, rules)
+end
+
+function _calc_dimensions(array::JuMP.Containers.DenseAxisArray, name, num_rows, horizon)
+    ax = axes(array)
+    # Two use cases for read:
+    # 1. Read data for one execution for one device.
+    # 2. Read data for one execution for all devices.
+    # This will ensure that data on disk is contiguous in both cases.
+    if length(ax) == 1
+        columns = [name]
+        dims = (horizon, 1, num_rows)
+    elseif length(ax) == 2
+        columns = collect(axes(array)[1])
+        dims = (horizon, length(columns), num_rows)
+    elseif length(ax) == 3
+        # TODO DT: untested
+        dims = (length(ax[2]), horizon, length(columns), num_rows)
+    else
+        error("unsupported data size $(length(ax))")
+    end
+
+    return Dict("columns" => columns, "dims" => dims)
+end
+
+function _calc_dimensions(array::JuMP.Containers.SparseAxisArray, name, num_rows, horizon)
+    columns = unique([(k[1], k[3]) for k in keys(array.data)])
+    dims = (horizon, length(columns), num_rows)  # TODO DT: what about 2-d arrays?
+    @warn "SparseAxisArray dimensions may be incorrect" name dims
+    return Dict("columns" => columns, "dims" => dims)
 end
 
 struct SimulationSerializationWrapper

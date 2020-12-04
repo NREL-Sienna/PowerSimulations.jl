@@ -258,6 +258,53 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray)
     return DataFrames.DataFrame(array_values, Symbol.(column_names))
 end
 
+function to_array(array::JuMP.Containers.DenseAxisArray)
+    ax = axes(array)
+    len_axes = length(ax)
+    if len_axes == 1
+        data = _jump_value.((array[x] for x in ax[1]))
+    elseif len_axes == 2
+        data = Array{Float64, 2}(undef, length(ax[2]), length(ax[1]))
+        for t in ax[2], (ix, name) in enumerate(ax[1])
+            data[t, ix] = _jump_value(array[name, t])
+        end
+    elseif len_axes == 3
+        extra_dims = sum(length(axes(array)[2:(end - 1)]))
+        arrays = Vector{Array{Float64, 2}}()
+
+        for i in ax[2]
+            third_dim = collect(fill(i, size(array)[end]))
+            data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
+            for t in last(ax), (ix, name) in enumerate(first(ax))
+                data[t, ix] = _jump_value(array[name, i, t])
+            end
+            push!(arrays, data)
+        end
+        data = vcat(arrays)  # TODO DT: untested
+    else
+        error("array axes not supported: $(axes(array))")
+    end
+
+    return data
+end
+
+function to_array(array::JuMP.Containers.SparseAxisArray)
+    columns = unique([(k[1], k[3]) for k in keys(array.data)])
+    # TODO DT: can we determine the 2-d array size?
+    tmp_data = Dict{Any, Vector{Float64}}()
+    for (ix, col) in enumerate(columns)
+        res = values(filter(v -> first(v)[[1, 3]] == col, array.data))
+        tmp_data[col] = PSI._jump_value.(res)
+    end
+
+    data = Array{Float64, 2}(undef, length(first(values(tmp_data))), length(columns))
+    for (i, column) in enumerate(columns)
+        data[:, i] = tmp_data[column]
+    end
+
+    return data
+end
+
 # this ensures that the time_stamp is not double shortened
 function find_var_length(es::Dict, e_list::Array)
     return size(es[Symbol(splitext(e_list[1])[1])], 1)

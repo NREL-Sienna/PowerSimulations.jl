@@ -1,5 +1,4 @@
 ######## Internal Simulation Object Structs ########
-# TODO DT: add stage name
 mutable struct StageInternal
     number::Int
     name::String
@@ -196,7 +195,6 @@ function run_stage(
     step::Int,
     stage::Stage{M},
     start_time::Dates.DateTime,
-    time_step::Int,
     results_path::String,
     store::SimulationStore,
 ) where {M <: PowerSimulationsOperationsProblem}
@@ -221,9 +219,13 @@ function run_stage(
     export_model_result(stage, start_time, results_path)
     export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
 
-    # HDF exports
-    append_model_results!(store, step, time_step, stage)
-    stats = OptimizerStats(step, get_number(stage), time_step, stage.internal.psi_container.JuMPmodel)
+    write_model_results!(store, stage, start_time)
+    stats = OptimizerStats(
+        step,
+        get_number(stage),
+        start_time,
+        stage.internal.psi_container.JuMPmodel,
+    )
     append_optimizer_stats!(store, stats)
 
     stage.internal.execution_count += 1
@@ -232,6 +234,73 @@ function run_stage(
         stage.internal.execution_count = 0
     end
     return
+end
+
+function write_model_results!(store, stage, timestamp)
+    psi_container = get_psi_container(stage)
+
+    if is_milp(stage.internal.psi_container)
+        @warn "Stage $(stage.internal.number) is a MILP, duals can't be exported"
+    else
+        _write_model_dual_results!(store, psi_container, stage, timestamp)
+    end
+
+    _write_model_parameter_results!(store, psi_container, stage, timestamp)
+    _write_model_variable_results!(store, psi_container, stage, timestamp)
+    return
+end
+
+function _write_model_dual_results!(store, psi_container, stage, timestamp)
+    stage_name = Symbol(get_name(stage))
+    for name in get_constraint_duals(psi_container.settings)
+        constraint = get_constraint(psi_container, name)
+        write_result!(
+            store,
+            timestamp,
+            stage_name,
+            CONTAINER_TYPE_DUALS,
+            name,
+            to_array(constraint),
+        )
+    end
+end
+
+function _write_model_parameter_results!(store, psi_container, stage, timestamp)
+    parameters = get_parameters(psi_container)
+    (isnothing(parameters) || isempty(parameters)) && return
+
+    horizon = get_horizon(get_settings(stage))
+    stage_name = Symbol(get_name(stage))
+    for (name, container) in parameters
+        !isa(container.update_ref, UpdateRef{<:PSY.Component}) && continue
+        param_array = get_parameter_array(container)
+        multiplier_array = get_multiplier_array(container)
+        @assert_op length(axes(param_array)) == 2
+        num_columns = size(param_array)[1]
+        data = Array{Float64}(undef, horizon, num_columns)
+        for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
+            val1 = _jump_value(param_array[name, r_ix])
+            val2 = multiplier_array[name, r_ix]
+            data[r_ix, c_ix] =
+                _jump_value(param_array[name, r_ix]) * (multiplier_array[name, r_ix])
+        end
+
+        write_result!(store, timestamp, stage_name, CONTAINER_TYPE_PARAMETERS, name, data)
+    end
+end
+
+function _write_model_variable_results!(store, psi_container, stage, timestamp)
+    stage_name = Symbol(get_name(stage))
+    for (name, variable) in get_variables(psi_container)
+        write_result!(
+            store,
+            timestamp,
+            stage_name,
+            CONTAINER_TYPE_VARIABLES,
+            name,
+            to_array(variable),
+        )
+    end
 end
 
 # Here because requires the stage to be defined

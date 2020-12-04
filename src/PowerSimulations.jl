@@ -213,6 +213,7 @@ export INFLOW_RANGE
 
 #################################################################################
 # Imports
+import DataStructures: OrderedDict, Deque
 import Logging
 import Serialization
 #Modeling Imports
@@ -227,7 +228,13 @@ import PowerSystems
 import InfrastructureSystems
 # so that users have access to IS.Results interfaces
 import InfrastructureSystems:
-    get_variables, get_total_cost, get_optimizer_log, write_results, get_timestamp, get_name
+    get_variables,
+    get_total_cost,
+    get_optimizer_log,
+    write_results,
+    get_timestamp,
+    get_name,
+    @assert_op
 export get_name
 export get_model_base_power
 export get_variables
@@ -281,6 +288,9 @@ include("core/psi_container.jl")
 include("core/update_initial_conditions.jl")
 include("core/operations_problem_results.jl")
 include("core/operations_problem.jl")
+include("core/cache_utils.jl")
+include("core/param_result_cache.jl")
+include("core/result_cache.jl")
 include("core/simulation_store.jl")
 include("core/hdf_simulation_store.jl")
 include("core/simulation_store_factory.jl")

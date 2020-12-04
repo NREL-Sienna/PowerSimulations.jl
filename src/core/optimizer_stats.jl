@@ -1,7 +1,7 @@
 struct OptimizerStats
     simulation_step::Int
     stage_number::Int
-    time_step::Int
+    timestamp::Float64
     obj_value::Float64
     termination_status::Int
     primal_status::Int
@@ -11,7 +11,7 @@ struct OptimizerStats
     sec_in_gc::Union{Nothing, Float64}
 end
 
-function OptimizerStats(simulation_step, stage_number, time_step, model::JuMP.AbstractModel)
+function OptimizerStats(simulation_step, stage_number, timestamp, model::JuMP.AbstractModel)
     solve_time = NaN
     try
         solve_time = MOI.get(model, MOI.SolveTime())
@@ -25,7 +25,7 @@ function OptimizerStats(simulation_step, stage_number, time_step, model::JuMP.Ab
     return OptimizerStats(
         simulation_step,
         stage_number,
-        time_step,
+        Dates.datetime2unix(timestamp),
         JuMP.objective_value(model),
         Int(JuMP.termination_status(model)),
         Int(JuMP.primal_status(model)),
@@ -47,5 +47,5 @@ function from_array(::Type{OptimizerStats}, data::Array, columns)
 end
 
 function to_array(stats::OptimizerStats)
-    return [Float64(getfield(stats, x)) for x in fieldnames(OptimizerStats)] 
+    return [Float64(getfield(stats, x)) for x in fieldnames(OptimizerStats)]
 end

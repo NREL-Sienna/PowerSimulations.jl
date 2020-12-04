@@ -20,6 +20,7 @@ using DataFrames
 using DataStructures
 import UUIDs
 import Aqua
+using Random
 Aqua.test_unbound_args(PowerSimulations)
 Aqua.test_undefined_exports(PowerSimulations)
 #Aqua.test_ambiguities(PowerSimulations)
