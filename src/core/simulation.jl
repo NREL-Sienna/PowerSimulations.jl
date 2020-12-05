@@ -926,8 +926,8 @@ function execute!(sim::Simulation; kwargs...)
         open_func(dirname(sim.internal.logs_dir), "w") do store
             return Logging.with_logger(logger) do
                 _execute!(sim, store; kwargs...)
+                log_cache_hit_percentages(store)
             end
-            log_cache_hit_percentages(store)
         end
     finally
         unregister_recorders!(sim.internal)
