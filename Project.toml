@@ -4,7 +4,6 @@ authors = ["Jose Daniel Lara", "Clayton Barrows", "Daniel Thom", "Dheepak Krishn
 version = "0.8.1"
 
 [deps]
-Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -26,7 +25,6 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
 [compat]
-Arrow = "~0.4"
 CSV = "~0.8"
 DataFrames = "~0.22"
 HDF5 = "~0.14"
