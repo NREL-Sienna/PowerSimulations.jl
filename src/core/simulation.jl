@@ -922,17 +922,22 @@ function execute!(sim::Simulation; kwargs...)
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
     open_func = _get_simulation_store_open_func(sim)
+    results = nothing
+
     try
         open_func(dirname(sim.internal.logs_dir), "w") do store
-            return Logging.with_logger(logger) do
-                _execute!(sim, store; kwargs...)
+            Logging.with_logger(logger) do
+                results = _execute!(sim, store; kwargs...)
                 log_cache_hit_percentages(store)
             end
         end
+
     finally
         unregister_recorders!(sim.internal)
         close(logger)
     end
+
+    return results
 end
 
 function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)

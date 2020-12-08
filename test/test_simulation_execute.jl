@@ -4,70 +4,6 @@ function get_deserialized(sim::Simulation, stage_info)
     return Simulation(directory, stage_info)
 end
 
-function testsim(file_path = "test_reading_results")
-    if isdir(file_path)
-        rm(file_path, force = true, recursive = true)
-    end
-    mkdir(file_path)
-
-    stage_info = Dict(
-        "UC" => Dict("optimizer" => GLPK_optimizer, "jump_model" => nothing),
-        "ED" => Dict("optimizer" => ipopt_optimizer),
-    )
-    # Tests of a Simulation without Caches
-    duals = [:CopperPlateBalance]
-    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
-    c_sys5_hy_ed = build_system("c_sys5_hy_ed")
-    stages_definition = Dict(
-        "UC" => Stage(
-            GenericOpProblem,
-            template_hydro_basic_uc,
-            c_sys5_hy_uc,
-            stage_info["UC"]["optimizer"];
-            constraint_duals = duals,
-        ),
-        "ED" => Stage(
-            GenericOpProblem,
-            template_hydro_ed,
-            c_sys5_hy_ed,
-            stage_info["ED"]["optimizer"];
-            constraint_duals = duals,
-        ),
-    )
-
-    sequence = SimulationSequence(
-        step_resolution = Hour(24),
-        order = Dict(1 => "UC", 2 => "ED"),
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
-        feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
-            ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_stage = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
-            ),
-        ),
-        ini_cond_chronology = InterStageChronology(),
-    )
-    sim = Simulation(
-        name = "aggregation",
-        steps = 2,
-        stages = stages_definition,
-        stages_sequence = sequence,
-        simulation_folder = file_path,
-    )
-    build!(sim)
-    res = execute!(sim)
-    return sim
-end
-
 function test_load_simulation(file_path::String)
     c_sys5_uc = build_system("c_sys5_uc")
     single_stage_definition =
@@ -786,13 +722,13 @@ function test_load_simulation(file_path::String)
     end
 end
 
-#@testset "Test load simulation" begin
-#    # Use spaces in this path because that has caused failures.
-#    path = mkpath(joinpath(pwd(), "test_reading_results"))
-#    try
-#        test_load_simulation(path)
-#    finally
-#        @info("removing test files")
-#        rm(path, force = true, recursive = true)
-#    end
-#end
+@testset "Test load simulation" begin
+    # Use spaces in this path because that has caused failures.
+    path = mkpath(joinpath(pwd(), "test_reading_results"))
+    try
+        test_load_simulation(path)
+    finally
+        @info("removing test files")
+        rm(path, force = true, recursive = true)
+    end
+end
