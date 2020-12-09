@@ -149,16 +149,16 @@ get_settings(stage::Stage) = get_psi_container(stage).settings
 get_system(stage::Stage) = stage.sys
 get_template(stage::Stage) = stage.template
 get_write_path(stage::Stage) = stage.internal.write_path
-warm_start_enabled(stage::Stage) = get_warm_start(stage.internal.psi_container.settings)
+warm_start_enabled(stage::Stage) = get_warm_start(get_psi_container(stage).settings)
 
 set_write_path!(stage::Stage, path::AbstractString) = stage.internal.write_path = path
 set_stage_status!(stage::Stage, status::BUILD_STATUS) = stage.internal.status = status
 
 function reset!(stage::Stage{T}) where {T <: AbstractOperationsProblem}
     stage.internal.execution_count = 0
-    stage.internal.psi_container =
-        PSIContainer(get_system(stage), get_settings(stage), nothing)
-    stage.internal.built = EMPTY
+    container = PSIContainer(get_system(stage), get_settings(stage), nothing)
+    get_psi_container(stage) = container
+    set_stage_status!(stage, EMPTY)
     return
 end
 
@@ -212,16 +212,16 @@ function run_stage(
     start_time::Dates.DateTime,
     store::SimulationStore,
 ) where {M <: PowerSimulationsOperationsProblem}
-    @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
+    @assert get_psi_container(stage).JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
-    model = stage.internal.psi_container.JuMPmodel
+    model = get_psi_container(stage).JuMPmodel
     settings = get_settings(stage)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
 
     @info "JuMP.optimize! completed" timed_log
 
-    model_status = JuMP.primal_status(stage.internal.psi_container.JuMPmodel)
+    model_status = JuMP.primal_status(get_psi_container(stage).JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         if settings.allow_fails
             @warn("Stage $(stage.internal.number) status is $(model_status)")
@@ -235,7 +235,7 @@ function run_stage(
         step,
         get_number(stage),
         start_time,
-        stage.internal.psi_container.JuMPmodel,
+        get_psi_container(stage).JuMPmodel,
     )
     append_optimizer_stats!(store, stats)
 
@@ -250,7 +250,7 @@ end
 function write_model_results!(store, stage, timestamp)
     psi_container = get_psi_container(stage)
 
-    if is_milp(stage.internal.psi_container)
+    if is_milp(get_psi_container(stage))
         @warn "Stage $(stage.internal.number) is a MILP, duals can't be exported"
     else
         _write_model_dual_results!(store, psi_container, stage, timestamp)
@@ -323,13 +323,13 @@ end
 
 function get_initial_cache(cache::TimeStatusChange, stage::Stage)
     ini_cond_on = get_initial_conditions(
-        stage.internal.psi_container,
+        get_psi_container(stage),
         TimeDurationON,
         cache.device_type,
     )
 
     ini_cond_off = get_initial_conditions(
-        stage.internal.psi_container,
+        get_psi_container(stage),
         TimeDurationOFF,
         cache.device_type,
     )
@@ -360,7 +360,7 @@ end
 
 function get_initial_cache(cache::StoredEnergy, stage::Stage)
     ini_cond_level =
-        get_initial_conditions(stage.internal.psi_container, EnergyLevel, cache.device_type)
+        get_initial_conditions(get_psi_container(stage), EnergyLevel, cache.device_type)
 
     device_axes = Set([PSY.get_name(ic.device) for ic in ini_cond_level],)
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)
@@ -374,7 +374,7 @@ end
 
 function get_timestamps(stage::Stage, start_time::Dates.DateTime)
     resolution = get_resolution(stage)
-    horizon = stage.internal.psi_container.time_steps[end]
+    horizon = get_psi_container(stage).time_steps[end]
     range_time = collect(start_time:resolution:(start_time + resolution * horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
@@ -382,14 +382,14 @@ function get_timestamps(stage::Stage, start_time::Dates.DateTime)
 end
 
 function write_data(stage::Stage, save_path::AbstractString; kwargs...)
-    write_data(stage.internal.psi_container, save_path; kwargs...)
+    write_data(get_psi_container(stage), save_path; kwargs...)
     return
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 function export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
     duals = Dict()
-    if is_milp(stage.internal.psi_container)
+    if is_milp(get_psi_container(stage))
         @warn("Stage $(stage.internal.number) is an MILP, duals can't be exported")
     else
         for c in get_constraint_duals(get_psi_container(stage).settings)
@@ -399,7 +399,7 @@ function export_model_result(stage::Stage, start_time::Dates.DateTime, save_path
     end
     write_data(stage, save_path)
     write_data(duals, save_path; duals = true)
-    write_data(get_parameters_value(stage.internal.psi_container), save_path; params = true)
+    write_data(get_parameters_value(get_psi_container(stage)), save_path; params = true)
     write_data(get_timestamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
