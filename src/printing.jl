@@ -195,43 +195,6 @@ function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.Service
     end
 end
 
-function Base.show(io::IO, ::MIME"text/html", sim_results::SimulationResultsReference)
-    println(io, "<h1>Simulation Results Reference</h1>")
-    println(io, "<p><b>Results Folder:</b> $(sim_results.results_folder)</p>")
-    println(io, "<h2>Reference Tables</h2>")
-    for (k, v) in sim_results.ref
-        println(io, "<p><b>$(k)</b></p>")
-        for (i, x) in v
-            println(io, "<p>$(i): dataframe size $(size(x))</p>")
-        end
-    end
-    for (k, v) in sim_results.chronologies
-        println(io, "<p><b>$(k)</b></p>")
-        println(io, "<p>time length: $(v)</p>")
-    end
-end
-
-function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsReference)
-    println(io, "Simulation Results Reference\n")
-    println(io, "Results Folder: $(sim_results.results_folder)\n")
-    println(io, "Reference Tables\n")
-    println(io, "________________\n")
-    for (k, v) in sim_results.ref
-        println(io, "$(k)\n")
-        try
-            for (i, x) in v
-                println(io, "$(i): dataframe size $(size(x))\n")
-            end
-        catch
-            print(io, "Custom Stage")
-        end
-    end
-    for (k, v) in sim_results.chronologies
-        println(io, "$(k)\n")
-        println(io, "time length: $(v)\n")
-    end
-end
-
 function _count_stages(sequence::Array)
     stages = Dict{Int, Int}()
     stage = 1

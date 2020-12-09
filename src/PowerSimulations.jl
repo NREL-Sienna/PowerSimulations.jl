@@ -137,7 +137,6 @@ export run_unit_commitment
 export get_duals
 
 ## Utils Exports
-export SimulationResultsReference
 export write_results
 export check_file_integrity
 export load_results

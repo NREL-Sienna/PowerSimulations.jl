@@ -357,3 +357,28 @@ function get_available_components(
         x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),
     )
 end
+
+"""
+    check_file_integrity(path::String)
+
+Checks the hash value for each file made with the file is written with the new hash_value to verify the file hasn't been tampered with since written
+
+# Arguments
+- `path::String`: this is the folder path that contains the results and the check.sha256 file
+"""
+function check_file_integrity(path::String)
+    matched = true
+    for file_info in read_file_hashes(path)
+        filename = file_info["filename"]
+        expected_hash = file_info["hash"]
+        actual_hash = compute_sha256(filename)
+        if expected_hash != actual_hash
+            @error "hash mismatch for file" filename expected_hash actual_hash
+            matched = false
+        end
+    end
+
+    if !matched
+        throw(IS.HashMismatchError("The hash value in the written files does not match the read files, results may have been tampered."))
+    end
+end
