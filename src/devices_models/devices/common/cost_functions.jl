@@ -201,6 +201,7 @@ function pwl_gencost_sos!(
     cost_data::Vector{NTuple{2, Float64}},
     time_period::Int,
 )
+    base_power = get_base_power(psi_container)
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     variable = get_variable(psi_container, var_name)[component_name, time_period]
     settings_ext = get_ext(get_settings(psi_container))
@@ -247,7 +248,7 @@ function pwl_gencost_sos!(
     )
     JuMP.@constraint(
         psi_container.JuMPmodel,
-        variable == sum([var_ * cost_data[ix][2] for (ix, var_) in enumerate(pwlvars)])
+        variable == sum([var_ * cost_data[ix][2]/base_power for (ix, var_) in enumerate(pwlvars)])
     )
     JuMP.add_to_expression!(total_gen_cost, gen_cost)
 
@@ -287,6 +288,7 @@ function pwl_gencost_linear!(
     cost_data::Vector{NTuple{2, Float64}},
     time_period::Int,
 )
+    base_power = get_base_power(psi_container)
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     variable = get_variable(psi_container, var_name)[component_name, time_period]
     settings_ext = get_ext(get_settings(psi_container))
@@ -302,13 +304,13 @@ function pwl_gencost_linear!(
             base_name = "{$(variable)}_{pwl_$(i)}",
             start = 0.0,
             lower_bound = 0.0,
-            upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i]
+            upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i] / base_power
         )
         if export_pwl_vars
             container = _get_pwl_vars_container(psi_container)
             container[(component_name, time_period, i)] = pwlvar
         end
-        JuMP.add_to_expression!(gen_cost, PSY.get_slopes(cost_data)[i] * pwlvar)
+        JuMP.add_to_expression!(gen_cost, PSY.get_slopes(cost_data)[i] * base_power * pwlvar)
         JuMP.add_to_expression!(total_gen, pwlvar)
     end
     JuMP.@constraint(psi_container.JuMPmodel, variable == total_gen)
@@ -664,6 +666,7 @@ function add_service_bid_cost!(
 ) where {T <: PSY.ReserveDirection}
     time_steps = model_time_steps(psi_container)
     initial_time = model_initial_time(psi_container)
+    base_power = get_base_power(psi_container)
     forecast_data = PSY.get_services_bid(
         component,
         PSY.get_operation_cost(component),
@@ -671,7 +674,7 @@ function add_service_bid_cost!(
         start_time = initial_time,
         len = length(time_steps),
     )
-    forecast_data_values = TimeSeries.values(forecast_data)
+    forecast_data_values = TimeSeries.values(forecast_data) .* base_power
     if eltype(forecast_data_values) == PSY.VariableCost{Float64}
         for t in time_steps
             linear_gen_cost!(
@@ -777,6 +780,7 @@ function variable_cost!(
     cost_component::PSY.VariableCost{NTuple{2, Float64}},
     time_period::Int,
 )
+    base_power = get_base_power(psi_container)
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     cost_data = PSY.get_cost(cost_component)
     if cost_data[1] >= eps()
@@ -784,7 +788,7 @@ function variable_cost!(
         resolution = model_resolution(psi_container)
         dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
         variable = get_variable(psi_container, var_name)[component_name, time_period]
-        gen_cost = sum(variable .^ 2) * cost_data[1] + sum(variable) * cost_data[2]
+        gen_cost = sum( (variable .* base_power) .^ 2) * cost_data[1] + sum(variable .* base_power) * cost_data[2]
         add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
     else
         @debug "Quadratic Variable Cost with only linear term" component_name
@@ -792,7 +796,7 @@ function variable_cost!(
             psi_container,
             var_name,
             component_name,
-            cost_data[2] * spec.multiplier,
+            cost_data[2] * spec.multiplier * base_power,
             time_period,
         )
     end
