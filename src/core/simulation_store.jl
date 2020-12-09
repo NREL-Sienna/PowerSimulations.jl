@@ -30,6 +30,7 @@ end
 struct SimulationStoreStageParams
     num_executions::Int
     horizon::Int
+    interval::Dates.Period
     resolution::Dates.Period
 end
 
