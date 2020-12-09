@@ -19,9 +19,9 @@ function OptimizerStats(
     model::JuMP.AbstractModel,
     timed_log::Dict,
 )
-    solve_time = NaN
+    solver_solve_time = NaN
     try
-        solve_time = MOI.get(model, MOI.SolveTime())
+        solver_time = MOI.get(model, MOI.SolveTime())
     catch
         @warn "SolveTime() property not supported by the Solver"
     end
