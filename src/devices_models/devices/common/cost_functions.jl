@@ -740,13 +740,14 @@ function variable_cost!(
     time_period::Int,
 )
     @debug "Linear Variable Cost" component_name
+    base_power = get_base_power(psi_container)
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     cost_data = PSY.get_cost(cost_component)
     linear_gen_cost!(
         psi_container,
         var_name,
         component_name,
-        cost_data * spec.multiplier,
+        cost_data * spec.multiplier * base_power,
         time_period,
     )
     return
