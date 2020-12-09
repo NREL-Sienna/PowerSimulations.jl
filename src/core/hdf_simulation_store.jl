@@ -409,6 +409,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
         store.params.stages[stage_name] = SimulationStoreStageParams(
             HDF5.read(HDF5.attributes(stage_group)["num_executions"]),
             HDF5.read(HDF5.attributes(stage_group)["horizon"]),
+            Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["resolution_ms"])),
         )
         store.datasets[stage_name] = StageDatasets()
@@ -445,6 +446,8 @@ function _serialize_attributes(store::HdfSimulationStore, stages_group, stage_re
         HDF5.attributes(stage_group)["horizon"] = params.stages[stage].horizon
         HDF5.attributes(stage_group)["resolution_ms"] =
             Dates.Millisecond(params.stages[stage].resolution).value
+        HDF5.attributes(stage_group)["interval_ms"] =
+            Dates.Millisecond(params.stages[stage].interval).value
     end
 end
 
