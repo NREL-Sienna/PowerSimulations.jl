@@ -2,8 +2,6 @@ const HDF_FILENAME = "simulation_store.h5"
 const HDF_SIMULATION_ROOT_PATH = "simulation"
 const HDF_OPTIMIZER_STATS_PATH = HDF_SIMULATION_ROOT_PATH * "/optimizer_stats"
 const HDF_OPTIMIZER_DATASET_PATH = HDF_OPTIMIZER_STATS_PATH * "/data"
-const HDF_SIM_DATA_PATH = HDF_SIMULATION_ROOT_PATH * "/simulation_data"
-const HDF_SIM_DATA_DATASET_PATH = HDF_SIM_DATA_PATH * "/data"
 
 mutable struct Dataset
     dataset::HDF5.HDF5Dataset
@@ -53,6 +51,10 @@ mutable struct HdfSimulationStore <: SimulationStore
     cache::ResultCache
 end
 
+get_params(store::HdfSimulationStore) = store.params
+get_datasets(store::HdfSimulationStore) = store.params
+get_dataset(store::HdfSimulationStore, key::Symbol) = store.params[key]
+
 function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
     if !(mode == "w" || mode == "r")
         throw(IS.ConflictingInputsError("mode can only be 'w' or 'r'"))
@@ -66,7 +68,6 @@ function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
     if mode == "w"
         HDF5.create_group(file, HDF_SIMULATION_ROOT_PATH)
         HDF5.create_group(file, HDF_OPTIMIZER_STATS_PATH)
-        HDF5.create_group(file, HDF_SIM_DATA_PATH)
         @debug "Created store" file_path
     end
 
@@ -171,23 +172,6 @@ function initialize_optimizer_stats_storage!(store::HdfSimulationStore, num_stat
     HDF5.attributes(dataset)["columns"] = get_column_names(OptimizerStats)
     @debug "Created dataset for optimizer stats" dataset size(dataset)
     store.optimizer_stats_index = 1
-    return
-end
-
-function store_simulation_data!(store::HdfSimulationStore, dict)
-    root = _get_root(store)
-    group = _get_sim_data_path(store)
-
-    dataset = HDF5.create_dataset(
-        group,
-        "data",
-        HDF5.datatype(Float64),
-        HDF5.dataspace((length(dict["names"]), 1)),
-    )
-    HDF5.attributes(dataset)["names"] = dict["names"]
-    HDF5.attributes(dataset)["system_uuid"] = dict["system_uuid"]
-    @debug "Created dataset for simulation data" dataset size(dataset)
-    dataset[:, 1] = dict["base_powers"]
     return
 end
 
@@ -411,6 +395,8 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             HDF5.read(HDF5.attributes(stage_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["resolution_ms"])),
+            HDF5.read(HDF5.attributes(stage_group)["base_power"]),
+            Base.UUID(HDF5.read(HDF5.attributes(stage_group)["system_uuid"]))
         )
         store.datasets[stage_name] = StageDatasets()
         for type in CONTAINER_TYPES
@@ -448,6 +434,8 @@ function _serialize_attributes(store::HdfSimulationStore, stages_group, stage_re
             Dates.Millisecond(params.stages[stage].resolution).value
         HDF5.attributes(stage_group)["interval_ms"] =
             Dates.Millisecond(params.stages[stage].interval).value
+        HDF5.attributes(stage_group)["base_power"] = params.stages[stage].base_power
+        HDF5.attributes(stage_group)["system_uuid"] = string(params.stages[stage].system_uuid)
     end
 end
 
@@ -526,7 +514,6 @@ end
 
 _get_optimizer_stats_path(store::HdfSimulationStore) = store.file[HDF_OPTIMIZER_STATS_PATH]
 _get_optimizer_data_path(store::HdfSimulationStore) = store.file[HDF_OPTIMIZER_DATASET_PATH]
-_get_sim_data_path(store::HdfSimulationStore) = store.file[HDF_SIM_DATA_PATH]
 _get_root(store::HdfSimulationStore) = store.file[HDF_SIMULATION_ROOT_PATH]
 
 function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)

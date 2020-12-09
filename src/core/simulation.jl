@@ -926,22 +926,6 @@ end
 
 get_simulation_store_open_func(sim::Simulation) = h5_store_open
 
-function store_simulation_data!(store::HdfSimulationStore, sim::Simulation)
-    stage_count = get_stages_quantity(sim)
-    data = Dict()
-    data["base_powers"] = Vector{Float64}(undef, stage_count)
-    data["system_uuid"] = Vector{String}(undef, stage_count)
-    data["names"] = Vector{String}(undef, stage_count)
-    for (ix, stage) in enumerate(values(get_stages(sim)))
-        system = get_system(stage)
-        data["system_uuid"][ix] = string(IS.get_uuid(system))
-        data["base_powers"][ix] = PSY.get_base_power(system)
-        data["names"][ix] = get_name(stage)
-    end
-    store_simulation_data!(store, data)
-    return
-end
-
 """
     execute!(sim::Simulation; kwargs...)
 
@@ -993,7 +977,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
     num_executions = steps * length(execution_order)
     _initialize_stage_storage!(sim, store, cache_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
-    store_simulation_data!(store, sim)
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
         for step in 1:steps
@@ -1110,7 +1093,10 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         # TODO DT: not sure this is correct
         interval = intervals[stage_name][1]
         resolution = get_resolution(stage)
-        stage_params = SimulationStoreStageParams(num_executions, horizon, interval, resolution)
+        system = get_system(stage)
+        base_power = PSY.get_base_power(system)
+        sys_uuid = IS.get_uuid(system)
+        stage_params = SimulationStoreStageParams(num_executions, horizon, interval, resolution, base_power, sys_uuid)
         reqs = SimulationStoreStageRequirements()
 
         # TODO DT: configuration of keep_in_cache and priority are not correct

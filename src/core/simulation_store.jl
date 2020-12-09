@@ -32,6 +32,8 @@ struct SimulationStoreStageParams
     horizon::Int
     interval::Dates.Period
     resolution::Dates.Period
+    base_power::Float64
+    system_uuid::Base.UUID
 end
 
 struct SimulationStoreParams
@@ -59,3 +61,5 @@ function SimulationStoreParams()
         OrderedDict{Symbol, SimulationStoreStageParams}(),
     )
 end
+
+get_stages(store_params::SimulationStoreParams) = store_params.stages
