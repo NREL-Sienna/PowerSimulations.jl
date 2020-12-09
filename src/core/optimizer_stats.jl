@@ -6,12 +6,19 @@ struct OptimizerStats
     termination_status::Int
     primal_status::Int
     dual_status::Int
-    solve_time::Float64
+    solver_solve_time::Float64
+    timed_solve_time::Float64
     solve_bytes_alloc::Union{Nothing, Float64}
     sec_in_gc::Union{Nothing, Float64}
 end
 
-function OptimizerStats(simulation_step, stage_number, timestamp, model::JuMP.AbstractModel)
+function OptimizerStats(
+    simulation_step,
+    stage_number,
+    timestamp,
+    model::JuMP.AbstractModel,
+    timed_log::Dict,
+)
     solve_time = NaN
     try
         solve_time = MOI.get(model, MOI.SolveTime())
@@ -19,9 +26,6 @@ function OptimizerStats(simulation_step, stage_number, timestamp, model::JuMP.Ab
         @warn "SolveTime() property not supported by the Solver"
     end
 
-    #@show JuMP.termination_status(model)
-    #@show JuMP.primal_status(model)
-    #@show JuMP.dual_status(model)
     return OptimizerStats(
         simulation_step,
         stage_number,
@@ -30,9 +34,10 @@ function OptimizerStats(simulation_step, stage_number, timestamp, model::JuMP.Ab
         Int(JuMP.termination_status(model)),
         Int(JuMP.primal_status(model)),
         Int(JuMP.dual_status(model)),
-        solve_time,
-        NaN,
-        NaN,
+        solver_solve_time,
+        timed_log[:timed_solve_time],
+        timed_log[:solve_bytes_alloc],
+        timed_log[:sec_in_gc],
     )
 end
 
