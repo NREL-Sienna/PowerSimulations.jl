@@ -61,7 +61,15 @@ function SimulationInternal(
     recorder_dir = joinpath(simulation_dir, "recorder")
     results_dir = joinpath(simulation_dir, "results")
 
-    for path in (simulation_dir, sim_files_dir, logs_dir, models_dir, recorder_dir, results_dir, store_dir)
+    for path in (
+        simulation_dir,
+        sim_files_dir,
+        logs_dir,
+        models_dir,
+        recorder_dir,
+        results_dir,
+        store_dir,
+    )
         mkpath(path)
     end
 
@@ -546,7 +554,7 @@ function build!(
     recorders = [],
     console_level = Logging.Error,
     file_level = Logging.Info,
-    serialize = true
+    serialize = true,
 )
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
@@ -604,7 +612,7 @@ function _build!(sim::Simulation, serialize::Bool)
     _build_stages!(sim)
     if serialize
         TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Serializing Simulation Files" begin
-        serialize_simulation(sim)
+            serialize_simulation(sim)
         end
     end
     return
@@ -916,7 +924,7 @@ function update_stage!(
     return
 end
 
-_get_simulation_store_open_func(sim::Simulation) = h5_store_open
+get_simulation_store_open_func(sim::Simulation) = h5_store_open
 
 function store_simulation_data!(store::HdfSimulationStore, sim::Simulation)
     stage_count = get_stages_quantity(sim)
@@ -956,7 +964,7 @@ function execute!(sim::Simulation; kwargs...)
     file_mode = "a"
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
-    open_func = _get_simulation_store_open_func(sim)
+    open_func = get_simulation_store_open_func(sim)
     results = nothing
     # TODO: return file name for hash calculation instead of hard code
     try
@@ -1100,8 +1108,9 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         num_rows = num_executions * get_steps(sim)
 
         # TODO DT: not sure this is correct
-        resolution = intervals[stage_name][1]
-        stage_params = SimulationStoreStageParams(num_executions, horizon, resolution)
+        interval = intervals[stage_name][1]
+        resolution = get_resolution(stage)
+        stage_params = SimulationStoreStageParams(num_executions, horizon, interval, resolution)
         reqs = SimulationStoreStageRequirements()
 
         # TODO DT: configuration of keep_in_cache and priority are not correct
