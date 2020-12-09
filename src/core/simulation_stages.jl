@@ -80,16 +80,18 @@ function Stage{M}(
     export_pwl_vars = false,
     allow_fails = false,
 ) where {M <: AbstractOperationsProblem}
-    settings = PSISettings(sys;
-                        optimizer = optimizer,
-                        use_parameters = true,
-                        warm_start = warm_start,
-                        balance_slack_variables = balance_slack_variables,
-                        services_slack_variables = services_slack_variables,
-                        constraint_duals = constraint_duals,
-                        system_to_file = system_to_file,
-                        export_pwl_vars = export_pwl_vars,
-                        allow_fails = allow_fails)
+    settings = PSISettings(
+        sys;
+        optimizer = optimizer,
+        use_parameters = true,
+        warm_start = warm_start,
+        balance_slack_variables = balance_slack_variables,
+        services_slack_variables = services_slack_variables,
+        constraint_duals = constraint_duals,
+        system_to_file = system_to_file,
+        export_pwl_vars = export_pwl_vars,
+        allow_fails = allow_fails,
+    )
     return Stage{M}(template, sys, settings, jump_model)
 end
 
@@ -234,7 +236,7 @@ function run_stage!(
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
 
-    @info "JuMP.optimize! completed" timed_log[:timed_solve_time]
+    @info "JuMP.optimize! completed in $(timed_log[:timed_solve_time]) seconds"
 
     model_status = JuMP.primal_status(model)
     stats = OptimizerStats(step, get_number(stage), start_time, model, timed_log)
