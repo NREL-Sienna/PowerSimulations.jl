@@ -211,45 +211,38 @@ function build!(
     return
 end
 
-function run_stage(
+function run_stage!(
     step::Int,
     stage::Stage{M},
     start_time::Dates.DateTime,
     store::SimulationStore,
 ) where {M <: PowerSimulationsOperationsProblem}
     @assert get_psi_container(stage).JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
+    status = RUNNING
     timed_log = Dict{Symbol, Any}()
     model = get_psi_container(stage).JuMPmodel
-    settings = get_settings(stage)
+
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
 
-    @info "JuMP.optimize! completed" timed_log
+    @info "JuMP.optimize! completed" timed_log[:timed_solve_time]
 
-    model_status = JuMP.primal_status(get_psi_container(stage).JuMPmodel)
-    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        if settings.allow_fails
-            @warn("Stage $(stage.internal.number) status is $(model_status)")
-        else
-            error("Stage $(stage.internal.number) status is $(model_status)")
-        end
-    end
-    # TODO: Add Fallback when optimization fails
-    write_model_results!(store, stage, start_time)
-    stats = OptimizerStats(
-        step,
-        get_number(stage),
-        start_time,
-        get_psi_container(stage).JuMPmodel,
-    )
+    model_status = JuMP.primal_status(model)
+    stats = OptimizerStats(step, get_number(stage), start_time, model, timed_log)
     append_optimizer_stats!(store, stats)
 
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        return FAILED_RUN
+    else
+        status = SUCESSFUL_RUN
+    end
+    write_model_results!(store, stage, start_time)
     stage.internal.execution_count += 1
     # Reset execution count at the end of step
     if stage.internal.execution_count == stage.internal.executions
         stage.internal.execution_count = 0
     end
-    return
+    return status
 end
 
 function write_model_results!(store, stage, timestamp)
@@ -382,26 +375,6 @@ end
 
 function write_data(stage::Stage, save_path::AbstractString; kwargs...)
     write_data(get_psi_container(stage), save_path; kwargs...)
-    return
-end
-
-# These functions are writing directly to the feather file and skipping printing to memory.
-function export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
-    duals = Dict()
-    if is_milp(get_psi_container(stage))
-        @warn("Stage $(stage.internal.number) is an MILP, duals can't be exported")
-    else
-        for c in get_constraint_duals(get_psi_container(stage).settings)
-            v = get_constraint(get_psi_container(stage), c)
-            duals[c] = axis_array_to_dataframe(v)
-        end
-    end
-    write_data(stage, save_path)
-    write_data(duals, save_path; duals = true)
-    write_data(get_parameters_value(get_psi_container(stage)), save_path; params = true)
-    write_data(get_timestamps(stage, start_time), save_path, "time_stamp")
-    files = collect(readdir(save_path))
-    compute_file_hash(save_path, files)
     return
 end
 

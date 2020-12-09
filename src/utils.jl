@@ -41,6 +41,10 @@ function compute_file_hash(path::String, files::Vector{String})
     end
 end
 
+function compute_file_hash(path::String, file::String)
+    return compute_file_hash(path, [file])
+end
+
 function read_file_hashes(path)
     data = open(joinpath(path, HASH_FILENAME), "r") do io
         JSON.parse(io)

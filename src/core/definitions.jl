@@ -37,15 +37,17 @@ const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
     EMPTY = 0
 end
 
+@enum RUN_STATUS begin
+    SUCESSFUL_RUN = 0
+    FAILED_RUN = -1
+    RUNNING = 1
+    NOT_RUNNING = 2
+end
+
 @enum SOS_STATUS_VARIABLE begin
     NO_VARIABLE = 1
     PARAMETER = 2
     VARIABLE = 3
-end
-
-@enum STAGE_STATUS begin
-    SUCESSFUL_RUN = 0
-    FAILED_RUN = 1
 end
 
 # Settings constants

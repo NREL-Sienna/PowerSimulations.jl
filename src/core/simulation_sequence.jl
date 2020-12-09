@@ -153,7 +153,6 @@ function _check_cache_defination(cache::Dict{<:Tuple, <:AbstractCache})
     return
 end
 
-
 @doc raw"""
     SimulationSequence(horizons::Dict{String, Int}
                         step_resolution::Dates.TimePeriod
@@ -238,7 +237,8 @@ function get_stage_horizon(sequence::SimulationSequence, stage::String)
     return horizon
 end
 
-get_stage_interval(sequence::SimulationSequence, stage::String) = sequence.intervals[stage][1]
+get_stage_interval(sequence::SimulationSequence, stage::String) =
+    sequence.intervals[stage][1]
 
 function get_stage_name(sequence::SimulationSequence, stage::Stage)
     name = get(get_order(sequence), get_number(stage), nothing)

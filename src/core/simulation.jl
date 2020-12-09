@@ -4,6 +4,7 @@ const SIMULATION_LOG_FILENAME = "simulation.log"
 const REQUIRED_RECORDERS = [:simulation_status, :simulation]
 
 mutable struct SimulationInternal
+    store_dir::String
     logs_dir::String
     models_dir::String
     recorder_dir::String
@@ -12,11 +13,12 @@ mutable struct SimulationInternal
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
     time_step_ref::Dict{Int, Int}
-    date_range::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
+    #Inital Time of the first forecast and Inital Time of the last forecast
+    date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
     time_step::Int
-    reset::Bool
-    compiled_status::BUILD_STATUS
+    status::RUN_STATUS
+    build_status::BUILD_STATUS
     simulation_cache::Dict{<:CacheKey, AbstractCache}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
@@ -51,12 +53,13 @@ function SimulationInternal(
         error("$simulation_dir already exists. Delete it or pass a different output_dir.")
     end
 
+    store_dir = joinpath(simulation_dir, "data_store")
     logs_dir = joinpath(simulation_dir, "logs")
     models_dir = joinpath(simulation_dir, "models_json")
     recorder_dir = joinpath(simulation_dir, "recorder")
     results_dir = joinpath(simulation_dir, "results")
 
-    for path in (simulation_dir, logs_dir, models_dir, recorder_dir, results_dir)
+    for path in (simulation_dir, logs_dir, models_dir, recorder_dir, results_dir, store_dir)
         mkpath(path)
     end
 
@@ -66,6 +69,7 @@ function SimulationInternal(
     init_time = Dates.now()
     time_step = 1
     return SimulationInternal(
+        store_dir,
         logs_dir,
         models_dir,
         recorder_dir,
@@ -77,7 +81,7 @@ function SimulationInternal(
         (init_time, init_time),
         init_time,
         time_step,
-        true,
+        NOT_RUNNING,
         EMPTY,
         Dict{CacheKey, AbstractCache}(),
         collect(unique_recorders),
@@ -258,11 +262,14 @@ get_date_range(sim::Simulation) = sim.internal.date_range
 get_current_time(sim::Simulation) = sim.internal.current_time
 get_stages(sim::Simulation) = sim.stages
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
+get_store_dir(sim::Simulation) = sim.internal.store_dir
+get_simulation_status(sim::Simulation) = sim.internal.status
+get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
-    for (k, v) in get_stages(sim)
-        base_powers[k] = PSY.get_base_power(v.sys)
+    for (name, stage) in get_stages(sim)
+        base_powers[name] = PSY.get_base_power(get_system(stage))
     end
     return base_powers
 end
@@ -446,8 +453,10 @@ function _check_steps(
     for (stage_number, stage_name) in get_sequence(sim).order
         stage = sim.stages[stage_name]
         execution_counts = get_executions(stage)
-        transitions =
-            get_sequence(sim).execution_order[vcat(1, diff(get_sequence(sim).execution_order)) .== 1]
+        transitions = get_sequence(sim).execution_order[vcat(
+            1,
+            diff(get_sequence(sim).execution_order),
+        ) .== 1]
         @assert length(findall(x -> x == stage_number, get_sequence(sim).execution_order)) /
                 length(findall(x -> x == stage_number, transitions)) == execution_counts
         forecast_count = length(stage_initial_times[stage_number])
@@ -556,7 +565,7 @@ function build!(
         try
             Logging.with_logger(logger) do
                 _build!(sim)
-                sim.internal.compiled_status = BUILT
+                sim.internal.build_status = BUILT
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
         finally
@@ -568,7 +577,7 @@ function build!(
 end
 
 function _build!(sim::Simulation)
-    sim.internal.compiled_status = IN_PROGRESS
+    sim.internal.build_status = IN_PROGRESS
     stage_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
     for (stage_number, stage_name) in get_order(sequence)
@@ -898,19 +907,18 @@ end
 _get_simulation_store_open_func(sim::Simulation) = h5_store_open
 
 function store_simulation_data!(store::HdfSimulationStore, sim::Simulation)
-    base_power_dict = Dict{String, eltype(values(dict))}()
-    for (k, v) in get_stages(sim)
-        base_power_dict[string(k)] = PSY.get_base_power(get_system(v))
+    stage_count = get_stages_quantity(sim)
+    data = Dict()
+    data["base_powers"] = Vector{Float64}(undef, stage_count)
+    data["system_uuid"] = Vector{String}(undef, stage_count)
+    data["names"] = Vector{String}(undef, stage_count)
+    for (ix, stage) in enumerate(values(get_stages(sim)))
+        system = get_system(stage)
+        data["system_uuid"][ix] = string(IS.get_uuid(system))
+        data["base_powers"][ix] = PSY.get_base_power(system)
+        data["names"][ix] = get_name(stage)
     end
-
-    dataset = HDF5.create_dataset(
-        group,
-        "data",
-        HDF5.datatype(eltype(values(dict))),
-        HDF5.dataspace((get_stages_quantity(sim), 2)),
-    )
-
-    key_data_pairs_to_dataset!(dataset, base_power_dict)
+    store_simulation_data!(store, data)
     return
 end
 
@@ -940,7 +948,7 @@ function execute!(sim::Simulation; kwargs...)
     results = nothing
 
     try
-        open_func(get_simulation_dir(sim), "w") do store
+        open_func(get_store_dir(sim), "w") do store
             Logging.with_logger(logger) do
                 results = _execute!(sim, store; kwargs...)
                 log_cache_hit_percentages(store)
@@ -956,23 +964,19 @@ function execute!(sim::Simulation; kwargs...)
 end
 
 function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
-    if sim.internal.reset
-        sim.internal.reset = false
-    elseif sim.internal.reset == false
-        error("Re-build the simulation")
+    if get_simulation_build_status(sim) != BUILT
+        error("Simulation status is $(get_simulation_status(sim)), try to rebuild the simulation")
     end
-    system_to_file = get(kwargs, :system_to_file, true)
-    isnothing(sim.internal) &&
-        error("Simulation not built, build the simulation to execute")
-        execution_order = get_execution_order(sim)
-        steps = get_steps(sim)
-        num_executions = steps * length(execution_order)
-        _initialize_stage_storage!(sim, store, cache_size_mib)
-        initialize_optimizer_stats_storage!(store, num_executions)
-        store_simulation_data(sim, store)
-        TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
-        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-        for step in 1:get_steps(sim)
+    @assert !isnothing(sim.internal)
+    execution_order = get_execution_order(sim)
+    steps = get_steps(sim)
+    num_executions = steps * length(execution_order)
+    _initialize_stage_storage!(sim, store, cache_size_mib)
+    initialize_optimizer_stats_storage!(store, num_executions)
+    store_simulation_data!(store, sim)
+    TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
+        for step in 1:steps
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
                 IS.@record :simulation_status SimulationStepEvent(
@@ -1000,6 +1004,7 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                         run_name = "step-$(step)-stage-$(stage_name)"
                         sim.internal.current_time = sim.internal.date_ref[stage_number]
                         sim.internal.time_step = sim.internal.time_step_ref[stage_number]
+                        # TODO: Show progress meter here
                         get_sequence(sim).current_execution_index = ix
                         @info "Starting run $run_name $(get_current_time(sim))"
                         # Is first run of first stage? Yes -> don't update stage
@@ -1008,12 +1013,22 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
                             stage_name = get_stage_name(sim, stage)
-                            run_stage(
-                                step,
-                                stage,
-                                get_current_time(sim),
-                                store,
-                            )
+                            settings = get_settings(stage)
+                            # TODO: Add Fallback when run_stage fails
+                            status = run_stage!(step, stage, get_current_time(sim), store)
+                            if status == SUCESSFUL_RUN
+                            elseif !get_allow_fails(settings) && (status != SUCESSFUL_RUN)
+                                break
+                            elseif get_allow_fails(settings) && (status != SUCESSFUL_RUN)
+                                continue
+                            elseif status == RUNNING
+                                flush(store)
+                                error("Stage still in RUNNING status")
+                            else
+                                flush(store)
+                                error("Invalid stage status")
+                            end
+
                             sim.internal.run_count[step][stage_number] += 1
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
@@ -1044,9 +1059,8 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
             end
         end
         flush(store)
-        #sim_results = SimulationResultsReference(sim)
     end
-
+    compute_file_hash(get_store_dir(sim), HDF_FILENAME)
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
     #serialize_sim_output(sim_results)
     return nothing #sim_results
