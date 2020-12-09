@@ -2,6 +2,8 @@ const HDF_FILENAME = "simulation_store.h5"
 const HDF_SIMULATION_ROOT_PATH = "simulation"
 const HDF_OPTIMIZER_STATS_PATH = HDF_SIMULATION_ROOT_PATH * "/optimizer_stats"
 const HDF_OPTIMIZER_DATASET_PATH = HDF_OPTIMIZER_STATS_PATH * "/data"
+const HDF_SIM_DATA_PATH = HDF_SIMULATION_ROOT_PATH * "/simulation_data"
+const HDF_SIM_DATA_DATASET_PATH = HDF_SIM_DATA_PATH * "/data"
 
 mutable struct Dataset
     dataset::HDF5.HDF5Dataset
@@ -64,6 +66,7 @@ function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
     if mode == "w"
         HDF5.create_group(file, HDF_SIMULATION_ROOT_PATH)
         HDF5.create_group(file, HDF_OPTIMIZER_STATS_PATH)
+        HDF5.create_group(file, HDF_SIM_DATA_PATH)
         @debug "Created store" file_path
     end
 
@@ -142,7 +145,7 @@ end
 
 function append_optimizer_stats!(store::HdfSimulationStore, stats::OptimizerStats)
     @assert_op store.optimizer_stats_index > 0
-    dataset = store.file["simulation/optimizer_stats/data"]
+    dataset = store.file[HDF_OPTIMIZER_DATASET_PATH]
     @assert_op store.optimizer_stats_index <= size(dataset)[1]
 
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
@@ -168,6 +171,23 @@ function initialize_optimizer_stats_storage!(store::HdfSimulationStore, num_stat
     HDF5.attributes(dataset)["columns"] = get_column_names(OptimizerStats)
     @debug "Created dataset for optimizer stats" dataset size(dataset)
     store.optimizer_stats_index = 1
+    return
+end
+
+function store_simulation_data!(store::HdfSimulationStore, dict)
+    root = _get_root(store)
+    group = _get_sim_data_path(store)
+
+    dataset = HDF5.create_dataset(
+        group,
+        "data",
+        HDF5.datatype(Float64),
+        HDF5.dataspace((length(dict["names"]), 1)),
+    )
+    HDF5.attributes(dataset)["names"] = dict["names"]
+    HDF5.attributes(dataset)["system_uuid"] = dict["system_uuid"]
+    @debug "Created dataset for simulation data" dataset size(dataset)
+    dataset[:, 1] = dict["base_powers"]
     return
 end
 
@@ -378,7 +398,8 @@ end
 function _deserialize_attributes!(store::HdfSimulationStore)
     group = store.file["simulation"]
     initial_time = Dates.DateTime(HDF5.read(HDF5.attributes(group)["initial_time"]))
-    step_resolution = Dates.Millisecond(HDF5.read(HDF5.attributes(group)["step_resolution_ms"]))
+    step_resolution =
+        Dates.Millisecond(HDF5.read(HDF5.attributes(group)["step_resolution_ms"]))
     num_steps = HDF5.read(HDF5.attributes(group)["num_steps"])
     store.params = SimulationStoreParams(initial_time, step_resolution, num_steps)
     empty!(store.datasets)
@@ -502,6 +523,7 @@ end
 
 _get_optimizer_stats_path(store::HdfSimulationStore) = store.file[HDF_OPTIMIZER_STATS_PATH]
 _get_optimizer_data_path(store::HdfSimulationStore) = store.file[HDF_OPTIMIZER_DATASET_PATH]
+_get_sim_data_path(store::HdfSimulationStore) = store.file[HDF_SIM_DATA_PATH]
 _get_root(store::HdfSimulationStore) = store.file[HDF_SIMULATION_ROOT_PATH]
 
 function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)

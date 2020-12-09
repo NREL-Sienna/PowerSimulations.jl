@@ -162,10 +162,12 @@ function reset!(stage::Stage{T}) where {T <: AbstractOperationsProblem}
     return
 end
 
-function build_pre_step!(stage::Stage,
+function build_pre_step!(
+    stage::Stage,
     initial_time::Dates.DateTime,
     horizon::Int,
-    stage_interval::Dates.Period)
+    stage_interval::Dates.Period,
+)
     !is_stage_empty(stage) && reset!(stage)
     settings = get_settings(stage)
     # Horizon and initial time are set here because the information is specified in the
@@ -193,8 +195,11 @@ function build!(
     write_path = get_write_path(stage)
     write_psi_container(
         get_psi_container(stage),
-        joinpath(write_path, "models_json",
-        "Stage$(stage.internal.number)_optimization_model.json"),
+        joinpath(
+            write_path,
+            "models_json",
+            "Stage$(stage.internal.number)_optimization_model.json",
+        ),
     )
     if get_system_to_file(settings)
         PSY.to_json(
@@ -322,17 +327,11 @@ function get_initial_cache(cache::AbstractCache, stage::Stage)
 end
 
 function get_initial_cache(cache::TimeStatusChange, stage::Stage)
-    ini_cond_on = get_initial_conditions(
-        get_psi_container(stage),
-        TimeDurationON,
-        cache.device_type,
-    )
+    ini_cond_on =
+        get_initial_conditions(get_psi_container(stage), TimeDurationON, cache.device_type)
 
-    ini_cond_off = get_initial_conditions(
-        get_psi_container(stage),
-        TimeDurationOFF,
-        cache.device_type,
-    )
+    ini_cond_off =
+        get_initial_conditions(get_psi_container(stage), TimeDurationOFF, cache.device_type)
 
     device_axes = Set((
         PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
