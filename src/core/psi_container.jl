@@ -11,6 +11,7 @@ mutable struct PSIContainer
     parameters::Union{Nothing, ParametersContainer}
     initial_conditions::InitialConditions
     pm::Union{Nothing, PM.AbstractPowerModel}
+    base_power::Float64
 
     function PSIContainer(
         sys::PSY.System,
@@ -33,6 +34,7 @@ mutable struct PSIContainer
             nothing,
             InitialConditions(use_parameters = get_use_parameters(settings)),
             nothing,
+            PSY.get_base_power(sys),
         )
     end
 end
@@ -219,6 +221,7 @@ get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_cond
 get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
 get_settings(psi_container::PSIContainer) = psi_container.settings
 get_jump_model(psi_container::PSIContainer) = psi_container.JuMPmodel
+get_base_power(psi_container::PSIContainer) = psi_container.base_power
 
 function get_variable(
     psi_container::PSIContainer,
