@@ -71,10 +71,25 @@ function Stage{M}(
     sys::PSY.System,
     optimizer::JuMP.MOI.OptimizerWithAttributes,
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
-    kwargs...,
+    PTDF = nothing,
+    warm_start = true,
+    balance_slack_variables = false,
+    services_slack_variables = false,
+    constraint_duals = Vector{Symbol}(),
+    system_to_file = true,
+    export_pwl_vars = false,
+    allow_fails = false,
 ) where {M <: AbstractOperationsProblem}
-    check_kwargs(kwargs, STAGE_ACCEPTED_KWARGS, "Stage")
-    settings = PSISettings(sys; optimizer = optimizer, use_parameters = true, kwargs...)
+    settings = PSISettings(sys;
+                        optimizer = optimizer,
+                        use_parameters = true,
+                        warm_start = warm_start,
+                        balance_slack_variables = balance_slack_variables,
+                        services_slack_variables = services_slack_variables,
+                        constraint_duals = constraint_duals,
+                        system_to_file = system_to_file,
+                        export_pwl_vars = export_pwl_vars,
+                        allow_fails = allow_fails)
     return Stage{M}(template, sys, settings, jump_model)
 end
 
@@ -201,12 +216,6 @@ function build!(
             "Stage$(stage.internal.number)_optimization_model.json",
         ),
     )
-    if get_system_to_file(settings)
-        PSY.to_json(
-            system,
-            joinpath(write_path, "data", "Stage$(stage.internal.number)_sys_data.json"),
-        )
-    end
     set_stage_status!(stage, BUILT)
     return
 end
