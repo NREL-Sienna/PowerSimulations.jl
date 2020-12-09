@@ -248,7 +248,8 @@ function pwl_gencost_sos!(
     )
     JuMP.@constraint(
         psi_container.JuMPmodel,
-        variable == sum([var_ * cost_data[ix][2]/base_power for (ix, var_) in enumerate(pwlvars)])
+        variable ==
+        sum([var_ * cost_data[ix][2] / base_power for (ix, var_) in enumerate(pwlvars)])
     )
     JuMP.add_to_expression!(total_gen_cost, gen_cost)
 
@@ -310,7 +311,10 @@ function pwl_gencost_linear!(
             container = _get_pwl_vars_container(psi_container)
             container[(component_name, time_period, i)] = pwlvar
         end
-        JuMP.add_to_expression!(gen_cost, PSY.get_slopes(cost_data)[i] * base_power * pwlvar)
+        JuMP.add_to_expression!(
+            gen_cost,
+            PSY.get_slopes(cost_data)[i] * base_power * pwlvar,
+        )
         JuMP.add_to_expression!(total_gen, pwlvar)
     end
     JuMP.@constraint(psi_container.JuMPmodel, variable == total_gen)
@@ -789,7 +793,9 @@ function variable_cost!(
         resolution = model_resolution(psi_container)
         dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
         variable = get_variable(psi_container, var_name)[component_name, time_period]
-        gen_cost = sum( (variable .* base_power) .^ 2) * cost_data[1] + sum(variable .* base_power) * cost_data[2]
+        gen_cost =
+            sum((variable .* base_power) .^ 2) * cost_data[1] +
+            sum(variable .* base_power) * cost_data[2]
         add_to_cost_expression!(psi_container, spec.multiplier * gen_cost * dt)
     else
         @debug "Quadratic Variable Cost with only linear term" component_name
