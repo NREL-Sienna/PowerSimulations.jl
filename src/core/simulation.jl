@@ -4,6 +4,7 @@ const SIMULATION_LOG_FILENAME = "simulation.log"
 const REQUIRED_RECORDERS = [:simulation_status, :simulation]
 
 mutable struct SimulationInternal
+    sim_files_dir::String
     store_dir::String
     logs_dir::String
     models_dir::String
@@ -53,13 +54,14 @@ function SimulationInternal(
         error("$simulation_dir already exists. Delete it or pass a different output_dir.")
     end
 
+    sim_files_dir = joinpath(simulation_dir, "simulation_files")
     store_dir = joinpath(simulation_dir, "data_store")
     logs_dir = joinpath(simulation_dir, "logs")
     models_dir = joinpath(simulation_dir, "models_json")
     recorder_dir = joinpath(simulation_dir, "recorder")
     results_dir = joinpath(simulation_dir, "results")
 
-    for path in (simulation_dir, logs_dir, models_dir, recorder_dir, results_dir, store_dir)
+    for path in (simulation_dir, sim_files_dir, logs_dir, models_dir, recorder_dir, results_dir, store_dir)
         mkpath(path)
     end
 
@@ -69,6 +71,7 @@ function SimulationInternal(
     init_time = Dates.now()
     time_step = 1
     return SimulationInternal(
+        sim_files_dir,
         store_dir,
         logs_dir,
         models_dir,
@@ -262,6 +265,7 @@ get_date_range(sim::Simulation) = sim.internal.date_range
 get_current_time(sim::Simulation) = sim.internal.current_time
 get_stages(sim::Simulation) = sim.stages
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
+get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
 get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
@@ -542,6 +546,7 @@ function build!(
     recorders = [],
     console_level = Logging.Error,
     file_level = Logging.Info,
+    serialize = true
 )
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
@@ -564,7 +569,7 @@ function build!(
         register_recorders!(sim.internal, file_mode)
         try
             Logging.with_logger(logger) do
-                _build!(sim)
+                _build!(sim, serialize)
                 sim.internal.build_status = BUILT
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
@@ -576,7 +581,7 @@ function build!(
     return
 end
 
-function _build!(sim::Simulation)
+function _build!(sim::Simulation, serialize::Bool)
     sim.internal.build_status = IN_PROGRESS
     stage_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
@@ -597,6 +602,12 @@ function _build!(sim::Simulation)
     _assign_feedforward_chronologies(sim)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim)
+    if serialize
+        TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Serializing Simulation Files" begin
+        serialize_simulation(sim)
+        end
+    end
+    return
 end
 
 #Defined here because it requires Stage and Simulation to defined
@@ -621,7 +632,8 @@ function initial_condition_update!(
             get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
-        # We pass the simulation cache instead of the whole simulation to avoid definition dependencies. All the inputs to calculate_ic_quantity are defined before the simulation object
+        # We pass the simulation cache instead of the whole simulation to avoid definition dependencies.
+        # All the inputs to calculate_ic_quantity are defined before the simulation object
         quantity = calculate_ic_quantity(
             ini_cond_key,
             ic,
@@ -946,7 +958,7 @@ function execute!(sim::Simulation; kwargs...)
     register_recorders!(sim.internal, file_mode)
     open_func = _get_simulation_store_open_func(sim)
     results = nothing
-
+    # TODO: return file name for hash calculation instead of hard code
     try
         open_func(get_store_dir(sim), "w") do store
             Logging.with_logger(logger) do
@@ -959,7 +971,7 @@ function execute!(sim::Simulation; kwargs...)
         unregister_recorders!(sim.internal)
         close(logger)
     end
-
+    compute_file_hash(get_store_dir(sim), HDF_FILENAME)
     return results
 end
 
@@ -1017,15 +1029,14 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                             # TODO: Add Fallback when run_stage fails
                             status = run_stage!(step, stage, get_current_time(sim), store)
                             if status == SUCESSFUL_RUN
+                                flush(store)
                             elseif !get_allow_fails(settings) && (status != SUCESSFUL_RUN)
                                 break
                             elseif get_allow_fails(settings) && (status != SUCESSFUL_RUN)
                                 continue
                             elseif status == RUNNING
-                                flush(store)
                                 error("Stage still in RUNNING status")
                             else
-                                flush(store)
                                 error("Invalid stage status")
                             end
 
@@ -1060,7 +1071,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
         end
         flush(store)
     end
-    compute_file_hash(get_store_dir(sim), HDF_FILENAME)
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
     #serialize_sim_output(sim_results)
     return nothing #sim_results
@@ -1192,32 +1202,32 @@ struct SimulationSerializationWrapper
 end
 
 """
-    serialize(simulation::Simulation, path = ".")
+    serialize_simulation(sim::Simulation, path = ".")
 
 Serialize the simulation to a directory in path.
 
 Return the serialized simulation directory name that is created.
 
 # Arguments
-- `simulation::Simulation`: simulation to serialize
+- `sim::Simulation`: simulation to serialize
 - `path = "."`: path in which to create the serialzed directory
 - `force = false`: If true, delete the directory if it already exists. Otherwise, it will
    throw an exception.
 """
-function serialize(simulation::Simulation; path = ".", force = false)
-    directory = joinpath(path, "simulation-$(get_name(simulation))")
+function serialize_simulation(sim::Simulation; force = false)
+    directory = get_simulation_files_dir(sim)
     stages = Dict{String, StageSerializationWrapper}()
 
     orig = pwd()
-    if isdir(directory) || ispath(directory) && !force
-        throw(ArgumentError("$directory already exists. Please delete it or pass force = true."))
+    if !isempty(readdir(directory)) && !force
+        throw(ArgumentError("$directory has files already $(readdir(directory)). Please delete them or pass force = true."))
     end
     rm(directory, recursive = true, force = true)
     mkdir(directory)
     cd(directory)
 
     try
-        for (key, stage) in simulation.stages
+        for (key, stage) in get_stages(sim)
             if isnothing(stage.internal)
                 throw(ArgumentError("stage $(stage.internal.number) has not been built"))
             end
@@ -1239,15 +1249,15 @@ function serialize(simulation::Simulation; path = ".", force = false)
 
     filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
     obj = SimulationSerializationWrapper(
-        simulation.steps,
+        get_steps(sim),
         stages,
-        simulation.initial_time,
-        simulation.sequence,
-        simulation.simulation_folder,
-        get_name(simulation),
+        get_initial_time(sim),
+        get_sequence(sim),
+        get_simulation_dir(sim),
+        get_name(sim),
     )
     Serialization.serialize(filename, obj)
-    @info "Serialized simulation" get_name(simulation) directory
+    @info "Serialized simulation" get_name(sim) directory
     return directory
 end
 
