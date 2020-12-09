@@ -91,17 +91,6 @@ const OPERATIONS_ACCEPTED_KWARGS = [
 
 const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
-const STAGE_ACCEPTED_KWARGS = [
-    :PTDF,
-    :warm_start,
-    :balance_slack_variables,
-    :services_slack_variables,
-    :constraint_duals,
-    :system_to_file,
-    :export_pwl_vars,
-    :allow_fails,
-]
-
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 
