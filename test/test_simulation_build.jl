@@ -181,7 +181,7 @@ function test_sequence_build(file_path::String)
         )
         sim.internal = PSI.SimulationInternal(
             sim.steps,
-            keys(sim.sequence.order),
+            keys(get_sequence(sim).order),
             mktempdir(),
             PSI.get_name(sim),
         )

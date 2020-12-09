@@ -559,7 +559,7 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function export_op_model(op_problem::OperationsProblem, save_path::String)
-    _write_psi_container(op_problem.psi_container, save_path)
+    write_psi_container(op_problem.psi_container, save_path)
     return
 end
 
