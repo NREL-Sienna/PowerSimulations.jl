@@ -188,7 +188,7 @@ function initialize_stage_storage!(
     stages_group = _get_group_or_create(root, "stages")
     set_max_size!(store.cache, flush_rules.max_size)
     set_min_flush_size!(store.cache, flush_rules.min_flush_size)
-    @info "initialize_stage_storage" store.cache
+    @debug "initialize_stage_storage" store.cache
 
     for stage in keys(store.params.stages)
         store.datasets[stage] = StageDatasets()
