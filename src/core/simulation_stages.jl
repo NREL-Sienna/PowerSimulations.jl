@@ -174,7 +174,7 @@ set_stage_status!(stage::Stage, status::BUILD_STATUS) = stage.internal.status = 
 function reset!(stage::Stage{T}) where {T <: AbstractOperationsProblem}
     stage.internal.execution_count = 0
     container = PSIContainer(get_system(stage), get_settings(stage), nothing)
-    get_psi_container(stage) = container
+    stage.internal.psi_container = container
     set_stage_status!(stage, EMPTY)
     return
 end
@@ -185,7 +185,10 @@ function build_pre_step!(
     horizon::Int,
     stage_interval::Dates.Period,
 )
-    !is_stage_empty(stage) && reset!(stage)
+    if !is_stage_empty(stage)
+        @info "Stage $(get_name(stage)) status not EMPTY. Resetting"
+        reset!(stage)
+    end
     settings = get_settings(stage)
     # Horizon and initial time are set here because the information is specified in the
     # Simulation Sequence object and not at the stage creation.

@@ -956,8 +956,8 @@ function execute!(sim::Simulation; kwargs...)
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
     open_func = get_simulation_store_open_func(sim)
-    if get_simulation_build_status(sim) != BUILT && get_status(sum) != READY
-        error("Simulation status is invalid, try to rebuild the simulation")
+    if (get_simulation_build_status(sim) != BUILT) || (get_simulation_status(sim) != READY)
+        error("Simulation status is invalid, you need to rebuild the simulation")
     end
     try
         open_func(get_store_dir(sim), "w") do store
@@ -973,7 +973,7 @@ function execute!(sim::Simulation; kwargs...)
         close(logger)
     end
     compute_file_hash(get_store_dir(sim), HDF_FILENAME)
-    return get_status(sim)
+    return get_simulation_status(sim)
 end
 
 function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
