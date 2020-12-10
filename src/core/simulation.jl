@@ -467,15 +467,15 @@ function _check_steps(
     sim::Simulation,
     stage_initial_times::Dict{Int, Vector{Dates.DateTime}},
 )
+    execution_order = get_sequence(sim).execution_order
     for (stage_number, stage_name) in get_sequence(sim).order
         stage = sim.stages[stage_name]
         execution_counts = get_executions(stage)
-        transitions = get_sequence(sim).execution_order[vcat(
-            1,
-            diff(get_sequence(sim).execution_order),
-        ) .== 1]
-        @assert_op length(findall(x -> x == stage_number, get_sequence(sim).execution_order)) /
-                length(findall(x -> x == stage_number, transitions)) == execution_counts
+        transitions = execution_order[vcat(1, diff(execution_order)) .== 1]
+        # Checks the consistency between two methods of calculating the number of executions
+        total_stage_executions = length(findall(x -> x == stage_number, execution_order, ))
+        total_stage_transitions = length(findall(x -> x == stage_number, transitions))
+        @assert_op total_stage_executions / total_stage_transitions == execution_counts
         forecast_count = length(stage_initial_times[stage_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
@@ -546,7 +546,8 @@ Build the Simulation, stages and the related folder structure
 
 # Arguments
 - `sim::Simulation`: simulation object
-- `output_dir`: Output directory for the simulation
+- `output_dir` = nothing: Name of the output directory for the simulation. If nothing, the
+   folder will have the same name as the simulation
 - `serialize::Bool = true`: serializes the simulation objects in the simulation
 - `recorders::Vector{Symbol} = []`: recorder names to register
 - `console_level = Logging.Error`:
@@ -556,7 +557,7 @@ Throws an exception if label is passed and the directory already exists.
 """
 function build!(
     sim::Simulation;
-    output_dir,
+    output_dir = nothing,
     recorders = [],
     console_level = Logging.Error,
     file_level = Logging.Info,
