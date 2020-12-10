@@ -268,6 +268,7 @@ function storage_energy_init(
         key,
         _make_initial_condition_energy,
         _get_initial_energy_value,
+        StoredEnergy,
     )
 
     return
