@@ -1030,7 +1030,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                             # TODO: Add Fallback when run_stage fails
                             status = run_stage!(step, stage, get_current_time(sim), store)
                             if status == SUCESSFUL_RUN
-                                flush(store)
                             elseif !get_allow_fails(settings) && (status != SUCESSFUL_RUN)
                                 set_simulation_status!(sim, FAILED_RUN)
                                 break
@@ -1073,7 +1072,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                 )
             end
         end
-        flush(store)
     end
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
     set_simulation_status!(sim, SUCESSFUL_RUN)
