@@ -542,11 +542,12 @@ end
 """
     build!(sim::Simulation)
 
-Build the Simulation and all stages.
+Build the Simulation, stages and the related folder structure
 
 # Arguments
 - `sim::Simulation`: simulation object
-- `output_dir = nothing`: If nothing then generate a unique name.
+- `output_dir`: Output directory for the simulation
+- `serialize::Bool = true`: serializes the simulation objects in the simulation
 - `recorders::Vector{Symbol} = []`: recorder names to register
 - `console_level = Logging.Error`:
 - `file_level = Logging.Info`:
@@ -555,7 +556,7 @@ Throws an exception if label is passed and the directory already exists.
 """
 function build!(
     sim::Simulation;
-    output_dir = nothing,
+    output_dir,
     recorders = [],
     console_level = Logging.Error,
     file_level = Logging.Info,
