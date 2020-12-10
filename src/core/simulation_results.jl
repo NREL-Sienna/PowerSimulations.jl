@@ -69,7 +69,7 @@ function SimulationResults(
         error("Execution $execution not in the simulations results")
     end
     if !check_folder_integrity(execution_path)
-        @warn("The results folder $(execution_path) is not consistent with the default folder structure. This can lead to unwanted to errors or unwanted results")
+        @warn("The results folder $(execution_path) is not consistent with the default folder structure. This can lead to errors or unwanted results")
     end
     simulation_store_path = joinpath(execution_path, "data_store")
     check_file_integrity(simulation_store_path)
