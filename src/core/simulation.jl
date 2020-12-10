@@ -950,12 +950,11 @@ function execute!(sim::Simulation; kwargs...)
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
     open_func = get_simulation_store_open_func(sim)
-    results = nothing
     # TODO: return file name for hash calculation instead of hard code
     try
         open_func(get_store_dir(sim), "w") do store
             Logging.with_logger(logger) do
-                results = _execute!(sim, store; kwargs...)
+                _execute!(sim, store; kwargs...)
                 log_cache_hit_percentages(store)
             end
         end
@@ -965,7 +964,7 @@ function execute!(sim::Simulation; kwargs...)
         close(logger)
     end
     compute_file_hash(get_store_dir(sim), HDF_FILENAME)
-    return results
+    return nothing
 end
 
 function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
@@ -1064,8 +1063,7 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
         flush(store)
     end
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
-    #serialize_sim_output(sim_results)
-    return nothing #sim_results
+    return nothing
 end
 
 function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)

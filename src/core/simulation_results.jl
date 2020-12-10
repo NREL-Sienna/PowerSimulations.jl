@@ -100,23 +100,21 @@ function SimulationResults(
                              )
 end
 
-function SimulationResults(sim::Simulation, stage_name::String; results_output_path = nothing)
-    simulation_store_path = joinpath(get_store_dir(sim), "data_store")
+function SimulationResults(sim::Simulation, stage_name::String)
+    simulation_store_path = get_store_dir(sim)
     check_file_integrity(simulation_store_path)
     stage_params = results_pre_process(simulation_store_path, stage_name)
-    if results_output_path === nothing
-        results_output_path = get_results_dir(sim)
-    end
+    sys = get_system(get_stage(sim, stage_name))
     return SimulationResults(stage_name,
-                            get_base_power(get_stage(sim, stage_name)),
+                            PSY.get_base_power(sys),
                             get_simulation_dir(sim),
-                            results_output_path,
-                            get_system(get_stage(sim, stage_name)),
-                            collect(stage_results_params["available_variables"]),
+                            get_results_dir(sim),
+                            sys,
+                            collect(stage_params["available_variables"]),
                             Dict{Symbol, DataFrames.DataFrame}(),
-                            collect(stage_results_params["available_duals"]),
+                            collect(stage_params["available_duals"]),
                             Dict{Symbol, Any}(),
-                            collect(stage_results_params["available_duals"]),
+                            collect(stage_params["available_duals"]),
                             Dict{Symbol, DataFrames.DataFrame}()
                             )
 end
