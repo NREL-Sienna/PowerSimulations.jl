@@ -18,7 +18,7 @@ mutable struct SimulationInternal
     date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
     time_step::Int
-    status::RUN_STATUS
+    status::Union{Nothing, RUN_STATUS}
     build_status::BUILD_STATUS
     simulation_cache::Dict{<:CacheKey, AbstractCache}
     recorders::Vector{Symbol}
@@ -92,7 +92,7 @@ function SimulationInternal(
         (init_time, init_time),
         init_time,
         time_step,
-        NOT_RUNNING,
+        nothing,
         EMPTY,
         Dict{CacheKey, AbstractCache}(),
         collect(unique_recorders),
@@ -278,6 +278,9 @@ get_store_dir(sim::Simulation) = sim.internal.store_dir
 get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 get_results_dir(sim::Simulation) = sim.internal.results_dir
+
+set_simulation_status!(sim::Simulation, status::RUN_STATUS) = sim.internal.status = status
+set_simulation_build_status!(sim::Simulation, status::BUILD_STATUS) = sim.internal.build_status = status
 
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
@@ -579,15 +582,17 @@ function build!(
         try
             Logging.with_logger(logger) do
                 _build!(sim, serialize)
-                sim.internal.build_status = BUILT
+                set_simulation_build_status!(sim, BUILT)
+                set_simulation_status!(sim, READY)
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
+        # TODO: catch errors and remove created folder if the build failed
         finally
             unregister_recorders!(sim.internal)
             close(logger)
         end
     end
-    return
+    return get_simulation_build_status(sim)
 end
 
 function _build!(sim::Simulation, serialize::Bool)
@@ -950,9 +955,12 @@ function execute!(sim::Simulation; kwargs...)
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
     open_func = get_simulation_store_open_func(sim)
-    # TODO: return file name for hash calculation instead of hard code
+    if get_simulation_build_status(sim) != BUILT && get_status(sum) != READY
+        error("Simulation status is invalid, try to rebuild the simulation")
+    end
     try
         open_func(get_store_dir(sim), "w") do store
+            # TODO: return file name for hash calculation instead of hard code
             Logging.with_logger(logger) do
                 _execute!(sim, store; kwargs...)
                 log_cache_hit_percentages(store)
@@ -964,14 +972,12 @@ function execute!(sim::Simulation; kwargs...)
         close(logger)
     end
     compute_file_hash(get_store_dir(sim), HDF_FILENAME)
-    return nothing
+    return get_status(sim)
 end
 
 function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
-    if get_simulation_build_status(sim) != BUILT
-        error("Simulation status is $(get_simulation_status(sim)), try to rebuild the simulation")
-    end
     @assert !isnothing(sim.internal)
+    set_simulation_status!(sim, RUNNING)
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
@@ -979,6 +985,7 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
     initialize_optimizer_stats_storage!(store, num_executions)
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
+        status = RUNNING
         for step in 1:steps
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
@@ -1022,12 +1029,15 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                             if status == SUCESSFUL_RUN
                                 flush(store)
                             elseif !get_allow_fails(settings) && (status != SUCESSFUL_RUN)
+                                set_simulation_status!(sim, FAILED_RUN)
                                 break
                             elseif get_allow_fails(settings) && (status != SUCESSFUL_RUN)
                                 continue
                             elseif status == RUNNING
+                                set_simulation_status!(sim, FAILED_RUN)
                                 error("Stage still in RUNNING status")
                             else
+                                set_simulation_status!(sim, FAILED_RUN)
                                 error("Invalid stage status")
                             end
 
@@ -1063,6 +1073,7 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
         flush(store)
     end
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
+    set_simulation_status!(sim, SUCESSFUL_RUN)
     return nothing
 end
 

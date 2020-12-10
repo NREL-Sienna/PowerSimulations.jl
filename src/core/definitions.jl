@@ -38,10 +38,10 @@ const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 end
 
 @enum RUN_STATUS begin
+    READY = -1
     SUCESSFUL_RUN = 0
-    FAILED_RUN = -1
     RUNNING = 1
-    NOT_RUNNING = 2
+    FAILED_RUN = 2
 end
 
 @enum SOS_STATUS_VARIABLE begin
@@ -74,6 +74,7 @@ const MiB = KiB * KiB
 const GiB = MiB * KiB
 
 # Interface limitations
+# TODO: Remove this and use Julia's default kwarg behavior
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
     :initial_time,
