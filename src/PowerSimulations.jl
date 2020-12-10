@@ -11,6 +11,7 @@ export OperationsProblem
 export OperationsProblemTemplate
 export InitialCondition
 export SimulationSequence
+export SimulationResults
 
 #Network Relevant Exports
 export StandardPTDFModel
