@@ -36,6 +36,13 @@ struct SimulationStoreStageParams
     system_uuid::Base.UUID
 end
 
+get_num_executions(params::SimulationStoreStageParams) = params.num_executions
+get_horizon(params::SimulationStoreStageParams) = params.horizon
+get_interval(params::SimulationStoreStageParams) = params.interval
+get_resolution(params::SimulationStoreStageParams) = params.resolution
+get_base_power(params::SimulationStoreStageParams) = params.base_power
+get_system_uuid(params::SimulationStoreStageParams) = params.system_uuid
+
 struct SimulationStoreParams
     initial_time::Dates.DateTime
     step_resolution::Dates.Period
@@ -62,4 +69,5 @@ function SimulationStoreParams()
     )
 end
 
+get_initial_time(store_params::SimulationStoreParams) = store_params.initial_time
 get_stages(store_params::SimulationStoreParams) = store_params.stages

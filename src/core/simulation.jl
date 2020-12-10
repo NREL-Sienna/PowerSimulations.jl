@@ -277,6 +277,7 @@ get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
 get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
+get_results_dir(sim::Simulation) = sim.internal.results_dir
 
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
