@@ -403,7 +403,7 @@ end
 function _get_simulation_initial_times!(sim::Simulation)
     k = keys(get_sequence(sim).order)
     k_size = length(k)
-    @assert k_size == maximum(k)
+    @assert_op k_size == maximum(k)
 
     stage_initial_times = Dict{Int, Vector{Dates.DateTime}}()
     time_range = Vector{Dates.DateTime}(undef, 2)
@@ -474,7 +474,7 @@ function _check_steps(
             1,
             diff(get_sequence(sim).execution_order),
         ) .== 1]
-        @assert length(findall(x -> x == stage_number, get_sequence(sim).execution_order)) /
+        @assert_op length(findall(x -> x == stage_number, get_sequence(sim).execution_order)) /
                 length(findall(x -> x == stage_number, transitions)) == execution_counts
         forecast_count = length(stage_initial_times[stage_number])
         if get_steps(sim) * execution_counts > forecast_count
