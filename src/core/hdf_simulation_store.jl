@@ -31,9 +31,9 @@ mutable struct StageDatasets
     variables::Dict{Symbol, Dataset}
 end
 
-get_duals(stage_data_set::StageDatasets) = stage_data_set.duals
-get_parameters(stage_data_set::StageDatasets) = stage_data_set.parameters
-get_variables(stage_data_set::StageDatasets) = stage_data_set.variables
+get_duals(stage_dataset::StageDatasets) = stage_dataset.duals
+get_parameters(stage_dataset::StageDatasets) = stage_dataset.parameters
+get_variables(stage_dataset::StageDatasets) = stage_dataset.variables
 
 function StageDatasets()
     return StageDatasets(
