@@ -374,6 +374,7 @@ function check_file_integrity(path::String)
     matched = true
     for file_info in read_file_hashes(path)
         filename = file_info["filename"]
+        @info "checking integrity of $filename"
         expected_hash = file_info["hash"]
         actual_hash = compute_sha256(filename)
         if expected_hash != actual_hash
