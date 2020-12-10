@@ -28,7 +28,7 @@ set_min_flush_size!(cache::ResultCache, x) = cache.min_flush_size = x
 
 function add_param_cache!(cache::ResultCache, key, flush_rule)
     cache.data[key] = ParamResultCache(key, flush_rule)
-    @info "Added cache container for" key flush_rule
+    @debug "Added cache container for" key flush_rule
 end
 
 """
