@@ -1101,7 +1101,6 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         variables = get_variables(psi_container)
         num_rows = num_executions * get_steps(sim)
 
-        # TODO DT: not sure this is correct
         interval = intervals[stage_name][1]
         resolution = get_resolution(stage)
         system = get_system(stage)
