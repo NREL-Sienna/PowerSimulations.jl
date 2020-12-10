@@ -398,7 +398,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["resolution_ms"])),
             HDF5.read(HDF5.attributes(stage_group)["base_power"]),
-            Base.UUID(HDF5.read(HDF5.attributes(stage_group)["system_uuid"]))
+            Base.UUID(HDF5.read(HDF5.attributes(stage_group)["system_uuid"])),
         )
         store.datasets[stage_name] = StageDatasets()
         for type in CONTAINER_TYPES
@@ -437,7 +437,8 @@ function _serialize_attributes(store::HdfSimulationStore, stages_group, stage_re
         HDF5.attributes(stage_group)["interval_ms"] =
             Dates.Millisecond(params.stages[stage].interval).value
         HDF5.attributes(stage_group)["base_power"] = params.stages[stage].base_power
-        HDF5.attributes(stage_group)["system_uuid"] = string(params.stages[stage].system_uuid)
+        HDF5.attributes(stage_group)["system_uuid"] =
+            string(params.stages[stage].system_uuid)
     end
 end
 

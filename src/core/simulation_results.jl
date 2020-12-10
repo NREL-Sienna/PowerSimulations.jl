@@ -17,7 +17,7 @@ end
 
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
-    alien_files = [f for f in folder_files  if f ∉ FILE_STRUCT]
+    alien_files = [f for f in folder_files if f ∉ FILE_STRUCT]
     if isempty(alien_files)
         return true
     end
@@ -54,7 +54,6 @@ function results_pre_process(simulation_store_path::AbstractString, stage_name::
     return stage_params
 end
 
-
 function SimulationResults(
     path::String,
     stage_name::String;
@@ -77,7 +76,11 @@ function SimulationResults(
     stage_params = results_pre_process(simulation_store_path, stage_name)
 
     if load_system
-        sys = PSY.System(joinpath(execution_path, "simulation_files", "system-$(stage_params["system_uuid"]).json"))
+        sys = PSY.System(joinpath(
+            execution_path,
+            "simulation_files",
+            "system-$(stage_params["system_uuid"]).json",
+        ))
     else
         sys = nothing
     end
@@ -86,18 +89,19 @@ function SimulationResults(
         results_output_path = joinpath(execution_path, "results")
     end
 
-    return SimulationResults(stage_name,
-                             stage_params["base_power"],
-                             execution_path,
-                             results_output_path,
-                             sys,
-                             collect(stage_params["available_variables"]),
-                             Dict{Symbol, DataFrames.DataFrame}(),
-                             collect(stage_params["available_duals"]),
-                             Dict{Symbol, Any}(),
-                             collect(stage_params["available_duals"]),
-                             Dict{Symbol, DataFrames.DataFrame}()
-                             )
+    return SimulationResults(
+        stage_name,
+        stage_params["base_power"],
+        execution_path,
+        results_output_path,
+        sys,
+        collect(stage_params["available_variables"]),
+        Dict{Symbol, DataFrames.DataFrame}(),
+        collect(stage_params["available_duals"]),
+        Dict{Symbol, Any}(),
+        collect(stage_params["available_duals"]),
+        Dict{Symbol, DataFrames.DataFrame}(),
+    )
 end
 
 function SimulationResults(sim::Simulation, stage_name::String)
@@ -105,18 +109,19 @@ function SimulationResults(sim::Simulation, stage_name::String)
     check_file_integrity(simulation_store_path)
     stage_params = results_pre_process(simulation_store_path, stage_name)
     sys = get_system(get_stage(sim, stage_name))
-    return SimulationResults(stage_name,
-                            PSY.get_base_power(sys),
-                            get_simulation_dir(sim),
-                            get_results_dir(sim),
-                            sys,
-                            collect(stage_params["available_variables"]),
-                            Dict{Symbol, DataFrames.DataFrame}(),
-                            collect(stage_params["available_duals"]),
-                            Dict{Symbol, Any}(),
-                            collect(stage_params["available_duals"]),
-                            Dict{Symbol, DataFrames.DataFrame}()
-                            )
+    return SimulationResults(
+        stage_name,
+        PSY.get_base_power(sys),
+        get_simulation_dir(sim),
+        get_results_dir(sim),
+        sys,
+        collect(stage_params["available_variables"]),
+        Dict{Symbol, DataFrames.DataFrame}(),
+        collect(stage_params["available_duals"]),
+        Dict{Symbol, Any}(),
+        collect(stage_params["available_duals"]),
+        Dict{Symbol, DataFrames.DataFrame}(),
+    )
 end
 
 get_model_base_power(result::SimulationResults) = result.base_power

@@ -280,7 +280,8 @@ get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 
 set_simulation_status!(sim::Simulation, status::RUN_STATUS) = sim.internal.status = status
-set_simulation_build_status!(sim::Simulation, status::BUILD_STATUS) = sim.internal.build_status = status
+set_simulation_build_status!(sim::Simulation, status::BUILD_STATUS) =
+    sim.internal.build_status = status
 
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
@@ -586,7 +587,7 @@ function build!(
                 set_simulation_status!(sim, READY)
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
-        # TODO: catch errors and remove created folder if the build failed
+            # TODO: catch errors and remove created folder if the build failed
         finally
             unregister_recorders!(sim.internal)
             close(logger)
@@ -1106,7 +1107,14 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         system = get_system(stage)
         base_power = PSY.get_base_power(system)
         sys_uuid = IS.get_uuid(system)
-        stage_params = SimulationStoreStageParams(num_executions, horizon, interval, resolution, base_power, sys_uuid)
+        stage_params = SimulationStoreStageParams(
+            num_executions,
+            horizon,
+            interval,
+            resolution,
+            base_power,
+            sys_uuid,
+        )
         reqs = SimulationStoreStageRequirements()
 
         # TODO DT: configuration of keep_in_cache and priority are not correct
