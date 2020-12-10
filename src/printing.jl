@@ -70,6 +70,8 @@ function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
     println(io, "========\n")
     println(io, "Variables")
     println(io, "=========\n")
+    #TODO JD: temporarily disabled
+    #=
     times = IS.get_timestamp(results)
     variables = IS.get_variables(results)
     if (length(keys(variables)) > 5)
@@ -125,6 +127,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
     for (k, v) in results.total_cost
         println(io, "Total Cost: $(k) = $(v)")
     end
+    =#
 end
 function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     println(io, "<h1>Results</h1>")
