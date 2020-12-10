@@ -60,7 +60,7 @@ function log_cache_hit_percentages(cache::ResultCache)
     for key in sort!(collect(keys(cache.data)))
         param_cache = cache.data[key]
         cache_hit_pecentage = get_cache_hit_percentage(param_cache)
-        @info "Cache stats" key cache_hit_pecentage
+        @debug "Cache stats" key cache_hit_pecentage
     end
 end
 
