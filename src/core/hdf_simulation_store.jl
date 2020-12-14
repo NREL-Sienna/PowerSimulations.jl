@@ -253,6 +253,7 @@ function read_result(
     name,
     timestamp::Dates.DateTime,
 )
+    key = make_cache_key(stage_name, type, name)
     if is_cached!(store.cache, key, timestamp)
         data = read_result(store.cache, key, timestamp)
     else
