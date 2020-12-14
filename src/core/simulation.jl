@@ -473,7 +473,7 @@ function _check_steps(
         execution_counts = get_executions(stage)
         transitions = execution_order[vcat(1, diff(execution_order)) .== 1]
         # Checks the consistency between two methods of calculating the number of executions
-        total_stage_executions = length(findall(x -> x == stage_number, execution_order, ))
+        total_stage_executions = length(findall(x -> x == stage_number, execution_order))
         total_stage_transitions = length(findall(x -> x == stage_number, transitions))
         @assert_op total_stage_executions / total_stage_transitions == execution_counts
         forecast_count = length(stage_initial_times[stage_number])
