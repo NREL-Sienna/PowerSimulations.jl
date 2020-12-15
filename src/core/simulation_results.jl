@@ -65,6 +65,7 @@ end
 # - Handle PER-UNIT conversion of variables according to type
 # - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
 
+""" Holds the results of the simulation for plotting or exporting"""
 function SimulationResults(
     path::String,
     stage_name::String;
@@ -258,7 +259,14 @@ function _add_results!(
     return results_dict
 end
 
-function get_variable_values!(
+"""
+    Returns the values for the requested variable names. It keeps requests when performing multiple retrievals. Accepts a vector of names for the return of the values
+
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+"""
+function get_variables_values!(
     res::SimulationResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -279,7 +287,15 @@ function get_variable_values!(
     return get_variables(res)
 end
 
-function get_dual_values!(
+"""
+    Returns the values for the requested dual names. It must match the duals requested in the simulation stage definition.
+    It keeps requests when performing multiple retrievals. Accepts a vector of names for the return of the values
+
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+"""
+function get_duals_values!(
     res::SimulationResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -295,7 +311,14 @@ function get_dual_values!(
     return get_duals(res)
 end
 
-function get_parameter_values!(
+"""
+    Returns the values for the parameters used in the simulation. It keeps requests when performing multiple retrievals. Accepts a vector of names for the return of the values
+
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+"""
+function get_parameters_values!(
     res::SimulationResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -316,16 +339,35 @@ function get_parameter_values!(
     return get_parameters(res)
 end
 
+"""
+    Returns the values for the requested variable name. It keeps requests when performing multiple retrievals. Accepts a variable name to return the result.
+
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+"""
 function get_variable_values!(res::SimulationResults, name::Symbol; kwargs...)
-    return get_variable_values!(res, [name]; kwargs...)[name]
+    return get_variables_values!(res, [name]; kwargs...)[name]
 end
 
+"""
+    Returns the values for the requested dual name. It keeps requests when performing multiple retrievals. Accepts a dual name to return the result.
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+"""
 function get_dual_values!(res::SimulationResults, name::Symbol; kwargs...)
-    return get_dual_values!(res, [name]; kwargs...)[name]
+    return get_duals_values!(res, [name]; kwargs...)[name]
 end
 
+"""
+    Returns the values for the requested parameter name. It keeps requests when performing multiple retrievals. Accepts a parameter name to return the result.
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+"""
 function get_parameter_values!(res::SimulationResults, name::Symbol; kwargs...)
-    return get_parameter_values!(res, [name]; kwargs...)[name]
+    return get_parameters_values!(res, [name]; kwargs...)[name]
 end
 
 #= NEEDS RE-IMPLEMENTATION
