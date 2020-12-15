@@ -155,7 +155,6 @@ get_duals(result::SimulationResults) = result.dual_values
 IS.get_parameters(result::SimulationResults) = result.parameter_values
 get_duals(result::SimulationResults) = result.dual_values
 
-
 #IS.get_total_cost(result::SimulationResults) = result.total_cost
 #IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
 
@@ -195,14 +194,15 @@ end
 function _process_timestamps!(
     res::SimulationResults,
     initial_time::Dates.DateTime,
-    count::Union{Int, Nothing}
+    count::Union{Int, Nothing},
 )
     results_time_stamp = res.results_timestamps
     existing_timestamps = get_existing_timestamps(res)
     if count === nothing
         requested_range = [v for v in existing_timestamps if v >= initial_time]
     else
-        requested_range = collect(range(initial_time, length = count, step = get_interval(res)))
+        requested_range =
+            collect(range(initial_time, length = count, step = get_interval(res)))
     end
     invalid_timestamps = [v for v in requested_range if v ∉ existing_timestamps]
     if !isempty(invalid_timestamps)
@@ -269,7 +269,13 @@ function get_variable_values!(
     end
     _validate_names(res, get_existing_variables, names)
     additional_timestamps = _process_timestamps!(res, initial_time, count)
-    res.variable_values = _add_results!(res, get_variables, CONTAINER_TYPE_VARIABLES, names, additional_timestamps)
+    res.variable_values = _add_results!(
+        res,
+        get_variables,
+        CONTAINER_TYPE_VARIABLES,
+        names,
+        additional_timestamps,
+    )
     return get_variables(res)
 end
 
@@ -284,8 +290,8 @@ function get_dual_values!(
     end
     _validate_names(res, get_existing_duals, names)
     additional_timestamps = _process_timestamps!(res, initial_time, count)
-    res.dual_values = _add_results!(res, get_duals, CONTAINER_TYPE_DUALS, names,
-    additional_timestamps)
+    res.dual_values =
+        _add_results!(res, get_duals, CONTAINER_TYPE_DUALS, names, additional_timestamps)
     return get_duals(res)
 end
 
@@ -300,7 +306,13 @@ function get_parameter_values!(
     end
     _validate_names(res, get_existing_parameters, names)
     additional_timestamps = _process_timestamps!(res, initial_time, count)
-    res.parameter_values = _add_results!(res, IS.get_parameters, CONTAINER_TYPE_PARAMETERS, names, additional_timestamps)
+    res.parameter_values = _add_results!(
+        res,
+        IS.get_parameters,
+        CONTAINER_TYPE_PARAMETERS,
+        names,
+        additional_timestamps,
+    )
     return get_parameters(res)
 end
 
