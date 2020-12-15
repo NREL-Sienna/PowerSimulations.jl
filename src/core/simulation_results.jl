@@ -1,7 +1,7 @@
 const FILE_STRUCT =
     ["data_store", "logs", "models_json", "recorder", "results", "simulation_files"]
 
-struct SimulationResults <: PSIResults
+mutable struct SimulationResults <: PSIResults
     stage::String
     base_power::Float64
     execution_path::AbstractString
@@ -10,11 +10,11 @@ struct SimulationResults <: PSIResults
     results_timestamps::Vector{Dates.DateTime}
     system::Union{Nothing, PSY.System}
     existing_variables::Array{Symbol}
-    variable_values::Dict{Symbol, Dict{Dates.DateTime, DataFrames.DataFrame}}
+    variable_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
     existing_duals::Array{Symbol}
-    dual_values::Dict{Symbol, Dict{Dates.DateTime, DataFrames.DataFrame}}
+    dual_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
     existing_parameters::Array{Symbol}
-    parameter_values::Dict{Symbol, Dict{Dates.DateTime, DataFrames.DataFrame}}
+    parameter_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
 end
 
 function check_folder_integrity(folder::String)
@@ -29,7 +29,7 @@ function check_folder_integrity(folder::String)
     return false
 end
 
-function results_pre_process(store::HdfSimulationStore, stage_name::Symbol)
+function _results_pre_process(store::HdfSimulationStore, stage_name::Symbol)
     stage_results_params = Dict()
     store_params = get_params(store)
     sim_initial_time = get_initial_time(store_params)
@@ -51,11 +51,11 @@ function results_pre_process(store::HdfSimulationStore, stage_name::Symbol)
     return stage_results_params
 end
 
-function results_pre_process(simulation_store_path::AbstractString, stage_name::String)
+function _results_pre_process(simulation_store_path::AbstractString, stage_name::String)
     stage_name = Symbol(stage_name)
     stage_params = nothing
     h5_store_open(simulation_store_path, "r") do store
-        stage_params = results_pre_process(store, stage_name)
+        stage_params = _results_pre_process(store, stage_name)
     end
     return stage_params
 end
@@ -84,7 +84,7 @@ function SimulationResults(
     end
     simulation_store_path = joinpath(execution_path, "data_store")
     check_file_integrity(simulation_store_path)
-    stage_params = results_pre_process(simulation_store_path, stage_name)
+    stage_params = _results_pre_process(simulation_store_path, stage_name)
 
     if load_system
         sys = PSY.System(joinpath(
@@ -109,18 +109,18 @@ function SimulationResults(
         Vector{Dates.DateTime}(),
         sys,
         collect(stage_params["existing_variables"]),
-        Dict{Symbol, DataFrames.DataFrame}(),
+        Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}(),
         collect(stage_params["existing_duals"]),
-        Dict{Symbol, Any}(),
-        collect(stage_params["existing_duals"]),
-        Dict{Symbol, DataFrames.DataFrame}(),
+        Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}(),
+        collect(stage_params["existing_params"]),
+        Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}(),
     )
 end
 
 function SimulationResults(sim::Simulation, stage_name::String)
     simulation_store_path = get_store_dir(sim)
     check_file_integrity(simulation_store_path)
-    stage_params = results_pre_process(simulation_store_path, stage_name)
+    stage_params = _results_pre_process(simulation_store_path, stage_name)
     sys = get_system(get_stage(sim, stage_name))
     return SimulationResults(
         stage_name,
@@ -131,16 +131,15 @@ function SimulationResults(sim::Simulation, stage_name::String)
         Vector{Dates.DateTime}(),
         sys,
         collect(stage_params["existing_variables"]),
-        Dict{Symbol, DataFrames.DataFrame}(),
+        Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}(),
         collect(stage_params["existing_duals"]),
-        Dict{Symbol, Any}(),
-        collect(stage_params["existing_duals"]),
-        Dict{Symbol, DataFrames.DataFrame}(),
+        Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}(),
+        collect(stage_params["existing_params"]),
+        Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}(),
     )
 end
 
 get_stage_name(res::SimulationResults) = res.stage
-get_interval(res::SimulationResults) = res.existing_timestamps.step
 get_system(res::SimulationResults) = res.system
 get_execution_path(res::SimulationResults) = res.execution_path
 get_existing_variables(res::SimulationResults) = res.existing_variables
@@ -148,10 +147,14 @@ get_existing_duals(res::SimulationResults) = res.existing_duals
 get_existing_parameters(res::SimulationResults) = res.existing_parameters
 get_existing_timestamps(res::SimulationResults) = res.existing_timestamps
 get_model_base_power(res::SimulationResults) = res.base_power
+IS.get_timestamp(result::SimulationResults) = result.results_timestamps
+
+get_interval(res::SimulationResults) = res.existing_timestamps.step
 IS.get_variables(result::SimulationResults) = result.variable_values
 get_duals(result::SimulationResults) = result.dual_values
 IS.get_parameters(result::SimulationResults) = result.parameter_values
-IS.get_timestamp(result::SimulationResults) = result.results_timestamps
+get_duals(result::SimulationResults) = result.dual_values
+
 
 #IS.get_total_cost(result::SimulationResults) = result.total_cost
 #IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
@@ -168,10 +171,10 @@ function _get_store_value(
     stage_interval = get_interval(res)
     h5_store_open(simulation_store_path, "r") do store
         for name in names
-            _results = Dict{Dates.DateTime, DataFrames.DataFrame}()
+            _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
             for ts in timestamps
                 out = read_result(DataFrames.DataFrame, store, stage_name, field, name, ts)
-                _results[time_stamp] = out
+                _results[ts] = out
             end
             results[name] = _results
         end
@@ -192,101 +195,125 @@ end
 function _process_timestamps!(
     res::SimulationResults,
     initial_time::Dates.DateTime,
-    count::Int,
+    count::Union{Int, Nothing}
 )
     results_time_stamp = res.results_timestamps
-    requested_range = collect(range(initial_time, length = count, step = get_interval(res)))
-    additional_timestamps = setdiff!(requested_range, results_time_stamp)
-    invalid_timestamps = [v for v in additional_timestamps if v ∉ get_existing_timestamps(res)]
+    existing_timestamps = get_existing_timestamps(res)
+    if count === nothing
+        requested_range = [v for v in existing_timestamps if v >= initial_time]
+    else
+        requested_range = collect(range(initial_time, length = count, step = get_interval(res)))
+    end
+    invalid_timestamps = [v for v in requested_range if v ∉ existing_timestamps]
     if !isempty(invalid_timestamps)
         throw(IS.InvalidValue(
             "Timetamps $(invalid_timestamps) not stored",
             sort!(get_existing_timestamps(res)),
         ))
     else
-        union!(res.results_timestamps, additional_timestamps)
+        time_stamps_union = union(res.results_timestamps, requested_range)
+        if all(diff(time_stamps_union) .== get_interval(res))
+            additional_timestamps = setdiff!(requested_range, results_time_stamp)
+            res.results_timestamps = time_stamps_union
+        else
+            @info "requesting new time range"
+            additional_timestamps = requested_range = res.results_timestamps
+        end
     end
+    @debug additional_timestamps
     return additional_timestamps
 end
 
 function _add_results!(
-    results_dict::Dict,
+    res::SimulationResults,
+    get_results::Function,
     field::Symbol,
     names::Vector{Symbol},
     additional_timestamps,
 )
-
+    results_dict = get_results(res)
     current_names = keys(results_dict)
-    additional_names = setdiff!(names, current_names)
+    additional_names = setdiff(names, current_names)
     current_timestamps = res.results_timestamps
 
     if !isempty(additional_timestamps) && !isempty(additional_names)
+        @info "Requested new names and times"
         #TODO: Make an efficient the expansion of the results for this case
-        return _get_store_value(res, field, names, current_timestamps)
+        results_dict = _get_store_value(res, field, names, current_timestamps)
     elseif isempty(additional_timestamps) && !isempty(additional_names)
+        @info "Requested new names $(additional_names)"
         additional_values =
             _get_store_value(res, field, additional_names, current_timestamps)
-        merge!(dict, additional_values)
-        return results_dict
+        merge!(results_dict, additional_values)
     elseif !isempty(additional_timestamps) && isempty(additional_names)
+        @info "Requested new times"
         additional_values = _get_store_value(res, field, names, additional_timestamps)
         for (var_name, df_dict) in additional_values
             merge!(results_dict[var_name], df_dict)
         end
-        return results_dict
     elseif isempty(additional_timestamps) && isempty(additional_names)
     else
         error()
     end
+    return results_dict
 end
 
 function get_variable_values!(
     res::SimulationResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Int = 1,
+    count::Union{Int, Nothing} = nothing,
 )
-    initial_time = initial_time === nothing ? first(get_existing_timestamps(res)) : initial_time
+    if initial_time === nothing
+        initial_time = first(get_existing_timestamps(res))
+    end
     _validate_names(res, get_existing_variables, names)
     additional_timestamps = _process_timestamps!(res, initial_time, count)
-    _add_results!(res.variable_values, CONTAINER_TYPE_VARIABLES, names, additional_timestamps)
-    return res.variable_values
+    res.variable_values = _add_results!(res, get_variables, CONTAINER_TYPE_VARIABLES, names, additional_timestamps)
+    return get_variables(res)
 end
 
 function get_dual_values!(
     res::SimulationResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Int = 1,
+    count::Union{Int, Nothing} = nothing,
 )
-    initial_time = initial_time === nothing ? first(get_existing_timestamps) : initial_time
-    _validate_names(res, get_existing_variables, names)
+    if initial_time === nothing
+        initial_time = first(get_existing_timestamps(res))
+    end
+    _validate_names(res, get_existing_duals, names)
     additional_timestamps = _process_timestamps!(res, initial_time, count)
-    _add_results!(res.dual_values, CONTAINER_TYPE_DUALS, names, additional_timestamps)
+    res.dual_values = _add_results!(res, get_duals, CONTAINER_TYPE_DUALS, names,
+    additional_timestamps)
+    return get_duals(res)
 end
 
 function get_parameter_values!(
     res::SimulationResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Int = 1,
+    count::Union{Int, Nothing} = nothing,
 )
-    initial_time = initial_time === nothing ? first(get_existing_timestamps) : initial_time
-    _validate_names(res, get_existing_variables, names)
+    if initial_time === nothing
+        initial_time = first(get_existing_timestamps(res))
+    end
+    _validate_names(res, get_existing_parameters, names)
     additional_timestamps = _process_timestamps!(res, initial_time, count)
-    _add_results!(res.paramter_values, CONTAINER_TYPE_PARAMETERS, names, additional_timestamps)
+    res.parameter_values = _add_results!(res, IS.get_parameters, CONTAINER_TYPE_PARAMETERS, names, additional_timestamps)
+    return get_parameters(res)
 end
 
 function get_variable_values!(res::SimulationResults, name::Symbol; kwargs...)
-    return get_variable_values!(res, [name]; kwargs...)
+    return get_variable_values!(res, [name]; kwargs...)[name]
 end
 
 function get_dual_values!(res::SimulationResults, name::Symbol; kwargs...)
-    return get_dual_values!(res, [name]; kwargs...)
+    return get_dual_values!(res, [name]; kwargs...)[name]
 end
 
 function get_parameter_values!(res::SimulationResults, name::Symbol; kwargs...)
-    return get_parameter_values!(res, [name]; kwargs...)
+    return get_parameter_values!(res, [name]; kwargs...)[name]
 end
 
 #= NEEDS RE-IMPLEMENTATION
