@@ -124,7 +124,6 @@ export set_model!
 ## Sim Model Exports
 export build!
 export execute!
-export make_references
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
@@ -147,9 +146,7 @@ export get_dual_values!
 
 ## Utils Exports
 export write_results
-export load_results
 export load_operation_results
-export load_simulation_results
 export write_to_CSV
 export get_all_constraint_index
 export get_all_var_index

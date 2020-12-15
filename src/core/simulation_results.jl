@@ -154,7 +154,6 @@ get_interval(res::SimulationResults) = res.existing_timestamps.step
 IS.get_variables(result::SimulationResults) = result.variable_values
 get_duals(result::SimulationResults) = result.dual_values
 IS.get_parameters(result::SimulationResults) = result.parameter_values
-get_duals(result::SimulationResults) = result.dual_values
 
 #IS.get_total_cost(result::SimulationResults) = result.total_cost
 #IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log

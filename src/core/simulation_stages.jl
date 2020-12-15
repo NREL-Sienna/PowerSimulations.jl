@@ -91,6 +91,7 @@ function Stage{M}(
         system_to_file = system_to_file,
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
+        PTDF = PTDF,
     )
     return Stage{M}(template, sys, settings, jump_model)
 end

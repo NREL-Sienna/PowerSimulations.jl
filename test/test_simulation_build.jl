@@ -25,7 +25,7 @@ function create_sequence()
     )
 end
 
-function test_sequence_build(file_path::String)
+function test_simulation_build(file_path::String)
     c_sys5_uc = build_system("c_sys5_uc")
     c_sys5_ed = build_system("c_sys5_ed")
 
@@ -181,7 +181,7 @@ function test_sequence_build(file_path::String)
         )
         sim.internal = PSI.SimulationInternal(
             sim.steps,
-            keys(get_sequence(sim).order),
+            keys(PSI.get_sequence(sim).order),
             mktempdir(),
             PSI.get_name(sim),
         )
@@ -398,11 +398,11 @@ function test_sequence_build(file_path::String)
     end
 end
 
-@testset "Test sequence build" begin
-    path = joinpath(pwd(), "test_sequence_build")
+@testset "Test simulation build" begin
+    path = joinpath(pwd(), "test_simulation_build")
     !isdir(path) && mkdir(path)
     try
-        test_sequence_build(path)
+        test_simulation_build(path)
     finally
         @info("removing test files")
         rm(path, force = true, recursive = true)
