@@ -513,10 +513,10 @@ function _get_indices(store::HdfSimulationStore, stage, timestamp)
     stage_params = store.params.stages[stage]
     initial_time = store.params.initial_time + (step - 1) * store.params.step_resolution
     time_diff = timestamp - initial_time
-    if time_diff % stage_params.resolution != Dates.Millisecond(0)
-        throw(ArgumentError("timestamp = $timestamp is not on a stage resolution"))
+    if time_diff % stage_params.interval != Dates.Millisecond(0)
+        throw(ArgumentError("timestamp = $timestamp is not a valid stage timestamp"))
     end
-    execution_index = Int(time_diff / stage_params.resolution) + 1
+    execution_index = Int(time_diff / stage_params.interval) + 1
     return step, execution_index
 end
 
