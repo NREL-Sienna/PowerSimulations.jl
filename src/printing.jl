@@ -1,9 +1,3 @@
-#=
-function Base.show(io::IO, op_problem::OperationsProblem)
-    println(io, "Operation Model")
-end
-=#
-
 function _organize_model(
     val::Dict{Symbol, T},
     field::Symbol,
@@ -70,64 +64,22 @@ function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
     println(io, "========\n")
     println(io, "Variables")
     println(io, "=========\n")
-    #TODO JD: temporarily disabled
-    #=
-    times = IS.get_timestamp(results)
-    variables = IS.get_variables(results)
-    if (length(keys(variables)) > 5)
-        for (k, v) in variables
-            println(io, "$k: $(size(v))")
-        end
-        println(io, "\n")
-    else
-        for (k, v) in IS.get_variables(results)
-            if size(times, 1) == size(v, 1)
-                var = hcat(times, v)
-            else
-                var = v
-            end
-            (l, w) = size(var)
-            if w < 6
-                println(io, "$(k)")
-                println(io, "$("-" ^ length("$k"))\n")
-                println(io, "$(var)\n")
-            else
-                println(io, "$(k)  size ($l, $w)\n")
-            end
-        end
-    end
-    parameters = IS.get_parameters(results)
-    if !isempty(parameters)
-        println(io, "Parameters")
-        println(io, "==========\n")
-        for (p, v) in parameters
-            if size(times, 1) == size(v, 1)
-                var = hcat(times, v)
-            else
-                var = v
-            end
-            l, w = size(var)
-            if w < 6
-                println(io, "$(p)")
-                println(io, "-"^length("$p"))
-                println(io, "$(var)\n")
-            else
-                println(io, "$(p)  size ($l, $w)\n")
-            end
-        end
-    end
-    println(io, "Optimizer Log")
-    println(io, "-------------")
-    for (k, v) in results.optimizer_log
-        if !isnothing(v)
-            println(io, "        $(k) = $(v)")
-        end
+    for v in get_existing_variables(results)
+        println(io, "$(v)")
     end
     println(io, "\n")
-    for (k, v) in results.total_cost
-        println(io, "Total Cost: $(k) = $(v)")
+    parameters = get_existing_parameters(results)
+    duals = get_existing_duals(results)
+    for val in [("Parameters", parameters), ("Duals", duals)]
+        if !isempty(val[2])
+            println(io, "$(val[1])")
+            println(io, "==========\n")
+            for v in val[2]
+                println(io, "$(v)")
+            end
+            println(io, "\n")
+        end
     end
-    =#
 end
 function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     println(io, "<h1>Results</h1>")
