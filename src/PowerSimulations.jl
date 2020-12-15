@@ -135,7 +135,15 @@ export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
 ## Results interfaces
-export get_duals
+export get_stage_name
+export get_system
+export get_existing_duals
+export get_existing_variables
+export get_existing_parameters
+export get_existing_timestamps
+export get_variable_values!
+export get_parameter_values!
+export get_dual_values!
 
 ## Utils Exports
 export write_results
@@ -147,8 +155,6 @@ export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
-export get_result_variable
-export get_variable_names
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
@@ -212,7 +218,7 @@ export INFLOW_RANGE
 
 #################################################################################
 # Imports
-import DataStructures: OrderedDict, Deque
+import DataStructures: OrderedDict, Deque, SortedDict
 import Logging
 import Serialization
 #Modeling Imports
