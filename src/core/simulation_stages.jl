@@ -249,7 +249,7 @@ function run_stage!(
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         return FAILED_RUN
     else
-        status = SUCESSFUL_RUN
+        status = SUCCESSFUL_RUN
     end
     write_model_results!(store, stage, start_time)
     stage.internal.execution_count += 1

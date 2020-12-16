@@ -39,7 +39,7 @@ end
 
 @enum RUN_STATUS begin
     READY = -1
-    SUCESSFUL_RUN = 0
+    SUCCESSFUL_RUN = 0
     RUNNING = 1
     FAILED_RUN = 2
 end

@@ -28,7 +28,7 @@ function test_simulation_single_ed(file_path::String)
         build_out = build!(sim_single)
         @test build_out == PSI.BUILT
         execute_out = execute!(sim_single)
-        @test execute_out == PSI.SUCESSFUL_RUN
+        @test execute_out == PSI.SUCCESSFUL_RUN
         stage_single = PSI.get_stage(sim_single, "ED")
         @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
               [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
@@ -94,7 +94,7 @@ function test_simulation_without_caches(file_path::String)
         build_out = build!(sim; recorders = [:simulation])
         @test build_out == PSI.BUILT
         execute_out = execute!(sim)
-        @test execute_out == PSI.SUCESSFUL_RUN
+        @test execute_out == PSI.SUCCESSFUL_RUN
         stage_names = keys(sim.stages)
 
         for name in stage_names
@@ -159,7 +159,7 @@ function test_simulation_with_cache(file_path::String)
         build_out = build!(sim_cache)
         @test build_out == PSI.BUILT
         execute_out = execute!(sim_cache)
-        @test execute_out == PSI.SUCESSFUL_RUN
+        @test execute_out == PSI.SUCCESSFUL_RUN
 
         var_names =
             axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard])[1]

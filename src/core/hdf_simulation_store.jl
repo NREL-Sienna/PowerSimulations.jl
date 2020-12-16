@@ -4,8 +4,8 @@ const HDF_OPTIMIZER_STATS_PATH = HDF_SIMULATION_ROOT_PATH * "/optimizer_stats"
 const HDF_OPTIMIZER_DATASET_PATH = HDF_OPTIMIZER_STATS_PATH * "/data"
 
 mutable struct Dataset
-    dataset::HDF5.HDF5Dataset
-    column_dataset::HDF5.HDF5Dataset
+    dataset::HDF5.Dataset
+    column_dataset::HDF5.Dataset
     write_index::Int
 end
 
