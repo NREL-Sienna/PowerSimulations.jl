@@ -6,102 +6,101 @@ end
 
 function test_simulation_single_ed(file_path::String)
     @testset "Single stage sequential tests" begin
-    c_sys5_uc = build_system("c_sys5_uc")
-    single_stage_definition =
-        Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
+        c_sys5_uc = build_system("c_sys5_uc")
+        single_stage_definition =
+            Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
 
-    single_sequence = SimulationSequence(
-        step_resolution = Hour(24),
-        order = Dict(1 => "ED"),
-        horizons = Dict("ED" => 24),
-        intervals = Dict("ED" => (Hour(24), Consecutive())),
-        ini_cond_chronology = IntraStageChronology(),
-    )
+        single_sequence = SimulationSequence(
+            step_resolution = Hour(24),
+            order = Dict(1 => "ED"),
+            horizons = Dict("ED" => 24),
+            intervals = Dict("ED" => (Hour(24), Consecutive())),
+            ini_cond_chronology = IntraStageChronology(),
+        )
 
-    sim_single = Simulation(
-        name = "consecutive",
-        steps = 2,
-        stages = single_stage_definition,
-        stages_sequence = single_sequence,
-        simulation_folder = file_path,
-    )
-    build_out = build!(sim_single)
-    @test build_out == PSI.BUILT
-    execute_out = execute!(sim_single)
-    @test execute_out == PSI.SUCESSFUL_RUN
-    stage_single = PSI.get_stage(sim_single, "ED")
-    @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
-        [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        sim_single = Simulation(
+            name = "consecutive",
+            steps = 2,
+            stages = single_stage_definition,
+            stages_sequence = single_sequence,
+            simulation_folder = file_path,
+        )
+        build_out = build!(sim_single)
+        @test build_out == PSI.BUILT
+        execute_out = execute!(sim_single)
+        @test execute_out == PSI.SUCESSFUL_RUN
+        stage_single = PSI.get_stage(sim_single, "ED")
+        @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
+              [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
     end
 end
 
 function test_simulation_without_caches(file_path::String)
     @testset "All stages executed - No Cache" begin
-
-    stage_info = Dict(
-        "UC" => Dict("optimizer" => GLPK_optimizer, "jump_model" => nothing),
-        "ED" => Dict("optimizer" => ipopt_optimizer),
-    )
-    # Tests of a Simulation without Caches
-    duals = [:CopperPlateBalance]
-    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
-    c_sys5_hy_ed = build_system("c_sys5_hy_ed")
-    stages_definition = Dict(
-        "UC" => Stage(
-            GenericOpProblem,
-            template_hydro_basic_uc,
-            c_sys5_hy_uc,
-            stage_info["UC"]["optimizer"];
-            constraint_duals = duals,
-        ),
-        "ED" => Stage(
-            GenericOpProblem,
-            template_hydro_ed,
-            c_sys5_hy_ed,
-            stage_info["ED"]["optimizer"];
-            constraint_duals = duals,
-        ),
-    )
-
-    sequence = SimulationSequence(
-        step_resolution = Hour(24),
-        order = Dict(1 => "UC", 2 => "ED"),
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
-        feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+        stage_info = Dict(
+            "UC" => Dict("optimizer" => GLPK_optimizer, "jump_model" => nothing),
+            "ED" => Dict("optimizer" => ipopt_optimizer),
+        )
+        # Tests of a Simulation without Caches
+        duals = [:CopperPlateBalance]
+        c_sys5_hy_uc = build_system("c_sys5_hy_uc")
+        c_sys5_hy_ed = build_system("c_sys5_hy_ed")
+        stages_definition = Dict(
+            "UC" => Stage(
+                GenericOpProblem,
+                template_hydro_basic_uc,
+                c_sys5_hy_uc,
+                stage_info["UC"]["optimizer"];
+                constraint_duals = duals,
             ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_stage = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
+            "ED" => Stage(
+                GenericOpProblem,
+                template_hydro_ed,
+                c_sys5_hy_ed,
+                stage_info["ED"]["optimizer"];
+                constraint_duals = duals,
             ),
-        ),
-        ini_cond_chronology = InterStageChronology(),
-    )
-    sim = Simulation(
-        name = "aggregation",
-        steps = 2,
-        stages = stages_definition,
-        stages_sequence = sequence,
-        simulation_folder = file_path,
-    )
+        )
 
-    build_out = build!(sim; recorders = [:simulation])
-    @test build_out == PSI.BUILT
-    execute_out = execute!(sim)
-    @test execute_out == PSI.SUCESSFUL_RUN
-    stage_names = keys(sim.stages)
+        sequence = SimulationSequence(
+            step_resolution = Hour(24),
+            order = Dict(1 => "UC", 2 => "ED"),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_source_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+                ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+                    variable_source_stage = PSI.ACTIVE_POWER,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+        sim = Simulation(
+            name = "aggregation",
+            steps = 2,
+            stages = stages_definition,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+        )
+
+        build_out = build!(sim; recorders = [:simulation])
+        @test build_out == PSI.BUILT
+        execute_out = execute!(sim)
+        @test execute_out == PSI.SUCESSFUL_RUN
+        stage_names = keys(sim.stages)
 
         for name in stage_names
             stage = PSI.get_stage(sim, name)
             @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in
-                    [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+                  [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
 end
@@ -202,7 +201,7 @@ end
     test_set = [
         test_simulation_single_ed,
         test_simulation_without_caches,
-        test_simulation_with_cache
+        test_simulation_with_cache,
     ]
     try
         for f in test_set
@@ -214,7 +213,7 @@ end
             end
         end
     finally
-       @info("removing test files")
-       rm(path, force = true, recursive = true)
+        @info("removing test files")
+        rm(path, force = true, recursive = true)
     end
 end
