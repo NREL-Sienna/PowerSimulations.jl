@@ -157,8 +157,7 @@ end
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(1),
             "base_power" => 100.0,
-            "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572")
-
+            "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
         :UC => Dict(
             "execution_count" => 1,
@@ -168,7 +167,7 @@ end
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(24),
             "base_power" => 100.0,
-            "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572")
+            "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
     )
     cache_rules = CacheFlushRules(max_size = 1 * MiB, min_flush_size = 4 * KiB)

@@ -9,7 +9,6 @@ struct OperationsProblemResults <: PSIResults
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
-
 get_existing_variables(result::OperationsProblemResults) = keys(get_variables(result))
 get_model_base_power(result::OperationsProblemResults) = result.base_power
 IS.get_variables(result::OperationsProblemResults) = result.variable_values
@@ -36,7 +35,6 @@ function _find_duals(variables::Array)
     end
     return duals
 end
-
 
 """
     results = load_operation_results(path)
