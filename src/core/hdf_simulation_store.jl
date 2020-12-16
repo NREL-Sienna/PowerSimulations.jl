@@ -47,7 +47,7 @@ end
 Stores simulation data in an HDF file.
 """
 mutable struct HdfSimulationStore <: SimulationStore
-    file::HDF5.HDF5File
+    file::HDF5.File
     params::SimulationStoreParams
     # The key order is the stage execution order.
     datasets::OrderedDict{Symbol, StageDatasets}

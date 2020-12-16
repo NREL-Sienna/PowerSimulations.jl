@@ -55,8 +55,6 @@ function test_simulation_results(file_path::String)
         @test execute_out == PSI.SUCCESSFUL_RUN
         results_uc = SimulationResults(sim, "ED")
         results_ed = SimulationResults(sim, "ED")
-
-
     end
 end
 
