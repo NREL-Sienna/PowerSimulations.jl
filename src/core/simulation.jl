@@ -1124,7 +1124,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
             add_rule!(
                 rules,
                 stage_sym,
-                CONTAINER_TYPE_DUALS,
+                STORE_CONTAINER_DUALS,
                 name,
                 false,
                 CachePrioritys.LOW,
@@ -1139,7 +1139,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
             add_rule!(
                 rules,
                 stage_sym,
-                CONTAINER_TYPE_PARAMETERS,
+                STORE_CONTAINER_PARAMETERS,
                 name,
                 false,
                 CachePrioritys.LOW,
@@ -1151,7 +1151,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
             add_rule!(
                 rules,
                 stage_sym,
-                CONTAINER_TYPE_VARIABLES,
+                STORE_CONTAINER_TYPE_VARIABLES,
                 name,
                 true,
                 CachePrioritys.HIGH,

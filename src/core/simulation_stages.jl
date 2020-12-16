@@ -281,7 +281,7 @@ function _write_model_dual_results!(store, psi_container, stage, timestamp)
         write_result!(
             store,
             stage_name,
-            CONTAINER_TYPE_DUALS,
+            STORE_CONTAINER_DUALS,
             name,
             timestamp,
             to_array(constraint),
@@ -309,7 +309,7 @@ function _write_model_parameter_results!(store, psi_container, stage, timestamp)
                 _jump_value(param_array[name, r_ix]) * (multiplier_array[name, r_ix])
         end
 
-        write_result!(store, stage_name, CONTAINER_TYPE_PARAMETERS, name, timestamp, data)
+        write_result!(store, stage_name, STORE_CONTAINER_PARAMETERS, name, timestamp, data)
     end
 end
 
@@ -319,7 +319,7 @@ function _write_model_variable_results!(store, psi_container, stage, timestamp)
         write_result!(
             store,
             stage_name,
-            CONTAINER_TYPE_VARIABLES,
+            STORE_CONTAINER_TYPE_VARIABLES,
             name,
             timestamp,
             to_array(variable),

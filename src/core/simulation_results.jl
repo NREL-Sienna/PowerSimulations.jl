@@ -279,7 +279,7 @@ function get_variables_values!(
     res.variable_values = _add_results!(
         res,
         get_variables,
-        CONTAINER_TYPE_VARIABLES,
+        STORE_CONTAINER_TYPE_VARIABLES,
         names,
         additional_timestamps,
     )
@@ -306,7 +306,7 @@ function get_duals_values!(
     _validate_names(res, get_existing_duals, names)
     additional_timestamps = _process_timestamps!(res, initial_time, count)
     res.dual_values =
-        _add_results!(res, get_duals, CONTAINER_TYPE_DUALS, names, additional_timestamps)
+        _add_results!(res, get_duals, STORE_CONTAINER_DUALS, names, additional_timestamps)
     return get_duals(res)
 end
 
@@ -331,7 +331,7 @@ function get_parameters_values!(
     res.parameter_values = _add_results!(
         res,
         IS.get_parameters,
-        CONTAINER_TYPE_PARAMETERS,
+        STORE_CONTAINER_PARAMETERS,
         names,
         additional_timestamps,
     )
