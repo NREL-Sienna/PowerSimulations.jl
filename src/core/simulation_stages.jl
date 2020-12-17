@@ -319,7 +319,7 @@ function _write_model_variable_results!(store, psi_container, stage, timestamp)
         write_result!(
             store,
             stage_name,
-            STORE_CONTAINER_TYPE_VARIABLES,
+            STORE_CONTAINER_VARIABLES,
             name,
             timestamp,
             to_array(variable),

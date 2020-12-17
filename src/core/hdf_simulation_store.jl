@@ -193,7 +193,7 @@ function initialize_stage_storage!(
     for stage in keys(store.params.stages)
         store.datasets[stage] = StageDatasets()
         stage_group = _get_group_or_create(stages_group, string(stage))
-        for type in STORE_CONTAINER_TYPES
+        for type in STORE_CONTAINERS
             group = _get_group_or_create(stage_group, string(type))
             for (name, reqs) in getfield(stage_reqs[stage], type)
                 dataset = _create_dataset(group, string(name), reqs)
@@ -273,7 +273,7 @@ function read_result(
     simulation_step::Int,
     execution_index::Int,
 )
-    @assert key.type in STORE_CONTAINER_TYPES "$(key.type)"
+    @assert key.type in STORE_CONTAINERS "$(key.type)"
 
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
 
@@ -402,7 +402,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             Base.UUID(HDF5.read(HDF5.attributes(stage_group)["system_uuid"])),
         )
         store.datasets[stage_name] = StageDatasets()
-        for type in STORE_CONTAINER_TYPES
+        for type in STORE_CONTAINERS
             group = stage_group[string(type)]
             for name in names(group)
                 if !endswith(name, "columns")
