@@ -1,18 +1,7 @@
-const FILE_STRUCT =
+const KNOWN_PATHS =
     ["data_store", "logs", "models_json", "recorder", "results", "simulation_files"]
 
-mutable struct SimulationResults <: PSIResults
-    stage::String
-    base_power::Float64
-    execution_path::AbstractString
-    results_output_folder::String
-    existing_timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
-    results_timestamps::Vector{Dates.DateTime}
-    system::Union{Nothing, PSY.System}
-    variable_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
-    dual_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
-    parameter_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
-end
+
 
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
@@ -71,6 +60,19 @@ end
 # - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
 
 """ Holds the results of the simulation for plotting or exporting"""
+mutable struct SimulationResults <: PSIResults
+    stage::String
+    base_power::Float64
+    execution_path::String
+    results_output_folder::String
+    existing_timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
+    results_timestamps::Vector{Dates.DateTime}
+    system::Union{Nothing, PSY.System}
+    variable_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
+    dual_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
+    parameter_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
+end
+
 function SimulationResults(
     path::String,
     stage_name::String;
