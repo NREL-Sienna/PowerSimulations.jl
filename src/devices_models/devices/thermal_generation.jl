@@ -11,8 +11,6 @@ struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 struct ThermalMultiStartUnitCommitment <: AbstractThermalUnitCommitment end
 
-#! format: on
-
 ############## ActivePowerVariable, ThermalGen ####################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = false
@@ -77,6 +75,8 @@ get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, _) = 1.0
 
 get_variable_binary(v::T, d::PSY.ThermalMultiStart) where T <: Union{ColdStartVariable, WarmStartVariable, HotStartVariable} = get_variable_binary(v, typeof(d))
 get_variable_binary(::T, ::Type{PSY.ThermalMultiStart}) where T <: Union{ColdStartVariable, WarmStartVariable, HotStartVariable} = true
+
+#! format: on
 
 ######## CONSTRAINTS ############
 
@@ -156,8 +156,7 @@ function DeviceRangeConstraintSpec(
 end
 
 """
-This function adds the active power limits of generators when there are
-    no CommitmentVariables
+This function adds the active power limits of generators when there are no CommitmentVariables
 """
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},

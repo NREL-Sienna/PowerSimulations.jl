@@ -6,11 +6,7 @@ function add_variables!(
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
 ) where {T <: VariableType, U <: PSY.Component}
-    add_variable!(
-        psi_container,
-        T(),
-        devices,
-    )
+    add_variable!(psi_container, T(), devices)
 end
 
 """
@@ -22,12 +18,7 @@ function add_variables!(
     service::U,
     devices::Vector{V},
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
-    add_variable!(
-        psi_container,
-        T(),
-        devices,
-        service,
-    )
+    add_variable!(psi_container, T(), devices, service)
 end
 
 @doc raw"""
@@ -67,8 +58,7 @@ function add_variable!(
     psi_container::PSIContainer,
     variable_type::VariableType,
     devices::U,
-) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where D<:PSY.Component
-
+) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(psi_container)
 
@@ -122,8 +112,7 @@ function add_variable!(
     variable_type::VariableType,
     devices::U,
     service::PSY.Reserve,
-) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where D<:PSY.Component
-
+) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(psi_container)
 
@@ -206,7 +195,6 @@ function set_variable_bounds!(
     end
 end
 
-
 function commitment_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
@@ -218,11 +206,7 @@ function commitment_variables!(
         initial_value = nothing
     end
 
-    add_variable!(
-        psi_container,
-        OnVariable(),
-        devices,
-    )
+    add_variable!(psi_container, OnVariable(), devices)
     var_status = get_variable(psi_container, OnVariable, PSY.ThermalMultiStart)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
@@ -236,10 +220,7 @@ function commitment_variables!(
         )
     end
 
-    variable_types = [
-        StartVariable(),
-        StopVariable(),
-    ]
+    variable_types = [StartVariable(), StopVariable()]
     for variable_type in variable_types
         add_variable!(psi_container, variable_type, devices)
     end

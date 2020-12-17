@@ -99,22 +99,20 @@ function has_on_variable(
     variable_type = OnVariable,
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
-    return !(get(
-        psi_container.variables,
-        make_variable_name(variable_type, T),
-        nothing,
-    ) === nothing)
+    return !(
+        get(psi_container.variables, make_variable_name(variable_type, T), nothing) ===
+        nothing
+    )
 end
 
 function has_on_parameter(psi_container::PSIContainer, ::Type{T}) where {T <: PSY.Component}
     if !model_has_parameters(psi_container)
         return false
     end
-    return !(get(
-        psi_container.parameters,
-        encode_symbol(OnVariable, string(T)),
-        nothing,
-    ) === nothing)
+    return !(
+        get(psi_container.parameters, encode_symbol(OnVariable, string(T)), nothing) ===
+        nothing
+    )
 end
 
 function _get_pwl_vars_container(psi_container::PSIContainer)

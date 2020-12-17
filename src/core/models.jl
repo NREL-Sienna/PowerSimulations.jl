@@ -8,7 +8,6 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     formulation::Type{B}
 end
 
-
 abstract type AbstractDeviceFormulation end
 struct FixedOutput <: AbstractDeviceFormulation end
 

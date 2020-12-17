@@ -1,3 +1,5 @@
+#! format: off
+
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 struct PIDSmoothACE <: AbstractAGCFormulation end
 
@@ -78,6 +80,8 @@ get_variable_binary(::LiftVariable, ::Type{<:PSY.Area}) = false
 get_variable_lower_bound(::LiftVariable, ::PSY.Area, _) = 0.0
 
 ########################## , ###########################
+
+#! format: off
 
 function balancing_auxiliary_variables!(psi_container, sys)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]

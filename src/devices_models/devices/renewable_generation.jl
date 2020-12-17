@@ -159,7 +159,7 @@ function AddCostSpec(
     ::PSIContainer,
 ) where {T <: PSY.RenewableDispatch, U <: AbstractRenewableDispatchFormulation}
     # TODO: remove once cost_function is required
-    cost_function = x -> ( x === nothing ? 1.0 : PSY.get_variable(x) )
+    cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,

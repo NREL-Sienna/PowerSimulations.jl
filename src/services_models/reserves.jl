@@ -3,7 +3,6 @@ struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
 
-
 ############################### ActiveServiceVariable, Reserve #########################################
 
 get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}) = false

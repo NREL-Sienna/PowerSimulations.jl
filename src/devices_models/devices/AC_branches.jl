@@ -26,7 +26,12 @@ flow_variables!(
     ::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
 ) = nothing
 
-add_variables!(psi_container::PSIContainer, ::StandardPTDFModel, devices::IS.FlattenIteratorWrapper{B}) where {B <: PSY.ACBranch} =  add_variable!(psi_container, FlowActivePowerVariable(), devices)
+add_variables!(
+    psi_container::PSIContainer,
+    ::StandardPTDFModel,
+    devices::IS.FlattenIteratorWrapper{B},
+) where {B <: PSY.ACBranch} =
+    add_variable!(psi_container, FlowActivePowerVariable(), devices)
 
 get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}) = false
 
