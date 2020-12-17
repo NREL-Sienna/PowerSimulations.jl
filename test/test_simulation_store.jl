@@ -8,7 +8,7 @@ import PowerSimulations:
     KiB,
     MiB,
     GiB,
-    STORE_CONTAINER_TYPE_VARIABLES,
+    STORE_CONTAINER_VARIABLES,
     CachePrioritys,
     initialize_stage_storage!,
     add_rule!,
@@ -46,7 +46,7 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
             add_rule!(
                 cache_rules,
                 stage,
-                STORE_CONTAINER_TYPE_VARIABLES,
+                STORE_CONTAINER_VARIABLES,
                 name,
                 keep_in_cache,
                 cache_priority,
@@ -69,7 +69,7 @@ end
 
 function _run_sim_test(path, sim, variables, stage_defs, cache_rules, seed)
     rng = MersenneTwister(seed)
-    type = STORE_CONTAINER_TYPE_VARIABLES
+    type = STORE_CONTAINER_VARIABLES
     h5_store_open(path, "w") do store
         sim_time = sim["initial_time"]
         _initialize!(store, sim, variables, stage_defs, cache_rules)
@@ -102,7 +102,7 @@ end
 
 function _verify_read_results(path, sim, variables, stage_defs, seed)
     rng = MersenneTwister(seed)
-    type = STORE_CONTAINER_TYPE_VARIABLES
+    type = STORE_CONTAINER_VARIABLES
     h5_store_open(path, "r") do store
         sim_time = sim["initial_time"]
         for step in 1:sim["num_steps"]
