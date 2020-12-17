@@ -1,3 +1,5 @@
+#! format: off
+
 abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
@@ -38,7 +40,6 @@ get_variable_initial_value(::ReactivePowerVariable, d::PSY.HydroGen, ::WarmStart
 
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).max
-
 
 ############## EnergyVariable, HydroGen ####################
 
@@ -99,6 +100,8 @@ get_variable_lower_bound(::SpillageVariable, d::PSY.HydroGen, _) = 0.0
 
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroGen}) = true
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroPumpedStorage}) = true
+
+#! format: on
 
 """
 This function define the range constraint specs for the

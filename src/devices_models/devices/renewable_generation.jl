@@ -1,3 +1,5 @@
+#! format: off
+
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
@@ -17,6 +19,8 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, _) = PSY.ge
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = false
 
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = :nodal_balance_reactive
+
+#! format: on
 
 ####################################### Reactive Power constraint_infos #########################
 function DeviceRangeConstraintSpec(

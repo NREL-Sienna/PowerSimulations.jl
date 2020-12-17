@@ -1,3 +1,5 @@
+#! format: off
+
 abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
 struct StaticPowerLoad <: AbstractLoadFormulation end
@@ -29,6 +31,8 @@ get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, _) = PSY.
 ########################### ReactivePowerVariable, ElectricLoad ####################################
 
 get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}) = true
+
+#! format: on
 
 ####################################### Reactive Power Constraints #########################
 """

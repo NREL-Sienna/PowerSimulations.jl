@@ -326,6 +326,7 @@ include("core/simulation_results.jl")
 include("core/recorder_events.jl")
 
 # Device Modeling components
+include("devices_models/devices/interfaces.jl")
 include("devices_models/devices/common/device_range_constraints.jl")
 include("devices_models/devices/common/nodal_expression.jl")
 include("devices_models/devices/renewable_generation.jl")

@@ -1,3 +1,5 @@
+#! format: off
+
 abstract type AbstractRegulationFormulation <: AbstractDeviceFormulation end
 struct ReserveLimitedRegulation <: AbstractRegulationFormulation end
 struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
@@ -21,6 +23,8 @@ get_variable_lower_bound(::AdditionalDeltaActivePowerUpVariable, ::PSY.Regulatio
 
 get_variable_binary(::AdditionalDeltaActivePowerDownVariable, ::Type{<:PSY.RegulationDevice}) = false
 get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.RegulationDevice, _) = 0.0
+
+#! format: on
 
 function add_constraints!(
     psi_container::PSIContainer,

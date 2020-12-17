@@ -1,3 +1,5 @@
+#! format: off
+
 abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
@@ -34,6 +36,8 @@ get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
 ############## ReserveVariable, Storage ####################
 
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
+
+#! format: on
 
 ################################## output power constraints#################################
 
