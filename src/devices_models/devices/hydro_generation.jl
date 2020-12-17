@@ -22,6 +22,10 @@ get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::WarmStartVa
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).max
 
+############## ActivePowerVariable, HydroDispatchRunOfRiver ####################
+
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::HydroDispatchRunOfRiver) = 0.0
+
 ############## ReactivePowerVariable, HydroGen ####################
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}) = false
