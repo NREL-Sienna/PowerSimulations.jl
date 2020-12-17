@@ -127,10 +127,7 @@ function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractDCLineFormulation},
-    ::Union{
-        Type{<:PM.AbstractActivePowerModel},
-        Type{<:PM.AbstractPowerModel},
-    },
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)

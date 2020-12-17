@@ -16,10 +16,8 @@ struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = false
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
 
-get_variable_initial_value(pv::ActivePowerVariable, d::PSY.HydroGen, settings) =
-    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(pv::ActivePowerVariable, d::PSY.HydroGen, settings) = get_variable_initial_value(pv, d, WarmStartVariable())
 get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::WarmStartVariable) = PSY.get_active_power(d)
-get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::ColdStartVariable) = nothing
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).max
@@ -31,9 +29,8 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}) = false
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_reactive
 
 get_variable_initial_value(pv::ReactivePowerVariable, d::PSY.HydroGen, settings) =
-get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(pv, d, WarmStartVariable())
 get_variable_initial_value(::ReactivePowerVariable, d::PSY.HydroGen, ::WarmStartVariable) = PSY.get_active_power(d)
-get_variable_initial_value(::ReactivePowerVariable, d::PSY.HydroGen, ::ColdStartVariable) = nothing
 
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HydroGen, _) = PSY.get_active_power_limits(d).max
@@ -86,10 +83,8 @@ get_variable_sign(::ActivePowerOutVariable, d::PSY.HydroGen) = -1.0
 
 get_variable_binary(::OnVariable, ::Type{<:PSY.HydroGen}) = true
 
-get_variable_initial_value(pv::OnVariable, d::PSY.HydroGen, settings) =
-    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(pv::OnVariable, d::PSY.HydroGen, settings) = get_variable_initial_value(pv, d, WarmStartVariable())
 get_variable_initial_value(::OnVariable, d::PSY.HydroGen, ::WarmStartVariable) = PSY.get_active_power(d) > 0 ? 1.0 : 0.0
-get_variable_initial_value(::OnVariable, d::PSY.HydroGen, ::ColdStartVariable) = nothing
 
 ############## SpillageVariable, HydroGen ####################
 
