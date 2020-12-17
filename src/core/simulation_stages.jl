@@ -240,8 +240,6 @@ function run_stage!(
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
 
-    @info "JuMP.optimize! completed in $(timed_log[:timed_solve_time]) seconds"
-
     model_status = JuMP.primal_status(model)
     stats = OptimizerStats(step, get_number(stage), start_time, model, timed_log)
     append_optimizer_stats!(store, stats)

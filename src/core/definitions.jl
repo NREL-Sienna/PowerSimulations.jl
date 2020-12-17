@@ -32,9 +32,10 @@ const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 @enum BUILD_STATUS begin
-    BUILT = 1
+    BUILT = 0
     IN_PROGRESS = -1
-    EMPTY = 0
+    FAILED_BUILD = 1
+    EMPTY = 2
 end
 
 @enum RUN_STATUS begin

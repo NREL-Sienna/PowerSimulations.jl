@@ -1,4 +1,3 @@
-
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"
 const REQUIRED_RECORDERS = [:simulation_status, :simulation]
@@ -14,7 +13,7 @@ mutable struct SimulationInternal
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
     time_step_ref::Dict{Int, Int}
-    #Inital Time of the first forecast and Inital Time of the last forecast
+    #Initial Time of the first forecast and Initial Time of the last forecast
     date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
     time_step::Int
@@ -589,7 +588,10 @@ function build!(
                 set_simulation_status!(sim, READY)
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
-            # TODO: catch errors and remove created folder if the build failed
+        catch e
+            set_simulation_build_status!(sim, FAILED_BUILD)
+            set_simulation_status!(sim, nothing)
+            @error(e)
         finally
             unregister_recorders!(sim.internal)
             close(logger)
@@ -965,11 +967,19 @@ function execute!(sim::Simulation; kwargs...)
         open_func(get_store_dir(sim), "w") do store
             # TODO: return file name for hash calculation instead of hard code
             Logging.with_logger(logger) do
-                _execute!(sim, store; kwargs...)
+                TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
+                    _execute!(sim, store; kwargs...)
+                end
+                @info ("\n$(RUN_SIMULATION_TIMER)\n")
+                set_simulation_status!(sim, SUCCESSFUL_RUN)
                 log_cache_hit_percentages(store)
             end
         end
-
+    catch e
+        # TODO: Add Fallback when run_stage fails
+        set_simulation_status!(sim, FAILED_RUN)
+        @error(e)
     finally
         unregister_recorders!(sim.internal)
         close(logger)
@@ -986,72 +996,60 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
     num_executions = steps * length(execution_order)
     _initialize_stage_storage!(sim, store, cache_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
-    TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-        status = RUNNING
-        for step in 1:steps
-            TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
-                println("Executing Step $(step)")
-                IS.@record :simulation_status SimulationStepEvent(
+    status = RUNNING
+    for step in 1:steps
+        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
+            IS.@record :simulation_status SimulationStepEvent(
+                get_current_time(sim),
+                sim.internal.time_step,
+                step,
+                "start",
+            )
+            for (ix, stage_number) in enumerate(execution_order)
+                IS.@record :simulation_status SimulationStageEvent(
                     get_current_time(sim),
                     sim.internal.time_step,
                     step,
+                    stage_number,
                     "start",
                 )
-                for (ix, stage_number) in enumerate(execution_order)
-                    IS.@record :simulation_status SimulationStageEvent(
-                        get_current_time(sim),
-                        sim.internal.time_step,
-                        step,
-                        stage_number,
-                        "start",
-                    )
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Stage $(stage_number)" begin
-                        # TODO: implement some efficient way of indexing with stage name.
-                        stage = get_stage(sim, stage_number)
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Stage $(stage_number)" begin
+                    # TODO: implement some efficient way of indexing with stage name.
+                    stage = get_stage(sim, stage_number)
+                    stage_name = get_stage_name(sim, stage)
+                    if !is_stage_built(stage)
+                        error("Stage $(stage_name) status is not BUILT")
+                    end
+                    stage_interval = get_stage_interval(sim, stage_name)
+                    sim.internal.current_time = sim.internal.date_ref[stage_number]
+                    sim.internal.time_step = sim.internal.time_step_ref[stage_number]
+                    # TODO: Show progress meter here
+                    get_sequence(sim).current_execution_index = ix
+                    # Is first run of first stage? Yes -> don't update stage
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Stage $(stage_number)" begin
+                        !(step == 1 && ix == 1) && update_stage!(stage, sim)
+                    end
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
                         stage_name = get_stage_name(sim, stage)
-                        if !is_stage_built(stage)
-                            error("Stage $(stage_name) status is not BUILT")
+                        settings = get_settings(stage)
+                        status = run_stage!(step, stage, get_current_time(sim), store)
+                        sim.internal.run_count[step][stage_number] += 1
+                        sim.internal.date_ref[stage_number] += stage_interval
+                        sim.internal.time_step_ref[stage_number] += 1
+                        if get_allow_fails(settings) && (status != SUCCESSFUL_RUN)
+                            continue
+                        elseif !get_allow_fails(settings) && (status != SUCCESSFUL_RUN)
+                            throw(ErrorException("Simulation Failed in stage $(stage_number)"))
+                        else
+                            @assert status == SUCCESSFUL_RUN
                         end
-                        stage_interval = get_stage_interval(sim, stage_name)
-                        run_name = "step-$(step)-stage-$(stage_name)"
-                        sim.internal.current_time = sim.internal.date_ref[stage_number]
-                        sim.internal.time_step = sim.internal.time_step_ref[stage_number]
-                        # TODO: Show progress meter here
-                        get_sequence(sim).current_execution_index = ix
-                        @info "Starting run $run_name $(get_current_time(sim))"
-                        # Is first run of first stage? Yes -> don't update stage
-                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Stage $(stage_number)" begin
-                            !(step == 1 && ix == 1) && update_stage!(stage, sim)
-                        end
-                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
-                            stage_name = get_stage_name(sim, stage)
-                            settings = get_settings(stage)
-                            # TODO: Add Fallback when run_stage fails
-                            status = run_stage!(step, stage, get_current_time(sim), store)
-                            if status == SUCCESSFUL_RUN
-                            elseif !get_allow_fails(settings) && (status != SUCCESSFUL_RUN)
-                                set_simulation_status!(sim, FAILED_RUN)
-                                break
-                            elseif get_allow_fails(settings) && (status != SUCCESSFUL_RUN)
-                                continue
-                            elseif status == RUNNING
-                                set_simulation_status!(sim, FAILED_RUN)
-                                error("Stage still in RUNNING status")
-                            else
-                                set_simulation_status!(sim, FAILED_RUN)
-                                error("Invalid stage status")
-                            end
-
-                            sim.internal.run_count[step][stage_number] += 1
-                        end
-                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
-                            _update_caches!(sim, stage)
-                        end
-                        if warm_start_enabled(stage)
-                            TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(stage_number)" begin
-                                _apply_warm_start!(stage)
-                            end
+                    end # Run stage Timer
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
+                        _update_caches!(sim, stage)
+                    end
+                    if warm_start_enabled(stage)
+                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(stage_number)" begin
+                            _apply_warm_start!(stage)
                         end
                     end
                     IS.@record :simulation_status SimulationStageEvent(
@@ -1061,20 +1059,16 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                         stage_number,
                         "done",
                     )
-                    sim.internal.date_ref[stage_number] += stage_interval
-                    sim.internal.time_step_ref[stage_number] += 1
-                end
-                IS.@record :simulation_status SimulationStepEvent(
-                    get_current_time(sim),
-                    sim.internal.time_step,
-                    step,
-                    "done",
-                )
-            end
-        end
-    end
-    @info ("\n$(RUN_SIMULATION_TIMER)\n")
-    set_simulation_status!(sim, SUCCESSFUL_RUN)
+                end #execition stage timer
+            end # execution order for loop
+            IS.@record :simulation_status SimulationStepEvent(
+                get_current_time(sim),
+                sim.internal.time_step,
+                step,
+                "done",
+            )
+        end # Execution step timer
+    end # Steps for loop
     return nothing
 end
 
