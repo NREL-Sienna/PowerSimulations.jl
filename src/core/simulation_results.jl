@@ -1,8 +1,6 @@
 const KNOWN_PATHS =
     ["data_store", "logs", "models_json", "recorder", "results", "simulation_files"]
 
-
-
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
     alien_files = [f for f in folder_files if f ∉ FILE_STRUCT]
@@ -182,10 +180,10 @@ function _get_store_value(
     return results
 end
 
-function _validate_names(res::SimulationResults, get_existing, names::Vector{Symbol})
+function _validate_names(existing_names::Vector{Symbol}, names::Vector{Symbol})
     for name in names
-        if name ∉ get_existing(res)
-            @error("$name is not stored", sort!(get_existing(res)))
+        if name ∉ existing_names
+            @error("$name is not stored", sort!(existing_names))
             throw(IS.InvalidValue("$name is not stored"))
         end
     end
@@ -218,16 +216,17 @@ function _process_timestamps(
 end
 
 function _get_variables_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
-    _validate_names(res, get_existing_variables, names)
-    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
     existing_names = get_existing_variables(res)
-    same_names = isempty([n for n in names if n ∉ existing_names])
-    if !same_time_stamps && !same_names
-        @debug "reading variables from data store"
-        vals = _get_store_value(res, STORE_CONTAINER_VARIABLES, names, timestamps)
+    _validate_names(existing_names, names)
+    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    names_with_values = [k for (k, v) in res.variable_values if !isempty(v)]
+    same_names = isempty([n for n in names if n ∉ names_with_values])
+    if same_time_stamps && same_names
+        @info "reading variables from SimulationsResults"
+        vals = filter(p -> (p.first ∈ names), res.variable_values)
     else
-       @debug "reading variables from SimulationsResults"
-       vals =  filter(p-> (p.first ∈ names), res.variable_values)
+        @info "reading variables from data store"
+        vals = _get_store_value(res, STORE_CONTAINER_VARIABLES, names, timestamps)
     end
     return vals
 end
@@ -248,13 +247,25 @@ function get_variables_values(
     count::Union{Int, Nothing} = nothing,
 )
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _get_variables_value(res, names, timestamps)
+    values = _get_variables_values(res, names, timestamps)
     return values
 end
 
 function _get_duals_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
-    _validate_names(res, get_existing_duals, names)
-    return _get_store_value(res, STORE_CONTAINER_DUALS, names, timestamps)
+    isempty(names) && return res.dual_values
+    existing_names = get_existing_duals(res)
+    _validate_names(existing_names, names)
+    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    names_with_values = [k for (k, v) in res.dual_values if !isempty(v)]
+    same_names = isempty([n for n in names if n ∉ names_with_values])
+    if same_time_stamps && same_names
+        @debug "reading duals from SimulationsResults"
+        vals = filter(p -> (p.first ∈ names), res.dual_values)
+    else
+        @debug "reading duals from data store"
+        vals = _get_store_value(res, STORE_CONTAINER_DUALS, names, timestamps)
+    end
+    return vals
 end
 
 """
@@ -277,9 +288,22 @@ function get_duals_values(
 end
 
 function _get_parameters_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
-    _validate_names(res, get_existing_parameters, names)
-    return _get_store_value(res, STORE_CONTAINER_PARAMETERS, names, timestamps)
+    isempty(names) && return res.parameter_values
+    existing_names = get_existing_parameters(res)
+    _validate_names(existing_names, names)
+    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    names_with_values = [k for (k, v) in res.parameter_values if !isempty(v)]
+    same_names = isempty([n for n in names if n ∉ names_with_values])
+    if same_time_stamps && same_names
+        @info "reading parameters from SimulationsResults"
+        vals = filter(p -> (p.first ∈ names), res.parameter_values)
+    else
+        @info "reading parameters from data store"
+        vals = _get_store_value(res, STORE_CONTAINER_PARAMETERS, names, timestamps)
+    end
+    return vals
 end
+
 """
     Returns the values for the parameters used in the simulation. It keeps requests when performing multiple retrievals. Accepts a vector of names for the return of the values
 
@@ -293,7 +317,6 @@ function get_parameters_values(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
 )
-    _validate_names(res, get_existing_variables, names)
     timestamps = _process_timestamps(res, initial_time, count)
     values = _get_parameters_values(res, names, timestamps)
     return values
