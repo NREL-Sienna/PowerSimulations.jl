@@ -128,6 +128,8 @@ function test_simulation_results(file_path::String)
         @test length(results_ed.variable_values[:P__ThermalStandard]) == 3
         @test_throws IS.InvalidValue get_parameter_values(results_ed, :invalid)
         @test_throws IS.InvalidValue get_variable_values(results_ed, :invalid)
+        @test_throws IS.InvalidValue get_variable_values(results_uc, :P__ThermalStandard; initial_time = now())
+        @test_throws IS.InvalidValue get_variable_values(results_uc, :P__ThermalStandard; count = 25)
 
         clear_simulation_results!(results_ed)
         @test isempty(results_ed.variable_values[:P__ThermalStandard])

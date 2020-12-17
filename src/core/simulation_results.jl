@@ -203,18 +203,21 @@ function _process_timestamps(
         initial_time = first(get_existing_timestamps(res))
     end
     existing_timestamps = get_existing_timestamps(res)
-    if count === nothing
-        requested_range = [v for v in existing_timestamps if v >= initial_time]
+
+    if initial_time ∉ existing_timestamps
+        invalid_timestamps = [initial_time]
     else
-        requested_range =
-            collect(range(initial_time, length = count, step = get_interval(res)))
+        if count === nothing
+            requested_range = [v for v in existing_timestamps if v >= initial_time]
+        else
+            requested_range =
+                    collect(range(initial_time, length = count, step = get_interval(res)))
+        end
+        invalid_timestamps = [v for v in requested_range if v ∉ existing_timestamps]
     end
-    invalid_timestamps = [v for v in requested_range if v ∉ existing_timestamps]
     if !isempty(invalid_timestamps)
-        throw(IS.InvalidValue(
-            "Timetamps $(invalid_timestamps) not stored",
-            sort!(get_existing_timestamps(res)),
-        ))
+        @error  "Timestamps $(invalid_timestamps) not stored" get_existing_timestamps(res)
+        throw(IS.InvalidValue("Timestamps not stored"))
     end
     return requested_range
 end
