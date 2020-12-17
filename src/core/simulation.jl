@@ -278,7 +278,7 @@ get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 
-set_simulation_status!(sim::Simulation, status::RUN_STATUS) = sim.internal.status = status
+set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
 set_simulation_build_status!(sim::Simulation, status::BUILD_STATUS) =
     sim.internal.build_status = status
 
@@ -591,7 +591,7 @@ function build!(
         catch e
             set_simulation_build_status!(sim, FAILED_BUILD)
             set_simulation_status!(sim, nothing)
-            @error(e)
+            rethrow(e)
         finally
             unregister_recorders!(sim.internal)
             close(logger)
@@ -979,7 +979,7 @@ function execute!(sim::Simulation; kwargs...)
     catch e
         # TODO: Add Fallback when run_stage fails
         set_simulation_status!(sim, FAILED_RUN)
-        @error(e)
+        @error "simulation failed" exception=(e,catch_backtrace())
     finally
         unregister_recorders!(sim.internal)
         close(logger)

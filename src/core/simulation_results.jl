@@ -3,7 +3,7 @@ const KNOWN_PATHS =
 
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
-    alien_files = [f for f in folder_files if f ∉ FILE_STRUCT]
+    alien_files = [f for f in folder_files if f ∉ KNOWN_PATHS]
     if isempty(alien_files)
         return true
     end
@@ -79,7 +79,11 @@ function SimulationResults(
     results_output_path = nothing,
 )
     if execution === nothing
-        execution = maximum([parse(Int, f) for f in readdir(path) if occursin(r"^\d+$", f)])
+        executions = [parse(Int, f) for f in readdir(path) if occursin(r"^\d+$", f)]
+        if isempty(executions)
+            error("There are no simulation results in the path")
+        end
+        execution = maximum(executions)
     end
     execution_path = joinpath(path, string(execution))
     if !isdir(execution_path)
@@ -216,6 +220,7 @@ function _process_timestamps(
 end
 
 function _get_variables_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
+    isempty(names) && return res.variable_values
     existing_names = get_existing_variables(res)
     _validate_names(existing_names, names)
     same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
@@ -394,8 +399,8 @@ function load_simulation_results!(
 end
 
 function _clear_result_dict(dict)
-    for k in keys(dict)
-        dict[k] = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
+    for v in values(dict)
+        empty!(v)
     end
     return
 end
