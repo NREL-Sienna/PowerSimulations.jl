@@ -14,7 +14,7 @@ function test_simulation_results(file_path::String)
                 template_hydro_st_ed,
                 c_sys5_hy_ed,
                 GLPK_optimizer,
-                constraint_duals = [:CopperPlateBalance]
+                constraint_duals = [:CopperPlateBalance],
             ),
         )
 

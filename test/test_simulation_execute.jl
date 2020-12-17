@@ -283,14 +283,14 @@ function test_simulation_with_cache(file_path::String)
             end
         end
 
-
         =#
-
 
     end
 end
-#=
+
 function test_stage_chronologies(file_path)
+    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
+    c_sys5_hy_ed = build_system("c_sys5_hy_ed")
     stages_definition = Dict(
         "UC" => Stage(
             GenericOpProblem,
@@ -327,9 +327,12 @@ function test_stage_chronologies(file_path)
         stages_sequence = sequence,
         simulation_folder = file_path,
     )
-    build!(sim)
-    sim_results = execute!(sim)
+    build_out = build!(sim)
+    @test build_out == PSI.BUILT
+    execute_out = execute!(sim)
+    @test execute_out == PSI.SUCCESSFUL_RUN
 
+    #=
     @testset "Test verify time gap for Receding Horizon" begin
         names = ["UC"] # TODO why doesn't this work for ED??
         for name in names
@@ -382,9 +385,9 @@ function test_stage_chronologies(file_path)
             end
         end
     end
-
+    =#
 end
-=#
+
 function test_simulation_utils(file_path)
     stage_info = Dict(
         "UC" => Dict("optimizer" => GLPK_optimizer, "jump_model" => nothing),
@@ -444,52 +447,51 @@ function test_simulation_utils(file_path)
     @test execute_out == PSI.SUCCESSFUL_RUN
 
     @testset "Verify simulation events" begin
-            file = joinpath(
-                PSI.get_simulation_dir(sim),
-                "recorder",
-                "simulation.log",
-            )
-            @test isfile(file)
-            events = PSI.list_simulation_events(
-                PSI.InitialConditionUpdateEvent,
-                PSI.get_simulation_dir(sim);
-                step = 1,
-            )
-            @test length(events) == 0
-            events = PSI.list_simulation_events(
-                PSI.InitialConditionUpdateEvent,
-                PSI.get_simulation_dir(sim);
-                step = 2,
-            )
-            @test length(events) == 10
-            PSI.show_simulation_events(
-                devnull,
-                PSI.InitialConditionUpdateEvent,
-                PSI.get_simulation_dir(sim),;
-                step = 2,
-            )
-            events = PSI.list_simulation_events(
-                PSI.InitialConditionUpdateEvent,
-                PSI.get_simulation_dir(sim);
-                step = 1,
-                stage = 1,
-            )
-            @test length(events) == 0
-            events = PSI.list_simulation_events(
-                PSI.InitialConditionUpdateEvent,
-                PSI.get_simulation_dir(sim),;
-                step = 2,
-                stage = 1,
-            )
-            @test length(events) == 10
-            PSI.show_simulation_events(
-                devnull,
-                PSI.InitialConditionUpdateEvent,
-                PSI.get_simulation_dir(sim),;
-                step = 2,
-                stage = 1,
-            )
-        end
+        file = joinpath(PSI.get_simulation_dir(sim), "recorder", "simulation.log")
+        @test isfile(file)
+        events = PSI.list_simulation_events(
+            PSI.InitialConditionUpdateEvent,
+            PSI.get_simulation_dir(sim);
+            step = 1,
+        )
+        @test length(events) == 0
+        events = PSI.list_simulation_events(
+            PSI.InitialConditionUpdateEvent,
+            PSI.get_simulation_dir(sim);
+            step = 2,
+        )
+        @test length(events) == 10
+        PSI.show_simulation_events(
+            devnull,
+            PSI.InitialConditionUpdateEvent,
+            PSI.get_simulation_dir(sim),
+            ;
+            step = 2,
+        )
+        events = PSI.list_simulation_events(
+            PSI.InitialConditionUpdateEvent,
+            PSI.get_simulation_dir(sim);
+            step = 1,
+            stage = 1,
+        )
+        @test length(events) == 0
+        events = PSI.list_simulation_events(
+            PSI.InitialConditionUpdateEvent,
+            PSI.get_simulation_dir(sim),
+            ;
+            step = 2,
+            stage = 1,
+        )
+        @test length(events) == 10
+        PSI.show_simulation_events(
+            devnull,
+            PSI.InitialConditionUpdateEvent,
+            PSI.get_simulation_dir(sim),
+            ;
+            step = 2,
+            stage = 1,
+        )
+    end
 
     @testset "Check Serialization - Deserialization of Sim" begin
         path = mktempdir()
@@ -515,7 +517,8 @@ end
         test_simulation_single_ed,
         test_simulation_without_caches,
         test_simulation_with_cache,
-        test_simulation_utils
+        test_stage_chronologies,
+        test_simulation_utils,
     ]
     try
         for f in test_set
