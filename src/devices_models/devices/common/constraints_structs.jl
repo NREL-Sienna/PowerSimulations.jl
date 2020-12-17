@@ -59,7 +59,7 @@ function DeviceTimeSeriesConstraintInfo(
     name = PSY.get_name(device)
     bus_number = PSY.get_number(PSY.get_bus(device))
     multiplier = multiplier_function(device)
-    if isnothing(get_constraint_values)
+    if get_constraint_values === nothing
         range_constraint_info = DeviceRangeConstraintInfo(name)
     else
         range_constraint_info =

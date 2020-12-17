@@ -205,7 +205,7 @@ function ramp_constraints!(
 
     for d in devices
         ramp_limits = PSY.get_ramp_limits(d)
-        isnothing(ramp_limits) && continue
+        ramp_limits === nothing && continue
         scaling_factor = resolution * SECONDS_IN_MINUTE
         name = PSY.get_name(d)
         for t in time_steps

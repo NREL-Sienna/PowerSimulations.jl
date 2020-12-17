@@ -66,7 +66,8 @@ end
 get_device_type(m::DeviceModel) = m.device_type
 get_formulation(m::DeviceModel) = m.formulation
 get_feedforward(m::DeviceModel) = m.feedforward
-get_services(m::Union{DeviceModel, Nothing}) = isnothing(m) ? nothing : m.services
+get_services(m::DeviceModel) = m.services
+get_services(m::Nothing) = nothing
 
 ### Network models
 

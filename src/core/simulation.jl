@@ -180,7 +180,7 @@ function _set_internal_caches(
 end
 
 function _get_output_dir_name(path, output_dir)
-    if !isnothing(output_dir)
+    if !(output_dir === nothing)
         # The user wants a custom name.
         return output_dir
     end
@@ -265,7 +265,7 @@ end
 
 function get_stage(s::Simulation, name::String)
     stage = get(s.stages, name, nothing)
-    isnothing(stage) && throw(ArgumentError("Stage $(name) not present in the simulation"))
+    stage === nothing && throw(ArgumentError("Stage $(name) not present in the simulation"))
     return stage
 end
 
@@ -273,7 +273,7 @@ get_stage_interval(s::Simulation, name::String) = get_stage_interval(s.sequence,
 
 function get_stage(s::Simulation, number::Int)
     name = get(s.sequence.order, number, nothing)
-    isnothing(name) && throw(ArgumentError("Stage with $(number) not defined"))
+    name === nothing && throw(ArgumentError("Stage with $(number) not defined"))
     return get_stage(s, name)
 end
 
@@ -305,7 +305,7 @@ end
 
 function get_cache(simulation_cache::Dict{<:CacheKey, AbstractCache}, key::CacheKey)
     c = get(simulation_cache, key, nothing)
-    isnothing(c) && @debug("Cache with key $(key) not present in the simulation")
+    c === nothing && @debug("Cache with key $(key) not present in the simulation")
     return c
 end
 
@@ -394,7 +394,7 @@ function _get_simulation_initial_times!(sim::Simulation)
                 throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
             end
         end
-        if !isnothing(sim_ini_time) &&
+        if !(sim_ini_time === nothing) &&
            !mapreduce(x -> x == sim_ini_time, |, stage_initial_times[stage_number])
             throw(IS.ConflictingInputsError("The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number.
             Manually provided initial times have to be compatible with the specified interval and horizon in the stages."))
@@ -407,7 +407,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     end
     sim.internal.date_range = Tuple(time_range)
 
-    if isnothing(get_initial_time(sim))
+    if get_initial_time(sim) === nothing
         sim.initial_time = stage_initial_times[1][1]
         @debug("Initial Simulation Time will be infered from the data.
                Initial Simulation Time set to $(sim.initial_time)")
@@ -424,7 +424,7 @@ function _attach_feedforward!(sim::Simulation, stage_name::String)
         # Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
-        isnothing(device_model) &&
+        device_model === nothing &&
             throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
         device_model.feedforward = ff
     end
@@ -456,9 +456,9 @@ function _check_required_ini_cond_caches(sim::Simulation)
         stage = get_stage(sim, stage_name)
         for (k, v) in iterate_initial_conditions(stage.internal.psi_container)
             # No cache needed for the initial condition -> continue
-            isnothing(v[1].cache_type) && continue
+            v[1].cache_type === nothing && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
-            if isnothing(c)
+            if c === nothing
                 throw(ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k) in stage $stage_name"))
             end
             @debug "found cache $(v[1].cache_type) for initial condition $(k) in stage $(stage_name)"
@@ -565,7 +565,7 @@ function _build!(sim::Simulation)
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
-        if isnothing(stage)
+        if stage === nothing
             throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         end
         stage_interval = get_stage_interval(sim, stage_name)
@@ -923,7 +923,7 @@ function _execute!(sim::Simulation; kwargs...)
         error("Re-build the simulation")
     end
     system_to_file = get(kwargs, :system_to_file, true)
-    isnothing(sim.internal) &&
+    sim.internal === nothing &&
         error("Simulation not built, build the simulation to execute")
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
@@ -1036,7 +1036,7 @@ function serialize(simulation::Simulation; path = ".", force = false)
 
     try
         for (key, stage) in simulation.stages
-            if isnothing(stage.internal)
+            if stage.internal === nothing
                 throw(ArgumentError("stage $(stage.internal.number) has not been built"))
             end
             sys_filename = "system-$(IS.get_uuid(stage.sys)).json"

@@ -407,7 +407,7 @@ function add_pm_var_refs!(
         for (pm_v, ps_v) in pm_var_map[d_class]
             if pm_v in pm_var_names
                 for dir in fieldnames(typeof(ps_v))
-                    isnothing(getfield(ps_v, dir)) && continue
+                    getfield(ps_v, dir) === nothing && continue
                     # TODO: make a better mapping with the var names in the definitions file
                     var_name = getfield(ps_v, dir)
                     container = PSI.container_spec(

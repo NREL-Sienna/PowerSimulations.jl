@@ -782,7 +782,7 @@ function AddCostSpec(
     ::PSIContainer,
 ) where {T <: PSY.HydroGen, U <: AbstractHydroFormulation}
     # Hydro Generators currently have no OperationalCost
-    cost_function = x -> isnothing(x) ? 1.0 : PSY.get_variable(x)
+    cost_function = x -> ( x === nothing ? 1.0 : PSY.get_variable(x) )
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,

@@ -99,22 +99,22 @@ function has_on_variable(
     variable_type = OnVariable,
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
-    return !isnothing(get(
+    return !(get(
         psi_container.variables,
         make_variable_name(variable_type, T),
         nothing,
-    ))
+    ) === nothing)
 end
 
 function has_on_parameter(psi_container::PSIContainer, ::Type{T}) where {T <: PSY.Component}
     if !model_has_parameters(psi_container)
         return false
     end
-    return !isnothing(get(
+    return !(get(
         psi_container.parameters,
         encode_symbol(OnVariable, string(T)),
         nothing,
-    ))
+    ) === nothing)
 end
 
 function _get_pwl_vars_container(psi_container::PSIContainer)
@@ -343,7 +343,7 @@ function add_to_cost!(
         @warn "No variable cost defined for $component_name"
     end
 
-    if !isnothing(spec.fixed_cost) && spec.has_status_variable
+    if !(spec.fixed_cost === nothing) && spec.has_status_variable
         @debug "Fixed cost" component_name
         for t in time_steps
             linear_gen_cost!(
@@ -377,7 +377,7 @@ function add_to_cost!(
         variable_cost!(psi_container, spec, component_name, variable_cost, t)
     end
 
-    if !isnothing(spec.start_up_cost)
+    if !(spec.start_up_cost === nothing)
         @debug "Start up cost" component_name
         for t in time_steps
             linear_gen_cost!(
@@ -390,7 +390,7 @@ function add_to_cost!(
         end
     end
 
-    if !isnothing(spec.shut_down_cost)
+    if !(spec.shut_down_cost === nothing)
         @debug "Shut down cost" component_name
         for t in time_steps
             linear_gen_cost!(
@@ -403,7 +403,7 @@ function add_to_cost!(
         end
     end
 
-    if !isnothing(spec.fixed_cost) && spec.has_status_variable
+    if !(spec.fixed_cost === nothing) && spec.has_status_variable
         @debug "Fixed cost" component_name
         for t in time_steps
             linear_gen_cost!(
@@ -433,7 +433,7 @@ function add_to_cost!(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     time_steps = model_time_steps(psi_container)
 
-    if !isnothing(spec.fixed_cost) && spec.has_status_variable
+    if !(spec.fixed_cost === nothing) && spec.has_status_variable
         @debug "Fixed cost" component_name
         for t in time_steps
             linear_gen_cost!(
@@ -446,7 +446,7 @@ function add_to_cost!(
         end
     end
 
-    if !isnothing(spec.shut_down_cost)
+    if !(spec.shut_down_cost === nothing)
         @debug "Shut down cost" component_name
         for t in time_steps
             linear_gen_cost!(
@@ -522,7 +522,7 @@ function add_to_cost!(
         )
     end
 
-    if !isnothing(spec.start_up_cost)
+    if !(spec.start_up_cost === nothing)
         start_cost_data = spec.start_up_cost(cost_data)
         for (st, var_type) in enumerate(start_types)
             var_name = make_variable_name(var_type, spec.component_type)
@@ -551,7 +551,7 @@ function add_to_cost!(
         end
     end
 
-    if !isnothing(spec.shut_down_cost)
+    if !(spec.shut_down_cost === nothing)
         @debug "Shut down cost" component_name
         for t in time_steps
             linear_gen_cost!(
@@ -605,7 +605,7 @@ function add_to_cost!(
         )
     end
 
-    if !isnothing(spec.start_up_cost)
+    if !(spec.start_up_cost === nothing)
         start_cost_data = spec.start_up_cost(cost_data)
         var_name = make_variable_name(StartVariable, spec.component_type)
         for t in time_steps
@@ -632,7 +632,7 @@ function add_to_cost!(
         end
     end
 
-    if !isnothing(spec.shut_down_cost)
+    if !(spec.shut_down_cost === nothing)
         @debug "Shut down cost" component_name
         for t in time_steps
             linear_gen_cost!(

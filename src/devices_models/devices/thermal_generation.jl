@@ -436,7 +436,7 @@ function _get_data_for_rocc(
         non_binding_up = false
         non_binding_down = false
         ramp_limits = PSY.get_ramp_limits(g)
-        if !isnothing(ramp_limits)
+        if !(ramp_limits === nothing)
             p_lims = PSY.get_active_power_limits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
             if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
@@ -931,7 +931,7 @@ function _get_data_for_tdc(
         non_binding_down = false
         time_limits = PSY.get_time_limits(g)
         name = PSY.get_name(g)
-        if !isnothing(time_limits)
+        if !(time_limits === nothing)
             if (time_limits.up <= fraction_of_hour) & (time_limits.down <= fraction_of_hour)
                 @debug "Generator $(name) has a nonbinding time limits. Constraints Skipped"
                 continue

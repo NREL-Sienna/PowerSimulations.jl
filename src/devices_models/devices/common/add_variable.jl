@@ -93,15 +93,15 @@ function add_variable!(
         )
 
         ub = get_variable_upper_bound(variable_type, d, psi_container.settings)
-        !isnothing(ub) && JuMP.set_upper_bound(variable[name, t], ub)
+        !(ub === nothing) && JuMP.set_upper_bound(variable[name, t], ub)
 
         lb = get_variable_lower_bound(variable_type, d, psi_container.settings)
-        !isnothing(lb) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
+        !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
         init = get_variable_initial_value(variable_type, d, psi_container.settings)
-        !isnothing(init) && JuMP.set_start_value(variable[name, t], init)
+        !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
 
-        if !(isnothing(expression_name))
+        if !((expression_name === nothing))
             bus_number = PSY.get_number(PSY.get_bus(d))
             add_to_expression!(
                 get_expression(psi_container, expression_name),
@@ -148,15 +148,15 @@ function add_variable!(
         )
 
         ub = get_variable_upper_bound(variable_type, d, psi_container.settings)
-        !isnothing(ub) && JuMP.set_upper_bound(variable[name, t], ub)
+        !(ub === nothing) && JuMP.set_upper_bound(variable[name, t], ub)
 
         lb = get_variable_lower_bound(variable_type, d, psi_container.settings)
-        !isnothing(lb) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
+        !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
         init = get_variable_initial_value(variable_type, d, psi_container.settings)
-        !isnothing(init) && JuMP.set_start_value(variable[name, t], init)
+        !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
 
-        if !(isnothing(expression_name))
+        if !((expression_name === nothing))
             bus_number = PSY.get_number(PSY.get_bus(d))
             add_to_expression!(
                 get_expression(psi_container, expression_name),

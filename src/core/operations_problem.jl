@@ -524,7 +524,7 @@ function solve!(
         param_values,
     )
 
-    !isnothing(save_path) && write_results(results, save_path)
+    !(save_path === nothing) && write_results(results, save_path)
 
     return results
 end

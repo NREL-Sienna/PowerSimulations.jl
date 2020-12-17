@@ -37,7 +37,7 @@ function construct_network!(
     ac_branches = get_available_components(PSY.ACBranch, sys)
     ptdf = get_PTDF(psi_container)
 
-    if isnothing(ptdf)
+    if ptdf === nothing
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
