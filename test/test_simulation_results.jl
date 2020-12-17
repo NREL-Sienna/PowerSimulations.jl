@@ -43,7 +43,7 @@ function test_simulation_results(file_path::String)
             ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
-            name = "cache",
+            name = "results_sim",
             steps = 2,
             stages = stages_definition,
             stages_sequence = sequence_cache,
@@ -55,24 +55,32 @@ function test_simulation_results(file_path::String)
         @test execute_out == PSI.SUCCESSFUL_RUN
         results_uc = SimulationResults(sim, "UC")
         results_ed = SimulationResults(sim, "ED")
+        results_uc_from_file = SimulationResults(joinpath(file_path,"results_sim"), "UC")
+        results_ed_from_file = SimulationResults(joinpath(file_path,"results_sim"), "ED")
 
-        ed_expected_vars = [:Sp__HydroEnergyReservoir
-                            :P__ThermalStandard
-                            :P__RenewableDispatch
-                            :E__HydroEnergyReservoir
-                            :P__InterruptibleLoad
-                            :P__HydroEnergyReservoir]
+        ed_expected_vars = [
+            :Sp__HydroEnergyReservoir
+            :P__ThermalStandard
+            :P__RenewableDispatch
+            :E__HydroEnergyReservoir
+            :P__InterruptibleLoad
+            :P__HydroEnergyReservoir
+        ]
 
-    uc_expected_vars = [:Sp__HydroEnergyReservoir
-                        :P__ThermalStandard
-                        :P__RenewableDispatch
-                        :start__ThermalStandard
-                        :stop__ThermalStandard
-                        :E__HydroEnergyReservoir
-                        :P__HydroEnergyReservoir
-                        :On__ThermalStandard]
+        uc_expected_vars = [
+            :Sp__HydroEnergyReservoir
+            :P__ThermalStandard
+            :P__RenewableDispatch
+            :start__ThermalStandard
+            :stop__ThermalStandard
+            :E__HydroEnergyReservoir
+            :P__HydroEnergyReservoir
+            :On__ThermalStandard
+        ]
         @test isempty(setdiff(uc_expected_vars, get_existing_variables(results_uc)))
         @test isempty(setdiff(ed_expected_vars, get_existing_variables(results_ed)))
+        @test isempty(setdiff(uc_expected_vars, get_existing_variables(results_uc_from_file)))
+        @test isempty(setdiff(ed_expected_vars, get_existing_variables(results_ed_from_file)))
 
         p_thermal_standard_ed = get_variable_values(results_ed, :P__ThermalStandard)
         @test length(keys(p_thermal_standard_ed)) == 24
@@ -80,13 +88,15 @@ function test_simulation_results(file_path::String)
             @test size(v) == (12, 5)
         end
 
-        ren_dispatch_params = get_parameter_values(results_ed, :P__max_active_power__RenewableDispatch)
+        ren_dispatch_params =
+            get_parameter_values(results_ed, :P__max_active_power__RenewableDispatch)
         @test length(keys(ren_dispatch_params)) == 24
         for v in values(p_thermal_standard_ed)
             @test size(v) == (12, 5)
         end
 
-        p_variables_uc = get_variables_values(results_uc, [:P__RenewableDispatch, :P__ThermalStandard])
+        p_variables_uc =
+            get_variables_values(results_uc, [:P__RenewableDispatch, :P__ThermalStandard])
         @test length(keys(p_variables_uc)) == 2
         for var_name in values(p_variables_uc)
             for v_ in values(var_name)
@@ -94,12 +104,18 @@ function test_simulation_results(file_path::String)
             end
         end
 
-        load_simulation_results!(results_ed, initial_time = DateTime("2024-01-01T00:00:00"), count = 3, variables = [:P__ThermalStandard])
+        load_simulation_results!(
+            results_ed,
+            initial_time = DateTime("2024-01-01T00:00:00"),
+            count = 3,
+            variables = [:P__ThermalStandard],
+        )
+
         @test !isempty(results_ed.variable_values[:P__ThermalStandard])
         @test length(results_ed.variable_values[:P__ThermalStandard]) == 3
-
         @test_throws IS.InvalidValue get_parameter_values(results_ed, :invalid)
         @test_throws IS.InvalidValue get_variable_values(results_ed, :invalid)
+
     end
 end
 
