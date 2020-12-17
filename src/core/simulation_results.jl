@@ -220,7 +220,7 @@ function _process_timestamps(
 end
 
 function _get_variables_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
-    isempty(names) && return res.variable_values
+    isempty(names) && return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_variables(res)
     _validate_names(existing_names, names)
     same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
@@ -257,7 +257,7 @@ function get_variables_values(
 end
 
 function _get_duals_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
-    isempty(names) && return res.dual_values
+    isempty(names) && return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_duals(res)
     _validate_names(existing_names, names)
     same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
@@ -293,7 +293,7 @@ function get_duals_values(
 end
 
 function _get_parameters_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
-    isempty(names) && return res.parameter_values
+    isempty(names) && return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_parameters(res)
     _validate_names(existing_names, names)
     same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
