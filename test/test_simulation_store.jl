@@ -8,7 +8,7 @@ import PowerSimulations:
     KiB,
     MiB,
     GiB,
-    CONTAINER_TYPE_VARIABLES,
+    STORE_CONTAINER_VARIABLES,
     CachePrioritys,
     initialize_stage_storage!,
     add_rule!,
@@ -29,7 +29,10 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
         stage_params = SimulationStoreStageParams(
             execution_count,
             horizon,
+            stage_defs[stage]["interval"],
             stage_defs[stage]["resolution"],
+            stage_defs[stage]["base_power"],
+            stage_defs[stage]["system_uuid"],
         )
         reqs = SimulationStoreStageRequirements()
 
@@ -43,7 +46,7 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
             add_rule!(
                 cache_rules,
                 stage,
-                CONTAINER_TYPE_VARIABLES,
+                STORE_CONTAINER_VARIABLES,
                 name,
                 keep_in_cache,
                 cache_priority,
@@ -66,7 +69,7 @@ end
 
 function _run_sim_test(path, sim, variables, stage_defs, cache_rules, seed)
     rng = MersenneTwister(seed)
-    type = CONTAINER_TYPE_VARIABLES
+    type = STORE_CONTAINER_VARIABLES
     h5_store_open(path, "w") do store
         sim_time = sim["initial_time"]
         _initialize!(store, sim, variables, stage_defs, cache_rules)
@@ -99,7 +102,7 @@ end
 
 function _verify_read_results(path, sim, variables, stage_defs, seed)
     rng = MersenneTwister(seed)
-    type = CONTAINER_TYPE_VARIABLES
+    type = STORE_CONTAINER_VARIABLES
     h5_store_open(path, "r") do store
         sim_time = sim["initial_time"]
         for step in 1:sim["num_steps"]
@@ -151,14 +154,20 @@ end
             "horizon" => 12,
             "names" => [:dev1, :dev2, :dev3, :dev4, :dev5],
             "variables" => Dict(x => ones(12, 5) for x in keys(variables)),
+            "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(1),
+            "base_power" => 100.0,
+            "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
         :UC => Dict(
             "execution_count" => 1,
             "horizon" => 24,
             "names" => [:dev1, :dev2, :dev3],
             "variables" => Dict(x => ones(24, 3) for x in keys(variables)),
+            "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(24),
+            "base_power" => 100.0,
+            "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
     )
     cache_rules = CacheFlushRules(max_size = 1 * MiB, min_flush_size = 4 * KiB)

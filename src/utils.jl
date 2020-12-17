@@ -41,6 +41,10 @@ function compute_file_hash(path::String, files::Vector{String})
     end
 end
 
+function compute_file_hash(path::String, file::String)
+    return compute_file_hash(path, [file])
+end
+
 function read_file_hashes(path)
     data = open(joinpath(path, HASH_FILENAME), "r") do io
         JSON.parse(io)
@@ -65,7 +69,6 @@ end
 # writing a dictionary of dataframes to files
 
 function write_data(vars_results::Dict, save_path::String; kwargs...)
-    file_type = get(kwargs, :file_type, Arrow)
     if :duals in keys(kwargs)
         name = "dual_"
     elseif :params in keys(kwargs)
@@ -73,14 +76,12 @@ function write_data(vars_results::Dict, save_path::String; kwargs...)
     else
         name = ""
     end
-    if file_type == Arrow || file_type == CSV
-        for (k, v) in vars_results
-            file_path = joinpath(save_path, "$name$k.$(lowercase("$file_type"))")
-            if isempty(vars_results[k])
-                @debug "$name$k is empty, not writing $file_path"
-            else
-                file_type.write(file_path, vars_results[k])
-            end
+    for (k, v) in vars_results
+        file_path = joinpath(save_path, "$name$k.csv")
+        if isempty(vars_results[k])
+            @debug "$name$k is empty, not writing $file_path"
+        else
+            file_type.write(file_path, vars_results[k])
         end
     end
 end
@@ -93,15 +94,14 @@ function write_data(
     save_path::AbstractString;
     kwargs...,
 )
-    file_type = get(kwargs, :file_type, Arrow)
     for (k, v) in vars_results
         var = DataFrames.DataFrame()
-        if file_type == CSV && size(time, 1) == size(v, 1)
+        if size(time, 1) == size(v, 1)
             var = hcat(time, v)
         else
             var = v
         end
-        file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
+        file_path = joinpath(save_path, "$(k).csv")
         file_type.write(file_path, var)
     end
 end
@@ -115,11 +115,8 @@ function write_data(
     if isfile(save_path)
         save_path = dirname(save_path)
     end
-    file_type = get(kwargs, :file_type, Arrow)
-    if file_type == Arrow || file_type == CSV
-        file_path = joinpath(save_path, "$(file_name).$(lowercase("$file_type"))")
-        file_type.write(file_path, data)
-    end
+    file_path = joinpath(save_path, "$(file_name).csv")
+    file_type.write(file_path, data)
     return
 end
 
@@ -359,10 +356,27 @@ function get_available_components(
 end
 
 """
-Load the complete arrow file into a DataFrame. Not optimized for memory use
+    check_file_integrity(path::String)
+
+Checks the hash value for each file made with the file is written with the new hash_value to verify the file hasn't been tampered with since written
+
+# Arguments
+- `path::String`: this is the folder path that contains the results and the check.sha256 file
 """
-function read_arrow_file(file::AbstractString)
-    return open(file, "r") do io
-        DataFrames.DataFrame(Arrow.Table(io))
+function check_file_integrity(path::String)
+    matched = true
+    for file_info in read_file_hashes(path)
+        filename = file_info["filename"]
+        @info "checking integrity of $filename"
+        expected_hash = file_info["hash"]
+        actual_hash = compute_sha256(filename)
+        if expected_hash != actual_hash
+            @error "hash mismatch for file" filename expected_hash actual_hash
+            matched = false
+        end
+    end
+
+    if !matched
+        throw(IS.HashMismatchError("The hash value in the written files does not match the read files, results may have been tampered."))
     end
 end

@@ -4,8 +4,8 @@ const HDF_OPTIMIZER_STATS_PATH = HDF_SIMULATION_ROOT_PATH * "/optimizer_stats"
 const HDF_OPTIMIZER_DATASET_PATH = HDF_OPTIMIZER_STATS_PATH * "/data"
 
 mutable struct Dataset
-    dataset::HDF5.HDF5Dataset
-    column_dataset::HDF5.HDF5Dataset
+    dataset::HDF5.Dataset
+    column_dataset::HDF5.Dataset
     write_index::Int
 end
 
@@ -31,6 +31,10 @@ mutable struct StageDatasets
     variables::Dict{Symbol, Dataset}
 end
 
+get_duals(stage_dataset::StageDatasets) = stage_dataset.duals
+get_parameters(stage_dataset::StageDatasets) = stage_dataset.parameters
+get_variables(stage_dataset::StageDatasets) = stage_dataset.variables
+
 function StageDatasets()
     return StageDatasets(
         Dict{Symbol, Dataset}(),
@@ -43,13 +47,15 @@ end
 Stores simulation data in an HDF file.
 """
 mutable struct HdfSimulationStore <: SimulationStore
-    file::HDF5.HDF5File
+    file::HDF5.File
     params::SimulationStoreParams
     # The key order is the stage execution order.
     datasets::OrderedDict{Symbol, StageDatasets}
     optimizer_stats_index::Int
     cache::ResultCache
 end
+
+get_params(store::HdfSimulationStore) = store.params
 
 function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
     if !(mode == "w" || mode == "r")
@@ -62,8 +68,8 @@ function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
 
     file = HDF5.h5open(file_path, mode)
     if mode == "w"
-        HDF5.g_create(file, HDF_SIMULATION_ROOT_PATH)
-        HDF5.g_create(file, HDF_OPTIMIZER_STATS_PATH)
+        HDF5.create_group(file, HDF_SIMULATION_ROOT_PATH)
+        HDF5.create_group(file, HDF_OPTIMIZER_STATS_PATH)
         @debug "Created store" file_path
     end
 
@@ -142,7 +148,7 @@ end
 
 function append_optimizer_stats!(store::HdfSimulationStore, stats::OptimizerStats)
     @assert_op store.optimizer_stats_index > 0
-    dataset = store.file["simulation/optimizer_stats/data"]
+    dataset = store.file[HDF_OPTIMIZER_DATASET_PATH]
     @assert_op store.optimizer_stats_index <= size(dataset)[1]
 
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
@@ -158,16 +164,17 @@ function initialize_optimizer_stats_storage!(store::HdfSimulationStore, num_stat
     group = _get_optimizer_stats_path(store)
 
     num_columns = length(fieldnames(PSI.OptimizerStats))
-    dataset = HDF5.d_create(
+    dataset = HDF5.create_dataset(
         group,
         "data",
         HDF5.datatype(Float64),
         HDF5.dataspace((num_stats, num_columns)),
     )
 
-    HDF5.attrs(dataset)["columns"] = get_column_names(OptimizerStats)
+    HDF5.attributes(dataset)["columns"] = get_column_names(OptimizerStats)
     @debug "Created dataset for optimizer stats" dataset size(dataset)
     store.optimizer_stats_index = 1
+    return
 end
 
 function initialize_stage_storage!(
@@ -181,12 +188,12 @@ function initialize_stage_storage!(
     stages_group = _get_group_or_create(root, "stages")
     set_max_size!(store.cache, flush_rules.max_size)
     set_min_flush_size!(store.cache, flush_rules.min_flush_size)
-    @info "initialize_stage_storage" store.cache
+    @debug "initialize_stage_storage" store.cache
 
     for stage in keys(store.params.stages)
         store.datasets[stage] = StageDatasets()
         stage_group = _get_group_or_create(stages_group, string(stage))
-        for type in CONTAINER_TYPES
+        for type in STORE_CONTAINERS
             group = _get_group_or_create(stage_group, string(type))
             for (name, reqs) in getfield(stage_reqs[stage], type)
                 dataset = _create_dataset(group, string(name), reqs)
@@ -246,6 +253,7 @@ function read_result(
     name,
     timestamp::Dates.DateTime,
 )
+    key = make_cache_key(stage_name, type, name)
     if is_cached!(store.cache, key, timestamp)
         data = read_result(store.cache, key, timestamp)
     else
@@ -265,7 +273,7 @@ function read_result(
     simulation_step::Int,
     execution_index::Int,
 )
-    @assert key.type in CONTAINER_TYPES "$(key.type)"
+    @assert key.type in STORE_CONTAINERS "$(key.type)"
 
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
 
@@ -275,7 +283,7 @@ function read_result(
         throw(ArgumentError("execution_index = $execution_index cannot be larger than $num_executions"))
     end
 
-    dataset = _get_dataset(store, key)
+    dataset = get_dataset(store, key)
     row_index = (simulation_step - 1) * num_executions + execution_index
     columns = dataset.column_dataset[:]
 
@@ -376,21 +384,25 @@ end
 
 function _deserialize_attributes!(store::HdfSimulationStore)
     group = store.file["simulation"]
-    initial_time = Dates.DateTime(HDF5.read(HDF5.attrs(group)["initial_time"]))
-    step_resolution = Dates.Millisecond(HDF5.read(HDF5.attrs(group)["step_resolution_ms"]))
-    num_steps = HDF5.read(HDF5.attrs(group)["num_steps"])
+    initial_time = Dates.DateTime(HDF5.read(HDF5.attributes(group)["initial_time"]))
+    step_resolution =
+        Dates.Millisecond(HDF5.read(HDF5.attributes(group)["step_resolution_ms"]))
+    num_steps = HDF5.read(HDF5.attributes(group)["num_steps"])
     store.params = SimulationStoreParams(initial_time, step_resolution, num_steps)
     empty!(store.datasets)
-    for stage in HDF5.read(HDF5.attrs(group)["stage_order"])
+    for stage in HDF5.read(HDF5.attributes(group)["stage_order"])
         stage_group = store.file["simulation/stages/$stage"]
         stage_name = Symbol(stage)
         store.params.stages[stage_name] = SimulationStoreStageParams(
-            HDF5.read(HDF5.attrs(stage_group)["num_executions"]),
-            HDF5.read(HDF5.attrs(stage_group)["horizon"]),
-            Dates.Millisecond(HDF5.read(HDF5.attrs(stage_group)["resolution_ms"])),
+            HDF5.read(HDF5.attributes(stage_group)["num_executions"]),
+            HDF5.read(HDF5.attributes(stage_group)["horizon"]),
+            Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["interval_ms"])),
+            Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["resolution_ms"])),
+            HDF5.read(HDF5.attributes(stage_group)["base_power"]),
+            Base.UUID(HDF5.read(HDF5.attributes(stage_group)["system_uuid"])),
         )
         store.datasets[stage_name] = StageDatasets()
-        for type in CONTAINER_TYPES
+        for type in STORE_CONTAINERS
             group = stage_group[string(type)]
             for name in names(group)
                 if !endswith(name, "columns")
@@ -411,24 +423,29 @@ end
 function _serialize_attributes(store::HdfSimulationStore, stages_group, stage_reqs)
     params = store.params
     group = store.file["simulation"]
-    HDF5.attrs(group)["stage_order"] = [string(k) for k in keys(params.stages)]
-    HDF5.attrs(group)["initial_time"] = string(params.initial_time)
-    HDF5.attrs(group)["step_resolution_ms"] =
+    HDF5.attributes(group)["stage_order"] = [string(k) for k in keys(params.stages)]
+    HDF5.attributes(group)["initial_time"] = string(params.initial_time)
+    HDF5.attributes(group)["step_resolution_ms"] =
         Dates.Millisecond(params.step_resolution).value
-    HDF5.attrs(group)["num_steps"] = params.num_steps
+    HDF5.attributes(group)["num_steps"] = params.num_steps
 
     for stage in keys(params.stages)
         stage_group = store.file["simulation/stages/$stage"]
-        HDF5.attrs(stage_group)["num_executions"] = params.stages[stage].num_executions
-        HDF5.attrs(stage_group)["horizon"] = params.stages[stage].horizon
-        HDF5.attrs(stage_group)["resolution_ms"] =
+        HDF5.attributes(stage_group)["num_executions"] = params.stages[stage].num_executions
+        HDF5.attributes(stage_group)["horizon"] = params.stages[stage].horizon
+        HDF5.attributes(stage_group)["resolution_ms"] =
             Dates.Millisecond(params.stages[stage].resolution).value
+        HDF5.attributes(stage_group)["interval_ms"] =
+            Dates.Millisecond(params.stages[stage].interval).value
+        HDF5.attributes(stage_group)["base_power"] = params.stages[stage].base_power
+        HDF5.attributes(stage_group)["system_uuid"] =
+            string(params.stages[stage].system_uuid)
     end
 end
 
 function _flush_data!(cache::ParamResultCache, store::HdfSimulationStore, key, discard)
     !has_dirty(cache) && return 0
-    dataset = _get_dataset(store, key)
+    dataset = get_dataset(store, key)
     timestamps, data = get_data_to_flush!(cache, get_min_flush_size(store.cache))
     num_results = length(timestamps)
     @assert_op num_results == size(data)[end]
@@ -458,11 +475,15 @@ function _get_columns_dataset(store::HdfSimulationStore, key)
     return getfield(store.datasets[key.stage], key.type)[key.name].columns
 end
 
-function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore)
+function get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore)
     return store.file[OPTIMIZER_DATASET_PATH]
 end
 
-function _get_dataset(store::HdfSimulationStore, key)
+function get_dataset(store::HdfSimulationStore, stage_name::Symbol)
+    return store.datasets[stage_name]
+end
+
+function get_dataset(store::HdfSimulationStore, key)
     return getfield(store.datasets[key.stage], key.type)[key.name]
 end
 
@@ -470,7 +491,7 @@ function _get_group_or_create(parent, group_name)
     if HDF5.exists(parent, group_name)
         group = parent[group_name]
     else
-        group = HDF5.g_create(parent, group_name)
+        group = HDF5.create_group(parent, group_name)
         @debug "Created group" group
     end
 
@@ -492,10 +513,10 @@ function _get_indices(store::HdfSimulationStore, stage, timestamp)
     stage_params = store.params.stages[stage]
     initial_time = store.params.initial_time + (step - 1) * store.params.step_resolution
     time_diff = timestamp - initial_time
-    if time_diff % stage_params.resolution != Dates.Millisecond(0)
-        throw(ArgumentError("timestamp = $timestamp is not on a stage resolution"))
+    if time_diff % stage_params.interval != Dates.Millisecond(0)
+        throw(ArgumentError("timestamp = $timestamp is not a valid stage timestamp"))
     end
-    execution_index = Int(time_diff / stage_params.resolution) + 1
+    execution_index = Int(time_diff / stage_params.interval) + 1
     return step, execution_index
 end
 
@@ -504,14 +525,14 @@ _get_optimizer_data_path(store::HdfSimulationStore) = store.file[HDF_OPTIMIZER_D
 _get_root(store::HdfSimulationStore) = store.file[HDF_SIMULATION_ROOT_PATH]
 
 function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
-    dataset = _get_dataset(OptimizerStats, store)
-    return HDF5.read(HDF5.attrs(dataset), "columns")
+    dataset = get_dataset(OptimizerStats, store)
+    return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
 function _read_data_columns(store, key, timestamp)
     if is_cached!(store.cache, key, timestamp)
         data = read_result(store.cache, key, timestamp)
-        column_dataset = _get_dataset(store, key).column_dataset
+        column_dataset = get_dataset(store, key).column_dataset
         columns = column_dataset[:]
     else
         data, columns = read_result(store, key, timestamp)
@@ -521,8 +542,8 @@ function _read_data_columns(store, key, timestamp)
 end
 
 function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
-    dataset = _get_dataset(OptimizerStats, store)
-    return HDF5.read(HDF5.attrs(dataset), "columns")
+    dataset = get_dataset(OptimizerStats, store)
+    return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
 function _write_dataset!(dataset, array, row_range)

@@ -32,20 +32,23 @@ const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 @enum BUILD_STATUS begin
-    BUILT = 1
+    BUILT = 0
     IN_PROGRESS = -1
-    EMPTY = 0
+    FAILED_BUILD = 1
+    EMPTY = 2
+end
+
+@enum RUN_STATUS begin
+    READY = -1
+    SUCCESSFUL_RUN = 0
+    RUNNING = 1
+    FAILED_RUN = 2
 end
 
 @enum SOS_STATUS_VARIABLE begin
     NO_VARIABLE = 1
     PARAMETER = 2
     VARIABLE = 3
-end
-
-@enum STAGE_STATUS begin
-    SUCESSFUL_RUN = 0
-    FAILED_RUN = 1
 end
 
 # Settings constants
@@ -72,6 +75,7 @@ const MiB = KiB * KiB
 const GiB = MiB * KiB
 
 # Interface limitations
+# TODO: Remove this and use Julia's default kwarg behavior
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
     :initial_time,
@@ -88,17 +92,6 @@ const OPERATIONS_ACCEPTED_KWARGS = [
 ]
 
 const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
-
-const STAGE_ACCEPTED_KWARGS = [
-    :PTDF,
-    :warm_start,
-    :balance_slack_variables,
-    :services_slack_variables,
-    :constraint_duals,
-    :system_to_file,
-    :export_pwl_vars,
-    :allow_fails,
-]
 
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]

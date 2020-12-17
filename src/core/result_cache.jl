@@ -28,7 +28,7 @@ set_min_flush_size!(cache::ResultCache, x) = cache.min_flush_size = x
 
 function add_param_cache!(cache::ResultCache, key, flush_rule)
     cache.data[key] = ParamResultCache(key, flush_rule)
-    @info "Added cache container for" key flush_rule
+    @debug "Added cache container for" key flush_rule
 end
 
 """
@@ -60,7 +60,7 @@ function log_cache_hit_percentages(cache::ResultCache)
     for key in sort!(collect(keys(cache.data)))
         param_cache = cache.data[key]
         cache_hit_pecentage = get_cache_hit_percentage(param_cache)
-        @info "Cache stats" key cache_hit_pecentage
+        @debug "Cache stats" key cache_hit_pecentage
     end
 end
 

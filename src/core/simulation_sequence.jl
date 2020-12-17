@@ -153,7 +153,6 @@ function _check_cache_defination(cache::Dict{<:Tuple, <:AbstractCache})
     return
 end
 
-# TODO: Add DocString
 @doc raw"""
     SimulationSequence(horizons::Dict{String, Int}
                         step_resolution::Dates.TimePeriod
@@ -231,24 +230,27 @@ function _get_num_executions_by_stage(order, execution_order)
     return executions_by_stage
 end
 
-function get_stage_horizon(s::SimulationSequence, stage::String)
-    horizon = get(s.horizons, stage, nothing)
+function get_stage_horizon(sequence::SimulationSequence, stage::String)
+    horizon = get(sequence.horizons, stage, nothing)
     isnothing(horizon) &&
         throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
     return horizon
 end
 
-get_stage_interval(s::SimulationSequence, stage::String) = s.intervals[stage][1]
+get_stage_interval(sequence::SimulationSequence, stage::String) =
+    sequence.intervals[stage][1]
 
-function get_stage_name(s::SimulationSequence, stage::Stage)
-    name = get(s.order, get_number(stage), nothing)
+function get_stage_name(sequence::SimulationSequence, stage::Stage)
+    name = get(get_order(sequence), get_number(stage), nothing)
     isnothing(name) &&
         throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
     return name
 end
 
-get_step_resolution(s::SimulationSequence) = s.step_resolution
+get_step_resolution(sequence::SimulationSequence) = sequence.step_resolution
 
-function get_stage_interval_chronology(s::SimulationSequence, stage::String)
-    return s.intervals[stage][2]
+function get_stage_interval_chronology(sequence::SimulationSequence, stage::String)
+    return sequence.intervals[stage][2]
 end
+
+get_order(sequence::SimulationSequence) = sequence.order

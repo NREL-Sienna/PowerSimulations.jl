@@ -109,3 +109,4 @@ get_balance_slack_variables(settings::PSISettings) = settings.balance_slack_vari
 get_services_slack_variables(settings::PSISettings) = settings.services_slack_variables
 get_system_to_file(settings::PSISettings) = settings.system_to_file
 get_export_pwl_vars(settings::PSISettings) = settings.export_pwl_vars
+get_allow_fails(settings::PSISettings) = settings.allow_fails

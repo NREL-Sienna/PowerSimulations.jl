@@ -11,6 +11,7 @@ export OperationsProblem
 export OperationsProblemTemplate
 export InitialCondition
 export SimulationSequence
+export SimulationResults
 
 #Network Relevant Exports
 export StandardPTDFModel
@@ -123,7 +124,6 @@ export set_model!
 ## Sim Model Exports
 export build!
 export execute!
-export make_references
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
@@ -134,22 +134,28 @@ export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
 ## Results interfaces
-export get_duals
+export get_stage_name
+export get_system
+export get_existing_duals
+export get_existing_variables
+export get_existing_parameters
+export get_existing_timestamps
+export get_variables_values
+export get_parameters_values
+export get_duals_values
+export get_variable_values
+export get_parameter_values
+export get_dual_values
+export load_simulation_results!
 
 ## Utils Exports
-export SimulationResultsReference
 export write_results
-export check_file_integrity
-export load_results
 export load_operation_results
-export load_simulation_results
 export write_to_CSV
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
-export get_result_variable
-export get_variable_names
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
@@ -213,7 +219,7 @@ export INFLOW_RANGE
 
 #################################################################################
 # Imports
-import DataStructures: OrderedDict, Deque
+import DataStructures: OrderedDict, Deque, SortedDict
 import Logging
 import Serialization
 #Modeling Imports
@@ -252,7 +258,6 @@ import TimeSeries
 
 #I/O Imports
 import DataFrames
-import Arrow
 import JSON
 import CSV
 import SHA

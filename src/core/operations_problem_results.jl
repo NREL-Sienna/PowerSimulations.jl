@@ -1,3 +1,4 @@
+# TODO: Reimplement everything here using CSV or HDF5 files
 struct OperationsProblemResults <: PSIResults
     base_power::Float64
     variable_values::Dict{Symbol, DataFrames.DataFrame}
@@ -8,6 +9,7 @@ struct OperationsProblemResults <: PSIResults
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
+get_existing_variables(result::OperationsProblemResults) = keys(get_variables(result))
 get_model_base_power(result::OperationsProblemResults) = result.base_power
 IS.get_variables(result::OperationsProblemResults) = result.variable_values
 IS.get_total_cost(result::OperationsProblemResults) = result.total_cost
@@ -38,7 +40,7 @@ end
     results = load_operation_results(path)
 
 This function can be used to load results from a folder
-of results from a single-step problem, or for a single foulder
+of results from a single-step problem, or for a single folder
 within a simulation.
 
 # Arguments
@@ -58,7 +60,7 @@ function load_operation_results(folder_path::AbstractString)
     files_in_folder = readdir(folder_path)
     variable_list = setdiff(
         files_in_folder,
-        ["time_stamp.arrow", "base_power.json", "optimizer_log.json", "check.sha256"],
+        ["time_stamp.csv", "base_power.json", "optimizer_log.json", "check.sha256"],
     )
     vars_result = Dict{Symbol, DataFrames.DataFrame}()
     dual_result = Dict{Symbol, Any}()
@@ -102,40 +104,6 @@ function load_operation_results(folder_path::AbstractString)
     return results
 end
 
-# This method is also used by OperationsProblemResults
-"""
-    write_results(results::PSIResults, save_path::String)
-
-Exports Operational Problem Results to a path
-
-# Arguments
-- `results::OperationsProblemResults`: results from the simulation
-- `save_path::String`: folder path where the files will be written
-
-# Accepted Key Words
-- `file_type = CSV`: only CSV and featherfile are accepted
-"""
-function IS.write_results(results::PSIResults, folder_path::String; kwargs...)
-    if !isdir(folder_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
-    end
-    write_data(get_variables(results), folder_path; kwargs...)
-    if !isempty(get_duals(results))
-        write_data(get_duals(results), folder_path; duals = true, kwargs...)
-    end
-    if !isempty(IS.get_parameters(results))
-        write_data(IS.get_parameters(results), folder_path; params = true, kwargs...)
-    end
-    write_data(get_model_base_power(results), folder_path)
-    write_optimizer_log(results.optimizer_log, folder_path)
-    write_data(IS.get_timestamp(results), folder_path, "time_stamp"; kwargs...)
-    files = readdir(folder_path)
-    compute_file_hash(folder_path, files)
-    @info("Files written to $folder_path folder.")
-    return
-end
-
-# writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::OperationsProblemResults, save_path::String; kwargs...)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))

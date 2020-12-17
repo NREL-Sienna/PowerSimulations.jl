@@ -534,19 +534,14 @@ function get_timestamps(op_problem::OperationsProblem)
     return time_stamp
 end
 
-function write_data(psi_container::PSIContainer, save_path::AbstractString; kwargs...)
-    file_type = get(kwargs, :file_type, Arrow)
-    if file_type == Arrow || file_type == CSV
-        for (k, v) in get_variables(psi_container)
-            file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-            variable = axis_array_to_dataframe(v)
-            if isempty(variable)
-                @debug "$(k) is empty, not writing $file_path"
-            else
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write feather variable" begin
-                    file_type.write(file_path, variable)
-                end
-            end
+function write_data(psi_container::PSIContainer, save_path::AbstractString)
+    for (k, v) in get_variables(psi_container)
+        file_path = joinpath(save_path, "$(k).csv")
+        variable = axis_array_to_dataframe(v)
+        if isempty(variable)
+            @debug "$(k) is empty, not writing $file_path"
+        else
+            CSV.write(file_path, variable)
         end
     end
     return
@@ -559,7 +554,7 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function export_op_model(op_problem::OperationsProblem, save_path::String)
-    _write_psi_container(op_problem.psi_container, save_path)
+    write_psi_container(op_problem.psi_container, save_path)
     return
 end
 
