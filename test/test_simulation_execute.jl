@@ -195,6 +195,114 @@ function test_simulation_with_cache(file_path::String)
     end
 end
 
+function test_simulation_utils(file_path)
+    stage_info = Dict(
+        "UC" => Dict("optimizer" => GLPK_optimizer, "jump_model" => nothing),
+        "ED" => Dict("optimizer" => ipopt_optimizer),
+    )
+    duals = [:CopperPlateBalance]
+    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
+    c_sys5_hy_ed = build_system("c_sys5_hy_ed")
+    stages_definition = Dict(
+        "UC" => Stage(
+            GenericOpProblem,
+            template_hydro_basic_uc,
+            c_sys5_hy_uc,
+            stage_info["UC"]["optimizer"];
+            constraint_duals = duals,
+        ),
+        "ED" => Stage(
+            GenericOpProblem,
+            template_hydro_ed,
+            c_sys5_hy_ed,
+            stage_info["ED"]["optimizer"];
+            constraint_duals = duals,
+        ),
+    )
+
+    sequence = SimulationSequence(
+        step_resolution = Hour(24),
+        order = Dict(1 => "UC", 2 => "ED"),
+        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+        horizons = Dict("UC" => 24, "ED" => 12),
+        intervals = Dict(
+            "UC" => (Hour(24), Consecutive()),
+            "ED" => (Hour(1), Consecutive()),
+        ),
+        feedforward = Dict(
+            ("ED", :devices, :Generators) => SemiContinuousFF(
+                binary_source_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
+            ),
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+                variable_source_stage = PSI.ACTIVE_POWER,
+                affected_variables = [PSI.ACTIVE_POWER],
+            ),
+        ),
+        ini_cond_chronology = InterStageChronology(),
+    )
+    sim = Simulation(
+        name = "aggregation",
+        steps = 2,
+        stages = stages_definition,
+        stages_sequence = sequence,
+        simulation_folder = file_path,
+    )
+    build_out = build!(sim; recorders = [:simulation])
+    @test build_out == PSI.BUILT
+    execute_out = execute!(sim)
+    @test execute_out == PSI.SUCCESSFUL_RUN
+
+    @testset "Verify simulation events" begin
+            file = joinpath(
+                PSI.get_simulation_dir(sim),
+                "recorder",
+                "simulation.log",
+            )
+            @test isfile(file)
+            events = PSI.list_simulation_events(
+                PSI.InitialConditionUpdateEvent,
+                PSI.get_simulation_dir(sim);
+                step = 1,
+            )
+            @test length(events) == 0
+            events = PSI.list_simulation_events(
+                PSI.InitialConditionUpdateEvent,
+                PSI.get_simulation_dir(sim);
+                step = 2,
+            )
+            @test length(events) == 10
+            PSI.show_simulation_events(
+                devnull,
+                PSI.InitialConditionUpdateEvent,
+                PSI.get_simulation_dir(sim),;
+                step = 2,
+            )
+            events = PSI.list_simulation_events(
+                PSI.InitialConditionUpdateEvent,
+                PSI.get_simulation_dir(sim);
+                step = 1,
+                stage = 1,
+            )
+            @test length(events) == 0
+            events = PSI.list_simulation_events(
+                PSI.InitialConditionUpdateEvent,
+                PSI.get_simulation_dir(sim),;
+                step = 2,
+                stage = 1,
+            )
+            @test length(events) == 10
+            PSI.show_simulation_events(
+                devnull,
+                PSI.InitialConditionUpdateEvent,
+                PSI.get_simulation_dir(sim),;
+                step = 2,
+                stage = 1,
+            )
+        end
+
+end
+
 @testset "Test simulation execution" begin
     # Use spaces in this path because that has caused failures.
     path = mkpath(joinpath(pwd(), "test_simulation_results"))
@@ -202,6 +310,7 @@ end
         test_simulation_single_ed,
         test_simulation_without_caches,
         test_simulation_with_cache,
+        test_simulation_utils
     ]
     try
         for f in test_set
