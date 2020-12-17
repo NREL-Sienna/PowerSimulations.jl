@@ -55,8 +55,8 @@ function test_simulation_results(file_path::String)
         @test execute_out == PSI.SUCCESSFUL_RUN
         results_uc = SimulationResults(sim, "UC")
         results_ed = SimulationResults(sim, "ED")
-        results_uc_from_file = SimulationResults(joinpath(file_path,"results_sim"), "UC")
-        results_ed_from_file = SimulationResults(joinpath(file_path,"results_sim"), "ED")
+        results_uc_from_file = SimulationResults(joinpath(file_path, "results_sim"), "UC")
+        results_ed_from_file = SimulationResults(joinpath(file_path, "results_sim"), "ED")
 
         ed_expected_vars = [
             :Sp__HydroEnergyReservoir
@@ -79,8 +79,14 @@ function test_simulation_results(file_path::String)
         ]
         @test isempty(setdiff(uc_expected_vars, get_existing_variables(results_uc)))
         @test isempty(setdiff(ed_expected_vars, get_existing_variables(results_ed)))
-        @test isempty(setdiff(uc_expected_vars, get_existing_variables(results_uc_from_file)))
-        @test isempty(setdiff(ed_expected_vars, get_existing_variables(results_ed_from_file)))
+        @test isempty(setdiff(
+            uc_expected_vars,
+            get_existing_variables(results_uc_from_file),
+        ))
+        @test isempty(setdiff(
+            ed_expected_vars,
+            get_existing_variables(results_ed_from_file),
+        ))
 
         p_thermal_standard_ed = get_variable_values(results_ed, :P__ThermalStandard)
         @test length(keys(p_thermal_standard_ed)) == 24
@@ -115,7 +121,6 @@ function test_simulation_results(file_path::String)
         @test length(results_ed.variable_values[:P__ThermalStandard]) == 3
         @test_throws IS.InvalidValue get_parameter_values(results_ed, :invalid)
         @test_throws IS.InvalidValue get_variable_values(results_ed, :invalid)
-
     end
 end
 

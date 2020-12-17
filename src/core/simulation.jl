@@ -979,7 +979,7 @@ function execute!(sim::Simulation; kwargs...)
     catch e
         # TODO: Add Fallback when run_stage fails
         set_simulation_status!(sim, FAILED_RUN)
-        @error "simulation failed" exception=(e,catch_backtrace())
+        @error "simulation failed" exception = (e, catch_backtrace())
     finally
         unregister_recorders!(sim.internal)
         close(logger)
