@@ -1,9 +1,3 @@
-function get_deserialized(sim::Simulation, stage_info)
-    path = mktempdir()
-    directory = PSI.serialize(sim; path = path)
-    return Simulation(directory, stage_info)
-end
-
 function test_simulation_single_ed(file_path::String)
     @testset "Single stage sequential tests" begin
         c_sys5_uc = build_system("c_sys5_uc")
@@ -300,6 +294,18 @@ function test_simulation_utils(file_path)
                 stage = 1,
             )
         end
+
+    @testset "Check Serialization - Deserialization of Sim" begin
+        path = mktempdir()
+        files_path = PSI.serialize_simulation(sim; path = path)
+        deserialized_sim = Simulation(files_path, stage_info)
+        build_out = build!(deserialized_sim)
+        @test build_out == PSI.BUILT
+        for stage in values(PSI.get_stages(deserialized_sim))
+            @test PSI.is_stage_built(stage)
+        end
+    end
+
 
 end
 
