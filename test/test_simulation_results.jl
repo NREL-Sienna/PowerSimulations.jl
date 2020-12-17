@@ -14,6 +14,7 @@ function test_simulation_results(file_path::String)
                 template_hydro_st_ed,
                 c_sys5_hy_ed,
                 GLPK_optimizer,
+                constraint_duals = [:CopperPlateBalance]
             ),
         )
 
@@ -99,6 +100,12 @@ function test_simulation_results(file_path::String)
         @test length(keys(ren_dispatch_params)) == 24
         for v in values(p_thermal_standard_ed)
             @test size(v) == (12, 5)
+        end
+
+        network_duals = get_dual_values(results_ed, :CopperPlateBalance)
+        @test length(keys(network_duals)) == 24
+        for v in values(network_duals)
+            @test size(v) == (12, 1)
         end
 
         p_variables_uc =
