@@ -147,6 +147,7 @@ export get_variable_values
 export get_parameter_values
 export get_dual_values
 export load_simulation_results!
+export clear_simulation_results!
 
 ## Utils Exports
 export write_results

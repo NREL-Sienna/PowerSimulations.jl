@@ -363,7 +363,8 @@ end
 
 """
     Loads the simulation results into memory for repeated reads. Running this function twice
-    overwrites the previously loaded results
+    overwrites the previously loaded results. This is useful when loading results from remote
+    locations over network connections
 
     # Required Key Words
     - `initial_time::Dates.DateTime` : initial of the requested results
@@ -389,7 +390,7 @@ function load_simulation_results!(
     merge!(res.dual_values, _get_duals_values(res, duals, res.results_timestamps))
     merge!(
         res.parameter_values,
-        _get_variables_values(res, parameters, res.results_timestamps),
+        _get_parameters_values(res, parameters, res.results_timestamps),
     )
     return nothing
 end
@@ -408,7 +409,7 @@ function clear_simulation_results!(res::SimulationResults)
     _clear_result_dict(res.variable_values)
     _clear_result_dict(res.dual_values)
     _clear_result_dict(res.parameter_values)
-    res.results_timestamps = nothing
+    res.results_timestamps = Vector{Dates.DateTime}()
     return
 end
 

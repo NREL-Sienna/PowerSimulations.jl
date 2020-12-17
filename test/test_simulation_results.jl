@@ -128,6 +128,23 @@ function test_simulation_results(file_path::String)
         @test length(results_ed.variable_values[:P__ThermalStandard]) == 3
         @test_throws IS.InvalidValue get_parameter_values(results_ed, :invalid)
         @test_throws IS.InvalidValue get_variable_values(results_ed, :invalid)
+
+        clear_simulation_results!(results_ed)
+        @test isempty(results_ed.variable_values[:P__ThermalStandard])
+
+
+            load_simulation_results!(
+            results_ed,
+            initial_time = DateTime("2024-01-01T00:00:00"),
+            count = 3,
+            variables = [:P__ThermalStandard],
+            duals = [:CopperPlateBalance],
+            parameters = [:P__max_active_power__RenewableDispatch]
+        )
+
+        @test !isempty(results_ed.variable_values[:P__ThermalStandard])
+        @test !isempty(results_ed.dual_values[:CopperPlateBalance])
+        @test !isempty(results_ed.parameter_values[:P__max_active_power__RenewableDispatch])
     end
 end
 
