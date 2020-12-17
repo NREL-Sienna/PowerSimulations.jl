@@ -3,7 +3,6 @@
 const ACTIVE_POWER = "P"
 const ACTIVE_POWER_IN = "Pin"
 const ACTIVE_POWER_OUT = "Pout"
-const AREA_MISMATCH = "area_mismatch"
 const COLD_START = "start_cold"
 const ENERGY = "E"
 const ENERGY_UP = "Eup"
@@ -117,7 +116,7 @@ make_variable_name(::Type{EnergyVariableUp}, ::Type{T}) where {T <: PSY.Device} 
 
 make_variable_name(::Type{EnergyVariableDown}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "Edown")
 
-make_variable_name(::Type{LiftVariable}) = encode_symbol("lift")
+make_variable_name(::Type{LiftVariable}) = :lift
 
 make_variable_name(::Type{LiftVariable}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "lift")
 
@@ -135,9 +134,9 @@ make_variable_name(::Type{StartVariable}, ::Type{T}) where {T <: PSY.Device} = e
 
 make_variable_name(::Type{StopVariable}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "stop")
 
-make_variable_name(::Type{SteadyStateFrequencyDeviation}) = encode_symbol("Δf")
+make_variable_name(::Type{SteadyStateFrequencyDeviation}) = :Δf
 
-make_variable_name(::Type{AreaMismatchVariable}) = encode_symbol(AREA_MISMATCH)
+make_variable_name(::Type{AreaMismatchVariable}) = :area_mismatch
 
 make_variable_name(::Type{DeltaActivePowerUpVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "ΔP_up")
 
