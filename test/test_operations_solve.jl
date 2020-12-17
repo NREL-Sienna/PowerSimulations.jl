@@ -1,5 +1,3 @@
-import CSV
-
 devices = Dict{Symbol, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -415,9 +413,69 @@ end
         end
     end
 end
-################################################################
-#=
-function test_write_functions(file_path, op_problem, res)
+
+@testset "Set optimizer at solve call" begin
+    c_sys5 = build_system("c_sys5")
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    )
+    template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
+    UC = OperationsProblem(TestOpProblem, template, c_sys5;)
+    set_services_template!(
+        UC,
+        Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
+    )
+    res = solve!(UC; optimizer = GLPK_optimizer)
+    @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
+end
+
+@testset "Test duals and variables getter functions" begin
+    duals = [:CopperPlateBalance]
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    c_sys5_re = build_system("c_sys5_re")
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5_re;
+        optimizer = OSQP_optimizer,
+        use_parameters = true,
+        constraint_duals = duals,
+    )
+    res = solve!(op_problem)
+
+    @testset "test constraint duals in the operations problem" begin
+        name = PSI.make_constraint_name("CopperPlateBalance")
+        for i in 1:ncol(IS.get_timestamp(res))
+            dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
+            @test isapprox(dual, PSI.get_duals(res)[name][i, 1])
+        end
+        dual_results = get_dual_values(op_problem.psi_container, duals)
+        @test dual_results == res.dual_values
+    end
+
+    @testset "test get variable function" begin
+        @test_throws IS.ConflictingInputsError PSI.get_variable(res, :fake)
+        @test res.variable_values[:P__ThermalStandard] ==
+              PSI.get_variable(res, :P__ThermalStandard)
+    end
+
+    @testset "Test parameter values" begin
+    system = op_problem.sys
+    params =
+        PSI.get_parameter_array(op_problem.psi_container.parameters[:P__max_active_power__PowerLoad])
+    params = PSI.axis_array_to_dataframe(params)
+    devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
+    multiplier = [PSY.get_active_power(devices[1])]
+    for d in 2:length(devices)
+        multiplier = hcat(multiplier, PSY.get_active_power(devices[d]))
+    end
+    extracted = -multiplier .* params
+    @test extracted == res.parameter_values[:P_PowerLoad]
+    end
+end
+
+function test_op_problem_write_functions(file_path)
     @testset "Test write optimizer problem" begin
         path = mkdir(joinpath(file_path, "op_problem"))
         file = joinpath(path, "op_problem.json")
@@ -482,87 +540,17 @@ function test_write_functions(file_path, op_problem, res)
         @test !isempty(new_path)
     end
 
-    @testset "Test parameter values" begin
-        c_sys5_re = build_system("c_sys5_re")
-        system = op_problem.sys
-        params =
-            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__max_active_power__PowerLoad])
-        params = PSI.axis_array_to_dataframe(params)
-        devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
-        multiplier = [PSY.get_active_power(devices[1])]
-        for d in 2:length(devices)
-            multiplier = hcat(multiplier, PSY.get_active_power(devices[d]))
-        end
-        extracted = -multiplier .* params
-        @test extracted == res.parameter_values[:P_PowerLoad]
-    end
-
-    @testset "Set optimizer at solve call" begin
-        c_sys5 = build_system("c_sys5")
-        devices = Dict{Symbol, DeviceModel}(
-            :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
-            :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-        )
-        template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-        UC = OperationsProblem(TestOpProblem, template, c_sys5;)
-        set_services_template!(
-            UC,
-            Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
-        )
-        res = solve!(UC; optimizer = GLPK_optimizer)
-        @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
-    end
-
     @testset "Test get_variable function" begin
         variable = PSI.get_result_variable(res, :P, ThermalStandard)
         @test isa(variable, DataFrames.DataFrame)
     end
 end
-=#
-@testset "Miscellaneous OperationsProblem" begin
-    duals = [:CopperPlateBalance]
-    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5_re = build_system("c_sys5_re")
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        template,
-        c_sys5_re;
-        optimizer = OSQP_optimizer,
-        use_parameters = true,
-        constraint_duals = duals,
-    )
-    res = solve!(op_problem)
-    # @testset "Test print methods" begin
-    #     list = [template, op_problem, op_problem.psi_container, res, services]
-    #     _test_plain_print_methods(list)
-    #     list = [services]
-    #     _test_html_print_methods(list)
-    # end
 
-    @testset "test constraint duals in the operations problem" begin
-        name = PSI.make_constraint_name("CopperPlateBalance")
-        for i in 1:ncol(IS.get_timestamp(res))
-            dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
-            @test isapprox(dual, PSI.get_duals(res)[name][i, 1])
-        end
-        dual_results = get_dual_values(op_problem.psi_container, duals)
-        @test dual_results == res.dual_values
-    end
-
-    @testset "test get variable function" begin
-        @test_throws IS.ConflictingInputsError PSI.get_variable(res, :fake)
-        @test res.variable_values[:P__ThermalStandard] ==
-              PSI.get_variable(res, :P__ThermalStandard)
-    end
-
-    #@testset "Test writing functions" begin
-    #    path = joinpath(pwd(), "test_writing")
-    #    try
-    #        !isdir(path) && mkdir(path)
-    #        test_write_functions(path, op_problem, res)
-    #    finally
-    #        @info("removing test files")
-    #        rm(path, recursive = true)
-    #    end
-    #end
-end
+#path = joinpath(pwd(), "test_writing")
+#    try
+#        !isdir(path) && mkdir(path)
+#        test_write_functions(path, op_problem, res)
+#    finally
+#        @info("removing test files")
+#        rm(path, recursive = true)
+#    end

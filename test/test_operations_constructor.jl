@@ -184,3 +184,19 @@ end
     @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
     @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
 end
+
+@testset "Test print methods" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    c_sys5 = build_system("c_sys5")
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5;
+        optimizer = GLPK_optimizer,
+        use_parameters = true,
+    )
+    list = [template, op_problem, op_problem.psi_container, services]
+    _test_plain_print_methods(list)
+    list = [services]
+    _test_html_print_methods(list)
+end

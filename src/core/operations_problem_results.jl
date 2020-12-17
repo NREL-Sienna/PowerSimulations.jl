@@ -1,11 +1,10 @@
-# TODO: Reimplement everything here using CSV or HDF5 files
 struct OperationsProblemResults <: PSIResults
     base_power::Float64
     variable_values::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
-    dual_values::Dict{Symbol, Any}
+    dual_values::Dict{Symbol, DataFrames.DataFrame}
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
@@ -34,74 +33,6 @@ function _find_duals(variables::Array)
         end
     end
     return duals
-end
-
-"""
-    results = load_operation_results(path)
-
-This function can be used to load results from a folder
-of results from a single-step problem, or for a single folder
-within a simulation.
-
-# Arguments
-- `path::AbstractString = folder path`
-- `directory::AbstractString = "2019-10-03T09-18-00"`: the foulder name that contains
-feather files of the results.
-
-# Example
-```julia
-results = load_operation_results("/Users/test/2019-10-03T09-18-00")
-```
-"""
-function load_operation_results(folder_path::AbstractString)
-    if isfile(folder_path)
-        throw(ArgumentError("Not a folder path."))
-    end
-    files_in_folder = readdir(folder_path)
-    variable_list = setdiff(
-        files_in_folder,
-        ["time_stamp.csv", "base_power.json", "optimizer_log.json", "check.sha256"],
-    )
-    vars_result = Dict{Symbol, DataFrames.DataFrame}()
-    dual_result = Dict{Symbol, Any}()
-    dual_names = _find_duals(variable_list)
-    param_names = _find_params(variable_list)
-    variable_list = setdiff(variable_list, vcat(dual_names, param_names, ".DS_Store"))
-    param_values = Dict{Symbol, DataFrames.DataFrame}()
-    for name in variable_list
-        variable_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        vars_result[Symbol(variable_name)] = read_arrow_file(file_path)
-    end
-    for name in dual_names
-        dual_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        dual_result[Symbol(dual_name)] = read_arrow_file(file_path)
-    end
-    for name in param_names
-        param_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        param_values[Symbol(param_name)] = read_arrow_file(file_path)
-    end
-    optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
-    time_stamp = read_arrow_file(joinpath(folder_path, "time_stamp.arrow"))
-    time_stamp = convert.(Dates.DateTime, time_stamp)
-    base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
-    if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
-        time_stamp = shorten_time_stamp(time_stamp)
-    end
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
-    check_file_integrity(folder_path)
-    results = OperationsProblemResults(
-        base_power,
-        vars_result,
-        obj_value,
-        optimizer_log,
-        time_stamp,
-        dual_result,
-        param_values,
-    )
-    return results
 end
 
 function write_to_CSV(results::OperationsProblemResults, save_path::String; kwargs...)

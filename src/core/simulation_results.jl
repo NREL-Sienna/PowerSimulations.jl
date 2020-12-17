@@ -211,12 +211,12 @@ function _process_timestamps(
             requested_range = [v for v in existing_timestamps if v >= initial_time]
         else
             requested_range =
-                    collect(range(initial_time, length = count, step = get_interval(res)))
+                collect(range(initial_time, length = count, step = get_interval(res)))
         end
         invalid_timestamps = [v for v in requested_range if v ∉ existing_timestamps]
     end
     if !isempty(invalid_timestamps)
-        @error  "Timestamps $(invalid_timestamps) not stored" get_existing_timestamps(res)
+        @error "Timestamps $(invalid_timestamps) not stored" get_existing_timestamps(res)
         throw(IS.InvalidValue("Timestamps not stored"))
     end
     return requested_range

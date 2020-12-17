@@ -151,7 +151,6 @@ export clear_simulation_results!
 
 ## Utils Exports
 export write_results
-export load_operation_results
 export write_to_CSV
 export get_all_constraint_index
 export get_all_var_index
