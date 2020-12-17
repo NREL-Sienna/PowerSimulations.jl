@@ -358,13 +358,6 @@ function get_parameter_values(res::SimulationResults, name::Symbol; kwargs...)
     return get_parameters_values(res, [name]; kwargs...)[name]
 end
 
-function _store_result!(result_dict, results)
-    for (k, v) in results
-        result_dict[k] = v
-    end
-    return
-end
-
 """
     Loads the simulation results into memory for repeated reads. Running this function twice
     overwrites the previously loaded results
@@ -386,12 +379,12 @@ function load_simulation_results!(
     parameters::Vector{Symbol} = Symbol[],
 )
     res.results_timestamps = _process_timestamps(res, initial_time, count)
-    _store_result!(
+    merge!(
         res.variable_values,
         _get_variables_values(res, variables, res.results_timestamps),
     )
-    _store_result!(res.dual_values, _get_duals_values(res, duals, res.results_timestamps))
-    _store_result!(
+    merge!(res.dual_values, _get_duals_values(res, duals, res.results_timestamps))
+    merge!(
         res.parameter_values,
         _get_variables_values(res, parameters, res.results_timestamps),
     )
