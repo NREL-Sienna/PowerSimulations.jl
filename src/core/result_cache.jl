@@ -47,11 +47,11 @@ end
 """
 Return true if the data for `timestamp` is stored in cache.
 """
-function is_cached!(cache::ResultCache, type, name, stage, timestamp)
-    return is_cached!(cache, make_cache_key(stage, type, name), timestamp)
+function is_cached(cache::ResultCache, type, name, stage, timestamp)
+    return is_cached(cache, make_cache_key(stage, type, name), timestamp)
 end
 
-is_cached!(cache::ResultCache, key, timestamp) = has_timestamp(cache.data[key], timestamp)
+is_cached(cache::ResultCache, key, timestamp) = has_timestamp(cache.data[key], timestamp)
 
 """
 Log the cache hit percentages for all caches.
