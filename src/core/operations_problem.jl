@@ -194,7 +194,7 @@ function OperationsProblem(
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
 )
-    return deserialize(
+    return deserialize_problem(
         OperationsProblem,
         filename;
         jump_model = jump_model,
@@ -534,26 +534,8 @@ function get_timestamps(op_problem::OperationsProblem)
     return time_stamp
 end
 
-function write_data(psi_container::PSIContainer, save_path::AbstractString)
-    for (k, v) in get_variables(psi_container)
-        file_path = joinpath(save_path, "$(k).csv")
-        variable = axis_array_to_dataframe(v)
-        if isempty(variable)
-            @debug "$(k) is empty, not writing $file_path"
-        else
-            CSV.write(file_path, variable)
-        end
-    end
-    return
-end
-
-function write_data(op_problem::OperationsProblem, save_path::String; kwargs...)
-    write_data(op_problem.psi_container, save_path; kwargs...)
-    return
-end
-
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function export_op_model(op_problem::OperationsProblem, save_path::String)
+function export_operations_model(op_problem::OperationsProblem, save_path::String)
     write_psi_container(op_problem.psi_container, save_path)
     return
 end
@@ -604,7 +586,7 @@ function get_var_index(op_problem::OperationsProblem, index::Int)
     return
 end
 
-function serialize(op_problem::OperationsProblem, filename::AbstractString)
+function serialize_problem(op_problem::OperationsProblem, filename::AbstractString)
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
     sys_filename = "$(basename(filename))-system-$(IS.get_uuid(op_problem.sys)).json"
@@ -619,7 +601,7 @@ function serialize(op_problem::OperationsProblem, filename::AbstractString)
     @info "Serialized OperationsProblem to" filename
 end
 
-function deserialize(::Type{OperationsProblem}, filename::AbstractString; kwargs...)
+function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString; kwargs...)
     obj = Serialization.deserialize(filename)
     if !(obj isa OperationsProblemSerializationWrapper)
         throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))

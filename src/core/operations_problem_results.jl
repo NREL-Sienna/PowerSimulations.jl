@@ -17,7 +17,7 @@ IS.get_timestamp(result::OperationsProblemResults) = result.time_stamp
 get_duals(result::OperationsProblemResults) = result.dual_values
 IS.get_parameters(result::OperationsProblemResults) = result.parameter_values
 
-function get_variable(res_model::OperationsProblemResults, key::Symbol)
+function get_variable_value(res_model::OperationsProblemResults, key::Symbol)
     var_result = get(res_model.variable_values, key, nothing)
     if isnothing(var_result)
         throw(IS.ConflictingInputsError("No variable with key $(key) has been found."))
@@ -33,6 +33,16 @@ function _find_duals(variables::Array)
         end
     end
     return duals
+end
+
+function _find_params(variables::Array)
+    params = []
+    for i in 1:length(variables)
+        if occursin("parameter", String.(variables[i]))
+            params = vcat(params, variables[i])
+        end
+    end
+    return params
 end
 
 function write_to_CSV(results::OperationsProblemResults, save_path::String; kwargs...)
@@ -87,14 +97,4 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
-end
-
-function _find_params(variables::Array)
-    params = []
-    for i in 1:length(variables)
-        if occursin("parameter", String.(variables[i]))
-            params = vcat(params, variables[i])
-        end
-    end
-    return params
 end

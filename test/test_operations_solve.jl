@@ -9,20 +9,6 @@ branches = Dict{Symbol, DeviceModel}(
 )
 services = Dict{Symbol, ServiceModel}()
 
-function get_deserialized(op_problem::OperationsProblem; kwargs...)
-    orig = pwd()
-    path = mktempdir()
-    cd(path)
-
-    try
-        filename = "test_op_problem.bin"
-        PSI.serialize(op_problem, filename)
-        return OperationsProblem(filename; kwargs...)
-    finally
-        cd(orig)
-    end
-end
-
 @testset "Solving ED with CopperPlate" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     parameters_value = [true, false]
@@ -41,10 +27,6 @@ end
                 use_parameters = p,
             )
             psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
-
-            # Serialize, deserialize, rebuild, re-run.
-            ED2 = get_deserialized(ED; optimizer = OSQP_optimizer)
-            psi_checksolve_test(ED2, [MOI.OPTIMAL], test_results[sys], 10000)
         end
     end
     c_sys5_re = build_system("c_sys5_re")
@@ -454,37 +436,48 @@ end
         @test dual_results == res.dual_values
     end
 
-    @testset "test get variable function" begin
-        @test_throws IS.ConflictingInputsError PSI.get_variable(res, :fake)
-        @test res.variable_values[:P__ThermalStandard] ==
-              PSI.get_variable(res, :P__ThermalStandard)
-    end
-
     @testset "Test parameter values" begin
-    system = op_problem.sys
-    params =
-        PSI.get_parameter_array(op_problem.psi_container.parameters[:P__max_active_power__PowerLoad])
-    params = PSI.axis_array_to_dataframe(params)
-    devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
-    multiplier = [PSY.get_active_power(devices[1])]
-    for d in 2:length(devices)
-        multiplier = hcat(multiplier, PSY.get_active_power(devices[d]))
-    end
-    extracted = -multiplier .* params
-    @test extracted == res.parameter_values[:P_PowerLoad]
+        system = op_problem.sys
+        params =
+            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__max_active_power__PowerLoad])
+        params = PSI.axis_array_to_dataframe(params)
+        devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
+        multiplier = [PSY.get_active_power(devices[1])]
+        for d in 2:length(devices)
+            multiplier = hcat(multiplier, PSY.get_active_power(devices[d]))
+        end
+        extracted = -multiplier .* params
+        @test extracted == res.parameter_values[:P_PowerLoad]
     end
 end
 
 function test_op_problem_write_functions(file_path)
-    @testset "Test write optimizer problem" begin
-        path = mkdir(joinpath(file_path, "op_problem"))
+    duals = [:CopperPlateBalance]
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    c_sys5_re = build_system("c_sys5_re")
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5_re;
+        optimizer = OSQP_optimizer,
+        use_parameters = true,
+        constraint_duals = duals,
+    )
+    res = solve!(op_problem)
+
+    @testset "Test Serialization, deserialization and write optimizer problem" begin
+        path = mkpath(joinpath(file_path, "op_problem"))
         file = joinpath(path, "op_problem.json")
-        PSI.export_op_model(op_problem, file)
-        PSI.write_data(op_problem, path)
-        list = sort!(collect(readdir(path)))
-        @test ["P__ThermalStandard.csv", "op_problem.json"] == list
+        export_operations_model(op_problem, file)
+        filename = joinpath(path, "test_op_problem.bin")
+        serialize_problem(op_problem, filename)
+        file_list = sort!(collect(readdir(path)))
+        @test ["op_problem.json", "test_op_problem.bin"] == file_list
+        ED2 = OperationsProblem(filename, optimizer = OSQP_optimizer)
+        psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
     end
 
+    #=
     @testset "Test write_data functions" begin
         PSI.write_data(get_variables(res), mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
@@ -544,13 +537,15 @@ function test_op_problem_write_functions(file_path)
         variable = PSI.get_result_variable(res, :P, ThermalStandard)
         @test isa(variable, DataFrames.DataFrame)
     end
+    =#
 end
 
-#path = joinpath(pwd(), "test_writing")
-#    try
-#        !isdir(path) && mkdir(path)
-#        test_write_functions(path, op_problem, res)
-#    finally
-#        @info("removing test files")
-#        rm(path, recursive = true)
-#    end
+@testset "Operation write to disk functions" begin
+    path = mkpath(joinpath(pwd(), "test_writing"))
+    try
+        test_op_problem_write_functions(path)
+    finally
+        @info("removing test files")
+        rm(path, recursive = true)
+    end
+end
