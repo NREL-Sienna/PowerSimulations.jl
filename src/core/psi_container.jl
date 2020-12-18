@@ -490,7 +490,7 @@ function write_psi_container(psi_container::PSIContainer, save_path::String)
     return
 end
 
-function get_variables_value(psi_container::PSIContainer)
+function get_variables_values(psi_container::PSIContainer)
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
     for (k, v) in get_variables(psi_container)
         results_dict[k] = axis_array_to_dataframe(v)
