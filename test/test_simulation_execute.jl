@@ -720,6 +720,35 @@ function test_load_simulation(file_path::String)
             end
         end
     end
+
+    @testset "" begin
+        c_sys5_pglib = build_system("c_sys5_pglib_sim")
+        stages_definition = Dict(
+            "UC" => Stage(
+                GenericOpProblem,
+                template_multi_start_uc,
+                c_sys5_pglib,
+                Cbc_optimizer,
+                balance_slack_variables = true,
+            ),
+        )
+        sequence = SimulationSequence(
+            step_resolution = Hour(14),
+            order = Dict(1 => "UC"),
+            horizons = Dict("UC" => 24),
+            intervals = Dict("UC" => (Hour(14), Consecutive())),
+            ini_cond_chronology = IntraStageChronology(),
+        )
+        sim = Simulation(
+            name = "multi_start-test",
+            steps = 2,
+            stages = stages_definition,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+        )
+        build!(sim)
+        sim_results = execute!(sim)
+    end
 end
 
 @testset "Test load simulation" begin
