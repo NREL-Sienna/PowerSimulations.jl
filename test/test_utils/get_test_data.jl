@@ -1371,24 +1371,64 @@ function build_c_sys5_pglib(; kwargs...)
     end
 
     if get(kwargs, :add_reserves, false)
-        reserve_uc = reserve5(get_components(ThermalStandard, c_sys5_uc))
-        add_service!(c_sys5_uc, reserve_uc[1], get_components(ThermalStandard, c_sys5_uc))
+        reserve_uc = reserve5(get_components(ThermalMultiStart, c_sys5_uc))
+        add_service!(c_sys5_uc, reserve_uc[1], get_components(ThermalMultiStart, c_sys5_uc))
         add_service!(
             c_sys5_uc,
             reserve_uc[2],
-            [collect(get_components(ThermalStandard, c_sys5_uc))[end]],
+            [collect(get_components(ThermalMultiStart, c_sys5_uc))[end]],
         )
-        add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalStandard, c_sys5_uc))
-        for (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
+        add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalMultiStart, c_sys5_uc))
+        for serv in get_components(VariableReserve, c_sys5_uc)
             forecast_data = SortedDict{Dates.DateTime, TimeArray}()
             for t in 1:2
-                ini_time = timestamp(Reserve_ts[ix])[1]
+                ini_time = timestamp(Reserve_ts[t])[1]
                 forecast_data[ini_time] = Reserve_ts[t]
             end
             add_time_series!(c_sys5_uc, serv, Deterministic("requirement", forecast_data))
         end
     end
 
+    return c_sys5_uc
+end
+
+function build_c_sys5_pglib_sim(; kwargs...)
+    nodes = nodes5()
+    c_sys5_uc = System(
+        100.0,
+        nodes,
+        thermal_pglib_generators5(nodes),
+        renewable_generators5(nodes),
+        loads5(nodes),
+        branches5(nodes);
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
+    )
+
+    if get(kwargs, :add_forecasts, true)
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
+            data = vcat(load_timeseries_DA[1][ix] .* 0.3, load_timeseries_DA[2][ix] .* 0.3)
+            add_time_series!(c_sys5_uc, l, SingleTimeSeries("max_active_power", data))
+        end
+        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
+            data = vcat(ren_timeseries_DA[1][ix], ren_timeseries_DA[2][ix])
+            add_time_series!(c_sys5_uc, r, SingleTimeSeries("max_active_power", data))
+        end
+    end
+    if get(kwargs, :add_reserves, false)
+        reserve_uc = reserve5(get_components(ThermalMultiStart, c_sys5_uc))
+        add_service!(c_sys5_uc, reserve_uc[1], get_components(ThermalMultiStart, c_sys5_uc))
+        add_service!(
+            c_sys5_uc,
+            reserve_uc[2],
+            [collect(get_components(ThermalMultiStart, c_sys5_uc))[end]],
+        )
+        add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalMultiStart, c_sys5_uc))
+        for serv in get_components(VariableReserve, c_sys5_uc)
+            data = vcat(Reserve_ts[1], Reserve_ts[2])
+            add_time_series!(c_sys5_uc, serv, SingleTimeSeries("requirement", data))
+        end
+    end
+    PSY.transform_single_time_series!(c_sys5_uc, 24, Dates.Hour(14))
     return c_sys5_uc
 end
 
@@ -1753,6 +1793,11 @@ TEST_SYSTEMS = Dict(
     "c_sys5_pglib" => (
         description = "5-bus with ThermalMultiStart",
         build = build_c_sys5_pglib,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_pglib_sim" => (
+        description = "5-bus with ThermalMultiStart for simulation",
+        build = build_c_sys5_pglib_sim,
         time_series_in_memory = true,
     ),
     "c_sys5_pwl_uc" => (
