@@ -498,12 +498,12 @@ function get_variables_values(psi_container::PSIContainer)
     return results_dict
 end
 
-function get_duals_values(psi_container::PSIContainer)
+function get_dual_values(psi_container::PSIContainer)
     cons = get_constraint_duals(psi_container.settings)
-    return get_duals_values(psi_container, cons)
+    return get_dual_values(psi_container, cons)
 end
 
-function get_duals_values(op::PSIContainer, cons::Vector{Symbol})
+function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
     isempty(cons) && return results_dict
     for c in cons

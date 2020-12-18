@@ -144,7 +144,7 @@ export get_existing_parameters
 export get_existing_timestamps
 export get_variables_values
 export get_parameters_values
-export get_duals_values
+export get_dual_values
 export get_variable_values
 export get_parameter_values
 export get_dual_values

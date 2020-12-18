@@ -260,7 +260,7 @@ function get_variables_values(
     return values
 end
 
-function _get_duals_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
+function _get_dual_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_duals(res)
@@ -286,14 +286,14 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_duals_values(
+function get_dual_values(
     res::SimulationResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
 )
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _get_duals_values(res, names, timestamps)
+    values = _get_dual_values(res, names, timestamps)
     return values
 end
 
@@ -351,7 +351,7 @@ end
     - `count::Int`: Number of results
 """
 function get_dual_values(res::SimulationResults, name::Symbol; kwargs...)
-    return get_duals_values(res, [name]; kwargs...)[name]
+    return get_dual_values(res, [name]; kwargs...)[name]
 end
 
 """
@@ -390,7 +390,7 @@ function load_simulation_results!(
         res.variable_values,
         _get_variables_values(res, variables, res.results_timestamps),
     )
-    merge!(res.dual_values, _get_duals_values(res, duals, res.results_timestamps))
+    merge!(res.dual_values, _get_dual_values(res, duals, res.results_timestamps))
     merge!(
         res.parameter_values,
         _get_parameters_values(res, parameters, res.results_timestamps),

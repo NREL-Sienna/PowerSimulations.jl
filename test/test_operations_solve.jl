@@ -478,16 +478,16 @@ function test_op_problem_write_functions(file_path)
     end
 
     @testset "Test write_to_csv results functions" begin
-        results_path = mkdir(joinpath(path, "results"))
+        results_path = mkdir(joinpath(file_path, "results"))
         write_to_CSV(res, results_path)
         file_list = sort!(collect(readdir(results_path)))
     end
 end
 
 @testset "Operation write to disk functions" begin
-    path = mkpath(joinpath(pwd(), "test_writing"))
+    folder_path = mkpath(joinpath(pwd(), "test_writing"))
     try
-        test_op_problem_write_functions(path)
+        test_op_problem_write_functions(folder_path)
     finally
         @info("removing test files")
         rm(path, recursive = true)
