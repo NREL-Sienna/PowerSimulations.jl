@@ -1220,8 +1220,12 @@ Return the serialized simulation directory name that is created.
 - `force = false`: If true, delete the directory if it already exists. Otherwise, it will
    throw an exception.
 """
-function serialize_simulation(sim::Simulation; force = false)
-    directory = get_simulation_files_dir(sim)
+function serialize_simulation(sim::Simulation; path = nothing, force = false)
+    if path === nothing
+        directory = get_simulation_files_dir(sim)
+    else
+        directory = path
+    end
     stages = Dict{String, StageSerializationWrapper}()
 
     orig = pwd()

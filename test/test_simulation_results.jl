@@ -14,6 +14,7 @@ function test_simulation_results(file_path::String)
                 template_hydro_st_ed,
                 c_sys5_hy_ed,
                 GLPK_optimizer,
+                constraint_duals = [:CopperPlateBalance],
             ),
         )
 
@@ -101,6 +102,12 @@ function test_simulation_results(file_path::String)
             @test size(v) == (12, 5)
         end
 
+        network_duals = get_dual_values(results_ed, :CopperPlateBalance)
+        @test length(keys(network_duals)) == 24
+        for v in values(network_duals)
+            @test size(v) == (12, 1)
+        end
+
         p_variables_uc =
             get_variables_values(results_uc, [:P__RenewableDispatch, :P__ThermalStandard])
         @test length(keys(p_variables_uc)) == 2
@@ -121,6 +128,32 @@ function test_simulation_results(file_path::String)
         @test length(results_ed.variable_values[:P__ThermalStandard]) == 3
         @test_throws IS.InvalidValue get_parameter_values(results_ed, :invalid)
         @test_throws IS.InvalidValue get_variable_values(results_ed, :invalid)
+        @test_throws IS.InvalidValue get_variable_values(
+            results_uc,
+            :P__ThermalStandard;
+            initial_time = now(),
+        )
+        @test_throws IS.InvalidValue get_variable_values(
+            results_uc,
+            :P__ThermalStandard;
+            count = 25,
+        )
+
+        clear_simulation_results!(results_ed)
+        @test isempty(results_ed.variable_values[:P__ThermalStandard])
+
+        load_simulation_results!(
+            results_ed,
+            initial_time = DateTime("2024-01-01T00:00:00"),
+            count = 3,
+            variables = [:P__ThermalStandard],
+            duals = [:CopperPlateBalance],
+            parameters = [:P__max_active_power__RenewableDispatch],
+        )
+
+        @test !isempty(results_ed.variable_values[:P__ThermalStandard])
+        @test !isempty(results_ed.dual_values[:CopperPlateBalance])
+        @test !isempty(results_ed.parameter_values[:P__max_active_power__RenewableDispatch])
     end
 end
 

@@ -121,6 +121,8 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 export set_model!
+export serialize_problem
+export export_operations_model
 ## Sim Model Exports
 export build!
 export execute!
@@ -142,15 +144,15 @@ export get_existing_parameters
 export get_existing_timestamps
 export get_variables_values
 export get_parameters_values
-export get_duals_values
+export get_dual_values
 export get_variable_values
 export get_parameter_values
 export get_dual_values
 export load_simulation_results!
+export clear_simulation_results!
 
 ## Utils Exports
 export write_results
-export load_operation_results
 export write_to_CSV
 export get_all_constraint_index
 export get_all_var_index
