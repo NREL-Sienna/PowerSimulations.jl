@@ -59,9 +59,17 @@ function Base.show(io::IO, sim::Simulation)
     println(io, "Simulation()")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
-    println(io, "\nResults")
-    println(io, "========\n")
+function Base.show(io::IO, ::MIME"text/plain", results::SimulationResults)
+    for res in values(results.stage_results)
+        show(io, MIME"text/plain"(), res)
+    end
+end
+
+function Base.show(io::IO, ::MIME"text/plain", results::StageResults)
+    title = results.stage * " Results"
+    println(io, "\n$title")
+    bars = join(("=" for _ in 1:length(title)))
+    println(io, "$bars\n")
     println(io, "Variables")
     println(io, "=========\n")
     for v in get_existing_variables(results)

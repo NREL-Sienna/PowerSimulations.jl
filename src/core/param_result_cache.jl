@@ -8,8 +8,6 @@ mutable struct ParamResultCache
     data::OrderedDict{Dates.DateTime, Array}
     "Oldest entry is first"
     dirty_timestamps::Deque{Dates.DateTime}
-    "Only for validation. Will be removed."
-    clean_timestamps::Set{Dates.DateTime}
     "Any key in data that is earlier than the first dirty timestamp must be clean."
     stats::CacheStats
     size_per_entry::Int
@@ -21,7 +19,6 @@ function ParamResultCache(key, flush_rule)
         key,
         OrderedDict{Dates.DateTime, Array}(),
         Deque{Dates.DateTime}(),
-        Set{Dates.DateTime}(),
         CacheStats(),
         0,
         flush_rule,
@@ -39,7 +36,6 @@ should_keep_in_cache(x::ParamResultCache) = x.flush_rule.keep_in_cache
 function Base.empty!(cache::ParamResultCache)
     empty!(cache.data)
     empty!(cache.dirty_timestamps)
-    empty!(cache.clean_timestamps)
     data.size_per_entry = 0
 end
 
@@ -102,9 +98,4 @@ function has_timestamp(cache::ParamResultCache, timestamp)
     return present
 end
 
-mark_clean!(x::ParamResultCache, timestamp) = push!(x.clean_timestamps, timestamp)
-
-function _pop_first!(cache::ParamResultCache)
-    timestamp = pop!(first(keys(cache.data)))
-    pop!(cache.clean_timestamps, timestamp)
-end
+_pop_first!(cache::ParamResultCache) = pop!(first(keys(cache.data)))

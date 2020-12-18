@@ -12,6 +12,7 @@ export OperationsProblemTemplate
 export InitialCondition
 export SimulationSequence
 export SimulationResults
+export StageResults
 
 #Network Relevant Exports
 export StandardPTDFModel
@@ -148,8 +149,9 @@ export get_dual_values
 export get_variable_values
 export get_parameter_values
 export get_dual_values
+export get_stage_results
+export list_stages
 export load_simulation_results!
-export clear_simulation_results!
 
 ## Utils Exports
 export write_results

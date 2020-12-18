@@ -13,43 +13,11 @@ function check_folder_integrity(folder::String)
     return false
 end
 
-function _results_pre_process(store::HdfSimulationStore, stage_name::Symbol)
-    stage_results_params = Dict()
-    store_params = get_params(store)
-    sim_initial_time = get_initial_time(store_params)
-    stages_params = get_stages(store_params)
-    if stage_name ∉ keys(stages_params)
-        error("Stage with name $(stage_name) not in the simulation")
-    end
-    stage_params = stages_params[stage_name]
-    stage_results_params["base_power"] = get_base_power(stage_params)
-    stage_results_params["system_uuid"] = get_system_uuid(stage_params)
-    stage_dataset = get_dataset(store, stage_name)
-    interval = get_interval(stage_params)
-    executions = get_num_executions(stage_params)
-    stage_results_params["existing_time_steps"] =
-        range(sim_initial_time, length = executions, step = interval)
-    stage_results_params["existing_variables"] = keys(get_variables(stage_dataset))
-    stage_results_params["existing_params"] = keys(get_parameters(stage_dataset))
-    stage_results_params["existing_duals"] = keys(get_duals(stage_dataset))
-    return stage_results_params
-end
+const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
+const FieldResultsByTime = Dict{Symbol, ResultsByTime}
 
-function _results_pre_process(simulation_store_path::AbstractString, stage_name::String)
-    stage_name = Symbol(stage_name)
-    stage_params = nothing
-    h5_store_open(simulation_store_path, "r") do store
-        stage_params = _results_pre_process(store, stage_name)
-    end
-    return stage_params
-end
-
-function _fill_result_value_container(keys)
-    dict = Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
-    for k in keys
-        dict[k] = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
-    end
-    return dict
+function _fill_result_value_container(fields)
+    return FieldResultsByTime(x => ResultsByTime() for x in fields)
 end
 
 # TODO:
@@ -57,8 +25,8 @@ end
 # - Handle PER-UNIT conversion of variables according to type
 # - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
 
-""" Holds the results of the simulation for plotting or exporting"""
-mutable struct SimulationResults <: PSIResults
+"""Holds the results of a simulation stage for plotting or exporting"""
+mutable struct StageResults <: PSIResults
     stage::String
     base_power::Float64
     execution_path::String
@@ -66,103 +34,92 @@ mutable struct SimulationResults <: PSIResults
     existing_timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     results_timestamps::Vector{Dates.DateTime}
     system::Union{Nothing, PSY.System}
-    variable_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
-    dual_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
-    parameter_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}
+    variable_values::FieldResultsByTime
+    dual_values::FieldResultsByTime
+    parameter_values::FieldResultsByTime
 end
 
-function SimulationResults(
-    path::String,
-    stage_name::String;
-    execution::Union{Nothing, Int} = nothing,
-    load_system::Bool = true,
+function StageResults(
+    store::SimulationStore,
+    stage_name::AbstractString,
+    stage_params::SimulationStoreStageParams,
+    sim_params::SimulationStoreParams,
+    path;
+    load_system = true,
     results_output_path = nothing,
 )
-    if execution === nothing
-        executions = [parse(Int, f) for f in readdir(path) if occursin(r"^\d+$", f)]
-        if isempty(executions)
-            error("There are no simulation results in the path")
-        end
-        execution = maximum(executions)
-    end
-    execution_path = joinpath(path, string(execution))
-    if !isdir(execution_path)
-        error("Execution $execution not in the simulations results")
-    end
-    if !check_folder_integrity(execution_path)
-        @warn("The results folder $(execution_path) is not consistent with the default folder structure. This can lead to errors or unwanted results")
-    end
-    simulation_store_path = joinpath(execution_path, "data_store")
-    check_file_integrity(simulation_store_path)
-    stage_params = _results_pre_process(simulation_store_path, stage_name)
+    name = Symbol(stage_name)
 
     if load_system
         sys = PSY.System(joinpath(
-            execution_path,
+            path,
             "simulation_files",
-            "system-$(stage_params["system_uuid"]).json",
+            "system-$(stage_params.system_uuid).json",
         ))
     else
         sys = nothing
     end
 
     if results_output_path === nothing
-        results_output_path = joinpath(execution_path, "results")
+        results_output_path = joinpath(path, "results")
     end
 
-    return SimulationResults(
+    time_steps = range(
+        sim_params.initial_time,
+        length = stage_params.num_executions,
+        step = stage_params.interval,
+    )
+    variables = list_fields(store, name, STORE_CONTAINER_VARIABLES)
+    parameters = list_fields(store, name, STORE_CONTAINER_PARAMETERS)
+    duals = list_fields(store, name, STORE_CONTAINER_DUALS)
+
+    return StageResults(
         stage_name,
-        stage_params["base_power"],
-        execution_path,
+        stage_params.base_power,
+        path,
         results_output_path,
-        stage_params["existing_time_steps"],
+        time_steps,
         Vector{Dates.DateTime}(),
         sys,
-        _fill_result_value_container(stage_params["existing_variables"]),
-        _fill_result_value_container(stage_params["existing_duals"]),
-        _fill_result_value_container(stage_params["existing_params"]),
+        _fill_result_value_container(variables),
+        _fill_result_value_container(duals),
+        _fill_result_value_container(parameters),
     )
 end
 
-function SimulationResults(sim::Simulation, stage_name::String)
-    simulation_store_path = get_store_dir(sim)
-    check_file_integrity(simulation_store_path)
-    stage_params = _results_pre_process(simulation_store_path, stage_name)
-    sys = get_system(get_stage(sim, stage_name))
-    return SimulationResults(
-        stage_name,
-        PSY.get_base_power(sys),
-        get_simulation_dir(sim),
-        get_results_dir(sim),
-        stage_params["existing_time_steps"],
-        Vector{Dates.DateTime}(),
-        sys,
-        _fill_result_value_container(stage_params["existing_variables"]),
-        _fill_result_value_container(stage_params["existing_duals"]),
-        _fill_result_value_container(stage_params["existing_params"]),
-    )
+function Base.empty!(res::StageResults)
+    foreach(empty!, _get_dicts(res))
+    empty!(res.results_timestamps)
+    return
 end
 
-get_stage_name(res::SimulationResults) = res.stage
-get_system(res::SimulationResults) = res.system
-get_execution_path(res::SimulationResults) = res.execution_path
-get_existing_variables(res::SimulationResults) = collect(keys(res.variable_values))
-get_existing_duals(res::SimulationResults) = collect(keys(res.dual_values))
-get_existing_parameters(res::SimulationResults) = collect(keys(res.parameter_values))
-get_existing_timestamps(res::SimulationResults) = res.existing_timestamps
-get_model_base_power(res::SimulationResults) = res.base_power
-IS.get_timestamp(result::SimulationResults) = result.results_timestamps
+Base.isempty(res::StageResults) = all(isempty, _get_dicts(res))
 
-get_interval(res::SimulationResults) = res.existing_timestamps.step
-IS.get_variables(result::SimulationResults) = result.variable_values
-get_duals(result::SimulationResults) = result.dual_values
-IS.get_parameters(result::SimulationResults) = result.parameter_values
+# This returns the number of timestamps stored in all containers.
+Base.length(res::StageResults) = mapreduce(length, +, _get_dicts(res))
 
-#IS.get_total_cost(result::SimulationResults) = result.total_cost
-#IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
+_get_containers(x::StageResults) = (x.variable_values, x.parameter_values, x.dual_values)
+_get_dicts(res::StageResults) = (y for x in _get_containers(res) for y in values(x))
+get_stage_name(res::StageResults) = res.stage
+get_system(res::StageResults) = res.system
+get_execution_path(res::StageResults) = res.execution_path
+get_existing_variables(res::StageResults) = collect(keys(res.variable_values))
+get_existing_duals(res::StageResults) = collect(keys(res.dual_values))
+get_existing_parameters(res::StageResults) = collect(keys(res.parameter_values))
+get_existing_timestamps(res::StageResults) = res.existing_timestamps
+get_model_base_power(res::StageResults) = res.base_power
+IS.get_timestamp(result::StageResults) = result.results_timestamps
+
+get_interval(res::StageResults) = res.existing_timestamps.step
+IS.get_variables(result::StageResults) = result.variable_values
+get_duals(result::StageResults) = result.dual_values
+IS.get_parameters(result::StageResults) = result.parameter_values
+
+#IS.get_total_cost(result::StageResults) = result.total_cost
+#IS.get_optimizer_log(results::StageResults) = results.optimizer_log
 
 function _get_store_value(
-    res::SimulationResults,
+    res::StageResults,
     field::Symbol,
     names::Vector{Symbol},
     timestamps,
@@ -195,7 +152,7 @@ function _validate_names(existing_names::Vector{Symbol}, names::Vector{Symbol})
 end
 
 function _process_timestamps(
-    res::SimulationResults,
+    res::StageResults,
     initial_time::Union{Nothing, Dates.DateTime},
     count::Union{Int, Nothing},
 )
@@ -222,7 +179,7 @@ function _process_timestamps(
     return requested_range
 end
 
-function _get_variables_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
+function _get_variables_values(res::StageResults, names::Vector{Symbol}, timestamps)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_variables(res)
@@ -250,7 +207,7 @@ end
     - `count::Int`: Number of results
 """
 function get_variables_values(
-    res::SimulationResults,
+    res::StageResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -260,7 +217,7 @@ function get_variables_values(
     return values
 end
 
-function _get_dual_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
+function _get_dual_values(res::StageResults, names::Vector{Symbol}, timestamps)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_duals(res)
@@ -287,7 +244,7 @@ end
     - `count::Int`: Number of results
 """
 function get_dual_values(
-    res::SimulationResults,
+    res::StageResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -297,7 +254,7 @@ function get_dual_values(
     return values
 end
 
-function _get_parameters_values(res::SimulationResults, names::Vector{Symbol}, timestamps)
+function _get_parameters_values(res::StageResults, names::Vector{Symbol}, timestamps)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_parameters(res)
@@ -323,7 +280,7 @@ end
     - `count::Int`: Number of results
 """
 function get_parameters_values(
-    res::SimulationResults,
+    res::StageResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -340,7 +297,7 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_variable_values(res::SimulationResults, name::Symbol; kwargs...)
+function get_variable_values(res::StageResults, name::Symbol; kwargs...)
     return get_variables_values(res, [name]; kwargs...)[name]
 end
 
@@ -350,7 +307,7 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_dual_values(res::SimulationResults, name::Symbol; kwargs...)
+function get_dual_values(res::StageResults, name::Symbol; kwargs...)
     return get_dual_values(res, [name]; kwargs...)[name]
 end
 
@@ -360,7 +317,7 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_parameter_values(res::SimulationResults, name::Symbol; kwargs...)
+function get_parameter_values(res::StageResults, name::Symbol; kwargs...)
     return get_parameters_values(res, [name]; kwargs...)[name]
 end
 
@@ -378,7 +335,7 @@ end
     - `parameters::Vector{Symbol}`: Parameter names to load into results
 """
 function load_simulation_results!(
-    res::SimulationResults;
+    res::StageResults;
     initial_time::Dates.DateTime,
     count::Int,
     variables::Vector{Symbol} = Symbol[],
@@ -398,27 +355,9 @@ function load_simulation_results!(
     return nothing
 end
 
-function _clear_result_dict(dict)
-    for v in values(dict)
-        empty!(v)
-    end
-    return
-end
-
-"""
-    Clears the values stored in SimulationResults
-"""
-function clear_simulation_results!(res::SimulationResults)
-    _clear_result_dict(res.variable_values)
-    _clear_result_dict(res.dual_values)
-    _clear_result_dict(res.parameter_values)
-    res.results_timestamps = Vector{Dates.DateTime}()
-    return
-end
-
 #= NEEDS RE-IMPLEMENTATION
-""" Exports the results in the SimulationResults object to  CSV files"""
-function write_to_CSV(res::SimulationResults; kwargs...)
+""" Exports the results in the StageResults object to  CSV files"""
+function write_to_CSV(res::StageResults; kwargs...)
     folder_path = res.results_output_folder
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
@@ -447,3 +386,76 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     return
 end
 =#
+
+struct SimulationResults <: PSIResults
+    path::String
+    params::SimulationStoreParams
+    stage_results::Dict{String, StageResults}
+end
+
+"""
+Construct SimulationResults from a path and optionally an execution number.
+By default, choose the latest execution.
+"""
+function SimulationResults(path::AbstractString, execution = nothing)
+    # path will be either the execution_path or the directory containing all executions.
+    contents = readdir(path)
+    if "data_store" in contents
+        execution_path = path
+    else
+        if execution === nothing
+            executions = [parse(Int, f) for f in contents if occursin(r"^\d+$", f)]
+            if isempty(executions)
+                error("There are no simulation results in the path")
+            end
+            execution = maximum(executions)
+        end
+        execution_path = joinpath(path, string(execution))
+        if !isdir(execution_path)
+            error("Execution $execution not in the simulations results")
+        end
+    end
+
+    if !check_folder_integrity(execution_path)
+        @warn "The results folder $(execution_path) is not consistent with the default folder structure. " *
+              "This can lead to errors or unwanted results."
+    end
+
+    simulation_store_path = joinpath(execution_path, "data_store")
+    check_file_integrity(simulation_store_path)
+
+    return h5_store_open(simulation_store_path, "r") do store
+        stage_results = Dict{String, StageResults}()
+        sim_params = get_params(store)
+        for (name, stage_params) in sim_params.stages
+            name = string(name)
+            stage_result =
+                StageResults(store, name, stage_params, sim_params, execution_path)
+            stage_results[name] = stage_result
+        end
+
+        return SimulationResults(execution_path, sim_params, stage_results)
+    end
+end
+
+"""
+Construct SimulationResults from a simulation.
+"""
+SimulationResults(sim::Simulation) = SimulationResults(get_simulation_dir(sim))
+
+Base.empty!(res::SimulationResults) = foreach(empty!, values(res.stage_results))
+Base.isempty(res::SimulationResults) = all(isempty, values(res.stage_results))
+Base.length(res::SimulationResults) = mapreduce(length, +, values(res.stage_results))
+
+function get_stage_results(results::SimulationResults, stage)
+    if !haskey(results.stage_results, stage)
+        throw(IS.InvalidValue("$stage is not stored"))
+    end
+
+    return results.stage_results[stage]
+end
+
+"""
+Return the stage names in the simulation.
+"""
+list_stages(results::SimulationResults) = collect(keys(results.stage_results))
