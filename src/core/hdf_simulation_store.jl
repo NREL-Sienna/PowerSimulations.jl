@@ -322,7 +322,6 @@ function write_result!(
         size_flushed = _flush_data!(param_cache, store, key, discard)
 
         @debug "flushed data" key size_flushed discard
-        !discard && mark_clean!(param_cache, timestamp)
     end
 
     # Disabled because this is currently a noop.
