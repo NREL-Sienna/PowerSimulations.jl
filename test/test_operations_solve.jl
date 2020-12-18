@@ -477,67 +477,11 @@ function test_op_problem_write_functions(file_path)
         psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
     end
 
-    #=
-    @testset "Test write_data functions" begin
-        PSI.write_data(get_variables(res), mkdir(joinpath(file_path, "one")))
-        readdir(joinpath(file_path, "one"))
-        for (k, v) in get_variables(res)
-            @test isfile(joinpath(file_path, "one", "$k.arrow"))
-        end
-
-        PSI.write_data(
-            get_variables(res),
-            res.time_stamp,
-            mkdir(joinpath(file_path, "two"));
-            file_type = CSV,
-        )
-        for (k, v) in get_variables(res)
-            @test isfile(joinpath(file_path, "two/$k.csv"))
-        end
-
-        PSI.write_data(
-            get_variables(res),
-            res.time_stamp,
-            mkdir(joinpath(file_path, "three")),
-        )
-        for (k, v) in get_variables(res)
-            @test isfile(joinpath(file_path, "three", "$k.arrow"))
-        end
-
-        var_name = PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
-        PSI.write_data(
-            get_variables(res)[var_name],
-            mkdir(joinpath(file_path, "four")),
-            string(var_name),
-        )
-        @test isfile(joinpath(file_path, "four", "$(var_name).arrow"))
-
-        #testing if directory is a file
-        PSI.write_data(
-            get_variables(res)[var_name],
-            joinpath(file_path, "four", "$(var_name).arrow"),
-            string(var_name),
-        )
-        @test isfile(joinpath(file_path, "four", "$(var_name).arrow"))
-
-        PSI.write_optimizer_log(get_optimizer_log(res), mkdir(joinpath(file_path, "five")))
-        @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
-
-        PSI.write_to_CSV(res, mkdir(joinpath(file_path, "six")))
-        @test !isempty(joinpath(file_path, "six", "results"))
+    @testset "Test write_to_csv results functions" begin
+        results_path = mkdir(joinpath(path, "results"))
+        write_to_CSV(res, results_path)
+        file_list = sort!(collect(readdir(results_path)))
     end
-
-    @testset "Test write result functions" begin
-        new_path = joinpath(file_path, "seven")
-        IS.write_results(res, mkdir(new_path))
-        @test !isempty(new_path)
-    end
-
-    @testset "Test get_variable function" begin
-        variable = PSI.get_result_variable(res, :P, ThermalStandard)
-        @test isa(variable, DataFrames.DataFrame)
-    end
-    =#
 end
 
 @testset "Operation write to disk functions" begin

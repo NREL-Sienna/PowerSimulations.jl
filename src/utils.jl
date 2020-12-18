@@ -81,7 +81,7 @@ function write_data(vars_results::Dict, save_path::String; kwargs...)
         if isempty(vars_results[k])
             @debug "$name$k is empty, not writing $file_path"
         else
-            file_type.write(file_path, vars_results[k])
+            CSV.write(file_path, vars_results[k])
         end
     end
 end
@@ -102,7 +102,7 @@ function write_data(
             var = v
         end
         file_path = joinpath(save_path, "$(k).csv")
-        file_type.write(file_path, var)
+        CSV.write(file_path, var)
     end
 end
 
@@ -116,7 +116,7 @@ function write_data(
         save_path = dirname(save_path)
     end
     file_path = joinpath(save_path, "$(file_name).csv")
-    file_type.write(file_path, data)
+    CSV.write(file_path, data)
     return
 end
 

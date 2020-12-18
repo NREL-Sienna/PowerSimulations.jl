@@ -8,14 +8,16 @@ struct OperationsProblemResults <: PSIResults
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
-get_existing_variables(result::OperationsProblemResults) = keys(get_variables(result))
-get_model_base_power(result::OperationsProblemResults) = result.base_power
-IS.get_variables(result::OperationsProblemResults) = result.variable_values
-IS.get_total_cost(result::OperationsProblemResults) = result.total_cost
-IS.get_optimizer_log(results::OperationsProblemResults) = results.optimizer_log
-IS.get_timestamp(result::OperationsProblemResults) = result.time_stamp
-get_duals(result::OperationsProblemResults) = result.dual_values
-IS.get_parameters(result::OperationsProblemResults) = result.parameter_values
+get_existing_variables(res::OperationsProblemResults) = keys(get_variables(res))
+get_existing_parameters(res::OperationsProblemResults) = keys(IS.get_parameters(res))
+get_existing_duals(res::OperationsProblemResults) = keys(get_duals(res))
+get_model_base_power(res::OperationsProblemResults) = res.base_power
+IS.get_variables(res::OperationsProblemResults) = res.variable_values
+IS.get_total_cost(res::OperationsProblemResults) = res.total_cost
+IS.get_optimizer_log(res::OperationsProblemResults) = res.optimizer_log
+IS.get_timestamp(res::OperationsProblemResults) = res.time_stamp
+get_duals(res::OperationsProblemResults) = res.dual_values
+IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
 
 function get_variable_value(res_model::OperationsProblemResults, key::Symbol)
     var_result = get(res_model.variable_values, key, nothing)
@@ -45,52 +47,44 @@ function _find_params(variables::Array)
     return params
 end
 
-function write_to_CSV(results::OperationsProblemResults, save_path::String; kwargs...)
+function write_to_CSV(res::OperationsProblemResults, save_path::String; kwargs...)
     if !isdir(save_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
+        throw(IS.ConflictingInputsError("Specified path is not valid."))
     end
     folder_path = mkdir(joinpath(
         save_path,
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
     export_variables = Dict()
-    for (k, v) in IS.get_variables(results)
-        start = decode_symbol(k)[1]
-        if start !== "ON" || start !== "START" || start != "STOP"
-            export_variables[k] = get_model_base_power(results) .* v
-        else
-            export_variables[k] = v
-        end
+    for (k, v) in IS.get_variables(res)
+        export_variables[k] = v
     end
-    write_data(export_variables, folder_path; file_type = CSV, kwargs...)
-    if !isempty(get_duals(results))
+    write_data(export_variables, folder_path; kwargs...)
+    if !isempty(get_duals(res))
         write_data(
-            get_duals(results),
+            get_duals(res),
             folder_path;
             duals = true,
-            file_type = CSV,
             kwargs...,
         )
     end
     export_parameters = Dict()
-    if !isempty(IS.get_parameters(results))
-        for (p, v) in IS.get_parameters(results)
-            export_parameters[p] = get_model_base_power(results) .* v
+    if !isempty(IS.get_parameters(res))
+        for (p, v) in IS.get_parameters(res)
+            export_parameters[p] = get_model_base_power(res) .* v
         end
         write_data(
             export_parameters,
             folder_path;
             params = true,
-            file_type = CSV,
             kwargs...,
         )
     end
-    write_optimizer_log(results.optimizer_log, folder_path)
+    write_optimizer_log(res.optimizer_log, folder_path)
     write_data(
-        IS.get_timestamp(results),
+        IS.get_timestamp(res),
         folder_path,
         "time_stamp";
-        file_type = CSV,
         kwargs...,
     )
     files = readdir(folder_path)
