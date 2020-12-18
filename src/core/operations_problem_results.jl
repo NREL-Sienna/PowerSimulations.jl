@@ -1,3 +1,4 @@
+# TODO: More refactoring to resemble Simulation Results and match interfaces
 struct OperationsProblemResults <: PSIResults
     base_power::Float64
     variable_values::Dict{Symbol, DataFrames.DataFrame}
@@ -20,7 +21,6 @@ get_duals(res::OperationsProblemResults) = res.dual_values
 IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
 
 # TODO:
-# - Allow passing the system path if the simulation wasn't serialized
 # - Handle PER-UNIT conversion of variables according to type
 # - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
 

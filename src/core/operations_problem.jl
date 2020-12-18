@@ -422,16 +422,16 @@ function _build!(
     return
 end
 
-function get_variables_value(op_m::OperationsProblem)
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-    for (k, v) in get_variables(op_m.psi_container)
-        results_dict[k] = axis_array_to_dataframe(v)
-    end
-    return results_dict
+function get_variables_values(op_m::OperationsProblem)
+    return get_variables_values(op_m.psi_container)
 end
 
-function get_dual_values(op_m::OperationsProblem)
-    return get_dual_values(op_m.psi_container)
+function get_duals_values(op_m::OperationsProblem)
+    return get_duals_values(op_m.psi_container)
+end
+
+function get_parameters_values(op_m::OperationsProblem)
+    return get_parameters_values(op_m.psi_container)
 end
 
 """
@@ -477,12 +477,12 @@ function solve!(
         error("The Operational Problem $(T) status is $(model_status)")
     end
     vars_result = get_variables_value(op_problem)
-    param_values = get_parameters_value(get_psi_container(op_problem))
+    param_values = get_parameters_value(op_problem)
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_timestamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     base_power = PSY.get_base_power(op_problem.sys)
-    dual_result = get_dual_values(op_problem)
+    dual_result = get_duals_values(op_problem)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
@@ -499,7 +499,7 @@ function solve!(
         param_values,
     )
 
-    !isnothing(save_path) && write_results(results, save_path)
+    !isnothing(save_path) && serialize(op_problem, save_path)
 
     return results
 end
