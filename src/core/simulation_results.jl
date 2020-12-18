@@ -160,18 +160,21 @@ function _process_timestamps(
         initial_time = first(get_existing_timestamps(res))
     end
     existing_timestamps = get_existing_timestamps(res)
-    if count === nothing
-        requested_range = [v for v in existing_timestamps if v >= initial_time]
+
+    if initial_time ∉ existing_timestamps
+        invalid_timestamps = [initial_time]
     else
-        requested_range =
-            collect(range(initial_time, length = count, step = get_interval(res)))
+        if count === nothing
+            requested_range = [v for v in existing_timestamps if v >= initial_time]
+        else
+            requested_range =
+                collect(range(initial_time, length = count, step = get_interval(res)))
+        end
+        invalid_timestamps = [v for v in requested_range if v ∉ existing_timestamps]
     end
-    invalid_timestamps = [v for v in requested_range if v ∉ existing_timestamps]
     if !isempty(invalid_timestamps)
-        throw(IS.InvalidValue(
-            "Timetamps $(invalid_timestamps) not stored",
-            sort!(get_existing_timestamps(res)),
-        ))
+        @error "Timestamps $(invalid_timestamps) not stored" get_existing_timestamps(res)
+        throw(IS.InvalidValue("Timestamps not stored"))
     end
     return requested_range
 end
@@ -214,7 +217,7 @@ function get_variables_values(
     return values
 end
 
-function _get_duals_values(res::StageResults, names::Vector{Symbol}, timestamps)
+function _get_dual_values(res::StageResults, names::Vector{Symbol}, timestamps)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_duals(res)
@@ -240,14 +243,14 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_duals_values(
+function get_dual_values(
     res::StageResults,
     names::Vector{Symbol};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
 )
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _get_duals_values(res, names, timestamps)
+    values = _get_dual_values(res, names, timestamps)
     return values
 end
 
@@ -305,7 +308,7 @@ end
     - `count::Int`: Number of results
 """
 function get_dual_values(res::StageResults, name::Symbol; kwargs...)
-    return get_duals_values(res, [name]; kwargs...)[name]
+    return get_dual_values(res, [name]; kwargs...)[name]
 end
 
 """
@@ -320,7 +323,8 @@ end
 
 """
     Loads the simulation results into memory for repeated reads. Running this function twice
-    overwrites the previously loaded results
+    overwrites the previously loaded results. This is useful when loading results from remote
+    locations over network connections
 
     # Required Key Words
     - `initial_time::Dates.DateTime` : initial of the requested results
@@ -343,10 +347,10 @@ function load_simulation_results!(
         res.variable_values,
         _get_variables_values(res, variables, res.results_timestamps),
     )
-    merge!(res.dual_values, _get_duals_values(res, duals, res.results_timestamps))
+    merge!(res.dual_values, _get_dual_values(res, duals, res.results_timestamps))
     merge!(
         res.parameter_values,
-        _get_variables_values(res, parameters, res.results_timestamps),
+        _get_parameters_values(res, parameters, res.results_timestamps),
     )
     return nothing
 end
