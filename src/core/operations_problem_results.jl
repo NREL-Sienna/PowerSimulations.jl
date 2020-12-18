@@ -19,8 +19,13 @@ IS.get_timestamp(res::OperationsProblemResults) = res.time_stamp
 get_duals(res::OperationsProblemResults) = res.dual_values
 IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
 
-function get_variable_value(res_model::OperationsProblemResults, key::Symbol)
-    var_result = get(res_model.variable_values, key, nothing)
+# TODO:
+# - Allow passing the system path if the simulation wasn't serialized
+# - Handle PER-UNIT conversion of variables according to type
+# - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
+
+function get_variable_value(res::OperationsProblemResults, key::Symbol)
+    var_result = get(res.variable_values, key, nothing)
     if isnothing(var_result)
         throw(IS.ConflictingInputsError("No variable with key $(key) has been found."))
     end
@@ -47,7 +52,7 @@ function _find_params(variables::Array)
     return params
 end
 
-function write_to_CSV(res::OperationsProblemResults, save_path::String; kwargs...)
+function write_to_CSV(res::OperationsProblemResults, save_path::String)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid."))
     end
@@ -59,34 +64,19 @@ function write_to_CSV(res::OperationsProblemResults, save_path::String; kwargs..
     for (k, v) in IS.get_variables(res)
         export_variables[k] = v
     end
-    write_data(export_variables, folder_path; kwargs...)
+    write_data(export_variables, folder_path)
     if !isempty(get_duals(res))
-        write_data(
-            get_duals(res),
-            folder_path;
-            duals = true,
-            kwargs...,
-        )
+        write_data(get_duals(res), folder_path; duals = true)
     end
     export_parameters = Dict()
     if !isempty(IS.get_parameters(res))
         for (p, v) in IS.get_parameters(res)
             export_parameters[p] = get_model_base_power(res) .* v
         end
-        write_data(
-            export_parameters,
-            folder_path;
-            params = true,
-            kwargs...,
-        )
+        write_data(export_parameters, folder_path; params = true)
     end
     write_optimizer_log(res.optimizer_log, folder_path)
-    write_data(
-        IS.get_timestamp(res),
-        folder_path,
-        "time_stamp";
-        kwargs...,
-    )
+    write_data(IS.get_timestamp(res), folder_path, "time_stamp")
     files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
