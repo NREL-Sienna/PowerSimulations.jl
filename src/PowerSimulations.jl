@@ -152,7 +152,6 @@ export get_dual_values
 export get_stage_results
 export list_stages
 export load_simulation_results!
-export clear_simulation_results!
 
 ## Utils Exports
 export write_results
