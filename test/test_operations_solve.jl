@@ -490,6 +490,6 @@ end
         test_op_problem_write_functions(folder_path)
     finally
         @info("removing test files")
-        rm(path, recursive = true)
+        rm(folder_path, recursive = true)
     end
 end
