@@ -53,10 +53,15 @@ function test_simulation_results(file_path::String)
         @test build_out == PSI.BUILT
         execute_out = execute!(sim)
         @test execute_out == PSI.SUCCESSFUL_RUN
-        results_uc = SimulationResults(sim, "UC")
-        results_ed = SimulationResults(sim, "ED")
-        results_uc_from_file = SimulationResults(joinpath(file_path, "results_sim"), "UC")
-        results_ed_from_file = SimulationResults(joinpath(file_path, "results_sim"), "ED")
+        results = SimulationResults(sim)
+        @test list_stages(results) == ["ED", "UC"]
+        results_uc = get_stage_results(results, "UC")
+        results_ed = get_stage_results(results, "ED")
+
+        results_from_file = SimulationResults(joinpath(file_path, "results_sim"))
+        @test list_stages(results) == ["ED", "UC"]
+        results_uc_from_file = get_stage_results(results_from_file, "UC")
+        results_ed_from_file = get_stage_results(results_from_file, "ED")
 
         ed_expected_vars = [
             :Sp__HydroEnergyReservoir
@@ -119,8 +124,17 @@ function test_simulation_results(file_path::String)
 
         @test !isempty(results_ed.variable_values[:P__ThermalStandard])
         @test length(results_ed.variable_values[:P__ThermalStandard]) == 3
+        @test length(results_ed) == 3
+        @test length(results) == length(results_ed)
+
         @test_throws IS.InvalidValue get_parameter_values(results_ed, :invalid)
         @test_throws IS.InvalidValue get_variable_values(results_ed, :invalid)
+
+        @test !isempty(results_ed)
+        @test !isempty(results)
+        empty!(results)
+        @test isempty(results_ed)
+        @test isempty(results)
     end
 end
 

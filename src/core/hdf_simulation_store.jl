@@ -31,10 +31,6 @@ mutable struct StageDatasets
     variables::Dict{Symbol, Dataset}
 end
 
-get_duals(stage_dataset::StageDatasets) = stage_dataset.duals
-get_parameters(stage_dataset::StageDatasets) = stage_dataset.parameters
-get_variables(stage_dataset::StageDatasets) = stage_dataset.variables
-
 function StageDatasets()
     return StageDatasets(
         Dict{Symbol, Dataset}(),
@@ -54,8 +50,6 @@ mutable struct HdfSimulationStore <: SimulationStore
     optimizer_stats_index::Int
     cache::ResultCache
 end
-
-get_params(store::HdfSimulationStore) = store.params
 
 function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
     if !(mode == "w" || mode == "r")
@@ -113,19 +107,11 @@ function h5_store_open(
     store = nothing
     try
         store = HdfSimulationStore(joinpath(directory, filename), mode)
-        func(store)
+        return func(store)
     finally
         !isnothing(store) && close(store)
     end
-
-    return
 end
-
-# TODO: Interfaces to add
-# - list_stages(store)
-# - list_names(store, type) for duals/parameters/variables by stage
-# - get_step_resolution(store)
-# - get_resolution(store, stage)
 
 function Base.close(store::HdfSimulationStore)
     flush(store)
@@ -144,6 +130,21 @@ function Base.flush(store::HdfSimulationStore)
 
     flush(store.file)
     @debug "Flush store" store.file.file_path
+end
+
+get_params(store::HdfSimulationStore) = store.params
+
+"""
+Return the stage names in order of execution.
+"""
+list_stages(store::HdfSimulationStore) = keys(store.datasets)
+
+"""
+Return the fields stored for the `stage` and `container_type` (duals/parameters/variables).
+"""
+function list_fields(store::HdfSimulationStore, stage::Symbol, container_type::Symbol)
+    container = getfield(store.datasets[stage], container_type)
+    return keys(container)
 end
 
 function append_optimizer_stats!(store::HdfSimulationStore, stats::OptimizerStats)
@@ -283,7 +284,7 @@ function read_result(
         throw(ArgumentError("execution_index = $execution_index cannot be larger than $num_executions"))
     end
 
-    dataset = get_dataset(store, key)
+    dataset = _get_dataset(store, key)
     row_index = (simulation_step - 1) * num_executions + execution_index
     columns = dataset.column_dataset[:]
 
@@ -445,7 +446,7 @@ end
 
 function _flush_data!(cache::ParamResultCache, store::HdfSimulationStore, key, discard)
     !has_dirty(cache) && return 0
-    dataset = get_dataset(store, key)
+    dataset = _get_dataset(store, key)
     timestamps, data = get_data_to_flush!(cache, get_min_flush_size(store.cache))
     num_results = length(timestamps)
     @assert_op num_results == size(data)[end]
@@ -475,15 +476,15 @@ function _get_columns_dataset(store::HdfSimulationStore, key)
     return getfield(store.datasets[key.stage], key.type)[key.name].columns
 end
 
-function get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore)
+function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore)
     return store.file[OPTIMIZER_DATASET_PATH]
 end
 
-function get_dataset(store::HdfSimulationStore, stage_name::Symbol)
+function _get_dataset(store::HdfSimulationStore, stage_name::Symbol)
     return store.datasets[stage_name]
 end
 
-function get_dataset(store::HdfSimulationStore, key)
+function _get_dataset(store::HdfSimulationStore, key)
     return getfield(store.datasets[key.stage], key.type)[key.name]
 end
 
@@ -525,14 +526,14 @@ _get_optimizer_data_path(store::HdfSimulationStore) = store.file[HDF_OPTIMIZER_D
 _get_root(store::HdfSimulationStore) = store.file[HDF_SIMULATION_ROOT_PATH]
 
 function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
-    dataset = get_dataset(OptimizerStats, store)
+    dataset = _get_dataset(OptimizerStats, store)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
 function _read_data_columns(store, key, timestamp)
     if is_cached!(store.cache, key, timestamp)
         data = read_result(store.cache, key, timestamp)
-        column_dataset = get_dataset(store, key).column_dataset
+        column_dataset = _get_dataset(store, key).column_dataset
         columns = column_dataset[:]
     else
         data, columns = read_result(store, key, timestamp)
@@ -542,7 +543,7 @@ function _read_data_columns(store, key, timestamp)
 end
 
 function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
-    dataset = get_dataset(OptimizerStats, store)
+    dataset = _get_dataset(OptimizerStats, store)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
