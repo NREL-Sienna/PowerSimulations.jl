@@ -91,7 +91,7 @@ end
 function write_data(
     vars_results::Dict,
     time::DataFrames.DataFrame,
-    save_path::AbstractString;,
+    save_path::AbstractString,
 )
     for (k, v) in vars_results
         var = DataFrames.DataFrame()
@@ -108,7 +108,7 @@ end
 function write_data(
     data::DataFrames.DataFrame,
     save_path::AbstractString,
-    file_name::String;,
+    file_name::String,
 )
     if isfile(save_path)
         save_path = dirname(save_path)
