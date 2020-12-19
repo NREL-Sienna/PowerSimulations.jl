@@ -232,7 +232,7 @@ end
 
 function get_stage_horizon(sequence::SimulationSequence, stage::String)
     horizon = get(sequence.horizons, stage, nothing)
-        throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+        throw(ArgumentError("Stage $stage not present in the simulation"))
     return horizon
 end
 

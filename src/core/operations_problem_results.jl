@@ -26,7 +26,7 @@ IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
 
 function get_variable_value(res::OperationsProblemResults, key::Symbol)
     var_result = get(res.variable_values, key, nothing)
-    if isnothing(var_result)
+    if var_result === nothing
         throw(IS.ConflictingInputsError("No variable with key $(key) has been found."))
     end
     return var_result
