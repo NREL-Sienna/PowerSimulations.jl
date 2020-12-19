@@ -37,7 +37,7 @@ function construct_network!(
     ac_branches = get_available_components(PSY.ACBranch, sys)
     ptdf = get_PTDF(psi_container)
 
-    if isnothing(ptdf)
+    if ptdf === nothing
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
@@ -54,7 +54,7 @@ function construct_network!(
             btype,
             Vector([[b for b in dc_branches if typeof(b) == btype]]),
         )
-        flow_variables!(psi_container, StandardPTDFModel, typed_dc_branches)
+        add_variables!(psi_container, StandardPTDFModel(), typed_dc_branches)
     end
     return
 end

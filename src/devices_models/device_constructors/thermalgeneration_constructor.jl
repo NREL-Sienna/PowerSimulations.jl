@@ -13,17 +13,17 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
     add_variables!(psi_container, OnVariable, devices)
     add_variables!(psi_container, StartVariable, devices)
     add_variables!(psi_container, StopVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, D)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -47,7 +47,7 @@ function construct_device!(
     time_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -72,16 +72,16 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
     add_variables!(psi_container, OnVariable, devices)
     add_variables!(psi_container, StartVariable, devices)
     add_variables!(psi_container, StopVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, D)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -96,7 +96,7 @@ function construct_device!(
     time_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -117,17 +117,19 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
     add_variables!(psi_container, OnVariable, devices)
     add_variables!(psi_container, StartVariable, devices)
     add_variables!(psi_container, StopVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
-    #Constraints
+    # Constraints
+    # TODO: active_power_constraints
+    # TODO: refactor constraints such that ALL variables for all devices are added first, and then the constraint creation is trigged
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -149,7 +151,7 @@ function construct_device!(
     commitment_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -170,16 +172,16 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
     add_variables!(psi_container, OnVariable, devices)
     add_variables!(psi_container, StartVariable, devices)
     add_variables!(psi_container, StopVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -192,7 +194,7 @@ function construct_device!(
     commitment_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -213,14 +215,14 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -242,7 +244,7 @@ function construct_device!(
     ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -263,13 +265,13 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -282,7 +284,7 @@ function construct_device!(
     ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -304,13 +306,13 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -331,7 +333,7 @@ function construct_device!(
     )
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -353,12 +355,12 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -370,7 +372,7 @@ function construct_device!(
     )
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -406,7 +408,7 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
     commitment_variables!(psi_container, devices)
@@ -414,10 +416,10 @@ function construct_device!(
     add_variables!(psi_container, WarmStartVariable, devices)
     add_variables!(psi_container, HotStartVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -451,7 +453,7 @@ function construct_device!(
     must_run_constraints!(psi_container, devices, model, S, get_feedforward(model))
     initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return
@@ -470,17 +472,17 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerVariable, devices)
     commitment_variables!(psi_container, devices)
     add_variables!(psi_container, ColdStartVariable, devices)
     add_variables!(psi_container, WarmStartVariable, devices)
     add_variables!(psi_container, HotStartVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -505,7 +507,7 @@ function construct_device!(
     must_run_constraints!(psi_container, devices, model, S, get_feedforward(model))
     initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
-    #Cost Function
+    # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 
     return

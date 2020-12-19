@@ -132,17 +132,17 @@ function device_range_constraints!(
     timeseries_range_constraint_spec = spec.timeseries_range_constraint_spec
     custom_psi_container_func = spec.custom_psi_container_func
 
-    if !isnothing(spec.devices_filter_func)
+    if !(spec.devices_filter_func === nothing)
         devices = filter!(spec.devices_filter_func, collect(devices))
     end
 
-    if isnothing(feedforward)
+    if feedforward === nothing
         ff_affected_variables = Set{Symbol}()
     else
         ff_affected_variables = Set(get_affected_variables(feedforward))
     end
 
-    if !isnothing(range_constraint_spec)
+    if !(range_constraint_spec === nothing)
         _apply_range_constraint_spec!(
             psi_container,
             range_constraint_spec,
@@ -152,7 +152,7 @@ function device_range_constraints!(
         )
     end
 
-    if !isnothing(timeseries_range_constraint_spec)
+    if !(timeseries_range_constraint_spec === nothing)
         _apply_timeseries_range_constraint_spec!(
             psi_container,
             timeseries_range_constraint_spec,
@@ -162,7 +162,7 @@ function device_range_constraints!(
         )
     end
 
-    if !isnothing(custom_psi_container_func)
+    if !(custom_psi_container_func === nothing)
         custom_psi_container_func(psi_container, devices, U)
     end
 end
@@ -186,7 +186,7 @@ function _apply_range_constraint_spec!(
     for (i, dev) in enumerate(devices)
         dev_name = PSY.get_name(dev)
         limits = spec.limits_func(dev)
-        if isnothing(limits)
+        if limits === nothing
             limits = (min = 0.0, max = 0.0)
             @warn "Range constraint limits of $T $dev_name are nothing. Set to" limits
         end
@@ -241,7 +241,7 @@ function _apply_timeseries_range_constraint_spec!(
         spec.constraint_name,
         variable_name,
         spec.bin_variable_name,
-        isnothing(spec.parameter_name) ? nothing :
+        spec.parameter_name === nothing ? nothing :
         UpdateRef{T}(spec.parameter_name, spec.forecast_label),
     )
     spec.constraint_func(psi_container, ts_inputs)

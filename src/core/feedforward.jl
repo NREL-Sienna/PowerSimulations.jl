@@ -31,7 +31,7 @@ function get_execution_wait_count(trigger::UpdateTrigger)
     return trigger.execution_wait_count
 end
 
-############################Chronologies For FeedForward###################################
+############################ Chronologies For FeedForward ###################################
 @doc raw"""
     Synchronize(periods::Int)
 Defines the co-ordination of time between Two stages.
@@ -133,7 +133,7 @@ function check_chronology!(
     return
 end
 
-############################FeedForward Definitions########################################
+############################ FeedForward Definitions ########################################
 
 struct UpperBoundFF <: AbstractAffectFeedForward
     variable_source_stage::Symbol
@@ -339,13 +339,13 @@ function range_ff(
     set_name = axes[1]
     @assert axes[2] == time_steps
 
-    #Create containers for the constraints
+    # Create containers for the constraints
     container_lb = add_param_container!(psi_container, param_reference[1], set_name)
     param_lb = get_parameter_array(container_lb)
     container_ub = add_param_container!(psi_container, param_reference[2], set_name)
     param_ub = get_parameter_array(container_ub)
 
-    #Create containers for the parameters
+    # Create containers for the parameters
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
@@ -612,7 +612,7 @@ function feedforward!(
     end
 end
 
-#########################FeedForward Variables Updating#####################################
+######################### FeedForward Variables Updating #####################################
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(
     chron::RecedingHorizon,

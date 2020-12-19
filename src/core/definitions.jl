@@ -1,26 +1,15 @@
 #################################################################################
-#Type Alias for long type signatures
+# Type Alias for long type signatures
 const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
 const NamedMinMax = Tuple{String, MinMax}
 const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
 const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 const StartUpStages = NamedTuple{(:hot, :warm, :cold), NTuple{3, Float64}}
 
-# Type Alias From other Packages
-const PM = PowerModels
-const PSY = PowerSystems
-const PSI = PowerSimulations
-const IS = InfrastructureSystems
-const MOI = MathOptInterface
-const MOIU = MathOptInterface.Utilities
-const PJ = ParameterJuMP
-const MOPFM = MOI.FileFormats.Model
-const TS = TimeSeries
-
 const BUILD_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
-#Type Alias for JuMP and PJ containers
+# Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
 const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
 const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}

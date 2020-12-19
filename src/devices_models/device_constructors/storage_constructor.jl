@@ -10,16 +10,16 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerInVariable, devices)
     add_variables!(psi_container, ActivePowerOutVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
     add_variables!(psi_container, EnergyVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, D)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -72,15 +72,15 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerInVariable, devices)
     add_variables!(psi_container, ActivePowerOutVariable, devices)
     add_variables!(psi_container, EnergyVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, D)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -120,17 +120,17 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerInVariable, devices)
     add_variables!(psi_container, ActivePowerOutVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
     add_variables!(psi_container, EnergyVariable, devices)
     add_variables!(psi_container, ReserveVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -185,16 +185,16 @@ function construct_device!(
         return
     end
 
-    #Variables
+    # Variables
     add_variables!(psi_container, ActivePowerInVariable, devices)
     add_variables!(psi_container, ActivePowerOutVariable, devices)
     add_variables!(psi_container, EnergyVariable, devices)
     add_variables!(psi_container, ReserveVariable, devices)
 
-    #Initial Conditions
+    # Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
-    #Constraints
+    # Constraints
     add_constraints!(
         psi_container,
         RangeConstraint,

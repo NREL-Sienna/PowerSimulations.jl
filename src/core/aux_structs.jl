@@ -31,7 +31,7 @@ function UpdateRef{T}(
 end
 
 function get_data_label(ref::UpdateRef{T}) where {T <: PSY.Component}
-    if isnothing(ref.data_label)
+    if ref.data_label === nothing
         throw(IS.InvalidValue("data_label is not defined for $ref"))
     end
 

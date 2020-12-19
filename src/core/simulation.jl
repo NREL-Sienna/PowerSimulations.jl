@@ -13,7 +13,7 @@ mutable struct SimulationInternal
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
     time_step_ref::Dict{Int, Int}
-    #Initial Time of the first forecast and Initial Time of the last forecast
+    # Initial Time of the first forecast and Initial Time of the last forecast
     date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
     time_step::Int
@@ -196,7 +196,7 @@ function _set_internal_caches(
 end
 
 function _get_output_dir_name(path, output_dir)
-    if !isnothing(output_dir)
+    if !(output_dir === nothing)
         # The user wants a custom name.
         return output_dir
     end
@@ -292,7 +292,7 @@ end
 
 function get_stage(sim::Simulation, name::String)
     stage = get(get_stages(sim), name, nothing)
-    isnothing(stage) && throw(ArgumentError("Stage $(name) not present in the simulation"))
+    stage === nothing && throw(ArgumentError("Stage $(name) not present in the simulation"))
     return stage
 end
 
@@ -300,7 +300,7 @@ get_stage_interval(sim::Simulation, name::String) = get_stage_interval(sim.seque
 
 function get_stage(sim::Simulation, number::Int)
     name = get(get_sequence(sim).order, number, nothing)
-    isnothing(name) && throw(ArgumentError("Stage with $(number) not defined"))
+    name === nothing && throw(ArgumentError("Stage with $(number) not defined"))
     return get_stage(sim, name)
 end
 
@@ -336,7 +336,7 @@ end
 
 function get_cache(simulation_cache::Dict{<:CacheKey, AbstractCache}, key::CacheKey)
     c = get(simulation_cache, key, nothing)
-    isnothing(c) && @debug("Cache with key $(key) not present in the simulation")
+    c === nothing && @debug("Cache with key $(key) not present in the simulation")
     return c
 end
 
@@ -425,7 +425,7 @@ function _get_simulation_initial_times!(sim::Simulation)
                 throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
             end
         end
-        if !isnothing(sim_ini_time) &&
+        if !(sim_ini_time === nothing) &&
            !mapreduce(x -> x == sim_ini_time, |, stage_initial_times[stage_number])
             throw(IS.ConflictingInputsError("The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number.
             Manually provided initial times have to be compatible with the specified interval and horizon in the stages."))
@@ -438,7 +438,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     end
     sim.internal.date_range = Tuple(time_range)
 
-    if isnothing(get_initial_time(sim))
+    if get_initial_time(sim) === nothing
         sim.initial_time = stage_initial_times[1][1]
         @debug("Initial Simulation Time will be infered from the data.
                Initial Simulation Time set to $(sim.initial_time)")
@@ -455,7 +455,7 @@ function _attach_feedforward!(sim::Simulation, stage_name::String)
         # Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
-        isnothing(device_model) &&
+        device_model === nothing &&
             throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
         device_model.feedforward = ff
     end
@@ -489,9 +489,9 @@ function _check_required_ini_cond_caches(sim::Simulation)
         stage = get_stage(sim, stage_name)
         for (k, v) in iterate_initial_conditions(stage.internal.psi_container)
             # No cache needed for the initial condition -> continue
-            isnothing(v[1].cache_type) && continue
+            v[1].cache_type === nothing && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
-            if isnothing(c)
+            if c === nothing
                 throw(ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k) in stage $stage_name"))
             end
             @debug "found cache $(v[1].cache_type) for initial condition $(k) in stage $(stage_name)"
@@ -606,7 +606,7 @@ function _build!(sim::Simulation, serialize::Bool)
     sequence = get_sequence(sim)
     for (stage_number, stage_name) in get_order(sequence)
         stage = get_stage(sim, stage_name)
-        if isnothing(stage)
+        if stage === nothing
             throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         end
         stage_interval = get_stage_interval(sim, stage_name)
@@ -629,9 +629,9 @@ function _build!(sim::Simulation, serialize::Bool)
     return
 end
 
-#Defined here because it requires Stage and Simulation to defined
+# Defined here because it requires Stage and Simulation to defined
 
-#############################Interfacing Functions##########################################
+############################# Interfacing Functions ##########################################
 # These are the functions that the user will have to implement to update a custom IC Chron #
 # or custom InitialConditionType #
 
@@ -733,7 +733,7 @@ function _update_caches!(sim::Simulation, stage::Stage)
     return
 end
 
-################################Cache Update################################################
+################################ Cache Update ################################################
 # TODO: Need to be careful here if 2 stages modify the same cache. This function might need
 # dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
 function update_cache!(
@@ -747,7 +747,7 @@ function update_cache!(
     variable = get_variable(stage.internal.psi_container, c.ref)
     t_range = 1:get_end_of_interval_step(stage)
     for name in variable.axes[1]
-        #Store the initial condition
+        # Store the initial condition
         c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
         c.value[name][:series][1] = c.value[name][:status]
         c.value[name][:current] = 1
@@ -797,7 +797,7 @@ function update_cache!(
     return
 end
 
-#########################TimeSeries Data Updating###########################################
+######################### TimeSeries Data Updating###########################################
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
@@ -924,7 +924,7 @@ function _update_stage!(stage::Stage, sim::Simulation)
     return
 end
 
-#############################Interfacing Functions##########################################
+############################# Interfacing Functions##########################################
 ## These are the functions that the user will have to implement to update a custom stage ###
 """ Generic Stage update function for most problems with no customization"""
 function update_stage!(
@@ -1238,7 +1238,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
 
     try
         for (key, stage) in get_stages(sim)
-            if isnothing(stage.internal)
+            if stage.internal === nothing
                 throw(ArgumentError("stage $(stage.internal.number) has not been built"))
             end
             sys_filename = "system-$(IS.get_uuid(stage.sys)).json"

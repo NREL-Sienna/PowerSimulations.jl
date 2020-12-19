@@ -1,3 +1,5 @@
+#! format: off
+
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 struct PIDSmoothACE <: AbstractAGCFormulation end
 
@@ -13,120 +15,73 @@ function add_variables!(psi_container::PSIContainer, ::Type{SteadyStateFrequency
     end
 end
 
-"""
-This function add the upwards scheduled regulation variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{ActivePowerVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.Area}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(ActivePowerVariable, U),
-        binary = false,
-    )
-end
+########################## ActivePowerVariable, Area ###########################
 
-"""
-This function adds the smooth ACE Variable
-"""
-function AddVariableSpec(
-    ::Type{SmoothACE},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.AggregationTopology}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(SmoothACE, U),
-        binary = false,
-    )
-end
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.Area}) = false
 
-"""
-This function add the upwards scheduled regulation variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{DeltaActivePowerUpVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.Area}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(DeltaActivePowerUpVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+########################## SmoothACE, AggregationTopology ###########################
 
-"""
-This function add the downwards scheduled regulation variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{DeltaActivePowerDownVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.Area}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(DeltaActivePowerDownVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+get_variable_binary(::SmoothACE, ::Type{<:PSY.AggregationTopology}) = false
 
-#= Commented out since not in use. These functions will substitute balancing_auxiliary_variables!
-"""
-This function add the upwards scheduled regulation variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{AdditionalDeltaActivePowerUpVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.Area}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(AdditionalDeltaActivePowerUpVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-        expression_name = :emergency_up,
-    )
-end
+########################## DeltaActivePowerUpVariable, Area ###########################
 
-"""
-This function add the variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{AdditionalDeltaActivePowerDownVariable},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {U <: PSY.Area}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(AdditionalDeltaActivePowerDownVariable, U),
-        binary = false,
-        lb_value_func = x -> 0.0,
-        expression_name = :emergency_dn,
-    )
-end
-=#
+get_variable_binary(::DeltaActivePowerUpVariable, ::Type{<:PSY.Area}) = false
+get_variable_lower_bound(::DeltaActivePowerUpVariable, ::PSY.Area, _) = 0.0
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{PSY.Area},
-    ::PSIContainer,
-) where {T <: AreaMismatchVariable}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(AreaMismatchVariable),
-        binary = false,
-    )
-end
+########################## DeltaActivePowerDownVariable, Area ###########################
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{PSY.Area},
-    ::PSIContainer,
-) where {T <: LiftVariable}
-    AddVariableSpec(;
-        variable_name = make_variable_name(LiftVariable),
-        binary = false,
-        lb_value_func = x -> 0.0,
-    )
-end
+get_variable_binary(::DeltaActivePowerDownVariable, ::Type{<:PSY.Area}) = false
+get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, _) = 0.0
+
+########################## AdditionalDeltaPowerUpVariable, Area ###########################
+
+# Commented out since not in use. These functions will substitute balancing_auxiliary_variables!
+# """
+# This function add the upwards scheduled regulation variables for power generation output to the model
+# """
+# function AddVariableSpec(
+#     ::Type{AdditionalDeltaActivePowerUpVariable},
+#     ::Type{U},
+#     psi_container::PSIContainer,
+# ) where {U <: PSY.Area}
+#     return AddVariableSpec(;
+#         variable_name = make_variable_name(AdditionalDeltaActivePowerUpVariable, U),
+#         binary = false,
+#         lb_value_func = x -> 0.0,
+#         expression_name = :emergency_up,
+#     )
+# end
+#
+# """
+# This function add the variables for power generation output to the model
+# """
+# function AddVariableSpec(
+#     ::Type{AdditionalDeltaActivePowerDownVariable},
+#     ::Type{U},
+#     psi_container::PSIContainer,
+# ) where {U <: PSY.Area}
+#     return AddVariableSpec(;
+#         variable_name = make_variable_name(AdditionalDeltaActivePowerDownVariable, U),
+#         binary = false,
+#         lb_value_func = x -> 0.0,
+#         expression_name = :emergency_dn,
+#     )
+# end
+
+########################## AreaMismatchVariable, Area ###########################
+
+make_variable_name(::Type{AreaMismatchVariable}, _) = make_variable_name(AreaMismatchVariable)
+get_variable_binary(::AreaMismatchVariable, ::Type{<:PSY.Area}) = false
+
+########################## LiftVariable, Area ###########################
+
+make_variable_name(::Type{LiftVariable}, _) = make_variable_name(LiftVariable)
+get_variable_binary(::LiftVariable, ::Type{<:PSY.Area}) = false
+get_variable_lower_bound(::LiftVariable, ::PSY.Area, _) = 0.0
+
+########################## , ###########################
+
+#! format: off
 
 function balancing_auxiliary_variables!(psi_container, sys)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
