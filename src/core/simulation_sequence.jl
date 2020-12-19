@@ -221,7 +221,6 @@ mutable struct SimulationSequence
 end
 
 function _get_num_executions_by_stage(order, execution_order)
-    # TODO DT: make test
     executions_by_stage = Dict(x => 0 for x in values(order))
     for stage_number in execution_order
         executions_by_stage[order[stage_number]] += 1

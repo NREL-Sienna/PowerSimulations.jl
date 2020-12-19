@@ -1,6 +1,6 @@
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"
-const REQUIRED_RECORDERS = [:simulation_status, :simulation]
+const REQUIRED_RECORDERS = (:simulation_status, :simulation)
 
 mutable struct SimulationInternal
     sim_files_dir::String
