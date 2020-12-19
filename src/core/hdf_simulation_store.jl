@@ -255,7 +255,7 @@ function read_result(
     timestamp::Dates.DateTime,
 )
     key = make_cache_key(stage_name, type, name)
-    if is_cached!(store.cache, key, timestamp)
+    if is_cached(store.cache, key, timestamp)
         data = read_result(store.cache, key, timestamp)
     else
         # PERF: If this will be commonly used then we need to remove reading of columns.
@@ -530,7 +530,7 @@ function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
 end
 
 function _read_data_columns(store, key, timestamp)
-    if is_cached!(store.cache, key, timestamp)
+    if is_cached(store.cache, key, timestamp)
         data = read_result(store.cache, key, timestamp)
         column_dataset = _get_dataset(store, key).column_dataset
         columns = column_dataset[:]
