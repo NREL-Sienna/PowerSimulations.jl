@@ -1,4 +1,4 @@
-#########################Initial Condition Updating#########################################
+######################### Initial Condition Updating #########################################
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
 function calculate_ic_quantity(
@@ -63,7 +63,7 @@ function calculate_ic_quantity(
     # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
     dev = get_device(ic)
     min_power = PSY.get_active_power_limits(dev).min
-    if isnothing(cache)
+    if cache === nothing
         # Transitions can't be calculated without cache
         status_change_to_on =
             get_condition(ic) <= min_power && var_value >= ABSOLUTE_TOLERANCE

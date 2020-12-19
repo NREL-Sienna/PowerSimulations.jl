@@ -6,7 +6,7 @@ mutable struct StageInternal
     end_of_interval_step::Int
     # This line keeps track of the executions of a stage relative to other stages.
     # This might be needed in the future to run multiple stages. For now it is disabled
-    #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
+    # synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
     psi_container::PSIContainer
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}

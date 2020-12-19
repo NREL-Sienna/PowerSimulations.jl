@@ -1,14 +1,14 @@
-#Generic Branch Models
+# Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
 abstract type AbstractBoundedBranchFormulation <: AbstractBranchFormulation end
 
-#Abstract Line Models
+# Abstract Line Models
 struct StaticLine <: AbstractBranchFormulation end
 struct StaticLineBounds <: AbstractBoundedBranchFormulation end
 struct StaticLineUnbounded <: AbstractBranchFormulation end
 struct FlowMonitoredLine <: AbstractBranchFormulation end
 
-#Abstract Transformer Models
+# Abstract Transformer Models
 struct StaticTransformer <: AbstractBranchFormulation end
 struct StaticTransformerBounds <: AbstractBoundedBranchFormulation end
 struct StaticTransformerUnbounded <: AbstractBranchFormulation end
@@ -26,14 +26,14 @@ flow_variables!(
     ::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
 ) = nothing
 
-function flow_variables!(
+add_variables!(
     psi_container::PSIContainer,
-    ::Type{<:StandardPTDFModel},
+    ::StandardPTDFModel,
     devices::IS.FlattenIteratorWrapper{B},
-) where {B <: PSY.ACBranch}
-    add_variable!(psi_container, devices, make_variable_name(FLOW_ACTIVE_POWER, B), false)
-    return
-end
+) where {B <: PSY.ACBranch} =
+    add_variable!(psi_container, FlowActivePowerVariable(), devices)
+
+get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}) = false
 
 #################################### Flow Variable Bounds ##################################################
 function _get_constraint_data(

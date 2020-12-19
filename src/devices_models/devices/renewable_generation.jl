@@ -1,34 +1,26 @@
+#! format: off
+
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
-########################### renewable generation variables #################################
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ActivePowerVariable, U <: PSY.RenewableGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        lb_value_func = x -> 0.0,
-        ub_value_func = x -> PSY.get_max_active_power(x),
-    )
-end
+########################### ActivePowerVariable, RenewableGen #################################
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    ::PSIContainer,
-) where {T <: ReactivePowerVariable, U <: PSY.RenewableGen}
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_reactive,
-    )
-end
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}) = false
+
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}) = :nodal_balance_active
+
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.RenewableGen, _) = 0.0
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, _) = PSY.get_max_active_power(d)
+
+########################### ReactivePowerVariable, RenewableGen #################################
+
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = false
+
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = :nodal_balance_reactive
+
+#! format: on
 
 ####################################### Reactive Power constraint_infos #########################
 function DeviceRangeConstraintSpec(
@@ -167,7 +159,7 @@ function AddCostSpec(
     ::PSIContainer,
 ) where {T <: PSY.RenewableDispatch, U <: AbstractRenewableDispatchFormulation}
     # TODO: remove once cost_function is required
-    cost_function = x -> isnothing(x) ? 1.0 : PSY.get_variable(x)
+    cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,

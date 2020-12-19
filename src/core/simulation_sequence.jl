@@ -130,7 +130,7 @@ function _check_chronology_consistency(
             @warn("Single stage detected, the default Initial Condition Chronology is IntraStageChronology(), other values will be ignored.")
         end
     end
-    #TODO: Add more consistency checks
+    # TODO: Add more consistency checks
     return
 end
 
@@ -219,7 +219,7 @@ end
 
 function get_stage_horizon(s::SimulationSequence, stage::String)
     horizon = get(s.horizons, stage, nothing)
-    isnothing(horizon) &&
+    horizon === nothing &&
         throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
     return horizon
 end
@@ -228,7 +228,7 @@ get_stage_interval(s::SimulationSequence, stage::String) = s.intervals[stage][1]
 
 function get_stage_name(s::SimulationSequence, stage::Stage)
     name = get(s.order, get_number(stage), nothing)
-    isnothing(name) &&
+    name === nothing &&
         throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
     return name
 end

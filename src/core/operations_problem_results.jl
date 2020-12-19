@@ -19,7 +19,7 @@ IS.get_parameters(result::OperationsProblemResults) = result.parameter_values
 
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
     var_result = get(res_model.variable_values, key, nothing)
-    if isnothing(var_result)
+    if var_result === nothing
         throw(IS.ConflictingInputsError("No variable with key $(key) has been found."))
     end
     return var_result

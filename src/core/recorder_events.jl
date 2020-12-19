@@ -185,20 +185,20 @@ function list_simulation_events(
     step = nothing,
     stage = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
-    if isnothing(step) && !isnothing(stage)
+    if !(stage === nothing) && step === nothing
         throw(ArgumentError("step is required if stage is passed"))
     end
 
     recorder_file = _get_simulation_recorder_filename(output_dir)
     events = IS.list_recorder_events(T, recorder_file, filter_func)
 
-    if !isnothing(step)
+    if !(step === nothing)
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
         step_range = get_simulation_step_range(recorder_file, step)
         _filter_by_type_range!(events, step_range)
     end
 
-    if !isnothing(stage)
+    if !(stage === nothing)
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
         stage_range = get_simulation_stage_range(recorder_file, step, stage)
         _filter_by_type_range!(events, stage_range)

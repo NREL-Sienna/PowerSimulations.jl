@@ -18,7 +18,6 @@ mutable struct PSIContainer
         settings::PSISettings,
         jump_model::Union{Nothing, JuMP.AbstractModel},
     )
-        #PSY.check_forecast_consistency(sys)
         resolution = PSY.get_time_series_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
         new(
@@ -65,7 +64,7 @@ function _make_jump_model!(psi_container::PSIContainer)
     settings = psi_container.settings
     parameters = get_use_parameters(settings)
     optimizer = get_optimizer(settings)
-    if !isnothing(psi_container.JuMPmodel)
+    if !(psi_container.JuMPmodel === nothing)
         if parameters
             if !haskey(psi_container.JuMPmodel.ext, :params)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
@@ -79,7 +78,7 @@ function _make_jump_model!(psi_container::PSIContainer)
         return
     end
     @debug "Instantiating the JuMP model"
-    if !isnothing(optimizer)
+    if !(optimizer === nothing)
         JuMPmodel = JuMP.Model(optimizer)
         warm_start_enabled = get_warm_start(settings)
         solver_supports_warm_start =
@@ -146,7 +145,7 @@ function psi_container_init!(
     # The order of operations matter
     settings = psi_container.settings
     _make_jump_model!(psi_container)
-    @assert !isnothing(psi_container.JuMPmodel)
+    @assert !(psi_container.JuMPmodel === nothing)
     make_parameters_container = get_use_parameters(settings)
     make_parameters_container && (psi_container.parameters = ParametersContainer())
 
@@ -212,7 +211,7 @@ model_has_parameters(psi_container::PSIContainer) =
 model_uses_forecasts(psi_container::PSIContainer) =
     get_use_forecast_data(psi_container.settings)
 model_initial_time(psi_container::PSIContainer) = get_initial_time(psi_container.settings)
-#Internal Variables, Constraints and Parameters accessors
+# Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
 get_parameters(psi_container::PSIContainer) = psi_container.parameters
@@ -249,7 +248,7 @@ end
 
 function get_variable(psi_container::PSIContainer, name::Symbol)
     var = get(psi_container.variables, name, nothing)
-    if isnothing(var)
+    if var === nothing
         @error "$name is not stored" sort!(get_variable_names(psi_container))
         throw(IS.InvalidValue("variable $name is not stored"))
     end
@@ -317,7 +316,7 @@ end
 
 function get_constraint(psi_container::PSIContainer, name::Symbol)
     var = get(psi_container.constraints, name, nothing)
-    if isnothing(var)
+    if var === nothing
         @error "$name is not stored" sort!(get_constraint_names(psi_container))
         throw(IS.InvalidValue("constraint $name is not stored"))
     end
@@ -379,7 +378,7 @@ end
 
 function get_parameter_container(psi_container::PSIContainer, name::Symbol)
     container = get(psi_container.parameters, name, nothing)
-    if isnothing(container)
+    if container === nothing
         @error "$name is not stored" sort!(get_parameter_names(psi_container))
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
@@ -445,7 +444,7 @@ function get_parameters_value(psi_container::PSIContainer)
     # the system
     params_dict = Dict{Symbol, DataFrames.DataFrame}()
     parameters = get_parameters(psi_container)
-    (isnothing(parameters) || isempty(parameters)) && return params_dict
+    (parameters === nothing || isempty(parameters)) && return params_dict
     for (k, v) in parameters
         !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
         params_key_tuple = decode_symbol(k)
