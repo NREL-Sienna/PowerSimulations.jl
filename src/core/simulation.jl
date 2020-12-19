@@ -12,11 +12,9 @@ mutable struct SimulationInternal
     stages_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
-    time_step_ref::Dict{Int, Int}
     # Initial Time of the first forecast and Initial Time of the last forecast
     date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
-    time_step::Int
     status::Union{Nothing, RUN_STATUS}
     build_status::BUILD_STATUS
     simulation_cache::Dict{<:CacheKey, AbstractCache}
@@ -76,7 +74,6 @@ function SimulationInternal(
     foreach(x -> push!(unique_recorders, x), recorders)
 
     init_time = Dates.now()
-    time_step = 1
     return SimulationInternal(
         sim_files_dir,
         store_dir,
@@ -89,7 +86,6 @@ function SimulationInternal(
         Dict{Int, Dates.DateTime}(),
         (init_time, init_time),
         init_time,
-        time_step,
         nothing,
         EMPTY,
         Dict{CacheKey, AbstractCache}(),
@@ -309,10 +305,6 @@ function get_simulation_time(sim::Simulation, stage_number::Int)
     return sim.internal.date_ref[stage_number]
 end
 
-function get_simulation_time_step(sim::Simulation, stage_number::Int)
-    return sim.internal.time_step_ref[stage_number]
-end
-
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
 get_stage_name(sim::Simulation, stage::Stage) = get_stage_name(sim.sequence, stage)
 IS.get_name(sim::Simulation) = sim.name
@@ -519,7 +511,6 @@ function _build_stages!(sim::Simulation)
             build!(stage, initial_time, horizon, stage_interval)
             _populate_caches!(sim, stage_name)
             sim.internal.date_ref[stage_number] = initial_time
-            sim.internal.time_step_ref[stage_number] = 1
         end
     end
     _check_required_ini_cond_caches(sim)
@@ -663,7 +654,6 @@ function initial_condition_update!(
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
-            sim.internal.time_step,
             ini_cond_key,
             ic,
             quantity,
@@ -714,7 +704,6 @@ function initial_condition_update!(
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
-            sim.internal.time_step,
             ini_cond_key,
             ic,
             quantity,
@@ -1000,14 +989,12 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
-                sim.internal.time_step,
                 step,
                 "start",
             )
             for (ix, stage_number) in enumerate(execution_order)
                 IS.@record :simulation_status SimulationStageEvent(
                     get_current_time(sim),
-                    sim.internal.time_step,
                     step,
                     stage_number,
                     "start",
@@ -1021,7 +1008,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                     end
                     stage_interval = get_stage_interval(sim, stage_name)
                     sim.internal.current_time = sim.internal.date_ref[stage_number]
-                    sim.internal.time_step = sim.internal.time_step_ref[stage_number]
                     # TODO: Show progress meter here
                     get_sequence(sim).current_execution_index = ix
                     # Is first run of first stage? Yes -> don't update stage
@@ -1034,7 +1020,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                         status = run_stage!(step, stage, get_current_time(sim), store)
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
-                        sim.internal.time_step_ref[stage_number] += 1
                         if get_allow_fails(settings) && (status != SUCCESSFUL_RUN)
                             continue
                         elseif !get_allow_fails(settings) && (status != SUCCESSFUL_RUN)
@@ -1053,7 +1038,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                     end
                     IS.@record :simulation_status SimulationStageEvent(
                         get_current_time(sim),
-                        sim.internal.time_step,
                         step,
                         stage_number,
                         "done",
@@ -1062,7 +1046,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
             end # execution order for loop
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
-                sim.internal.time_step,
                 step,
                 "done",
             )
