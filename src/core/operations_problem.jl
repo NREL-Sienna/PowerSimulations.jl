@@ -615,6 +615,7 @@ function serialize_problem(op_problem::OperationsProblem, filename::AbstractStri
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
     sys_filename = "$(basename(filename))-system-$(IS.get_uuid(op_problem.sys)).json"
+    sys_filename = joinpath(dirname(filename), sys_filename)
     PSY.to_json(op_problem.sys, sys_filename)
     obj = OperationsProblemSerializationWrapper(
         op_problem.template,
