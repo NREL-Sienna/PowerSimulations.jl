@@ -51,5 +51,5 @@ function get_cache_hit_percentage(x::CacheStats)
     total = x.hits + x.misses
     total == 0 && return 0.0
 
-    return Float64(x.hits) / (x.hits + x.misses) * 100
+    return x.hits / (x.hits + x.misses) * 100
 end

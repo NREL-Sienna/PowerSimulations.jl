@@ -87,7 +87,6 @@ function SimulationInternal(
         length(stages_keys),
         count_dict,
         Dict{Int, Dates.DateTime}(),
-        Dict{Int, Int}(),
         (init_time, init_time),
         init_time,
         time_step,
