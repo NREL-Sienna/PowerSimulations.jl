@@ -1,3 +1,9 @@
+@enum SOS_STATUS_VARIABLE begin
+    NO_VARIABLE = 1
+    PARAMETER = 2
+    VARIABLE = 3
+end
+
 struct AddCostSpec
     variable_type::Type
     component_type::Type

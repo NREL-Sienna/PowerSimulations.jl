@@ -20,24 +20,18 @@ const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
-@enum BUILD_STATUS begin
-    BUILT = 0
+IS.@scoped_enum BUILD_STATUS begin
     IN_PROGRESS = -1
+    BUILT = 0
     FAILED_BUILD = 1
     EMPTY = 2
 end
 
-@enum RUN_STATUS begin
+IS.@scoped_enum RUN_STATUS begin
     READY = -1
     SUCCESSFUL_RUN = 0
     RUNNING = 1
     FAILED_RUN = 2
-end
-
-@enum SOS_STATUS_VARIABLE begin
-    NO_VARIABLE = 1
-    PARAMETER = 2
-    VARIABLE = 3
 end
 
 # Settings constants

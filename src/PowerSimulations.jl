@@ -164,6 +164,10 @@ export show_recorder_events
 export list_simulation_events
 export show_simulation_events
 
+## Enums
+export BUILD_STATUSs
+export RUN_STATUSs
+
 # Variables / Parameters
 export ACTIVE_POWER
 export ENERGY
