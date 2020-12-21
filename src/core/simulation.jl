@@ -15,8 +15,8 @@ mutable struct SimulationInternal
     # Initial Time of the first forecast and Initial Time of the last forecast
     date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
-    status::Union{Nothing, RUN_STATUSs.RUN_STATUS}
-    build_status::BUILD_STATUSs.BUILD_STATUS
+    status::Union{Nothing, RunStatuss.RunStatus}
+    build_status::BuildStatuss.BuildStatus
     simulation_cache::Dict{<:CacheKey, AbstractCache}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
@@ -87,7 +87,7 @@ function SimulationInternal(
         (init_time, init_time),
         init_time,
         nothing,
-        BUILD_STATUSs.EMPTY,
+        BuildStatuss.EMPTY,
         Dict{CacheKey, AbstractCache}(),
         collect(unique_recorders),
         console_level,
@@ -274,7 +274,7 @@ get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
-set_simulation_build_status!(sim::Simulation, status::BUILD_STATUSs.BUILD_STATUS) =
+set_simulation_build_status!(sim::Simulation, status::BuildStatuss.BuildStatus) =
     sim.internal.build_status = status
 
 function get_base_powers(sim::Simulation)
@@ -574,12 +574,12 @@ function build!(
         try
             Logging.with_logger(logger) do
                 _build!(sim, serialize)
-                set_simulation_build_status!(sim, BUILD_STATUSs.BUILT)
-                set_simulation_status!(sim, RUN_STATUSs.READY)
+                set_simulation_build_status!(sim, BuildStatuss.BUILT)
+                set_simulation_status!(sim, RunStatuss.READY)
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
         catch e
-            set_simulation_build_status!(sim, BUILD_STATUSs.FAILED_BUILD)
+            set_simulation_build_status!(sim, BuildStatuss.FAILED_BUILD)
             set_simulation_status!(sim, nothing)
             rethrow(e)
         finally
@@ -591,7 +591,7 @@ function build!(
 end
 
 function _build!(sim::Simulation, serialize::Bool)
-    sim.internal.build_status = BUILD_STATUSs.IN_PROGRESS
+    sim.internal.build_status = BuildStatuss.IN_PROGRESS
     stage_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
     for (stage_number, stage_name) in get_order(sequence)
@@ -948,7 +948,8 @@ function execute!(sim::Simulation; kwargs...)
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
     open_func = get_simulation_store_open_func(sim)
-    if (get_simulation_build_status(sim) != BUILD_STATUSs.BUILT) || (get_simulation_status(sim) != RUN_STATUSs.READY)
+    if (get_simulation_build_status(sim) != BuildStatuss.BUILT) ||
+       (get_simulation_status(sim) != RunStatuss.READY)
         error("Simulation status is invalid, you need to rebuild the simulation")
     end
     try
@@ -960,13 +961,13 @@ function execute!(sim::Simulation; kwargs...)
                     _execute!(sim, store; kwargs...)
                 end
                 @info ("\n$(RUN_SIMULATION_TIMER)\n")
-                set_simulation_status!(sim, RUN_STATUSs.SUCCESSFUL_RUN)
+                set_simulation_status!(sim, RunStatuss.SUCCESSFUL)
                 log_cache_hit_percentages(store)
             end
         end
     catch e
         # TODO: Add Fallback when run_stage fails
-        set_simulation_status!(sim, RUN_STATUSs.FAILED_RUN)
+        set_simulation_status!(sim, RunStatuss.FAILED_RUN)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
         unregister_recorders!(sim.internal)
@@ -978,13 +979,13 @@ end
 
 function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
     @assert !isnothing(sim.internal)
-    set_simulation_status!(sim, RUN_STATUSs.RUNNING)
+    set_simulation_status!(sim, RunStatuss.RUNNING)
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
     _initialize_stage_storage!(sim, store, cache_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
-    status = RUN_STATUSs.RUNNING
+    status = RunStatuss.RUNNING
     for step in 1:steps
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
@@ -1004,7 +1005,7 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                     stage = get_stage(sim, stage_number)
                     stage_name = get_stage_name(sim, stage)
                     if !is_stage_built(stage)
-                        error("Stage $(stage_name) status is not BUILD_STATUSs.BUILT")
+                        error("Stage $(stage_name) status is not BuildStatuss.BUILT")
                     end
                     stage_interval = get_stage_interval(sim, stage_name)
                     sim.internal.current_time = sim.internal.date_ref[stage_number]
@@ -1020,12 +1021,13 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                         status = run_stage!(step, stage, get_current_time(sim), store)
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
-                        if get_allow_fails(settings) && (status != RUN_STATUSs.SUCCESSFUL_RUN)
+                        if get_allow_fails(settings) && (status != RunStatuss.SUCCESSFUL)
                             continue
-                        elseif !get_allow_fails(settings) && (status != RUN_STATUSs.SUCCESSFUL_RUN)
+                        elseif !get_allow_fails(settings) &&
+                               (status != RunStatuss.SUCCESSFUL)
                             throw(ErrorException("Simulation Failed in stage $(stage_number)"))
                         else
-                            @assert status == RUN_STATUSs.SUCCESSFUL_RUN
+                            @assert status == RunStatuss.SUCCESSFUL
                         end
                     end # Run stage Timer
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
