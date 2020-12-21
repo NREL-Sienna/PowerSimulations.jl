@@ -1,3 +1,5 @@
+#! format: off
+
 ########################### Thermal Generation Models ######################################
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
@@ -9,165 +11,74 @@ struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 struct ThermalMultiStartUnitCommitment <: AbstractThermalUnitCommitment end
 
-########################### Active Dispatch Variables ######################################
-"""
-This function add the variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {T <: ActivePowerVariable, U <: PSY.ThermalGen}
-    if get_warm_start(psi_container.settings)
-        initial_value_func = d -> PSY.get_active_power(d)
-    else
-        initial_value_func = nothing
-    end
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        initial_value_func = initial_value_func,
-        lb_value_func = x -> PSY.get_active_power_limits(x).min,
-        ub_value_func = x -> PSY.get_active_power_limits(x).max,
-    )
-end
+############## ActivePowerVariable, ThermalGen ####################
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {T <: ActivePowerVariable, U <: PSY.ThermalMultiStart}
-    if get_warm_start(psi_container.settings)
-        initial_value_func = d -> PSY.get_active_power(d)
-    else
-        initial_value_func = nothing
-    end
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_active,
-        initial_value_func = initial_value_func,
-        lb_value_func = x -> 0,
-        ub_value_func = x -> PSY.get_active_power_limits(x).max,
-    )
-end
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = false
 
-"""
-This function add the variables for power generation output to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {T <: ReactivePowerVariable, U <: PSY.ThermalGen}
-    if get_warm_start(psi_container.settings)
-        initial_value_func = d -> PSY.get_reactive_power(d)
-    else
-        initial_value_func = nothing
-    end
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = false,
-        expression_name = :nodal_balance_reactive,
-        initial_value_func = initial_value_func,
-        lb_value_func = x -> PSY.get_reactive_power_limits(x).min,
-        ub_value_func = x -> PSY.get_reactive_power_limits(x).max,
-    )
-end
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_active
 
-"""
-This function add the variables for power generation commitment to the model
-"""
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {T <: OnVariable, U <: PSY.ThermalGen}
-    if get_warm_start(psi_container.settings)
-        initial_value_func = x -> (PSY.get_active_power(x) > 0 ? 1.0 : 0.0)
-    else
-        initial_value_func = nothing
-    end
-    return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        initial_value_func = initial_value_func,
-        binary = true,
-    )
-end
+get_variable_initial_value(pv::ActivePowerVariable, d::PSY.ThermalGen, settings) =
+    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::WarmStartVariable) = PSY.get_active_power(d)
+get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::ColdStartVariable) = nothing
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {T <: StopVariable, U <: PSY.ThermalGen}
-    AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
-end
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_active_power_limits(d).min
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_active_power_limits(d).max
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {T <: StartVariable, U <: PSY.ThermalGen}
-    AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
-        binary = true, # TODO: This variable could be relaxed. Consider this as a different formulation
-        lb_value_func = x -> 0.0,
-        ub_value_func = x -> 1.0,
-    )
-end
+############## ActivePowerVariable, ThermalMultiStart ####################
 
-function commitment_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-)
-    time_steps = model_time_steps(psi_container)
-    if get_warm_start(psi_container.settings)
-        initial_value = d -> (PSY.get_active_power(d) > 0 ? 1.0 : 0.0)
-    else
-        initial_value = nothing
-    end
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalMultiStart}) = false
 
-    add_variable!(
-        psi_container,
-        devices,
-        make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        true,
-    )
-    varstatus = get_variable(psi_container, OnVariable, PSY.ThermalMultiStart)
-    for t in time_steps, d in devices
-        name = PSY.get_name(d)
-        bus_number = PSY.get_number(PSY.get_bus(d))
-        add_to_expression!(
-            get_expression(psi_container, :nodal_balance_active),
-            bus_number,
-            t,
-            varstatus[name, t],
-            PSY.get_active_power_limits(d).min,
-        )
-    end
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalMultiStart}) = :nodal_balance_active
+get_variable_initial_value(pv::ActivePowerVariable, d::PSY.ThermalMultiStart, settings) =
+    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalMultiStart, ::WarmStartVariable) = PSY.get_active_power(d)
+get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalMultiStart, ::ColdStartVariable) = nothing
 
-    var_names = (
-        make_variable_name(StartVariable, PSY.ThermalMultiStart),
-        make_variable_name(StopVariable, PSY.ThermalMultiStart),
-    )
-    for v in var_names
-        add_variable!(psi_container, devices, v, true)
-    end
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalMultiStart, _) = 0
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalMultiStart, _) = PSY.get_active_power_limits(d).max
 
-    return
-end
+############## ReactivePowerVariable, ThermalGen ####################
 
-function AddVariableSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::PSIContainer,
-) where {
-    T <: Union{ColdStartVariable, WarmStartVariable, HotStartVariable},
-    U <: PSY.ThermalMultiStart,
-}
-    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
-end
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}) = false
+
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_reactive
+
+get_variable_initial_value(pv::ReactivePowerVariable, d::PSY.ThermalGen, settings) =
+get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::WarmStartVariable) = PSY.get_active_power(d)
+get_variable_initial_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::ColdStartVariable) = nothing
+
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_active_power_limits(d).min
+get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_active_power_limits(d).max
+
+############## OnVariable, ThermalGen ####################
+
+get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}) = true
+
+get_variable_initial_value(pv::OnVariable, d::PSY.ThermalGen, settings) =
+    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
+get_variable_initial_value(::OnVariable, d::PSY.ThermalGen, ::WarmStartVariable) = PSY.get_active_power(d) > 0 ? 1.0 : 0.0
+get_variable_initial_value(::OnVariable, d::PSY.ThermalGen, ::ColdStartVariable) = nothing
+
+############## StopVariable, ThermalGen ####################
+
+get_variable_binary(::StopVariable, ::Type{<:PSY.ThermalGen}) = true
+
+############## StartVariable, ThermalGen ####################
+
+get_variable_binary(::StartVariable, d::Type{<:PSY.ThermalGen}) = true
+get_variable_lower_bound(::StartVariable, d::PSY.ThermalGen, _) = 0.0
+get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, _) = 1.0
+
+############## ColdStartVariable, WarmStartVariable, HotStartVariable ############
+
+get_variable_binary(v::T, d::PSY.ThermalMultiStart) where T <: Union{ColdStartVariable, WarmStartVariable, HotStartVariable} = get_variable_binary(v, typeof(d))
+get_variable_binary(::T, ::Type{PSY.ThermalMultiStart}) where T <: Union{ColdStartVariable, WarmStartVariable, HotStartVariable} = true
+
+#! format: on
+
+######## CONSTRAINTS ############
 
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
@@ -245,8 +156,7 @@ function DeviceRangeConstraintSpec(
 end
 
 """
-This function adds the active power limits of generators when there are
-    no CommitmentVariables
+This function adds the active power limits of generators when there are no CommitmentVariables
 """
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
@@ -518,7 +428,7 @@ function _get_data_for_rocc(
         non_binding_up = false
         non_binding_down = false
         ramp_limits = PSY.get_ramp_limits(g)
-        if !isnothing(ramp_limits)
+        if !(ramp_limits === nothing)
             p_lims = PSY.get_active_power_limits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
             if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
@@ -1013,7 +923,7 @@ function _get_data_for_tdc(
         non_binding_down = false
         time_limits = PSY.get_time_limits(g)
         name = PSY.get_name(g)
-        if !isnothing(time_limits)
+        if !(time_limits === nothing)
             if (time_limits.up <= fraction_of_hour) & (time_limits.down <= fraction_of_hour)
                 @debug "Generator $(name) has a nonbinding time limits. Constraints Skipped"
                 continue
@@ -1180,7 +1090,7 @@ function AddCostSpec(
         component_type = T,
         has_status_variable = has_on_variable(psi_container, T),
         has_status_parameter = has_on_parameter(psi_container, T),
-        #variable_cost = PSY.get_variable, uses SOS by default
+        # variable_cost = PSY.get_variable, uses SOS by default
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
         sos_status = VARIABLE,

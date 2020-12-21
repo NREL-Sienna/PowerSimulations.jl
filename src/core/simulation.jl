@@ -1,6 +1,6 @@
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"
-const REQUIRED_RECORDERS = [:simulation_status, :simulation]
+const REQUIRED_RECORDERS = (:simulation_status, :simulation)
 
 mutable struct SimulationInternal
     sim_files_dir::String
@@ -12,13 +12,11 @@ mutable struct SimulationInternal
     stages_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
-    time_step_ref::Dict{Int, Int}
-    #Initial Time of the first forecast and Initial Time of the last forecast
+    # Initial Time of the first forecast and Initial Time of the last forecast
     date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
-    time_step::Int
-    status::Union{Nothing, RUN_STATUS}
-    build_status::BUILD_STATUS
+    status::Union{Nothing, RunStatuss.RunStatus}
+    build_status::BuildStatuss.BuildStatus
     simulation_cache::Dict{<:CacheKey, AbstractCache}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
@@ -76,7 +74,6 @@ function SimulationInternal(
     foreach(x -> push!(unique_recorders, x), recorders)
 
     init_time = Dates.now()
-    time_step = 1
     return SimulationInternal(
         sim_files_dir,
         store_dir,
@@ -87,12 +84,10 @@ function SimulationInternal(
         length(stages_keys),
         count_dict,
         Dict{Int, Dates.DateTime}(),
-        Dict{Int, Int}(),
         (init_time, init_time),
         init_time,
-        time_step,
         nothing,
-        EMPTY,
+        BuildStatuss.EMPTY,
         Dict{CacheKey, AbstractCache}(),
         collect(unique_recorders),
         console_level,
@@ -196,7 +191,7 @@ function _set_internal_caches(
 end
 
 function _get_output_dir_name(path, output_dir)
-    if !isnothing(output_dir)
+    if !(output_dir === nothing)
         # The user wants a custom name.
         return output_dir
     end
@@ -279,7 +274,7 @@ get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
-set_simulation_build_status!(sim::Simulation, status::BUILD_STATUS) =
+set_simulation_build_status!(sim::Simulation, status::BuildStatuss.BuildStatus) =
     sim.internal.build_status = status
 
 function get_base_powers(sim::Simulation)
@@ -292,7 +287,7 @@ end
 
 function get_stage(sim::Simulation, name::String)
     stage = get(get_stages(sim), name, nothing)
-    isnothing(stage) && throw(ArgumentError("Stage $(name) not present in the simulation"))
+    stage === nothing && throw(ArgumentError("Stage $(name) not present in the simulation"))
     return stage
 end
 
@@ -300,7 +295,7 @@ get_stage_interval(sim::Simulation, name::String) = get_stage_interval(sim.seque
 
 function get_stage(sim::Simulation, number::Int)
     name = get(get_sequence(sim).order, number, nothing)
-    isnothing(name) && throw(ArgumentError("Stage with $(number) not defined"))
+    name === nothing && throw(ArgumentError("Stage with $(number) not defined"))
     return get_stage(sim, name)
 end
 
@@ -308,10 +303,6 @@ get_stages_quantity(sim::Simulation) = sim.internal.stages_count
 
 function get_simulation_time(sim::Simulation, stage_number::Int)
     return sim.internal.date_ref[stage_number]
-end
-
-function get_simulation_time_step(sim::Simulation, stage_number::Int)
-    return sim.internal.time_step_ref[stage_number]
 end
 
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
@@ -336,7 +327,7 @@ end
 
 function get_cache(simulation_cache::Dict{<:CacheKey, AbstractCache}, key::CacheKey)
     c = get(simulation_cache, key, nothing)
-    isnothing(c) && @debug("Cache with key $(key) not present in the simulation")
+    c === nothing && @debug("Cache with key $(key) not present in the simulation")
     return c
 end
 
@@ -425,7 +416,7 @@ function _get_simulation_initial_times!(sim::Simulation)
                 throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
             end
         end
-        if !isnothing(sim_ini_time) &&
+        if !(sim_ini_time === nothing) &&
            !mapreduce(x -> x == sim_ini_time, |, stage_initial_times[stage_number])
             throw(IS.ConflictingInputsError("The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number.
             Manually provided initial times have to be compatible with the specified interval and horizon in the stages."))
@@ -438,7 +429,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     end
     sim.internal.date_range = Tuple(time_range)
 
-    if isnothing(get_initial_time(sim))
+    if get_initial_time(sim) === nothing
         sim.initial_time = stage_initial_times[1][1]
         @debug("Initial Simulation Time will be infered from the data.
                Initial Simulation Time set to $(sim.initial_time)")
@@ -455,7 +446,7 @@ function _attach_feedforward!(sim::Simulation, stage_name::String)
         # Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
-        isnothing(device_model) &&
+        device_model === nothing &&
             throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
         device_model.feedforward = ff
     end
@@ -489,9 +480,9 @@ function _check_required_ini_cond_caches(sim::Simulation)
         stage = get_stage(sim, stage_name)
         for (k, v) in iterate_initial_conditions(stage.internal.psi_container)
             # No cache needed for the initial condition -> continue
-            isnothing(v[1].cache_type) && continue
+            v[1].cache_type === nothing && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
-            if isnothing(c)
+            if c === nothing
                 throw(ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k) in stage $stage_name"))
             end
             @debug "found cache $(v[1].cache_type) for initial condition $(k) in stage $(stage_name)"
@@ -520,7 +511,6 @@ function _build_stages!(sim::Simulation)
             build!(stage, initial_time, horizon, stage_interval)
             _populate_caches!(sim, stage_name)
             sim.internal.date_ref[stage_number] = initial_time
-            sim.internal.time_step_ref[stage_number] = 1
         end
     end
     _check_required_ini_cond_caches(sim)
@@ -584,12 +574,12 @@ function build!(
         try
             Logging.with_logger(logger) do
                 _build!(sim, serialize)
-                set_simulation_build_status!(sim, BUILT)
-                set_simulation_status!(sim, READY)
+                set_simulation_build_status!(sim, BuildStatuss.BUILT)
+                set_simulation_status!(sim, RunStatuss.READY)
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
         catch e
-            set_simulation_build_status!(sim, FAILED_BUILD)
+            set_simulation_build_status!(sim, BuildStatuss.FAILED_BUILD)
             set_simulation_status!(sim, nothing)
             rethrow(e)
         finally
@@ -601,12 +591,12 @@ function build!(
 end
 
 function _build!(sim::Simulation, serialize::Bool)
-    sim.internal.build_status = IN_PROGRESS
+    sim.internal.build_status = BuildStatuss.IN_PROGRESS
     stage_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
     for (stage_number, stage_name) in get_order(sequence)
         stage = get_stage(sim, stage_name)
-        if isnothing(stage)
+        if stage === nothing
             throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         end
         stage_interval = get_stage_interval(sim, stage_name)
@@ -629,9 +619,9 @@ function _build!(sim::Simulation, serialize::Bool)
     return
 end
 
-#Defined here because it requires Stage and Simulation to defined
+# Defined here because it requires Stage and Simulation to defined
 
-#############################Interfacing Functions##########################################
+############################# Interfacing Functions ##########################################
 # These are the functions that the user will have to implement to update a custom IC Chron #
 # or custom InitialConditionType #
 
@@ -664,7 +654,6 @@ function initial_condition_update!(
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
-            sim.internal.time_step,
             ini_cond_key,
             ic,
             quantity,
@@ -715,7 +704,6 @@ function initial_condition_update!(
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
-            sim.internal.time_step,
             ini_cond_key,
             ic,
             quantity,
@@ -733,7 +721,7 @@ function _update_caches!(sim::Simulation, stage::Stage)
     return
 end
 
-################################Cache Update################################################
+################################ Cache Update ################################################
 # TODO: Need to be careful here if 2 stages modify the same cache. This function might need
 # dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
 function update_cache!(
@@ -747,7 +735,7 @@ function update_cache!(
     variable = get_variable(stage.internal.psi_container, c.ref)
     t_range = 1:get_end_of_interval_step(stage)
     for name in variable.axes[1]
-        #Store the initial condition
+        # Store the initial condition
         c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
         c.value[name][:series][1] = c.value[name][:status]
         c.value[name][:current] = 1
@@ -797,7 +785,7 @@ function update_cache!(
     return
 end
 
-#########################TimeSeries Data Updating###########################################
+######################### TimeSeries Data Updating###########################################
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
@@ -924,7 +912,7 @@ function _update_stage!(stage::Stage, sim::Simulation)
     return
 end
 
-#############################Interfacing Functions##########################################
+############################# Interfacing Functions##########################################
 ## These are the functions that the user will have to implement to update a custom stage ###
 """ Generic Stage update function for most problems with no customization"""
 function update_stage!(
@@ -960,7 +948,8 @@ function execute!(sim::Simulation; kwargs...)
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
     open_func = get_simulation_store_open_func(sim)
-    if (get_simulation_build_status(sim) != BUILT) || (get_simulation_status(sim) != READY)
+    if (get_simulation_build_status(sim) != BuildStatuss.BUILT) ||
+       (get_simulation_status(sim) != RunStatuss.READY)
         error("Simulation status is invalid, you need to rebuild the simulation")
     end
     try
@@ -972,13 +961,13 @@ function execute!(sim::Simulation; kwargs...)
                     _execute!(sim, store; kwargs...)
                 end
                 @info ("\n$(RUN_SIMULATION_TIMER)\n")
-                set_simulation_status!(sim, SUCCESSFUL_RUN)
+                set_simulation_status!(sim, RunStatuss.SUCCESSFUL)
                 log_cache_hit_percentages(store)
             end
         end
     catch e
         # TODO: Add Fallback when run_stage fails
-        set_simulation_status!(sim, FAILED_RUN)
+        set_simulation_status!(sim, RunStatuss.FAILED_RUN)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
         unregister_recorders!(sim.internal)
@@ -990,25 +979,23 @@ end
 
 function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
     @assert !isnothing(sim.internal)
-    set_simulation_status!(sim, RUNNING)
+    set_simulation_status!(sim, RunStatuss.RUNNING)
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
     _initialize_stage_storage!(sim, store, cache_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
-    status = RUNNING
+    status = RunStatuss.RUNNING
     for step in 1:steps
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
-                sim.internal.time_step,
                 step,
                 "start",
             )
             for (ix, stage_number) in enumerate(execution_order)
                 IS.@record :simulation_status SimulationStageEvent(
                     get_current_time(sim),
-                    sim.internal.time_step,
                     step,
                     stage_number,
                     "start",
@@ -1018,11 +1005,10 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                     stage = get_stage(sim, stage_number)
                     stage_name = get_stage_name(sim, stage)
                     if !is_stage_built(stage)
-                        error("Stage $(stage_name) status is not BUILT")
+                        error("Stage $(stage_name) status is not BuildStatuss.BUILT")
                     end
                     stage_interval = get_stage_interval(sim, stage_name)
                     sim.internal.current_time = sim.internal.date_ref[stage_number]
-                    sim.internal.time_step = sim.internal.time_step_ref[stage_number]
                     # TODO: Show progress meter here
                     get_sequence(sim).current_execution_index = ix
                     # Is first run of first stage? Yes -> don't update stage
@@ -1035,13 +1021,13 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                         status = run_stage!(step, stage, get_current_time(sim), store)
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
-                        sim.internal.time_step_ref[stage_number] += 1
-                        if get_allow_fails(settings) && (status != SUCCESSFUL_RUN)
+                        if get_allow_fails(settings) && (status != RunStatuss.SUCCESSFUL)
                             continue
-                        elseif !get_allow_fails(settings) && (status != SUCCESSFUL_RUN)
+                        elseif !get_allow_fails(settings) &&
+                               (status != RunStatuss.SUCCESSFUL)
                             throw(ErrorException("Simulation Failed in stage $(stage_number)"))
                         else
-                            @assert status == SUCCESSFUL_RUN
+                            @assert status == RunStatuss.SUCCESSFUL
                         end
                     end # Run stage Timer
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
@@ -1054,7 +1040,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                     end
                     IS.@record :simulation_status SimulationStageEvent(
                         get_current_time(sim),
-                        sim.internal.time_step,
                         step,
                         stage_number,
                         "done",
@@ -1063,7 +1048,6 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
             end # execution order for loop
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
-                sim.internal.time_step,
                 step,
                 "done",
             )
@@ -1238,7 +1222,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
 
     try
         for (key, stage) in get_stages(sim)
-            if isnothing(stage.internal)
+            if stage.internal === nothing
                 throw(ArgumentError("stage $(stage.internal.number) has not been built"))
             end
             sys_filename = "system-$(IS.get_uuid(stage.sys)).json"

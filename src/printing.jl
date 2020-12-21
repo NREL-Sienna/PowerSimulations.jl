@@ -10,7 +10,7 @@ function _organize_model(
             inner_field == :services && continue
             value = getfield(val[i], Symbol(inner_field))
 
-            if !isnothing(value)
+            if !(value === nothing)
                 println(io, "        $(inner_field) = $value")
             end
         end
@@ -41,7 +41,7 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
             println(io, "============================================")
             _organize_model(val, field, io)
         else
-            if !isnothing(val)
+            if !(val === nothing)
                 println(io, "  $(field):  $(val)")
             else
                 println(io, "no data")
@@ -136,7 +136,7 @@ function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     end
     println(io, "<p><b>Optimizer Log</b></p>")
     for (k, v) in results.optimizer_log
-        if !isnothing(v)
+        if !(v === nothing)
             println(io, "<p>        $(k) = $(v)</p>")
         end
     end

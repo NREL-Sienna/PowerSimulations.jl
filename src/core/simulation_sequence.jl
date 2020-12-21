@@ -130,7 +130,7 @@ function _check_chronology_consistency(
             @warn("Single stage detected, the default Initial Condition Chronology is IntraStageChronology(), other values will be ignored.")
         end
     end
-    #TODO: Add more consistency checks
+    # TODO: Add more consistency checks
     return
 end
 
@@ -221,7 +221,6 @@ mutable struct SimulationSequence
 end
 
 function _get_num_executions_by_stage(order, execution_order)
-    # TODO DT: make test
     executions_by_stage = Dict(x => 0 for x in values(order))
     for stage_number in execution_order
         executions_by_stage[order[stage_number]] += 1
@@ -232,8 +231,9 @@ end
 
 function get_stage_horizon(sequence::SimulationSequence, stage::String)
     horizon = get(sequence.horizons, stage, nothing)
-    isnothing(horizon) &&
-        throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+    if horizon === nothing
+        throw(ArgumentError("Stage $(stage) not present in the simulation"))
+    end
     return horizon
 end
 
@@ -242,8 +242,9 @@ get_stage_interval(sequence::SimulationSequence, stage::String) =
 
 function get_stage_name(sequence::SimulationSequence, stage::Stage)
     name = get(get_order(sequence), get_number(stage), nothing)
-    isnothing(name) &&
+    if name === nothing
         throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+    end
     return name
 end
 

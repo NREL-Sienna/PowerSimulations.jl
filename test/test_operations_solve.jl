@@ -472,7 +472,8 @@ function test_op_problem_write_functions(file_path)
         filename = joinpath(path, "test_op_problem.bin")
         serialize_problem(op_problem, filename)
         file_list = sort!(collect(readdir(path)))
-        @test ["op_problem.json", "test_op_problem.bin"] == file_list
+        @test "op_problem.json" in file_list
+        @test "test_op_problem.bin" in file_list
         ED2 = OperationsProblem(filename, optimizer = OSQP_optimizer)
         psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
     end

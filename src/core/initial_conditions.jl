@@ -23,7 +23,7 @@ end
 
 function get_initial_conditions(container::InitialConditions, key::ICKey)
     initial_conditions = get(container.data, key, nothing)
-    if isnothing(initial_conditions)
+    if initial_conditions === nothing
         throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
     end
 

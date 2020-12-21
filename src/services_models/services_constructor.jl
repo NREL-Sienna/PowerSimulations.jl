@@ -89,9 +89,9 @@ function construct_service!(
             contributing_devices =
                 [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
         end
-        #Services without contributing devices should have been filtered out in the validation
+        # Services without contributing devices should have been filtered out in the validation
         @assert !isempty(contributing_devices)
-        #Variables
+        # Variables
         add_variables!(psi_container, ActiveServiceVariable, service, contributing_devices)
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
@@ -132,7 +132,7 @@ function construct_service!(
             contributing_devices =
                 [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
         end
-        #Variables
+        # Variables
         add_variables!(psi_container, ActiveServiceVariable, service, contributing_devices)
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
@@ -152,9 +152,9 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {T <: AbstractAGCFormulation}
-    #Order is important in the addition of these variables
+    # Order is important in the addition of these variables
     for device_model in devices_template
-        #TODO: make a check for the devices' models
+        # TODO: make a check for the devices' models
     end
     agc_areas = [PSY.get_area(agc) for agc in services]
     areas = PSY.get_components(PSY.Area, sys)
@@ -170,8 +170,8 @@ function construct_service!(
     add_variables!(psi_container, ActivePowerVariable, areas)
     add_variables!(psi_container, DeltaActivePowerUpVariable, areas)
     add_variables!(psi_container, DeltaActivePowerDownVariable, areas)
-    #add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, areas)
-    #add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, areas)
+    # add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, areas)
+    # add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, areas)
     balancing_auxiliary_variables!(psi_container, sys)
 
     absolute_value_lift(psi_container, areas)

@@ -16,7 +16,7 @@ struct InterStageChronology <: InitialConditionChronology end
 """
 struct IntraStageChronology <: InitialConditionChronology end
 
-#########################Initial Conditions Definitions#####################################
+######################### Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
 struct DeviceStatus <: InitialConditionType end
 struct TimeDurationON <: InitialConditionType end

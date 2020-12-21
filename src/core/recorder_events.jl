@@ -6,21 +6,18 @@ abstract type AbstractSimulationStatusEvent <: IS.AbstractRecorderEvent end
 struct SimulationStepEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
-    time_step::Int
     step::Int
     status::String
 end
 
 function SimulationStepEvent(
     simulation_time::Dates.DateTime,
-    time_step::Int,
     step::Int,
     status::AbstractString,
 )
     return SimulationStepEvent(
         IS.RecorderEventCommon("SimulationStepEvent"),
         simulation_time,
-        time_step,
         step,
         status,
     )
@@ -29,7 +26,6 @@ end
 struct SimulationStageEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
-    time_step::Int
     step::Int
     stage::Int
     status::String
@@ -37,7 +33,6 @@ end
 
 function SimulationStageEvent(
     simulation_time::Dates.DateTime,
-    time_step::Int,
     step::Int,
     stage::Int,
     status::AbstractString,
@@ -45,7 +40,6 @@ function SimulationStageEvent(
     return SimulationStageEvent(
         IS.RecorderEventCommon("SimulationStageEvent"),
         simulation_time,
-        time_step,
         step,
         stage,
         status,
@@ -55,7 +49,6 @@ end
 struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
-    time_step::Int
     initial_condition_type::String
     device_type::String
     device_name::String
@@ -66,7 +59,6 @@ end
 
 function InitialConditionUpdateEvent(
     simulation_time,
-    time_step,
     key::ICKey,
     ic::InitialCondition,
     val::Float64,
@@ -76,7 +68,6 @@ function InitialConditionUpdateEvent(
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
         simulation_time,
-        time_step,
         string(key.ic_type),
         string(key.device_type),
         device_name(ic),
@@ -90,7 +81,6 @@ struct FeedForwardUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     category::String
     simulation_time::Dates.DateTime
-    time_step::Int
     parameter_type::String
     device_name::String
     previous_value::Float64
@@ -102,7 +92,6 @@ end
 function FeedForwardUpdateEvent(
     category::String,
     simulation_time::Dates.DateTime,
-    time_step::Int,
     update_ref::UpdateRef{JuMP.VariableRef},
     device_name::String,
     val::Float64,
@@ -114,7 +103,6 @@ function FeedForwardUpdateEvent(
         IS.RecorderEventCommon("FeedForwardUpdateEvent"),
         category,
         simulation_time,
-        time_step,
         string(update_ref.access_ref),
         device_name,
         previous_value,
@@ -197,20 +185,20 @@ function list_simulation_events(
     step = nothing,
     stage = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
-    if isnothing(step) && !isnothing(stage)
+    if !(stage === nothing) && step === nothing
         throw(ArgumentError("step is required if stage is passed"))
     end
 
     recorder_file = _get_simulation_recorder_filename(output_dir)
     events = IS.list_recorder_events(T, recorder_file, filter_func)
 
-    if !isnothing(step)
+    if !(step === nothing)
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
         step_range = get_simulation_step_range(recorder_file, step)
         _filter_by_type_range!(events, step_range)
     end
 
-    if !isnothing(stage)
+    if !(stage === nothing)
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
         stage_range = get_simulation_stage_range(recorder_file, step, stage)
         _filter_by_type_range!(events, stage_range)

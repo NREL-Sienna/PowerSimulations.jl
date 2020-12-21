@@ -315,7 +315,7 @@ thermal_generators5(nodes5) = [
         reactive_power_limits = (min = -0.30, max = 0.30),
         ramp_limits = nothing,
         time_limits = nothing,
-        operation_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+        operation_cost = ThreePartCost((0.0, 14.0), 0.0, 4.0, 2.0),
         base_power = 100.0,
     ),
     ThermalStandard(
@@ -332,7 +332,7 @@ thermal_generators5(nodes5) = [
         reactive_power_limits = (min = -1.275, max = 1.275),
         ramp_limits = (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
         time_limits = (up = 2.0, down = 1.0),
-        operation_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+        operation_cost = ThreePartCost((0.0, 15.0), 0.0, 1.5, 0.75),
         base_power = 100.0,
     ),
     ThermalStandard(
@@ -349,7 +349,7 @@ thermal_generators5(nodes5) = [
         reactive_power_limits = (min = -3.90, max = 3.90),
         ramp_limits = (up = 0.012 * 5.2, down = 0.012 * 5.2),
         time_limits = (up = 3.0, down = 2.0),
-        operation_cost = ThreePartCost((0.0, 3000.0), 0.0, 3.0, 1.5),
+        operation_cost = ThreePartCost((0.0, 30.0), 0.0, 3.0, 1.5),
         base_power = 100.0,
     ),
     ThermalStandard(
@@ -366,7 +366,7 @@ thermal_generators5(nodes5) = [
         reactive_power_limits = (min = -1.5, max = 1.5),
         ramp_limits = (up = 0.015 * 2.5, down = 0.015 * 2.5),
         time_limits = (up = 2.0, down = 1.0),
-        operation_cost = ThreePartCost((0.0, 4000.0), 0.0, 4.0, 2.0),
+        operation_cost = ThreePartCost((0.0, 40.0), 0.0, 4.0, 2.0),
         base_power = 100.0,
     ),
     ThermalStandard(
@@ -383,7 +383,7 @@ thermal_generators5(nodes5) = [
         reactive_power_limits = (min = -4.50, max = 4.50),
         ramp_limits = (up = 0.015 * 7.5, down = 0.015 * 7.5),
         time_limits = (up = 5.0, down = 3.0),
-        operation_cost = ThreePartCost((0.0, 1000.0), 0.0, 1.5, 0.75),
+        operation_cost = ThreePartCost((0.0, 10.0), 0.0, 1.5, 0.75),
         base_power = 100.0,
     ),
 ];
@@ -404,7 +404,7 @@ thermal_generators5_pwl(nodes5) = [
         ramp_limits = (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
         time_limits = (up = 2.0, down = 1.0),
         operation_cost = ThreePartCost(
-            VariableCost([(0.0, 0.5), (190.1, 0.8), (582.72, 1.2), (1094.1, 1.70)]),
+            VariableCost([(0.0, 50.0), (190.1, 80.0), (582.72, 120.0), (1094.1, 170.0)]),
             0.0,
             1.5,
             0.75,
@@ -429,7 +429,7 @@ thermal_generators5_pwl_nonconvex(nodes5) = [
         ramp_limits = (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
         time_limits = (up = 2.0, down = 1.0),
         operation_cost = ThreePartCost(
-            VariableCost([(0.0, 0.5), (190.1, 0.8), (582.72, 1.2), (825.1, 1.70)]),
+            VariableCost([(0.0, 50.0), (190.1, 80.0), (582.72, 120.0), (825.1, 170.0)]),
             0.0,
             1.5,
             0.75,
@@ -457,7 +457,7 @@ thermal_pglib_generators5(nodes5) = [
         (hot = 2.0, warm = 4.0, cold = 12.0),
         3,
         MultiStartCost(
-            VariableCost([(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)]),
+            VariableCost([(0.0, 5.0), (290.1, 7.33), (582.72, 9.67), (894.1, 12.0)]),
             897.29,
             0.0,
             (hot = 393.28, warm = 455.37, cold = 703.76),
@@ -483,7 +483,7 @@ thermal_pglib_generators5(nodes5) = [
         (hot = 1.0, warm = 999.0, cold = 999.0),
         1,
         MultiStartCost(
-            VariableCost([(0.0, 0.08), (391.45, 0.012), (783.74, 0.016), (1212.28, 0.20)]),
+            VariableCost([(0.0, 8.0), (391.45, 12.0), (783.74, 16.0), (1212.28, 20.0)]),
             1085.78,
             0.0,
             (hot = 51.75, warm = PSY.START_COST, cold = PSY.START_COST),
@@ -504,7 +504,7 @@ renewable_generators5(nodes5) = [
         PrimeMovers.WT,
         (min = 0.0, max = 0.0),
         1.0,
-        TwoPartCost(22.0, 0.0),
+        TwoPartCost(0.220, 0.0),
         100.0,
     ),
     RenewableDispatch(
@@ -517,7 +517,7 @@ renewable_generators5(nodes5) = [
         PrimeMovers.WT,
         (min = 0.0, max = 0.0),
         1.0,
-        TwoPartCost(22.0, 0.0),
+        TwoPartCost(0.220, 0.0),
         100.0,
     ),
     RenewableDispatch(
@@ -530,7 +530,7 @@ renewable_generators5(nodes5) = [
         PrimeMovers.WT,
         (min = -0.800, max = 0.800),
         1.0,
-        TwoPartCost(22.0, 0.0),
+        TwoPartCost(0.220, 0.0),
         100.0,
     ),
 ];
@@ -569,7 +569,7 @@ hydro_generators5(nodes5) = [
         #ramp_limits = (up = 1.0, down = 1.0),
         ramp_limits = (up = 10.0 * 0.6, down = 10.0 * 0.6),
         time_limits = nothing,
-        operation_cost = TwoPartCost(15.0, 0.0),
+        operation_cost = TwoPartCost(0.150, 0.0),
         base_power = 100.0,
         storage_capacity = 0.1, # 50 pu * hr (i.e. 5 GWh)
         inflow = 1.0,
@@ -594,7 +594,7 @@ phes5(nodes5) = [
         reactive_power_limits = (min = 0.0, max = 60.0),
         ramp_limits = (up = 10.0 * 0.6, down = 10.0 * 0.6),
         time_limits = nothing,
-        operation_cost = TwoPartCost(15.0, 0.0),
+        operation_cost = TwoPartCost(0.150, 0.0),
         rating_pump = 0.2,
         active_power_limits_pump = (min = 0.0, max = 10.0),
         reactive_power_limits_pump = (min = 0.0, max = 10.0),

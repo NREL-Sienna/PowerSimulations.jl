@@ -1,26 +1,15 @@
 #################################################################################
-#Type Alias for long type signatures
+# Type Alias for long type signatures
 const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
 const NamedMinMax = Tuple{String, MinMax}
 const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
 const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 const StartUpStages = NamedTuple{(:hot, :warm, :cold), NTuple{3, Float64}}
 
-# Type Alias From other Packages
-const PM = PowerModels
-const PSY = PowerSystems
-const PSI = PowerSimulations
-const IS = InfrastructureSystems
-const MOI = MathOptInterface
-const MOIU = MathOptInterface.Utilities
-const PJ = ParameterJuMP
-const MOPFM = MOI.FileFormats.Model
-const TS = TimeSeries
-
 const BUILD_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
-#Type Alias for JuMP and PJ containers
+# Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
 const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
 const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
@@ -31,24 +20,18 @@ const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
-@enum BUILD_STATUS begin
-    BUILT = 0
+IS.@scoped_enum BuildStatus begin
     IN_PROGRESS = -1
+    BUILT = 0
     FAILED_BUILD = 1
     EMPTY = 2
 end
 
-@enum RUN_STATUS begin
+IS.@scoped_enum RunStatus begin
     READY = -1
-    SUCCESSFUL_RUN = 0
+    SUCCESSFUL = 0
     RUNNING = 1
-    FAILED_RUN = 2
-end
-
-@enum SOS_STATUS_VARIABLE begin
-    NO_VARIABLE = 1
-    PARAMETER = 2
-    VARIABLE = 3
+    FAILED = 2
 end
 
 # Settings constants

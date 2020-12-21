@@ -51,9 +51,9 @@ function test_simulation_results(file_path::String)
             simulation_folder = file_path,
         )
         build_out = build!(sim)
-        @test build_out == PSI.BUILT
+        @test build_out == PSI.BuildStatuss.BUILT
         execute_out = execute!(sim)
-        @test execute_out == PSI.SUCCESSFUL_RUN
+        @test execute_out == PSI.RunStatuss.SUCCESSFUL
         results = SimulationResults(sim)
         @test list_stages(results) == ["ED", "UC"]
         results_uc = get_stage_results(results, "UC")

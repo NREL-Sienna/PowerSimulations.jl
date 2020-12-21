@@ -22,7 +22,7 @@ function ptdf_networkflow(
             btype,
             Vector([[b for b in branches if isa(b, btype)]]),
         )
-        flow_variables!(psi_container, StandardPTDFModel, typed_branches)
+        add_variables!(psi_container, StandardPTDFModel(), typed_branches)
     end
 
     for t in time_steps
