@@ -675,6 +675,7 @@ function energy_budget_constraints!(
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
+        @debug "time_series" ts_vector
         constraint_d =
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)
         constraint_data[ix] = constraint_d
@@ -715,17 +716,18 @@ function device_energy_budget_param_ub(
     variable_out = get_variable(psi_container, var_names)
     set_name = [get_component_name(r) for r in energy_budget_data]
     constraint = add_cons_container!(psi_container, cons_name, set_name)
-    container = add_param_container!(psi_container, param_reference, set_name, 1)
+    container = add_param_container!(psi_container, param_reference, set_name, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     for constraint_info in energy_budget_data
         name = get_component_name(constraint_info)
         multiplier[name, 1] = constraint_info.multiplier * inv_dt
-        param[name, 1] =
-            PJ.add_parameter(psi_container.JuMPmodel, sum(constraint_info.timeseries))
+        for t in time_steps
+            param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[t])
+        end
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable_out[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1]
+            sum([variable_out[name, t] for t in time_steps]) <= multiplier[name, 1] * sum([param[name, t] for t in time_steps])
         )
     end
 
