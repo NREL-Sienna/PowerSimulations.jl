@@ -136,10 +136,10 @@ function add_variable!(
             binary = binary
         )
 
-        ub = get_variable_upper_bound(variable_type, d, psi_container.settings)
+        ub = get_variable_upper_bound(variable_type, service, d, psi_container.settings)
         !(ub === nothing) && JuMP.set_upper_bound(variable[name, t], ub)
 
-        lb = get_variable_lower_bound(variable_type, d, psi_container.settings)
+        lb = get_variable_lower_bound(variable_type, service, d, psi_container.settings)
         !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
         init = get_variable_initial_value(variable_type, d, psi_container.settings)

@@ -1,17 +1,19 @@
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
-############################### Reserve Variables` #########################################
+############################### Reserve Variables #########################################
 
 ############################### ActiveServiceVariable, Reserve #########################################
 
 get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}) = false
-get_variable_lower_bound(::ActiveServiceVariable, d::PSY.Reserve, _) = 0.0
+get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = nothing
+get_variable_lower_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
 
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 
 get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}) = false
-get_variable_lower_bound(::ServiceRequirementVariable, d::PSY.ReserveDemandCurve, _) = 0.0
+get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, _) = nothing
+get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, _) = 0.0
 
 ################################## Reserve Requirement Constraint ##########################
 function service_requirement_constraint!(
