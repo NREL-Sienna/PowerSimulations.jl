@@ -723,7 +723,8 @@ function device_energy_budget_param_ub(
         name = get_component_name(constraint_info)
         multiplier[name, 1] = constraint_info.multiplier * inv_dt
         for t in time_steps
-            param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[t])
+            param[name, t] =
+                PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[t])
         end
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
