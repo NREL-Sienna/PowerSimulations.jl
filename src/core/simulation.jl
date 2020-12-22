@@ -579,7 +579,7 @@ function build!(
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
         catch e
-            set_simulation_build_status!(sim, BuildStatuss.FAILED_BUILD)
+            set_simulation_build_status!(sim, BuildStatuss.FAILED)
             set_simulation_status!(sim, nothing)
             rethrow(e)
         finally
@@ -967,7 +967,7 @@ function execute!(sim::Simulation; kwargs...)
         end
     catch e
         # TODO: Add Fallback when run_stage fails
-        set_simulation_status!(sim, RunStatuss.FAILED_RUN)
+        set_simulation_status!(sim, RunStatuss.FAILED)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
         unregister_recorders!(sim.internal)

@@ -23,7 +23,7 @@ const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 IS.@scoped_enum BuildStatus begin
     IN_PROGRESS = -1
     BUILT = 0
-    FAILED_BUILD = 1
+    FAILED = 1
     EMPTY = 2
 end
 

@@ -246,7 +246,7 @@ function run_stage!(
     append_optimizer_stats!(store, stats)
 
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        return RunStatuss.FAILED_RUN
+        return RunStatuss.FAILED
     else
         status = RunStatuss.SUCCESSFUL
     end
