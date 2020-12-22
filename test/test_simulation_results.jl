@@ -1,5 +1,6 @@
 function test_simulation_results(file_path::String)
     @testset "Test simulation results" begin
+        # TODO: make a simulation that has lookahead for better results extraction tests
         c_sys5_hy_uc = build_system("c_sys5_hy_uc")
         c_sys5_hy_ed = build_system("c_sys5_hy_ed")
         stages_definition = Dict(
@@ -95,32 +96,70 @@ function test_simulation_results(file_path::String)
         ))
 
         p_thermal_standard_ed = get_variable_values(results_ed, :P__ThermalStandard)
-        @test length(keys(p_thermal_standard_ed)) == 24
+        @test length(keys(p_thermal_standard_ed)) == 48
         for v in values(p_thermal_standard_ed)
             @test size(v) == (12, 5)
         end
 
         ren_dispatch_params =
             get_parameter_values(results_ed, :P__max_active_power__RenewableDispatch)
-        @test length(keys(ren_dispatch_params)) == 24
+        @test length(keys(ren_dispatch_params)) == 48
         for v in values(p_thermal_standard_ed)
             @test size(v) == (12, 5)
         end
 
         network_duals = get_dual_values(results_ed, :CopperPlateBalance)
-        @test length(keys(network_duals)) == 24
+        @test length(keys(network_duals)) == 48
         for v in values(network_duals)
             @test size(v) == (12, 1)
         end
 
-        p_variables_uc =
-            get_variables_values(results_uc, [:P__RenewableDispatch, :P__ThermalStandard])
+        p_variables_uc = get_variables_values(
+            results_uc,
+            names = [:P__RenewableDispatch, :P__ThermalStandard],
+        )
         @test length(keys(p_variables_uc)) == 2
         for var_name in values(p_variables_uc)
             for v_ in values(var_name)
                 @test size(v_)[1] == 24
             end
         end
+
+        realized_var_uc = get_realized_variables_values(results_uc)
+        @test length(keys(realized_var_uc)) == 8
+        for var in values(realized_var_uc)
+            @test size(var)[1] == 48
+        end
+
+        realized_param_uc = get_realized_parameters_values(
+            results_uc,
+            names = [:P__max_active_power__RenewableDispatch],
+        )
+        @test length(keys(realized_param_uc)) == 1
+        for param in values(realized_param_uc)
+            @test size(param)[1] == 48
+        end
+
+        realized_duals_ed = get_realized_dual_values(results_ed)
+        @test length(keys(realized_duals_ed)) == 1
+        for param in values(realized_duals_ed)
+            @test size(param)[1] == 576
+        end
+
+        # request non sync data
+        realized_var_ed = get_realized_variables_values(
+            results_ed,
+            names = [:P__ThermalStandard],
+            initial_time = Dates.DateTime("2024-01-01T02:12:00"),
+            len = 3,
+        )
+        # request bad window
+        @test_throws IS.InvalidValue get_realized_variables_values(
+            results_ed,
+            names = [:P__ThermalStandard],
+            initial_time = Dates.DateTime("2024-01-02T23:12:00"),
+            len = 10,
+        )
 
         load_simulation_results!(
             results_ed,
@@ -173,10 +212,10 @@ end
 
 @testset "Test simulation results" begin
     # Use spaces in this path because that has caused failures.
-    path = mkpath(joinpath(pwd(), "test_simulation_results"))
+    file_path = mkpath(joinpath(pwd(), "test_simulation_results"))
     try
-        test_simulation_results(path)
+        test_simulation_results(file_path)
     finally
-        rm(path, force = true, recursive = true)
+        rm(file_path, force = true, recursive = true)
     end
 end

@@ -66,7 +66,7 @@ function StageResults(
 
     time_steps = range(
         sim_params.initial_time,
-        length = stage_params.num_executions,
+        length = stage_params.num_executions * sim_params.num_steps,
         step = stage_params.interval,
     )
     variables = list_fields(store, name, STORE_CONTAINER_VARIABLES)
@@ -203,15 +203,17 @@ end
     function it will read from memory.
 
     # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
 function get_variables_values(
-    res::StageResults,
-    names::Vector{Symbol};
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
 )
+    names = isnothing(names) ? collect(keys(res.variable_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
     values = _get_variables_values(res, names, timestamps)
     return values
@@ -240,15 +242,17 @@ end
     It keeps requests when performing multiple retrievals. Accepts a vector of names for the return of the values
 
     # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_dual_values(
-    res::StageResults,
-    names::Vector{Symbol};
+function get_dual_values( #TODO: should this be get_duals_values?
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
 )
+    names = isnothing(names) ? collect(keys(res.dual_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
     values = _get_dual_values(res, names, timestamps)
     return values
@@ -276,15 +280,17 @@ end
     Returns the values for the parameters used in the simulation. It keeps requests when performing multiple retrievals. Accepts a vector of names for the return of the values
 
     # Accepted Key Words
-    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial time of the requested results
     - `count::Int`: Number of results
 """
 function get_parameters_values(
-    res::StageResults,
-    names::Vector{Symbol};
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
 )
+    names = isnothing(names) ? collect(keys(res.parameter_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
     values = _get_parameters_values(res, names, timestamps)
     return values
@@ -298,7 +304,7 @@ end
     - `count::Int`: Number of results
 """
 function get_variable_values(res::StageResults, name::Symbol; kwargs...)
-    return get_variables_values(res, [name]; kwargs...)[name]
+    return get_variables_values(res; names = [name], kwargs...)[name]
 end
 
 """
@@ -308,7 +314,7 @@ end
     - `count::Int`: Number of results
 """
 function get_dual_values(res::StageResults, name::Symbol; kwargs...)
-    return get_dual_values(res, [name]; kwargs...)[name]
+    return get_dual_values(res; names = [name], kwargs...)[name]
 end
 
 """
@@ -318,7 +324,151 @@ end
     - `count::Int`: Number of results
 """
 function get_parameter_values(res::StageResults, name::Symbol; kwargs...)
-    return get_parameters_values(res, [name]; kwargs...)[name]
+    return get_parameters_values(res; names = [name], kwargs...)[name]
+end
+
+struct RealizedMeta
+    initial_time::Dates.DateTime
+    count::Int
+    start_offset::Int
+    end_offset::Int
+    interval_len::Int
+end
+
+function RealizedMeta(
+    res::StageResults;
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    existing_timestamps = get_existing_timestamps(res)
+    interval = existing_timestamps.step
+    resolution = PSY.get_time_series_resolution(get_system(res))
+    horizon = PSY.get_forecast_horizon(get_system(res))
+    initial_time = isnothing(initial_time) ? first(existing_timestamps) : initial_time
+    end_time =
+        isnothing(len) ? last(existing_timestamps) + interval :
+        initial_time + len * resolution
+
+    requested_range = initial_time:resolution:end_time
+    available_range =
+        (first(existing_timestamps), last(existing_timestamps) + horizon * resolution)
+    invalid_timestamps = [
+        v for v in requested_range if !(v >= available_range[1] && v <= available_range[2])
+    ]
+    if !isempty(invalid_timestamps)
+        throw(IS.InvalidValue("Requested time does not match available results"))
+    end
+
+    result_initial_time =
+        existing_timestamps[findlast(x -> x .<= initial_time, existing_timestamps)]
+    interval_len = Int(interval / resolution)
+    result_end_time =
+        existing_timestamps[findlast(x -> x .<= end_time, existing_timestamps)]
+    count = length(result_initial_time:(existing_timestamps.step):result_end_time)
+    start_offset = length(result_initial_time:resolution:initial_time)
+    end_offset = length(end_time:resolution:(result_end_time + interval - resolution))
+
+    return RealizedMeta(result_initial_time, count, start_offset, end_offset, interval_len)
+end
+
+function get_realization(
+    result_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}},
+    meta::RealizedMeta,
+)
+    realized_values = Dict{Symbol, DataFrames.DataFrame}()
+    for (key, result_value) in result_values
+        realized_values[key] = DataFrames.DataFrame()
+        for (step, df) in enumerate(result_value)
+            first_id = step > 1 ? 1 : meta.start_offset
+            last_id =
+                step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
+            for ix in first_id:last_id
+                push!(realized_values[key], df[2][ix, :])
+            end
+        end
+    end
+    return realized_values
+end
+
+"""
+    Returns the final values for the requested variable names for each time step for a stage.
+    Accepts a vector of names for the return of the values. If the time stamps and names are
+    loaded using the [load_simulation_results!](@ref) function it will read from memory.
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial time of the requested results
+    - `len::Int`: length of results
+"""
+function get_realized_variables_values(
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.variable_values)) : names
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values = get_variables_values(
+        res,
+        names = names,
+        initial_time = meta.initial_time,
+        count = meta.count,
+    )
+    return get_realization(result_values, meta)
+end
+
+"""
+    Returns the final values for the requested parameter names for each time step for a stage.
+    Accepts a vector of names for the return of the values. If the time stamps and names are
+    loaded using the [load_simulation_results!](@ref) function it will read from memory.
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial time of the requested results
+    - `len::Int`: length of results
+"""
+function get_realized_parameters_values(
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.parameter_values)) : names
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values = get_parameters_values(
+        res,
+        names = names,
+        initial_time = meta.initial_time,
+        count = meta.count,
+    )
+    return get_realization(result_values, meta)
+end
+
+"""
+    Returns the final values for the requested dual names for each time step for a stage.
+    Accepts a vector of names for the return of the values. If the time stamps and names are
+    loaded using the [load_simulation_results!](@ref) function it will read from memory.
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial time of the requested results
+    - `len::Int`: length of results
+"""
+function get_realized_dual_values( # TODO: Should this be get_realized_duals_values?
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.dual_values)) : names
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values = get_dual_values(
+        res,
+        names = names,
+        initial_time = meta.initial_time,
+        count = meta.count,
+    )
+    return get_realization(result_values, meta)
 end
 
 """
