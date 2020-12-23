@@ -129,7 +129,7 @@ function Base.flush(store::HdfSimulationStore)
     end
 
     flush(store.file)
-    @debug "Flush store" store.file.file_path
+    @debug "Flush store"
 end
 
 get_params(store::HdfSimulationStore) = store.params

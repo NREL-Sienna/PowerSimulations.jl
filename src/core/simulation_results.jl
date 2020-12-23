@@ -98,8 +98,6 @@ Base.isempty(res::StageResults) = all(isempty, _get_dicts(res))
 # This returns the number of timestamps stored in all containers.
 Base.length(res::StageResults) = mapreduce(length, +, _get_dicts(res))
 
-_get_containers(x::StageResults) = (x.variable_values, x.parameter_values, x.dual_values)
-_get_dicts(res::StageResults) = (y for x in _get_containers(res) for y in values(x))
 get_stage_name(res::StageResults) = res.stage
 get_system(res::StageResults) = res.system
 get_execution_path(res::StageResults) = res.execution_path
@@ -118,26 +116,43 @@ IS.get_parameters(result::StageResults) = result.parameter_values
 #IS.get_total_cost(result::StageResults) = result.total_cost
 #IS.get_optimizer_log(results::StageResults) = results.optimizer_log
 
+_get_containers(x::StageResults) = (x.variable_values, x.parameter_values, x.dual_values)
+_get_dicts(res::StageResults) = (y for x in _get_containers(res) for y in values(x))
+
 function _get_store_value(
     res::StageResults,
     field::Symbol,
     names::Vector{Symbol},
     timestamps,
+    ::Nothing,
+)
+    simulation_store_path = joinpath(get_execution_path(res), "data_store")
+    return h5_store_open(simulation_store_path, "r") do store
+        _get_store_value(res, field, names, timestamps, store)
+    end
+end
+
+function _get_store_value(
+    res::StageResults,
+    field::Symbol,
+    names::Vector{Symbol},
+    timestamps,
+    store::SimulationStore,
 )
     results = Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     stage_name = Symbol(get_stage_name(res))
-    simulation_store_path = joinpath(get_execution_path(res), "data_store")
     stage_interval = get_interval(res)
-    h5_store_open(simulation_store_path, "r") do store
-        for name in names
-            _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
-            for ts in timestamps
-                out = read_result(DataFrames.DataFrame, store, stage_name, field, name, ts)
-                _results[ts] = out
-            end
-            results[name] = _results
+    resolution = PSY.get_time_series_resolution(get_system(res))
+    for name in names
+        _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
+        for ts in timestamps
+            out = read_result(DataFrames.DataFrame, store, stage_name, field, name, ts)
+            out[!, "timestamp"] = range(ts, length = size(out)[1], step = resolution)
+            _results[ts] = out
         end
+        results[name] = _results
     end
+
     return results
 end
 
@@ -179,7 +194,7 @@ function _process_timestamps(
     return requested_range
 end
 
-function _read_variables(res::StageResults, names::Vector{Symbol}, timestamps)
+function _read_variables(res::StageResults, names::Vector{Symbol}, timestamps, store)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_variables(res)
@@ -192,7 +207,7 @@ function _read_variables(res::StageResults, names::Vector{Symbol}, timestamps)
         vals = filter(p -> (p.first ∈ names), res.variable_values)
     else
         @info "reading variables from data store"
-        vals = _get_store_value(res, STORE_CONTAINER_VARIABLES, names, timestamps)
+        vals = _get_store_value(res, STORE_CONTAINER_VARIABLES, names, timestamps, store)
     end
     return vals
 end
@@ -206,20 +221,22 @@ end
     - `names::Vector{Symbol}` : names of desired results
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_variables(
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
+    store = nothing,
 )
     names = isnothing(names) ? collect(keys(res.variable_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _read_variables(res, names, timestamps)
+    values = _read_variables(res, names, timestamps, store)
     return values
 end
 
-function _read_duals(res::StageResults, names::Vector{Symbol}, timestamps)
+function _read_duals(res::StageResults, names::Vector{Symbol}, timestamps, store)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_duals(res)
@@ -232,7 +249,7 @@ function _read_duals(res::StageResults, names::Vector{Symbol}, timestamps)
         vals = filter(p -> (p.first ∈ names), res.dual_values)
     else
         @debug "reading duals from data store"
-        vals = _get_store_value(res, STORE_CONTAINER_DUALS, names, timestamps)
+        vals = _get_store_value(res, STORE_CONTAINER_DUALS, names, timestamps, store)
     end
     return vals
 end
@@ -245,20 +262,22 @@ end
     - `names::Vector{Symbol}` : names of desired results
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_duals(
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
+    store = nothing,
 )
     names = isnothing(names) ? collect(keys(res.dual_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _read_duals(res, names, timestamps)
+    values = _read_duals(res, names, timestamps, store)
     return values
 end
 
-function _read_parameters(res::StageResults, names::Vector{Symbol}, timestamps)
+function _read_parameters(res::StageResults, names::Vector{Symbol}, timestamps, store)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_parameters(res)
@@ -271,7 +290,7 @@ function _read_parameters(res::StageResults, names::Vector{Symbol}, timestamps)
         vals = filter(p -> (p.first ∈ names), res.parameter_values)
     else
         @info "reading parameters from data store"
-        vals = _get_store_value(res, STORE_CONTAINER_PARAMETERS, names, timestamps)
+        vals = _get_store_value(res, STORE_CONTAINER_PARAMETERS, names, timestamps, store)
     end
     return vals
 end
@@ -283,16 +302,18 @@ end
     - `names::Vector{Symbol}` : names of desired results
     - `initial_time::Dates.DateTime` : initial time of the requested results
     - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_parameters(
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
+    store = nothing,
 )
     names = isnothing(names) ? collect(keys(res.parameter_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _read_parameters(res, names, timestamps)
+    values = _read_parameters(res, names, timestamps, store)
     return values
 end
 
@@ -302,6 +323,7 @@ end
     # Accepted Key Words
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_variable(res::StageResults, name::Symbol; kwargs...)
     return read_variables(res; names = [name], kwargs...)[name]
@@ -312,6 +334,7 @@ end
     # Accepted Key Words
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_dual(res::StageResults, name::Symbol; kwargs...)
     return read_duals(res; names = [name], kwargs...)[name]
@@ -383,6 +406,7 @@ function get_realization(
             last_id =
                 step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
             for colname in propertynames(df)
+                colname == :timestamp && continue
                 col = df[!, colname][first_id:last_id]
                 if !haskey(results_concat, colname)
                     results_concat[colname] = col
@@ -498,12 +522,17 @@ function load_results!(
         isnothing(initial_time) ? first(get_existing_timestamps(res)) : initial_time
 
     res.results_timestamps = _process_timestamps(res, initial_time, count)
-    merge!(res.variable_values, _read_variables(res, variables, res.results_timestamps))
-    merge!(res.dual_values, _read_duals(res, duals, res.results_timestamps))
-    merge!(res.parameter_values, _read_parameters(res, parameters, res.results_timestamps))
+    merge!(
+        res.variable_values,
+        _read_variables(res, variables, res.results_timestamps, nothing),
+    )
+    merge!(res.dual_values, _read_duals(res, duals, res.results_timestamps, nothing))
+    merge!(
+        res.parameter_values,
+        _read_parameters(res, parameters, res.results_timestamps, nothing),
+    )
     return nothing
 end
-
 #= NEEDS RE-IMPLEMENTATION
 """ Exports the results in the StageResults object to  CSV files"""
 function write_to_CSV(res::StageResults; kwargs...)
@@ -595,6 +624,7 @@ SimulationResults(sim::Simulation) = SimulationResults(get_simulation_dir(sim))
 Base.empty!(res::SimulationResults) = foreach(empty!, values(res.stage_results))
 Base.isempty(res::SimulationResults) = all(isempty, values(res.stage_results))
 Base.length(res::SimulationResults) = mapreduce(length, +, values(res.stage_results))
+get_exports_folder(x::SimulationResults) = joinpath(x.path, "exports")
 
 function get_stage_results(results::SimulationResults, stage)
     if !haskey(results.stage_results, stage)
@@ -608,3 +638,88 @@ end
 Return the stage names in the simulation.
 """
 list_stages(results::SimulationResults) = collect(keys(results.stage_results))
+
+"""
+Export results to files in the results directory.
+
+# Arguments
+- `results::SimulationResults`: simulation results
+- `exports`: SimulationResultsExport or anything that can be passed to its constructor.
+  (such as Dict or path to JSON file)
+"""
+function export_results(results::SimulationResults, exports)
+    simulation_store_path = joinpath(results.path, "data_store")
+    h5_store_open(simulation_store_path, "r") do store
+        export_results(results, exports, store)
+    end
+end
+
+function export_results(results::SimulationResults, exports, store::SimulationStore)
+    if !(exports isa SimulationResultsExport)
+        exports = SimulationResultsExport(exports, results.params)
+    end
+
+    file_type = get_export_file_type(exports)
+
+    for stage_results in values(results.stage_results)
+        stage_exports = get_stage_exports(exports, stage_results.stage)
+        path = exports.path === nothing ? stage_results.results_output_folder : exports.path
+        for timestamp in get_existing_timestamps(stage_results)
+            !should_export(exports, timestamp) && continue
+
+            export_path = joinpath(path, stage_results.stage, "variables")
+            mkpath(export_path)
+            for name in get_existing_variables(stage_results)
+                if should_export_variable(stage_exports, name)
+                    dfs = read_variable(
+                        stage_results,
+                        name;
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
+                    )
+                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                end
+            end
+
+            export_path = joinpath(path, stage_results.stage, "parameters")
+            mkpath(export_path)
+            for name in get_existing_parameters(stage_results)
+                if should_export_parameter(stage_exports, name)
+                    dfs = read_parameter(
+                        stage_results,
+                        name;
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
+                    )
+                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                end
+            end
+
+            export_path = joinpath(path, stage_results.stage, "duals")
+            mkpath(export_path)
+            for name in get_existing_duals(stage_results)
+                if should_export_dual(stage_exports, name)
+                    dfs = read_dual(
+                        stage_results,
+                        name;
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
+                    )
+                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                end
+            end
+        end
+    end
+end
+
+function export_result(::Type{CSV.File}, path, name, timestamp, df::DataFrames.DataFrame)
+    filename = joinpath(path, string(name) * "_" * convert_for_path(timestamp) * ".csv")
+    open(filename, "w") do io
+        CSV.write(io, df)
+    end
+
+    @debug "Exported $filename"
+end

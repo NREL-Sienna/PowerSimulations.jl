@@ -151,6 +151,10 @@ export read_parameter
 export read_dual
 export get_stage_results
 export list_stages
+export list_supported_formats
+export export_results
+export SimulationResultsExport
+export StageResultsExport
 export load_results!
 export read_realized_variables
 export read_realized_parameters
@@ -355,6 +359,7 @@ include("devices_models/devices/common/get_time_series.jl")
 
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
+include("core/simulation_results_export.jl")
 include("core/recorder_events.jl")
 
 # Device Modeling components

@@ -333,6 +333,8 @@ function replace_chars(s::String, char::String, replacement::String)
     return replace(s, Regex("[$char]") => replacement)
 end
 
+convert_for_path(x::Dates.DateTime) = replace(string(x), ":" => "-")
+
 "Removes the string `char` from the original string"
 function remove_chars(s::String, char::String)
     return replace_chars(s::String, char::String, "")
