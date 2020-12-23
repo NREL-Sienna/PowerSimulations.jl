@@ -143,15 +143,18 @@ export get_existing_duals
 export get_existing_variables
 export get_existing_parameters
 export get_existing_timestamps
-export get_variables_values
-export get_parameters_values
-export get_dual_values
-export get_variable_values
-export get_parameter_values
-export get_dual_values
+export read_variables
+export read_parameters
+export read_duals
+export read_variable
+export read_parameter
+export read_dual
 export get_stage_results
 export list_stages
-export load_simulation_results!
+export load_results!
+export read_realized_variables
+export read_realized_parameters
+export read_realized_duals
 
 ## Utils Exports
 export write_results
@@ -252,7 +255,7 @@ import InfrastructureSystems:
 export get_name
 export get_model_base_power
 export get_variables
-export get_dual_values
+export get_duals
 export get_total_cost
 export get_optimizer_log
 export get_timestamp
