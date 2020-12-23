@@ -95,29 +95,27 @@ function test_simulation_results(file_path::String)
             get_existing_variables(results_ed_from_file),
         ))
 
-        p_thermal_standard_ed = get_variable_values(results_ed, :P__ThermalStandard)
+        p_thermal_standard_ed = read_variable(results_ed, :P__ThermalStandard)
         @test length(keys(p_thermal_standard_ed)) == 48
         for v in values(p_thermal_standard_ed)
             @test size(v) == (12, 5)
         end
 
         ren_dispatch_params =
-            get_parameter_values(results_ed, :P__max_active_power__RenewableDispatch)
+            read_parameter(results_ed, :P__max_active_power__RenewableDispatch)
         @test length(keys(ren_dispatch_params)) == 48
         for v in values(p_thermal_standard_ed)
             @test size(v) == (12, 5)
         end
 
-        network_duals = get_dual_values(results_ed, :CopperPlateBalance)
+        network_duals = read_dual(results_ed, :CopperPlateBalance)
         @test length(keys(network_duals)) == 48
         for v in values(network_duals)
             @test size(v) == (12, 1)
         end
 
-        p_variables_uc = get_variables_values(
-            results_uc,
-            names = [:P__RenewableDispatch, :P__ThermalStandard],
-        )
+        p_variables_uc =
+            read_variables(results_uc, names = [:P__RenewableDispatch, :P__ThermalStandard])
         @test length(keys(p_variables_uc)) == 2
         for var_name in values(p_variables_uc)
             for v_ in values(var_name)
@@ -125,13 +123,13 @@ function test_simulation_results(file_path::String)
             end
         end
 
-        realized_var_uc = get_realized_variables_values(results_uc)
+        realized_var_uc = read_realized_variables(results_uc)
         @test length(keys(realized_var_uc)) == 8
         for var in values(realized_var_uc)
             @test size(var)[1] == 48
         end
 
-        realized_param_uc = get_realized_parameters_values(
+        realized_param_uc = read_realized_parameters(
             results_uc,
             names = [:P__max_active_power__RenewableDispatch],
         )
@@ -140,31 +138,40 @@ function test_simulation_results(file_path::String)
             @test size(param)[1] == 48
         end
 
-        realized_duals_ed = get_realized_dual_values(results_ed)
+        realized_duals_ed = read_realized_duals(results_ed)
         @test length(keys(realized_duals_ed)) == 1
         for param in values(realized_duals_ed)
             @test size(param)[1] == 576
         end
 
         # request non sync data
-        realized_var_ed = get_realized_variables_values(
+        @test_throws IS.InvalidValue read_realized_variables(
             results_ed,
             names = [:P__ThermalStandard],
-            initial_time = Dates.DateTime("2024-01-01T02:12:00"),
+            initial_time = DateTime("2024-01-01T02:12:00"),
             len = 3,
         )
-        # request bad window
-        @test_throws IS.InvalidValue get_realized_variables_values(
+
+        # request good window
+        @test size(read_realized_variables(
             results_ed,
             names = [:P__ThermalStandard],
-            initial_time = Dates.DateTime("2024-01-02T23:12:00"),
+            initial_time = DateTime("2024-01-02T23:10:00"),
             len = 10,
+        )[:P__ThermalStandard])[1] == 10
+
+        # request bad window
+        @test_throws IS.InvalidValue read_realized_variables(
+            results_ed,
+            names = [:P__ThermalStandard],
+            initial_time = DateTime("2024-01-02T23:10:00"),
+            len = 11,
         )
 
-        load_simulation_results!(
+        load_results!(
             results_ed,
+            3,
             initial_time = DateTime("2024-01-01T00:00:00"),
-            count = 3,
             variables = [:P__ThermalStandard],
         )
 
@@ -173,14 +180,14 @@ function test_simulation_results(file_path::String)
         @test length(results_ed) == 3
         @test length(results) == length(results_ed)
 
-        @test_throws IS.InvalidValue get_parameter_values(results_ed, :invalid)
-        @test_throws IS.InvalidValue get_variable_values(results_ed, :invalid)
-        @test_throws IS.InvalidValue get_variable_values(
+        @test_throws IS.InvalidValue read_parameter(results_ed, :invalid)
+        @test_throws IS.InvalidValue read_variable(results_ed, :invalid)
+        @test_throws IS.InvalidValue read_variable(
             results_uc,
             :P__ThermalStandard;
             initial_time = now(),
         )
-        @test_throws IS.InvalidValue get_variable_values(
+        @test_throws IS.InvalidValue read_variable(
             results_uc,
             :P__ThermalStandard;
             count = 25,
@@ -189,10 +196,10 @@ function test_simulation_results(file_path::String)
         empty!(results_ed)
         @test isempty(results_ed.variable_values[:P__ThermalStandard])
 
-        load_simulation_results!(
+        load_results!(
             results_ed,
+            3,
             initial_time = DateTime("2024-01-01T00:00:00"),
-            count = 3,
             variables = [:P__ThermalStandard],
             duals = [:CopperPlateBalance],
             parameters = [:P__max_active_power__RenewableDispatch],

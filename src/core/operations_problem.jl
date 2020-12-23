@@ -447,16 +447,16 @@ function _build!(
     return
 end
 
-function get_variables_values(op_m::OperationsProblem)
-    return get_variables_values(op_m.psi_container)
+function read_variables(op_m::OperationsProblem)
+    return read_variables(op_m.psi_container)
 end
 
-function get_dual_values(op_m::OperationsProblem)
-    return get_dual_values(op_m.psi_container)
+function read_duals(op_m::OperationsProblem)
+    return read_duals(op_m.psi_container)
 end
 
-function get_parameters_values(op_m::OperationsProblem)
-    return get_parameters_values(op_m.psi_container)
+function read_parameters(op_m::OperationsProblem)
+    return read_parameters(op_m.psi_container)
 end
 
 """
@@ -501,13 +501,13 @@ function solve!(
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("The Operational Problem $(T) status is $(model_status)")
     end
-    vars_result = get_variables_values(op_problem)
-    param_values = get_parameters_values(op_problem)
+    vars_result = read_variables(op_problem)
+    param_values = read_parameters(op_problem)
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_timestamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     base_power = PSY.get_base_power(op_problem.sys)
-    dual_result = get_dual_values(op_problem)
+    dual_result = read_duals(op_problem)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )

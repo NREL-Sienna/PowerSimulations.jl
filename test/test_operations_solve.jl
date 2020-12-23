@@ -432,7 +432,7 @@ end
             dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
             @test isapprox(dual, PSI.get_duals(res)[name][i, 1])
         end
-        dual_results = get_dual_values(op_problem.psi_container, duals)
+        dual_results = read_duals(op_problem.psi_container, duals)
         @test dual_results == res.dual_values
     end
 

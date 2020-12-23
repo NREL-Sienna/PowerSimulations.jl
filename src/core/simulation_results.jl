@@ -179,7 +179,7 @@ function _process_timestamps(
     return requested_range
 end
 
-function _get_variables_values(res::StageResults, names::Vector{Symbol}, timestamps)
+function _read_variables(res::StageResults, names::Vector{Symbol}, timestamps)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_variables(res)
@@ -199,7 +199,7 @@ end
 
 """
     Returns the values for the requested variable names. Accepts a vector of names for the
-    return of the values. If the time stamps and names are loaded using the [load_simulation_results!](@ref)
+    return of the values. If the time stamps and names are loaded using the [load_results!](@ref)
     function it will read from memory.
 
     # Accepted Key Words
@@ -207,7 +207,7 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_variables_values(
+function read_variables(
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -215,11 +215,11 @@ function get_variables_values(
 )
     names = isnothing(names) ? collect(keys(res.variable_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _get_variables_values(res, names, timestamps)
+    values = _read_variables(res, names, timestamps)
     return values
 end
 
-function _get_dual_values(res::StageResults, names::Vector{Symbol}, timestamps)
+function _read_duals(res::StageResults, names::Vector{Symbol}, timestamps)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_duals(res)
@@ -246,7 +246,7 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_dual_values( #TODO: should this be get_duals_values?
+function read_duals(
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -254,11 +254,11 @@ function get_dual_values( #TODO: should this be get_duals_values?
 )
     names = isnothing(names) ? collect(keys(res.dual_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _get_dual_values(res, names, timestamps)
+    values = _read_duals(res, names, timestamps)
     return values
 end
 
-function _get_parameters_values(res::StageResults, names::Vector{Symbol}, timestamps)
+function _read_parameters(res::StageResults, names::Vector{Symbol}, timestamps)
     isempty(names) &&
         return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     existing_names = get_existing_parameters(res)
@@ -284,7 +284,7 @@ end
     - `initial_time::Dates.DateTime` : initial time of the requested results
     - `count::Int`: Number of results
 """
-function get_parameters_values(
+function read_parameters(
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -292,7 +292,7 @@ function get_parameters_values(
 )
     names = isnothing(names) ? collect(keys(res.parameter_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _get_parameters_values(res, names, timestamps)
+    values = _read_parameters(res, names, timestamps)
     return values
 end
 
@@ -303,8 +303,8 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_variable_values(res::StageResults, name::Symbol; kwargs...)
-    return get_variables_values(res; names = [name], kwargs...)[name]
+function read_variable(res::StageResults, name::Symbol; kwargs...)
+    return read_variables(res; names = [name], kwargs...)[name]
 end
 
 """
@@ -313,8 +313,8 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_dual_values(res::StageResults, name::Symbol; kwargs...)
-    return get_dual_values(res; names = [name], kwargs...)[name]
+function read_dual(res::StageResults, name::Symbol; kwargs...)
+    return read_duals(res; names = [name], kwargs...)[name]
 end
 
 """
@@ -323,8 +323,8 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function get_parameter_values(res::StageResults, name::Symbol; kwargs...)
-    return get_parameters_values(res; names = [name], kwargs...)[name]
+function read_parameter(res::StageResults, name::Symbol; kwargs...)
+    return read_parameters(res; names = [name], kwargs...)[name]
 end
 
 struct RealizedMeta
@@ -350,11 +350,11 @@ function RealizedMeta(
         initial_time + len * resolution
 
     requested_range = initial_time:resolution:end_time
-    available_range =
-        (first(existing_timestamps), last(existing_timestamps) + horizon * resolution)
-    invalid_timestamps = [
-        v for v in requested_range if !(v >= available_range[1] && v <= available_range[2])
-    ]
+    available_range = first(existing_timestamps):resolution:(last(
+        existing_timestamps,
+    ) + (horizon) * resolution)
+    invalid_timestamps = setdiff(requested_range, available_range)
+
     if !isempty(invalid_timestamps)
         throw(IS.InvalidValue("Requested time does not match available results"))
     end
@@ -364,7 +364,7 @@ function RealizedMeta(
     interval_len = Int(interval / resolution)
     result_end_time =
         existing_timestamps[findlast(x -> x .<= end_time, existing_timestamps)]
-    count = length(result_initial_time:(existing_timestamps.step):result_end_time)
+    count = length(result_initial_time:interval:result_end_time)
     start_offset = length(result_initial_time:resolution:initial_time)
     end_offset = length(end_time:resolution:(result_end_time + interval - resolution))
 
@@ -377,15 +377,21 @@ function get_realization(
 )
     realized_values = Dict{Symbol, DataFrames.DataFrame}()
     for (key, result_value) in result_values
-        realized_values[key] = DataFrames.DataFrame()
-        for (step, df) in enumerate(result_value)
+        results_concat = Dict{Symbol, Vector{Float64}}()
+        for (step, (t, df)) in enumerate(result_value)
             first_id = step > 1 ? 1 : meta.start_offset
             last_id =
                 step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
-            for ix in first_id:last_id
-                push!(realized_values[key], df[2][ix, :])
+            for colname in propertynames(df)
+                col = df[!, colname][first_id:last_id]
+                if !haskey(results_concat, colname)
+                    results_concat[colname] = col
+                else
+                    results_concat[colname] = vcat(results_concat[colname], col)
+                end
             end
         end
+        realized_values[key] = DataFrames.DataFrame(results_concat, copycols = false)
     end
     return realized_values
 end
@@ -393,14 +399,14 @@ end
 """
     Returns the final values for the requested variable names for each time step for a stage.
     Accepts a vector of names for the return of the values. If the time stamps and names are
-    loaded using the [load_simulation_results!](@ref) function it will read from memory.
+    loaded using the [load_results!](@ref) function it will read from memory.
 
     # Accepted Key Words
     - `names::Vector{Symbol}` : names of desired results
     - `initial_time::Dates.DateTime` : initial time of the requested results
     - `len::Int`: length of results
 """
-function get_realized_variables_values(
+function read_realized_variables(
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -408,7 +414,7 @@ function get_realized_variables_values(
 )
     names = isnothing(names) ? collect(keys(res.variable_values)) : names
     meta = RealizedMeta(res, initial_time = initial_time, len = len)
-    result_values = get_variables_values(
+    result_values = read_variables(
         res,
         names = names,
         initial_time = meta.initial_time,
@@ -420,14 +426,14 @@ end
 """
     Returns the final values for the requested parameter names for each time step for a stage.
     Accepts a vector of names for the return of the values. If the time stamps and names are
-    loaded using the [load_simulation_results!](@ref) function it will read from memory.
+    loaded using the [load_results!](@ref) function it will read from memory.
 
     # Accepted Key Words
     - `names::Vector{Symbol}` : names of desired results
     - `initial_time::Dates.DateTime` : initial time of the requested results
     - `len::Int`: length of results
 """
-function get_realized_parameters_values(
+function read_realized_parameters(
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -435,7 +441,7 @@ function get_realized_parameters_values(
 )
     names = isnothing(names) ? collect(keys(res.parameter_values)) : names
     meta = RealizedMeta(res, initial_time = initial_time, len = len)
-    result_values = get_parameters_values(
+    result_values = read_parameters(
         res,
         names = names,
         initial_time = meta.initial_time,
@@ -447,14 +453,14 @@ end
 """
     Returns the final values for the requested dual names for each time step for a stage.
     Accepts a vector of names for the return of the values. If the time stamps and names are
-    loaded using the [load_simulation_results!](@ref) function it will read from memory.
+    loaded using the [load_results!](@ref) function it will read from memory.
 
     # Accepted Key Words
     - `names::Vector{Symbol}` : names of desired results
     - `initial_time::Dates.DateTime` : initial time of the requested results
     - `len::Int`: length of results
 """
-function get_realized_dual_values( # TODO: Should this be get_realized_duals_values?
+function read_realized_duals( # TODO: Should this be get_realized_duals_values?
     res::StageResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -462,12 +468,8 @@ function get_realized_dual_values( # TODO: Should this be get_realized_duals_val
 )
     names = isnothing(names) ? collect(keys(res.dual_values)) : names
     meta = RealizedMeta(res, initial_time = initial_time, len = len)
-    result_values = get_dual_values(
-        res,
-        names = names,
-        initial_time = meta.initial_time,
-        count = meta.count,
-    )
+    result_values =
+        read_duals(res, names = names, initial_time = meta.initial_time, count = meta.count)
     return get_realization(result_values, meta)
 end
 
@@ -484,24 +486,21 @@ end
     - `duals::Vector{Symbol}`: Dual names to load into results
     - `parameters::Vector{Symbol}`: Parameter names to load into results
 """
-function load_simulation_results!(
-    res::StageResults;
-    initial_time::Dates.DateTime,
-    count::Int,
+function load_results!(
+    res::StageResults,
+    count::Int;
+    initial_time::Union{Dates.DateTime, Nothing} = nothing,
     variables::Vector{Symbol} = Symbol[],
     duals::Vector{Symbol} = Symbol[],
     parameters::Vector{Symbol} = Symbol[],
 )
+    initial_time =
+        isnothing(initial_time) ? first(get_existing_timestamps(res)) : initial_time
+
     res.results_timestamps = _process_timestamps(res, initial_time, count)
-    merge!(
-        res.variable_values,
-        _get_variables_values(res, variables, res.results_timestamps),
-    )
-    merge!(res.dual_values, _get_dual_values(res, duals, res.results_timestamps))
-    merge!(
-        res.parameter_values,
-        _get_parameters_values(res, parameters, res.results_timestamps),
-    )
+    merge!(res.variable_values, _read_variables(res, variables, res.results_timestamps))
+    merge!(res.dual_values, _read_duals(res, duals, res.results_timestamps))
+    merge!(res.parameter_values, _read_parameters(res, parameters, res.results_timestamps))
     return nothing
 end
 

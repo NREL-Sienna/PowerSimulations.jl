@@ -492,7 +492,7 @@ function write_psi_container(psi_container::PSIContainer, save_path::String)
     return
 end
 
-function get_variables_values(psi_container::PSIContainer)
+function read_variables(psi_container::PSIContainer)
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
     for (k, v) in get_variables(psi_container)
         results_dict[k] = axis_array_to_dataframe(v)
@@ -500,12 +500,12 @@ function get_variables_values(psi_container::PSIContainer)
     return results_dict
 end
 
-function get_dual_values(psi_container::PSIContainer)
+function read_duals(psi_container::PSIContainer)
     cons = get_constraint_duals(psi_container.settings)
-    return get_dual_values(psi_container, cons)
+    return read_duals(psi_container, cons)
 end
 
-function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
+function read_duals(op::PSIContainer, cons::Vector{Symbol})
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
     isempty(cons) && return results_dict
     for c in cons
@@ -515,7 +515,7 @@ function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
     return results_dict
 end
 
-function get_parameters_values(psi_container::PSIContainer)
+function read_parameters(psi_container::PSIContainer)
     # TODO: Still not obvious implementation since it needs to get the multipliers from
     # the system
     params_dict = Dict{Symbol, DataFrames.DataFrame}()
