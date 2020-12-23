@@ -1,3 +1,4 @@
+#! format: off
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
@@ -15,6 +16,7 @@ get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurv
 get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, _) = nothing
 get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, _) = 0.0
 
+#! format: on
 ################################## Reserve Requirement Constraint ##########################
 function service_requirement_constraint!(
     psi_container::PSIContainer,
