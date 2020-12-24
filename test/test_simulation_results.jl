@@ -238,17 +238,27 @@ function test_simulation_results(file_path::String)
         @test length(results_ed) == 3
         @test length(results) == length(results_ed)
 
-        @test_throws IS.InvalidValue read_parameter(results_ed, :invalid)
-        @test_throws IS.InvalidValue read_variable(results_ed, :invalid)
-        @test_throws IS.InvalidValue read_variable(
-            results_uc,
-            :P__ThermalStandard;
-            initial_time = now(),
+        @test_logs(
+            (:error, r"invalid is not stored"),
+            @test_throws(IS.InvalidValue, read_parameter(results_ed, :invalid))
         )
-        @test_throws IS.InvalidValue read_variable(
-            results_uc,
-            :P__ThermalStandard;
-            count = 25,
+        @test_logs(
+            (:error, r"invalid is not stored"),
+            @test_throws(IS.InvalidValue, read_variable(results_ed, :invalid))
+        )
+        @test_logs(
+            (:error, r"not stored"),
+            @test_throws(
+                IS.InvalidValue,
+                read_variable(results_uc, :P__ThermalStandard; initial_time = now())
+            )
+        )
+        @test_logs(
+            (:error, r"not stored"),
+            @test_throws(
+                IS.InvalidValue,
+                read_variable(results_uc, :P__ThermalStandard; count = 25)
+            )
         )
 
         empty!(results_ed)
