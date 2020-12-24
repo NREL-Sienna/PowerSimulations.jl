@@ -14,6 +14,7 @@ using OSQP
 using SCS
 using TimeSeries
 using ParameterJuMP
+using CSV
 using DataFrames
 using DataStructures
 import UUIDs

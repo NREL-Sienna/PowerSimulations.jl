@@ -1,0 +1,30 @@
+{
+  "stages": [
+    {
+      "name": "ED",
+      "variables": [
+        "P__ThermalStandard",
+        "E__HydroEnergyReservoir"
+      ],
+      "parameters": [
+        "all"
+      ]
+    },
+    {
+      "name": "UC",
+      "variables": [
+        "On__ThermalStandard"
+      ],
+      "parameters": [
+        "all"
+      ],
+      "duals": [
+        "all"
+      ]
+    }
+  ],
+  "start_time": "2020-01-01T04:00:00",
+  "end_time": null,
+  "path": "export_path",
+  "format": "csv"
+}

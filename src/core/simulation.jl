@@ -928,13 +928,13 @@ get_simulation_store_open_func(sim::Simulation) = h5_store_open
 """
     execute!(sim::Simulation; kwargs...)
 
-Solves the simulation model for sequential Simulations
-and populates a nested folder structure created in Simulation()
-with a dated folder of featherfiles that contain the results for
-each stage and step.
+Solves the simulation model for sequential Simulations.
 
 # Arguments
 - `sim::Simulation=sim`: simulation object created by Simulation()
+
+The optional keyword argument `exports` controls exporting of results to CSV files as
+the simulation runs. Refer to [`export_results`](@ref) for a description of this argument.
 
 # Example
 ```julia
@@ -942,7 +942,6 @@ sim = Simulation("Test", 7, stages, "/Users/folder")
 execute!(sim::Simulation; kwargs...)
 ```
 """
-
 function execute!(sim::Simulation; kwargs...)
     file_mode = "a"
     logger = configure_logging(sim.internal, file_mode)
@@ -977,15 +976,31 @@ function execute!(sim::Simulation; kwargs...)
     return get_simulation_status(sim)
 end
 
-function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
+function _execute!(
+    sim::Simulation,
+    store;
+    cache_size_mib = 1024,
+    exports = nothing,
+    kwargs...,
+)
     @assert !isnothing(sim.internal)
     set_simulation_status!(sim, RunStatuss.RUNNING)
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
-    _initialize_stage_storage!(sim, store, cache_size_mib)
+    store_params = _initialize_stage_storage!(sim, store, cache_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
     status = RunStatuss.RUNNING
+    if exports !== nothing
+        if !(exports isa SimulationResultsExport)
+            exports = SimulationResultsExport(exports, store_params)
+        end
+
+        if exports.path === nothing
+            exports.path = get_results_dir(sim)
+        end
+    end
+
     for step in 1:steps
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
@@ -1018,7 +1033,13 @@ function _execute!(sim::Simulation, store; cache_size_mib = 1024, kwargs...)
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
                         stage_name = get_stage_name(sim, stage)
                         settings = get_settings(stage)
-                        status = run_stage!(step, stage, get_current_time(sim), store)
+                        status = run_stage!(
+                            step,
+                            stage,
+                            get_current_time(sim),
+                            store;
+                            exports = exports,
+                        )
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                         if get_allow_fails(settings) && (status != RunStatuss.SUCCESSFUL)
@@ -1151,6 +1172,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
     )
     @debug "initialized stage requirements" store_params
     initialize_stage_storage!(store, store_params, stage_reqs, rules)
+    return store_params
 end
 
 function _calc_dimensions(array::JuMP.Containers.DenseAxisArray, name, num_rows, horizon)

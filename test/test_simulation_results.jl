@@ -1,4 +1,43 @@
-function test_simulation_results(file_path::String)
+function verify_export_results(results, export_path)
+    exports = SimulationResultsExport(
+        make_export_all(keys(results.stage_results)),
+        results.params,
+    )
+    export_results(results, exports)
+
+    for stage_results in values(results.stage_results)
+        stage = stage_results.stage
+        rpath = stage_results.results_output_folder
+        base_path = results.path
+        for timestamp in get_existing_timestamps(stage_results)
+            for name in get_existing_duals(stage_results)
+                compare_results(rpath, export_path, stage, "duals", name, timestamp)
+            end
+            for name in get_existing_parameters(stage_results)
+                compare_results(rpath, export_path, stage, "parameters", name, timestamp)
+            end
+            for name in get_existing_variables(stage_results)
+                compare_results(rpath, export_path, stage, "variables", name, timestamp)
+            end
+        end
+    end
+end
+
+function compare_results(rpath, epath, stage, field, name, timestamp)
+    filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
+    df1 = PSI.read_dataframe(joinpath(rpath, stage, field, filename))
+    df2 = PSI.read_dataframe(joinpath(epath, stage, field, filename))
+    @test df1 == df2
+end
+
+function make_export_all(stages)
+    return [
+        StageResultsExport(x, duals = [:all], variables = [:all], parameters = [:all])
+        for x in stages
+    ]
+end
+
+function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
         # TODO: make a simulation that has lookahead for better results extraction tests
         c_sys5_hy_uc = build_system("c_sys5_hy_uc")
@@ -53,8 +92,27 @@ function test_simulation_results(file_path::String)
         )
         build_out = build!(sim)
         @test build_out == PSI.BuildStatuss.BUILT
-        execute_out = execute!(sim)
+
+        exports = Dict(
+            "stages" => [
+                Dict(
+                    "name" => "UC",
+                    "variables" => [:all],
+                    "parameters" => [:all],
+                    "duals" => [:all],
+                ),
+                Dict(
+                    "name" => "ED",
+                    "variables" => [:all],
+                    "parameters" => [:all],
+                    "duals" => [:all],
+                ),
+            ],
+            "path" => export_path,
+        )
+        execute_out = execute!(sim, exports = exports)
         @test execute_out == PSI.RunStatuss.SUCCESSFUL
+
         results = SimulationResults(sim)
         @test list_stages(results) == ["ED", "UC"]
         results_uc = get_stage_results(results, "UC")
@@ -98,20 +156,20 @@ function test_simulation_results(file_path::String)
         p_thermal_standard_ed = read_variable(results_ed, :P__ThermalStandard)
         @test length(keys(p_thermal_standard_ed)) == 48
         for v in values(p_thermal_standard_ed)
-            @test size(v) == (12, 5)
+            @test size(v) == (12, 6)
         end
 
         ren_dispatch_params =
             read_parameter(results_ed, :P__max_active_power__RenewableDispatch)
         @test length(keys(ren_dispatch_params)) == 48
         for v in values(p_thermal_standard_ed)
-            @test size(v) == (12, 5)
+            @test size(v) == (12, 6)
         end
 
         network_duals = read_dual(results_ed, :CopperPlateBalance)
         @test length(keys(network_duals)) == 48
         for v in values(network_duals)
-            @test size(v) == (12, 1)
+            @test size(v) == (12, 2)
         end
 
         p_variables_uc =
@@ -180,26 +238,37 @@ function test_simulation_results(file_path::String)
         @test length(results_ed) == 3
         @test length(results) == length(results_ed)
 
-        @test_throws IS.InvalidValue read_parameter(results_ed, :invalid)
-        @test_throws IS.InvalidValue read_variable(results_ed, :invalid)
-        @test_throws IS.InvalidValue read_variable(
-            results_uc,
-            :P__ThermalStandard;
-            initial_time = now(),
+        @test_logs(
+            (:error, r"invalid is not stored"),
+            @test_throws(IS.InvalidValue, read_parameter(results_ed, :invalid))
         )
-        @test_throws IS.InvalidValue read_variable(
-            results_uc,
-            :P__ThermalStandard;
-            count = 25,
+        @test_logs(
+            (:error, r"invalid is not stored"),
+            @test_throws(IS.InvalidValue, read_variable(results_ed, :invalid))
+        )
+        @test_logs(
+            (:error, r"not stored"),
+            @test_throws(
+                IS.InvalidValue,
+                read_variable(results_uc, :P__ThermalStandard; initial_time = now())
+            )
+        )
+        @test_logs(
+            (:error, r"not stored"),
+            @test_throws(
+                IS.InvalidValue,
+                read_variable(results_uc, :P__ThermalStandard; count = 25)
+            )
         )
 
         empty!(results_ed)
         @test isempty(results_ed.variable_values[:P__ThermalStandard])
 
+        initial_time = DateTime("2024-01-01T00:00:00")
         load_results!(
             results_ed,
             3,
-            initial_time = DateTime("2024-01-01T00:00:00"),
+            initial_time = initial_time,
             variables = [:P__ThermalStandard],
             duals = [:CopperPlateBalance],
             parameters = [:P__max_active_power__RenewableDispatch],
@@ -214,15 +283,18 @@ function test_simulation_results(file_path::String)
         empty!(results)
         @test isempty(results_ed)
         @test isempty(results)
+
+        verify_export_results(results, export_path)
     end
 end
 
 @testset "Test simulation results" begin
-    # Use spaces in this path because that has caused failures.
     file_path = mkpath(joinpath(pwd(), "test_simulation_results"))
+    export_path = mkpath(joinpath(pwd(), "test_export_path"))
     try
-        test_simulation_results(file_path)
+        test_simulation_results(file_path, export_path)
     finally
         rm(file_path, force = true, recursive = true)
+        rm(export_path, force = true, recursive = true)
     end
 end

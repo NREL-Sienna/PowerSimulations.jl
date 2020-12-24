@@ -4,8 +4,17 @@ const HASH_FILENAME = "check.sha256"
 Return a decoded JSON file.
 """
 function read_json(filename::AbstractString)
-    return open(filename) do io
-        return JSON.parse(io)
+    open(filename, "r") do io
+        JSON.parse(io)
+    end
+end
+
+"""
+Return a DataFrame from a CSV file.
+"""
+function read_dataframe(filename::AbstractString)
+    open(filename, "r") do io
+        DataFrames.DataFrame(CSV.File(io))
     end
 end
 
@@ -332,6 +341,8 @@ end
 function replace_chars(s::String, char::String, replacement::String)
     return replace(s, Regex("[$char]") => replacement)
 end
+
+convert_for_path(x::Dates.DateTime) = replace(string(x), ":" => "-")
 
 "Removes the string `char` from the original string"
 function remove_chars(s::String, char::String)
