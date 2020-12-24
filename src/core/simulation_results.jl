@@ -648,6 +648,42 @@ Export results to files in the results directory.
 - `results::SimulationResults`: simulation results
 - `exports`: SimulationResultsExport or anything that can be passed to its constructor.
   (such as Dict or path to JSON file)
+
+An example JSON file demonstrating possible options is below. Note that `start_time`,
+`end_time`, `path`, and `format` are optional.
+
+```
+{
+  "stages": [
+    {
+      "name": "ED",
+      "variables": [
+        "P__ThermalStandard",
+        "E__HydroEnergyReservoir"
+      ],
+      "parameters": [
+        "all"
+      ]
+    },
+    {
+      "name": "UC",
+      "variables": [
+        "On__ThermalStandard"
+      ],
+      "parameters": [
+        "all"
+      ],
+      "duals": [
+        "all"
+      ]
+    }
+  ],
+  "start_time": "2020-01-01T04:00:00",
+  "end_time": null,
+  "path": null,
+  "format": "csv"
+}
+```
 """
 function export_results(results::SimulationResults, exports)
     simulation_store_path = joinpath(results.path, "data_store")

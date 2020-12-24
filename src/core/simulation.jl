@@ -928,13 +928,13 @@ get_simulation_store_open_func(sim::Simulation) = h5_store_open
 """
     execute!(sim::Simulation; kwargs...)
 
-Solves the simulation model for sequential Simulations
-and populates a nested folder structure created in Simulation()
-with a dated folder of featherfiles that contain the results for
-each stage and step.
+Solves the simulation model for sequential Simulations.
 
 # Arguments
 - `sim::Simulation=sim`: simulation object created by Simulation()
+
+The optional keyword argument `exports` controls exporting of results to CSV files as
+the simulation runs. Refer to [`export_results`](@ref) for a description of this argument.
 
 # Example
 ```julia
@@ -942,7 +942,6 @@ sim = Simulation("Test", 7, stages, "/Users/folder")
 execute!(sim::Simulation; kwargs...)
 ```
 """
-
 function execute!(sim::Simulation; kwargs...)
     file_mode = "a"
     logger = configure_logging(sim.internal, file_mode)

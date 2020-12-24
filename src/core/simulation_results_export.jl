@@ -1,28 +1,6 @@
 
 const _SUPPORTED_FORMATS = ("csv",)
 
-#EXPORT_FORMAT = Dict(
-#    "stages" => [
-#        Dict(
-#            "name" => "name1",
-#            "duals" => [
-#                "name1",
-#                "name2",
-#            ]
-#            "parameters" => [
-#                "name1",
-#                "name2",
-#            ]
-#            "variables" => [
-#                "name1",
-#                "name2",
-#            ]
-#       ),
-#    ],
-#    "start_time" => "2020-01-01", # can be nothing
-#    "end_time" => "2020-12-31", # can be nothing
-#)
-
 struct StageResultsExport
     name::String
     duals::Set{Symbol}
