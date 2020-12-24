@@ -149,7 +149,7 @@ function _get_store_value(
         for ts in timestamps
             out = read_result(DataFrames.DataFrame, store, stage_name, field, name, ts)
             time_col = range(ts, length = horizon, step = resolution)
-            DataFrames.insertcols!(out, 1, "DateTime" => time_col)
+            DataFrames.insertcols!(out, 1, :DateTime => time_col)
             _results[ts] = out
         end
         results[name] = _results

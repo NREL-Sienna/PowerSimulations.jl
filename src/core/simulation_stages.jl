@@ -263,12 +263,12 @@ end
 function write_model_results!(store, stage, timestamp; exports = nothing)
     psi_container = get_psi_container(stage)
     if exports !== nothing
-        export_params = Dict(
-            "exports" => exports,
-            "exports_path" => joinpath(exports.path, get_name(stage)),
-            "file_type" => get_export_file_type(exports),
-            "resolution" => get_resolution(stage),
-            "horizon" => get_horizon(get_settings(stage)),
+        export_params = Dict{Symbol, Any}(
+            :exports => exports,
+            :exports_path => joinpath(exports.path, get_name(stage)),
+            :file_type => get_export_file_type(exports),
+            :resolution => get_resolution(stage),
+            :horizon => get_horizon(get_settings(stage)),
         )
     else
         export_params = nothing
@@ -289,7 +289,7 @@ function _write_model_dual_results!(store, psi_container, stage, timestamp, expo
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
-        exports_path = joinpath(exports["exports_path"], "duals")
+        exports_path = joinpath(exports[:exports_path], "duals")
         mkpath(exports_path)
     end
 
@@ -305,17 +305,17 @@ function _write_model_dual_results!(store, psi_container, stage, timestamp, expo
         )
 
         if exports !== nothing &&
-           should_export_dual(exports["exports"], timestamp, stage_name_str, name)
-            horizon = exports["horizon"]
-            resolution = exports["resolution"]
-            file_type = exports["file_type"]
+           should_export_dual(exports[:exports], timestamp, stage_name_str, name)
+            horizon = exports[:horizon]
+            resolution = exports[:resolution]
+            file_type = exports[:file_type]
             df = axis_array_to_dataframe(constraint)
             if names(df) == ["var"]
                 # Workaround for limitation in axis_array_to_dataframe.
                 DataFrames.rename!(df, [name])
             end
             time_col = range(timestamp, length = horizon, step = resolution)
-            DataFrames.insertcols!(df, 1, "DateTime" => time_col)
+            DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, name, timestamp, df)
         end
     end
@@ -325,7 +325,7 @@ function _write_model_parameter_results!(store, psi_container, stage, timestamp,
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
-        exports_path = joinpath(exports["exports_path"], "parameters")
+        exports_path = joinpath(exports[:exports_path], "parameters")
         mkpath(exports_path)
     end
 
@@ -350,12 +350,12 @@ function _write_model_parameter_results!(store, psi_container, stage, timestamp,
         write_result!(store, stage_name, STORE_CONTAINER_PARAMETERS, name, timestamp, data)
 
         if exports !== nothing &&
-           should_export_parameter(exports["exports"], timestamp, stage_name_str, name)
-            resolution = exports["resolution"]
-            file_type = exports["file_type"]
+           should_export_parameter(exports[:exports], timestamp, stage_name_str, name)
+            resolution = exports[:resolution]
+            file_type = exports[:file_type]
             df = DataFrames.DataFrame(data, param_array.axes[1])
             time_col = range(timestamp, length = horizon, step = resolution)
-            DataFrames.insertcols!(df, 1, "DateTime" => time_col)
+            DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, name, timestamp, df)
         end
     end
@@ -365,7 +365,7 @@ function _write_model_variable_results!(store, psi_container, stage, timestamp, 
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
-        exports_path = joinpath(exports["exports_path"], "variables")
+        exports_path = joinpath(exports[:exports_path], "variables")
         mkpath(exports_path)
     end
 
@@ -380,13 +380,13 @@ function _write_model_variable_results!(store, psi_container, stage, timestamp, 
         )
 
         if exports !== nothing &&
-           should_export_variable(exports["exports"], timestamp, stage_name_str, name)
-            horizon = exports["horizon"]
-            resolution = exports["resolution"]
-            file_type = exports["file_type"]
+           should_export_variable(exports[:exports], timestamp, stage_name_str, name)
+            horizon = exports[:horizon]
+            resolution = exports[:resolution]
+            file_type = exports[:file_type]
             df = axis_array_to_dataframe(variable)
             time_col = range(timestamp, length = horizon, step = resolution)
-            DataFrames.insertcols!(df, 1, "DateTime" => time_col)
+            DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, name, timestamp, df)
         end
     end
