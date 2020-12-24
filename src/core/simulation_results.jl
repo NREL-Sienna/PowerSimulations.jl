@@ -143,11 +143,13 @@ function _get_store_value(
     stage_name = Symbol(get_stage_name(res))
     stage_interval = get_interval(res)
     resolution = PSY.get_time_series_resolution(get_system(res))
+    horizon = PSY.get_forecast_horizon(get_system(res))
     for name in names
         _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
         for ts in timestamps
             out = read_result(DataFrames.DataFrame, store, stage_name, field, name, ts)
-            out[!, "timestamp"] = range(ts, length = size(out)[1], step = resolution)
+            time_col = range(ts, length = horizon, step = resolution)
+            DataFrames.insertcols!(out, 1, "DateTime" => time_col)
             _results[ts] = out
         end
         results[name] = _results
@@ -406,7 +408,7 @@ function get_realization(
             last_id =
                 step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
             for colname in propertynames(df)
-                colname == :timestamp && continue
+                colname == :DateTime && continue
                 col = df[!, colname][first_id:last_id]
                 if !haskey(results_concat, colname)
                     results_concat[colname] = col

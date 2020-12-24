@@ -1,4 +1,4 @@
-function verify_export_results(results)
+function verify_export_results(results, export_path)
     exports = SimulationResultsExport(
         make_export_all(keys(results.stage_results)),
         results.params,
@@ -8,17 +8,16 @@ function verify_export_results(results)
     for stage_results in values(results.stage_results)
         stage = stage_results.stage
         rpath = stage_results.results_output_folder
-        epath = joinpath(results.path, "exports")
         base_path = results.path
         for timestamp in get_existing_timestamps(stage_results)
             for name in get_existing_duals(stage_results)
-                compare_results(rpath, epath, stage, "duals", name, timestamp)
+                compare_results(rpath, export_path, stage, "duals", name, timestamp)
             end
             for name in get_existing_parameters(stage_results)
-                compare_results(rpath, epath, stage, "parameters", name, timestamp)
+                compare_results(rpath, export_path, stage, "parameters", name, timestamp)
             end
             for name in get_existing_variables(stage_results)
-                compare_results(rpath, epath, stage, "variables", name, timestamp)
+                compare_results(rpath, export_path, stage, "variables", name, timestamp)
             end
         end
     end
@@ -38,7 +37,7 @@ function make_export_all(stages)
     ]
 end
 
-function test_simulation_results(file_path::String)
+function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
         # TODO: make a simulation that has lookahead for better results extraction tests
         c_sys5_hy_uc = build_system("c_sys5_hy_uc")
@@ -109,6 +108,7 @@ function test_simulation_results(file_path::String)
                     "duals" => [:all],
                 ),
             ],
+            "path" => export_path,
         )
         execute_out = execute!(sim, exports = exports)
         @test execute_out == PSI.RunStatuss.SUCCESSFUL
@@ -284,16 +284,17 @@ function test_simulation_results(file_path::String)
         @test isempty(results_ed)
         @test isempty(results)
 
-        verify_export_results(results)
+        verify_export_results(results, export_path)
     end
 end
 
 @testset "Test simulation results" begin
-    # Use spaces in this path because that has caused failures.
     file_path = mkpath(joinpath(pwd(), "test_simulation_results"))
+    export_path = mkpath(joinpath(pwd(), "test_export_path"))
     try
-        test_simulation_results(file_path)
+        test_simulation_results(file_path, export_path)
     finally
         rm(file_path, force = true, recursive = true)
+        rm(export_path, force = true, recursive = true)
     end
 end

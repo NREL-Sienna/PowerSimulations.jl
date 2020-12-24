@@ -9,7 +9,6 @@ mutable struct SimulationInternal
     models_dir::String
     recorder_dir::String
     results_dir::String
-    exports_dir::String
     stages_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
@@ -58,7 +57,6 @@ function SimulationInternal(
     models_dir = joinpath(simulation_dir, "models_json")
     recorder_dir = joinpath(simulation_dir, "recorder")
     results_dir = joinpath(simulation_dir, "results")
-    exports_dir = joinpath(simulation_dir, "exports")
 
     for path in (
         simulation_dir,
@@ -67,7 +65,6 @@ function SimulationInternal(
         models_dir,
         recorder_dir,
         results_dir,
-        exports_dir,
         store_dir,
     )
         mkpath(path)
@@ -84,7 +81,6 @@ function SimulationInternal(
         models_dir,
         recorder_dir,
         results_dir,
-        exports_dir,
         length(stages_keys),
         count_dict,
         Dict{Int, Dates.DateTime}(),
@@ -317,7 +313,6 @@ get_execution_order(sim::Simulation) = get_sequence(sim).execution_order
 get_current_execution_index(sim::Simulation) = get_sequence(sim).current_execution_index
 get_logs_folder(sim::Simulation) = sim.internal.logs_dir
 get_recorder_folder(sim::Simulation) = sim.internal.recorder_dir
-get_exports_folder(sim::Simulation) = sim.internal.exports_dir
 
 function get_stage_cache_definition(sim::Simulation, stage::String)
     caches = get_sequence(sim).cache
@@ -1003,7 +998,7 @@ function _execute!(
         end
 
         if exports.path === nothing
-            exports.path = get_exports_folder(sim)
+            exports.path = get_results_dir(sim)
         end
     end
 

@@ -314,7 +314,8 @@ function _write_model_dual_results!(store, psi_container, stage, timestamp, expo
                 # Workaround for limitation in axis_array_to_dataframe.
                 DataFrames.rename!(df, [name])
             end
-            df.timestamp = range(timestamp, length = horizon, step = resolution)
+            time_col = range(timestamp, length = horizon, step = resolution)
+            DataFrames.insertcols!(df, 1, "DateTime" => time_col)
             export_result(file_type, exports_path, name, timestamp, df)
         end
     end
@@ -353,7 +354,8 @@ function _write_model_parameter_results!(store, psi_container, stage, timestamp,
             resolution = exports["resolution"]
             file_type = exports["file_type"]
             df = DataFrames.DataFrame(data, param_array.axes[1])
-            df.timestamp = range(timestamp, length = horizon, step = resolution)
+            time_col = range(timestamp, length = horizon, step = resolution)
+            DataFrames.insertcols!(df, 1, "DateTime" => time_col)
             export_result(file_type, exports_path, name, timestamp, df)
         end
     end
@@ -383,7 +385,8 @@ function _write_model_variable_results!(store, psi_container, stage, timestamp, 
             resolution = exports["resolution"]
             file_type = exports["file_type"]
             df = axis_array_to_dataframe(variable)
-            df.timestamp = range(timestamp, length = horizon, step = resolution)
+            time_col = range(timestamp, length = horizon, step = resolution)
+            DataFrames.insertcols!(df, 1, "DateTime" => time_col)
             export_result(file_type, exports_path, name, timestamp, df)
         end
     end
