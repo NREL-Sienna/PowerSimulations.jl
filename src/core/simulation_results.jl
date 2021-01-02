@@ -370,25 +370,33 @@ function RealizedMeta(
     interval = existing_timestamps.step
     resolution = PSY.get_time_series_resolution(get_system(res))
     interval_len = Int(interval / resolution)
-    realized_timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    realized_timestamps =
+        get_realized_timestamps(res, initial_time = initial_time, len = len)
 
-    result_initial_time =
-        existing_timestamps[findlast(x -> x .<= first(realized_timestamps), existing_timestamps)]
-    result_end_time =
-        existing_timestamps[findlast(x -> x .<= last(realized_timestamps), existing_timestamps)]
+    result_initial_time = existing_timestamps[findlast(
+        x -> x .<= first(realized_timestamps),
+        existing_timestamps,
+    )]
+    result_end_time = existing_timestamps[findlast(
+        x -> x .<= last(realized_timestamps),
+        existing_timestamps,
+    )]
 
     count = length(result_initial_time:interval:result_end_time)
 
     start_offset = length(result_initial_time:resolution:first(realized_timestamps))
-    end_offset = length(last(realized_timestamps) + resolution:resolution:(result_end_time + interval - resolution))
+    end_offset = length(
+        (last(realized_timestamps) + resolution):resolution:(result_end_time + interval - resolution),
+    )
 
     return RealizedMeta(result_initial_time, count, start_offset, end_offset, interval_len)
 end
 
-function get_realized_timestamps(res::StageResults;
+function get_realized_timestamps(
+    res::StageResults;
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,)
-
+    len::Union{Int, Nothing} = nothing,
+)
     existing_timestamps = get_existing_timestamps(res)
     interval = existing_timestamps.step
     resolution = PSY.get_time_series_resolution(get_system(res))
