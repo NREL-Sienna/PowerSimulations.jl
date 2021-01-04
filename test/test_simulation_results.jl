@@ -218,12 +218,20 @@ function test_simulation_results(file_path::String, export_path)
             )[:P__ThermalStandard],
         )[1] == 10
 
-        # request bad window
+        # request good window
         @test_throws IS.InvalidValue read_realized_variables(
             results_ed,
             names = [:P__ThermalStandard],
             initial_time = DateTime("2024-01-02T23:10:00"),
             len = 11,
+        )
+
+        # request bad window
+        @test_throws IS.InvalidValue read_realized_variables(
+            results_ed,
+            names = [:P__ThermalStandard],
+            initial_time = DateTime("2024-01-02T23:10:00"),
+            len = 12,
         )
 
         load_results!(
