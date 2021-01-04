@@ -609,22 +609,24 @@ phes5(nodes5) = [
     ),
 ];
 
-battery5(nodes5) = [GenericBattery(
-    name = "Bat",
-    prime_mover = PrimeMovers.BA,
-    available = true,
-    bus = nodes5[1],
-    initial_energy = 5.0,
-    state_of_charge_limits = (min = 5.0, max = 100.0),
-    rating = 70.0,
-    active_power = 10.0,
-    input_active_power_limits = (min = 0.0, max = 50.0),
-    output_active_power_limits = (min = 0.0, max = 50.0),
-    efficiency = (in = 0.80, out = 0.90),
-    reactive_power = 0.0,
-    reactive_power_limits = (min = -50.0, max = 50.0),
-    base_power = 100.0,
-)];
+battery5(nodes5) = [
+    GenericBattery(
+        name = "Bat",
+        prime_mover = PrimeMovers.BA,
+        available = true,
+        bus = nodes5[1],
+        initial_energy = 5.0,
+        state_of_charge_limits = (min = 5.0, max = 100.0),
+        rating = 70.0,
+        active_power = 10.0,
+        input_active_power_limits = (min = 0.0, max = 50.0),
+        output_active_power_limits = (min = 0.0, max = 50.0),
+        efficiency = (in = 0.80, out = 0.90),
+        reactive_power = 0.0,
+        reactive_power_limits = (min = -50.0, max = 50.0),
+        base_power = 100.0,
+    ),
+];
 
 loadbus2_ts_DA = [
     0.792729978
@@ -743,18 +745,20 @@ loads5(nodes5) = [
     ),
 ];
 
-interruptible(nodes5) = [InterruptibleLoad(
-    "IloadBus4",
-    true,
-    nodes5[4],
-    LoadModels.ConstantPower,
-    0.10,
-    0.0,
-    0.10,
-    0.0,
-    100.0,
-    TwoPartCost(150.0, 2400.0),
-)]
+interruptible(nodes5) = [
+    InterruptibleLoad(
+        "IloadBus4",
+        true,
+        nodes5[4],
+        LoadModels.ConstantPower,
+        0.10,
+        0.0,
+        0.10,
+        0.0,
+        100.0,
+        TwoPartCost(150.0, 2400.0),
+    ),
+]
 
 ORDC_cost = [(9000.0, 0.0), (6000.0, 0.2), (500.0, 0.4), (10.0, 0.6), (0.0, 0.8)]
 

@@ -423,7 +423,11 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
         condition = get_condition(ic)
         status = (condition > 0.0) ? 0.0 : 1.0
         if value_array[device_name][:status] != status
-            throw(IS.ConflictingInputsError("Initial Conditions for $(device_name) are not compatible. The values provided are invalid"))
+            throw(
+                IS.ConflictingInputsError(
+                    "Initial Conditions for $(device_name) are not compatible. The values provided are invalid",
+                ),
+            )
         end
     end
 

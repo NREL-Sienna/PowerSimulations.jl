@@ -438,8 +438,9 @@ end
 
     @testset "Test parameter values" begin
         system = op_problem.sys
-        params =
-            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__max_active_power__PowerLoad])
+        params = PSI.get_parameter_array(
+            op_problem.psi_container.parameters[:P__max_active_power__PowerLoad],
+        )
         params = PSI.axis_array_to_dataframe(params)
         devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
         multiplier = [PSY.get_active_power(devices[1])]

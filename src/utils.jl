@@ -68,7 +68,11 @@ function check_kwargs(input_kwargs, valid_set::Array{Symbol}, function_name::Str
     else
         for (key, value) in input_kwargs
             if !(key in valid_set)
-                throw(ArgumentError("keyword argument $(key) is not a valid input for $(function_name)"))
+                throw(
+                    ArgumentError(
+                        "keyword argument $(key) is not a valid input for $(function_name)",
+                    ),
+                )
             end
         end
     end
@@ -247,7 +251,9 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
         end
         return DataFrames.rename!(result_df, names)
     else
-        @warn("Dimension Number $(length(axes(input_array))) not Supported, returning empty DataFrame")
+        @warn(
+            "Dimension Number $(length(axes(input_array))) not Supported, returning empty DataFrame"
+        )
         return DataFrames.DataFrame()
     end
 end
@@ -386,7 +392,11 @@ function check_file_integrity(path::String)
     end
 
     if !matched
-        throw(IS.HashMismatchError("The hash value in the written files does not match the read files, results may have been tampered."))
+        throw(
+            IS.HashMismatchError(
+                "The hash value in the written files does not match the read files, results may have been tampered.",
+            ),
+        )
     end
 end
 

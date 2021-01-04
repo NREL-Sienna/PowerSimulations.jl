@@ -51,11 +51,9 @@ function StageResults(
     name = Symbol(stage_name)
 
     if load_system
-        sys = PSY.System(joinpath(
-            path,
-            "simulation_files",
-            "system-$(stage_params.system_uuid).json",
-        ))
+        sys = PSY.System(
+            joinpath(path, "simulation_files", "system-$(stage_params.system_uuid).json"),
+        )
     else
         sys = nothing
     end
