@@ -32,8 +32,8 @@ end
 
 function make_export_all(stages)
     return [
-        StageResultsExport(x, duals = [:all], variables = [:all], parameters = [:all]) for
-        x in stages
+        StageResultsExport(x, duals = [:all], variables = [:all], parameters = [:all])
+        for x in stages
     ]
 end
 
