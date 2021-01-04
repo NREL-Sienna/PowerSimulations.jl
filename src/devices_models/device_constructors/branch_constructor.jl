@@ -49,11 +49,8 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    !(get_feedforward(model) === nothing) && throw(
-        IS.ConflictingInputsError(
-            "$(Br) formulation doesn't support FeedForward. Use Constrained Branch Formulation instead",
-        ),
-    )
+    !(get_feedforward(model) === nothing) &&
+        throw(IS.ConflictingInputsError("$(Br) formulation doesn't support FeedForward. Use Constrained Branch Formulation instead"))
     branch_rate_bounds!(psi_container, devices, model, S)
     branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
     return

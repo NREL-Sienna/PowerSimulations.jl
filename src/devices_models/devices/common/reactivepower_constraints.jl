@@ -9,9 +9,7 @@ function make_reactive_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
-    error(
-        "make_reactive_power_constraints_inputs is not implemented for types $T / $U / $V",
-    )
+    error("make_reactive_power_constraints_inputs is not implemented for types $T / $U / $V")
 end
 
 """

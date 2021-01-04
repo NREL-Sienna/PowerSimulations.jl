@@ -144,12 +144,14 @@ function test_simulation_results(file_path::String, export_path)
         ]
         @test isempty(setdiff(uc_expected_vars, get_existing_variables(results_uc)))
         @test isempty(setdiff(ed_expected_vars, get_existing_variables(results_ed)))
-        @test isempty(
-            setdiff(uc_expected_vars, get_existing_variables(results_uc_from_file)),
-        )
-        @test isempty(
-            setdiff(ed_expected_vars, get_existing_variables(results_ed_from_file)),
-        )
+        @test isempty(setdiff(
+            uc_expected_vars,
+            get_existing_variables(results_uc_from_file),
+        ))
+        @test isempty(setdiff(
+            ed_expected_vars,
+            get_existing_variables(results_ed_from_file),
+        ))
 
         p_thermal_standard_ed = read_variable(results_ed, :P__ThermalStandard)
         @test length(keys(p_thermal_standard_ed)) == 48
@@ -209,14 +211,12 @@ function test_simulation_results(file_path::String, export_path)
         )
 
         # request good window
-        @test size(
-            read_realized_variables(
-                results_ed,
-                names = [:P__ThermalStandard],
-                initial_time = DateTime("2024-01-02T23:10:00"),
-                len = 10,
-            )[:P__ThermalStandard],
-        )[1] == 10
+        @test size(read_realized_variables(
+            results_ed,
+            names = [:P__ThermalStandard],
+            initial_time = DateTime("2024-01-02T23:10:00"),
+            len = 10,
+        )[:P__ThermalStandard])[1] == 10
 
         # request good window
         @test_throws IS.InvalidValue read_realized_variables(

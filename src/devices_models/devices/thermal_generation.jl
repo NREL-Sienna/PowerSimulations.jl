@@ -1122,11 +1122,7 @@ function cost_function!(
             @debug "PWL cost function detected for device $(component_name) using ThermalDispatchNoMin"
             slopes = PSY.get_slopes(cost_component)
             if any(slopes .< 0) || !pwlparamcheck(cost_component)
-                throw(
-                    IS.InvalidValue(
-                        "The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost.",
-                    ),
-                )
+                throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost."))
             end
             if slopes[1] != 0.0
                 @debug "PWL has no 0.0 intercept for generator $(PSY.get_name(g))"

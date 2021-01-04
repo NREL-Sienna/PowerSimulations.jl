@@ -99,19 +99,11 @@ function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
     source_stage_sync = sync.periods
 
     if source_stage_sync > source_stage_horizon
-        throw(
-            IS.ConflictingInputsError(
-                "The lookahead length $(source_stage_horizon) in stage is insufficient to syncronize with $(source_stage_sync) feedforward periods",
-            ),
-        )
+        throw(IS.ConflictingInputsError("The lookahead length $(source_stage_horizon) in stage is insufficient to syncronize with $(source_stage_sync) feedforward periods"))
     end
 
     if (source_stage_sync % destination_stage_executions_per_solution) != 0
-        throw(
-            IS.ConflictingInputsError(
-                "The current configuration implies $(source_stage_sync / destination_stage_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in stage $(key.first) needs to be a mutiple of the number of stage $(key.second) execution for every stage $(key.first) interval.",
-            ),
-        )
+        throw(IS.ConflictingInputsError("The current configuration implies $(source_stage_sync / destination_stage_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in stage $(key.first) needs to be a mutiple of the number of stage $(key.second) execution for every stage $(key.first) interval."))
     end
 
     return
@@ -121,9 +113,7 @@ function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
     source_stage_horizon = get_sequence(sim).horizons[key.first]
     source_stage_interval = get_stage_interval(sim, key.first)
     if source_stage_horizon != source_stage_interval
-        @warn(
-            "Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_stage_horizon) in stage $(key.first) will be replaced with $(source_stage_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon"
-        )
+        @warn("Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_stage_horizon) in stage $(key.first) will be replaced with $(source_stage_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon")
     end
     get_sequence(sim).horizons[key.first] = get_stage_interval(sim, key.first)
     return

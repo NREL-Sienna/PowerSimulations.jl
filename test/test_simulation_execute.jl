@@ -207,9 +207,8 @@ function test_simulation_with_cache(file_path::String)
         execute_out = execute!(sim_cache)
         @test execute_out == PSI.RunStatuss.SUCCESSFUL
 
-        var_names = axes(
-            PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard],
-        )[1]
+        var_names =
+            axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard])[1]
         for name in var_names
             var =
                 PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard][

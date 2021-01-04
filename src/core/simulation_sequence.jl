@@ -19,11 +19,7 @@ function _calculate_interval_inner_counts(
         previous_stage_interval = intervals[previous_stage_name][1]
         if Dates.Millisecond(previous_stage_interval % stage_interval) !=
            Dates.Millisecond(0)
-            throw(
-                IS.ConflictingInputsError(
-                    "The interval configuration provided results in a fractional number of executions of stage $stage_name",
-                ),
-            )
+            throw(IS.ConflictingInputsError("The interval configuration provided results in a fractional number of executions of stage $stage_name"))
         end
         interval_run_counts[k] = previous_stage_interval / stage_interval
         @debug "Stage $k is executed $(interval_run_counts[k]) time within each interval of Stage $(k-1)"
@@ -86,11 +82,7 @@ end
 function _check_stage_order(order::Dict{Int, String})
     length(order) == 1 && return
     if !mapreduce(x -> x == 1, *, diff(sort!(collect(keys(order)))))
-        throw(
-            IS.InvalidValue(
-                "Keys in the order dictionary aren't specified as consecutive integrers 1 -> N",
-            ),
-        )
+        throw(IS.InvalidValue("Keys in the order dictionary aren't specified as consecutive integrers 1 -> N"))
     end
     return
 end
@@ -119,11 +111,7 @@ function _check_feedforward(
     for stage_key in keys(feedforward)
         @debug stage_key
         if !mapreduce(x -> x.second == stage_key[1], |, keys(feedforward_chronologies))
-            throw(
-                ArgumentError(
-                    "No valid Chronology has been defined for the feedforward added to $(stage_key[1])",
-                ),
-            )
+            throw(ArgumentError("No valid Chronology has been defined for the feedforward added to $(stage_key[1])"))
         end
     end
     return
@@ -135,15 +123,11 @@ function _check_chronology_consistency(
     ini_cond_chronology::InitialConditionChronology,
 )
     if isempty(feedforward_chronologies)
-        @warn(
-            "No Feedforward Chronologies have been defined. This configuration assummes that there is no information passing between stages"
-        )
+        @warn("No Feedforward Chronologies have been defined. This configuration assummes that there is no information passing between stages")
     end
     if length(order) == 1
         if isa(ini_cond_chronology, InterStageChronology)
-            @warn(
-                "Single stage detected, the default Initial Condition Chronology is IntraStageChronology(), other values will be ignored."
-            )
+            @warn("Single stage detected, the default Initial Condition Chronology is IntraStageChronology(), other values will be ignored.")
         end
     end
     # TODO: Add more consistency checks
@@ -155,11 +139,7 @@ function _check_step_interval_consistency(
     first_stage_interval::Dates.TimePeriod,
 )
     if step_resolution != first_stage_interval
-        throw(
-            IS.ConflictingInputsError(
-                "step_resolution != first_stage_interval : this specification is not currently supported, adjust step_resolution or intervals arguments.",
-            ),
-        )
+        throw(IS.ConflictingInputsError("step_resolution != first_stage_interval : this specification is not currently supported, adjust step_resolution or intervals arguments."))
     end
     return
 end
@@ -167,9 +147,7 @@ end
 function _check_cache_defination(cache::Dict{<:Tuple, <:AbstractCache})
     for (stage_names, c) in cache
         if typeof(c) == TimeStatusChange && length(stage_names) > 1
-            error(
-                "TimeStatusChange cache currently only supports single stage. Please consider changing your cache definations",
-            )
+            error("TimeStatusChange cache currently only supports single stage. Please consider changing your cache definations")
         end
     end
     return

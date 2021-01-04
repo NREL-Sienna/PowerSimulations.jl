@@ -413,11 +413,7 @@ function energy_balance_constraint!(
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !has_initial_conditions(psi_container.initial_conditions, key)
-        throw(
-            IS.DataFormatError(
-                "Initial Conditions for $(H) Energy Constraints not in the model",
-            ),
-        )
+        throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
     inflow_forecast_label = "inflow"
@@ -500,11 +496,7 @@ function energy_balance_constraint!(
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !has_initial_conditions(psi_container.initial_conditions, key)
-        throw(
-            IS.DataFormatError(
-                "Initial Conditions for $(H) Energy Constraints not in the model",
-            ),
-        )
+        throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
     forecast_label_in = "inflow"

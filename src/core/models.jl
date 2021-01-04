@@ -15,11 +15,7 @@ function _check_device_formulation(
     ::Type{D},
 ) where {D <: Union{AbstractDeviceFormulation, PSY.Device}}
     if !isconcretetype(D)
-        throw(
-            ArgumentError(
-                "The device model must contain only concrete types, $(D) is an Abstract Type",
-            ),
-        )
+        throw(ArgumentError("The device model must contain only concrete types, $(D) is an Abstract Type"))
     end
 end
 

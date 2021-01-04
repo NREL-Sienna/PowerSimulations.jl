@@ -292,11 +292,7 @@ function set_device_model!(
         reset!(op_problem)
         build!(op_problem)
     else
-        throw(
-            IS.ConflictingInputsError(
-                "Device Model with name $(name) doesn't exist in the model",
-            ),
-        )
+        throw(IS.ConflictingInputsError("Device Model with name $(name) doesn't exist in the model"))
     end
     return
 end
@@ -311,11 +307,7 @@ function set_branch_model!(
         reset!(op_problem)
         build!(op_problem)
     else
-        throw(
-            IS.ConflictingInputsError(
-                "Branch Model with name $(name) doesn't exist in the model",
-            ),
-        )
+        throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
     end
     return
 end
@@ -330,11 +322,7 @@ function set_services_model!(
         reset!(op_problem)
         build!(op_problem)
     else
-        throw(
-            IS.ConflictingInputsError(
-                "Branch Model with name $(name) doesn't exist in the model",
-            ),
-        )
+        throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
     end
     return
 end

@@ -188,9 +188,7 @@ function construct_device!(
     S <: PM.AbstractPowerModel,
 }
     if D != StaticPowerLoad
-        @warn(
-            "The Formulation $(D) only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
-        )
+        @warn("The Formulation $(D) only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")
     end
 
     construct_device!(psi_container, sys, DeviceModel(L, StaticPowerLoad), S)

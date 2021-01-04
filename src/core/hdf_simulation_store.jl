@@ -281,11 +281,7 @@ function read_result(
     horizon = store.params.stages[key.stage].horizon
     num_executions = store.params.stages[key.stage].num_executions
     if execution_index > num_executions
-        throw(
-            ArgumentError(
-                "execution_index = $execution_index cannot be larger than $num_executions",
-            ),
-        )
+        throw(ArgumentError("execution_index = $execution_index cannot be larger than $num_executions"))
     end
 
     dataset = _get_dataset(store, key)
@@ -512,9 +508,7 @@ function _get_indices(store::HdfSimulationStore, stage, timestamp)
         step = trunc(Int, time_diff / store.params.step_resolution) + 1
     end
     if step > store.params.num_steps
-        throw(
-            ArgumentError("timestamp = $timestamp is beyond the simulation: step = $step"),
-        )
+        throw(ArgumentError("timestamp = $timestamp is beyond the simulation: step = $step"))
     end
     stage_params = store.params.stages[stage]
     initial_time = store.params.initial_time + (step - 1) * store.params.step_resolution

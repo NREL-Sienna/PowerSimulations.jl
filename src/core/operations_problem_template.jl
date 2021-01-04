@@ -31,11 +31,7 @@ OperationsProblemTemplate() = OperationsProblemTemplate(PM.AbstractPowerModel)
 
 function set_model!(template::OperationsProblemTemplate, label::Symbol, model::DeviceModel)
     if haskey(template.devices, label)
-        throw(
-            IS.ConflictingInputsError(
-                "Device with model name $(label) already exists in the Opertaion Model",
-            ),
-        )
+        throw(IS.ConflictingInputsError("Device with model name $(label) already exists in the Opertaion Model"))
     end
     template.devices[label] = model
     return

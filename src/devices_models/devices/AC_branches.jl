@@ -138,9 +138,7 @@ function branch_flow_constraints!(
     constraint_infos = Vector{PSI.DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         if PSY.get_flow_limits(d).to_from != PSY.get_flow_limits(d).from_to
-            @info(
-                "Flow limits in Line $(PSY.get_name(d)) aren't equal. The minimum will be used in formulation $(T)"
-            )
+            @info("Flow limits in Line $(PSY.get_name(d)) aren't equal. The minimum will be used in formulation $(T)")
         end
         limit = min(
             PSY.get_rate(d),
