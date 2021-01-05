@@ -159,6 +159,7 @@ export load_results!
 export read_realized_variables
 export read_realized_parameters
 export read_realized_duals
+export get_realized_timestamps
 
 ## Utils Exports
 export write_results

@@ -112,6 +112,7 @@ get_interval(res::StageResults) = res.existing_timestamps.step
 IS.get_variables(result::StageResults) = result.variable_values
 get_duals(result::StageResults) = result.dual_values
 IS.get_parameters(result::StageResults) = result.parameter_values
+IS.get_base_power(result::StageResults) = result.base_power
 
 #IS.get_total_cost(result::StageResults) = result.total_cost
 #IS.get_optimizer_log(results::StageResults) = results.optimizer_log
@@ -368,32 +369,48 @@ function RealizedMeta(
     existing_timestamps = get_existing_timestamps(res)
     interval = existing_timestamps.step
     resolution = PSY.get_time_series_resolution(get_system(res))
+    interval_len = Int(interval / resolution)
+    realized_timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+
+    result_initial_time =
+        existing_timestamps[findlast(x -> x .<= first(realized_timestamps), existing_timestamps)]
+    result_end_time =
+        existing_timestamps[findlast(x -> x .<= last(realized_timestamps), existing_timestamps)]
+
+    count = length(result_initial_time:interval:result_end_time)
+
+    start_offset = length(result_initial_time:resolution:first(realized_timestamps))
+    end_offset = length(last(realized_timestamps) + resolution:resolution:(result_end_time + interval - resolution))
+
+    return RealizedMeta(result_initial_time, count, start_offset, end_offset, interval_len)
+end
+
+function get_realized_timestamps(res::StageResults;
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,)
+
+    existing_timestamps = get_existing_timestamps(res)
+    interval = existing_timestamps.step
+    resolution = PSY.get_time_series_resolution(get_system(res))
     horizon = PSY.get_forecast_horizon(get_system(res))
     initial_time = isnothing(initial_time) ? first(existing_timestamps) : initial_time
     end_time =
-        isnothing(len) ? last(existing_timestamps) + interval :
-        initial_time + len * resolution
+        isnothing(len) ? last(existing_timestamps) + interval - resolution :
+        initial_time + (len - 1) * resolution
 
     requested_range = initial_time:resolution:end_time
     available_range = first(existing_timestamps):resolution:(last(
         existing_timestamps,
-    ) + (horizon) * resolution)
+    ) + (horizon - 1) * resolution)
     invalid_timestamps = setdiff(requested_range, available_range)
 
     if !isempty(invalid_timestamps)
-        throw(IS.InvalidValue("Requested time does not match available results"))
+        msg = "Requested time does not match available results"
+        @error msg
+        throw(IS.InvalidValue(msg))
     end
 
-    result_initial_time =
-        existing_timestamps[findlast(x -> x .<= initial_time, existing_timestamps)]
-    interval_len = Int(interval / resolution)
-    result_end_time =
-        existing_timestamps[findlast(x -> x .<= end_time, existing_timestamps)]
-    count = length(result_initial_time:interval:result_end_time)
-    start_offset = length(result_initial_time:resolution:initial_time)
-    end_offset = length(end_time:resolution:(result_end_time + interval - resolution))
-
-    return RealizedMeta(result_initial_time, count, start_offset, end_offset, interval_len)
+    return requested_range
 end
 
 function get_realization(
