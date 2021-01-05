@@ -405,7 +405,9 @@ function get_realized_timestamps(res::StageResults;
     invalid_timestamps = setdiff(requested_range, available_range)
 
     if !isempty(invalid_timestamps)
-        throw(IS.InvalidValue("Requested time does not match available results"))
+        msg = "Requested time does not match available results"
+        @error msg
+        throw(IS.InvalidValue(msg))
     end
 
     return requested_range
