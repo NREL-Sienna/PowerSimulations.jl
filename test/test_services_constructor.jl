@@ -20,6 +20,18 @@
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
         moi_tests(op_problem, p, 648, 0, 120, 216, 72, false)
+        symbols = [
+            :Reserve1__VariableReserve_ReserveUp,
+            :Reserve11__VariableReserve_ReserveUp,
+            :Reserve2__VariableReserve_ReserveDown,
+            :ORDC1__ReserveDemandCurve_ReserveUp,
+        ]
+        for sym in symbols
+            for v in op_problem.psi_container.variables[sym]
+                @test JuMP.has_lower_bound(v)
+                @test JuMP.lower_bound(v) == 0.0
+            end
+        end
     end
 end
 
