@@ -73,6 +73,389 @@ function energy_balance(
     return
 end
 
+
+@doc raw"""
+Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
+# Constraints
+If t = 1:
+`` varenergy[name, 1] == initial_conditions[ix].value + (paraminflow[name, t] - varspill[name, 1] - varout[name, 1])*fraction_of_hour ``
+If t > 1:
+`` varenergy[name, t] == varenergy[name, t-1] + (paraminflow[name, t] - varspill[name, t] - varout[name, t])*fraction_of_hour ``
+`` varenergy[name, end] >= paramenergytarget[name, end]
+# LaTeX
+`` x^{energy}_1 == x^{energy}_{init} + frhr  (x^{in}_1 - x^{spillage}_1 -  x^{out}_1), \text{ for } t = 1 ``
+`` x^{energy}_t == x^{energy}_{t-1} + frhr (x^{in}_t - x^{spillage}_t - x^{out}_t), \forall t \geq 2 ``
+`` x^{energy}_t >= x^{energy}_{target} \text{ for } t = end ``
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
+* time_series_data::Tuple{Vector{DeviceTimeSeriesConstraintInfo}, Vector{DeviceTimeSeriesConstraintInfo}} : forecast information
+- : time_series_data[1] : Inflow energy forecast information
+- : time_series_data[2] : Target reservoir storage forecast information
+* cons_names::Tuple{Symbol, Symbol} : name of the constraints
+- : cons_names[1] : energy balance constraint name
+- : cons_names[2] : energy target constraint name
+* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+- : var_names[1] : varspill
+- : var_names[2] : varout
+- : var_names[3] : varenergy
+* param_reference::UpdateRef : UpdateRef to access the inflow parameter
+"""
+function energy_balance_target_param(
+    psi_container::PSIContainer,
+    initial_conditions::Vector{InitialCondition},
+    efficiency_data::Tuple{Vector{String}, Vector{InOut}},
+    time_series_data::Vector{DeviceTimeSeriesConstraintInfo},
+    cons_names::Tuple{Symbol, Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
+    param_references::UpdateRef,
+)
+    time_steps = model_time_steps(psi_container)
+    resolution = model_resolution(psi_container)
+    fraction_of_hour = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+
+    target_data = time_series_data
+
+    name_index = efficiency_data[1]
+
+    varin = get_variable(psi_container, var_names[1])
+    varout = get_variable(psi_container, var_names[2])
+    varenergy = get_variable(psi_container, var_names[3])
+
+    balance_cons_name = cons_names[1]
+    target_cons_name = cons_names[2]
+    target_param_reference = param_references
+
+
+    container_target =
+        add_param_container!(psi_container, target_param_reference, name_index, time_steps)
+    param_target = get_parameter_array(container_target)
+    multiplier_target = get_multiplier_array(container_target)
+
+    balance_constraint =
+        add_cons_container!(psi_container, balance_cons_name, name_index, time_steps)
+    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index, 1)
+
+    for (ix, d) in enumerate(target_data)
+        name = get_component_name(d)
+        eff_in = efficiency_data[2][ix].in
+        eff_out = efficiency_data[2][ix].out
+        # Create the PGAE outside of the constraint definition
+        balance =
+            initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
+            (varout[name, 1]) * fraction_of_hour / eff_out
+        balance_constraint[name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
+
+        param_target[name, 1] =
+            PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
+
+        for t in time_steps[2:end]
+            eff_in = efficiency_data[2][ix].in
+            eff_out = efficiency_data[2][ix].out
+
+            balance_constraint[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                varenergy[name, t] ==
+                varenergy[name, t - 1] + varin[name, t] * eff_in * fraction_of_hour -
+                (varout[name, t]) * fraction_of_hour / eff_out
+            )
+
+            param_target[name, t] =
+                PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
+        end
+
+        target_constraint[name, 1] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            varenergy[name, time_steps[end]] >=
+            d.multiplier * param_target[name, time_steps[end]]
+        )
+
+    end
+
+    return
+end
+
+@doc raw"""
+Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
+# Constraints
+If t = 1:
+`` varenergy[name, 1] == initial_conditions[ix].value + (paraminflow[name, t] - varspill[name, 1] - varout[name, 1])*fraction_of_hour ``
+If t > 1:
+`` varenergy[name, t] == varenergy[name, t-1] + (paraminflow[name, t] - varspill[name, t] - varout[name, t])*fraction_of_hour ``
+`` varenergy[name, end] >= paramenergytarget[name, end]
+# LaTeX
+`` x^{energy}_1 == x^{energy}_{init} + frhr  (x^{in}_1 - x^{spillage}_1 -  x^{out}_1), \text{ for } t = 1 ``
+`` x^{energy}_t == x^{energy}_{t-1} + frhr (x^{in}_t - x^{spillage}_t - x^{out}_t), \forall t \geq 2 ``
+`` x^{energy}_t >= x^{energy}_{target} \text{ for } t = end ``
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
+* time_series_data::Tuple{Vector{DeviceTimeSeriesConstraintInfo}, Vector{DeviceTimeSeriesConstraintInfo}} : forecast information
+- : time_series_data[1] : Inflow energy forecast information
+- : time_series_data[2] : Target reservoir storage forecast information
+* cons_names::Tuple{Symbol, Symbol} : name of the constraints
+- : cons_names[1] : energy balance constraint name
+- : cons_names[2] : energy target constraint name
+* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+- : var_names[1] : varspill
+- : var_names[2] : varout
+- : var_names[3] : varenergy
+* param_reference::UpdateRef : UpdateRef to access the inflow parameter
+"""
+function energy_balance_target(
+    psi_container::PSIContainer,
+    initial_conditions::Vector{InitialCondition},
+    efficiency_data::Tuple{Vector{String}, Vector{InOut}},
+    time_series_data::Vector{DeviceTimeSeriesConstraintInfo},
+    cons_names::Tuple{Symbol, Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
+)
+    time_steps = model_time_steps(psi_container)
+    resolution = model_resolution(psi_container)
+    fraction_of_hour = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+
+    target_data = time_series_data
+
+    name_index = efficiency_data[1]
+
+    varin = get_variable(psi_container, var_names[1])
+    varout = get_variable(psi_container, var_names[2])
+    varenergy = get_variable(psi_container, var_names[3])
+
+    balance_cons_name = cons_names[1]
+    target_cons_name = cons_names[2]
+
+    balance_constraint =
+        add_cons_container!(psi_container, balance_cons_name, name_index, time_steps)
+    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index, 1)
+
+    for (ix, d) in enumerate(target_data)
+        name = get_component_name(d)
+        eff_in = efficiency_data[2][ix].in
+        eff_out = efficiency_data[2][ix].out
+        # Create the PGAE outside of the constraint definition
+        balance =
+            initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
+            (varout[name, 1]) * fraction_of_hour / eff_out
+        balance_constraint[name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
+
+        for t in time_steps[2:end]
+            eff_in = efficiency_data[2][ix].in
+            eff_out = efficiency_data[2][ix].out
+
+            balance_constraint[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                varenergy[name, t] ==
+                varenergy[name, t - 1] + varin[name, t] * eff_in * fraction_of_hour -
+                (varout[name, t]) * fraction_of_hour / eff_out
+            )
+
+        end
+
+        target_constraint[name, 1] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            varenergy[name, time_steps[end]] >=
+            d.multiplier * d.timeseries[time_steps[end]]
+        )
+    end
+
+    return
+end
+
+@doc raw"""
+Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
+# Constraints
+If t = 1:
+`` varenergy[name, 1] == initial_conditions[ix].value + (paraminflow[name, t] - varspill[name, 1] - varout[name, 1])*fraction_of_hour ``
+If t > 1:
+`` varenergy[name, t] == varenergy[name, t-1] + (paraminflow[name, t] - varspill[name, t] - varout[name, t])*fraction_of_hour ``
+`` varenergy[name, end] >= paramenergytarget[name, end]
+# LaTeX
+`` x^{energy}_1 == x^{energy}_{init} + frhr  (x^{in}_1 - x^{spillage}_1 -  x^{out}_1), \text{ for } t = 1 ``
+`` x^{energy}_t == x^{energy}_{t-1} + frhr (x^{in}_t - x^{spillage}_t - x^{out}_t), \forall t \geq 2 ``
+`` x^{energy}_t >= x^{energy}_{target} \text{ for } t = end ``
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
+* time_series_data::Tuple{Vector{DeviceTimeSeriesConstraintInfo}, Vector{DeviceTimeSeriesConstraintInfo}} : forecast information
+- : time_series_data[1] : Inflow energy forecast information
+- : time_series_data[2] : Target reservoir storage forecast information
+* cons_names::Tuple{Symbol, Symbol} : name of the constraints
+- : cons_names[1] : energy balance constraint name
+- : cons_names[2] : energy target constraint name
+* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+- : var_names[1] : varspill
+- : var_names[2] : varout
+- : var_names[3] : varenergy
+* param_reference::UpdateRef : UpdateRef to access the inflow parameter
+"""
+function energy_balance_soft_target_param(
+    psi_container::PSIContainer,
+    initial_conditions::Vector{InitialCondition},
+    efficiency_data::Tuple{Vector{String}, Vector{InOut}},
+    time_series_data::Vector{DeviceTimeSeriesConstraintInfo},
+    cons_names::Tuple{Symbol, Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol, Symbol},
+    param_references::UpdateRef,
+)
+    time_steps = model_time_steps(psi_container)
+    resolution = model_resolution(psi_container)
+    fraction_of_hour = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+
+    target_data = time_series_data
+
+    name_index = efficiency_data[1]
+
+    varin = get_variable(psi_container, var_names[1])
+    varout = get_variable(psi_container, var_names[2])
+    varenergy = get_variable(psi_container, var_names[3])
+    varslack = get_variable(psi_container, var_names[4])
+
+    balance_cons_name = cons_names[1]
+    target_cons_name = cons_names[2]
+    target_param_reference = param_references
+
+
+    container_target =
+        add_param_container!(psi_container, target_param_reference, name_index, time_steps)
+    param_target = get_parameter_array(container_target)
+    multiplier_target = get_multiplier_array(container_target)
+
+    balance_constraint =
+        add_cons_container!(psi_container, balance_cons_name, name_index, time_steps)
+    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index, 1)
+
+    for (ix, d) in enumerate(target_data)
+        name = get_component_name(d)
+        eff_in = efficiency_data[2][ix].in
+        eff_out = efficiency_data[2][ix].out
+        # Create the PGAE outside of the constraint definition
+        balance =
+            initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
+            (varout[name, 1]) * fraction_of_hour / eff_out
+        balance_constraint[name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
+
+        param_target[name, 1] =
+            PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
+
+        for t in time_steps[2:end]
+            eff_in = efficiency_data[2][ix].in
+            eff_out = efficiency_data[2][ix].out
+
+            balance_constraint[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                varenergy[name, t] ==
+                varenergy[name, t - 1] + varin[name, t] * eff_in * fraction_of_hour -
+                (varout[name, t]) * fraction_of_hour / eff_out
+            )
+
+            param_target[name, t] =
+                PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
+        end
+
+        target_constraint[name, 1] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            varenergy[name, time_steps[end]] + varslack[name, 1] >=
+            d.multiplier * param_target[name, time_steps[end]]
+        )
+
+    end
+
+    return
+end
+
+@doc raw"""
+Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
+# Constraints
+If t = 1:
+`` varenergy[name, 1] == initial_conditions[ix].value + (paraminflow[name, t] - varspill[name, 1] - varout[name, 1])*fraction_of_hour ``
+If t > 1:
+`` varenergy[name, t] == varenergy[name, t-1] + (paraminflow[name, t] - varspill[name, t] - varout[name, t])*fraction_of_hour ``
+`` varenergy[name, end] >= paramenergytarget[name, end]
+# LaTeX
+`` x^{energy}_1 == x^{energy}_{init} + frhr  (x^{in}_1 - x^{spillage}_1 -  x^{out}_1), \text{ for } t = 1 ``
+`` x^{energy}_t == x^{energy}_{t-1} + frhr (x^{in}_t - x^{spillage}_t - x^{out}_t), \forall t \geq 2 ``
+`` x^{energy}_t >= x^{energy}_{target} \text{ for } t = end ``
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
+* time_series_data::Tuple{Vector{DeviceTimeSeriesConstraintInfo}, Vector{DeviceTimeSeriesConstraintInfo}} : forecast information
+- : time_series_data[1] : Inflow energy forecast information
+- : time_series_data[2] : Target reservoir storage forecast information
+* cons_names::Tuple{Symbol, Symbol} : name of the constraints
+- : cons_names[1] : energy balance constraint name
+- : cons_names[2] : energy target constraint name
+* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+- : var_names[1] : varspill
+- : var_names[2] : varout
+- : var_names[3] : varenergy
+* param_reference::UpdateRef : UpdateRef to access the inflow parameter
+"""
+function energy_balance_soft_target(
+    psi_container::PSIContainer,
+    initial_conditions::Vector{InitialCondition},
+    efficiency_data::Tuple{Vector{String}, Vector{InOut}},
+    time_series_data::Vector{DeviceTimeSeriesConstraintInfo},
+    cons_names::Tuple{Symbol, Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol, Symbol},
+)
+    time_steps = model_time_steps(psi_container)
+    resolution = model_resolution(psi_container)
+    fraction_of_hour = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+
+    target_data = time_series_data
+
+    name_index = efficiency_data[1]
+
+    varin = get_variable(psi_container, var_names[1])
+    varout = get_variable(psi_container, var_names[2])
+    varenergy = get_variable(psi_container, var_names[3])
+    varslack = get_variable(psi_container, var_names[4])
+
+    balance_cons_name = cons_names[1]
+    target_cons_name = cons_names[2]
+
+    balance_constraint =
+        add_cons_container!(psi_container, balance_cons_name, name_index, time_steps)
+    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index, 1)
+
+    for (ix, d) in enumerate(target_data)
+        name = get_component_name(d)
+        eff_in = efficiency_data[2][ix].in
+        eff_out = efficiency_data[2][ix].out
+        # Create the PGAE outside of the constraint definition
+        balance =
+            initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
+            (varout[name, 1]) * fraction_of_hour / eff_out
+        balance_constraint[name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
+
+        for t in time_steps[2:end]
+            eff_in = efficiency_data[2][ix].in
+            eff_out = efficiency_data[2][ix].out
+
+            balance_constraint[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                varenergy[name, t] ==
+                varenergy[name, t - 1] + varin[name, t] * eff_in * fraction_of_hour -
+                (varout[name, t]) * fraction_of_hour / eff_out
+            )
+
+        end
+
+        target_constraint[name, 1] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            varenergy[name, time_steps[end]] + varslack[name, 1] >=
+            d.multiplier * d.timeseries[time_steps[end]]
+        )
+    end
+
+    return
+end
+
 @doc raw"""
 Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
 # Constraints
