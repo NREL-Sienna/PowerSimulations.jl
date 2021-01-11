@@ -4,7 +4,9 @@ abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
 struct BookKeepingwTarget <: AbstractStorageFormulation end
+struct BookKeepingwTargetTimeSeries <: AbstractStorageFormulation end
 struct BookKeepingwSoftTarget <: AbstractStorageFormulation end
+struct BookKeepingwSoftTargetTimeSeries <: AbstractStorageFormulation end
 struct BookKeepingwEnergyValue <: AbstractStorageFormulation end
 ########################### ActivePowerInVariable, Storage #################################
 
@@ -258,23 +260,88 @@ function energy_balance_constraint!(
     return
 end
 
+############################ Energy Management constraints ######################################
 
-function energy_balance_constraint!(
+function energy_target_constraint!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    ::Type{BookKeepingwTargetTimeSeries},
+    ::Type{S},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {St <: PSY.BatterywEMS, S <: PM.AbstractPowerModel}
+
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+
+    target_forecast_label = "storage_target"
+    constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        ts_vector_target = get_time_series(psi_container, d, target_forecast_label)
+        constraint_info_target = DeviceTimeSeriesConstraintInfo(
+            d,
+            x -> PSY.get_storage_target(x) * PSY.get_storage_capacity(x),
+            ts_vector_target,
+        )
+        constraint_infos_target[ix] = constraint_info_target
+    end
+
+    if parameters
+        energy_target_timeseries_param(
+            psi_container,
+            constraint_infos_target,
+            make_constraint_name(ENERGY_TARGET, St),
+            make_variable_name(ENERGY, St),
+            UpdateRef{St}(TARGET, target_forecast_label),
+        )
+    else
+        energy_target_timeseries(
+            psi_container,
+            constraint_infos_target,
+            make_constraint_name(ENERGY_TARGET, St),
+            make_variable_name(ENERGY, St),
+        )
+    end
+    return
+end
+
+function energy_target_constraint!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{St},
     ::Type{BookKeepingwTarget},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
+) where {St <: PSY.BatterywEMS, S <: PM.AbstractPowerModel}
+
+    constraint_infos_target = Vector{DeviceEnergyTargetConstraintInfo}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        constraint_info_target = DeviceEnergyTargetConstraintInfo(
+            d,
+            PSY.get_storage_capacity(d),
+            PSY.get_storage_target(d),
+        )
+        constraint_infos_target[ix] = constraint_info_target
+    end
+
+    energy_target(
+        psi_container,
+        constraint_infos_target,
+        make_constraint_name(ENERGY_TARGET, St),
+        make_variable_name(ENERGY, St),
+    )
+
+    return
+end
+
+function energy_target_constraint!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    ::Type{BookKeepingwSoftTargetTimeSeries},
+    ::Type{S},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {St <: PSY.BatterywEMS, S <: PM.AbstractPowerModel}
 
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
-    efficiency_data = make_efficiency_data(devices)
-    key = ICKey(EnergyLevel, St)
-
-    if !has_initial_conditions(psi_container.initial_conditions, key)
-        throw(IS.DataFormatError("Initial Conditions for $(St) Energy Constraints not in the model"))
-    end
 
     target_forecast_label = "storage_target"
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
@@ -289,119 +356,83 @@ function energy_balance_constraint!(
     end
 
     if parameters
-        energy_balance_target_param(
+        energy_soft_target_timeseries_param(
             psi_container,
-            get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
-            efficiency_data,
             constraint_infos_target,
+            make_constraint_name(ENERGY_TARGET, St),
             (
-                make_constraint_name(ENERGY_LIMIT, St),
-                make_constraint_name(ENERGY_TARGET, St),
-            ),
-            (
-                make_variable_name(ACTIVE_POWER_IN, St),
-                make_variable_name(ACTIVE_POWER_OUT, St),
                 make_variable_name(ENERGY, St),
+                make_variable_name(ENERGY_TARGET_SLACK, St),
             ),
             UpdateRef{St}(TARGET, target_forecast_label),
         )
     else
-        energy_balance_target(
+        energy_soft_target_timeseries(
             psi_container,
-            get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
-            efficiency_data,
             constraint_infos_target,
+            make_constraint_name(ENERGY_TARGET, St),
             (
-                make_constraint_name(ENERGY_LIMIT, St),
-                make_constraint_name(ENERGY_TARGET, St),
-            ),
-            (
-                make_variable_name(ACTIVE_POWER_IN, St),
-                make_variable_name(ACTIVE_POWER_OUT, St),
                 make_variable_name(ENERGY, St),
+                make_variable_name(ENERGY_TARGET_SLACK, St),
             ),
         )
     end
     return
 end
 
-function energy_balance_constraint!(
+function energy_target_constraint!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{St},
     ::Type{BookKeepingwSoftTarget},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
+) where {St <: PSY.BatterywEMS, S <: PM.AbstractPowerModel}
 
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-    efficiency_data = make_efficiency_data(devices)
-    key = ICKey(EnergyLevel, St)
-
-    if !has_initial_conditions(psi_container.initial_conditions, key)
-        throw(IS.DataFormatError("Initial Conditions for $(St) Energy Constraints not in the model"))
-    end
-
-    target_forecast_label = "storage_target"
-    constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    constraint_infos_target = Vector{DeviceEnergyTargetConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector_target = get_time_series(psi_container, d, target_forecast_label)
-        constraint_info_target = DeviceTimeSeriesConstraintInfo(
+        constraint_info_target = DeviceEnergyTargetConstraintInfo(
             d,
-            x -> PSY.get_storage_target(x) * PSY.get_storage_capacity(x),
-            ts_vector_target,
+            PSY.get_storage_capacity(d),
+            PSY.get_storage_target(d),
         )
         constraint_infos_target[ix] = constraint_info_target
     end
 
-    if parameters
-        energy_balance_soft_target_param(
-            psi_container,
-            get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
-            efficiency_data,
-            constraint_infos_target,
-            (
-                make_constraint_name(ENERGY_LIMIT, St),
-                make_constraint_name(ENERGY_TARGET, St),
-            ),
-            (
-                make_variable_name(ACTIVE_POWER_IN, St),
-                make_variable_name(ACTIVE_POWER_OUT, St),
-                make_variable_name(ENERGY, St),
-                make_variable_name(ENERGY_TARGET_SLACK, St),
-            ),
-            UpdateRef{St}(TARGET, target_forecast_label),
-        )
-    else
-        energy_balance_soft_target(
-            psi_container,
-            get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
-            efficiency_data,
-            constraint_infos_target,
-            (
-                make_constraint_name(ENERGY_LIMIT, St),
-                make_constraint_name(ENERGY_TARGET, St),
-            ),
-            (
-                make_variable_name(ACTIVE_POWER_IN, St),
-                make_variable_name(ACTIVE_POWER_OUT, St),
-                make_variable_name(ENERGY, St),
-                make_variable_name(ENERGY_TARGET_SLACK, St),
-            ),
-        )
-    end
+    energy_soft_target(
+        psi_container,
+        constraint_infos_target,
+        make_constraint_name(ENERGY_TARGET, St),
+        (
+            make_variable_name(ENERGY, St),
+            make_variable_name(ENERGY_TARGET_SLACK, St),
+        ),
+    )
+
     return
 end
 
 function AddCostSpec(
     ::Type{St},
-    ::Type{BookKeepingwSoftTarget},
+    ::Type{D},
     psi_container::PSIContainer,
-) where {St <: PSY.Storage}
+) where {St <: PSY.BatterywEMS, D <: Union{BookKeepingwSoftTarget, BookKeepingwSoftTargetTimeSeries}}
     return AddCostSpec(;
         variable_type = EnergyTargetSlackVariable,
         component_type = St,
         variable_cost = PSY.get_penalty_cost,
         multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+    )
+end
+
+function AddCostSpec(
+    ::Type{St},
+    ::Type{BookKeepingwEnergyValue},
+    psi_container::PSIContainer,
+) where {St <: PSY.BatterywEMS}
+    return AddCostSpec(;
+        variable_type = EnergyVariable,
+        component_type = St,
+        variable_cost = PSY.get_energy_value,
+        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end

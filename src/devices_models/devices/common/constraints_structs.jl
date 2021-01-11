@@ -155,3 +155,9 @@ struct DeviceStartTypesConstraintInfo <: AbstractStartConstraintInfo
     component_name::String
     startup_types::Int
 end
+
+struct DeviceEnergyTargetConstraintInfo <: AbstractStartConstraintInfo
+    component_name::String
+    multiplier::Float64
+    storage_target::Float64
+end
