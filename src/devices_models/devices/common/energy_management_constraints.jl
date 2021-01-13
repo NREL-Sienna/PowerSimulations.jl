@@ -19,7 +19,7 @@ function energy_target_timeseries_param(
     param_references::UpdateRef,
 )
     time_steps = model_time_steps(psi_container)
-    name_index = (d.component_name for d in constriant_data)
+    name_index = (get_component_name(d) for d in constriant_data)
     varenergy = get_variable(psi_container, var_name)
     target_param_reference = param_references
 
@@ -29,7 +29,8 @@ function energy_target_timeseries_param(
     multiplier_target = get_multiplier_array(container_target)
     target_constraint = add_cons_container!(psi_container, cons_name, name_index, 1)
 
-    for d in enumerate(constriant_data), name in get_component_name(d)
+    for d in constriant_data
+        name = get_component_name(d)
         multiplier_target[name, 1] = d.multiplier
         param_target[name, 1] =
             PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[time_steps[end]])
@@ -64,12 +65,13 @@ function energy_target_timeseries(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    name_index = (d.component_name for d in constriant_data)
+    name_index = (get_component_name(d) for d in constriant_data)
     varenergy = get_variable(psi_container, var_name)
 
     target_constraint = add_cons_container!(psi_container, cons_name, name_index, 1)
 
-    for d in enumerate(constriant_data), name in get_component_name(d)
+    for d in constriant_data
+        name = get_component_name(d)
         target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[name, time_steps[end]] >=
@@ -99,13 +101,13 @@ function energy_target(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    name_index = (d.component_name for d in constriant_data)
+    name_index = (get_component_name(d) for d in constriant_data)
     varenergy = get_variable(psi_container, var_name)
 
     target_constraint = add_cons_container!(psi_container, cons_name, name_index, 1)
 
-    for data in enumerate(constriant_data)
-        name = data.component_name
+    for data in constriant_data
+        name = get_component_name(data)
         target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[name, time_steps[end]] >= data.multiplier * data.storage_target
@@ -138,7 +140,7 @@ function energy_soft_target_timeseries_param(
     param_references::UpdateRef,
 )
     time_steps = model_time_steps(psi_container)
-    name_index = (d.component_name for d in constriant_data)
+    name_index = (get_component_name(d) for d in constriant_data)
 
     varenergy = get_variable(psi_container, var_names[1])
     varslack = get_variable(psi_container, var_names[2])
@@ -152,7 +154,7 @@ function energy_soft_target_timeseries_param(
 
     target_constraint = add_cons_container!(psi_container, cons_name, name_index, 1)
 
-    for d in enumerate(constriant_data)
+    for d in constriant_data
         name = get_component_name(d)
         multiplier_target[name, 1] = d.multiplier
         param_target[name, 1] =
@@ -190,14 +192,14 @@ function energy_soft_target_timeseries(
     var_names::Tuple{Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    name_index = (d.component_name for d in constriant_data)
+    name_index = (get_component_name(d) for d in constriant_data)
 
     varenergy = get_variable(psi_container, var_names[1])
     varslack = get_variable(psi_container, var_names[2])
 
     target_constraint = add_cons_container!(psi_container, cons_name, name_index, 1)
 
-    for d in enumerate(constriant_data)
+    for d in constriant_data
         name = get_component_name(d)
 
         target_constraint[name, 1] = JuMP.@constraint(
@@ -231,15 +233,15 @@ function energy_soft_target(
     var_names::Tuple{Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    name_index = (d.component_name for d in constriant_data)
+    name_index = (get_component_name(d) for d in constriant_data)
 
     varenergy = get_variable(psi_container, var_names[1])
     varslack = get_variable(psi_container, var_names[2])
 
     target_constraint = add_cons_container!(psi_container, cons_name, name_index, 1)
 
-    for data in enumerate(constriant_data)
-        name = data.component_name
+    for data in constriant_data
+        name = get_component_name(data)
         target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[name, time_steps[end]] + varslack[name, time_steps[end]] >=

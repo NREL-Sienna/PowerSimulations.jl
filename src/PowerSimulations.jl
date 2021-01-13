@@ -59,11 +59,11 @@ export HydroDispatchPumpedStoragewReservation
 ######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
-export BookKeepingwTarget
-export BookKeepingwTargetTimeSeries
-export BookKeepingwSoftTarget
-export BookKeepingwSoftTargetTimeSeries
-export BookKeepingwEnergyValue
+export EndOfPeriodStaticEnergyTarget
+export EndOfPeriodEnergyTarget
+export EndOfPeriodStaticEnergySoftTarget
+export EndOfPeriodEnergySoftTarget
+export EndOfPeriodEnergyValue
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
