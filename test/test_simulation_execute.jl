@@ -1,6 +1,6 @@
 function test_simulation_single_ed(file_path::String)
     @testset "Single stage sequential tests" begin
-        c_sys5_uc = build_system("c_sys5_uc")
+        c_sys5_uc = PSB.build_system(PSITestSystems,"c_sys5_uc")
         single_stage_definition =
             Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
 
@@ -38,8 +38,8 @@ function test_simulation_without_caches(file_path::String)
         )
         # Tests of a Simulation without Caches
         duals = [:CopperPlateBalance]
-        c_sys5_hy_uc = build_system("c_sys5_hy_uc")
-        c_sys5_hy_ed = build_system("c_sys5_hy_ed")
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
         stages_definition = Dict(
             "UC" => Stage(
                 GenericOpProblem,
@@ -101,8 +101,8 @@ function test_simulation_without_caches(file_path::String)
 end
 
 function test_simulation_with_cache(file_path::String)
-    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
-    c_sys5_hy_ed = build_system("c_sys5_hy_ed")
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems,"c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems,"c_sys5_hy_ed")
     @testset "Simulation Single Stage with Cache" begin
         single_stage_definition = Dict(
             "ED" => Stage(
@@ -289,8 +289,8 @@ function test_simulation_with_cache(file_path::String)
 end
 
 function test_stage_chronologies(file_path)
-    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
-    c_sys5_hy_ed = build_system("c_sys5_hy_ed")
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems,"c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems,"c_sys5_hy_ed")
     stages_definition = Dict(
         "UC" => Stage(
             GenericOpProblem,
@@ -394,8 +394,8 @@ function test_simulation_utils(file_path)
         "ED" => Dict("optimizer" => ipopt_optimizer),
     )
     duals = [:CopperPlateBalance]
-    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
-    c_sys5_hy_ed = build_system("c_sys5_hy_ed")
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems,"c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems,"c_sys5_hy_ed")
     stages_definition = Dict(
         "UC" => Stage(
             GenericOpProblem,

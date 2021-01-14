@@ -12,8 +12,8 @@ services = Dict{Symbol, ServiceModel}()
 @testset "Solving ED with CopperPlate" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     parameters_value = [true, false]
-    c_sys5 = build_system("c_sys5")
-    c_sys14 = build_system("c_sys14")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     systems = [c_sys5, c_sys14]
     test_results = Dict{System, Float64}(c_sys5 => 240000.0, c_sys14 => 142000.0)
     @info "Test solve ED with CopperPlatePowerModel network"
@@ -29,7 +29,7 @@ services = Dict{Symbol, ServiceModel}()
             psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
         end
     end
-    c_sys5_re = build_system("c_sys5_re")
+    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     ED = OperationsProblem(
         TestOpProblem,
         template,
@@ -43,9 +43,9 @@ end
 @testset "Solving ED with PTDF Models" begin
     template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services)
     parameters_value = [true, false]
-    c_sys5 = build_system("c_sys5")
-    c_sys14 = build_system("c_sys14")
-    c_sys14_dc = build_system("c_sys14_dc")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => build_PTDF5(),
@@ -75,9 +75,9 @@ end
 end
 
 @testset "Solving ED With PowerModels with loss-less convex models" begin
-    c_sys5 = build_system("c_sys5")
-    c_sys14 = build_system("c_sys14")
-    c_sys14_dc = build_system("c_sys14_dc")
+    c_sys5 = PSB.build_system(PSITestSystems,"c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems,"c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems,"c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
     networks = [DCPPowerModel, NFAPowerModel]
@@ -110,9 +110,9 @@ end
 end
 
 @testset "Solving ED With PowerModels with linear convex models" begin
-    c_sys5 = build_system("c_sys5")
-    c_sys14 = build_system("c_sys14")
-    c_sys14_dc = build_system("c_sys14_dc")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems,"c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
     networks = [DCPLLPowerModel, LPACCPowerModel]
@@ -149,7 +149,7 @@ end
 
     thermal_gens = [ThermalDispatch]
 
-    c_sys5_re = build_system("c_sys5_re")
+    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     systems = [c_sys5_re]
     for net in networks, thermal in thermal_gens, system in systems
         devices = Dict{Symbol, DeviceModel}(
@@ -194,9 +194,9 @@ end
 =#
 
 @testset "Solving ED With PowerModels Non-Convex Networks" begin
-    c_sys5 = build_system("c_sys5")
-    c_sys14 = build_system("c_sys14")
-    c_sys14_dc = build_system("c_sys14_dc")
+    c_sys5 = PSB.build_system(PSITestSystems,"c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems,"c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
     networks = [
@@ -232,7 +232,7 @@ end
 end
 
 @testset "Solving ED Hydro System using Dispatch Run of River" begin
-    sys = build_system("c_sys5_hy")
+    sys = PSB.build_system(PSITestSystems, "c_sys5_hy")
     parameters_value = [true, false]
     networks = [ACPPowerModel, DCPPowerModel]
 
@@ -266,7 +266,7 @@ end
 end
 
 @testset "Solving ED Hydro System using Commitment Run of River" begin
-    sys = build_system("c_sys5_hy")
+    sys = PSB.build_system(PSITestSystems, "c_sys5_hy")
     parameters_value = [true, false]
     net = DCPPowerModel
 
@@ -293,7 +293,7 @@ end
 end
 
 @testset "Solving ED Hydro System using Dispatch with Reservoir" begin
-    sys = build_system("c_sys5_hyd")
+    sys = PSB.build_system(PSITestSystems, "c_sys5_hyd")
     parameters_value = [true, false]
     networks = [ACPPowerModel, DCPPowerModel]
     models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
@@ -332,7 +332,7 @@ end
 end
 
 @testset "Solving ED Hydro System using Commitment with Reservoir" begin
-    sys = build_system("c_sys5_hyd")
+    sys = PSB.build_system(PSITestSystems, "c_sys5_hyd")
     parameters_value = [true, false]
     net = DCPPowerModel
     models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
@@ -372,8 +372,8 @@ end
         :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
-    c_sys5 = build_system("c_sys5")
-    c_sys5_dc = build_system("c_sys5_dc")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
@@ -397,7 +397,7 @@ end
 end
 
 @testset "Set optimizer at solve call" begin
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -415,7 +415,7 @@ end
 @testset "Test duals and variables getter functions" begin
     duals = [:CopperPlateBalance]
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5_re = build_system("c_sys5_re")
+    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     op_problem = OperationsProblem(
         TestOpProblem,
         template,
@@ -454,7 +454,7 @@ end
 function test_op_problem_write_functions(file_path)
     duals = [:CopperPlateBalance]
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5_re = build_system("c_sys5_re")
+    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     op_problem = OperationsProblem(
         TestOpProblem,
         template,

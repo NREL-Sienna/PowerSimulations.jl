@@ -2,9 +2,9 @@
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
-    c_sys5_re_only = build_system("c_sys5_re_only")
+    c_sys5_re_only = PSB.build_system(PSITestSystems, "c_sys5_re_only")
     op_problem =
-        OperationsProblem(TestOpProblem, DCPPowerModel, build_system("c_sys5_re_only"))
+        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re_only)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Thermal, model)
 end
 
@@ -24,7 +24,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
-    c_sys5_uc = build_system("c_sys5_uc")
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
@@ -41,7 +41,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -67,7 +67,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
-    c_sys5_uc = build_system("c_sys5_uc")
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 600, 0, 600, 240, 120, true)
@@ -84,7 +84,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -105,7 +105,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
-    c_sys5_uc = build_system("c_sys5_uc")
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 480, 0, 240, 120, 120, true)
@@ -120,7 +120,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -140,7 +140,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
-    c_sys5_uc = build_system("c_sys5_uc")
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 600, 0, 360, 240, 120, true)
@@ -155,7 +155,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -170,7 +170,7 @@ end
 @testset "Thermal Dispatch With DC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatch)
     @info "5-Bus testing"
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
@@ -180,7 +180,7 @@ end
     end
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -193,7 +193,7 @@ end
 @testset "Thermal Dispatch With AC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatch)
     @info "5-Bus testing"
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
@@ -203,7 +203,7 @@ end
     end
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -218,7 +218,7 @@ end
 @testset "Thermal Dispatch NoMin With DC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     @info "5-Bus testing"
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
@@ -229,7 +229,7 @@ end
     end
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -243,7 +243,7 @@ end
 @testset "Thermal Dispatch NoMin With AC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     @info "5-Bus testing"
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
@@ -254,7 +254,7 @@ end
     end
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -273,7 +273,7 @@ end
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
-    c_sys5_uc = build_system("c_sys5_uc")
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
@@ -284,7 +284,7 @@ end
     end
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -301,7 +301,7 @@ end
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
-    c_sys5_uc = build_system("c_sys5_uc")
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
@@ -312,7 +312,7 @@ end
     end
 
     @info "14-Bus testing"
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -337,7 +337,7 @@ end
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 238, false => 234)
     @info "5-Bus testing"
-    c_sys5_pglib = build_system("c_sys5_pglib")
+    c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
             TestOpProblem,
@@ -365,7 +365,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
 )
 # Testing Ramping Constraint
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
-    ramp_test_sys = build_system("c_ramp_test")
+    ramp_test_sys = PSB.build_system(PSITestSystems, "c_ramp_test")
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, ED_devices, branches, services)
     for p in [true, false]
@@ -388,7 +388,7 @@ end
     UC = OperationsProblem(
         TestOpProblem,
         template,
-        build_system("c_duration_test");
+        PSB.build_system(PSITestSystems, "c_duration_test");
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
@@ -403,7 +403,7 @@ end
     UC = OperationsProblem(
         TestOpProblem,
         template,
-        build_system("c_linear_pwl_test");
+        PSB.build_system(PSITestSystems, "c_linear_pwl_test");
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
@@ -418,7 +418,7 @@ end
     UC = OperationsProblem(
         TestOpProblem,
         template,
-        build_system("c_sos_pwl_test");
+        PSB.build_system(PSITestSystems, "c_sos_pwl_test");
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
@@ -427,7 +427,7 @@ end
 end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin
-    sys = build_system("c_market_bid_cost")
+    sys = PSB.build_system(PSITestSystems, "c_market_bid_cost")
     UC_devices[:MSGenerators] =
         DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     template =

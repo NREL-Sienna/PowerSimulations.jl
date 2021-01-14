@@ -26,8 +26,8 @@ function create_sequence()
 end
 
 function test_simulation_build(file_path::String)
-    c_sys5_uc = build_system("c_sys5_uc")
-    c_sys5_ed = build_system("c_sys5_ed")
+    c_sys5_uc = PSB.build_system(PSITestSystems,"c_sys5_uc")
+    c_sys5_ed = PSB.build_system(PSITestSystems,"c_sys5_ed")
 
     @testset "Test Simulation Simulation Sequence Validation" begin
         sequence = create_sequence()
@@ -359,8 +359,8 @@ function test_simulation_build(file_path::String)
         @test !isnothing(sim.stages["ED"].internal.psi_container.settings.PTDF)
     end
     @testset "Create Simulation using SOS-PWL cost function" begin
-        c_sys5_uc = build_system("c_sys5_pwl_uc")
-        c_sys5_ed = build_system("c_sys5_pwl_ed")
+        c_sys5_uc = PSB.build_system(PSITestSystems,"c_sys5_pwl_uc")
+        c_sys5_ed = PSB.build_system(PSITestSystems,"c_sys5_pwl_ed")
         stages_definition_kwargs = Dict(
             "UC" => Stage(
                 GenericOpProblem,
