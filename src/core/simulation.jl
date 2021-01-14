@@ -1115,7 +1115,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         )
         reqs = SimulationStoreStageRequirements()
 
-        # TODO DT: configuration of keep_in_cache and priority are not correct
+        # TODO: configuration of keep_in_cache and priority are not correct
         stage_sym = Symbol(stage_name)
         for name in duals
             array = get_constraint(psi_container, name)
@@ -1187,9 +1187,9 @@ function _calc_dimensions(array::JuMP.Containers.DenseAxisArray, name, num_rows,
     elseif length(ax) == 2
         columns = collect(axes(array)[1])
         dims = (horizon, length(columns), num_rows)
-    elseif length(ax) == 3
-        # TODO DT: untested
-        dims = (length(ax[2]), horizon, length(columns), num_rows)
+   # elseif length(ax) == 3
+   #     # TODO: untested
+   #     dims = (length(ax[2]), horizon, length(columns), num_rows)
     else
         error("unsupported data size $(length(ax))")
     end
@@ -1199,8 +1199,7 @@ end
 
 function _calc_dimensions(array::JuMP.Containers.SparseAxisArray, name, num_rows, horizon)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
-    dims = (horizon, length(columns), num_rows)  # TODO DT: what about 2-d arrays?
-    @warn "SparseAxisArray dimensions may be incorrect" name dims
+    dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end
 

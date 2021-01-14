@@ -272,19 +272,20 @@ function to_array(array::JuMP.Containers.DenseAxisArray)
         for t in ax[2], (ix, name) in enumerate(ax[1])
             data[t, ix] = _jump_value(array[name, t])
         end
-    elseif len_axes == 3
-        extra_dims = sum(length(axes(array)[2:(end - 1)]))
-        arrays = Vector{Array{Float64, 2}}()
+    # TODO: this needs a better plan
+    #elseif len_axes == 3
+    #    extra_dims = sum(length(axes(array)[2:(end - 1)]))
+    #    arrays = Vector{Array{Float64, 2}}()
 
-        for i in ax[2]
-            third_dim = collect(fill(i, size(array)[end]))
-            data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
-            for t in last(ax), (ix, name) in enumerate(first(ax))
-                data[t, ix] = _jump_value(array[name, i, t])
-            end
-            push!(arrays, data)
-        end
-        data = vcat(arrays)  # TODO DT: untested
+    #    for i in ax[2]
+    #        third_dim = collect(fill(i, size(array)[end]))
+    #        data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
+    #        for t in last(ax), (ix, name) in enumerate(first(ax))
+    #            data[t, ix] = _jump_value(array[name, i, t])
+    #        end
+    #        push!(arrays, data)
+    #    end
+    #    data = vcat(arrays)
     else
         error("array axes not supported: $(axes(array))")
     end
@@ -294,7 +295,7 @@ end
 
 function to_array(array::JuMP.Containers.SparseAxisArray)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
-    # TODO DT: can we determine the 2-d array size?
+    # PERF: can we determine the 2-d array size?
     tmp_data = Dict{Any, Vector{Float64}}()
     for (ix, col) in enumerate(columns)
         res = values(filter(v -> first(v)[[1, 3]] == col, array.data))

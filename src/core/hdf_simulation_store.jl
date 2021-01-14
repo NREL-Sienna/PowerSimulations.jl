@@ -285,14 +285,20 @@ function read_result(
     end
 
     dataset = _get_dataset(store, key)
+    dset = dataset.dataset
     row_index = (simulation_step - 1) * num_executions + execution_index
     columns = dataset.column_dataset[:]
 
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
-        data = dataset.dataset[:, :, row_index]
+        num_dims = ndims(dset)
+        if num_dims == 3
+            data = dset[:, :, row_index]
+        #elseif num_dims == 4
+        #    data = dset[:, :, :, row_index]
+        else
+            error("unsupported dims: $num_dims")
+        end
     end
-
-    # TODO DT: this doesn't handle 4d datasets
 
     return data, columns
 end
@@ -404,7 +410,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
         store.datasets[stage_name] = StageDatasets()
         for type in STORE_CONTAINERS
             group = stage_group[string(type)]
-            for name in names(group)
+            for name in keys(group)
                 if !endswith(name, "columns")
                     dataset = group[name]
                     column_dataset = group[_make_column_name(name)]
@@ -488,7 +494,7 @@ function _get_dataset(store::HdfSimulationStore, key)
 end
 
 function _get_group_or_create(parent, group_name)
-    if HDF5.exists(parent, group_name)
+    if haskey(parent, group_name)
         group = parent[group_name]
     else
         group = HDF5.create_group(parent, group_name)
@@ -548,12 +554,11 @@ end
 
 function _write_dataset!(dataset, array, row_range)
     if ndims(array) == 2
-        # TODO DT: hack
         dataset[:, 1, row_range] = array
     elseif ndims(array) == 3
         dataset[:, :, row_range] = array
-    elseif ndims(array) == 4
-        dataset[:, :, :, row_range] = array
+    #elseif ndims(array) == 4
+    #    dataset[:, :, :, row_range] = array
     else
         error("ndims not supported: $(ndims(array))")
     end
