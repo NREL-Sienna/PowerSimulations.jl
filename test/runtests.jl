@@ -2,7 +2,7 @@ using Logging
 using PowerSimulations
 using PowerSystems
 using PowerModels
-using PowerSystemBuilder
+using PowerSystemCaseBuilder
 using InfrastructureSystems
 using DataFrames
 using Dates
@@ -20,7 +20,7 @@ using DataFrames
 using DataStructures
 import UUIDs
 import Aqua
-import PowerSystemBuilder:
+import PowerSystemCaseBuilder:
     PSITestSystems
 using Random
 Aqua.test_unbound_args(PowerSimulations)
@@ -31,7 +31,7 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 const PJ = ParameterJuMP
-const PSB  = PowerSystemBuilder
+const PSB  = PowerSystemCaseBuilder
 const IS = InfrastructureSystems
 TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
