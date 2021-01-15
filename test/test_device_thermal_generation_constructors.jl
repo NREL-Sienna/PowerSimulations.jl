@@ -323,6 +323,102 @@ end
 end
 
 ################################### ThermalMultiStart Testing ##################################
+@testset "Thermal UC With DC - PF" begin
+    bin_variable_names = [
+        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
+        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+    ]
+    uc_constraint_names = [
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(ThermalMultiStart, ThermalStandardUnitCommitment)
+
+    @info "5-Bus testing"
+    c_sys5_uc = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 384, 0, 240, 48, 144, true)
+        psi_constraint_test(op_problem, uc_constraint_names)
+        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+
+end
+
+@testset "Thermal UC With AC - PF" begin
+    bin_variable_names = [
+        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
+        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+    ]
+    uc_constraint_names = [
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(ThermalMultiStart, ThermalStandardUnitCommitment)
+
+    @info "5-Bus testing"
+    c_sys5_uc = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 432, 0, 288, 96, 144, true)
+        psi_constraint_test(op_problem, uc_constraint_names)
+        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+
+end
+
+@testset "Thermal Basic UC With DC - PF" begin
+    bin_variable_names = [
+        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
+        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
+
+    @info "5-Bus testing"
+    c_sys5_uc = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 384, 0, 96, 48, 144, true)
+        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+
+end
+
+@testset "Thermal Basic UC With AC - PF" begin
+    bin_variable_names = [
+        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
+        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
+
+    @info "5-Bus testing"
+    c_sys5_uc = build_system("c_sys5_pglib")
+    for p in [true, false]
+    op_problem =
+        OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 432, 0, 144, 96, 144, true)
+        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
 
 @testset "Thermal MultiStart Dispatch With DC - PF" begin
     constraint_names = [
@@ -335,7 +431,7 @@ end
         PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
-    no_less_than = Dict(true => 238, false => 234)
+    no_less_than = Dict(true => 334, false => 330)
     @info "5-Bus testing"
     c_sys5_pglib = build_system("c_sys5_pglib")
     for p in [true, false]
@@ -347,6 +443,34 @@ end
         )
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 528, 0, no_less_than[p], 60, 192, true)
+        psi_constraint_test(op_problem, constraint_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
+@testset "Thermal MultiStart Dispatch With AC - PF" begin
+    constraint_names = [
+        PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.START_TYPE, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.MUST_RUN_LB, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_WARM, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_HOT, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_LB, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
+    no_less_than = Dict(true => 382, false => 378)
+    @info "5-Bus testing"
+    c_sys5_pglib = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            ACPPowerModel,
+            c_sys5_pglib;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 576, 0, no_less_than[p], 108, 192, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end

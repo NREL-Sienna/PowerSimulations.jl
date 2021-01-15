@@ -423,6 +423,17 @@ function add_to_cost!(
     return
 end
 
+
+function check_single_start(psi_container::PSIContainer, spec::AddCostSpec)
+    for (st, var_type) in enumerate(START_VARIABLES)
+        var_name = make_variable_name(var_type, spec.component_type)
+        if !haskey(psi_container.variables, var_name)
+            return true
+        end
+    end
+    return false
+end
+
 """
 Adds to the models costs represented by PowerSystems Multi-Start costs.
 """
@@ -477,19 +488,31 @@ function add_to_cost!(
 
     # Start-up costs
     start_cost_data = PSY.get_start_up(cost_data)
-    for (st, var_type) in enumerate(start_types)
-        var_name = make_variable_name(var_type, spec.component_type)
+    if check_single_start(psi_container, spec)
+        normal_start_var = make_variable_name(StartVariable, spec.component_type)
         for t in time_steps
             linear_gen_cost!(
                 psi_container,
-                var_name,
+                normal_start_var,
                 component_name,
-                start_cost_data[st] * spec.multiplier,
+                start_cost_data[1] * spec.multiplier,
                 t,
             )
         end
+    else
+        for (st, var_type) in enumerate(START_VARIABLES)
+            var_name = make_variable_name(var_type, spec.component_type)
+            for t in time_steps
+                linear_gen_cost!(
+                    psi_container,
+                    var_name,
+                    component_name,
+                    start_cost_data[st] * spec.multiplier,
+                    t,
+                )
+            end
+        end
     end
-
     return
 end
 
@@ -528,7 +551,7 @@ function add_to_cost!(
 
     if !(spec.start_up_cost === nothing)
         start_cost_data = spec.start_up_cost(cost_data)
-        for (st, var_type) in enumerate(start_types)
+        for (st, var_type) in enumerate(STARTUP_VARIABLES)
             var_name = make_variable_name(var_type, spec.component_type)
             for t in time_steps
                 linear_gen_cost!(
