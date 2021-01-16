@@ -267,7 +267,6 @@ export get_timestamp
 export write_results
 import PowerModels
 import TimerOutputs
-import ProgressMeter
 
 # TimeStamp Management Imports
 import Dates
