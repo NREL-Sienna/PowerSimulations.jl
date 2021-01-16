@@ -79,7 +79,6 @@ function Stage{M}(
     system_to_file = true,
     export_pwl_vars = false,
     allow_fails = false,
-    optimizer_log_print = false
 ) where {M <: AbstractOperationsProblem}
     settings = PSISettings(
         sys;
@@ -93,7 +92,6 @@ function Stage{M}(
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
         PTDF = PTDF,
-        optimizer_log_print = optimizer_log_print
     )
     return Stage{M}(template, sys, settings, jump_model)
 end
@@ -127,8 +125,7 @@ stage = Stage(MyOpProblemType template, system, optimizer)
 - `balance_slack_variables::Bool` True will add slacks to the system balance constraints
 - `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 - `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
-- `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
-- `optimizer_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
+- `allow_fails::Bool`  True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
 """
 function Stage(
     ::Type{M},

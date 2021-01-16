@@ -92,13 +92,6 @@ function _make_jump_model!(psi_container::PSIContainer)
         parameters && PJ.enable_parameters(JuMPmodel)
         psi_container.JuMPmodel = JuMPmodel
     end
-    if !get_optimizer_log_print(settings)
-        JuMP.set_silent(psi_container.JuMPmodel)
-    elseif get_optimizer_log_print(settings)
-        JuMP.unset_silent(psi_container.JuMPmodel)
-    else
-        error("incorrect setting value")
-    end
     return
 end
 
