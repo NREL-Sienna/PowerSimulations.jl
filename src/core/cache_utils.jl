@@ -3,20 +3,18 @@ const ParamCacheKey = NamedTuple{(:stage, :type, :name), NTuple{3, Symbol}}
 make_cache_key(stage, type, name) = (stage = stage, type = type, name = name)
 
 # Priority for keeping data in cache to serve reads. Currently unused.
-IS.@scoped_enum CachePriority begin
-    LOW
-    MEDIUM
-    HIGH
-end
-
-# TODO: we need to make scoped_enum handle words ending in 'y'
+IS.@scoped_enum(CachePriority,
+    LOW = 1,
+    MEDIUM = 2,
+    HIGH = 3,
+)
 
 struct CacheFlushRule
     keep_in_cache::Bool
-    priority::CachePrioritys.CachePriority
+    priority::CachePriority
 end
 
-CacheFlushRule() = CacheFlushRule(false, CachePrioritys.LOW)
+CacheFlushRule() = CacheFlushRule(false, CachePriority.LOW)
 
 """
 Informs the flusher on what data to keep in cache.

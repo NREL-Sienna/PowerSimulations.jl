@@ -173,8 +173,8 @@ export list_simulation_events
 export show_simulation_events
 
 ## Enums
-export BuildStatuss
-export RunStatuss
+export BuildStatus
+export RunStatus
 
 # Variables / Parameters
 export ACTIVE_POWER

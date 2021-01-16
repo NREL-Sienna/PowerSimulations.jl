@@ -9,7 +9,7 @@ import PowerSimulations:
     MiB,
     GiB,
     STORE_CONTAINER_VARIABLES,
-    CachePrioritys,
+    CachePriority,
     initialize_stage_storage!,
     add_rule!,
     write_result!,
@@ -144,9 +144,9 @@ end
     )
     variables = Dict(
         :P__ThermalStandard =>
-            Dict("cache_priority" => CachePrioritys.HIGH, "keep_in_cache" => true),
+            Dict("cache_priority" => CachePriority.HIGH, "keep_in_cache" => true),
         :P__InterruptibleLoad =>
-            Dict("cache_priority" => CachePrioritys.LOW, "keep_in_cache" => false),
+            Dict("cache_priority" => CachePriority.LOW, "keep_in_cache" => false),
     )
     stage_defs = OrderedDict(
         :ED => Dict(

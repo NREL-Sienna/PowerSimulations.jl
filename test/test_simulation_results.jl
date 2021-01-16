@@ -91,7 +91,7 @@ function test_simulation_results(file_path::String, export_path)
             simulation_folder = file_path,
         )
         build_out = build!(sim)
-        @test build_out == PSI.BuildStatuss.BUILT
+        @test build_out == PSI.BuildStatus.BUILT
 
         exports = Dict(
             "stages" => [
@@ -111,7 +111,7 @@ function test_simulation_results(file_path::String, export_path)
             "path" => export_path,
         )
         execute_out = execute!(sim, exports = exports)
-        @test execute_out == PSI.RunStatuss.SUCCESSFUL
+        @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         results = SimulationResults(sim)
         @test list_stages(results) == ["ED", "UC"]
