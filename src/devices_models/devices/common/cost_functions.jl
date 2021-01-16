@@ -487,29 +487,31 @@ function add_to_cost!(
     end
 
     # Start-up costs
-    start_cost_data = PSY.get_start_up(cost_data)
-    if check_single_start(psi_container, spec)
-        normal_start_var = make_variable_name(StartVariable, spec.component_type)
-        for t in time_steps
-            linear_gen_cost!(
-                psi_container,
-                normal_start_var,
-                component_name,
-                start_cost_data[1] * spec.multiplier,
-                t,
-            )
-        end
-    else
-        for (st, var_type) in enumerate(START_VARIABLES)
-            var_name = make_variable_name(var_type, spec.component_type)
+    if !(spec.start_up_cost === nothing)
+        start_cost_data = PSY.get_start_up(cost_data)
+        if check_single_start(psi_container, spec)
+            normal_start_var = make_variable_name(StartVariable, spec.component_type)
             for t in time_steps
                 linear_gen_cost!(
                     psi_container,
-                    var_name,
+                    normal_start_var,
                     component_name,
-                    start_cost_data[st] * spec.multiplier,
+                    start_cost_data[1] * spec.multiplier,
                     t,
                 )
+            end
+        else
+            for (st, var_type) in enumerate(START_VARIABLES)
+                var_name = make_variable_name(var_type, spec.component_type)
+                for t in time_steps
+                    linear_gen_cost!(
+                        psi_container,
+                        var_name,
+                        component_name,
+                        start_cost_data[st] * spec.multiplier,
+                        t,
+                    )
+                end
             end
         end
     end
