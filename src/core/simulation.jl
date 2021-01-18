@@ -1001,6 +1001,7 @@ function _execute!(
         end
     end
 
+    progress_bar = ProgressMeter.Progress(num_executions, 1)
     for step in 1:steps
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
@@ -1040,6 +1041,7 @@ function _execute!(
                             store;
                             exports = exports,
                         )
+                        global_stage_execution_count = (step - 1) * length(execution_order) + ix
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                         if get_allow_fails(settings) && (status != RunStatuss.SUCCESSFUL)
@@ -1065,6 +1067,9 @@ function _execute!(
                         stage_number,
                         "done",
                     )
+                    ProgressMeter.update!(progress_bar, global_stage_execution_count;
+                        showvalues = [(:Step, step), (:Stage, stage_name),
+                    (:("Simulation Timestamp"), get_current_time(sim))])
                 end #execition stage timer
             end # execution order for loop
             IS.@record :simulation_status SimulationStepEvent(
