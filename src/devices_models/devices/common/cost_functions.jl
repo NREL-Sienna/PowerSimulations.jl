@@ -487,7 +487,7 @@ function add_to_cost!(
     end
 
     # Start-up costs
-    if !(spec.start_up_cost === nothing)
+    if !isnothing(spec.start_up_cost)
         start_cost_data = PSY.get_start_up(cost_data)
         if check_single_start(psi_container, spec)
             normal_start_var = make_variable_name(StartVariable, spec.component_type)
