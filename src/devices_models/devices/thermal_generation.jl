@@ -4,12 +4,14 @@
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
+abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
 struct ThermalBasicUnitCommitment <: AbstractThermalUnitCommitment end
 struct ThermalStandardUnitCommitment <: AbstractThermalUnitCommitment end
 struct ThermalDispatch <: AbstractThermalDispatchFormulation end
 struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
-struct ThermalMultiStartUnitCommitment <: AbstractThermalUnitCommitment end
+struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
+struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
 
 ############## ActivePowerVariable, ThermalGen ####################
 
@@ -253,15 +255,15 @@ This function adds range constraint for the first time period. Constraint (10) f
 """
 function initial_range_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {S <: PM.AbstractPowerModel}
+) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
-    key_status = ICKey(DeviceStatus, PSY.ThermalMultiStart)
+    key_power = ICKey(DevicePower, T)
+    key_status = ICKey(DeviceStatus, T)
     initial_conditions_power = get_initial_conditions(psi_container, key_power)
     initial_conditions_status = get_initial_conditions(psi_container, key_status)
     ini_conds = _get_data_for_range_ic(initial_conditions_power, initial_conditions_status)
@@ -282,8 +284,8 @@ function initial_range_constraints!(
             psi_container,
             constraint_data,
             ini_conds,
-            make_constraint_name(ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
-            make_variable_name(StopVariable, PSY.ThermalMultiStart),
+            make_constraint_name(ACTIVE_RANGE_IC, T),
+            make_variable_name(StopVariable, T),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"

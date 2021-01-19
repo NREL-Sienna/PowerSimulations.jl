@@ -512,3 +512,95 @@ function construct_device!(
 
     return
 end
+
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T, ThermalCompactUnitCommitment},
+    ::Type{S};
+    kwargs...,
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    devices = PSY.get_components(T, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
+    # Variables
+    add_variables!(psi_container, ActivePowerVariable, devices)
+    add_variables!(psi_container, ReactivePowerVariable, devices)
+    commitment_variables!(psi_container, devices)
+
+    # Initial Conditions
+    initial_conditions!(psi_container, devices, model.formulation)
+
+    # Constraints
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    commitment_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    time_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
+    # Cost Function
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
+
+    return
+end
+
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T, ThermalCompactUnitCommitment},
+    ::Type{S};
+    kwargs...,
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = PSY.get_components(T, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
+    # Variables
+    add_variables!(psi_container, ActivePowerVariable, devices)
+    commitment_variables!(psi_container, devices)
+
+    # Initial Conditions
+    initial_conditions!(psi_container, devices, model.formulation)
+
+    # Constraints
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    commitment_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    time_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
+    # Cost Function
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
+
+    return
+end
