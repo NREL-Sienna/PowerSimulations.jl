@@ -575,6 +575,158 @@ end
     end
 end
 
+################################### Thermal Compact UC Testing ##################################
+
+@testset "Thermal Standard with Compact UC and DC - PF" begin
+    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
+    @info "5-Bus testing"
+    c_sys5 = build_system("c_sys5")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            DCPPowerModel,
+            c_sys5;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 480, 0, 480, 120, 120, true)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
+
+@testset "Thermal MultiStart with Compact UC and DC - PF" begin
+    constraint_names = [
+        PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
+    @info "5-Bus testing"
+    c_sys5_pglib = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            DCPPowerModel,
+            c_sys5_pglib;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 384, 0, 242, 48, 144, true)
+        psi_constraint_test(op_problem, constraint_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
+@testset "Thermal Standard with Compact UC and AC - PF" begin
+    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
+    @info "5-Bus testing"
+    c_sys5 = build_system("c_sys5")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            ACPPowerModel,
+            c_sys5;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 600, 0, 600, 240, 120, true)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
+
+@testset "Thermal MultiStart with Compact UC and AC - PF" begin
+    constraint_names = [
+        PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
+    @info "5-Bus testing"
+    c_sys5_pglib = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            ACPPowerModel,
+            c_sys5_pglib;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 432, 0, 290, 96, 144, true)
+        psi_constraint_test(op_problem, constraint_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
+################################### Thermal Compact Dispatch Testing ##################################
+
+@testset "Thermal Standard with Compact Dispatch and DC - PF" begin
+    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
+    @info "5-Bus testing"
+    c_sys5 = build_system("c_sys5")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            DCPPowerModel,
+            c_sys5;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 120, 0, 168, 120, 0, false)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
+
+@testset "Thermal MultiStart with Compact Dispatch and DC - PF" begin
+    model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
+    @info "5-Bus testing"
+    c_sys5_pglib = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            DCPPowerModel,
+            c_sys5_pglib;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 240, 0, 144, 48, 96, false)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
+@testset "Thermal Standard with Compact Dispatch and AC - PF" begin
+    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
+    @info "5-Bus testing"
+    c_sys5 = build_system("c_sys5")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            ACPPowerModel,
+            c_sys5;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 240, 0, 288, 240, 0, false)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
+
+@testset "Thermal MultiStart with Compact Dispatch and AC - PF" begin
+    model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
+    no_less_than = Dict(true => 382, false => 378)
+    @info "5-Bus testing"
+    c_sys5_pglib = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            ACPPowerModel,
+            c_sys5_pglib;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 288, 0, 192, 96, 96, false)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
 ############################# UC validation tests ##########################################
 branches = Dict{Symbol, DeviceModel}()
 services = Dict{Symbol, ServiceModel}()

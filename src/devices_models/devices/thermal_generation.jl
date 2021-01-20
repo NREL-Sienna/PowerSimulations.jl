@@ -4,14 +4,18 @@
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
-abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
+
+abstract type AbstractCompactDispatchFormulation <: AbstractThermalDispatchFormulation end
+abstract type AbstractCompactlUnitCommitment <: AbstractThermalUnitCommitment end
+
 struct ThermalBasicUnitCommitment <: AbstractThermalUnitCommitment end
 struct ThermalStandardUnitCommitment <: AbstractThermalUnitCommitment end
 struct ThermalDispatch <: AbstractThermalDispatchFormulation end
 struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
-struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
-struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
+struct ThermalMultiStartUnitCommitment <: AbstractCompactlUnitCommitment end
+struct ThermalCompactUnitCommitment <: AbstractCompactlUnitCommitment end
+struct ThermalCompactDispatch <: AbstractCompactDispatchFormulation end
 
 ############## ActivePowerVariable, ThermalGen ####################
 
@@ -259,7 +263,7 @@ function initial_range_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment, S <: PM.AbstractPowerModel}
+) where {T <: PSY.ThermalMultiStart, D <: AbstractCompactlUnitCommitment, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key_power = ICKey(DevicePower, T)
@@ -1083,20 +1087,92 @@ end
 
 function AddCostSpec(
     ::Type{T},
-    ::Type{ThermalMultiStartUnitCommitment},
+    ::Type{U},
     psi_container::PSIContainer,
-) where {T <: PSY.ThermalGen}
+) where {T <: PSY.ThermalGen, U <: AbstractCompactlUnitCommitment}
     fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,
         has_status_variable = has_on_variable(psi_container, T),
         has_status_parameter = has_on_parameter(psi_container, T),
-        # variable_cost = PSY.get_variable, uses SOS by default
+        variable_cost = _get_compact_varcost,
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
         sos_status = VARIABLE,
     )
+end
+
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {T <: PSY.ThermalGen, U <: AbstractCompactDispatchFormulation}
+    if has_on_parameter(psi_container, T)
+        sos_status = PARAMETER
+    else
+        sos_status = NO_VARIABLE
+    end
+    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        variable_cost = _get_compact_varcost,
+        fixed_cost = fixed_cost_func,
+        sos_status = sos_status,
+    )
+end
+
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {T <: PSY.ThermalGen, U <: ThermalMultiStartUnitCommitment}
+    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        variable_cost = PSY.get_variable,
+        start_up_cost = PSY.get_start_up,
+        shut_down_cost = PSY.get_shut_down,
+        fixed_cost = fixed_cost_func,
+        sos_status = VARIABLE,
+        has_multistart_variables = true,
+    )
+end
+
+function PSY.get_no_load(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
+    var_cost, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    return no_load_cost
+end
+
+function _get_compact_varcost(cost)
+    return PSY.get_variable(cost)
+end
+
+function _get_compact_varcost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
+    var_cost, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    return var_cost
+end
+
+function _convert_variable_cost(var_cost::PSY.VariableCost)
+    return var_cost, 0.0
+end
+
+function _convert_variable_cost(var_cost::PSY.VariableCost{Float64})
+    return var_cost, var_cost
+end
+
+function _convert_variable_cost(variable_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}})
+    var_cost = PSY.get_cost(variable_cost)
+    no_load_cost, p_min = var_cost[1]
+    var_cost =
+        PSY.VariableCost([(c - no_load_cost, pp - var_cost[1][2]) for (c, pp) in var_cost])
+    return var_cost, no_load_cost
 end
 
 """

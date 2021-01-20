@@ -15,6 +15,7 @@ struct AddCostSpec
     start_up_cost::Union{Nothing, Function}
     shut_down_cost::Union{Nothing, Function}
     fixed_cost::Union{Nothing, Function}
+    has_multistart_variables::Bool
     addtional_linear_terms::Dict{String, Symbol}
 end
 
@@ -29,6 +30,7 @@ function AddCostSpec(;
     start_up_cost = nothing,
     shut_down_cost = nothing,
     fixed_cost = nothing,
+    has_multistart_variables = false,
     addtional_linear_terms = Dict{String, Symbol}(),
 )
     return AddCostSpec(
@@ -42,6 +44,7 @@ function AddCostSpec(;
         start_up_cost,
         shut_down_cost,
         fixed_cost,
+        has_multistart_variables,
         addtional_linear_terms,
     )
 end
@@ -485,22 +488,15 @@ function add_to_cost!(
     else
         @debug "No Variable Cost associated with $(component_name)"
     end
+    # variable_cost = PSY.get_variable(cost_data)
+    # for t in time_steps
+    #     variable_cost!(psi_container, spec, component_name, variable_cost, t)
+    # end
 
     # Start-up costs
     if !isnothing(spec.start_up_cost)
         start_cost_data = PSY.get_start_up(cost_data)
-        if check_single_start(psi_container, spec)
-            normal_start_var = make_variable_name(StartVariable, spec.component_type)
-            for t in time_steps
-                linear_gen_cost!(
-                    psi_container,
-                    normal_start_var,
-                    component_name,
-                    start_cost_data[1] * spec.multiplier,
-                    t,
-                )
-            end
-        else
+        if spec.has_multistart_variables 
             for (st, var_type) in enumerate(START_VARIABLES)
                 var_name = make_variable_name(var_type, spec.component_type)
                 for t in time_steps
@@ -512,6 +508,17 @@ function add_to_cost!(
                         t,
                     )
                 end
+            end
+        else
+            start_var = make_variable_name(StartVariable, spec.component_type)
+            for t in time_steps
+                linear_gen_cost!(
+                    psi_container,
+                    start_var,
+                    component_name,
+                    start_cost_data[1] * spec.multiplier,
+                    t,
+                )
             end
         end
     end
@@ -553,7 +560,7 @@ function add_to_cost!(
 
     if !(spec.start_up_cost === nothing)
         start_cost_data = spec.start_up_cost(cost_data)
-        for (st, var_type) in enumerate(STARTUP_VARIABLES)
+        for (st, var_type) in enumerate(START_VARIABLES)
             var_name = make_variable_name(var_type, spec.component_type)
             for t in time_steps
                 linear_gen_cost!(
