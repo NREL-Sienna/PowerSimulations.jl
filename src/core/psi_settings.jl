@@ -8,6 +8,7 @@ struct PSISettings
     initial_time::Base.RefValue{Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
+    optimizer_log_print::Bool
     constraint_duals::Vector{Symbol}
     system_to_file::Bool
     export_pwl_vars::Bool
@@ -26,6 +27,7 @@ function PSISettings(
     horizon::Int = UNSET_HORIZON,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    optimizer_log_print::Bool = false,
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
     system_to_file = true,
     export_pwl_vars = false,
@@ -42,6 +44,7 @@ function PSISettings(
         Ref(initial_time),
         PTDF,
         optimizer,
+        optimizer_log_print,
         constraint_duals,
         system_to_file,
         export_pwl_vars,
@@ -110,3 +113,4 @@ get_services_slack_variables(settings::PSISettings) = settings.services_slack_va
 get_system_to_file(settings::PSISettings) = settings.system_to_file
 get_export_pwl_vars(settings::PSISettings) = settings.export_pwl_vars
 get_allow_fails(settings::PSISettings) = settings.allow_fails
+get_optimizer_log_print(settings::PSISettings) = settings.optimizer_log_print

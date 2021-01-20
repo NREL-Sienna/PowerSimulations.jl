@@ -1001,6 +1001,7 @@ function _execute!(
         end
     end
 
+    progress_bar = ProgressMeter.Progress(num_executions, 1)
     for step in 1:steps
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
@@ -1040,6 +1041,7 @@ function _execute!(
                             store;
                             exports = exports,
                         )
+                        global_stage_execution_count = (step - 1) * length(execution_order) + ix
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                         if get_allow_fails(settings) && (status != RunStatuss.SUCCESSFUL)
@@ -1065,6 +1067,9 @@ function _execute!(
                         stage_number,
                         "done",
                     )
+                    ProgressMeter.update!(progress_bar, global_stage_execution_count;
+                        showvalues = [(:Step, step), (:Stage, stage_name),
+                    (:("Simulation Timestamp"), get_current_time(sim))])
                 end #execition stage timer
             end # execution order for loop
             IS.@record :simulation_status SimulationStepEvent(
@@ -1115,7 +1120,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         )
         reqs = SimulationStoreStageRequirements()
 
-        # TODO DT: configuration of keep_in_cache and priority are not correct
+        # TODO: configuration of keep_in_cache and priority are not correct
         stage_sym = Symbol(stage_name)
         for name in duals
             array = get_constraint(psi_container, name)
@@ -1187,9 +1192,9 @@ function _calc_dimensions(array::JuMP.Containers.DenseAxisArray, name, num_rows,
     elseif length(ax) == 2
         columns = collect(axes(array)[1])
         dims = (horizon, length(columns), num_rows)
-    elseif length(ax) == 3
-        # TODO DT: untested
-        dims = (length(ax[2]), horizon, length(columns), num_rows)
+   # elseif length(ax) == 3
+   #     # TODO: untested
+   #     dims = (length(ax[2]), horizon, length(columns), num_rows)
     else
         error("unsupported data size $(length(ax))")
     end
@@ -1199,8 +1204,7 @@ end
 
 function _calc_dimensions(array::JuMP.Containers.SparseAxisArray, name, num_rows, horizon)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
-    dims = (horizon, length(columns), num_rows)  # TODO DT: what about 2-d arrays?
-    @warn "SparseAxisArray dimensions may be incorrect" name dims
+    dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end
 
