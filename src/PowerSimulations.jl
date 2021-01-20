@@ -59,6 +59,8 @@ export HydroDispatchPumpedStoragewReservation
 ######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
+export EndOfPeriodEnergyTarget
+
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
@@ -356,6 +358,7 @@ include("devices_models/devices/common/timeseries_constraint.jl")
 include("devices_models/devices/common/expressionarray_algebra.jl")
 include("devices_models/devices/common/pm_translator.jl")
 include("devices_models/devices/common/energy_balance_constraint.jl")
+include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
 include("core/feedforward.jl")
