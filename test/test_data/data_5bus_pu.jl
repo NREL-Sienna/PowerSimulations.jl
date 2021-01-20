@@ -626,6 +626,28 @@ battery5(nodes5) = [GenericBattery(
     base_power = 100.0,
 )];
 
+batteryems5(nodes5) = [
+     BatteryEMS(
+         name = "Bat2",
+         prime_mover = PrimeMovers.BA,
+         available = true,
+         bus = nodes5[1],
+         initial_energy = 5.0,
+         state_of_charge_limits = (min = .10, max = 7.0),
+         rating = 7.0,
+         active_power = 2.0,
+         input_active_power_limits = (min = 0.0, max = 2.0),
+         output_active_power_limits = (min = 0.0, max = 2.0),
+         efficiency = (in = 0.80, out = 0.90),
+         reactive_power = 0.0,
+         reactive_power_limits = (min = -2.0, max = 2.0),
+         base_power = 100.0,
+         storage_target=0.2,
+         penalty_cost=1e5,
+         energy_value=999.0,
+     )
+ ];
+
 loadbus2_ts_DA = [
     0.792729978
     0.723201574
@@ -889,6 +911,11 @@ ren_timeseries_DA = [
         TimeSeries.TimeArray(DayAhead + Day(1), rand(24) * 0.1 + wind_ts_DA),
     ],
 ];
+
+battery_target_timeseries_DA = [
+     TimeArray(DayAhead, repeat([0.5], 24)),
+     TimeArray(DayAhead + Day(1), repeat([0.6], 24) ),
+ ]
 
 Iload_timeseries_DA = [
     [TimeArray(DayAhead, loadbus4_ts_DA)],
