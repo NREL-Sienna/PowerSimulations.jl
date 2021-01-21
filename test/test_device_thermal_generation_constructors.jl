@@ -335,7 +335,7 @@ end
         PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
-    no_less_than = Dict(true => 238, false => 234)
+    no_less_than = Dict(true => 334, false => 330)
     @info "5-Bus testing"
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
