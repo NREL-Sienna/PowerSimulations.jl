@@ -12,7 +12,7 @@ mutable struct StageInternal
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
-    status::BuildStatuss.BuildStatus
+    status::BuildStatus
     base_conversion::Bool
     write_path::String
     ext::Dict{String, Any}
@@ -33,7 +33,7 @@ mutable struct StageInternal
             psi_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
-            BuildStatuss.EMPTY,
+            BuildStatus.EMPTY,
             true,
             "",
             ext,
@@ -151,8 +151,8 @@ function Stage(
     return Stage{GenericOpProblem}(template, sys, optimizer, jump_model; kwargs...)
 end
 
-is_stage_built(stage::Stage) = stage.internal.status == BuildStatuss.BUILT
-is_stage_empty(stage::Stage) = stage.internal.status == BuildStatuss.EMPTY
+is_stage_built(stage::Stage) = stage.internal.status == BuildStatus.BUILT
+is_stage_empty(stage::Stage) = stage.internal.status == BuildStatus.EMPTY
 get_end_of_interval_step(stage::Stage) = stage.internal.end_of_interval_step
 get_execution_count(stage::Stage) = stage.internal.execution_count
 get_executions(stage::Stage) = stage.internal.executions
@@ -173,14 +173,14 @@ get_write_path(stage::Stage) = stage.internal.write_path
 warm_start_enabled(stage::Stage) = get_warm_start(get_psi_container(stage).settings)
 
 set_write_path!(stage::Stage, path::AbstractString) = stage.internal.write_path = path
-set_stage_status!(stage::Stage, status::BuildStatuss.BuildStatus) =
+set_stage_status!(stage::Stage, status::BuildStatus) =
     stage.internal.status = status
 
 function reset!(stage::Stage{T}) where {T <: AbstractOperationsProblem}
     stage.internal.execution_count = 0
     container = PSIContainer(get_system(stage), get_settings(stage), nothing)
     stage.internal.psi_container = container
-    set_stage_status!(stage, BuildStatuss.EMPTY)
+    set_stage_status!(stage, BuildStatus.EMPTY)
     return
 end
 
@@ -191,7 +191,7 @@ function build_pre_step!(
     stage_interval::Dates.Period,
 )
     if !is_stage_empty(stage)
-        @info "Stage $(get_name(stage)) status not BuildStatuss.EMPTY. Resetting"
+        @info "Stage $(get_name(stage)) status not BuildStatus.EMPTY. Resetting"
         reset!(stage)
     end
     settings = get_settings(stage)
@@ -201,7 +201,7 @@ function build_pre_step!(
     set_initial_time!(settings, initial_time)
     stage_resolution = get_resolution(stage)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
-    set_stage_status!(stage, BuildStatuss.IN_PROGRESS)
+    set_stage_status!(stage, BuildStatus.IN_PROGRESS)
     return
 end
 
@@ -226,7 +226,7 @@ function build!(
             "Stage$(stage.internal.number)_optimization_model.json",
         ),
     )
-    set_stage_status!(stage, BuildStatuss.BUILT)
+    set_stage_status!(stage, BuildStatus.BUILT)
     return
 end
 
@@ -238,7 +238,7 @@ function run_stage!(
     exports = nothing,
 ) where {M <: PowerSimulationsOperationsProblem}
     @assert get_psi_container(stage).JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
-    status = RunStatuss.RUNNING
+    status = RunStatus.RUNNING
     timed_log = Dict{Symbol, Any}()
     model = get_psi_container(stage).JuMPmodel
 
@@ -250,9 +250,9 @@ function run_stage!(
     append_optimizer_stats!(store, stats)
 
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        return RunStatuss.FAILED
+        return RunStatus.FAILED
     else
-        status = RunStatuss.SUCCESSFUL
+        status = RunStatus.SUCCESSFUL
     end
     write_model_results!(store, stage, start_time; exports = exports)
     stage.internal.execution_count += 1

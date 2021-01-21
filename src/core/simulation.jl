@@ -15,8 +15,8 @@ mutable struct SimulationInternal
     # Initial Time of the first forecast and Initial Time of the last forecast
     date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
-    status::Union{Nothing, RunStatuss.RunStatus}
-    build_status::BuildStatuss.BuildStatus
+    status::Union{Nothing, RunStatus}
+    build_status::BuildStatus
     simulation_cache::Dict{<:CacheKey, AbstractCache}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
@@ -87,7 +87,7 @@ function SimulationInternal(
         (init_time, init_time),
         init_time,
         nothing,
-        BuildStatuss.EMPTY,
+        BuildStatus.EMPTY,
         Dict{CacheKey, AbstractCache}(),
         collect(unique_recorders),
         console_level,
@@ -274,7 +274,7 @@ get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
-set_simulation_build_status!(sim::Simulation, status::BuildStatuss.BuildStatus) =
+set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
     sim.internal.build_status = status
 
 function get_base_powers(sim::Simulation)
@@ -574,12 +574,12 @@ function build!(
         try
             Logging.with_logger(logger) do
                 _build!(sim, serialize)
-                set_simulation_build_status!(sim, BuildStatuss.BUILT)
-                set_simulation_status!(sim, RunStatuss.READY)
+                set_simulation_build_status!(sim, BuildStatus.BUILT)
+                set_simulation_status!(sim, RunStatus.READY)
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
         catch e
-            set_simulation_build_status!(sim, BuildStatuss.FAILED)
+            set_simulation_build_status!(sim, BuildStatus.FAILED)
             set_simulation_status!(sim, nothing)
             rethrow(e)
         finally
@@ -591,7 +591,7 @@ function build!(
 end
 
 function _build!(sim::Simulation, serialize::Bool)
-    sim.internal.build_status = BuildStatuss.IN_PROGRESS
+    sim.internal.build_status = BuildStatus.IN_PROGRESS
     stage_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
     for (stage_number, stage_name) in get_order(sequence)
@@ -947,8 +947,8 @@ function execute!(sim::Simulation; kwargs...)
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
     open_func = get_simulation_store_open_func(sim)
-    if (get_simulation_build_status(sim) != BuildStatuss.BUILT) ||
-       (get_simulation_status(sim) != RunStatuss.READY)
+    if (get_simulation_build_status(sim) != BuildStatus.BUILT) ||
+       (get_simulation_status(sim) != RunStatus.READY)
         error("Simulation status is invalid, you need to rebuild the simulation")
     end
     try
@@ -960,13 +960,13 @@ function execute!(sim::Simulation; kwargs...)
                     _execute!(sim, store; kwargs...)
                 end
                 @info ("\n$(RUN_SIMULATION_TIMER)\n")
-                set_simulation_status!(sim, RunStatuss.SUCCESSFUL)
+                set_simulation_status!(sim, RunStatus.SUCCESSFUL)
                 log_cache_hit_percentages(store)
             end
         end
     catch e
         # TODO: Add Fallback when run_stage fails
-        set_simulation_status!(sim, RunStatuss.FAILED)
+        set_simulation_status!(sim, RunStatus.FAILED)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
         unregister_recorders!(sim.internal)
@@ -984,13 +984,13 @@ function _execute!(
     kwargs...,
 )
     @assert !isnothing(sim.internal)
-    set_simulation_status!(sim, RunStatuss.RUNNING)
+    set_simulation_status!(sim, RunStatus.RUNNING)
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
     store_params = _initialize_stage_storage!(sim, store, cache_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
-    status = RunStatuss.RUNNING
+    status = RunStatus.RUNNING
     if exports !== nothing
         if !(exports isa SimulationResultsExport)
             exports = SimulationResultsExport(exports, store_params)
@@ -1021,7 +1021,7 @@ function _execute!(
                     stage = get_stage(sim, stage_number)
                     stage_name = get_stage_name(sim, stage)
                     if !is_stage_built(stage)
-                        error("Stage $(stage_name) status is not BuildStatuss.BUILT")
+                        error("Stage $(stage_name) status is not BuildStatus.BUILT")
                     end
                     stage_interval = get_stage_interval(sim, stage_name)
                     sim.internal.current_time = sim.internal.date_ref[stage_number]
@@ -1044,13 +1044,13 @@ function _execute!(
                         global_stage_execution_count = (step - 1) * length(execution_order) + ix
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
-                        if get_allow_fails(settings) && (status != RunStatuss.SUCCESSFUL)
+                        if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
                             continue
                         elseif !get_allow_fails(settings) &&
-                               (status != RunStatuss.SUCCESSFUL)
+                               (status != RunStatus.SUCCESSFUL)
                             throw(ErrorException("Simulation Failed in stage $(stage_number)"))
                         else
-                            @assert status == RunStatuss.SUCCESSFUL
+                            @assert status == RunStatus.SUCCESSFUL
                         end
                     end # Run stage Timer
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
@@ -1131,7 +1131,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
                 STORE_CONTAINER_DUALS,
                 name,
                 false,
-                CachePrioritys.LOW,
+                CachePriority.LOW,
             )
         end
 
@@ -1146,7 +1146,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
                 STORE_CONTAINER_PARAMETERS,
                 name,
                 false,
-                CachePrioritys.LOW,
+                CachePriority.LOW,
             )
         end
 
@@ -1158,7 +1158,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
                 STORE_CONTAINER_VARIABLES,
                 name,
                 true,
-                CachePrioritys.HIGH,
+                CachePriority.HIGH,
             )
         end
 

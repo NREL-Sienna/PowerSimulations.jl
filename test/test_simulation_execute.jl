@@ -20,9 +20,9 @@ function test_simulation_single_ed(file_path::String)
             simulation_folder = file_path,
         )
         build_out = build!(sim_single)
-        @test build_out == PSI.BuildStatuss.BUILT
+        @test build_out == PSI.BuildStatus.BUILT
         execute_out = execute!(sim_single)
-        @test execute_out == PSI.RunStatuss.SUCCESSFUL
+        @test execute_out == PSI.RunStatus.SUCCESSFUL
         stage_single = PSI.get_stage(sim_single, "ED")
         @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
               [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
@@ -87,9 +87,9 @@ function test_simulation_without_caches(file_path::String)
         )
 
         build_out = build!(sim; recorders = [:simulation])
-        @test build_out == PSI.BuildStatuss.BUILT
+        @test build_out == PSI.BuildStatus.BUILT
         execute_out = execute!(sim)
-        @test execute_out == PSI.RunStatuss.SUCCESSFUL
+        @test execute_out == PSI.RunStatus.SUCCESSFUL
         stage_names = keys(sim.stages)
 
         for name in stage_names
@@ -130,9 +130,9 @@ function test_simulation_with_cache(file_path::String)
             simulation_folder = file_path,
         )
         build_out = build!(sim_single_wcache)
-        @test build_out == PSI.BuildStatuss.BUILT
+        @test build_out == PSI.BuildStatus.BUILT
         execute_out = execute!(sim_single_wcache)
-        @test execute_out == PSI.RunStatuss.SUCCESSFUL
+        @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         #=
         @testset "Test verify initial condition update using StoredEnergy cache" begin
@@ -203,9 +203,9 @@ function test_simulation_with_cache(file_path::String)
             simulation_folder = file_path,
         )
         build_out = build!(sim_cache)
-        @test build_out == PSI.BuildStatuss.BUILT
+        @test build_out == PSI.BuildStatus.BUILT
         execute_out = execute!(sim_cache)
-        @test execute_out == PSI.RunStatuss.SUCCESSFUL
+        @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         var_names =
             axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard])[1]
@@ -328,9 +328,9 @@ function test_stage_chronologies(file_path)
         simulation_folder = file_path,
     )
     build_out = build!(sim)
-    @test build_out == PSI.BuildStatuss.BUILT
+    @test build_out == PSI.BuildStatus.BUILT
     execute_out = execute!(sim)
-    @test execute_out == PSI.RunStatuss.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFUL
 
     #=
     @testset "Test verify time gap for Receding Horizon" begin
@@ -442,9 +442,9 @@ function test_simulation_utils(file_path)
         simulation_folder = file_path,
     )
     build_out = build!(sim; recorders = [:simulation])
-    @test build_out == PSI.BuildStatuss.BUILT
+    @test build_out == PSI.BuildStatus.BUILT
     execute_out = execute!(sim)
-    @test execute_out == PSI.RunStatuss.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFUL
 
     @testset "Verify simulation events" begin
         file = joinpath(PSI.get_simulation_dir(sim), "recorder", "simulation.log")
@@ -498,7 +498,7 @@ function test_simulation_utils(file_path)
         files_path = PSI.serialize_simulation(sim; path = path)
         deserialized_sim = Simulation(files_path, stage_info)
         build_out = build!(deserialized_sim)
-        @test build_out == PSI.BuildStatuss.BUILT
+        @test build_out == PSI.BuildStatus.BUILT
         for stage in values(PSI.get_stages(deserialized_sim))
             @test PSI.is_stage_built(stage)
         end
