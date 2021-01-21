@@ -2,10 +2,10 @@
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type HydroEnergyReservoir, consider changing the device models"
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Hydro, model)
-    c_sys14 = build_system("c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Hydro, model)
 end
@@ -16,7 +16,7 @@ end
 
 @testset "Hydro DCPLossLess FixedOutput" begin
     model = DeviceModel(HydroDispatch, FixedOutput)
-    c_sys5_hy = build_system("c_sys5_hy")
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
     op_problem =
@@ -45,7 +45,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with FixedOutput formulations" begin
     model = DeviceModel(HydroEnergyReservoir, FixedOutput)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -78,7 +78,7 @@ end
 
 @testset "Hydro DCPLossLess HydroDispatch with HydroDispatchRunOfRiver formulations" begin
     model = DeviceModel(HydroDispatch, HydroDispatchRunOfRiver)
-    c_sys5_hy = build_system("c_sys5_hy")
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
     op_problem =
@@ -96,7 +96,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroDispatch with HydroDispatchRunOfRiver formulations" begin
     model = DeviceModel(HydroDispatch, HydroDispatchRunOfRiver)
-    c_sys5_hy = build_system("c_sys5_hy")
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
     op_problem =
@@ -125,7 +125,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchRunOfRiver formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -154,7 +154,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroDispatchRunOfRiver formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -187,7 +187,7 @@ end
 
 @testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentRunOfRiver formulations" begin
     model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
-    c_sys5_hy = build_system("c_sys5_hy")
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
     op_problem =
@@ -205,7 +205,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroDispatch with HydroCommitmentRunOfRiver formulations" begin
     model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
-    c_sys5_hy = build_system("c_sys5_hy")
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
     op_problem =
@@ -234,7 +234,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentRunOfRiver formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentRunOfRiver)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -263,7 +263,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroCommitmentRunOfRiver formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentRunOfRiver)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -296,7 +296,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirBudget Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -325,7 +325,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroDispatchReservoirBudget Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -358,7 +358,7 @@ end
 
 @testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStorage Formulations" begin
     model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
-    c_sys5_phes_ed = build_system("c_sys5_phes_ed")
+    c_sys5_phes_ed = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
 
     # Parameters Testing
     op_problem = OperationsProblem(
@@ -391,7 +391,7 @@ end
 
 @testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStoragewReservation Formulations" begin
     model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStoragewReservation)
-    c_sys5_phes_ed = build_system("c_sys5_phes_ed")
+    c_sys5_phes_ed = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
 
     # Parameters Testing
     op_problem = OperationsProblem(
@@ -428,7 +428,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentReservoirBudget Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirBudget)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -457,7 +457,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroCommitmentReservoirBudget Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirBudget)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -490,7 +490,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -519,7 +519,7 @@ end
 
 @testset "Hydro ACPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -552,7 +552,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -581,7 +581,7 @@ end
 
 @testset "Hydro ACPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    c_sys5_hyd = build_system("c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
