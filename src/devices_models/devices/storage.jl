@@ -1,9 +1,10 @@
 #! format: off
 
 abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
+abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
-struct EndOfPeriodEnergyTarget <: AbstractStorageFormulation end
+struct EndOfPeriodEnergyTarget <: AbstractEnergyManagement end
 
 ########################### ActivePowerInVariable, Storage #################################
 
