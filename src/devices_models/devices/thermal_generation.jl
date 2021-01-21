@@ -519,12 +519,12 @@ function ramp_constraints!(
 
     # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
     for r in data
-        add_device_services!(r, r.ic_status.device, model)
+        add_device_services!(r, r.ic_power.device, model)
     end
     if !isempty(data)
         device_multistart_rateofchange!(
             psi_container,
-            constaint_data,
+            data,
             make_constraint_name(RAMP, PSY.ThermalMultiStart),
             make_variable_name(ActivePowerVariable, PSY.ThermalMultiStart),
         )
