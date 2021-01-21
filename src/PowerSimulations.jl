@@ -175,8 +175,8 @@ export list_simulation_events
 export show_simulation_events
 
 ## Enums
-export BuildStatuss
-export RunStatuss
+export BuildStatus
+export RunStatus
 
 # Variables / Parameters
 export ACTIVE_POWER
@@ -269,6 +269,7 @@ export get_timestamp
 export write_results
 import PowerModels
 import TimerOutputs
+import ProgressMeter
 
 # TimeStamp Management Imports
 import Dates
