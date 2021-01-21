@@ -610,7 +610,7 @@ end
             use_parameters = p,
         )
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 384, 0, 242, 48, 144, true)
+        moi_tests(op_problem, p, 384, 0, 288, 0, 144, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -649,7 +649,7 @@ end
             use_parameters = p,
         )
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 432, 0, 290, 96, 144, true)
+        moi_tests(op_problem, p, 432, 0, 336, 48, 144, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end

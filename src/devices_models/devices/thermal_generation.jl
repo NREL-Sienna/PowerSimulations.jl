@@ -5,17 +5,18 @@ abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
-abstract type AbstractCompactDispatchFormulation <: AbstractThermalDispatchFormulation end
-abstract type AbstractCompactlUnitCommitment <: AbstractThermalUnitCommitment end
+abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
+abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
 
-struct ThermalBasicUnitCommitment <: AbstractThermalUnitCommitment end
-struct ThermalStandardUnitCommitment <: AbstractThermalUnitCommitment end
+struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
+struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
 struct ThermalDispatch <: AbstractThermalDispatchFormulation end
 struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
-struct ThermalMultiStartUnitCommitment <: AbstractCompactlUnitCommitment end
-struct ThermalCompactUnitCommitment <: AbstractCompactlUnitCommitment end
-struct ThermalCompactDispatch <: AbstractCompactDispatchFormulation end
+
+struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
+struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
+struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
 ############## ActivePowerVariable, ThermalGen ####################
 
@@ -143,7 +144,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
-    ::Type{<:AbstractThermalFormulation},
+    ::Type{<:AbstractThermalUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
@@ -208,7 +209,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
-    ::Type{<:ThermalMultiStartUnitCommitment},
+    ::Type{<:AbstractCompactUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
@@ -263,7 +264,7 @@ function initial_range_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalMultiStart, D <: AbstractCompactlUnitCommitment, S <: PM.AbstractPowerModel}
+) where {T <: PSY.ThermalMultiStart, D <: AbstractCompactUnitCommitment, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key_power = ICKey(DevicePower, T)
@@ -332,7 +333,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ReactivePowerVariable},
     ::Type{T},
-    ::Type{<:AbstractThermalFormulation},
+    ::Type{<:AbstractThermalUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -364,7 +365,7 @@ function commitment_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
+) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment, S <: PM.AbstractPowerModel}
     device_commitment!(
         psi_container,
         get_initial_conditions(psi_container, ICKey(DeviceStatus, T)),
@@ -465,7 +466,7 @@ function ramp_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
+) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
     data = _get_data_for_rocc(psi_container, T)
     if !isempty(data)
@@ -516,12 +517,12 @@ end
 function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{T, ThermalMultiStartUnitCommitment},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractPowerModel}
+) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    data = _get_data_for_rocc(psi_container, T)
+    data = _get_data_for_rocc(psi_container, PSY.ThermalMultiStart)
 
     # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
     for r in data
@@ -956,7 +957,7 @@ function time_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
+) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment, S <: PM.AbstractPowerModel}
     parameters = model_has_parameters(psi_container)
     resolution = model_resolution(psi_container)
     initial_conditions_on = get_initial_conditions(psi_container, ICKey(TimeDurationON, T))
@@ -1049,7 +1050,7 @@ function AddCostSpec(
     ::Type{T},
     ::Type{U},
     psi_container::PSIContainer,
-) where {T <: PSY.ThermalGen, U <: AbstractThermalFormulation}
+) where {T <: PSY.ThermalGen, U <: AbstractThermalUnitCommitment}
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,
@@ -1089,7 +1090,7 @@ function AddCostSpec(
     ::Type{T},
     ::Type{U},
     psi_container::PSIContainer,
-) where {T <: PSY.ThermalGen, U <: AbstractCompactlUnitCommitment}
+) where {T <: PSY.ThermalGen, U <: AbstractCompactUnitCommitment}
     fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
@@ -1105,9 +1106,9 @@ end
 
 function AddCostSpec(
     ::Type{T},
-    ::Type{U},
+    ::Type{ThermalCompactDispatch},
     psi_container::PSIContainer,
-) where {T <: PSY.ThermalGen, U <: AbstractCompactDispatchFormulation}
+) where {T <: PSY.ThermalGen}
     if has_on_parameter(psi_container, T)
         sos_status = PARAMETER
     else
