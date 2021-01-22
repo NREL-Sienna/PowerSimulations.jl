@@ -1025,7 +1025,6 @@ function _execute!(
                     end
                     stage_interval = get_stage_interval(sim, stage_name)
                     sim.internal.current_time = sim.internal.date_ref[stage_number]
-                    # TODO: Show progress meter here
                     get_sequence(sim).current_execution_index = ix
                     # Is first run of first stage? Yes -> don't update stage
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Stage $(stage_number)" begin
@@ -1070,7 +1069,7 @@ function _execute!(
                     ProgressMeter.update!(progress_bar, global_stage_execution_count;
                         showvalues = [(:Step, step), (:Stage, stage_name),
                     (:("Simulation Timestamp"), get_current_time(sim))])
-                end #execition stage timer
+                end #execution stage timer
             end # execution order for loop
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
@@ -1240,7 +1239,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
-        throw(ArgumentError("$directory has files already $(readdir(directory)). Please delete them or pass force = true."))
+        throw(throw(ArgumentError("$directory has files already: $(readdir(directory)). Please delete them or pass force = true.")))
     end
     rm(directory, recursive = true, force = true)
     mkdir(directory)

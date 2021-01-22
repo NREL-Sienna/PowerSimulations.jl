@@ -470,7 +470,7 @@ function test_op_problem_write_functions(file_path)
         file = joinpath(path, "op_problem.json")
         export_operations_model(op_problem, file)
         filename = joinpath(path, "test_op_problem.bin")
-        serialize_problem(op_problem, filename)
+        serialize(op_problem, filename)
         file_list = sort!(collect(readdir(path)))
         @test "op_problem.json" in file_list
         @test "test_op_problem.bin" in file_list

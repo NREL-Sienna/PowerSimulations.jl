@@ -36,7 +36,6 @@ const IS = InfrastructureSystems
 TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
 
-include("test_utils/get_test_data.jl")
 include("test_utils/model_checks.jl")
 include("test_utils/operations_problem_templates.jl")
 
@@ -128,8 +127,6 @@ function run_tests()
             IS.LogEventTracker((Logging.Info, Logging.Warn, Logging.Error)),
         )
         global_logger(multi_logger)
-
-        initialize_system_serialized_files()
 
         @time @testset "Begin PowerSimulations tests" begin
             @includetests ARGS

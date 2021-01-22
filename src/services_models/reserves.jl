@@ -145,7 +145,7 @@ function AddCostSpec(
         start_up_cost = nothing,
         shut_down_cost = nothing,
         fixed_cost = nothing,
-        sos_status = NO_VARIABLE,
+        sos_status = SOSStatusVariable.NO_VARIABLE,
     )
 end
 

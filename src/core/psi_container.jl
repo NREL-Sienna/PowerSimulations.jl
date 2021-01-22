@@ -92,12 +92,12 @@ function _make_jump_model!(psi_container::PSIContainer)
         parameters && PJ.enable_parameters(JuMPmodel)
         psi_container.JuMPmodel = JuMPmodel
     end
-    if !get_optimizer_log_print(settings)
+    if get_optimizer_log_print(settings)
+        @debug "optimizer set to silent"
         JuMP.set_silent(psi_container.JuMPmodel)
-    elseif get_optimizer_log_print(settings)
-        JuMP.unset_silent(psi_container.JuMPmodel)
     else
-        error("incorrect setting value")
+        JuMP.unset_silent(psi_container.JuMPmodel)
+        @debug "optimizer unset to silent"
     end
     return
 end
@@ -500,11 +500,7 @@ function write_psi_container(psi_container::PSIContainer, save_path::String)
 end
 
 function read_variables(psi_container::PSIContainer)
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-    for (k, v) in get_variables(psi_container)
-        results_dict[k] = axis_array_to_dataframe(v)
-    end
-    return results_dict
+    return Dict(k => axis_array_to_dataframe(v) for (k, v) in get_variables(psi_container))
 end
 
 function read_duals(psi_container::PSIContainer)

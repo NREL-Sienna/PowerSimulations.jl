@@ -34,6 +34,12 @@ IS.@scoped_enum(RunStatus,
     FAILED = 2,
 )
 
+IS.@scoped_enum(SOSStatusVariable,
+    NO_VARIABLE = 1,
+    PARAMETER = 2,
+    VARIABLE = 3,
+)
+
 # Settings constants
 const UNSET_HORIZON = 0
 const UNSET_INI_TIME = Dates.DateTime(0)
