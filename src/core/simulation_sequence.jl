@@ -153,7 +153,6 @@ function _check_cache_defination(cache::Dict{<:Tuple, <:AbstractCache})
     return
 end
 
-# TODO: Add DocString
 @doc raw"""
     SimulationSequence(horizons::Dict{String, Int}
                         step_resolution::Dates.TimePeriod
@@ -176,7 +175,8 @@ mutable struct SimulationSequence
     ini_cond_chronology::InitialConditionChronology
     cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
-    current_execution_index::Int
+    executions_by_stage::Dict{String, Int}
+    current_execution_index::Int64
 
     function SimulationSequence(;
         horizons::Dict{String, Int},
@@ -202,6 +202,8 @@ mutable struct SimulationSequence
         if length(order) == 1
             ini_cond_chronology = IntraStageChronology()
         end
+        execution_order = _get_execution_order_vector(order, _intervals, step_resolution)
+        executions_by_stage = _get_num_executions_by_stage(order, execution_order)
         new(
             horizons,
             step_resolution,
@@ -211,30 +213,45 @@ mutable struct SimulationSequence
             feedforward,
             ini_cond_chronology,
             cache,
-            _get_execution_order_vector(order, _intervals, step_resolution),
+            execution_order,
+            executions_by_stage,
             0,
         )
     end
 end
 
-function get_stage_horizon(s::SimulationSequence, stage::String)
-    horizon = get(s.horizons, stage, nothing)
-    horizon === nothing &&
-        throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+function _get_num_executions_by_stage(order, execution_order)
+    executions_by_stage = Dict(x => 0 for x in values(order))
+    for stage_number in execution_order
+        executions_by_stage[order[stage_number]] += 1
+    end
+
+    return executions_by_stage
+end
+
+function get_stage_horizon(sequence::SimulationSequence, stage::String)
+    horizon = get(sequence.horizons, stage, nothing)
+    if horizon === nothing
+        throw(ArgumentError("Stage $(stage) not present in the simulation"))
+    end
     return horizon
 end
 
-get_stage_interval(s::SimulationSequence, stage::String) = s.intervals[stage][1]
+get_stage_interval(sequence::SimulationSequence, stage::String) =
+    sequence.intervals[stage][1]
 
-function get_stage_name(s::SimulationSequence, stage::Stage)
-    name = get(s.order, get_number(stage), nothing)
-    name === nothing &&
+function get_stage_name(sequence::SimulationSequence, stage::Stage)
+    name = get(get_order(sequence), get_number(stage), nothing)
+    if name === nothing
         throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+    end
     return name
 end
 
-get_step_resolution(s::SimulationSequence) = s.step_resolution
+get_step_resolution(sequence::SimulationSequence) = sequence.step_resolution
 
-function get_stage_interval_chronology(s::SimulationSequence, stage::String)
-    return s.intervals[stage][2]
+function get_stage_interval_chronology(sequence::SimulationSequence, stage::String)
+    return sequence.intervals[stage][2]
 end
+
+get_order(sequence::SimulationSequence) = sequence.order

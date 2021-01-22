@@ -20,22 +20,25 @@ const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
-@enum BUILD_STATUS begin
-    BUILT = 1
-    IN_PROGRESS = -1
-    EMPTY = 0
-end
+IS.@scoped_enum(BuildStatus,
+    IN_PROGRESS = -1,
+    BUILT = 0,
+    FAILED = 1,
+    EMPTY = 2,
+)
 
-@enum SOS_STATUS_VARIABLE begin
-    NO_VARIABLE = 1
-    PARAMETER = 2
-    VARIABLE = 3
-end
+IS.@scoped_enum(RunStatus,
+    READY = -1,
+    SUCCESSFUL = 0,
+    RUNNING = 1,
+    FAILED = 2,
+)
 
-@enum STAGE_STATUS begin
-    SUCESSFUL_RUN = 0
-    FAILED_RUN = 1
-end
+IS.@scoped_enum(SOSStatusVariable,
+    NO_VARIABLE = 1,
+    PARAMETER = 2,
+    VARIABLE = 3,
+)
 
 # Settings constants
 const UNSET_HORIZON = 0
@@ -56,8 +59,12 @@ const OBJECTIVE_FUNCTION_POSITIVE = 1.0
 const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
 # The DEFAULT_RESERVE_COST value is used to avoid degeneracy of the solutions, reseve cost isn't provided.
 const DEFAULT_RESERVE_COST = 1.0e-4
+const KiB = 1024
+const MiB = KiB * KiB
+const GiB = MiB * KiB
 
 # Interface limitations
+# TODO: Remove this and use Julia's default kwarg behavior
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
     :initial_time,
@@ -74,17 +81,6 @@ const OPERATIONS_ACCEPTED_KWARGS = [
 ]
 
 const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
-
-const STAGE_ACCEPTED_KWARGS = [
-    :PTDF,
-    :warm_start,
-    :balance_slack_variables,
-    :services_slack_variables,
-    :constraint_duals,
-    :system_to_file,
-    :export_pwl_vars,
-    :allow_fails,
-]
 
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]

@@ -11,6 +11,8 @@ export OperationsProblem
 export OperationsProblemTemplate
 export InitialCondition
 export SimulationSequence
+export SimulationResults
+export StageResults
 
 # Network Relevant Exports
 export StandardPTDFModel
@@ -119,10 +121,11 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 export set_model!
+export serialize_model
+export export_operations_model
 ## Sim Model Exports
 export build!
 export execute!
-export make_references
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
@@ -133,25 +136,44 @@ export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
 ## Results interfaces
-export get_duals
+export SimulationResultsExport
+export StageResultsExport
+export export_results
+export get_existing_duals
+export get_existing_parameters
+export get_existing_timestamps
+export get_existing_variables
+export get_stage_name
+export get_stage_results
+export get_system
+export list_stages
+export list_supported_formats
+export load_results!
+export read_dual
+export read_duals
+export read_realized_duals
+export read_realized_variables
+export read_realized_parameters
+export get_realized_timestamps
+export read_variable
+export read_variables
+export read_parameter
+export read_parameters
 
 ## Utils Exports
-export SimulationResultsReference
-export write_results
-export check_file_integrity
-export load_results
-export load_operation_results
-export load_simulation_results
-export write_to_CSV
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
-export get_result_variable
-export get_variable_names
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
+export write_results
+export write_to_CSV
+
+## Enums
+export BuildStatus
+export RunStatus
 
 # Variables / Parameters
 export ACTIVE_POWER
@@ -212,6 +234,7 @@ export INFLOW_RANGE
 
 #################################################################################
 # Imports
+import DataStructures: OrderedDict, Deque, SortedDict
 import Logging
 import Serialization
 # Modeling Imports
@@ -226,17 +249,24 @@ import PowerSystems
 import InfrastructureSystems
 # so that users have access to IS.Results interfaces
 import InfrastructureSystems:
-    get_variables, get_total_cost, get_optimizer_log, write_results, get_timestamp, get_name
+    get_variables,
+    get_total_cost,
+    get_optimizer_log,
+    write_results,
+    get_timestamp,
+    get_name,
+    @assert_op
 export get_name
 export get_model_base_power
 export get_variables
-export get_dual_values
+export get_duals
 export get_total_cost
 export get_optimizer_log
 export get_timestamp
 export write_results
 import PowerModels
 import TimerOutputs
+import ProgressMeter
 
 # TimeStamp Management Imports
 import Dates
@@ -244,10 +274,10 @@ import TimeSeries
 
 # I/O Imports
 import DataFrames
-import Arrow
 import JSON
 import CSV
 import SHA
+import HDF5
 
 # PowerModels exports
 export ACPPowerModel
@@ -293,6 +323,7 @@ include("core/parameters.jl")
 include("core/variables.jl")
 include("core/constraints.jl")
 include("core/cache.jl")
+include("core/optimizer_stats.jl")
 include("core/initial_condition_types.jl")
 include("core/initial_condition.jl")
 include("core/initial_conditions.jl")
@@ -302,6 +333,11 @@ include("core/psi_container.jl")
 include("core/update_initial_conditions.jl")
 include("core/operations_problem_results.jl")
 include("core/operations_problem.jl")
+include("core/cache_utils.jl")
+include("core/param_result_cache.jl")
+include("core/result_cache.jl")
+include("core/simulation_store.jl")
+include("core/hdf_simulation_store.jl")
 include("core/simulation_stages.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
@@ -323,6 +359,7 @@ include("devices_models/devices/common/get_time_series.jl")
 
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
+include("core/simulation_results_export.jl")
 include("core/recorder_events.jl")
 
 # Device Modeling components

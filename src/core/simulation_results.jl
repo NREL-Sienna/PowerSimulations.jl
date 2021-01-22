@@ -1,517 +1,561 @@
-struct SimulationResultsReference
-    ref::Dict
-    results_folder::String
-    chronologies::Dict
-    base_powers::Dict
+const KNOWN_PATHS =
+    ["data_store", "logs", "models_json", "recorder", "results", "simulation_files"]
+
+function check_folder_integrity(folder::String)
+    folder_files = readdir(folder)
+    alien_files = [f for f in folder_files if f ∉ KNOWN_PATHS]
+    if isempty(alien_files)
+        return true
+    end
+    if "data_store" ∉ folder_files
+        error("The file path doesn't contain any data_store folder")
+    end
+    return false
 end
 
-function SimulationResultsReference(sim::Simulation; kwargs...)
-    date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
-    ref = make_references(sim, date_run; kwargs...)
-    chronologies = Dict()
-    base_powers = Dict()
-    for (stage_number, stage_name) in sim.sequence.order
-        stage = get_stage(sim, stage_name)
-        interval = get_stage_interval(sim, stage_name)
-        resolution = PSY.get_time_series_resolution(get_sys(stage))
-        _resolution = IS.time_period_conversion(resolution)
-        chronologies["stage-$stage_name"] = convert(Int, (interval / _resolution))
-        base_powers[stage_name] = PSY.get_base_power(sim.stages[stage_name].sys)
-    end
-    return SimulationResultsReference(
-        ref,
-        sim.internal.results_dir,
-        chronologies,
-        base_powers,
-    )
+const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
+const FieldResultsByTime = Dict{Symbol, ResultsByTime}
+
+function _fill_result_value_container(fields)
+    return FieldResultsByTime(x => ResultsByTime() for x in fields)
 end
 
-# internal function for differentiating variables from duals in file names
-function _concat_dual(duals::Vector{Symbol})
-    dual = []
-    for d in duals
-        dual = vcat(dual, "dual_" * String(d))
-    end
-    return dual
-end
+# TODO:
+# - Allow passing the system path if the simulation wasn't serialized
+# - Handle PER-UNIT conversion of variables according to type
+# - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
 
-# internal function for differentiating variables from parameters in file names
-function _concat_param(params::Vector{Symbol})
-    param = []
-    for p in params
-        param = vcat(param, "parameter_" * String(p))
-    end
-    return param
-end
-
-"""
-    make_references(sim::Simulation, date_run::String; kwargs...)
-
-Creates a dictionary of variables with a dictionary of stages
-that contains dataframes of date/step/and desired file path
-so that the results can be parsed sequentially by variable
-and stage type.
-
-**Note:** make_references can only be run after run_sim_model
-or else, the folder structure will not yet be populated with results
-
-# Arguments
-- `sim::Simulation = sim`: simulation object created by Simulation()
-- `date_run::String = "2019-10-03T09-18-00"``: the name of the file created
-that contains the specific simulation run of the date run and "-test"
-
-# Example
-```julia
-sim = Simulation("Test", 7, stages, "/Users/yourusername/Desktop/"; system_to_file = false)
-execute!(sim::Simulation; kwargs...)
-references = make_references(sim, "2019-10-03T09-18-00-test")
-```
-"""
-function make_references(sim::Simulation, date_run::String)
-    for stage_number in keys(sim.internal.date_ref)
-        sim.internal.date_ref[stage_number] = sim.initial_time
-    end
-    references = Dict()
-    for (stage_number, stage_name) in sim.sequence.order
-        stage = sim.stages[stage_name]
-        references["stage-$stage_name"] = make_result_reference(stage, sim)
-    end
-    return references
-end
-
-function make_result_reference(
-    stage::Stage{T},
-    sim::Simulation,
-) where {T <: PowerSimulationsOperationsProblem}
-    stage_number = get_number(stage)
-    stage_container = get_psi_container(stage)
-    variables = Dict{Symbol, Any}()
-    stage_name = get_stage_name(sim, stage)
-    interval = get_stage_interval(sim, stage_name)
-    variable_names = (collect(keys(stage_container.variables)))
-    if !is_milp(get_psi_container(stage))
-        constraint_duals = get_constraint_duals(stage_container.settings)
-        constraint_duals_names = Symbol.(_concat_dual(constraint_duals))
-        variable_names = vcat(variable_names, constraint_duals_names)
-    end
-    params = collect(keys(get_parameters_value(get_psi_container(stage))))
-    param_keys = Symbol.(_concat_param(params))
-    variable_names = vcat(variable_names, param_keys)
-    for name in variable_names
-        variables[name] = DataFrames.DataFrame(
-            Date = Dates.DateTime[],
-            Step = String[],
-            File_Path = String[],
-        )
-    end
-    for s in 1:(sim.steps)
-        for run in 1:(stage.internal.executions)
-            sim.internal.current_time = sim.internal.date_ref[stage_number]
-            for name in variable_names
-                full_path = joinpath(
-                    sim.internal.raw_dir,
-                    "step-$(s)-stage-$(stage_name)",
-                    replace_chars("$(get_current_time(sim))", ":", "-"),
-                    "$(name).arrow",
-                )
-                if isfile(full_path)
-                    date_df = DataFrames.DataFrame(
-                        Date = get_current_time(sim),
-                        Step = "step-$(s)",
-                        File_Path = full_path,
-                    )
-                    variables[name] = vcat(variables[name], date_df)
-                else
-                    @error "$full_path, does not contain any simulation result raw data"
-                end
-            end
-            sim.internal.run_count[s][stage_number] += 1
-            sim.internal.date_ref[stage_number] =
-                sim.internal.date_ref[stage_number] + interval
-        end
-    end
-    return variables
-end
-
-make_result_reference(stage::Stage{T}, sim::Simulation) where {T} = nothing
-
-struct SimulationResults <: PSIResults
+"""Holds the results of a simulation stage for plotting or exporting"""
+mutable struct StageResults <: PSIResults
+    stage::String
     base_power::Float64
-    variable_values::Dict{Symbol, DataFrames.DataFrame}
-    total_cost::Dict
-    optimizer_log::Dict
-    time_stamp::DataFrames.DataFrame
-    dual_values::Dict{Symbol, Any}
-    results_folder::Union{Nothing, String}
-    parameter_values::Dict{Symbol, DataFrames.DataFrame}
+    execution_path::String
+    results_output_folder::String
+    existing_timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
+    results_timestamps::Vector{Dates.DateTime}
+    system::Union{Nothing, PSY.System}
+    variable_values::FieldResultsByTime
+    dual_values::FieldResultsByTime
+    parameter_values::FieldResultsByTime
 end
 
-get_model_base_power(result::SimulationResults) = result.base_power
-IS.get_base_power(result::SimulationResults) = get_model_base_power(result)
-IS.get_variables(result::SimulationResults) = result.variable_values
-IS.get_total_cost(result::SimulationResults) = result.total_cost
-IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
-IS.get_timestamp(result::SimulationResults) = result.time_stamp
-get_duals(result::SimulationResults) = result.dual_values
-IS.get_parameters(result::SimulationResults) = result.parameter_values
+function StageResults(
+    store::SimulationStore,
+    stage_name::AbstractString,
+    stage_params::SimulationStoreStageParams,
+    sim_params::SimulationStoreParams,
+    path;
+    load_system = true,
+    results_output_path = nothing,
+)
+    name = Symbol(stage_name)
 
-function deserialize_sim_output(file_path::String)
-    path = joinpath(file_path, "output_references")
-    list = setdiff(
-        readdir(path),
-        ["results_folder.json", "chronologies.json", "base_power.json"],
+    if load_system
+        sys = PSY.System(joinpath(
+            path,
+            "simulation_files",
+            "system-$(stage_params.system_uuid).json",
+        ))
+    else
+        sys = nothing
+    end
+
+    if results_output_path === nothing
+        results_output_path = joinpath(path, "results")
+    end
+
+    time_steps = range(
+        sim_params.initial_time,
+        length = stage_params.num_executions * sim_params.num_steps,
+        step = stage_params.interval,
     )
-    ref = Dict()
-    for stage in list
-        ref[stage] = Dict{Symbol, Any}()
-        for variable in readdir(joinpath(path, stage))
-            var = splitext(variable)[1]
-            ref[stage][Symbol(var)] = read_arrow_file(joinpath(path, stage, variable))
-            ref[stage][Symbol(var)][!, :Date] =
-                convert(Array{Dates.DateTime}, ref[stage][Symbol(var)][!, :Date])
-        end
-    end
-    results_folder = read_json(joinpath(path, "results_folder.json"))
-    chronologies = Dict{Any, Any}(read_json(joinpath(path, "chronologies.json")))
-    base_powers = Dict{Any, Any}(read_json(joinpath(path, "base_power.json")))
-    sim_output = SimulationResultsReference(ref, results_folder, chronologies, base_powers)
-    return sim_output
-end
+    variables = list_fields(store, name, STORE_CONTAINER_VARIABLES)
+    parameters = list_fields(store, name, STORE_CONTAINER_PARAMETERS)
+    duals = list_fields(store, name, STORE_CONTAINER_DUALS)
 
-# internal function to parse through the reference dictionary and grab the file paths
-function _read_references(
-    results::Dict,
-    list::Array,
-    stage::String,
-    step::Array,
-    references::Dict,
-    time_length::Int,
-)
-    for name in list
-        date_df = references[stage][name]
-        step_df = DataFrames.DataFrame(
-            Date = Dates.DateTime[],
-            Step = String[],
-            File_Path = String[],
-        )
-        for n in 1:length(step)
-            step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
-        end
-        results[name] = DataFrames.DataFrame()
-        for (ix, time) in enumerate(step_df.Date)
-            file_path = step_df[ix, :File_Path]
-            var = read_arrow_file("$file_path")
-            results[name] = vcat(results[name], var[1:time_length, :])
-        end
-    end
-    return results
-end
-# internal function to parse through the reference dictionary and grab the file paths
-function _read_references(
-    results::Dict,
-    list::Array,
-    stage::String,
-    references::Dict,
-    time_length::Int,
-)
-    for name in list
-        date_df = references[stage][name]
-        results[name] = DataFrames.DataFrame()
-        for (ix, time) in enumerate(date_df.Date)
-            file_path = date_df[ix, :File_Path]
-            var = read_arrow_file(file_path)
-            var_length = min(time_length, size(var, 1))
-            results[name] = vcat(results[name], var[1:var_length, :])
-        end
-    end
-    return results
-end
-# internal function to remove the overlapping results and only use the most recent
-function _read_time(file_path::String, time_length::Number)
-    time_file_path = joinpath(dirname(file_path), "time_stamp.arrow")
-    temp_time_stamp = read_arrow_file("$time_file_path")
-    time_stamp = temp_time_stamp[(1:time_length), :]
-    time_stamp = convert.(Dates.DateTime, time_stamp)
-    return time_stamp
-end
-
-"""
-    load_simulation_results(stage, step, variable, SimulationResultsReference)
-
-This function goes through the reference table of file paths and
-aggregates the results over time into a struct of type OperationsProblemResults
-for the desired step range and variables
-
-# Arguments
-- `SimulationResultsReference::SimulationResultsReference`: the container for the reference dictionary created in execute!
-- `stage_number::Int = 1``: The stage of the results getting parsed: 1 or 2
-- `step::Array{String} = ["step-1", "step-2", "step-3"]`: the steps of the results getting parsed
-- `variable::Array{Symbol} = [:P__ThermalStandard, :P__RenewableDispatch]`: the variables to be parsed
-
-# Example
-```julia
-stage = "stage-1"
-step = ["step-1", "step-2", "step-3"] # has to match the date range
-variable = [:P__ThermalStandard, :P__RenewableDispatch]
-results = load_simulation_results(stage,step, variable, SimulationResultsReference)
-```
-# Accepted Key Words
-"""
-
-function load_simulation_results(
-    path::String,
-    stage_name::String,
-    step::Array,
-    variable::Array;
-    kwargs...,
-)
-    sim_results = deserialize_sim_output(path)
-    load_simulation_results(sim_results, stage_name, step, variable; kwargs...)
-end
-
-function load_simulation_results(
-    sim_output::SimulationResultsReference,
-    stage_name::String,
-    step::Array,
-    variable::Array;
-    kwargs...,
-)
-    results_folder = mkpath(joinpath(sim_output.results_folder, stage_name))
-    stage = "stage-$stage_name"
-    references = sim_output.ref
-    base_power = sim_output.base_powers[stage_name]
-    variables = Dict{Symbol, DataFrames.DataFrame}()
-    duals = Dict{Symbol, Any}()
-    params = Dict{Symbol, DataFrames.DataFrame}()
-    time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
-    time_length = sim_output.chronologies[stage]
-    dual = _find_duals(collect(keys(references[stage])))
-    param = _find_params(collect(keys(references[stage])))
-    variable = setdiff(variable, vcat(param, dual))
-    for l in 1:length(variable)
-        date_df = references[stage][variable[l]]
-        step_df = DataFrames.DataFrame(
-            Date = Dates.DateTime[],
-            Step = String[],
-            File_Path = String[],
-        )
-        for n in 1:length(step)
-            step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
-        end
-        variables[(variable[l])] = DataFrames.DataFrame()
-        for (ix, time) in enumerate(step_df.Date)
-            file_path = step_df[ix, :File_Path]
-            var = read_arrow_file("$file_path")
-            variables[(variable[l])] = vcat(variables[(variable[l])], var[1:time_length, :])
-            if l == 1
-                time_stamp = vcat(time_stamp, _read_time(file_path, time_length))
-                check_file_integrity(dirname(file_path))
-            end
-        end
-    end
-    time_stamp[!, :Range] = convert(Array{Dates.DateTime}, time_stamp[!, :Range])
-    file_path = dirname(references[stage][variable[1]][1, :File_Path])
-    optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
-    duals = _read_references(duals, dual, stage, step, references, time_length)
-    param_values = _read_references(params, param, stage, step, references, time_length)
-    return SimulationResults(
-        base_power,
-        variables,
-        obj_value,
-        optimizer,
-        time_stamp,
-        duals,
-        results_folder,
-        param_values,
+    return StageResults(
+        stage_name,
+        stage_params.base_power,
+        path,
+        results_output_path,
+        time_steps,
+        Vector{Dates.DateTime}(),
+        sys,
+        _fill_result_value_container(variables),
+        _fill_result_value_container(duals),
+        _fill_result_value_container(parameters),
     )
 end
 
-"""
-    load_simulation_results(file_path, stage)
-
-This function goes through the reference table of file paths and
-aggregates the results over time into a struct of type OperationsProblemResults
-
-# Arguments
-- `file_path::String`: the file path to the dated folder with the raw results
-- `stage_number::String`: The stage of the results getting parsed
-
-# Example
-```julia
-execute!(simulation)
-results = load_simulation_results("file_path", "stage_name")
-```
-# Accepted Key Words
-"""
-function load_simulation_results(path::String, stage_name::String, kwargs...)
-    sim_results = deserialize_sim_output(path)
-    load_simulation_results(sim_results, stage_name; kwargs...)
-end
-"""
-    load_simulation_results(sim_output, stage)
-
-This function goes through the reference table of file paths and
-aggregates the results over time into a struct of type OperationsProblemResults
-
-# Arguments
-- `sim_output::SimulationResultsReference`: the container for the reference dictionary created in execute!
-- `stage_number::String`: The stage of the results getting parsed
-
-# Example
-```julia
-sim_output = execute!(simulation)
-results = load_simulation_results(sim_output, "stage_name")
-```
-# Accepted Key Words
-"""
-function load_simulation_results(
-    sim_output::SimulationResultsReference,
-    stage_name::String;
-    kwargs...,
-)
-    results_folder = mkpath(joinpath(sim_output.results_folder, stage_name))
-    stage = "stage-$stage_name"
-    references = sim_output.ref
-    base_power = sim_output.base_powers[stage_name]
-    variables = Dict{Symbol, DataFrames.DataFrame}()
-    duals = Dict{Symbol, Any}()
-    params = Dict{Symbol, DataFrames.DataFrame}()
-    variable = (collect(keys(references[stage])))
-    dual = _find_duals(variable)
-    param = _find_params(collect(keys(references[stage])))
-    variable = setdiff(variable, vcat(param, dual))
-    time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
-    time_length = sim_output.chronologies[stage]
-
-    for l in 1:length(variable)
-        date_df = references[stage][variable[l]]
-        variables[(variable[l])] = DataFrames.DataFrame()
-        for (ix, time) in enumerate(date_df.Date)
-            file_path = date_df[ix, :File_Path]
-            var = read_arrow_file(file_path)
-            variables[(variable[l])] = vcat(variables[(variable[l])], var[1:time_length, :])
-            if l == 1
-                time_stamp = vcat(time_stamp, _read_time(file_path, time_length))
-                check_file_integrity(dirname(file_path))
-            end
-        end
-    end
-    time_stamp[!, :Range] = convert(Array{Dates.DateTime}, time_stamp[!, :Range])
-    file_path = dirname(references[stage][variable[1]][1, :File_Path])
-    optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
-    param_values = _read_references(params, param, stage, references, time_length)
-    duals = _read_references(duals, dual, stage, references, time_length)
-    return SimulationResults(
-        base_power,
-        variables,
-        obj_value,
-        optimizer,
-        time_stamp,
-        duals,
-        results_folder,
-        param_values,
-    )
-end
-
-"""
-    check_file_integrity(path::String)
-
-Checks the hash value for each file made with the file is written with the new hash_value to verify the file hasn't been tampered with since written
-
-# Arguments
-- `path::String`: this is the folder path that contains the results and the check.sha256 file
-"""
-function check_file_integrity(path::String)
-    matched = true
-    for file_info in read_file_hashes(path)
-        filename = file_info["filename"]
-        expected_hash = file_info["hash"]
-        actual_hash = compute_sha256(filename)
-        if expected_hash != actual_hash
-            @error "hash mismatch for file" filename expected_hash actual_hash
-            matched = false
-        end
-    end
-
-    if !matched
-        throw(IS.HashMismatchError("The hash value in the written files does not match the read files, results may have been tampered."))
-    end
-end
-
-function get_variable_names(sim::Simulation, stage::Any)
-    return get_variable_names(sim.stages[stage].internal.psi_container)
-end
-
-function get_reference(
-    sim_results::SimulationResultsReference,
-    stage::String,
-    step::Int,
-    variable::Symbol,
-)
-    file_paths = sim_results.ref["stage-$stage"][variable]
-    return filter(file_paths -> file_paths.Step == "step-$step", file_paths)[:, :File_Path]
-end
-
-get_psi_container(sim::Simulation, stage::Any) = sim.stages[stage].internal.psi_container
-
-"""
-    write_results(results::SimulationResults)
-
-Exports Simulations Results to the path where they come from in the results folder
-
-# Arguments
-- `results::SimulationResults`: results from the simulation
-- `save_path::String`: folder path where the files will be written
-- `results_folder`: name of the folder where the results will be written
-
-# Accepted Key Words
-- `file_type = CSV`: only CSV and featherfile are accepted
-"""
-function IS.write_results(res::SimulationResults; kwargs...)
-    folder_path = res.results_folder
-    if !isdir(folder_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
-    end
-    write_data(res.variable_values, res.time_stamp, folder_path; kwargs...)
-    write_optimizer_log(res.optimizer_log, folder_path)
-    write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
-    write_data(res.base_power, folder_path)
-    write_data(res.dual_values, folder_path; kwargs...)
-    write_data(res.parameter_values, folder_path; kwargs...)
-    files = readdir(folder_path)
-    compute_file_hash(folder_path, files)
-    @info("Files written to $folder_path folder.")
+function Base.empty!(res::StageResults)
+    foreach(empty!, _get_dicts(res))
+    empty!(res.results_timestamps)
     return
 end
 
-function serialize_sim_output(sim_results::SimulationResultsReference)
-    file_path = mkdir(joinpath(dirname(sim_results.results_folder), "output_references"))
-    for (k, stage) in sim_results.ref
-        try
-            for (i, v) in stage
-                path = mkpath(joinpath(file_path, "$k"))
-                !isempty(v) && Arrow.write(joinpath(path, "$i.arrow"), v)
-            end
-        catch
-            @warn("Results Reference not compatible with serialization")
-        end
+Base.isempty(res::StageResults) = all(isempty, _get_dicts(res))
+
+# This returns the number of timestamps stored in all containers.
+Base.length(res::StageResults) = mapreduce(length, +, _get_dicts(res))
+
+get_stage_name(res::StageResults) = res.stage
+get_system(res::StageResults) = res.system
+get_execution_path(res::StageResults) = res.execution_path
+get_existing_variables(res::StageResults) = collect(keys(res.variable_values))
+get_existing_duals(res::StageResults) = collect(keys(res.dual_values))
+get_existing_parameters(res::StageResults) = collect(keys(res.parameter_values))
+get_existing_timestamps(res::StageResults) = res.existing_timestamps
+get_model_base_power(res::StageResults) = res.base_power
+IS.get_timestamp(result::StageResults) = result.results_timestamps
+
+get_interval(res::StageResults) = res.existing_timestamps.step
+IS.get_variables(result::StageResults) = result.variable_values
+get_duals(result::StageResults) = result.dual_values
+IS.get_parameters(result::StageResults) = result.parameter_values
+IS.get_base_power(result::StageResults) = result.base_power
+
+#IS.get_total_cost(result::StageResults) = result.total_cost
+#IS.get_optimizer_log(results::StageResults) = results.optimizer_log
+
+_get_containers(x::StageResults) = (x.variable_values, x.parameter_values, x.dual_values)
+_get_dicts(res::StageResults) = (y for x in _get_containers(res) for y in values(x))
+
+function _get_store_value(
+    res::StageResults,
+    field::Symbol,
+    names::Vector{Symbol},
+    timestamps,
+    ::Nothing,
+)
+    simulation_store_path = joinpath(get_execution_path(res), "data_store")
+    return h5_store_open(simulation_store_path, "r") do store
+        _get_store_value(res, field, names, timestamps, store)
     end
-    JSON.write(
-        joinpath(file_path, "results_folder.json"),
-        JSON.json(sim_results.results_folder),
-    )
-    JSON.write(
-        joinpath(file_path, "chronologies.json"),
-        JSON.json(sim_results.chronologies),
-    )
-    JSON.write(joinpath(file_path, "base_power.json"), JSON.json(sim_results.base_powers))
 end
 
-# writes the results to CSV files in a folder path, but they can't be read back
-function write_to_CSV(res::SimulationResults; kwargs...)
-    folder_path = res.results_folder
+function _get_store_value(
+    res::StageResults,
+    field::Symbol,
+    names::Vector{Symbol},
+    timestamps,
+    store::SimulationStore,
+)
+    results = Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
+    stage_name = Symbol(get_stage_name(res))
+    stage_interval = get_interval(res)
+    resolution = PSY.get_time_series_resolution(get_system(res))
+    horizon = PSY.get_forecast_horizon(get_system(res))
+    for name in names
+        _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
+        for ts in timestamps
+            out = read_result(DataFrames.DataFrame, store, stage_name, field, name, ts)
+            time_col = range(ts, length = horizon, step = resolution)
+            DataFrames.insertcols!(out, 1, :DateTime => time_col)
+            _results[ts] = out
+        end
+        results[name] = _results
+    end
+
+    return results
+end
+
+function _validate_names(existing_names::Vector{Symbol}, names::Vector{Symbol})
+    for name in names
+        if name ∉ existing_names
+            @error("$name is not stored", sort(existing_names))
+            throw(IS.InvalidValue("$name is not stored"))
+        end
+    end
+    nothing
+end
+
+function _process_timestamps(
+    res::StageResults,
+    initial_time::Union{Nothing, Dates.DateTime},
+    count::Union{Int, Nothing},
+)
+    if initial_time === nothing
+        initial_time = first(get_existing_timestamps(res))
+    end
+    existing_timestamps = get_existing_timestamps(res)
+
+    if initial_time ∉ existing_timestamps
+        invalid_timestamps = [initial_time]
+    else
+        if count === nothing
+            requested_range = [v for v in existing_timestamps if v >= initial_time]
+        else
+            requested_range =
+                collect(range(initial_time, length = count, step = get_interval(res)))
+        end
+        invalid_timestamps = [v for v in requested_range if v ∉ existing_timestamps]
+    end
+    if !isempty(invalid_timestamps)
+        @error "Timestamps $(invalid_timestamps) not stored" get_existing_timestamps(res)
+        throw(IS.InvalidValue("Timestamps not stored"))
+    end
+    return requested_range
+end
+
+function _read_variables(res::StageResults, names::Vector{Symbol}, timestamps, store)
+    isempty(names) &&
+        return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
+    existing_names = get_existing_variables(res)
+    _validate_names(existing_names, names)
+    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    names_with_values = [k for (k, v) in res.variable_values if !isempty(v)]
+    same_names = isempty([n for n in names if n ∉ names_with_values])
+    if same_time_stamps && same_names
+        @info "reading variables from SimulationsResults"
+        vals = filter(p -> (p.first ∈ names), res.variable_values)
+    else
+        @info "reading variables from data store"
+        vals = _get_store_value(res, STORE_CONTAINER_VARIABLES, names, timestamps, store)
+    end
+    return vals
+end
+
+"""
+    Returns the values for the requested variable names. Accepts a vector of names for the
+    return of the values. If the time stamps and names are loaded using the [load_results!](@ref)
+    function it will read from memory.
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
+"""
+function read_variables(
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.variable_values)) : names
+    timestamps = _process_timestamps(res, initial_time, count)
+    values = _read_variables(res, names, timestamps, store)
+    return values
+end
+
+function _read_duals(res::StageResults, names::Vector{Symbol}, timestamps, store)
+    isempty(names) &&
+        return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
+    existing_names = get_existing_duals(res)
+    _validate_names(existing_names, names)
+    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    names_with_values = [k for (k, v) in res.dual_values if !isempty(v)]
+    same_names = isempty([n for n in names if n ∉ names_with_values])
+    if same_time_stamps && same_names
+        @debug "reading duals from SimulationsResults"
+        vals = filter(p -> (p.first ∈ names), res.dual_values)
+    else
+        @debug "reading duals from data store"
+        vals = _get_store_value(res, STORE_CONTAINER_DUALS, names, timestamps, store)
+    end
+    return vals
+end
+
+"""
+    Returns the values for the requested dual names. It must match the duals requested in the simulation stage definition.
+    It keeps requests when performing multiple retrievals. Accepts a vector of names for the return of the values
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
+"""
+function read_duals(
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.dual_values)) : names
+    timestamps = _process_timestamps(res, initial_time, count)
+    values = _read_duals(res, names, timestamps, store)
+    return values
+end
+
+function _read_parameters(res::StageResults, names::Vector{Symbol}, timestamps, store)
+    isempty(names) &&
+        return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
+    existing_names = get_existing_parameters(res)
+    _validate_names(existing_names, names)
+    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    names_with_values = [k for (k, v) in res.parameter_values if !isempty(v)]
+    same_names = isempty([n for n in names if n ∉ names_with_values])
+    if same_time_stamps && same_names
+        @info "reading parameters from SimulationsResults"
+        vals = filter(p -> (p.first ∈ names), res.parameter_values)
+    else
+        @info "reading parameters from data store"
+        vals = _get_store_value(res, STORE_CONTAINER_PARAMETERS, names, timestamps, store)
+    end
+    return vals
+end
+
+"""
+    Returns the values for the parameters used in the simulation. It keeps requests when performing multiple retrievals. Accepts a vector of names for the return of the values
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial time of the requested results
+    - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
+"""
+function read_parameters(
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.parameter_values)) : names
+    timestamps = _process_timestamps(res, initial_time, count)
+    values = _read_parameters(res, names, timestamps, store)
+    return values
+end
+
+"""
+    Returns the values for the requested variable name. It keeps requests when performing multiple retrievals. Accepts a variable name to return the result.
+
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
+"""
+function read_variable(res::StageResults, name::Symbol; kwargs...)
+    return read_variables(res; names = [name], kwargs...)[name]
+end
+
+"""
+    Returns the values for the requested dual name. It keeps requests when performing multiple retrievals. Accepts a dual name to return the result.
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+    - `store::SimulationStore`: a store that has been opened for reading
+"""
+function read_dual(res::StageResults, name::Symbol; kwargs...)
+    return read_duals(res; names = [name], kwargs...)[name]
+end
+
+"""
+    Returns the values for the requested parameter name. It keeps requests when performing multiple retrievals. Accepts a parameter name to return the result.
+    # Accepted Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+"""
+function read_parameter(res::StageResults, name::Symbol; kwargs...)
+    return read_parameters(res; names = [name], kwargs...)[name]
+end
+
+struct RealizedMeta
+    initial_time::Dates.DateTime
+    count::Int
+    start_offset::Int
+    end_offset::Int
+    interval_len::Int
+end
+
+function RealizedMeta(
+    res::StageResults;
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    existing_timestamps = get_existing_timestamps(res)
+    interval = existing_timestamps.step
+    resolution = PSY.get_time_series_resolution(get_system(res))
+    interval_len = Int(interval / resolution)
+    realized_timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+
+    result_initial_time =
+        existing_timestamps[findlast(x -> x .<= first(realized_timestamps), existing_timestamps)]
+    result_end_time =
+        existing_timestamps[findlast(x -> x .<= last(realized_timestamps), existing_timestamps)]
+
+    count = length(result_initial_time:interval:result_end_time)
+
+    start_offset = length(result_initial_time:resolution:first(realized_timestamps))
+    end_offset = length(last(realized_timestamps) + resolution:resolution:(result_end_time + interval - resolution))
+
+    return RealizedMeta(result_initial_time, count, start_offset, end_offset, interval_len)
+end
+
+function get_realized_timestamps(res::StageResults;
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,)
+
+    existing_timestamps = get_existing_timestamps(res)
+    interval = existing_timestamps.step
+    resolution = PSY.get_time_series_resolution(get_system(res))
+    horizon = PSY.get_forecast_horizon(get_system(res))
+    initial_time = isnothing(initial_time) ? first(existing_timestamps) : initial_time
+    end_time =
+        isnothing(len) ? last(existing_timestamps) + interval - resolution :
+        initial_time + (len - 1) * resolution
+
+    requested_range = initial_time:resolution:end_time
+    available_range = first(existing_timestamps):resolution:(last(
+        existing_timestamps,
+    ) + (horizon - 1) * resolution)
+    invalid_timestamps = setdiff(requested_range, available_range)
+
+    if !isempty(invalid_timestamps)
+        msg = "Requested time does not match available results"
+        @error msg
+        throw(IS.InvalidValue(msg))
+    end
+
+    return requested_range
+end
+
+function get_realization(
+    result_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}},
+    meta::RealizedMeta,
+)
+    realized_values = Dict{Symbol, DataFrames.DataFrame}()
+    for (key, result_value) in result_values
+        results_concat = Dict{Symbol, Vector{Float64}}()
+        for (step, (t, df)) in enumerate(result_value)
+            first_id = step > 1 ? 1 : meta.start_offset
+            last_id =
+                step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
+            for colname in propertynames(df)
+                colname == :DateTime && continue
+                col = df[!, colname][first_id:last_id]
+                if !haskey(results_concat, colname)
+                    results_concat[colname] = col
+                else
+                    results_concat[colname] = vcat(results_concat[colname], col)
+                end
+            end
+        end
+        realized_values[key] = DataFrames.DataFrame(results_concat, copycols = false)
+    end
+    return realized_values
+end
+
+"""
+    Returns the final values for the requested variable names for each time step for a stage.
+    Accepts a vector of names for the return of the values. If the time stamps and names are
+    loaded using the [load_results!](@ref) function it will read from memory.
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial time of the requested results
+    - `len::Int`: length of results
+"""
+function read_realized_variables(
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.variable_values)) : names
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values = read_variables(
+        res,
+        names = names,
+        initial_time = meta.initial_time,
+        count = meta.count,
+    )
+    return get_realization(result_values, meta)
+end
+
+"""
+    Returns the final values for the requested parameter names for each time step for a stage.
+    Accepts a vector of names for the return of the values. If the time stamps and names are
+    loaded using the [load_results!](@ref) function it will read from memory.
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial time of the requested results
+    - `len::Int`: length of results
+"""
+function read_realized_parameters(
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.parameter_values)) : names
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values = read_parameters(
+        res,
+        names = names,
+        initial_time = meta.initial_time,
+        count = meta.count,
+    )
+    return get_realization(result_values, meta)
+end
+
+"""
+    Returns the final values for the requested dual names for each time step for a stage.
+    Accepts a vector of names for the return of the values. If the time stamps and names are
+    loaded using the [load_results!](@ref) function it will read from memory.
+
+    # Accepted Key Words
+    - `names::Vector{Symbol}` : names of desired results
+    - `initial_time::Dates.DateTime` : initial time of the requested results
+    - `len::Int`: length of results
+"""
+function read_realized_duals( # TODO: Should this be get_realized_duals_values?
+    res::StageResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.dual_values)) : names
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values =
+        read_duals(res, names = names, initial_time = meta.initial_time, count = meta.count)
+    return get_realization(result_values, meta)
+end
+
+"""
+    Loads the simulation results into memory for repeated reads. Running this function twice
+    overwrites the previously loaded results. This is useful when loading results from remote
+    locations over network connections
+
+    # Required Key Words
+    - `initial_time::Dates.DateTime` : initial of the requested results
+    - `count::Int`: Number of results
+    # Accepted Key Words
+    - `variables::Vector{Symbol}`: Variables names to load into results
+    - `duals::Vector{Symbol}`: Dual names to load into results
+    - `parameters::Vector{Symbol}`: Parameter names to load into results
+"""
+function load_results!(
+    res::StageResults,
+    count::Int;
+    initial_time::Union{Dates.DateTime, Nothing} = nothing,
+    variables::Vector{Symbol} = Symbol[],
+    duals::Vector{Symbol} = Symbol[],
+    parameters::Vector{Symbol} = Symbol[],
+)
+    initial_time =
+        isnothing(initial_time) ? first(get_existing_timestamps(res)) : initial_time
+
+    res.results_timestamps = _process_timestamps(res, initial_time, count)
+    merge!(
+        res.variable_values,
+        _read_variables(res, variables, res.results_timestamps, nothing),
+    )
+    merge!(res.dual_values, _read_duals(res, duals, res.results_timestamps, nothing))
+    merge!(
+        res.parameter_values,
+        _read_parameters(res, parameters, res.results_timestamps, nothing),
+    )
+    return nothing
+end
+#= NEEDS RE-IMPLEMENTATION
+""" Exports the results in the StageResults object to  CSV files"""
+function write_to_CSV(res::StageResults; kwargs...)
+    folder_path = res.results_output_folder
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
     end
@@ -538,79 +582,199 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     @info("Files written to $folder_path folder.")
     return
 end
+=#
+
+struct SimulationResults <: PSIResults
+    path::String
+    params::SimulationStoreParams
+    stage_results::Dict{String, StageResults}
+end
 
 """
-    get_result_variable(IS.results, Symbol, PSY.DataType)
-
-Retrieve a specific variable dataframe from the results.
-
-# Arguments
-- `results::PSIResults`
-- `name::Symbol`: The prefix for a type of variable or parameter
-- `PSY.DataType`: The datatype of the variable from Power Systems
-
-# Example
-```julia
-variable = get_result_variable(results, :ON, ThermalStandard)
-```
+Construct SimulationResults from a path and optionally an execution number.
+By default, choose the latest execution.
 """
-function get_result_variable(results::PSIResults, sym::Symbol, data_type::PSY.DataType)
-    variable_name = encode_symbol(data_type, sym)
-    if variable_name in keys(IS.get_variables(results))
-        variable = IS.get_variables(results)[variable_name]
-        return variable
+function SimulationResults(path::AbstractString, execution = nothing)
+    # path will be either the execution_path or the directory containing all executions.
+    contents = readdir(path)
+    if "data_store" in contents
+        execution_path = path
     else
-        @info "Variable $variable_name not found in results."
+        if execution === nothing
+            executions = [parse(Int, f) for f in contents if occursin(r"^\d+$", f)]
+            if isempty(executions)
+                error("There are no simulation results in the path")
+            end
+            execution = maximum(executions)
+        end
+        execution_path = joinpath(path, string(execution))
+        if !isdir(execution_path)
+            error("Execution $execution not in the simulations results")
+        end
+    end
+
+    if !check_folder_integrity(execution_path)
+        @warn "The results folder $(execution_path) is not consistent with the default folder structure. " *
+              "This can lead to errors or unwanted results."
+    end
+
+    simulation_store_path = joinpath(execution_path, "data_store")
+    check_file_integrity(simulation_store_path)
+
+    return h5_store_open(simulation_store_path, "r") do store
+        stage_results = Dict{String, StageResults}()
+        sim_params = get_params(store)
+        for (name, stage_params) in sim_params.stages
+            name = string(name)
+            stage_result =
+                StageResults(store, name, stage_params, sim_params, execution_path)
+            stage_results[name] = stage_result
+        end
+
+        return SimulationResults(execution_path, sim_params, stage_results)
     end
 end
 
-function load_results(folder_path::String)
-    if isfile(folder_path)
-        throw(ArgumentError("Not a folder path."))
+"""
+Construct SimulationResults from a simulation.
+"""
+SimulationResults(sim::Simulation) = SimulationResults(get_simulation_dir(sim))
+
+Base.empty!(res::SimulationResults) = foreach(empty!, values(res.stage_results))
+Base.isempty(res::SimulationResults) = all(isempty, values(res.stage_results))
+Base.length(res::SimulationResults) = mapreduce(length, +, values(res.stage_results))
+get_exports_folder(x::SimulationResults) = joinpath(x.path, "exports")
+
+function get_stage_results(results::SimulationResults, stage)
+    if !haskey(results.stage_results, stage)
+        throw(IS.InvalidValue("$stage is not stored"))
     end
-    files_in_folder = readdir(folder_path)
-    variable_list = setdiff(
-        files_in_folder,
-        ["time_stamp.arrow", "base_power.json", "optimizer_log.json", "check.sha256"],
-    )
-    vars_result = Dict{Symbol, DataFrames.DataFrame}()
-    dual_result = Dict{Symbol, Any}()
-    dual_names = _find_duals(variable_list)
-    param_names = _find_params(variable_list)
-    variable_list = setdiff(variable_list, vcat(dual_names, param_names, ".DS_Store"))
-    param_values = Dict{Symbol, DataFrames.DataFrame}()
-    for name in variable_list
-        variable_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        vars_result[Symbol(variable_name)] = read_arrow_file(file_path)
+
+    return results.stage_results[stage]
+end
+
+"""
+Return the stage names in the simulation.
+"""
+list_stages(results::SimulationResults) = collect(keys(results.stage_results))
+
+"""
+Export results to files in the results directory.
+
+# Arguments
+- `results::SimulationResults`: simulation results
+- `exports`: SimulationResultsExport or anything that can be passed to its constructor.
+  (such as Dict or path to JSON file)
+
+An example JSON file demonstrating possible options is below. Note that `start_time`,
+`end_time`, `path`, and `format` are optional.
+
+```
+{
+  "stages": [
+    {
+      "name": "ED",
+      "variables": [
+        "P__ThermalStandard",
+        "E__HydroEnergyReservoir"
+      ],
+      "parameters": [
+        "all"
+      ]
+    },
+    {
+      "name": "UC",
+      "variables": [
+        "On__ThermalStandard"
+      ],
+      "parameters": [
+        "all"
+      ],
+      "duals": [
+        "all"
+      ]
+    }
+  ],
+  "start_time": "2020-01-01T04:00:00",
+  "end_time": null,
+  "path": null,
+  "format": "csv"
+}
+```
+"""
+function export_results(results::SimulationResults, exports)
+    simulation_store_path = joinpath(results.path, "data_store")
+    h5_store_open(simulation_store_path, "r") do store
+        export_results(results, exports, store)
     end
-    for name in dual_names
-        dual_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        dual_result[Symbol(dual_name)] = read_arrow_file(file_path)
+end
+
+function export_results(results::SimulationResults, exports, store::SimulationStore)
+    if !(exports isa SimulationResultsExport)
+        exports = SimulationResultsExport(exports, results.params)
     end
-    for name in param_names
-        param_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        param_values[Symbol(param_name)] = read_arrow_file(file_path)
+
+    file_type = get_export_file_type(exports)
+
+    for stage_results in values(results.stage_results)
+        stage_exports = get_stage_exports(exports, stage_results.stage)
+        path = exports.path === nothing ? stage_results.results_output_folder : exports.path
+        for timestamp in get_existing_timestamps(stage_results)
+            !should_export(exports, timestamp) && continue
+
+            export_path = joinpath(path, stage_results.stage, "variables")
+            mkpath(export_path)
+            for name in get_existing_variables(stage_results)
+                if should_export_variable(stage_exports, name)
+                    dfs = read_variable(
+                        stage_results,
+                        name;
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
+                    )
+                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                end
+            end
+
+            export_path = joinpath(path, stage_results.stage, "parameters")
+            mkpath(export_path)
+            for name in get_existing_parameters(stage_results)
+                if should_export_parameter(stage_exports, name)
+                    dfs = read_parameter(
+                        stage_results,
+                        name;
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
+                    )
+                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                end
+            end
+
+            export_path = joinpath(path, stage_results.stage, "duals")
+            mkpath(export_path)
+            for name in get_existing_duals(stage_results)
+                if should_export_dual(stage_exports, name)
+                    dfs = read_dual(
+                        stage_results,
+                        name;
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
+                    )
+                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                end
+            end
+        end
     end
-    optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
-    time_stamp = read_arrow_file(joinpath(folder_path, "time_stamp.arrow"))
-    base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
-    if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
-        time_stamp = shorten_time_stamp(time_stamp)
+end
+
+function export_result(::Type{CSV.File}, path, name, timestamp, df::DataFrames.DataFrame)
+    filename = joinpath(path, string(name) * "_" * convert_for_path(timestamp) * ".csv")
+    open(filename, "w") do io
+        CSV.write(io, df)
     end
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
-    check_file_integrity(folder_path)
-    results = SimulationResults(
-        base_power,
-        vars_result,
-        obj_value,
-        optimizer_log,
-        time_stamp,
-        dual_result,
-        folder_path,
-        param_values,
-    )
-    return results
+
+    @debug "Exported $filename"
 end

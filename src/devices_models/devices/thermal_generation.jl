@@ -519,12 +519,12 @@ function ramp_constraints!(
 
     # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
     for r in data
-        add_device_services!(r, r.ic_status.device, model)
+        add_device_services!(r, r.ic_power.device, model)
     end
     if !isempty(data)
         device_multistart_rateofchange!(
             psi_container,
-            constaint_data,
+            data,
             make_constraint_name(RAMP, PSY.ThermalMultiStart),
             make_variable_name(ActivePowerVariable, PSY.ThermalMultiStart),
         )
@@ -1053,7 +1053,7 @@ function AddCostSpec(
         start_up_cost = PSY.get_start_up,
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = PSY.get_fixed,
-        sos_status = VARIABLE,
+        sos_status = SOSStatusVariable.VARIABLE,
     )
 end
 
@@ -1063,9 +1063,9 @@ function AddCostSpec(
     psi_container::PSIContainer,
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
     if has_on_parameter(psi_container, T)
-        sos_status = PARAMETER
+        sos_status = SOSStatusVariable.PARAMETER
     else
-        sos_status = NO_VARIABLE
+        sos_status = SOSStatusVariable.NO_VARIABLE
     end
 
     return AddCostSpec(;
@@ -1093,7 +1093,7 @@ function AddCostSpec(
         # variable_cost = PSY.get_variable, uses SOS by default
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
-        sos_status = VARIABLE,
+        sos_status = SOSStatusVariable.VARIABLE,
     )
 end
 

@@ -92,6 +92,13 @@ function _make_jump_model!(psi_container::PSIContainer)
         parameters && PJ.enable_parameters(JuMPmodel)
         psi_container.JuMPmodel = JuMPmodel
     end
+    if get_optimizer_log_print(settings)
+        @debug "optimizer set to silent"
+        JuMP.set_silent(psi_container.JuMPmodel)
+    else
+        JuMP.unset_silent(psi_container.JuMPmodel)
+        @debug "optimizer unset to silent"
+    end
     return
 end
 
@@ -439,23 +446,6 @@ function iterate_parameter_containers(psi_container::PSIContainer)
     end
 end
 
-function get_parameters_value(psi_container::PSIContainer)
-    # TODO: Still not obvious implementation since it needs to get the multipliers from
-    # the system
-    params_dict = Dict{Symbol, DataFrames.DataFrame}()
-    parameters = get_parameters(psi_container)
-    (parameters === nothing || isempty(parameters)) && return params_dict
-    for (k, v) in parameters
-        !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
-        params_key_tuple = decode_symbol(k)
-        params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
-        param_array = axis_array_to_dataframe(get_parameter_array(v))
-        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
-        params_dict[params_dict_key] = param_array .* multiplier_array
-    end
-    return params_dict
-end
-
 function assign_expression!(psi_container::PSIContainer, name::Symbol, value)
     @debug "set_expression" name
     psi_container.expressions[name] = value
@@ -502,19 +492,23 @@ function export_optimizer_log(
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function _write_psi_container(psi_container::PSIContainer, save_path::String)
+function write_psi_container(psi_container::PSIContainer, save_path::String)
     MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
     MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
 end
 
-function get_dual_values(psi_container::PSIContainer)
-    cons = get_constraint_duals(psi_container.settings)
-    return get_dual_values(psi_container, cons)
+function read_variables(psi_container::PSIContainer)
+    return Dict(k => axis_array_to_dataframe(v) for (k, v) in get_variables(psi_container))
 end
 
-function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
+function read_duals(psi_container::PSIContainer)
+    cons = get_constraint_duals(psi_container.settings)
+    return read_duals(psi_container, cons)
+end
+
+function read_duals(op::PSIContainer, cons::Vector{Symbol})
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
     isempty(cons) && return results_dict
     for c in cons
@@ -522,6 +516,23 @@ function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
         results_dict[c] = axis_array_to_dataframe(v)
     end
     return results_dict
+end
+
+function read_parameters(psi_container::PSIContainer)
+    # TODO: Still not obvious implementation since it needs to get the multipliers from
+    # the system
+    params_dict = Dict{Symbol, DataFrames.DataFrame}()
+    parameters = get_parameters(psi_container)
+    (isnothing(parameters) || isempty(parameters)) && return params_dict
+    for (k, v) in parameters
+        !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
+        params_key_tuple = decode_symbol(k)
+        params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
+        param_array = axis_array_to_dataframe(get_parameter_array(v))
+        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
+        params_dict[params_dict_key] = param_array .* multiplier_array
+    end
+    return params_dict
 end
 
 function add_to_setting_ext!(psi_container::PSIContainer, key::String, value)

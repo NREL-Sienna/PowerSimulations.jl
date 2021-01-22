@@ -1,9 +1,3 @@
-#=
-function Base.show(io::IO, op_problem::OperationsProblem)
-    println(io, "Operation Model")
-end
-=#
-
 function _organize_model(
     val::Dict{Symbol, T},
     field::Symbol,
@@ -65,69 +59,47 @@ function Base.show(io::IO, sim::Simulation)
     println(io, "Simulation()")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
-    println(io, "\nResults")
-    println(io, "========\n")
+function Base.show(io::IO, ::MIME"text/plain", results::SimulationResults)
+    for res in values(results.stage_results)
+        show(io, MIME"text/plain"(), res)
+    end
+end
+
+function Base.show(io::IO, ::MIME"text/plain", results::StageResults)
+    title = results.stage * " Results"
+    println(io, "\n$title")
+    bars = join(("=" for _ in 1:length(title)))
+    println(io, "$bars\n")
+    timestamps = get_existing_timestamps(results)
+    println(io, "Start: $(timestamps.start)")
+    println(io, "End: $(timestamps.stop)")
+    println(io, "Resolution: $(timestamps.step)")
+    println(io, "\n")
     println(io, "Variables")
     println(io, "=========\n")
-    times = IS.get_timestamp(results)
-    variables = IS.get_variables(results)
-    if (length(keys(variables)) > 5)
-        for (k, v) in variables
-            println(io, "$k: $(size(v))")
-        end
-        println(io, "\n")
-    else
-        for (k, v) in IS.get_variables(results)
-            if size(times, 1) == size(v, 1)
-                var = hcat(times, v)
-            else
-                var = v
-            end
-            (l, w) = size(var)
-            if w < 6
-                println(io, "$(k)")
-                println(io, "$("-" ^ length("$k"))\n")
-                println(io, "$(var)\n")
-            else
-                println(io, "$(k)  size ($l, $w)\n")
-            end
-        end
-    end
-    parameters = IS.get_parameters(results)
-    if !isempty(parameters)
-        println(io, "Parameters")
-        println(io, "==========\n")
-        for (p, v) in parameters
-            if size(times, 1) == size(v, 1)
-                var = hcat(times, v)
-            else
-                var = v
-            end
-            l, w = size(var)
-            if w < 6
-                println(io, "$(p)")
-                println(io, "-"^length("$p"))
-                println(io, "$(var)\n")
-            else
-                println(io, "$(p)  size ($l, $w)\n")
-            end
-        end
-    end
-    println(io, "Optimizer Log")
-    println(io, "-------------")
-    for (k, v) in results.optimizer_log
-        if !(v === nothing)
-            println(io, "        $(k) = $(v)")
-        end
+    for v in get_existing_variables(results)
+        println(io, "$(v)")
     end
     println(io, "\n")
-    for (k, v) in results.total_cost
-        println(io, "Total Cost: $(k) = $(v)")
+    parameters = get_existing_parameters(results)
+    duals = get_existing_duals(results)
+    for val in [("Parameters", parameters), ("Duals", duals)]
+        if !isempty(val[2])
+            println(io, "$(val[1])")
+            println(io, "==========\n")
+            for v in val[2]
+                println(io, "$(v)")
+            end
+            println(io, "\n")
+        end
     end
 end
 function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     println(io, "<h1>Results</h1>")
+    timestamps = get_existing_timestamps(results)
+    println(io, "<p> Start: $(timestamps.start)</p>")
+    println(io, "<p> End: $(timestamps.stop)</p>")
+    println(io, "<p> Resolution: $(timestamps.step)</p>")
     println(io, "<h2>Variables</h2>")
     times = IS.get_timestamp(results)
     variables = IS.get_variables(results)
@@ -192,43 +164,6 @@ function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.Service
     for (k, v) in services
         println(io, "<p><b>$(k)</b></p>")
         println(io, "<p>$(v)</p>")
-    end
-end
-
-function Base.show(io::IO, ::MIME"text/html", sim_results::SimulationResultsReference)
-    println(io, "<h1>Simulation Results Reference</h1>")
-    println(io, "<p><b>Results Folder:</b> $(sim_results.results_folder)</p>")
-    println(io, "<h2>Reference Tables</h2>")
-    for (k, v) in sim_results.ref
-        println(io, "<p><b>$(k)</b></p>")
-        for (i, x) in v
-            println(io, "<p>$(i): dataframe size $(size(x))</p>")
-        end
-    end
-    for (k, v) in sim_results.chronologies
-        println(io, "<p><b>$(k)</b></p>")
-        println(io, "<p>time length: $(v)</p>")
-    end
-end
-
-function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsReference)
-    println(io, "Simulation Results Reference\n")
-    println(io, "Results Folder: $(sim_results.results_folder)\n")
-    println(io, "Reference Tables\n")
-    println(io, "________________\n")
-    for (k, v) in sim_results.ref
-        println(io, "$(k)\n")
-        try
-            for (i, x) in v
-                println(io, "$(i): dataframe size $(size(x))\n")
-            end
-        catch
-            print(io, "Custom Stage")
-        end
-    end
-    for (k, v) in sim_results.chronologies
-        println(io, "$(k)\n")
-        println(io, "time length: $(v)\n")
     end
 end
 

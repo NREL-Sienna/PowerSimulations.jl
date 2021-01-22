@@ -84,8 +84,8 @@ end
 function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
     source_stage = get_stage(sim, key.first)
     destination_stage = get_stage(sim, key.second)
-    source_stage_horizon = sim.sequence.horizons[key.first]
-    destination_stage_horizon = sim.sequence.horizons[key.second]
+    source_stage_horizon = get_sequence(sim).horizons[key.first]
+    destination_stage_horizon = get_sequence(sim).horizons[key.second]
     source_stage_interval = get_stage_interval(sim, key.first)
     destination_stage_interval = get_stage_interval(sim, key.second)
 
@@ -110,12 +110,12 @@ function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
 end
 
 function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
-    source_stage_horizon = sim.sequence.horizons[key.first]
+    source_stage_horizon = get_sequence(sim).horizons[key.first]
     source_stage_interval = get_stage_interval(sim, key.first)
     if source_stage_horizon != source_stage_interval
         @warn("Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_stage_horizon) in stage $(key.first) will be replaced with $(source_stage_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon")
     end
-    sim.sequence.horizons[key.first] = get_stage_interval(sim, key.first)
+    get_sequence(sim).horizons[key.first] = get_stage_interval(sim, key.first)
     return
 end
 

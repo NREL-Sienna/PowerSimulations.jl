@@ -12,9 +12,9 @@ services = Dict{Symbol, ServiceModel}()
 
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5 = build_system("c_sys5")
-    c_sys5_re = build_system("c_sys5_re")
-    c_sys14 = build_system("c_sys14")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
 
     @test_throws ArgumentError OperationsProblem(
         TestOpProblem,
@@ -63,7 +63,7 @@ end
 
 @testset "Test optimization debugging functions" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     op_problem = OperationsProblem(
         TestOpProblem,
         template,
@@ -93,7 +93,7 @@ end
     my_model = JuMP.Model()
     my_model.ext[:PSI_Testing] = 1
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     op_problem = OperationsProblem(
         TestOpProblem,
         template,
@@ -129,10 +129,10 @@ end
         ThermalDispatchNoMin,
     ]
 
-    c_sys5 = build_system("c_sys5")
-    c_sys5_re = build_system("c_sys5_re")
-    c_sys5_bat = build_system("c_sys5_bat")
-    c_sys5_pwl_ed = build_system("c_sys5_pwl_ed")
+    c_sys5 = PSB.build_system(PSITestSystems,"c_sys5")
+    c_sys5_re = PSB.build_system(PSITestSystems,"c_sys5_re")
+    c_sys5_bat = PSB.build_system(PSITestSystems,"c_sys5_bat")
+    c_sys5_pwl_ed = PSB.build_system(PSITestSystems,"c_sys5_pwl_ed")
     systems = [c_sys5, c_sys5_re, c_sys5_bat, c_sys5_pwl_ed]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal)" begin
@@ -147,7 +147,7 @@ end
                 template,
                 system;
                 use_parameters = p,
-                PTDF = build_PTDF5(),
+                PTDF = PTDF(system),
                 export_pwl_vars = true,
             )
             @test :nodal_balance_active in keys(op_problem.psi_container.expressions)
@@ -157,7 +157,7 @@ end
 end
 
 @testset "Operation Model CopperPlatePowerModel - ThermalDispatchNoMin - c_sys5_pwl_ed_nonconvex" begin
-    c_sys5_pwl_ed_nonconvex = build_system("c_sys5_pwl_ed_nonconvex")
+    c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -169,12 +169,12 @@ end
         template,
         c_sys5_pwl_ed_nonconvex;
         use_parameters = true,
-        PTDF = build_PTDF5(),
+        PTDF = PTDF(c_sys5_pwl_ed_nonconvex),
         export_pwl_vars = true,
     )
 end
 @testset "Operations template constructors" begin
-    c_sys5 = build_system("c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
     op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
     moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
@@ -183,4 +183,20 @@ end
     UC = PSI.run_unit_commitment(c_sys5; optimizer = fast_lp_optimizer)
     @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
     @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
+end
+
+@testset "Test print methods" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5;
+        optimizer = GLPK_optimizer,
+        use_parameters = true,
+    )
+    list = [template, op_problem, op_problem.psi_container, services]
+    _test_plain_print_methods(list)
+    list = [services]
+    _test_html_print_methods(list)
 end

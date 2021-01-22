@@ -95,7 +95,7 @@ function DeviceMultiStartRangeConstraintsInfo(
     )
 end
 
-function DeviceMultiStartRangeConstraintsInfo(name::String)
+function DeviceMultiStartRangeConstraintsInfo(component_name::String)
     return DeviceMultiStartRangeConstraintsInfo(
         component_name,
         (min = -Inf, max = Inf),
@@ -130,7 +130,7 @@ function DeviceRampConstraintInfo(
     )
 end
 
-function DeviceRampConstraintInfo(name::String, ic_power::InitialCondition)
+function DeviceRampConstraintInfo(component_name::String, ic_power::InitialCondition)
     return DeviceRampConstraintInfo(
         component_name,
         (min = -Inf, max = Inf),

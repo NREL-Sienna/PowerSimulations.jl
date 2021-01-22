@@ -2,10 +2,10 @@ using Logging
 using PowerSimulations
 using PowerSystems
 using PowerModels
+using PowerSystemCaseBuilder
 using InfrastructureSystems
 using DataFrames
 using Dates
-using Arrow
 using JuMP
 using Test
 using Ipopt
@@ -15,11 +15,14 @@ using OSQP
 using SCS
 using TimeSeries
 using ParameterJuMP
-using TestSetExtensions
+using CSV
 using DataFrames
 using DataStructures
 import UUIDs
 import Aqua
+import PowerSystemCaseBuilder:
+    PSITestSystems
+using Random
 Aqua.test_unbound_args(PowerSimulations)
 Aqua.test_undefined_exports(PowerSimulations)
 #Aqua.test_ambiguities(PowerSimulations)
@@ -28,13 +31,16 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 const PJ = ParameterJuMP
+const PSB  = PowerSystemCaseBuilder
 const IS = InfrastructureSystems
 TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
+const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
+const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 
-include("test_utils/get_test_data.jl")
 include("test_utils/model_checks.jl")
 include("test_utils/operations_problem_templates.jl")
+
 
 ipopt_optimizer =
     JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)
@@ -77,8 +83,44 @@ function get_logging_level(env_name::String, default)
     return log_level
 end
 
+"""
+Includes the given test files, given as a list without their ".jl" extensions.
+If none are given it will scan the directory of the calling file and include all
+the julia files.
+"""
+macro includetests(testarg...)
+    if length(testarg) == 0
+        tests = []
+    elseif length(testarg) == 1
+        tests = testarg[1]
+    else
+        error("@includetests takes zero or one argument")
+    end
+
+    quote
+        tests = $tests
+        rootfile = @__FILE__
+        if length(tests) == 0
+            tests = readdir(dirname(rootfile))
+            tests = filter(
+                f ->
+                    startswith(f, "test_") && endswith(f, ".jl") && f != basename(rootfile),
+                tests,
+            )
+        else
+            tests = map(f -> string(f, ".jl"), tests)
+        end
+        println()
+        for test in tests
+            print(splitext(test)[1], ": ")
+            include(test)
+            println()
+        end
+    end
+end
+
 function run_tests()
-    console_level = get_logging_level("SYS_CONSOLE_LOG_LEVEL", "Info")
+    console_level = get_logging_level("SYS_CONSOLE_LOG_LEVEL", "Error")
     console_logger = ConsoleLogger(stderr, console_level)
     file_level = get_logging_level("SYS_LOG_LEVEL", "Info")
 
@@ -89,8 +131,6 @@ function run_tests()
         )
         global_logger(multi_logger)
 
-        initialize_system_serialized_files()
-
         @time @testset "Begin PowerSimulations tests" begin
             @includetests ARGS
         end
@@ -99,7 +139,6 @@ function run_tests()
         #@test length(IS.get_log_events(multi_logger.tracker, Logging.Error)) == 0
 
         @info IS.report_log_summary(multi_logger)
-        summarize_system_build_stats()
     end
 end
 

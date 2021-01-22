@@ -4,8 +4,17 @@ const HASH_FILENAME = "check.sha256"
 Return a decoded JSON file.
 """
 function read_json(filename::AbstractString)
-    return open(filename) do io
-        return JSON.parse(io)
+    open(filename, "r") do io
+        JSON.parse(io)
+    end
+end
+
+"""
+Return a DataFrame from a CSV file.
+"""
+function read_dataframe(filename::AbstractString)
+    open(filename, "r") do io
+        DataFrames.DataFrame(CSV.File(io))
     end
 end
 
@@ -41,6 +50,10 @@ function compute_file_hash(path::String, files::Vector{String})
     end
 end
 
+function compute_file_hash(path::String, file::String)
+    return compute_file_hash(path, [file])
+end
+
 function read_file_hashes(path)
     data = open(joinpath(path, HASH_FILENAME), "r") do io
         JSON.parse(io)
@@ -65,7 +78,6 @@ end
 # writing a dictionary of dataframes to files
 
 function write_data(vars_results::Dict, save_path::String; kwargs...)
-    file_type = get(kwargs, :file_type, Arrow)
     if :duals in keys(kwargs)
         name = "dual_"
     elseif :params in keys(kwargs)
@@ -73,14 +85,12 @@ function write_data(vars_results::Dict, save_path::String; kwargs...)
     else
         name = ""
     end
-    if file_type == Arrow || file_type == CSV
-        for (k, v) in vars_results
-            file_path = joinpath(save_path, "$name$k.$(lowercase("$file_type"))")
-            if isempty(vars_results[k])
-                @debug "$name$k is empty, not writing $file_path"
-            else
-                file_type.write(file_path, vars_results[k])
-            end
+    for (k, v) in vars_results
+        file_path = joinpath(save_path, "$name$k.csv")
+        if isempty(vars_results[k])
+            @debug "$name$k is empty, not writing $file_path"
+        else
+            CSV.write(file_path, vars_results[k])
         end
     end
 end
@@ -90,36 +100,30 @@ end
 function write_data(
     vars_results::Dict,
     time::DataFrames.DataFrame,
-    save_path::AbstractString;
-    kwargs...,
+    save_path::AbstractString,
 )
-    file_type = get(kwargs, :file_type, Arrow)
     for (k, v) in vars_results
         var = DataFrames.DataFrame()
-        if file_type == CSV && size(time, 1) == size(v, 1)
+        if size(time, 1) == size(v, 1)
             var = hcat(time, v)
         else
             var = v
         end
-        file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-        file_type.write(file_path, var)
+        file_path = joinpath(save_path, "$(k).csv")
+        CSV.write(file_path, var)
     end
 end
 
 function write_data(
     data::DataFrames.DataFrame,
     save_path::AbstractString,
-    file_name::String;
-    kwargs...,
+    file_name::String,
 )
     if isfile(save_path)
         save_path = dirname(save_path)
     end
-    file_type = get(kwargs, :file_type, Arrow)
-    if file_type == Arrow || file_type == CSV
-        file_path = joinpath(save_path, "$(file_name).$(lowercase("$file_type"))")
-        file_type.write(file_path, data)
-    end
+    file_path = joinpath(save_path, "$(file_name).csv")
+    CSV.write(file_path, data)
     return
 end
 
@@ -250,13 +254,60 @@ end
 
 function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray)
     column_names = unique([(k[1], k[3]) for k in keys(input_array.data)])
-    result_df = DataFrames.DataFrame()
     array_values = Vector{Vector{Float64}}(undef, length(column_names))
     for (ix, col) in enumerate(column_names)
         res = values(filter(v -> first(v)[[1, 3]] == col, input_array.data))
         array_values[ix] = PSI._jump_value.(res)
     end
     return DataFrames.DataFrame(array_values, Symbol.(column_names))
+end
+
+function to_array(array::JuMP.Containers.DenseAxisArray)
+    ax = axes(array)
+    len_axes = length(ax)
+    if len_axes == 1
+        data = _jump_value.((array[x] for x in ax[1]))
+    elseif len_axes == 2
+        data = Array{Float64, 2}(undef, length(ax[2]), length(ax[1]))
+        for t in ax[2], (ix, name) in enumerate(ax[1])
+            data[t, ix] = _jump_value(array[name, t])
+        end
+    # TODO: this needs a better plan
+    #elseif len_axes == 3
+    #    extra_dims = sum(length(axes(array)[2:(end - 1)]))
+    #    arrays = Vector{Array{Float64, 2}}()
+
+    #    for i in ax[2]
+    #        third_dim = collect(fill(i, size(array)[end]))
+    #        data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
+    #        for t in last(ax), (ix, name) in enumerate(first(ax))
+    #            data[t, ix] = _jump_value(array[name, i, t])
+    #        end
+    #        push!(arrays, data)
+    #    end
+    #    data = vcat(arrays)
+    else
+        error("array axes not supported: $(axes(array))")
+    end
+
+    return data
+end
+
+function to_array(array::JuMP.Containers.SparseAxisArray)
+    columns = unique([(k[1], k[3]) for k in keys(array.data)])
+    # PERF: can we determine the 2-d array size?
+    tmp_data = Dict{Any, Vector{Float64}}()
+    for (ix, col) in enumerate(columns)
+        res = values(filter(v -> first(v)[[1, 3]] == col, array.data))
+        tmp_data[col] = PSI._jump_value.(res)
+    end
+
+    data = Array{Float64, 2}(undef, length(first(values(tmp_data))), length(columns))
+    for (i, column) in enumerate(columns)
+        data[:, i] = tmp_data[column]
+    end
+
+    return data
 end
 
 # this ensures that the time_stamp is not double shortened
@@ -292,6 +343,8 @@ function replace_chars(s::String, char::String, replacement::String)
     return replace(s, Regex("[$char]") => replacement)
 end
 
+convert_for_path(x::Dates.DateTime) = replace(string(x), ":" => "-")
+
 "Removes the string `char` from the original string"
 function remove_chars(s::String, char::String)
     return replace_chars(s::String, char::String, "")
@@ -313,11 +366,28 @@ function get_available_components(
 end
 
 """
-Load the complete arrow file into a DataFrame. Not optimized for memory use
+    check_file_integrity(path::String)
+
+Checks the hash value for each file made with the file is written with the new hash_value to verify the file hasn't been tampered with since written
+
+# Arguments
+- `path::String`: this is the folder path that contains the results and the check.sha256 file
 """
-function read_arrow_file(file::AbstractString)
-    return open(file, "r") do io
-        DataFrames.DataFrame(Arrow.Table(io))
+function check_file_integrity(path::String)
+    matched = true
+    for file_info in read_file_hashes(path)
+        filename = file_info["filename"]
+        @info "checking integrity of $filename"
+        expected_hash = file_info["hash"]
+        actual_hash = compute_sha256(filename)
+        if expected_hash != actual_hash
+            @error "hash mismatch for file" filename expected_hash actual_hash
+            matched = false
+        end
+    end
+
+    if !matched
+        throw(IS.HashMismatchError("The hash value in the written files does not match the read files, results may have been tampered."))
     end
 end
 

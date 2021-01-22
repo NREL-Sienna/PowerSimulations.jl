@@ -25,9 +25,9 @@ function create_sequence()
     )
 end
 
-function test_sequence_build(file_path::String)
-    c_sys5_uc = build_system("c_sys5_uc")
-    c_sys5_ed = build_system("c_sys5_ed")
+function test_simulation_build(file_path::String)
+    c_sys5_uc = PSB.build_system(PSITestSystems,"c_sys5_uc")
+    c_sys5_ed = PSB.build_system(PSITestSystems,"c_sys5_ed")
 
     @testset "Test Simulation Simulation Sequence Validation" begin
         sequence = create_sequence()
@@ -38,7 +38,10 @@ function test_sequence_build(file_path::String)
     @testset "Simulation with provided initial time" begin
         stages_definition = create_stages(template_basic_uc, c_sys5_uc, c_sys5_ed)
         sequence = create_sequence()
-        second_day = DayAhead[24] + Hour(1)
+        second_day = DateTime(
+        "1/1/2024  23:00:00",
+        "d/m/y  H:M:S",
+    ) + Hour(1)
         sim = Simulation(
             name = "test",
             steps = 1,
@@ -181,7 +184,7 @@ function test_sequence_build(file_path::String)
         )
         sim.internal = PSI.SimulationInternal(
             sim.steps,
-            keys(sim.sequence.order),
+            keys(PSI.get_sequence(sim).order),
             mktempdir(),
             PSI.get_name(sim),
         )
@@ -327,7 +330,7 @@ function test_sequence_build(file_path::String)
                 template_ed_ptdf,
                 c_sys5_ed,
                 GLPK_optimizer;
-                PTDF = build_PTDF5(),
+                PTDF = PTDF(c_sys5_ed),
             ),
         )
 
@@ -359,8 +362,8 @@ function test_sequence_build(file_path::String)
         @test !isnothing(sim.stages["ED"].internal.psi_container.settings.PTDF)
     end
     @testset "Create Simulation using SOS-PWL cost function" begin
-        c_sys5_uc = build_system("c_sys5_pwl_uc")
-        c_sys5_ed = build_system("c_sys5_pwl_ed")
+        c_sys5_uc = PSB.build_system(PSITestSystems,"c_sys5_pwl_uc")
+        c_sys5_ed = PSB.build_system(PSITestSystems,"c_sys5_pwl_ed")
         stages_definition_kwargs = Dict(
             "UC" => Stage(
                 GenericOpProblem,
@@ -398,11 +401,11 @@ function test_sequence_build(file_path::String)
     end
 end
 
-@testset "Test sequence build" begin
-    path = joinpath(pwd(), "test_sequence_build")
+@testset "Test simulation build" begin
+    path = joinpath(pwd(), "test_simulation_build")
     !isdir(path) && mkdir(path)
     try
-        test_sequence_build(path)
+        test_simulation_build(path)
     finally
         @info("removing test files")
         rm(path, force = true, recursive = true)
