@@ -121,7 +121,7 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 export set_model!
-export serialize
+export serialize_model
 export export_operations_model
 ## Sim Model Exports
 export build!

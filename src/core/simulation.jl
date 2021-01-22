@@ -256,7 +256,7 @@ they passed to the original Simulation.
   original simulation.
 """
 function Simulation(directory::AbstractString, stage_info::Dict)
-    obj = deserialize(Simulation, directory, stage_info)
+    obj = deserialize_model(Simulation, directory, stage_info)
 end
 
 ################# accessor functions ####################
@@ -1280,7 +1280,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     return directory
 end
 
-function deserialize(::Type{Simulation}, directory::AbstractString, stage_info::Dict)
+function deserialize_model(::Type{Simulation}, directory::AbstractString, stage_info::Dict)
     orig = pwd()
     cd(directory)
 
