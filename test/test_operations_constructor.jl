@@ -147,7 +147,7 @@ end
                 template,
                 system;
                 use_parameters = p,
-                PTDF = build_PTDF5(),
+                PTDF = PTDF(system),
                 export_pwl_vars = true,
             )
             @test :nodal_balance_active in keys(op_problem.psi_container.expressions)
@@ -169,7 +169,7 @@ end
         template,
         c_sys5_pwl_ed_nonconvex;
         use_parameters = true,
-        PTDF = build_PTDF5(),
+        PTDF = PTDF(c_sys5_pwl_ed_nonconvex),
         export_pwl_vars = true,
     )
 end

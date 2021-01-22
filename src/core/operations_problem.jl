@@ -219,7 +219,7 @@ function OperationsProblem(
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
 )
-    return deserialize_problem(
+    return deserialize_model(
         OperationsProblem,
         filename;
         jump_model = jump_model,
@@ -524,7 +524,7 @@ function solve!(
         param_values,
     )
 
-    save_path !== nothing && serialize(op_problem, save_path)
+    save_path !== nothing && serialize_model(op_problem, save_path)
 
     return results
 end
@@ -611,7 +611,7 @@ function get_var_index(op_problem::OperationsProblem, index::Int)
     return
 end
 
-function serialize_problem(op_problem::OperationsProblem, filename::AbstractString)
+function serialize_model(op_problem::OperationsProblem, filename::AbstractString)
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
     sys_filename = "$(basename(filename))-system-$(IS.get_uuid(op_problem.sys)).json"
@@ -627,7 +627,7 @@ function serialize_problem(op_problem::OperationsProblem, filename::AbstractStri
     @info "Serialized OperationsProblem to" filename
 end
 
-function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString; kwargs...)
+function deserialize_model(::Type{OperationsProblem}, filename::AbstractString; kwargs...)
     obj = Serialization.deserialize(filename)
     if !(obj isa OperationsProblemSerializationWrapper)
         throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))

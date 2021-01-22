@@ -203,12 +203,14 @@ function test_simulation_results(file_path::String, export_path)
         end
 
         # request non sync data
+        @test_logs((:error, r"Requested time does not match available results"),
+        match_mode = :any,
         @test_throws IS.InvalidValue read_realized_variables(
             results_ed,
             names = [:P__ThermalStandard],
             initial_time = DateTime("2024-01-01T02:12:00"),
             len = 3,
-        )
+        ))
 
         # request good window
         @test size(read_realized_variables(

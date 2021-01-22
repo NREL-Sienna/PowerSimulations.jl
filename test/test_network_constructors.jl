@@ -63,9 +63,9 @@ end
         [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow]
     parameters = [true, false]
     PTDF_ref = IdDict{System, PTDF}(
-        c_sys5 => build_PTDF5(),
-        c_sys14 => build_PTDF14(),
-        c_sys14_dc => build_PTDF14_dc(),
+        c_sys5 => PTDF(c_sys5),
+        c_sys14 => PTDF(c_sys14),
+        c_sys14_dc => PTDF(c_sys14_dc),
     )
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 168],
@@ -176,7 +176,7 @@ end
         :DCLine => dc_line,
     )
     parameters = [true, false]
-    ptdf = build_PTDF5()
+    ptdf = PTDF(sys)
     LMPs = []
     for (ix, net) in enumerate(network), p in parameters
         template = OperationsProblemTemplate(net, devices, branches, services)

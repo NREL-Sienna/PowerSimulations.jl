@@ -162,7 +162,7 @@ end
 function _validate_names(existing_names::Vector{Symbol}, names::Vector{Symbol})
     for name in names
         if name ∉ existing_names
-            @error("$name is not stored", sort!(existing_names))
+            @error("$name is not stored", sort(existing_names))
             throw(IS.InvalidValue("$name is not stored"))
         end
     end

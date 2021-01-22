@@ -256,7 +256,7 @@ they passed to the original Simulation.
   original simulation.
 """
 function Simulation(directory::AbstractString, stage_info::Dict)
-    obj = deserialize(Simulation, directory, stage_info)
+    obj = deserialize_model(Simulation, directory, stage_info)
 end
 
 ################# accessor functions ####################
@@ -1025,7 +1025,6 @@ function _execute!(
                     end
                     stage_interval = get_stage_interval(sim, stage_name)
                     sim.internal.current_time = sim.internal.date_ref[stage_number]
-                    # TODO: Show progress meter here
                     get_sequence(sim).current_execution_index = ix
                     # Is first run of first stage? Yes -> don't update stage
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Stage $(stage_number)" begin
@@ -1070,7 +1069,7 @@ function _execute!(
                     ProgressMeter.update!(progress_bar, global_stage_execution_count;
                         showvalues = [(:Step, step), (:Stage, stage_name),
                     (:("Simulation Timestamp"), get_current_time(sim))])
-                end #execition stage timer
+                end #execution stage timer
             end # execution order for loop
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
@@ -1135,19 +1134,21 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
             )
         end
 
-        for (name, param_container) in parameters
-            # TODO JD: this needs improvement
-            !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
-            array = get_parameter_array(param_container)
-            reqs.parameters[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
-            add_rule!(
-                rules,
-                stage_sym,
-                STORE_CONTAINER_PARAMETERS,
-                name,
-                false,
-                CachePriority.LOW,
-            )
+        if parameters !== nothing
+            for (name, param_container) in parameters
+                # TODO JD: this needs improvement
+                !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
+                array = get_parameter_array(param_container)
+                reqs.parameters[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
+                add_rule!(
+                    rules,
+                    stage_sym,
+                    STORE_CONTAINER_PARAMETERS,
+                    name,
+                    false,
+                    CachePriority.LOW,
+                )
+            end
         end
 
         for (name, array) in variables
@@ -1240,7 +1241,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
-        throw(ArgumentError("$directory has files already $(readdir(directory)). Please delete them or pass force = true."))
+        throw(ArgumentError("$directory has files already: $(readdir(directory)). Please delete them or pass force = true."))
     end
     rm(directory, recursive = true, force = true)
     mkdir(directory)
@@ -1281,7 +1282,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     return directory
 end
 
-function deserialize(::Type{Simulation}, directory::AbstractString, stage_info::Dict)
+function deserialize_model(::Type{Simulation}, directory::AbstractString, stage_info::Dict)
     orig = pwd()
     cd(directory)
 
