@@ -1239,7 +1239,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
-        throw(throw(ArgumentError("$directory has files already: $(readdir(directory)). Please delete them or pass force = true.")))
+        throw(ArgumentError("$directory has files already: $(readdir(directory)). Please delete them or pass force = true."))
     end
     rm(directory, recursive = true, force = true)
     mkdir(directory)
