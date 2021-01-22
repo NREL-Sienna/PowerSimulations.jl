@@ -38,7 +38,10 @@ function test_simulation_build(file_path::String)
     @testset "Simulation with provided initial time" begin
         stages_definition = create_stages(template_basic_uc, c_sys5_uc, c_sys5_ed)
         sequence = create_sequence()
-        second_day = DayAhead[24] + Hour(1)
+        second_day = DateTime(
+        "1/1/2024  23:00:00",
+        "d/m/y  H:M:S",
+    ) + Hour(1)
         sim = Simulation(
             name = "test",
             steps = 1,
