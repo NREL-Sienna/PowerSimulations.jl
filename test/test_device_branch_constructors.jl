@@ -18,7 +18,7 @@
         template,
         system;
         optimizer = OSQP_optimizer,
-        PTDF = build_PTDF5(),
+        PTDF = PSY.PTDF(system),
     )
     for b in PSI.get_variable(op_problem_m.psi_container, :Fp__Line)
         @test JuMP.has_lower_bound(b)

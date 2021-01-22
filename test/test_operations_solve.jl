@@ -48,9 +48,9 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     PTDF_ref = IdDict{System, PTDF}(
-        c_sys5 => build_PTDF5(),
-        c_sys14 => build_PTDF14(),
-        c_sys14_dc => build_PTDF14_dc(),
+        c_sys5 => PTDF(c_sys5),
+        c_sys14 => PTDF(c_sys14),
+        c_sys14_dc => PTDF(c_sys14_dc),
     )
     test_results = IdDict{System, Float64}(
         c_sys5 => 340000.0,
@@ -165,7 +165,7 @@ end
             system;
             balance_slack_variables = true,
             optimizer = ipopt_optimizer,
-            PTDF = build_PTDF5(),
+            PTDF = PTDF(c_sys5_re),
         )
         res = solve!(op_problem)
         @test termination_status(op_problem.psi_container.JuMPmodel) in
@@ -377,7 +377,7 @@ end
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
-    PTDF_ref = IdDict{System, PTDF}(c_sys5 => build_PTDF5(), c_sys5_dc => build_PTDF5_dc())
+    PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
 
     for net in networks, p in parameters_value, sys in systems
         @info("Test solve UC with $(net) network")

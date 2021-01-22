@@ -327,7 +327,7 @@ function test_simulation_build(file_path::String)
                 template_ed_ptdf,
                 c_sys5_ed,
                 GLPK_optimizer;
-                PTDF = build_PTDF5(),
+                PTDF = PTDF(c_sys5_ed),
             ),
         )
 
