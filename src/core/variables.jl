@@ -10,7 +10,6 @@ const ENERGY_DOWN = "Edown"
 const ENERGY_BUDGET = "energy_budget"
 const ENERGY_BUDGET_UP = "energy_budget_up"
 const ENERGY_BUDGET_DOWN = "energy_budget_down"
-const ENERGY_TARGET_SLACK = "energy_slack"
 const FLOW_ACTIVE_POWER = "Fp"
 const HOT_START = "start_hot"
 const INFLOW = "In"
@@ -52,8 +51,6 @@ struct EnergyVariable <: VariableType end
 struct EnergyVariableUp <: VariableType end
 
 struct EnergyVariableDown <: VariableType end
-
-struct EnergyTargetSlackVariable <: VariableType end
 
 struct LiftVariable <: VariableType end
 
@@ -118,8 +115,6 @@ make_variable_name(::Type{EnergyVariable}, ::Type{T}) where {T <: PSY.Device} = 
 make_variable_name(::Type{EnergyVariableUp}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "Eup")
 
 make_variable_name(::Type{EnergyVariableDown}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "Edown")
-
-make_variable_name(::Type{EnergyTargetSlackVariable}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "energy_slack")
 
 make_variable_name(::Type{LiftVariable}) = :lift
 

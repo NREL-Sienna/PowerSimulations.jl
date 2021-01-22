@@ -302,10 +302,11 @@ function AddCostSpec(
     ::Type{EndOfPeriodEnergyTarget},
     psi_container::PSIContainer,
 )
+    variable_cost_func = x -> - PSY.get_energy_value(x) + PSY.get_penalty_cost(x)
     return AddCostSpec(;
-        variable_type = EnergyTargetSlackVariable,
+        variable_type = EnergyVariable,
         component_type = PSY.BatteryEMS,
-        variable_cost = PSY.get_penalty_cost,
+        variable_cost = variable_cost_func,
         multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
@@ -319,9 +320,13 @@ function add_to_cost!(
     component_name = PSY.get_name(component)
     time_steps = model_time_steps(psi_container)
 
-    for t in time_steps
-        variable_cost!(psi_container, spec, component_name, PSY.VariableCost(cost_data), t)
-    end
+    linear_gen_cost!(
+        psi_container,
+        make_variable_name(spec.variable_type, spec.component_type),
+        component_name,
+        PSY.VariableCost(cost_data),
+        time_steps[end],
+    )
     return
 end
 
