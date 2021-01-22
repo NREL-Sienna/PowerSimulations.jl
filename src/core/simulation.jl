@@ -1134,19 +1134,21 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
             )
         end
 
-        for (name, param_container) in parameters
-            # TODO JD: this needs improvement
-            !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
-            array = get_parameter_array(param_container)
-            reqs.parameters[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
-            add_rule!(
-                rules,
-                stage_sym,
-                STORE_CONTAINER_PARAMETERS,
-                name,
-                false,
-                CachePriority.LOW,
-            )
+        if parameters !== nothing
+            for (name, param_container) in parameters
+                # TODO JD: this needs improvement
+                !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
+                array = get_parameter_array(param_container)
+                reqs.parameters[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
+                add_rule!(
+                    rules,
+                    stage_sym,
+                    STORE_CONTAINER_PARAMETERS,
+                    name,
+                    false,
+                    CachePriority.LOW,
+                )
+            end
         end
 
         for (name, array) in variables
