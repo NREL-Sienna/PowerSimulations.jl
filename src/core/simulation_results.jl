@@ -594,7 +594,7 @@ end
 Construct SimulationResults from a path and optionally an execution number.
 By default, choose the latest execution.
 """
-function SimulationResults(path::AbstractString, execution = nothing)
+function SimulationResults(path::AbstractString, execution = nothing; load_systems = true)
     # path will be either the execution_path or the directory containing all executions.
     contents = readdir(path)
     if "data_store" in contents
@@ -627,7 +627,7 @@ function SimulationResults(path::AbstractString, execution = nothing)
         for (name, stage_params) in sim_params.stages
             name = string(name)
             stage_result =
-                StageResults(store, name, stage_params, sim_params, execution_path)
+                StageResults(store, name, stage_params, sim_params, execution_path; load_system = load_systems)
             stage_results[name] = stage_result
         end
 
