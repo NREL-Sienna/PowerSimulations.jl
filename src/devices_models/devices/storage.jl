@@ -39,11 +39,6 @@ get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
 
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
 
-############## EnergySlackVariable, Storage ####################
-
-get_variable_binary(::EnergyTargetSlackVariable, ::Type{<:PSY.Storage}) = false
-get_variable_lower_bound(::EnergyTargetSlackVariable, d::PSY.Storage, _) = 0.0
-
 #! format: on
 
 ################################## output power constraints#################################
@@ -324,7 +319,7 @@ function add_to_cost!(
         psi_container,
         make_variable_name(spec.variable_type, spec.component_type),
         component_name,
-        PSY.VariableCost(cost_data),
+        cost_data,
         time_steps[end],
     )
     return
