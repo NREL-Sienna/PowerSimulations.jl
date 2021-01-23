@@ -638,7 +638,7 @@ end
 """
 Construct SimulationResults from a simulation.
 """
-SimulationResults(sim::Simulation) = SimulationResults(get_simulation_dir(sim))
+SimulationResults(sim::Simulation; kwargs...) = SimulationResults(get_simulation_dir(sim); kwargs...)
 
 Base.empty!(res::SimulationResults) = foreach(empty!, values(res.stage_results))
 Base.isempty(res::SimulationResults) = all(isempty, values(res.stage_results))
