@@ -15,7 +15,7 @@
         branches,
         services_template,
     )
-    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
@@ -52,7 +52,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
@@ -76,7 +76,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_re = build_system("c_sys5_re"; add_reserves = true)
+    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_re; use_parameters = p)
@@ -104,7 +104,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_bat = build_system("c_sys5_bat"; add_reserves = true)
+    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_bat; use_parameters = p)
@@ -129,7 +129,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_hyd = build_system("c_sys5_hyd"; add_reserves = true)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_hyd; use_parameters = p)
@@ -153,7 +153,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
         op_problem = OperationsProblem(
             TestOpProblem,
@@ -168,7 +168,7 @@ end
 end
 
 @testset "Test AGC" begin
-    c_sys5_reg = build_system("c_sys5_reg")
+    c_sys5_reg = PSB.build_system(PSITestSystems, "c_sys5_reg")
     # End of the system creation code.
     devices = Dict(
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -203,7 +203,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     services = get_components(Service, c_sys5_uc)
     contributing_services = Vector{Service}()
     for service in services
@@ -244,7 +244,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     services = get_components(Service, c_sys5_uc)
     contributing_services = Vector{Service}()
     for service in services
@@ -290,7 +290,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_uc = build_system("c_sys5_uc")
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
     op_problem = OperationsProblem(TestOpProblem, model_template, c_sys5_uc)

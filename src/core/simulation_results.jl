@@ -162,7 +162,7 @@ end
 function _validate_names(existing_names::Vector{Symbol}, names::Vector{Symbol})
     for name in names
         if name ∉ existing_names
-            @error("$name is not stored", sort!(existing_names))
+            @error("$name is not stored", sort(existing_names))
             throw(IS.InvalidValue("$name is not stored"))
         end
     end
@@ -594,7 +594,7 @@ end
 Construct SimulationResults from a path and optionally an execution number.
 By default, choose the latest execution.
 """
-function SimulationResults(path::AbstractString, execution = nothing)
+function SimulationResults(path::AbstractString, execution = nothing; load_systems = true)
     # path will be either the execution_path or the directory containing all executions.
     contents = readdir(path)
     if "data_store" in contents
@@ -627,7 +627,7 @@ function SimulationResults(path::AbstractString, execution = nothing)
         for (name, stage_params) in sim_params.stages
             name = string(name)
             stage_result =
-                StageResults(store, name, stage_params, sim_params, execution_path)
+                StageResults(store, name, stage_params, sim_params, execution_path; load_system = load_systems)
             stage_results[name] = stage_result
         end
 
@@ -638,7 +638,7 @@ end
 """
 Construct SimulationResults from a simulation.
 """
-SimulationResults(sim::Simulation) = SimulationResults(get_simulation_dir(sim))
+SimulationResults(sim::Simulation; kwargs...) = SimulationResults(get_simulation_dir(sim); kwargs...)
 
 Base.empty!(res::SimulationResults) = foreach(empty!, values(res.stage_results))
 Base.isempty(res::SimulationResults) = all(isempty, values(res.stage_results))

@@ -1,15 +1,9 @@
-@enum SOS_STATUS_VARIABLE begin
-    NO_VARIABLE = 1
-    PARAMETER = 2
-    VARIABLE = 3
-end
-
 struct AddCostSpec
     variable_type::Type
     component_type::Type
     has_status_variable::Bool
     has_status_parameter::Bool
-    sos_status::SOS_STATUS_VARIABLE
+    sos_status::SOSStatusVariable
     multiplier::Float64
     variable_cost::Union{Nothing, Function}
     start_up_cost::Union{Nothing, Function}
@@ -24,7 +18,7 @@ function AddCostSpec(;
     component_type,
     has_status_variable = false,
     has_status_parameter = false,
-    sos_status = NO_VARIABLE,
+    sos_status = SOSStatusVariable.NO_VARIABLE,
     multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     variable_cost = nothing,
     start_up_cost = nothing,
@@ -216,15 +210,15 @@ function pwl_gencost_sos!(
     @debug export_pwl_vars
     total_gen_cost = JuMP.AffExpr(0.0)
 
-    if spec.sos_status == NO_VARIABLE
+    if spec.sos_status == SOSStatusVariable.NO_VARIABLE
         bin = 1.0
         @debug("Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)")
-    elseif spec.sos_status == PARAMETER
+    elseif spec.sos_status == SOSStatusVariable.PARAMETER
         param_key = encode_symbol(OnVariable, string(spec.component_type))
         bin =
             get_parameter_container(psi_container, param_key).parameter_array[component_name]
         @debug("Using Piecewise Linear cost function with parameter $(param_key)")
-    elseif spec.sos_status == VARIABLE
+    elseif spec.sos_status == SOSStatusVariable.VARIABLE
         var_key = make_variable_name(OnVariable, spec.component_type)
         bin = get_variable(psi_container, var_key)[component_name, time_period]
         @debug("Using Piecewise Linear cost function with variable $(var_key)")

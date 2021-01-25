@@ -106,7 +106,6 @@ export GenericOpProblem
 export UnitCommitmentProblem
 export EconomicDispatchProblem
 # export OptimalPowerFlow
-export HdfSimulationStore
 
 # Functions
 ## Construction Exports
@@ -123,7 +122,7 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 export set_model!
-export serialize_problem
+export serialize_model
 export export_operations_model
 ## Sim Model Exports
 export build!
@@ -138,33 +137,31 @@ export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
 ## Results interfaces
-export get_stage_name
-export get_system
-export get_existing_duals
-export get_existing_variables
-export get_existing_parameters
-export get_existing_timestamps
-export read_variables
-export read_parameters
-export read_duals
-export read_variable
-export read_parameter
-export read_dual
-export get_stage_results
-export list_stages
-export list_supported_formats
-export export_results
 export SimulationResultsExport
 export StageResultsExport
+export export_results
+export get_existing_duals
+export get_existing_parameters
+export get_existing_timestamps
+export get_existing_variables
+export get_stage_name
+export get_stage_results
+export get_system
+export list_stages
+export list_supported_formats
 export load_results!
+export read_dual
+export read_duals
+export read_realized_duals
 export read_realized_variables
 export read_realized_parameters
-export read_realized_duals
 export get_realized_timestamps
+export read_variable
+export read_variables
+export read_parameter
+export read_parameters
 
 ## Utils Exports
-export write_results
-export write_to_CSV
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
@@ -172,10 +169,12 @@ export get_var_index
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
+export write_results
+export write_to_CSV
 
 ## Enums
-export BuildStatuss
-export RunStatuss
+export BuildStatus
+export RunStatus
 
 # Variables / Parameters
 export ACTIVE_POWER
@@ -268,6 +267,7 @@ export get_timestamp
 export write_results
 import PowerModels
 import TimerOutputs
+import ProgressMeter
 
 # TimeStamp Management Imports
 import Dates
@@ -339,7 +339,6 @@ include("core/param_result_cache.jl")
 include("core/result_cache.jl")
 include("core/simulation_store.jl")
 include("core/hdf_simulation_store.jl")
-include("core/simulation_store_factory.jl")
 include("core/simulation_stages.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")

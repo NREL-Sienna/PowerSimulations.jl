@@ -40,8 +40,8 @@ end
 function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
         # TODO: make a simulation that has lookahead for better results extraction tests
-        c_sys5_hy_uc = build_system("c_sys5_hy_uc")
-        c_sys5_hy_ed = build_system("c_sys5_hy_ed")
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems,"c_sys5_hy_uc")
+        c_sys5_hy_ed = PSB.build_system(PSITestSystems,"c_sys5_hy_ed")
         stages_definition = Dict(
             "UC" => Stage(
                 GenericOpProblem,
@@ -91,7 +91,7 @@ function test_simulation_results(file_path::String, export_path)
             simulation_folder = file_path,
         )
         build_out = build!(sim)
-        @test build_out == PSI.BuildStatuss.BUILT
+        @test build_out == PSI.BuildStatus.BUILT
 
         exports = Dict(
             "stages" => [
@@ -111,7 +111,7 @@ function test_simulation_results(file_path::String, export_path)
             "path" => export_path,
         )
         execute_out = execute!(sim, exports = exports)
-        @test execute_out == PSI.RunStatuss.SUCCESSFUL
+        @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         results = SimulationResults(sim)
         @test list_stages(results) == ["ED", "UC"]
@@ -203,12 +203,14 @@ function test_simulation_results(file_path::String, export_path)
         end
 
         # request non sync data
+        @test_logs((:error, r"Requested time does not match available results"),
+        match_mode = :any,
         @test_throws IS.InvalidValue read_realized_variables(
             results_ed,
             names = [:P__ThermalStandard],
             initial_time = DateTime("2024-01-01T02:12:00"),
             len = 3,
-        )
+        ))
 
         # request good window
         @test size(read_realized_variables(
