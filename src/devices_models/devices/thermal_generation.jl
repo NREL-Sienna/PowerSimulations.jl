@@ -1100,7 +1100,7 @@ function AddCostSpec(
         variable_cost = _get_compact_varcost,
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
-        sos_status = VARIABLE,
+        sos_status = SOSStatusVariable.VARIABLE,
     )
 end
 
@@ -1110,9 +1110,9 @@ function AddCostSpec(
     psi_container::PSIContainer,
 ) where {T <: PSY.ThermalGen}
     if has_on_parameter(psi_container, T)
-        sos_status = PARAMETER
+        sos_status = SOSStatusVariable.PARAMETER
     else
-        sos_status = NO_VARIABLE
+        sos_status = SOSStatusVariable.NO_VARIABLE
     end
     fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
     return AddCostSpec(;

@@ -400,7 +400,7 @@ function test_simulation_build(file_path::String)
         build!(sim)
     end
     @testset "Test Multistart Thermal UC Simulation" begin
-         c_sys5_pglib = build_system("c_sys5_pglib_sim")
+         c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib_sim")
          stages_definition = Dict(
              "UC" => Stage(
                  GenericOpProblem,
