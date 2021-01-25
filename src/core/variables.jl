@@ -28,6 +28,11 @@ const THETA = "theta"
 const VM = "Vm"
 const LIFT = "z"
 const ACTIVE_POWER_PUMP = "Ppump"
+const ACTIVE_POWER_THERMAL = "P_thermal"
+const ACTIVE_POWER_LOAD = "P_load"
+const ACTIVE_POWER_IN_STORAGE = "Pin_storage"
+const ACTIVE_POWER_OUT_STORAGE = "Pout_storage"
+const ACTIVE_POWER_RENEWABLE = "P_renewable"
 
 abstract type VariableType end
 
@@ -83,6 +88,16 @@ struct AdditionalDeltaActivePowerUpVariable <: VariableType end
 struct AdditionalDeltaActivePowerDownVariable <: VariableType end
 
 struct SmoothACE <: VariableType end
+
+struct ActivePowerVariableThermal <: VariableType end
+
+struct ActivePowerVariableLoad <: VariableType end
+
+struct ActivePowerInVariableStorage <: VariableType end
+
+struct ActivePowerOutVariableStorage <: VariableType end
+
+struct ActivePowerVariableRenewable <: VariableType end
 
 """Struct to dispatch the creation of Flow Active Power Variables"""
 struct FlowActivePowerVariable <: VariableType end
@@ -157,3 +172,13 @@ make_variable_name(::Type{AdditionalDeltaActivePowerDownVariable}, ::Type{PSY.Re
 make_variable_name(::Type{SmoothACE}, ::Type{T}) where {T <: PSY.AggregationTopology} = encode_symbol(T, "SACE")
 
 make_variable_name(::Type{FlowActivePowerVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Fp")
+
+make_variable_name(::Type{ActivePowerVariableThermal}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "P_thermal")
+
+make_variable_name(::Type{ActivePowerVariableLoad}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "P_load")
+
+make_variable_name(::Type{ActivePowerInVariableStorage}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Pin_storage")
+
+make_variable_name(::Type{ActivePowerOutVariableStorage}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Pout_storage")
+
+make_variable_name(::Type{ActivePowerVariableRenewable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "P_renewable")
