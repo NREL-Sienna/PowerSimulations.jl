@@ -158,7 +158,11 @@ function psi_container_init!(
 
     use_forecasts = get_use_forecast_data(settings)
     if make_parameters_container && !use_forecasts
-        throw(IS.ConflictingInputsError("enabling parameters without forecasts is not supported"))
+        throw(
+            IS.ConflictingInputsError(
+                "enabling parameters without forecasts is not supported",
+            ),
+        )
     end
 
     if get_initial_time(settings) == UNSET_INI_TIME
@@ -177,7 +181,9 @@ function psi_container_init!(
         # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
         variable_count_estimate = length(psi_container.time_steps) * total_number_of_devices
         if variable_count_estimate > 10e6
-            @warn("The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times.")
+            @warn(
+                "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
+            )
         end
     end
 

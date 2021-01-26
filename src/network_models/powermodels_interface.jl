@@ -435,9 +435,8 @@ function add_pm_con_refs!(
     bus_dict = psi_container.pm.ext[:PMmap].bus
 
     pm_con_names = [
-        k
-        for
-        k in keys(psi_container.pm.con[:nw][1]) if !isempty(PM.con(psi_container.pm, 1, k))
+        k for k in keys(psi_container.pm.con[:nw][1]) if
+        !isempty(PM.con(psi_container.pm, 1, k))
     ]
 
     pm_con_map = PMconmap(system_formulation)

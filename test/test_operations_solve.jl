@@ -75,9 +75,9 @@ end
 end
 
 @testset "Solving ED With PowerModels with loss-less convex models" begin
-    c_sys5 = PSB.build_system(PSITestSystems,"c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems,"c_sys14")
-    c_sys14_dc = PSB.build_system(PSITestSystems,"c_sys14_dc")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
     networks = [DCPPowerModel, NFAPowerModel]
@@ -111,7 +111,7 @@ end
 
 @testset "Solving ED With PowerModels with linear convex models" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems,"c_sys14")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
@@ -194,8 +194,8 @@ end
 =#
 
 @testset "Solving ED With PowerModels Non-Convex Networks" begin
-    c_sys5 = PSB.build_system(PSITestSystems,"c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems,"c_sys14")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
@@ -438,8 +438,9 @@ end
 
     @testset "Test parameter values" begin
         system = op_problem.sys
-        params =
-            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__max_active_power__PowerLoad])
+        params = PSI.get_parameter_array(
+            op_problem.psi_container.parameters[:P__max_active_power__PowerLoad],
+        )
         params = PSI.axis_array_to_dataframe(params)
         devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
         multiplier = [PSY.get_active_power(devices[1])]

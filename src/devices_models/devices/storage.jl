@@ -241,7 +241,11 @@ function energy_balance_constraint!(
     key = ICKey(EnergyLevel, St)
 
     if !has_initial_conditions(psi_container.initial_conditions, key)
-        throw(IS.DataFormatError("Initial Conditions for $(St) Energy Constraints not in the model"))
+        throw(
+            IS.DataFormatError(
+                "Initial Conditions for $(St) Energy Constraints not in the model",
+            ),
+        )
     end
 
     energy_balance(
@@ -265,8 +269,8 @@ function energy_target_constraint!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {St <: PSY.BatteryEMS, S <: PM.AbstractPowerModel}
-
-    constraint_infos_target = Vector{DeviceEnergyTargetConstraintInfo}(undef, length(devices))
+    constraint_infos_target =
+        Vector{DeviceEnergyTargetConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         constraint_info_target = DeviceEnergyTargetConstraintInfo(
             PSY.get_name(d),
@@ -280,15 +284,11 @@ function energy_target_constraint!(
         psi_container,
         constraint_infos_target,
         make_constraint_name(ENERGY_TARGET, St),
-        (
-            make_variable_name(ENERGY, St),
-            make_variable_name(ENERGY_TARGET_SLACK, St),
-        ),
+        (make_variable_name(ENERGY, St), make_variable_name(ENERGY_TARGET_SLACK, St)),
     )
 
     return
 end
-
 
 ############################ Energy Management constraints ######################################
 
@@ -297,7 +297,7 @@ function AddCostSpec(
     ::Type{EndOfPeriodEnergyTarget},
     psi_container::PSIContainer,
 )
-    variable_cost_func = x -> - PSY.get_energy_value(x) + PSY.get_penalty_cost(x)
+    variable_cost_func = x -> -PSY.get_energy_value(x) + PSY.get_penalty_cost(x)
     return AddCostSpec(;
         variable_type = EnergyVariable,
         component_type = PSY.BatteryEMS,

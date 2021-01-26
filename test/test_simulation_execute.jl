@@ -1,6 +1,6 @@
 function test_simulation_single_ed(file_path::String)
     @testset "Single stage sequential tests" begin
-        c_sys5_uc = PSB.build_system(PSITestSystems,"c_sys5_uc")
+        c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
         single_stage_definition =
             Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
 
@@ -101,8 +101,8 @@ function test_simulation_without_caches(file_path::String)
 end
 
 function test_simulation_with_cache(file_path::String)
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems,"c_sys5_hy_uc")
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems,"c_sys5_hy_ed")
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     @testset "Simulation Single Stage with Cache" begin
         single_stage_definition = Dict(
             "ED" => Stage(
@@ -207,8 +207,9 @@ function test_simulation_with_cache(file_path::String)
         execute_out = execute!(sim_cache)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
 
-        var_names =
-            axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard])[1]
+        var_names = axes(
+            PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard],
+        )[1]
         for name in var_names
             var =
                 PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard][
@@ -289,8 +290,8 @@ function test_simulation_with_cache(file_path::String)
 end
 
 function test_stage_chronologies(file_path)
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems,"c_sys5_hy_uc")
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems,"c_sys5_hy_ed")
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     stages_definition = Dict(
         "UC" => Stage(
             GenericOpProblem,
@@ -394,8 +395,8 @@ function test_simulation_utils(file_path)
         "ED" => Dict("optimizer" => ipopt_optimizer),
     )
     duals = [:CopperPlateBalance]
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems,"c_sys5_hy_uc")
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems,"c_sys5_hy_ed")
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     stages_definition = Dict(
         "UC" => Stage(
             GenericOpProblem,

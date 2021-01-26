@@ -21,7 +21,11 @@ function construct_network!(
     area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
     branches = get_available_components(PSY.Branch, sys)
     if get_balance_slack_variables(psi_container.settings)
-        throw(IS.ConflictingInputsError("Slack Variables are not compatible with AreaBalancePowerModel"))
+        throw(
+            IS.ConflictingInputsError(
+                "Slack Variables are not compatible with AreaBalancePowerModel",
+            ),
+        )
     end
 
     area_balance(psi_container, :nodal_balance_active, area_mapping, branches)
@@ -66,7 +70,11 @@ function construct_network!(
     instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractPowerModel}
     if T in UNSUPPORTED_POWERMODELS
-        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
+        throw(
+            ArgumentError(
+                "$(T) formulation is not currently supported in PowerSimulations",
+            ),
+        )
     end
 
     if get_balance_slack_variables(psi_container.settings)
@@ -87,7 +95,11 @@ function construct_network!(
     instantiate_model = instantiate_bfp_expr_model,
 ) where {T <: PM.AbstractBFModel}
     if T in UNSUPPORTED_POWERMODELS
-        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
+        throw(
+            ArgumentError(
+                "$(T) formulation is not currently supported in PowerSimulations",
+            ),
+        )
     end
 
     get_balance_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
@@ -106,7 +118,11 @@ function construct_network!(
     instantiate_model = instantiate_vip_expr_model,
 ) where {T <: PM.AbstractIVRModel}
     if T in UNSUPPORTED_POWERMODELS
-        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
+        throw(
+            ArgumentError(
+                "$(T) formulation is not currently supported in PowerSimulations",
+            ),
+        )
     end
 
     if get_balance_slack_variables(psi_container.settings)

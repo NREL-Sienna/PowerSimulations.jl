@@ -105,7 +105,9 @@ function construct_device!(
     ::DeviceModel{PSY.RenewableFix, D},
     ::Type{S},
 ) where {D <: AbstractRenewableDispatchFormulation, S <: PM.AbstractPowerModel}
-    @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to FixedOutput")
+    @warn(
+        "The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to FixedOutput"
+    )
 
     construct_device!(psi_container, sys, DeviceModel(PSY.RenewableFix, FixedOutput), S)
 

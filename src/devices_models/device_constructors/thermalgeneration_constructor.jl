@@ -6,7 +6,11 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     devices = get_available_components(T, sys)
 
     if !validate_available_devices(T, devices)
@@ -701,7 +705,7 @@ function construct_device!(
     model::DeviceModel{T, D},
     ::Type{S};
     kwargs...,
-) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch,  S <: PM.AbstractPowerModel}
+) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
     if !validate_available_devices(T, devices)
@@ -748,7 +752,7 @@ function construct_device!(
     model::DeviceModel{T, D},
     ::Type{S};
     kwargs...,
-) where {T <: PSY.ThermalGen,  D <: ThermalCompactDispatch, S <: PM.AbstractActivePowerModel}
+) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
     if !validate_available_devices(T, devices)

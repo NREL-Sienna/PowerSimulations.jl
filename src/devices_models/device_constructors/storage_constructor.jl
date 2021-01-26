@@ -345,7 +345,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    
+
     # Cost Function
     cost_function!(psi_container, devices, model, S, get_feedforward(model))
 

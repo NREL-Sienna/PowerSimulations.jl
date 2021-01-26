@@ -403,12 +403,20 @@ function _get_simulation_initial_times!(sim::Simulation)
         system_interval = PSY.get_forecast_interval(stage_system)
         stage_interval = get_stage_interval(get_sequence(sim), stage_name)
         if system_interval != stage_interval
-            throw(IS.ConflictingInputsError("Simulation interval ($stage_interval) and forecast interval ($system_interval) definitions are not compatible"))
+            throw(
+                IS.ConflictingInputsError(
+                    "Simulation interval ($stage_interval) and forecast interval ($system_interval) definitions are not compatible",
+                ),
+            )
         end
         stage_horizon = get_stage_horizon(get_sequence(sim), stage_name)
         system_horizon = PSY.get_forecast_horizon(stage_system)
         if stage_horizon > system_horizon
-            throw(IS.ConflictingInputsError("Simulation horizon ($stage_horizon) and forecast horizon ($system_horizon) definitions are not compatible"))
+            throw(
+                IS.ConflictingInputsError(
+                    "Simulation horizon ($stage_horizon) and forecast horizon ($system_horizon) definitions are not compatible",
+                ),
+            )
         end
         stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
         for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
@@ -418,8 +426,12 @@ function _get_simulation_initial_times!(sim::Simulation)
         end
         if !(sim_ini_time === nothing) &&
            !mapreduce(x -> x == sim_ini_time, |, stage_initial_times[stage_number])
-            throw(IS.ConflictingInputsError("The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number.
-            Manually provided initial times have to be compatible with the specified interval and horizon in the stages."))
+            throw(
+                IS.ConflictingInputsError(
+                    "The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number.
+Manually provided initial times have to be compatible with the specified interval and horizon in the stages.",
+                ),
+            )
         end
         stage_number == 1 && (time_range[1] = stage_initial_times[stage_number][1])
         (
@@ -446,8 +458,11 @@ function _attach_feedforward!(sim::Simulation, stage_name::String)
         # Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
-        device_model === nothing &&
-            throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
+        device_model === nothing && throw(
+            IS.ConflictingInputsError(
+                "Device model $(key[3]) not found in stage $(stage_name)",
+            ),
+        )
         device_model.feedforward = ff
     end
     return
@@ -468,8 +483,12 @@ function _check_steps(
         @assert_op total_stage_executions / total_stage_transitions == execution_counts
         forecast_count = length(stage_initial_times[stage_number])
         if get_steps(sim) * execution_counts > forecast_count
-            throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
-            desired amount of simulation steps ($(sim.steps*get_execution_count(stage)))."))
+            throw(
+                IS.ConflictingInputsError(
+                    "The number of available time series ($(forecast_count)) is not enough to perform the
+desired amount of simulation steps ($(sim.steps*get_execution_count(stage))).",
+                ),
+            )
         end
     end
     return
@@ -483,7 +502,11 @@ function _check_required_ini_cond_caches(sim::Simulation)
             v[1].cache_type === nothing && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
             if c === nothing
-                throw(ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k) in stage $stage_name"))
+                throw(
+                    ArgumentError(
+                        "Cache $(v[1].cache_type) not defined for initial condition $(k) in stage $stage_name",
+                    ),
+                )
             end
             @debug "found cache $(v[1].cache_type) for initial condition $(k) in stage $(stage_name)"
         end
@@ -597,7 +620,11 @@ function _build!(sim::Simulation, serialize::Bool)
     for (stage_number, stage_name) in get_order(sequence)
         stage = get_stage(sim, stage_name)
         if stage === nothing
-            throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
+            throw(
+                IS.ConflictingInputsError(
+                    "Stage $(stage_name) not found in the stages definitions",
+                ),
+            )
         end
         stage_interval = get_stage_interval(sim, stage_name)
         step_resolution =
@@ -746,11 +773,15 @@ function update_cache!(
             c.value[name][:series][t + 1] = device_status
             if c.value[name][:status] == device_status
                 c.value[name][:count] += increment
-                @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
+                @debug(
+                    "Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])"
+                )
             else
                 c.value[name][:count] = increment
                 c.value[name][:status] = device_status
-                @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
+                @debug(
+                    "Cache value TimeStatus for device $name set to $device_status and count to 1.0"
+                )
             end
         end
     end
@@ -1040,14 +1071,19 @@ function _execute!(
                             store;
                             exports = exports,
                         )
-                        global_stage_execution_count = (step - 1) * length(execution_order) + ix
+                        global_stage_execution_count =
+                            (step - 1) * length(execution_order) + ix
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                         if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
                             continue
                         elseif !get_allow_fails(settings) &&
                                (status != RunStatus.SUCCESSFUL)
-                            throw(ErrorException("Simulation Failed in stage $(stage_number)"))
+                            throw(
+                                ErrorException(
+                                    "Simulation Failed in stage $(stage_number)",
+                                ),
+                            )
                         else
                             @assert status == RunStatus.SUCCESSFUL
                         end
@@ -1066,9 +1102,15 @@ function _execute!(
                         stage_number,
                         "done",
                     )
-                    ProgressMeter.update!(progress_bar, global_stage_execution_count;
-                        showvalues = [(:Step, step), (:Stage, stage_name),
-                    (:("Simulation Timestamp"), get_current_time(sim))])
+                    ProgressMeter.update!(
+                        progress_bar,
+                        global_stage_execution_count;
+                        showvalues = [
+                            (:Step, step),
+                            (:Stage, stage_name),
+                            (:("Simulation Timestamp"), get_current_time(sim)),
+                        ],
+                    )
                 end #execution stage timer
             end # execution order for loop
             IS.@record :simulation_status SimulationStepEvent(
@@ -1139,7 +1181,8 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
                 # TODO JD: this needs improvement
                 !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
                 array = get_parameter_array(param_container)
-                reqs.parameters[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
+                reqs.parameters[Symbol(name)] =
+                    _calc_dimensions(array, name, num_rows, horizon)
                 add_rule!(
                     rules,
                     stage_sym,
@@ -1193,9 +1236,9 @@ function _calc_dimensions(array::JuMP.Containers.DenseAxisArray, name, num_rows,
     elseif length(ax) == 2
         columns = collect(axes(array)[1])
         dims = (horizon, length(columns), num_rows)
-   # elseif length(ax) == 3
-   #     # TODO: untested
-   #     dims = (length(ax[2]), horizon, length(columns), num_rows)
+        # elseif length(ax) == 3
+        #     # TODO: untested
+        #     dims = (length(ax[2]), horizon, length(columns), num_rows)
     else
         error("unsupported data size $(length(ax))")
     end
@@ -1241,7 +1284,11 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
-        throw(ArgumentError("$directory has files already: $(readdir(directory)). Please delete them or pass force = true."))
+        throw(
+            ArgumentError(
+                "$directory has files already: $(readdir(directory)). Please delete them or pass force = true.",
+            ),
+        )
     end
     rm(directory, recursive = true, force = true)
     mkdir(directory)
@@ -1294,14 +1341,20 @@ function deserialize_model(::Type{Simulation}, directory::AbstractString, stage_
 
         obj = Serialization.deserialize(filename)
         if !(obj isa SimulationSerializationWrapper)
-            throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
+            throw(
+                IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"),
+            )
         end
 
         stages = Dict{String, Stage{<:AbstractOperationsProblem}}()
         for (key, wrapper) in obj.stages
             sys_filename = wrapper.sys
             if !ispath(sys_filename)
-                throw(ArgumentError("stage PowerSystems serialized file $sys_filename does not exist"))
+                throw(
+                    ArgumentError(
+                        "stage PowerSystems serialized file $sys_filename does not exist",
+                    ),
+                )
             end
             sys = PSY.System(sys_filename)
             if !haskey(stage_info[key], "optimizer")

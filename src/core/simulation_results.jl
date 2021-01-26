@@ -51,11 +51,9 @@ function StageResults(
     name = Symbol(stage_name)
 
     if load_system
-        sys = PSY.System(joinpath(
-            path,
-            "simulation_files",
-            "system-$(stage_params.system_uuid).json",
-        ))
+        sys = PSY.System(
+            joinpath(path, "simulation_files", "system-$(stage_params.system_uuid).json"),
+        )
     else
         sys = nothing
     end
@@ -370,25 +368,33 @@ function RealizedMeta(
     interval = existing_timestamps.step
     resolution = PSY.get_time_series_resolution(get_system(res))
     interval_len = Int(interval / resolution)
-    realized_timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    realized_timestamps =
+        get_realized_timestamps(res, initial_time = initial_time, len = len)
 
-    result_initial_time =
-        existing_timestamps[findlast(x -> x .<= first(realized_timestamps), existing_timestamps)]
-    result_end_time =
-        existing_timestamps[findlast(x -> x .<= last(realized_timestamps), existing_timestamps)]
+    result_initial_time = existing_timestamps[findlast(
+        x -> x .<= first(realized_timestamps),
+        existing_timestamps,
+    )]
+    result_end_time = existing_timestamps[findlast(
+        x -> x .<= last(realized_timestamps),
+        existing_timestamps,
+    )]
 
     count = length(result_initial_time:interval:result_end_time)
 
     start_offset = length(result_initial_time:resolution:first(realized_timestamps))
-    end_offset = length(last(realized_timestamps) + resolution:resolution:(result_end_time + interval - resolution))
+    end_offset = length(
+        (last(realized_timestamps) + resolution):resolution:(result_end_time + interval - resolution),
+    )
 
     return RealizedMeta(result_initial_time, count, start_offset, end_offset, interval_len)
 end
 
-function get_realized_timestamps(res::StageResults;
+function get_realized_timestamps(
+    res::StageResults;
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,)
-
+    len::Union{Int, Nothing} = nothing,
+)
     existing_timestamps = get_existing_timestamps(res)
     interval = existing_timestamps.step
     resolution = PSY.get_time_series_resolution(get_system(res))
@@ -626,8 +632,14 @@ function SimulationResults(path::AbstractString, execution = nothing; load_syste
         sim_params = get_params(store)
         for (name, stage_params) in sim_params.stages
             name = string(name)
-            stage_result =
-                StageResults(store, name, stage_params, sim_params, execution_path; load_system = load_systems)
+            stage_result = StageResults(
+                store,
+                name,
+                stage_params,
+                sim_params,
+                execution_path;
+                load_system = load_systems,
+            )
             stage_results[name] = stage_result
         end
 
@@ -638,7 +650,8 @@ end
 """
 Construct SimulationResults from a simulation.
 """
-SimulationResults(sim::Simulation; kwargs...) = SimulationResults(get_simulation_dir(sim); kwargs...)
+SimulationResults(sim::Simulation; kwargs...) =
+    SimulationResults(get_simulation_dir(sim); kwargs...)
 
 Base.empty!(res::SimulationResults) = foreach(empty!, values(res.stage_results))
 Base.isempty(res::SimulationResults) = all(isempty, values(res.stage_results))

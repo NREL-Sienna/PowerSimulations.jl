@@ -281,7 +281,11 @@ function read_result(
     horizon = store.params.stages[key.stage].horizon
     num_executions = store.params.stages[key.stage].num_executions
     if execution_index > num_executions
-        throw(ArgumentError("execution_index = $execution_index cannot be larger than $num_executions"))
+        throw(
+            ArgumentError(
+                "execution_index = $execution_index cannot be larger than $num_executions",
+            ),
+        )
     end
 
     dataset = _get_dataset(store, key)
@@ -293,8 +297,8 @@ function read_result(
         num_dims = ndims(dset)
         if num_dims == 3
             data = dset[:, :, row_index]
-        #elseif num_dims == 4
-        #    data = dset[:, :, :, row_index]
+            #elseif num_dims == 4
+            #    data = dset[:, :, :, row_index]
         else
             error("unsupported dims: $num_dims")
         end
@@ -514,7 +518,9 @@ function _get_indices(store::HdfSimulationStore, stage, timestamp)
         step = trunc(Int, time_diff / store.params.step_resolution) + 1
     end
     if step > store.params.num_steps
-        throw(ArgumentError("timestamp = $timestamp is beyond the simulation: step = $step"))
+        throw(
+            ArgumentError("timestamp = $timestamp is beyond the simulation: step = $step"),
+        )
     end
     stage_params = store.params.stages[stage]
     initial_time = store.params.initial_time + (step - 1) * store.params.step_resolution
@@ -557,8 +563,8 @@ function _write_dataset!(dataset, array, row_range)
         dataset[:, 1, row_range] = array
     elseif ndims(array) == 3
         dataset[:, :, row_range] = array
-    #elseif ndims(array) == 4
-    #    dataset[:, :, :, row_range] = array
+        #elseif ndims(array) == 4
+        #    dataset[:, :, :, row_range] = array
     else
         error("ndims not supported: $(ndims(array))")
     end

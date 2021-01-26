@@ -129,10 +129,10 @@ end
         ThermalDispatchNoMin,
     ]
 
-    c_sys5 = PSB.build_system(PSITestSystems,"c_sys5")
-    c_sys5_re = PSB.build_system(PSITestSystems,"c_sys5_re")
-    c_sys5_bat = PSB.build_system(PSITestSystems,"c_sys5_bat")
-    c_sys5_pwl_ed = PSB.build_system(PSITestSystems,"c_sys5_pwl_ed")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
+    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
+    c_sys5_pwl_ed = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed")
     systems = [c_sys5, c_sys5_re, c_sys5_bat, c_sys5_pwl_ed]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal)" begin
