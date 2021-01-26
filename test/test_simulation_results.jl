@@ -24,7 +24,7 @@ function verify_export_results(results, export_path)
 end
 
 function compare_results(rpath, epath, stage, field, name, timestamp)
-    filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
+    @show filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
     df1 = PSI.read_dataframe(joinpath(rpath, stage, field, filename))
     df2 = PSI.read_dataframe(joinpath(epath, stage, field, filename))
     @test df1 == df2
