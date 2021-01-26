@@ -26,8 +26,8 @@ function create_sequence()
 end
 
 function test_simulation_build(file_path::String)
-    c_sys5_uc = PSB.build_system(PSITestSystems,"c_sys5_uc")
-    c_sys5_ed = PSB.build_system(PSITestSystems,"c_sys5_ed")
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
+    c_sys5_ed = PSB.build_system(PSITestSystems, "c_sys5_ed")
 
     @testset "Test Simulation Simulation Sequence Validation" begin
         sequence = create_sequence()
@@ -38,10 +38,7 @@ function test_simulation_build(file_path::String)
     @testset "Simulation with provided initial time" begin
         stages_definition = create_stages(template_basic_uc, c_sys5_uc, c_sys5_ed)
         sequence = create_sequence()
-        second_day = DateTime(
-        "1/1/2024  23:00:00",
-        "d/m/y  H:M:S",
-    ) + Hour(1)
+        second_day = DateTime("1/1/2024  23:00:00", "d/m/y  H:M:S") + Hour(1)
         sim = Simulation(
             name = "test",
             steps = 1,
@@ -362,8 +359,8 @@ function test_simulation_build(file_path::String)
         @test !isnothing(sim.stages["ED"].internal.psi_container.settings.PTDF)
     end
     @testset "Create Simulation using SOS-PWL cost function" begin
-        c_sys5_uc = PSB.build_system(PSITestSystems,"c_sys5_pwl_uc")
-        c_sys5_ed = PSB.build_system(PSITestSystems,"c_sys5_pwl_ed")
+        c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pwl_uc")
+        c_sys5_ed = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed")
         stages_definition_kwargs = Dict(
             "UC" => Stage(
                 GenericOpProblem,
@@ -400,32 +397,32 @@ function test_simulation_build(file_path::String)
         build!(sim)
     end
     @testset "Test Multistart Thermal UC Simulation" begin
-         c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib_sim")
-         stages_definition = Dict(
-             "UC" => Stage(
-                 GenericOpProblem,
-                 template_multi_start_uc,
-                 c_sys5_pglib,
-                 Cbc_optimizer,
-                 balance_slack_variables = true,
-             ),
-         )
-         sequence = SimulationSequence(
-             step_resolution = Hour(14),
-             order = Dict(1 => "UC"),
-             horizons = Dict("UC" => 24),
-             intervals = Dict("UC" => (Hour(14), Consecutive())),
-             ini_cond_chronology = IntraStageChronology(),
-         )
-         sim = Simulation(
-             name = "multi_start-test",
-             steps = 2,
-             stages = stages_definition,
-             stages_sequence = sequence,
-             simulation_folder = file_path,
-         )
-         build!(sim)
-     end
+        c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib_sim")
+        stages_definition = Dict(
+            "UC" => Stage(
+                GenericOpProblem,
+                template_multi_start_uc,
+                c_sys5_pglib,
+                Cbc_optimizer,
+                balance_slack_variables = true,
+            ),
+        )
+        sequence = SimulationSequence(
+            step_resolution = Hour(14),
+            order = Dict(1 => "UC"),
+            horizons = Dict("UC" => 24),
+            intervals = Dict("UC" => (Hour(14), Consecutive())),
+            ini_cond_chronology = IntraStageChronology(),
+        )
+        sim = Simulation(
+            name = "multi_start-test",
+            steps = 2,
+            stages = stages_definition,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+        )
+        build!(sim)
+    end
 end
 
 @testset "Test simulation build" begin

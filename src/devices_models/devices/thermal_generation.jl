@@ -264,7 +264,11 @@ function initial_range_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalMultiStart, D <: AbstractCompactUnitCommitment, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalMultiStart,
+    D <: AbstractCompactUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key_power = ICKey(DevicePower, T)
@@ -365,7 +369,11 @@ function commitment_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     device_commitment!(
         psi_container,
         get_initial_conditions(psi_container, ICKey(DeviceStatus, T)),
@@ -466,7 +474,11 @@ function ramp_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     time_steps = model_time_steps(psi_container)
     data = _get_data_for_rocc(psi_container, T)
     if !isempty(data)
@@ -600,8 +612,8 @@ function turbine_temperature(
                 con[ix][name, t] = JuMP.@constraint(
                     psi_container.JuMPmodel,
                     start_vars[ix][name, t] <= sum(
-                        varstop[name, t - i]
-                        for i in st.time_limits[ix]:(st.time_limits[ix + 1] - 1)
+                        varstop[name, t - i] for
+                        i in st.time_limits[ix]:(st.time_limits[ix + 1] - 1)
                     )
                 )
             end
@@ -957,7 +969,11 @@ function time_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     parameters = model_has_parameters(psi_container)
     resolution = model_resolution(psi_container)
     initial_conditions_on = get_initial_conditions(psi_container, ICKey(TimeDurationON, T))
@@ -1201,7 +1217,11 @@ function cost_function!(
             @debug "PWL cost function detected for device $(component_name) using ThermalDispatchNoMin"
             slopes = PSY.get_slopes(cost_component)
             if any(slopes .< 0) || !pwlparamcheck(cost_component)
-                throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost."))
+                throw(
+                    IS.InvalidValue(
+                        "The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost.",
+                    ),
+                )
             end
             if slopes[1] != 0.0
                 @debug "PWL has no 0.0 intercept for generator $(PSY.get_name(g))"

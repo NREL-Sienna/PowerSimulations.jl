@@ -212,7 +212,9 @@ function pwl_gencost_sos!(
 
     if spec.sos_status == SOSStatusVariable.NO_VARIABLE
         bin = 1.0
-        @debug("Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)")
+        @debug(
+            "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)"
+        )
     elseif spec.sos_status == SOSStatusVariable.PARAMETER
         param_key = encode_symbol(OnVariable, string(spec.component_type))
         bin =
@@ -420,7 +422,6 @@ function add_to_cost!(
     return
 end
 
-
 function check_single_start(psi_container::PSIContainer, spec::AddCostSpec)
     for (st, var_type) in enumerate(START_VARIABLES)
         var_name = make_variable_name(var_type, spec.component_type)
@@ -490,7 +491,7 @@ function add_to_cost!(
     # Start-up costs
     if !isnothing(spec.start_up_cost)
         start_cost_data = PSY.get_start_up(cost_data)
-        if spec.has_multistart_variables 
+        if spec.has_multistart_variables
             for (st, var_type) in enumerate(START_VARIABLES)
                 var_name = make_variable_name(var_type, spec.component_type)
                 for t in time_steps
@@ -720,7 +721,9 @@ function add_service_bid_cost!(
             )
         end
     else
-        error("Current version only supports linear cost bid for services, please change the forecast data for $(PSY.get_name(service))")
+        error(
+            "Current version only supports linear cost bid for services, please change the forecast data for $(PSY.get_name(service))",
+        )
     end
     return
 end
@@ -731,7 +734,9 @@ function add_service_bid_cost!(
     component::PSY.Component,
     service::PSY.ReserveDemandCurve{T},
 ) where {T <: PSY.ReserveDirection}
-    error("Current version doesn't supports cost bid for ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))")
+    error(
+        "Current version doesn't supports cost bid for ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))",
+    )
     return
 end
 
@@ -883,9 +888,11 @@ function variable_cost!(
 
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     if !pwlparamcheck(cost_component)
-        @warn("The cost function provided for $(var_name) device is not compatible with a linear PWL cost function.
-        An SOS-2 formulation will be added to the model.
-        This will result in additional binary variables added to the model.")
+        @warn(
+            "The cost function provided for $(var_name) device is not compatible with a linear PWL cost function.
+      An SOS-2 formulation will be added to the model.
+      This will result in additional binary variables added to the model."
+        )
         gen_cost =
             pwl_gencost_sos!(psi_container, spec, component_name, cost_data, time_period)
     else

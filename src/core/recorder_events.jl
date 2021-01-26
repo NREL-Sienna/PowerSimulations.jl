@@ -115,11 +115,19 @@ end
 function get_simulation_step_range(filename::AbstractString, step::Int)
     events = IS.list_recorder_events(SimulationStepEvent, filename, x -> x.step == step)
     if length(events) != 2
-        throw(ArgumentError("$filename does not have two SimulationStepEvents for step = $step"))
+        throw(
+            ArgumentError(
+                "$filename does not have two SimulationStepEvents for step = $step",
+            ),
+        )
     end
 
     if events[1].status != "start" || events[2].status != "done"
-        throw(ArgumentError("$filename does not contain start and done events for step = $step"))
+        throw(
+            ArgumentError(
+                "$filename does not contain start and done events for step = $step",
+            ),
+        )
     end
 
     return (start = events[1].simulation_time, done = events[2].simulation_time)
@@ -132,11 +140,19 @@ function get_simulation_stage_range(filename::AbstractString, step::Int, stage::
         x -> x.step == step && x.stage == stage,
     )
     if length(events) != 2
-        throw(ArgumentError("$filename does not have two SimulationStageEvent for step = $step stage = $stage"))
+        throw(
+            ArgumentError(
+                "$filename does not have two SimulationStageEvent for step = $step stage = $stage",
+            ),
+        )
     end
 
     if events[1].status != "start" || events[2].status != "done"
-        throw(ArgumentError("$filename does not contain start and done events for step = $step stage = $stage"))
+        throw(
+            ArgumentError(
+                "$filename does not contain start and done events for step = $step stage = $stage",
+            ),
+        )
     end
 
     return (start = events[1].simulation_time, done = events[2].simulation_time)

@@ -32,16 +32,16 @@ end
 
 function make_export_all(stages)
     return [
-        StageResultsExport(x, duals = [:all], variables = [:all], parameters = [:all])
-        for x in stages
+        StageResultsExport(x, duals = [:all], variables = [:all], parameters = [:all]) for
+        x in stages
     ]
 end
 
 function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
         # TODO: make a simulation that has lookahead for better results extraction tests
-        c_sys5_hy_uc = PSB.build_system(PSITestSystems,"c_sys5_hy_uc")
-        c_sys5_hy_ed = PSB.build_system(PSITestSystems,"c_sys5_hy_ed")
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
         stages_definition = Dict(
             "UC" => Stage(
                 GenericOpProblem,
@@ -144,14 +144,12 @@ function test_simulation_results(file_path::String, export_path)
         ]
         @test isempty(setdiff(uc_expected_vars, get_existing_variables(results_uc)))
         @test isempty(setdiff(ed_expected_vars, get_existing_variables(results_ed)))
-        @test isempty(setdiff(
-            uc_expected_vars,
-            get_existing_variables(results_uc_from_file),
-        ))
-        @test isempty(setdiff(
-            ed_expected_vars,
-            get_existing_variables(results_ed_from_file),
-        ))
+        @test isempty(
+            setdiff(uc_expected_vars, get_existing_variables(results_uc_from_file)),
+        )
+        @test isempty(
+            setdiff(ed_expected_vars, get_existing_variables(results_ed_from_file)),
+        )
 
         p_thermal_standard_ed = read_variable(results_ed, :P__ThermalStandard)
         @test length(keys(p_thermal_standard_ed)) == 48
@@ -203,22 +201,26 @@ function test_simulation_results(file_path::String, export_path)
         end
 
         # request non sync data
-        @test_logs((:error, r"Requested time does not match available results"),
-        match_mode = :any,
-        @test_throws IS.InvalidValue read_realized_variables(
-            results_ed,
-            names = [:P__ThermalStandard],
-            initial_time = DateTime("2024-01-01T02:12:00"),
-            len = 3,
-        ))
+        @test_logs(
+            (:error, r"Requested time does not match available results"),
+            match_mode = :any,
+            @test_throws IS.InvalidValue read_realized_variables(
+                results_ed,
+                names = [:P__ThermalStandard],
+                initial_time = DateTime("2024-01-01T02:12:00"),
+                len = 3,
+            )
+        )
 
         # request good window
-        @test size(read_realized_variables(
-            results_ed,
-            names = [:P__ThermalStandard],
-            initial_time = DateTime("2024-01-02T23:10:00"),
-            len = 10,
-        )[:P__ThermalStandard])[1] == 10
+        @test size(
+            read_realized_variables(
+                results_ed,
+                names = [:P__ThermalStandard],
+                initial_time = DateTime("2024-01-02T23:10:00"),
+                len = 10,
+            )[:P__ThermalStandard],
+        )[1] == 10
 
         # request bad window
         @test_logs(
@@ -228,8 +230,7 @@ function test_simulation_results(file_path::String, export_path)
                 names = [:P__ThermalStandard],
                 initial_time = DateTime("2024-01-02T23:10:00"),
                 len = 11,
-                )
-            )
+            ))
         )
 
         # request bad window
@@ -240,8 +241,7 @@ function test_simulation_results(file_path::String, export_path)
                 names = [:P__ThermalStandard],
                 initial_time = DateTime("2024-01-02T23:10:00"),
                 len = 12,
-                )
-            )
+            ))
         )
 
         load_results!(
