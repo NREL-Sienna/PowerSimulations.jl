@@ -547,3 +547,52 @@ function add_to_setting_ext!(psi_container::PSIContainer, key::String, value)
     @debug "Add to settings ext" key value
     return
 end
+
+function check_psi_container(psi_container::PSIContainer)
+    valid = true
+    # Check for parameter invalid values
+    if model_has_parameters(psi_container)
+        for param_array in values(psi_container.parameters)
+            valid = !all(isnan.(param_array.multiplier_array.data))
+        end
+    end
+    if !valid
+        error("The model container has invalid values")
+    end
+    return
+end
+
+function _build!(
+    psi_container::PSIContainer,
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+)
+    transmission = template.transmission
+    # Order is required
+    # The container is initialized here because this build! call for psi_container takes the
+    # information from the template with cached PSISettings. It allows having the same build! call for operations problems
+    # specified with template and simulation stage.
+    psi_container_init!(psi_container, transmission, sys)
+    construct_services!(psi_container, sys, template.services, template.devices)
+    for device_model in values(template.devices)
+        @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
+        construct_device!(psi_container, sys, device_model, transmission)
+        @debug check_problem_size(psi_container)
+    end
+    @debug "Building $(transmission) network formulation"
+    construct_network!(psi_container, sys, transmission)
+    @debug check_problem_size(psi_container)
+
+    for branch_model in values(template.branches)
+        @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
+        construct_device!(psi_container, sys, branch_model, transmission)
+        @debug check_problem_size(psi_container)
+    end
+
+    @debug "Building Objective"
+    JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
+    @debug "Total operation count $(psi_container.JuMPmodel.operator_counter)"
+
+    check_psi_container(psi_container)
+    return
+end
