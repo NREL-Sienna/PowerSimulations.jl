@@ -175,6 +175,7 @@ function energy_balance_hydro_param!(
         for t in time_steps
             param_target[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
+            multiplier_target[name, t] = d.multiplier
         end
         target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
