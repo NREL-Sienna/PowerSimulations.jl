@@ -548,6 +548,19 @@ function add_to_setting_ext!(psi_container::PSIContainer, key::String, value)
     return
 end
 
+function check_psi_container(psi_container::PSIContainer)
+    valid = true
+    # Check for parameter invalid values
+    if model_has_parameters(psi_container)
+        for param_array in values(psi_container.parameters)
+            valid = !all(isnan.(param_array.multiplier_array.data))
+        end
+    end
+    if !valid
+        error("The model container has invalid values")
+    end
+    return
+end
 
 function _build!(
     psi_container::PSIContainer,
@@ -579,5 +592,7 @@ function _build!(
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
     @debug "Total operation count $(psi_container.JuMPmodel.operator_counter)"
+
+    check_psi_container(psi_container)
     return
 end
