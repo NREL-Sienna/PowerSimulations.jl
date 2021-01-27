@@ -438,7 +438,7 @@ function add_param_container!(
     container = ParameterContainer(
         param_reference,
         JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
-        JuMP.Containers.DenseAxisArray{Float64}(undef, axs...),
+        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
     assign_parameter!(psi_container, container)
     return container
