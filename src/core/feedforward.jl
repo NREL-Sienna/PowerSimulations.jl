@@ -301,8 +301,10 @@ function ub_ff(
             for val in constraint_info.additional_terms_ub
                 JuMP.add_to_expression!(expression_ub, variable[name, t])
             end
-            con_ub[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name] * multiplier_ub[name])
+            con_ub[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                expression_ub <= param_ub[name] * multiplier_ub[name]
+            )
         end
     end
     return
@@ -379,10 +381,14 @@ function range_ff(
             for val in constraint_info.additional_terms_lb
                 JuMP.add_to_expression!(expression_lb, variable[name, t], -1.0)
             end
-            con_ub[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name] * multiplier_ub[name])
-            con_lb[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= param_lb[name] * multiplier_lb[name])
+            con_ub[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                expression_ub <= param_ub[name] * multiplier_ub[name]
+            )
+            con_lb[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                expression_lb >= param_lb[name] * multiplier_lb[name]
+            )
         end
     end
 

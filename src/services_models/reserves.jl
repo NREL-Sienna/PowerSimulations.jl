@@ -39,7 +39,10 @@ function service_requirement_constraint!(
 
     requirement = PSY.get_requirement(service)
     if parameters
-        container = get_parameter_container(psi_container, UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"))
+        container = get_parameter_container(
+            psi_container,
+            UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"),
+        )
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps
@@ -53,7 +56,7 @@ function service_requirement_constraint!(
             mul = (requirement * multiplier[name, t])
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                resource_expression >= param[name, t]  * mul
+                resource_expression >= param[name, t] * mul
             )
         end
     else
