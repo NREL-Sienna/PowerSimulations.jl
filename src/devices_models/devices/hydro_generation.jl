@@ -736,7 +736,7 @@ function device_energy_budget_param_ub(
         end
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable_out[name, t] for t in time_steps]) <=  sum([ multiplier[name, t] * param[name, t] for t in time_steps])
+            sum([variable_out[name, t] for t in time_steps]) <= sum([multiplier[name, t] * param[name, t] for t in time_steps])
         )
     end
 

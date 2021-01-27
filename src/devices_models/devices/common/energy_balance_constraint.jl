@@ -364,8 +364,8 @@ function energy_balance_hydro_param!(
             exp =
                 varenergy_up[name, t - 1] +
                 (
-                    multiplier_inflow[name, t] * param_inflow[name, t] + varin[name, t] * pump_eff -
-                    varspill[name, t] - varout[name, t]
+                    multiplier_inflow[name, t] * param_inflow[name, t] +
+                    varin[name, t] * pump_eff - varspill[name, t] - varout[name, t]
                 ) * fraction_of_hour
             constraint_up[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, varenergy_up[name, t] == exp)
@@ -395,7 +395,8 @@ function energy_balance_hydro_param!(
                 varenergy_down[name, t - 1] +
                 (
                     varspill[name, t] + varout[name, t] -
-                    multiplier_outflow[name, t] * param_outflow[name, t] - varin[name, t] * pump_eff
+                    multiplier_outflow[name, t] * param_outflow[name, t] -
+                    varin[name, t] * pump_eff
                 ) * fraction_of_hour
             constraint_down[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, varenergy_down[name, t] == exp)
