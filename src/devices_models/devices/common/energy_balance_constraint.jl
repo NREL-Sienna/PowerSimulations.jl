@@ -345,7 +345,7 @@ function energy_balance_hydro_param!(
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
         pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
-        multiplier_inflow[name, 1] = d.multiplier
+        multiplier_inflow[name, t] .= d.multiplier
         param_inflow[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
