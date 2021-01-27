@@ -343,10 +343,7 @@ function _write_model_parameter_results!(store, psi_container, stage, timestamp,
         num_columns = size(param_array)[1]
         data = Array{Float64}(undef, horizon, num_columns)
         for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
-            val1 = _jump_value(param_array[name, r_ix])
-            val2 = multiplier_array[name, r_ix]
-            data[r_ix, c_ix] =
-                _jump_value(param_array[name, r_ix]) * (multiplier_array[name, r_ix])
+            data[r_ix, c_ix] = val1 * val2
         end
 
         write_result!(store, stage_name, STORE_CONTAINER_PARAMETERS, name, timestamp, data)
