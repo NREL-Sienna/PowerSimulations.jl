@@ -565,7 +565,7 @@ function export_optimizer_log(
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function write_optimization_container(
+function serialize_optimization_model(
     optimization_container::OptimizationContainer,
     save_path::String,
 )
@@ -636,6 +636,16 @@ function check_optimization_container(optimization_container::OptimizationContai
         error("The model container has invalid values")
     end
     return
+end
+
+function check_problem_size(optimization_container::OptimizationContainer)
+    model = optimization_container.JuMPmodel
+    vars = JuMP.num_variables(model)
+    cons = 0
+    for (exp, c_type) in JuMP.list_of_constraint_types(model)
+        cons += JuMP.num_constraints(model, exp, c_type)
+    end
+    return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
 function _build!(

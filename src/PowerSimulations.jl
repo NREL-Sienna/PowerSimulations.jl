@@ -5,7 +5,6 @@ module PowerSimulations
 # Exports
 
 # Base Models
-export Stage
 export Simulation
 export OperationsProblem
 export OperationsProblemTemplate
@@ -110,22 +109,12 @@ export EconomicDispatchProblem
 # export OptimalPowerFlow
 
 # Functions
-## Construction Exports
-export construct_device!
-export construct_network!
 ## Op Model Exports
 export solve!
+export simulate!
 export get_initial_conditions
-export set_transmission_model!
-export set_devices_template!
-export set_branches_template!
-export set_services_template!
-export set_device_model!
-export set_branch_model!
-export set_device_model!
-export set_model!
 export serialize_model
-export export_operations_model
+export serialize_optimization_model
 ## Sim Model Exports
 export build!
 export execute!

@@ -1,5 +1,5 @@
-struct Settings
-    horizon::Base.RefValue{Int}
+struct PSISettings
+    horizon::Dates.Period
     use_forecast_data::Bool
     use_parameters::Bool
     warm_start::Base.RefValue{Bool}
@@ -18,13 +18,12 @@ end
 
 function Settings(
     sys;
-    initial_time::Dates.DateTime = UNSET_INI_TIME,
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
     warm_start::Bool = true,
     balance_slack_variables::Bool = false,
     services_slack_variables::Bool = false,
-    horizon::Int = UNSET_HORIZON,
+    horizon::Dates.Period = UNSET_HORIZON,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     optimizer_log_print::Bool = false,
@@ -34,8 +33,8 @@ function Settings(
     allow_fails = false,
     ext = Dict{String, Any}(),
 )
-    return Settings(
-        Ref(horizon),
+    return PSISettings(
+        horizon,
         use_forecast_data,
         use_parameters,
         Ref(warm_start),

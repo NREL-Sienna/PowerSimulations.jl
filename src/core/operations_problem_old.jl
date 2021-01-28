@@ -197,16 +197,7 @@ function reset!(op_problem::OperationsProblem)
     return
 end
 
-function get_initial_conditions(
-    op_problem::OperationsProblem,
-    ic::InitialConditionType,
-    device::PSY.Device,
-)
-    psi_container = op_problem.psi_container
-    key = ICKey(ic, device)
 
-    return get_initial_conditions(psi_container, key)
-end
 
 function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
@@ -214,14 +205,6 @@ function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperations
     return
 end
 
-function check_problem_size(psi_container::PSIContainer)
-    vars = JuMP.num_variables(psi_container.JuMPmodel)
-    cons = 0
-    for (exp, c_type) in JuMP.list_of_constraint_types(psi_container.JuMPmodel)
-        cons += JuMP.num_constraints(psi_container.JuMPmodel, exp, c_type)
-    end
-    return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
-end
 
 function read_variables(op_m::OperationsProblem)
     return read_variables(op_m.psi_container)
