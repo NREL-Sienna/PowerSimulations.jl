@@ -28,13 +28,13 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
             optimizer = OSQP_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
-        construct_device!(ps_model, :Tf, transformer_model)
-        construct_device!(ps_model, :TTf, ttransformer_model)
-        construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :Tf, transformer_model)
+        mock_construct_device!(ps_model, :TTf, ttransformer_model)
+        mock_construct_device!(ps_model, :DCLine, dc_line)
 
         moi_tests(
             ps_model,
@@ -83,13 +83,13 @@ end
             PTDF = PTDF_ref[sys],
             constraint_duals = constraint_names,
         )
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
-        construct_device!(ps_model, :Tf, transformer_model)
-        construct_device!(ps_model, :TTf, ttransformer_model)
-        construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :Tf, transformer_model)
+        mock_construct_device!(ps_model, :TTf, ttransformer_model)
+        mock_construct_device!(ps_model, :DCLine, dc_line)
 
         moi_tests(
             ps_model,
@@ -108,8 +108,8 @@ end
 
     #PTDF input Error testing
     ps_model = OperationsProblem(MockOperationProblem, network, c_sys5; optimizer = GLPK_optimizer)
-    construct_device!(ps_model, :Thermal, thermal_model)
-    construct_device!(ps_model, :Load, load_model)
+    mock_construct_device!(ps_model, :Thermal, thermal_model)
+    mock_construct_device!(ps_model, :Load, load_model)
 end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
@@ -139,13 +139,13 @@ end
             optimizer = OSQP_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
-        construct_device!(ps_model, :Tf, transformer_model)
-        construct_device!(ps_model, :TTf, ttransformer_model)
-        construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :Tf, transformer_model)
+        mock_construct_device!(ps_model, :TTf, ttransformer_model)
+        mock_construct_device!(ps_model, :DCLine, dc_line)
 
         moi_tests(
             ps_model,
@@ -229,13 +229,13 @@ end
             optimizer = fast_ipopt_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
-        construct_device!(ps_model, :Tf, transformer_model)
-        construct_device!(ps_model, :TTf, ttransformer_model)
-        construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :Tf, transformer_model)
+        mock_construct_device!(ps_model, :TTf, ttransformer_model)
+        mock_construct_device!(ps_model, :DCLine, dc_line)
 
         moi_tests(
             ps_model,
@@ -271,11 +271,11 @@ end
             optimizer = OSQP_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
-        construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :DCLine, dc_line)
         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
     end
 end
@@ -294,10 +294,10 @@ end
         @info "Test construction of a $(network) network"
         ps_model =
             OperationsProblem(MockOperationProblem, network, sys; optimizer = fast_ipopt_optimizer)
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :Line, line_model)
         @test !isnothing(ps_model.optimization_container.pm)
     end
 end
@@ -313,11 +313,11 @@ end
         @info "Test construction of a $(network) network"
         ps_model =
             OperationsProblem(MockOperationProblem, network, sys; optimizer = fast_ipopt_optimizer)
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
-        construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.optimization_container.pm)
     end
 end
@@ -333,11 +333,11 @@ end
         @info "Test construction of a $(network) network"
         ps_model =
             OperationsProblem(MockOperationProblem, network, sys; optimizer = fast_ipopt_optimizer)
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
-        construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.optimization_container.pm)
     end
 end
@@ -347,8 +347,8 @@ end
     for network in PSI.UNSUPPORTED_POWERMODELS
         ps_model =
             OperationsProblem(MockOperationProblem, network, c_sys5; optimizer = ipopt_optimizer)
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
 
         @test_throws ArgumentError construct_network!(ps_model, network)
     end
@@ -382,11 +382,11 @@ end
     for (network, solver) in networks, sys in systems
         @info "Test construction of a $(network) network"
         ps_model = OperationsProblem(MockOperationProblem, network, sys; optimizer = solver)
-        construct_device!(ps_model, :Thermal, thermal_model)
-        construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model, :Thermal, thermal_model)
+        mock_construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
-        construct_device!(ps_model, :Line, line_model)
-        construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model, :Line, line_model)
+        mock_construct_device!(ps_model, :DCLine, dc_line)
         @test !isnothing(ps_model.optimization_container.pm)
     end
 end
