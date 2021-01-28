@@ -27,7 +27,7 @@ IS.@scoped_enum(RunStatus, READY = -1, SUCCESSFUL = 0, RUNNING = 1, FAILED = 2,)
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
 # Settings constants
-const UNSET_HORIZON = 0
+const UNSET_HORIZON = Dates.Second(0)
 const UNSET_INI_TIME = Dates.DateTime(0)
 
 # Tolerance of comparisons
@@ -48,25 +48,6 @@ const DEFAULT_RESERVE_COST = 1.0e-4
 const KiB = 1024
 const MiB = KiB * KiB
 const GiB = MiB * KiB
-
-# Interface limitations
-# TODO: Remove this and use Julia's default kwarg behavior
-const OPERATIONS_ACCEPTED_KWARGS = [
-    :horizon,
-    :initial_time,
-    :use_forecast_data,
-    :PTDF,
-    :use_parameters,
-    :optimizer,
-    :warm_start,
-    :balance_slack_variables,
-    :services_slack_variables,
-    :system_to_file,
-    :constraint_duals,
-    :export_pwl_vars,
-]
-
-const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
