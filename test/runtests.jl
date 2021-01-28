@@ -33,12 +33,11 @@ const PJ = ParameterJuMP
 const PSB = PowerSystemCaseBuilder
 const IS = InfrastructureSystems
 TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
-abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 
 include("test_utils/model_checks.jl")
-include("test_utils/operations_problem_templates.jl")
+#include("test_utils/operations_problem_templates.jl")
 
 ipopt_optimizer =
     JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)

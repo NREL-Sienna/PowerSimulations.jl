@@ -17,13 +17,13 @@ services = Dict{Symbol, ServiceModel}()
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
 
     @test_throws ArgumentError OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5;
         bad_kwarg = 10,
     )
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5;
         optimizer = GLPK_optimizer,
@@ -31,10 +31,10 @@ services = Dict{Symbol, ServiceModel}()
     )
     moi_tests(op_problem, true, 120, 0, 120, 120, 24, false)
     op_problem =
-        OperationsProblem(TestOpProblem, template, c_sys14; optimizer = OSQP_optimizer)
+        OperationsProblem(MockOperationProblem, template, c_sys14; optimizer = OSQP_optimizer)
     moi_tests(op_problem, false, 120, 0, 120, 120, 24, false)
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5_re;
         use_forecast_data = false,
@@ -42,7 +42,7 @@ services = Dict{Symbol, ServiceModel}()
     )
     moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5_re;
         use_forecast_data = false,
@@ -52,7 +52,7 @@ services = Dict{Symbol, ServiceModel}()
     moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
 
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5_re;
         optimizer = GLPK_optimizer,
@@ -65,7 +65,7 @@ end
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5;
         optimizer = GLPK_optimizer,
@@ -95,7 +95,7 @@ end
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5,
         my_model;
@@ -143,7 +143,7 @@ end
             branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
             template = OperationsProblemTemplate(net, devices, branches, services)
             op_problem = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 system;
                 use_parameters = p,
@@ -166,7 +166,7 @@ end
     branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     @test_throws IS.InvalidValue OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5_pwl_ed_nonconvex;
         use_parameters = true,
@@ -190,7 +190,7 @@ end
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5;
         optimizer = GLPK_optimizer,

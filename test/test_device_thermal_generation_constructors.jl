@@ -3,7 +3,7 @@
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
     c_sys5_re_only = PSB.build_system(PSITestSystems, "c_sys5_re_only")
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re_only)
+    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Thermal, model)
 end
 
@@ -24,7 +24,7 @@ end
 
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
+    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
@@ -32,7 +32,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     op_problem =
-        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = true)
+        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc; use_parameters = true)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, true, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
@@ -43,7 +43,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -67,7 +67,7 @@ end
 
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
+    op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 600, 0, 600, 240, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
@@ -75,7 +75,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     op_problem =
-        OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = true)
+        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc; use_parameters = true)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, true, 600, 0, 600, 240, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
@@ -86,7 +86,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -112,7 +112,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 384, 0, 240, 48, 144, true)
         psi_constraint_test(op_problem, uc_constraint_names)
@@ -139,7 +139,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 432, 0, 288, 96, 144, true)
         psi_constraint_test(op_problem, uc_constraint_names)
@@ -159,14 +159,14 @@ end
 
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
+    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 480, 0, 240, 120, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     op_problem =
-        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = true)
+        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc; use_parameters = true)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, true, 480, 0, 240, 120, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -176,7 +176,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -194,14 +194,14 @@ end
 
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
+    op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 600, 0, 360, 240, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     op_problem =
-        OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = true)
+        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc; use_parameters = true)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, true, 600, 0, 360, 240, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -211,7 +211,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -231,7 +231,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 384, 0, 96, 48, 144, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -251,7 +251,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 432, 0, 144, 96, 144, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -266,7 +266,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -276,7 +276,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -289,7 +289,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -299,7 +299,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -312,7 +312,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 48, 48, 96, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -325,7 +325,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 288, 0, 96, 96, 96, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -340,7 +340,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
@@ -351,7 +351,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
@@ -365,7 +365,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
@@ -376,7 +376,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
@@ -390,7 +390,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 48, 48, 48, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalMultiStart__RangeConstraint, 0.0)
@@ -404,7 +404,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 288, 0, 96, 96, 48, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalMultiStart__RangeConstraint, 0.0)
@@ -423,7 +423,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 216, 120, 0, false)
         psi_constraint_test(op_problem, constraint_names)
@@ -434,7 +434,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -451,7 +451,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 336, 240, 0, false)
         psi_constraint_test(op_problem, constraint_names)
@@ -462,7 +462,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -479,7 +479,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 144, 48, 96, false)
         psi_constraint_test(op_problem, constraint_names)
@@ -497,7 +497,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 288, 0, 192, 96, 96, false)
         psi_constraint_test(op_problem, constraint_names)
@@ -523,7 +523,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             DCPPowerModel,
             c_sys5_pglib;
             use_parameters = p,
@@ -551,7 +551,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             ACPPowerModel,
             c_sys5_pglib;
             use_parameters = p,
@@ -571,7 +571,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 480, 0, 480, 120, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -586,7 +586,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             DCPPowerModel,
             c_sys5_pglib;
             use_parameters = p,
@@ -604,7 +604,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 600, 0, 600, 240, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -619,7 +619,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             ACPPowerModel,
             c_sys5_pglib;
             use_parameters = p,
@@ -639,7 +639,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 168, 120, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -652,7 +652,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             DCPPowerModel,
             c_sys5_pglib;
             use_parameters = p,
@@ -669,7 +669,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem =
-            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
+            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 288, 240, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -683,7 +683,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             ACPPowerModel,
             c_sys5_pglib;
             use_parameters = p,
@@ -711,7 +711,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
         OperationsProblemTemplate(CopperPlatePowerModel, ED_devices, branches, services)
     for p in [true, false]
         ED = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             template,
             ramp_test_sys;
             optimizer = Cbc_optimizer,
@@ -727,7 +727,7 @@ end
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         PSB.build_system(PSITestSystems, "c_duration_test");
         optimizer = Cbc_optimizer,
@@ -742,7 +742,7 @@ end
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         PSB.build_system(PSITestSystems, "c_linear_pwl_test");
         optimizer = Cbc_optimizer,
@@ -757,7 +757,7 @@ end
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         PSB.build_system(PSITestSystems, "c_sos_pwl_test");
         optimizer = Cbc_optimizer,
@@ -774,7 +774,7 @@ end
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         sys;
         optimizer = Cbc_optimizer,

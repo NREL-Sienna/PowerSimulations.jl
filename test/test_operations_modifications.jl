@@ -8,12 +8,12 @@ services = Dict{Symbol, ServiceModel}()
 @testset "Operation set ref models" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
+    op_problem = OperationsProblem(MockOperationProblem, template, c_sys5)
     set_transmission_model!(op_problem, DCPLLPowerModel)
     @test op_problem.template.transmission == DCPLLPowerModel
 
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
+    op_problem = OperationsProblem(MockOperationProblem, template, c_sys5)
     new_devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -25,7 +25,7 @@ services = Dict{Symbol, ServiceModel}()
           true
 
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-    op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
+    op_problem = OperationsProblem(MockOperationProblem, template, c_sys5)
     new_branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
     set_branches_template!(op_problem, new_branches)
     @test op_problem.template.branches[:L].formulation == StaticLine
@@ -34,7 +34,7 @@ end
 @testset "Operation set models" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
+    op_problem = OperationsProblem(MockOperationProblem, template, c_sys5)
     set_device_model!(
         op_problem,
         :Generators,
@@ -46,7 +46,7 @@ end
           true
 
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-    op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
+    op_problem = OperationsProblem(MockOperationProblem, template, c_sys5)
     set_branch_model!(op_problem, :L, DeviceModel(Line, StaticLine))
     @test op_problem.template.branches[:L].formulation == StaticLine
     services_filled = Dict{Symbol, ServiceModel}(
@@ -54,7 +54,7 @@ end
     )
     template_s =
         OperationsProblemTemplate(DCPPowerModel, devices, branches, services_filled)
-    op_problem_s = OperationsProblem(TestOpProblem, template_s, c_sys5)
+    op_problem_s = OperationsProblem(MockOperationProblem, template_s, c_sys5)
     PSI.set_services_model!(
         op_problem_s,
         :Reserve,
