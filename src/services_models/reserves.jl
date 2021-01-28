@@ -40,7 +40,7 @@ function service_requirement_constraint!(
 
     requirement = PSY.get_requirement(service)
     if parameters
-        container = get_parameter_container(
+        param = get_parameter_array(
             optimization_container,
             UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"),
         )
@@ -49,7 +49,6 @@ function service_requirement_constraint!(
         for t in time_steps
             param[name, t] =
                 PJ.add_parameter(optimization_container.JuMPmodel, ts_vector[t])
-            multiplier[name, t] = 1.0
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
             else
@@ -58,7 +57,7 @@ function service_requirement_constraint!(
             mul = (requirement * multiplier[name, t])
             constraint[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                resource_expression >= param[name, t] * mul
+                resource_expression >= param[name, t] * requirement
             )
         end
     else

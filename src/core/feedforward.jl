@@ -288,15 +288,12 @@ function ub_ff(
     @assert axes[2] == time_steps
     container = add_param_container!(optimization_container, param_reference, set_name)
     param_ub = get_parameter_array(container)
-    multiplier_ub = get_multiplier_array(container)
     con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
         value = JuMP.upper_bound(variable[name, 1])
         param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
-        # default set to 1.0, as this implementation doesn't use multiplier
-        multiplier_ub[name] = 1.0
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
@@ -304,7 +301,7 @@ function ub_ff(
             end
             con_ub[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_ub <= param_ub[name] * multiplier_ub[name]
+                expression_ub <= param_ub[name]
             )
         end
     end
@@ -358,7 +355,6 @@ function range_ff(
     container_lb =
         add_param_container!(optimization_container, param_reference[1], set_name)
     param_lb = get_parameter_array(container_lb)
-    multiplier_lb = get_multiplier_array(container_lb)
     container_ub =
         add_param_container!(optimization_container, param_reference[2], set_name)
     param_ub = get_parameter_array(container_ub)
@@ -377,9 +373,6 @@ function range_ff(
             optimization_container.JuMPmodel,
             JuMP.upper_bound(variable[name, 1]),
         )
-        # default set to 1.0, as this implementation doesn't use multiplier
-        multiplier_ub[name] = 1.0
-        multiplier_lb[name] = 1.0
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
@@ -391,11 +384,11 @@ function range_ff(
             end
             con_ub[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_ub <= param_ub[name] * multiplier_ub[name]
+                expression_ub <= param_ub[name]
             )
             con_lb[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_lb >= param_lb[name] * multiplier_lb[name]
+                expression_lb >= param_lb[name]
             )
         end
     end
@@ -462,8 +455,6 @@ function semicontinuousrange_ff(
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
         @debug "SemiContinuousFF" name ub_value lb_value
-        # default set to 1.0, as this implementation doesn't use multiplier
-        multiplier[name] = 1.0
         param[name] = PJ.add_parameter(optimization_container.JuMPmodel, 1.0)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
@@ -485,11 +476,11 @@ function semicontinuousrange_ff(
             mul_lb = lb_value * multiplier[name]
             con_ub[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_ub <= mul_ub * param[name]
+                expression_ub <= ub_value * param[name]
             )
             con_lb[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_lb >= mul_lb * param[name]
+                expression_lb >= lb_value * param[name]
             )
         end
     end
@@ -548,15 +539,12 @@ function integral_limit_ff(
     @assert axes[2] == time_steps
     container_ub = add_param_container!(optimization_container, param_reference, set_name)
     param_ub = get_parameter_array(container_ub)
-    multiplier_ub = get_multiplier_array(container_ub)
     con_ub = add_cons_container!(optimization_container, ub_name, set_name)
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
 
         param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
-        # default set to 1.0, as this implementation doesn't use multiplier
-        multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
             sum(variable[name, t] for t in time_steps) / length(time_steps) <=
