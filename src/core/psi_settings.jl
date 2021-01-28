@@ -1,5 +1,5 @@
 struct Settings
-    horizon::Dates.Period
+    horizon::Int
     use_forecast_data::Bool
     use_parameters::Bool
     warm_start::Base.RefValue{Bool}
@@ -18,6 +18,7 @@ end
 
 function Settings(
     sys;
+    initial_time::Dates.DateTime = UNSET_INI_TIME,
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
     warm_start::Bool = true,
@@ -34,7 +35,7 @@ function Settings(
     ext = Dict{String, Any}(),
 )
     return Settings(
-        horizon,
+        horizon.value,
         use_forecast_data,
         use_parameters,
         Ref(warm_start),
@@ -86,11 +87,9 @@ function restore_from_copy(
     return Settings(vals...)
 end
 
-function set_horizon!(settings::Settings, horizon::Int)
-    settings.horizon[] = horizon
-    return
-end
-get_horizon(settings::Settings)::Int = settings.horizon[]
+set_horizon!(settings::Settings, horizon::Dates.Period) = settings.horizon = horizon
+
+get_horizon(settings::Settings) = settings.horizon
 get_use_forecast_data(settings::Settings) = settings.use_forecast_data
 get_use_parameters(settings::Settings) = settings.use_parameters
 function set_initial_time!(settings::Settings, initial_time::Dates.DateTime)
