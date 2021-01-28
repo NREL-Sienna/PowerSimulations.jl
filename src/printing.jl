@@ -1,19 +1,35 @@
-function _organize_model(
-    val::Dict{Symbol, T},
+function _display_model(
+    val::Dict{String, T},
     field::Symbol,
     io::IO,
-) where {T <: Union{DeviceModel, ServiceModel}}
-    println(io, "  $(field): ")
+) where {T <: ServiceModel}
+    field = titlecase(string(field))
+    println(io, "$(field) Models:\n")
+    if isempty(val)
+        println("\t No Models Specified\n")
+        return
+    end
     for (i, ix) in val
-        println(io, "      $(i):")
-        for inner_field in fieldnames(T)
-            inner_field == :services && continue
-            value = getfield(val[i], Symbol(inner_field))
-
-            if !(value === nothing)
-                println(io, "        $(inner_field) = $value")
-            end
+        println(io, "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
+        if ix.use_service_name
+            println(io, "\tName specific Model\n")
         end
+    end
+end
+
+function _display_model(
+    val::Dict{String, T},
+    field::Symbol,
+    io::IO,
+) where {T <: DeviceModel}
+    field = titlecase(string(field))
+    println(io, "$(field) Models: \n")
+    if isempty(val)
+        println("\t No Models Specified\n")
+        return
+    end
+    for (i, ix) in val
+        println(io, "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
     end
 end
 
@@ -33,16 +49,17 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTemplate)
     println(io, "\nOperations Problem Specification")
-    println(io, "============================================\n")
+    println(io, "============================================")
 
     for field in fieldnames(OperationsProblemTemplate)
         val = getfield(template, Symbol(field))
-        if typeof(val) <: Dict{Symbol, <:Union{DeviceModel, ServiceModel}}
+        if typeof(val) <: Dict{String, <:Union{DeviceModel, ServiceModel}}
             println(io, "============================================")
-            _organize_model(val, field, io)
+            _display_model(val, field, io)
         else
             if !(val === nothing)
-                println(io, "  $(field):  $(val)")
+                field = titlecase(string(field))
+                println(io, "$(field):\n\t$(val) \n")
             else
                 println(io, "no data")
             end
