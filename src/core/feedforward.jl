@@ -638,7 +638,7 @@ end
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(
     chron::RecedingHorizon,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::AbstractString,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -655,7 +655,7 @@ end
 
 function get_stage_variable(
     ::Consecutive,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -672,7 +672,7 @@ end
 
 function get_stage_variable(
     chron::Synchronize,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -692,7 +692,7 @@ end
 
 function get_stage_variable(
     ::FullHorizon,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -708,7 +708,7 @@ end
 
 function get_stage_variable(
     chron::Range,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -723,8 +723,8 @@ function get_stage_variable(
 end
 
 function feedforward_update!(
-    destination_stage::Stage,
-    source_stage::Stage,
+    destination_stage::OperationsProblem,
+    source_stage::OperationsProblem,
     chronology::FeedForwardChronology,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,

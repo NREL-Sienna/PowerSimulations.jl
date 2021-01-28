@@ -43,13 +43,13 @@ function test_simulation_results(file_path::String, export_path)
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
         stages_definition = Dict(
-            "UC" => Stage(
+            "UC" => OperationsProblem(
                 GenericOpProblem,
                 template_hydro_st_uc,
                 c_sys5_hy_uc,
                 GLPK_optimizer,
             ),
-            "ED" => Stage(
+            "ED" => OperationsProblem(
                 GenericOpProblem,
                 template_hydro_st_ed,
                 c_sys5_hy_ed,
