@@ -306,7 +306,8 @@ function get_simulation_time(sim::Simulation, stage_number::Int)
 end
 
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
-get_stage_name(sim::Simulation, stage::OperationsProblem) = get_stage_name(sim.sequence, stage)
+get_stage_name(sim::Simulation, stage::OperationsProblem) =
+    get_stage_name(sim.sequence, stage)
 IS.get_name(sim::Simulation) = sim.name
 get_simulation_folder(sim::Simulation) = sim.simulation_folder
 get_execution_order(sim::Simulation) = get_sequence(sim).execution_order

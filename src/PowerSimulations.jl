@@ -127,6 +127,7 @@ export UnitCommitmentProblem
 export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
+export set_component_model!
 ## Results interfaces
 export SimulationResultsExport
 export StageResultsExport

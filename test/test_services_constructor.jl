@@ -17,8 +17,12 @@
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, model_template, c_sys5_uc; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_uc;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 648, 0, 120, 216, 72, false)
         symbols = [
             :Reserve1__VariableReserve_ReserveUp,
@@ -54,8 +58,12 @@ end
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, model_template, c_sys5_uc; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_uc;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 1008, 0, 240, 216, 192, true)
     end
 end
@@ -78,8 +86,12 @@ end
     )
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, model_template, c_sys5_re; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_re;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 360, 0, 72, 48, 72, false)
     end
 end
@@ -106,8 +118,12 @@ end
     )
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, model_template, c_sys5_bat; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_bat;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 408, 0, 192, 264, 96, false)
     end
 end
@@ -131,8 +147,12 @@ end
     )
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, model_template, c_sys5_hyd; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_hyd;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 240, 0, 24, 96, 72, false)
     end
 end
@@ -220,8 +240,12 @@ end
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, model_template, c_sys5_uc; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_uc;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 648, 0, 120, 240, 72, false)
     end
 end

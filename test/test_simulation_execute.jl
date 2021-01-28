@@ -1,8 +1,14 @@
 function test_simulation_single_ed(file_path::String)
     @testset "Single stage sequential tests" begin
         c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-        single_stage_definition =
-            Dict("ED" => OperationsProblem(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
+        single_stage_definition = Dict(
+            "ED" => OperationsProblem(
+                GenericOpProblem,
+                template_ed,
+                c_sys5_uc,
+                ipopt_optimizer,
+            ),
+        )
 
         single_sequence = SimulationSequence(
             step_resolution = Hour(24),
@@ -301,8 +307,12 @@ function test_stage_chronologies(file_path)
             c_sys5_hy_uc,
             GLPK_optimizer,
         ),
-        "ED" =>
-            OperationsProblem(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
+        "ED" => OperationsProblem(
+            GenericOpProblem,
+            template_hydro_ed,
+            c_sys5_hy_ed,
+            ipopt_optimizer,
+        ),
     )
 
     sequence = SimulationSequence(

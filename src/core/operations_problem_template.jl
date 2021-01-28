@@ -25,7 +25,8 @@ end
 
 OperationsProblemTemplate() = OperationsProblemTemplate(CopperPlatePowerModel)
 
-function set_model!(
+# Note to devs. PSY exports set_model! these names are choosen to avoid name clashes
+function set_transmission_model!(
     template::OperationsProblemTemplate,
     model::Type{<:PM.AbstractPowerModel},
 )
@@ -33,7 +34,7 @@ function set_model!(
     return
 end
 
-function set_model!(
+function set_component_model!(
     template::OperationsProblemTemplate,
     label,
     model::DeviceModel{<:PSY.Device, <:AbstractDeviceFormulation},
@@ -42,7 +43,7 @@ function set_model!(
     return
 end
 
-function set_model!(
+function set_component_model!(
     template::OperationsProblemTemplate,
     label,
     model::DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation},
@@ -50,7 +51,7 @@ function set_model!(
     _set_model!(template.branches, string(label), model)
 end
 
-function set_model!(
+function set_component_model!(
     template::OperationsProblemTemplate,
     label,
     model::ServiceModel{<:PSY.Service, <:AbstractServiceFormulation},

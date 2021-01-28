@@ -359,7 +359,8 @@ function range_ff(
         add_param_container!(optimization_container, param_reference[1], set_name)
     param_lb = get_parameter_array(container_lb)
     multiplier_lb = get_multiplier_array(container_lb)
-    container_ub = add_param_container!(optimization_container, param_reference[2], set_name)
+    container_ub =
+        add_param_container!(optimization_container, param_reference[2], set_name)
     param_ub = get_parameter_array(container_ub)
     multiplier_ub = get_multiplier_array(container_ub)
     # Create containers for the parameters
@@ -368,10 +369,14 @@ function range_ff(
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
-        param_lb[name] =
-            PJ.add_parameter(optimization_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
-        param_ub[name] =
-            PJ.add_parameter(optimization_container.JuMPmodel, JuMP.upper_bound(variable[name, 1]))
+        param_lb[name] = PJ.add_parameter(
+            optimization_container.JuMPmodel,
+            JuMP.lower_bound(variable[name, 1]),
+        )
+        param_ub[name] = PJ.add_parameter(
+            optimization_container.JuMPmodel,
+            JuMP.upper_bound(variable[name, 1]),
+        )
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier_ub[name] = 1.0
         multiplier_lb[name] = 1.0

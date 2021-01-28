@@ -42,7 +42,6 @@ const PSB = PowerSystemCaseBuilder
 
 const PJ = ParameterJuMP
 const IS = InfrastructureSystems
-TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 
