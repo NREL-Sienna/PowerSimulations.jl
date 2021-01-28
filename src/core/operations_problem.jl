@@ -107,7 +107,7 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     function OperationsProblem{M}(
         template::OperationsProblemTemplate,
         sys::PSY.System,
-        settings::PSISettings,
+        settings::Settings,
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
         internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
@@ -131,7 +131,7 @@ function OperationsProblem{M}(
     allow_fails = false,
     optimizer_log_print = false,
 ) where {M <: AbstractOperationsProblem}
-    settings = PSISettings(
+    settings = Settings(
         sys;
         optimizer = optimizer,
         use_parameters = true,
@@ -333,7 +333,7 @@ end
 struct OperationsProblemSerializationWrapper
     template::OperationsProblemTemplate
     sys::String
-    settings::PSISettings
+    settings::Settings
     op_problem_type::DataType
 end
 
@@ -690,7 +690,7 @@ end
 struct StageSerializationWrapper
     template::OperationsProblemTemplate
     sys::String
-    settings::PSISettings
+    settings::Settings
     problem_type::DataType
 end
 

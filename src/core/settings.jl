@@ -1,4 +1,4 @@
-struct PSISettings
+struct Settings
     horizon::Dates.Period
     use_forecast_data::Bool
     use_parameters::Bool
@@ -33,7 +33,7 @@ function Settings(
     allow_fails = false,
     ext = Dict{String, Any}(),
 )
-    return PSISettings(
+    return Settings(
         horizon,
         use_forecast_data,
         use_parameters,
