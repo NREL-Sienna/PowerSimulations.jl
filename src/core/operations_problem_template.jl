@@ -1,45 +1,29 @@
-mutable struct OperationsProblemTemplate
-    transmission::Type{<:PM.AbstractPowerModel}
-    devices::Dict{Symbol, DeviceModel}
-    branches::Dict{Symbol, DeviceModel}
-    services::Dict{Symbol, ServiceModel}
-end
-
 """
     OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
-Creates a model reference of the Power Formulation, devices, branches, and services.
+Creates a model reference of the PowerSimulations Optimization Problem.
 # Arguments
 - `model::Type{T<:PM.AbstractPowerFormulation}`:
-- `devices::Dict{Symbol, DeviceModel}`: device dictionary
-- `branches::Dict{Symbol, BranchModel}`: branch dictionary
-- `services::Dict{Symbol, ServiceModel}`: service dictionary
 # Example
 ```julia
-template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+template = OperationsProblemTemplate(CopperPlatePowerModel)
 ```
 """
-function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
-    return OperationsProblemTemplate(
-        T,
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, ServiceModel}(),
-    )
-end
-
-OperationsProblemTemplate() = OperationsProblemTemplate(PM.AbstractPowerModel)
-
-function set_model!(template::OperationsProblemTemplate, label::Symbol, model::DeviceModel)
-    if haskey(template.devices, label)
-        throw(
-            IS.ConflictingInputsError(
-                "Device with model name $(label) already exists in the Opertaion Model",
-            ),
+mutable struct OperationsProblemTemplate
+    transmission::Type{<:PM.AbstractPowerModel}
+    devices::Dict{String, DeviceModel}
+    branches::Dict{String, DeviceModel}
+    services::Dict{String, ServiceModel}
+    function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
+        new(
+            T,
+            Dict{String, DeviceModel}(),
+            Dict{String, DeviceModel}(),
+            Dict{String, ServiceModel}(),
         )
     end
-    template.devices[label] = model
-    return
 end
+
+OperationsProblemTemplate() = OperationsProblemTemplate(CopperPlatePowerModel)
 
 function set_model!(
     template::OperationsProblemTemplate,
@@ -47,4 +31,29 @@ function set_model!(
 )
     template.transmission = model
     return
+end
+
+function set_model!(
+    template::OperationsProblemTemplate,
+    label,
+    model::DeviceModel{<:PSY.Device, <:AbstractDeviceFormulation},
+)
+    _set_model!(template.devices, string(label), model)
+    return
+end
+
+function set_model!(
+    template::OperationsProblemTemplate,
+    label,
+    model::DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation},
+)
+    _set_model!(template.branches, string(label), model)
+end
+
+function set_model!(
+    template::OperationsProblemTemplate,
+    label,
+    model::ServiceModel{<:PSY.Service, <:AbstractServiceFormulation},
+)
+    _set_model!(template.services, string(label), model)
 end
