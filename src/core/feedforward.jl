@@ -355,6 +355,7 @@ function range_ff(
     container_lb =
         add_param_container!(optimization_container, param_reference[1], set_name)
     param_lb = get_parameter_array(container_lb)
+    multiplier_lb = get_multiplier_array(container_lb)
     container_ub =
         add_param_container!(optimization_container, param_reference[2], set_name)
     param_ub = get_parameter_array(container_ub)
@@ -373,6 +374,9 @@ function range_ff(
             optimization_container.JuMPmodel,
             JuMP.upper_bound(variable[name, 1]),
         )
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
+        multiplier_lb[name] = 1.0
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub

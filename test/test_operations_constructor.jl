@@ -30,8 +30,12 @@ services = Dict{Symbol, ServiceModel}()
         use_parameters = true,
     )
     moi_tests(op_problem, true, 120, 0, 120, 120, 24, false)
-    op_problem =
-        OperationsProblem(MockOperationProblem, template, c_sys14; optimizer = OSQP_optimizer)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        template,
+        c_sys14;
+        optimizer = OSQP_optimizer,
+    )
     moi_tests(op_problem, false, 120, 0, 120, 120, 24, false)
     op_problem = OperationsProblem(
         MockOperationProblem,

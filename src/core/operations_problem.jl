@@ -48,7 +48,7 @@ function ProblemInternal(
             execution_count,
             0,
             Dict{Int, FeedForwardChronology}(),
-            false
+            false,
         ),
         ext,
     )
@@ -196,12 +196,7 @@ function OperationsProblem(
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
     kwargs...,
 )
-    return OperationsProblem{GenericOpProblem}(
-        template,
-        sys,
-        jump_model;
-        kwargs...,
-    )
+    return OperationsProblem{GenericOpProblem}(template, sys, jump_model; kwargs...)
 end
 
 is_built(problem::OperationsProblem) = problem.internal.status == BuildStatus.BUILT
@@ -209,8 +204,10 @@ is_empty(problem::OperationsProblem) = problem.internal.status == BuildStatus.EM
 warm_start_enabled(problem::OperationsProblem) =
     get_warm_start(get_optimization_container(problem).settings)
 built_for_simulation(problem::OperationsProblem) = get_simulation_info(problem) === nothing
-get_end_of_interval_step(problem::OperationsProblem) = get_simulation_info(problem).end_of_interval_step
-get_execution_count(problem::OperationsProblem) = get_simulation_info(problem).execution_count
+get_end_of_interval_step(problem::OperationsProblem) =
+    get_simulation_info(problem).end_of_interval_step
+get_execution_count(problem::OperationsProblem) =
+    get_simulation_info(problem).execution_count
 get_executions(problem::OperationsProblem) = get_simulation_info(problem).executions
 function get_initial_time(
     problem::OperationsProblem{T},
@@ -219,8 +216,11 @@ function get_initial_time(
 end
 get_name(problem::OperationsProblem) = problem.internal.name
 get_number(problem::OperationsProblem) = get_simulation_info(problem).number
-get_optimization_container(problem::OperationsProblem) = problem.internal.optimization_container
-function get_resolution(problem::OperationsProblem{T}) where {T <: AbstractOperationsProblem}
+get_optimization_container(problem::OperationsProblem) =
+    problem.internal.optimization_container
+function get_resolution(
+    problem::OperationsProblem{T},
+) where {T <: AbstractOperationsProblem}
     resolution = PSY.get_time_series_resolution(get_system(problem))
     return IS.time_period_conversion(resolution)
 end
@@ -240,9 +240,12 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(problem), key)
 end
 
-set_execution_count!(problem::OperationsProblem, val::Int) = get_simulation_info(problem).execution_count = val
-set_status!(problem::OperationsProblem, status::BuildStatus) = problem.internal.status = status
-set_write_path!(problem::OperationsProblem, path::AbstractString) = problem.internal.write_path = path
+set_execution_count!(problem::OperationsProblem, val::Int) =
+    get_simulation_info(problem).execution_count = val
+set_status!(problem::OperationsProblem, status::BuildStatus) =
+    problem.internal.status = status
+set_write_path!(problem::OperationsProblem, path::AbstractString) =
+    problem.internal.write_path = path
 
 function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsProblem}
     if built_for_simulation(problem::OperationsProblem)
@@ -277,7 +280,7 @@ function build!(
     problem::OperationsProblem{M};
     save_path::String,
     use_forecast_data::Bool = false,
-    initial_time::Dates.DateTime = UNSET_INI_TIME
+    initial_time::Dates.DateTime = UNSET_INI_TIME,
 ) where {M <: PowerSimulationsOperationsProblem}
     set_write_path!(problem, save_path)
     build_pre_step!(problem, initial_time)
@@ -286,7 +289,10 @@ function build!(
     _build!(optimization_container, get_template(problem), system)
     settings = get_settings(problem)
     @assert get_horizon(settings) == length(optimization_container.time_steps)
-    serialize_optimization_model(problem, joinpath(write_path, "operation_problem_optimization_model.json"))
+    serialize_optimization_model(
+        problem,
+        joinpath(write_path, "operation_problem_optimization_model.json"),
+    )
     set_status!(problem, BuildStatus.BUILT)
     return
 end
@@ -557,7 +563,14 @@ function _write_model_parameter_results!(
             data[r_ix, c_ix] = val1 * val2
         end
 
-        write_result!(store, problem_name, STORE_CONTAINER_PARAMETERS, name, timestamp, data)
+        write_result!(
+            store,
+            problem_name,
+            STORE_CONTAINER_PARAMETERS,
+            name,
+            timestamp,
+            data,
+        )
 
         if exports !== nothing &&
            should_export_parameter(exports[:exports], timestamp, problem_name_str, name)

@@ -5,7 +5,6 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     psi_container::PSIContainer
 end
 
-
 function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
@@ -24,7 +23,7 @@ function OperationsProblem{M}(
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
-    settings = PSISettings(sys; kwargs...)
+    settings = Settings(sys; kwargs...)
     return OperationsProblem{M}(template, sys, jump_model, settings)
 end
 
@@ -32,7 +31,7 @@ function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.AbstractModel},
-    settings::PSISettings,
+    settings::Settings,
 ) where {M <: AbstractOperationsProblem}
     op_problem =
         OperationsProblem{M}(template, sys, PSIContainer(sys, settings, jump_model))
@@ -149,7 +148,7 @@ function OperationsProblem{M}(
     kwargs...,
 ) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
-    settings = PSISettings(sys; kwargs...)
+    settings = Settings(sys; kwargs...)
     return OperationsProblem{M}(
         OperationsProblemTemplate(T),
         sys,
@@ -197,14 +196,11 @@ function reset!(op_problem::OperationsProblem)
     return
 end
 
-
-
 function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys)
     return
 end
-
 
 function read_variables(op_m::OperationsProblem)
     return read_variables(op_m.psi_container)

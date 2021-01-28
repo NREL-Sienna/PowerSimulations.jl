@@ -19,8 +19,12 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hy; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hy;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -48,8 +52,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -81,8 +89,12 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hy; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hy;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 24, 0, 24, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -99,8 +111,12 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hy; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        ACPPowerModel,
+        c_sys5_hy;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 48, 0, 48, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -128,8 +144,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 24, 0, 24, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -157,8 +177,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        ACPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 48, 0, 48, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -190,8 +214,12 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hy; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hy;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 48, 0, 48, 24, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -208,8 +236,12 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hy; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        ACPPowerModel,
+        c_sys5_hy;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 72, 0, 72, 48, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -237,8 +269,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 48, 0, 48, 24, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -266,8 +302,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        ACPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 72, 0, 72, 48, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -299,8 +339,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 24, 0, 1, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -328,8 +372,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        ACPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 48, 0, 1, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -431,8 +479,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 48, 0, 25, 24, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -460,8 +512,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        ACPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 72, 0, 49, 48, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -493,8 +549,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 72, 0, 0, 1, 24, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -522,8 +582,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        ACPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 96, 0, 0, 1, 24, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -555,8 +619,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 96, 0, 24, 25, 24, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -584,8 +652,12 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        ACPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 120, 0, 48, 49, 24, true)
     psi_checkobjfun_test(op_problem, GAEVF)

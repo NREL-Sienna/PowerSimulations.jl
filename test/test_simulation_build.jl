@@ -371,7 +371,12 @@ function test_simulation_build(file_path::String)
                 c_sys5_uc,
                 Cbc_optimizer,
             ),
-            "ED" => OperationsProblem(GenericOpProblem, template_pwl_ed, c_sys5_ed, Cbc_optimizer),
+            "ED" => OperationsProblem(
+                GenericOpProblem,
+                template_pwl_ed,
+                c_sys5_ed,
+                Cbc_optimizer,
+            ),
         )
         sequence = SimulationSequence(
             step_resolution = Hour(24),

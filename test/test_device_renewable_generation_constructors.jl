@@ -22,8 +22,12 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # Using Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_re;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, true, 72, 0, 72, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -44,8 +48,12 @@ end
     model = DeviceModel(RenewableDispatch, RenewableFullDispatch)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            ACPPowerModel,
+            c_sys5_re;
+            use_parameters = p,
+        )
         mock_construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 144, 0, 144, 72, 0, false)
@@ -82,8 +90,12 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # Using Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re; use_parameters = true)
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5_re;
+        use_parameters = true,
+    )
     mock_construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, true, 72, 0, 72, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -104,8 +116,12 @@ end
     model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            ACPPowerModel,
+            c_sys5_re;
+            use_parameters = p,
+        )
         mock_construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 144, 0, 72, 0, 72, false)
@@ -134,8 +150,12 @@ end
     model = DeviceModel(RenewableDispatch, FixedOutput)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            DCPPowerModel,
+            c_sys5_re;
+            use_parameters = p,
+        )
         mock_construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 0, 0, 0, 0, 0, false)
@@ -151,8 +171,12 @@ end
     model = DeviceModel(RenewableDispatch, FixedOutput)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     for p in [true, false]
-        op_problem =
-            OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            ACPPowerModel,
+            c_sys5_re;
+            use_parameters = p,
+        )
         mock_construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 0, 0, 0, 0, 0, false)

@@ -7,14 +7,27 @@ function PSI.OperationsProblem(
     ::Type{MockOperationProblem},
     ::Type{T},
     sys::PSY.System;
-    kwargs...
-) where T <: PM.AbstractPowerModel
+    kwargs...,
+) where {T <: PM.AbstractPowerModel}
     settings = PSI.Settings(sys; kwargs...)
-    return OperationsProblem{MockOperationProblem}(OperationsProblemTemplate(T), sys,
-    settings, nothing)
+    return OperationsProblem{MockOperationProblem}(
+        OperationsProblemTemplate(T),
+        sys,
+        settings,
+        nothing,
+    )
 end
 
-function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProblem}, label, model)
-    set_model!(problem.template, label, model)
-    PSI.mock_construct_device!(PSI.get_optimization_container(problem), PSI.get_system(problem), model, problem.template.transmission)
+function mock_construct_device!(
+    problem::PSI.OperationsProblem{MockOperationProblem},
+    label,
+    model,
+)
+    set_component_model!(problem.template, label, model)
+    PSI.construct_device!(
+        PSI.get_optimization_container(problem),
+        PSI.get_system(problem),
+        model,
+        problem.template.transmission,
+    )
 end
