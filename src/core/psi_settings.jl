@@ -1,4 +1,4 @@
-struct PSISettings
+struct Settings
     horizon::Dates.Period
     use_forecast_data::Bool
     use_parameters::Bool
@@ -16,7 +16,7 @@ struct PSISettings
     ext::Dict{String, Any}
 end
 
-function PSISettings(
+function Settings(
     sys;
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
@@ -33,7 +33,7 @@ function PSISettings(
     allow_fails = false,
     ext = Dict{String, Any}(),
 )
-    return PSISettings(
+    return Settings(
         horizon,
         use_forecast_data,
         use_parameters,
@@ -52,9 +52,9 @@ function PSISettings(
     )
 end
 
-function copy_for_serialization(settings::PSISettings)
+function copy_for_serialization(settings::Settings)
     vals = []
-    for name in fieldnames(PSISettings)
+    for name in fieldnames(Settings)
         if name == :optimizer
             # Cannot guarantee that the optimizer can be serialized.
             val = nothing
@@ -65,15 +65,15 @@ function copy_for_serialization(settings::PSISettings)
         push!(vals, val)
     end
 
-    return deepcopy(PSISettings(vals...))
+    return deepcopy(Settings(vals...))
 end
 
 function restore_from_copy(
-    settings::PSISettings;
+    settings::Settings;
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
 )
     vals = []
-    for name in fieldnames(PSISettings)
+    for name in fieldnames(Settings)
         if name == :optimizer
             val = optimizer
         else
@@ -83,33 +83,33 @@ function restore_from_copy(
         push!(vals, val)
     end
 
-    return PSISettings(vals...)
+    return Settings(vals...)
 end
 
-function set_horizon!(settings::PSISettings, horizon::Int)
+function set_horizon!(settings::Settings, horizon::Int)
     settings.horizon[] = horizon
     return
 end
-get_horizon(settings::PSISettings)::Int = settings.horizon[]
-get_use_forecast_data(settings::PSISettings) = settings.use_forecast_data
-get_use_parameters(settings::PSISettings) = settings.use_parameters
-function set_initial_time!(settings::PSISettings, initial_time::Dates.DateTime)
+get_horizon(settings::Settings)::Int = settings.horizon[]
+get_use_forecast_data(settings::Settings) = settings.use_forecast_data
+get_use_parameters(settings::Settings) = settings.use_parameters
+function set_initial_time!(settings::Settings, initial_time::Dates.DateTime)
     settings.initial_time[] = initial_time
     return
 end
-get_initial_time(settings::PSISettings)::Dates.DateTime = settings.initial_time[]
-get_PTDF(settings::PSISettings) = settings.PTDF
-get_optimizer(settings::PSISettings) = settings.optimizer
-get_ext(settings::PSISettings) = settings.ext
-function set_warm_start!(settings::PSISettings, warm_start::Bool)
+get_initial_time(settings::Settings)::Dates.DateTime = settings.initial_time[]
+get_PTDF(settings::Settings) = settings.PTDF
+get_optimizer(settings::Settings) = settings.optimizer
+get_ext(settings::Settings) = settings.ext
+function set_warm_start!(settings::Settings, warm_start::Bool)
     settings.warm_start[] = warm_start
     return
 end
-get_warm_start(settings::PSISettings) = settings.warm_start[]
-get_constraint_duals(settings::PSISettings) = settings.constraint_duals
-get_balance_slack_variables(settings::PSISettings) = settings.balance_slack_variables
-get_services_slack_variables(settings::PSISettings) = settings.services_slack_variables
-get_system_to_file(settings::PSISettings) = settings.system_to_file
-get_export_pwl_vars(settings::PSISettings) = settings.export_pwl_vars
-get_allow_fails(settings::PSISettings) = settings.allow_fails
-get_optimizer_log_print(settings::PSISettings) = settings.optimizer_log_print
+get_warm_start(settings::Settings) = settings.warm_start[]
+get_constraint_duals(settings::Settings) = settings.constraint_duals
+get_balance_slack_variables(settings::Settings) = settings.balance_slack_variables
+get_services_slack_variables(settings::Settings) = settings.services_slack_variables
+get_system_to_file(settings::Settings) = settings.system_to_file
+get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
+get_allow_fails(settings::Settings) = settings.allow_fails
+get_optimizer_log_print(settings::Settings) = settings.optimizer_log_print
