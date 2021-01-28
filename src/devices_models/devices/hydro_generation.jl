@@ -462,8 +462,6 @@ function energy_balance_constraint!(
     return
 end
 
-
-
 """
 This function defines the constraints for the water level (or state of charge)
 for the Hydro Reservoir.

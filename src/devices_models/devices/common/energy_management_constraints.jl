@@ -38,7 +38,6 @@ function energy_soft_target(
     return
 end
 
-
 @doc raw"""
 Constructs multi-timestep constraint from initial condition, efficiency data, and variable tuple
 # Constraints
