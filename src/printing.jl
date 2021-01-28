@@ -10,7 +10,10 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(io, "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
+        println(
+            io,
+            "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n",
+        )
         if ix.use_service_name
             println(io, "\tName specific Model\n")
         end
@@ -29,7 +32,10 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(io, "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
+        println(
+            io,
+            "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n",
+        )
     end
 end
 
@@ -68,8 +74,8 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
     println(io, "============================================")
 end
 
-function Base.show(io::IO, psi_container::PSIContainer)
-    println(io, "PSIContainer()")
+function Base.show(io::IO, optimization_container::OptimizationContainer)
+    println(io, "OptimizationContainer()")
 end
 
 function Base.show(io::IO, sim::Simulation)

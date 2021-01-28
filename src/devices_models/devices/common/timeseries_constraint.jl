@@ -7,12 +7,15 @@ struct TimeSeriesConstraintSpecInternal
     param_reference::Union{Nothing, UpdateRef}
 end
 
-function lazy_lb!(psi_container::PSIContainer, inputs::TimeSeriesConstraintSpecInternal)
-    time_steps = model_time_steps(psi_container)
+function lazy_lb!(
+    optimization_container::OptimizationContainer,
+    inputs::TimeSeriesConstraintSpecInternal,
+)
+    time_steps = model_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    variable = get_variable(psi_container, inputs.variable_name)
+    variable = get_variable(optimization_container, inputs.variable_name)
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
+    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
@@ -26,13 +29,13 @@ function lazy_lb!(psi_container::PSIContainer, inputs::TimeSeriesConstraintSpecI
             for val in constraint_info.range.additional_terms_lb
                 JuMP.add_to_expression!(
                     expression_lb,
-                    get_variable(psi_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[ci_name, t],
                     -1.0,
                 )
             end
             lb_val = max(0.0, constraint_info.range.limits.min)
             con_lb[ci_name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= lb_val)
+                JuMP.@constraint(optimization_container.JuMPmodel, expression_lb >= lb_val)
         end
     end
     return
@@ -50,14 +53,14 @@ Constructs upper bound for given variable and time series data and a multiplier.
 `` x_t \leq r^{val} r_t, \forall t ``
 """
 function device_timeseries_ub!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    variable = get_variable(psi_container, inputs.variable_name)
+    variable = get_variable(optimization_container, inputs.variable_name)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
+    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
     lazy_add_lb = false
 
     for constraint_info in inputs.constraint_infos
@@ -67,11 +70,11 @@ function device_timeseries_ub!(
             for val in constraint_info.range.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(psi_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[ci_name, t],
                 )
             end
             con_ub[ci_name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
+                optimization_container.JuMPmodel,
                 expression_ub <= constraint_info.multiplier * constraint_info.timeseries[t]
             )
         end
@@ -82,7 +85,7 @@ function device_timeseries_ub!(
     end
 
     @debug lazy_add_lb
-    lazy_add_lb && lazy_lb!(psi_container, inputs)
+    lazy_add_lb && lazy_lb!(optimization_container, inputs)
 
     return
 end
@@ -101,14 +104,14 @@ Constructs lower bound for given variable subject to time series data and a mult
 where (name, data) in range_data.
 """
 function device_timeseries_lb!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(psi_container)
-    variable = get_variable(psi_container, inputs.variable_name)
+    time_steps = model_time_steps(optimization_container)
+    variable = get_variable(optimization_container, inputs.variable_name)
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    constraint = add_cons_container!(psi_container, lb_name, names, time_steps)
+    constraint = add_cons_container!(optimization_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
@@ -117,12 +120,12 @@ function device_timeseries_lb!(
             for val in constraint_info.range.additional_terms_lb
                 JuMP.add_to_expression!(
                     expression_lb,
-                    get_variable(psi_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[ci_name, t],
                     -1.0,
                 )
             end
             constraint[ci_name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
+                optimization_container.JuMPmodel,
                 expression_lb >= constraint_info.multiplier * constraint_info.timeseries[t]
             )
         end
@@ -143,16 +146,20 @@ Constructs upper bound for given variable using a parameter. The constraint is
 `` x^{var}_t \leq r^{val} x^{param}_t, \forall t ``
 """
 function device_timeseries_param_ub!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    variable = get_variable(psi_container, inputs.variable_name)
+    variable = get_variable(optimization_container, inputs.variable_name)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    container =
-        add_param_container!(psi_container, inputs.param_reference, names, time_steps)
+    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
+    container = add_param_container!(
+        optimization_container,
+        inputs.param_reference,
+        names,
+        time_steps,
+    )
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     lazy_add_lb = false
@@ -164,13 +171,15 @@ function device_timeseries_param_ub!(
             for val in constraint_info.range.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(psi_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[ci_name, t],
                 )
             end
-            param[ci_name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[t])
+            param[ci_name, t] = PJ.add_parameter(
+                optimization_container.JuMPmodel,
+                constraint_info.timeseries[t],
+            )
             con_ub[ci_name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
+                optimization_container.JuMPmodel,
                 expression_ub <= constraint_info.multiplier * param[ci_name, t]
             )
             multiplier[ci_name, t] = constraint_info.multiplier
@@ -182,7 +191,7 @@ function device_timeseries_param_ub!(
     end
 
     @debug lazy_add_lb
-    lazy_add_lb && lazy_lb!(psi_container, inputs)
+    lazy_add_lb && lazy_lb!(optimization_container, inputs)
     return
 end
 
@@ -199,16 +208,20 @@ Constructs lower bound for given variable using a parameter. The constraint is
 `` r^{val} x^{param}_t \leq x^{var}_t, \forall t ``
 """
 function device_timeseries_param_lb!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(psi_container)
-    variable = get_variable(psi_container, inputs.variable_name)
+    time_steps = model_time_steps(optimization_container)
+    variable = get_variable(optimization_container, inputs.variable_name)
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    constraint = add_cons_container!(psi_container, lb_name, names, time_steps)
-    container =
-        add_param_container!(psi_container, inputs.param_reference, names, time_steps)
+    constraint = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    container = add_param_container!(
+        optimization_container,
+        inputs.param_reference,
+        names,
+        time_steps,
+    )
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
 
@@ -219,14 +232,16 @@ function device_timeseries_param_lb!(
             for val in constraint_info.range.additional_terms_lb
                 JuMP.add_to_expression!(
                     expression_lb,
-                    get_variable(psi_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[ci_name, t],
                     -1.0,
                 )
             end
-            param[ci_name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[t])
+            param[ci_name, t] = PJ.add_parameter(
+                optimization_container.JuMPmodel,
+                constraint_info.timeseries[t],
+            )
             constraint_info[ci_name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
+                optimization_container.JuMPmodel,
                 expression_lb >= constraint_info.multiplier * param[ci_name, t]
             )
             multiplier[ci_name, t] = constraint_info.multiplier
@@ -251,15 +266,15 @@ where (name, data) in range_data.
 `` x^{cts}_t \leq r^{val} r_t x^{bin}_t, \forall t ``
 """
 function device_timeseries_ub_bin!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    varcts = get_variable(psi_container, inputs.variable_name)
-    varbin = get_variable(psi_container, inputs.bin_variable_name)
+    varcts = get_variable(optimization_container, inputs.variable_name)
+    varbin = get_variable(optimization_container, inputs.bin_variable_name)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
+    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
         for t in time_steps
@@ -269,11 +284,11 @@ function device_timeseries_ub_bin!(
             for val in constraint_info.range.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(psi_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[ci_name, t],
                 )
             end
             con_ub[ci_name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
+                optimization_container.JuMPmodel,
                 expression_ub <= varbin[ci_name, t] * multiplier * forecast
             )
         end
@@ -298,20 +313,24 @@ Constructs upper bound for variable and time series and a multiplier or confines
 `` x^{cts}_t \leq M x^{bin}_t, \forall t ``
 """
 function device_timeseries_ub_bigM!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     key_status = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "status")
 
-    varcts = get_variable(psi_container, inputs.variable_name)
-    varbin = get_variable(psi_container, inputs.bin_variable_name)
+    varcts = get_variable(optimization_container, inputs.variable_name)
+    varbin = get_variable(optimization_container, inputs.bin_variable_name)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    con_status = add_cons_container!(psi_container, key_status, names, time_steps)
-    container =
-        add_param_container!(psi_container, inputs.param_reference, names, time_steps)
+    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
+    con_status = add_cons_container!(optimization_container, key_status, names, time_steps)
+    container = add_param_container!(
+        optimization_container,
+        inputs.param_reference,
+        names,
+        time_steps,
+    )
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
 
@@ -322,18 +341,20 @@ function device_timeseries_ub_bigM!(
             for val in constraint_info.range.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(psi_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[ci_name, t],
                 )
             end
-            param[ci_name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[t])
+            param[ci_name, t] = PJ.add_parameter(
+                optimization_container.JuMPmodel,
+                constraint_info.timeseries[t],
+            )
             con_ub[ci_name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
+                optimization_container.JuMPmodel,
                 expression_ub - param[ci_name, t] * constraint_info.multiplier <=
                 (1 - varbin[ci_name, t]) * M_VALUE
             )
             con_status[ci_name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
+                optimization_container.JuMPmodel,
                 expression_ub <= varbin[ci_name, t] * M_VALUE
             )
             multiplier[ci_name, t] = constraint_info.multiplier
