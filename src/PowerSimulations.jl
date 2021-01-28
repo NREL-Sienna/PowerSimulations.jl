@@ -320,7 +320,9 @@ include("core/results.jl")
 include("core/abstract_types.jl")
 include("core/aux_structs.jl")
 
-include("core/models.jl")
+include("core/powermodels_formulations.jl")
+include("core/service_models.jl")
+include("core/device_models.jl")
 
 include("core/parameters.jl")
 include("core/variables.jl")
@@ -407,7 +409,10 @@ include("devices_models/device_constructors/regulationdevice_constructor.jl")
 include("network_models/network_constructor.jl")
 
 # Templates
-include("operations_problems_templates.jl")
+include("operations_problem_templates.jl")
+
+# Operations Problems
+include("operations_problems.jl")
 
 # Printing
 include("printing.jl")
