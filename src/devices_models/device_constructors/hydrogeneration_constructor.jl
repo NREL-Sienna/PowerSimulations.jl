@@ -194,7 +194,7 @@ function construct_device!(
     storage_energy_init(psi_container, devices)
     # Energy Balance Constraint
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
-
+    energy_target_constraint!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -228,6 +228,7 @@ function construct_device!(
     storage_energy_init(psi_container, devices)
     # Energy Balance Constraint
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
+    energy_target_constraint!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -469,7 +470,7 @@ function construct_device!(
     storage_energy_init(psi_container, devices)
     # Energy Balance Constraint
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
-
+    energy_target_constraint!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -515,6 +516,7 @@ function construct_device!(
     storage_energy_init(psi_container, devices)
     # Energy Balance Constraint
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
+    energy_target_constraint!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     # Cost Function

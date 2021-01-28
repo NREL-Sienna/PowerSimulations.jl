@@ -421,9 +421,7 @@ function energy_balance_constraint!(
     end
 
     inflow_forecast_label = "inflow"
-    target_forecast_label = "storage_target"
     constraint_infos_inflow = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector_inflow = get_time_series(psi_container, d, inflow_forecast_label)
         constraint_info_inflow = DeviceTimeSeriesConstraintInfo(
@@ -433,7 +431,60 @@ function energy_balance_constraint!(
         )
         add_device_services!(constraint_info_inflow.range, d, model)
         constraint_infos_inflow[ix] = constraint_info_inflow
+    end
 
+    if parameters
+        energy_balance_hydro_param!(
+            psi_container,
+            get_initial_conditions(psi_container, key),
+            constraint_infos_inflow,
+            make_constraint_name(ENERGY_CAPACITY, H),
+            (
+                make_variable_name(SPILLAGE, H),
+                make_variable_name(ACTIVE_POWER, H),
+                make_variable_name(ENERGY, H),
+            ),
+            UpdateRef{H}(INFLOW, inflow_forecast_label),
+        )
+    else
+        energy_balance_hydro!(
+            psi_container,
+            get_initial_conditions(psi_container, key),
+            constraint_infos_inflow,
+            make_constraint_name(ENERGY_CAPACITY, H),
+            (
+                make_variable_name(SPILLAGE, H),
+                make_variable_name(ACTIVE_POWER, H),
+                make_variable_name(ENERGY, H),
+            ),
+        )
+    end
+    return
+end
+
+
+
+"""
+This function defines the constraints for the water level (or state of charge)
+for the Hydro Reservoir.
+"""
+function energy_target_constraint!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{H},
+    model::DeviceModel{H, S},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {
+    H <: PSY.HydroEnergyReservoir,
+    S <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage},
+}
+    key = ICKey(EnergyLevel, H)
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+
+    target_forecast_label = "storage_target"
+    constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
         ts_vector_target = get_time_series(psi_container, d, target_forecast_label)
         constraint_info_target = DeviceTimeSeriesConstraintInfo(
             d,
@@ -444,38 +495,19 @@ function energy_balance_constraint!(
     end
 
     if parameters
-        energy_balance_hydro_param!(
+        energy_target_hydro_param!(
             psi_container,
-            get_initial_conditions(psi_container, key),
-            (constraint_infos_inflow, constraint_infos_target),
-            (
-                make_constraint_name(ENERGY_CAPACITY, H),
-                make_constraint_name(ENERGY_TARGET, H),
-            ),
-            (
-                make_variable_name(SPILLAGE, H),
-                make_variable_name(ACTIVE_POWER, H),
-                make_variable_name(ENERGY, H),
-            ),
-            (
-                UpdateRef{H}(INFLOW, inflow_forecast_label),
-                UpdateRef{H}(TARGET, target_forecast_label),
-            ),
+            constraint_infos_target,
+            make_constraint_name(ENERGY_TARGET, H),
+            make_variable_name(ENERGY, H),
+            UpdateRef{H}(TARGET, target_forecast_label),
         )
     else
-        energy_balance_hydro!(
+        energy_target_hydro!(
             psi_container,
-            get_initial_conditions(psi_container, key),
-            (constraint_infos_inflow, constraint_infos_target),
-            (
-                make_constraint_name(ENERGY_CAPACITY, H),
-                make_constraint_name(ENERGY_TARGET, H),
-            ),
-            (
-                make_variable_name(SPILLAGE, H),
-                make_variable_name(ACTIVE_POWER, H),
-                make_variable_name(ENERGY, H),
-            ),
+            constraint_infos_target,
+            make_constraint_name(ENERGY_TARGET, H),
+            make_variable_name(ENERGY, H),
         )
     end
     return

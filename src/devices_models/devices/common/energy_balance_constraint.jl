@@ -103,20 +103,14 @@ If t > 1:
 function energy_balance_hydro_param!(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
-    time_series_data::Tuple{
-        Vector{DeviceTimeSeriesConstraintInfo},
-        Vector{DeviceTimeSeriesConstraintInfo},
-    },
-    cons_names::Tuple{Symbol, Symbol},
+    inflow_data::Vector{DeviceTimeSeriesConstraintInfo},
+    cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
-    param_references::Tuple{UpdateRef, UpdateRef},
+    param_reference::UpdateRef,
 )
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     fraction_of_hour = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-
-    inflow_data = time_series_data[1]
-    target_data = time_series_data[2]
 
     name_index = [get_component_name(d) for d in inflow_data]
 
@@ -124,23 +118,13 @@ function energy_balance_hydro_param!(
     varout = get_variable(psi_container, var_names[2])
     varenergy = get_variable(psi_container, var_names[3])
 
-    balance_cons_name = cons_names[1]
-    target_cons_name = cons_names[2]
-    balance_param_reference = param_references[1]
-    target_param_reference = param_references[2]
-
     container_inflow =
-        add_param_container!(psi_container, balance_param_reference, name_index, time_steps)
+        add_param_container!(psi_container, param_reference, name_index, time_steps)
     param_inflow = get_parameter_array(container_inflow)
     multiplier_inflow = get_multiplier_array(container_inflow)
-    container_target =
-        add_param_container!(psi_container, target_param_reference, name_index, time_steps)
-    param_target = get_parameter_array(container_target)
-    multiplier_target = get_multiplier_array(container_target)
 
     balance_constraint =
-        add_cons_container!(psi_container, balance_cons_name, name_index, time_steps)
-    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index, 1)
+        add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
@@ -168,20 +152,6 @@ function energy_balance_hydro_param!(
             balance_constraint[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, t] == exp)
         end
-    end
-
-    for (ix, d) in enumerate(target_data)
-        name = get_component_name(d)
-        for t in time_steps
-            param_target[name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
-            multiplier_target[name, t] = d.multiplier
-        end
-        target_constraint[name, 1] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            varenergy[name, time_steps[end]] >=
-            d.multiplier * param_target[name, time_steps[end]]
-        )
     end
 
     return
@@ -216,32 +186,21 @@ If t > 1:
 function energy_balance_hydro!(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
-    time_series_data::Tuple{
-        Vector{DeviceTimeSeriesConstraintInfo},
-        Vector{DeviceTimeSeriesConstraintInfo},
-    },
-    cons_names::Tuple{Symbol, Symbol},
+    inflow_data::Vector{DeviceTimeSeriesConstraintInfo},
+    cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-
-    inflow_data = time_series_data[1]
-    target_data = time_series_data[2]
-
     name_index = [get_component_name(d) for d in inflow_data]
 
     varspill = get_variable(psi_container, var_names[1])
     varout = get_variable(psi_container, var_names[2])
     varenergy = get_variable(psi_container, var_names[3])
 
-    balance_cons_name = cons_names[1]
-    target_cons_name = cons_names[2]
-
     balance_constraint =
-        add_cons_container!(psi_container, balance_cons_name, name_index, time_steps)
-    target_constraint = add_cons_container!(psi_container, target_cons_name, name_index, 1)
+        add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
@@ -262,15 +221,6 @@ function energy_balance_hydro!(
                 fraction_of_hour
             )
         end
-    end
-
-    for (ix, d) in enumerate(target_data)
-        name = get_component_name(d)
-        target_constraint[name, 1] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            varenergy[name, time_steps[end]] >=
-            d.multiplier * d.timeseries[time_steps[end]]
-        )
     end
 
     return
