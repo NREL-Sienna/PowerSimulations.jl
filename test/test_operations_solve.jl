@@ -20,7 +20,7 @@ services = Dict{Symbol, ServiceModel}()
     for sys in systems, p in parameters_value
         @testset "ED CopperPlatePowerModel model use_parameters = $(p)" begin
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = OSQP_optimizer,
@@ -31,7 +31,7 @@ services = Dict{Symbol, ServiceModel}()
     end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     ED = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5_re;
         optimizer = GLPK_optimizer,
@@ -62,7 +62,7 @@ end
     for sys in systems, p in parameters_value
         @testset "ED StandardPTDFModel model use_parameters = $(p)" begin
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = OSQP_optimizer,
@@ -92,7 +92,7 @@ end
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
@@ -127,7 +127,7 @@ end
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
@@ -160,7 +160,7 @@ end
         branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
         template = OperationsProblemTemplate(net, devices, branches, services)
         op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             template,
             system;
             balance_slack_variables = true,
@@ -185,7 +185,7 @@ end
         @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
         template = OperationsProblemTemplate(net, devices, branches, services);
-        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
+        ED = OperationsProblem(MockOperationProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         #The tolerance range here is large because Relaxations have a lower objective value
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 25000)
         end
@@ -215,7 +215,7 @@ end
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
@@ -249,7 +249,7 @@ end
         @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
@@ -281,7 +281,7 @@ end
         @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
@@ -315,7 +315,7 @@ end
             )
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
@@ -351,7 +351,7 @@ end
             )
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
@@ -384,7 +384,7 @@ end
         @testset "UC model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             UC = OperationsProblem(
-                TestOpProblem,
+                MockOperationProblem,
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
@@ -403,7 +403,7 @@ end
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-    UC = OperationsProblem(TestOpProblem, template, c_sys5;)
+    UC = OperationsProblem(MockOperationProblem, template, c_sys5;)
     set_services_template!(
         UC,
         Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
@@ -417,7 +417,7 @@ end
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5_re;
         optimizer = OSQP_optimizer,
@@ -457,7 +457,7 @@ function test_op_problem_write_functions(file_path)
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     op_problem = OperationsProblem(
-        TestOpProblem,
+        MockOperationProblem,
         template,
         c_sys5_re;
         optimizer = OSQP_optimizer,

@@ -49,7 +49,7 @@ end
     line = PSY.get_component(MonitoredLine, system, "1")
     limits = PSY.get_flow_limits(line)
     op_problem_m =
-        OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
+        OperationsProblem(MockOperationProblem, template, system; optimizer = ipopt_optimizer)
     monitored = solve!(op_problem_m)
     fq = monitored.variable_values[:FqFT__MonitoredLine][1, 1]
     fp = monitored.variable_values[:FpFT__MonitoredLine][1, 1]
@@ -74,7 +74,7 @@ end
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     rate = PSY.get_rate(PSY.get_component(MonitoredLine, system, "1"))
     op_problem_m =
-        OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
+        OperationsProblem(MockOperationProblem, template, system; optimizer = ipopt_optimizer)
     monitored = solve!(op_problem_m)
     fp = monitored.variable_values[:Fp__MonitoredLine][1, 1]
     @test isapprox(fp, limits.from_to, atol = 1e-3)
@@ -90,7 +90,7 @@ end
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     op_problem_m =
-        OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
+        OperationsProblem(MockOperationProblem, template, system; optimizer = ipopt_optimizer)
     @test check_variable_unbounded(
         op_problem_m,
         PSI.make_variable_name(FLOW_ACTIVE_POWER, Line),

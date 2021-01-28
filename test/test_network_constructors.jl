@@ -22,7 +22,7 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             network,
             sys;
             optimizer = OSQP_optimizer,
@@ -75,7 +75,7 @@ end
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             network,
             sys;
             optimizer = OSQP_optimizer,
@@ -107,7 +107,7 @@ end
     end
 
     #PTDF input Error testing
-    ps_model = OperationsProblem(TestOpProblem, network, c_sys5; optimizer = GLPK_optimizer)
+    ps_model = OperationsProblem(MockOperationProblem, network, c_sys5; optimizer = GLPK_optimizer)
     construct_device!(ps_model, :Thermal, thermal_model)
     construct_device!(ps_model, :Load, load_model)
 end
@@ -133,7 +133,7 @@ end
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             network,
             sys;
             optimizer = OSQP_optimizer,
@@ -181,7 +181,7 @@ end
     for (ix, net) in enumerate(network), p in parameters
         template = OperationsProblemTemplate(net, devices, branches, services)
         ps_model = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             template,
             sys;
             optimizer = OSQP_optimizer,
@@ -223,7 +223,7 @@ end
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             network,
             sys;
             optimizer = fast_ipopt_optimizer,
@@ -265,7 +265,7 @@ end
     for network in networks, sys in systems
         @info "Test construction of a $(network) network"
         ps_model = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             network,
             sys;
             optimizer = OSQP_optimizer,
@@ -293,7 +293,7 @@ end
     for network in networks, sys in systems
         @info "Test construction of a $(network) network"
         ps_model =
-            OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
+            OperationsProblem(MockOperationProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
@@ -312,7 +312,7 @@ end
     for network in networks, sys in systems
         @info "Test construction of a $(network) network"
         ps_model =
-            OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
+            OperationsProblem(MockOperationProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
@@ -332,7 +332,7 @@ end
     for network in networks, sys in systems
         @info "Test construction of a $(network) network"
         ps_model =
-            OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
+            OperationsProblem(MockOperationProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
@@ -346,7 +346,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for network in PSI.UNSUPPORTED_POWERMODELS
         ps_model =
-            OperationsProblem(TestOpProblem, network, c_sys5; optimizer = ipopt_optimizer)
+            OperationsProblem(MockOperationProblem, network, c_sys5; optimizer = ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
 
@@ -381,7 +381,7 @@ end
     systems = [c_sys5]#, c_sys14, c_sys14_dc]
     for (network, solver) in networks, sys in systems
         @info "Test construction of a $(network) network"
-        ps_model = OperationsProblem(TestOpProblem, network, sys; optimizer = solver)
+        ps_model = OperationsProblem(MockOperationProblem, network, sys; optimizer = solver)
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
