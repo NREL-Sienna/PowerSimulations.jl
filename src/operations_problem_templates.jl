@@ -50,9 +50,9 @@ template = template_unit_commitment()
 
 # Accepted Key Words
 - `network::Type{<:PM.AbstractPowerModel}` : override default network model settings
-- `devices::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
-- `branches::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
-- `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
+- `devices::Dict{String, DeviceModel}` : override default `DeviceModel` settings
+- `branches::Dict{String, DeviceModel}` : override default `DeviceModel` settings
+- `services::Dict{String, ServiceModel}` : override default `ServiceModel` settings
 """
 function template_unit_commitment(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
@@ -86,9 +86,9 @@ template = template_economic_dispatch()
 
 # Accepted Key Words
 - `network::Type{<:PM.AbstractPowerModel}` : override default network model settings
-- `devices::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
-- `branches::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
-- `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
+- `devices::Dict{String, DeviceModel}` : override default `DeviceModel` settings
+- `branches::Dict{String, DeviceModel}` : override default `DeviceModel` settings
+- `services::Dict{String, ServiceModel}` : override default `ServiceModel` settings
 """
 function template_economic_dispatch(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
