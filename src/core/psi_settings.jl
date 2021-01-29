@@ -1,5 +1,5 @@
 struct Settings
-    horizon::Int
+    horizon::Base.RefValue{Int}
     use_forecast_data::Bool
     use_parameters::Bool
     warm_start::Base.RefValue{Bool}
@@ -24,7 +24,7 @@ function Settings(
     warm_start::Bool = true,
     balance_slack_variables::Bool = false,
     services_slack_variables::Bool = false,
-    horizon::Dates.Period = UNSET_HORIZON,
+    horizon::Int = UNSET_HORIZON,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     optimizer_log_print::Bool = false,
@@ -35,7 +35,7 @@ function Settings(
     ext = Dict{String, Any}(),
 )
     return Settings(
-        horizon.value,
+        Ref(horizon),
         use_forecast_data,
         use_parameters,
         Ref(warm_start),
@@ -87,9 +87,12 @@ function restore_from_copy(
     return Settings(vals...)
 end
 
-set_horizon!(settings::Settings, horizon::Dates.Period) = settings.horizon = horizon
+function set_horizon!(settings::Settings, horizon::Int)
+    settings.horizon[] = horizon
+    return
+end
 
-get_horizon(settings::Settings) = settings.horizon
+get_horizon(settings::Settings) = settings.horizon[]
 get_use_forecast_data(settings::Settings) = settings.use_forecast_data
 get_use_parameters(settings::Settings) = settings.use_parameters
 function set_initial_time!(settings::Settings, initial_time::Dates.DateTime)
