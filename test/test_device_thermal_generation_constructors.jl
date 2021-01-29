@@ -4,7 +4,11 @@
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
     c_sys5_re_only = PSB.build_system(PSITestSystems, "c_sys5_re_only")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
-    @test_logs (:info,) (:warn, warn_message) match_mode=:any mock_construct_device!(op_problem, "Thermal", model)
+    @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
+        op_problem,
+        "Thermal",
+        model,
+    )
 end
 
 ################################### Unit Commitment tests ##################################
@@ -829,83 +833,113 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-############################# UC validation tests ##########################################
-# Testing Ramping Constraint
+
+############################# Model validation tests #######################################
+test_path = mkpath(joinpath(pwd(), "test_thermal_constructors"))
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
     ramp_test_sys = PSB.build_system(PSITestSystems, "c_ramp_test")
     template = OperationsProblemTemplate(CopperPlatePowerModel)
-    set_component_model!(template, "Generators", DeviceModel(ThermalStandard, ThermalRampLimited))
+    set_component_model!(
+        template,
+        "Generators",
+        DeviceModel(ThermalStandard, ThermalRampLimited),
+    )
     set_component_model!(template, "Loads", DeviceModel(PowerLoad, StaticPowerLoad))
-    for p in [true, false]
+    test_folder = mkpath(joinpath(test_path, randstring()))
+    try
         ED = OperationsProblem(
             EconomicDispatchProblem,
             template,
             ramp_test_sys;
             optimizer = Cbc_optimizer,
         )
-        build!(ED; save_path = pwd(), use_forecast_data = p)
+        @test build!(ED; output_dir = test_folder) == PSI.BuildStatus.BUILT
+        moi_tests(ED, false, 10, 0, 20, 10, 5, false)
+        res = solve!(ED)
         psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
-        moi_tests(ED, p, 10, 0, 20, 10, 5, false)
+    finally
+        rm(test_folder, force = true, recursive = true)
     end
 end
 
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
-    template =
-        OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
-    UC = OperationsProblem(
-        MockOperationProblem,
-        template,
-        PSB.build_system(PSITestSystems, "c_duration_test");
-        optimizer = Cbc_optimizer,
-        use_parameters = true,
-    )
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
-    moi_tests(UC, true, 56, 0, 56, 14, 21, true)
+    template = get_thermal_standard_uc_template()
+    test_folder = mkpath(joinpath(test_path, randstring()))
+    try
+        UC = OperationsProblem(
+            UnitCommitmentProblem,
+            template,
+            PSB.build_system(PSITestSystems, "c_duration_test");
+            optimizer = Cbc_optimizer,
+            use_parameters = true,
+        )
+        @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
+        moi_tests(UC, true, 56, 0, 56, 14, 21, true)
+        psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
+    finally
+        rm(test_folder, force = true, recursive = true)
+    end
 end
 
 ## PWL linear Cost implementation test
-@testset "Solving UC with CopperPlate testing Linear PWL" begin
-    template =
-        OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
-    UC = OperationsProblem(
-        MockOperationProblem,
-        template,
-        PSB.build_system(PSITestSystems, "c_linear_pwl_test");
-        optimizer = Cbc_optimizer,
-        use_parameters = true,
-    )
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
-    moi_tests(UC, true, 32, 0, 8, 4, 10, true)
+@testset "Solving UC with CopperPlate testing Convex PWL" begin
+    template = get_thermal_standard_uc_template()
+    test_folder = mkpath(joinpath(test_path, randstring()))
+    try
+        UC = OperationsProblem(
+            UnitCommitmentProblem,
+            template,
+            PSB.build_system(PSITestSystems, "c_linear_pwl_test");
+            optimizer = Cbc_optimizer,
+            use_parameters = true,
+        )
+        @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
+        moi_tests(UC, true, 32, 0, 8, 4, 10, true)
+        psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
+    finally
+        rm(test_folder, force = true, recursive = true)
+    end
 end
 
-## PWL SOS-2 Cost implementation test
-@testset "Solving UC with CopperPlate testing SOS2 implementation" begin
-    template =
-        OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
-    UC = OperationsProblem(
-        MockOperationProblem,
-        template,
-        PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-        optimizer = Cbc_optimizer,
-        use_parameters = true,
-    )
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89716, 10.0)
-    moi_tests(UC, true, 32, 0, 8, 4, 14, true)
+@testset "Solving UC with CopperPlate testing PWL-SOS2 implementation" begin
+    template = get_thermal_standard_uc_template()
+    test_folder = mkpath(joinpath(test_path, randstring()))
+    try
+        UC = OperationsProblem(
+            UnitCommitmentProblem,
+            template,
+            PSB.build_system(PSITestSystems, "c_sos_pwl_test");
+            optimizer = Cbc_optimizer,
+            use_parameters = true,
+        )
+        @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
+        moi_tests(UC, true, 32, 0, 8, 4, 14, true)
+        psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89716, 10.0)
+    finally
+        rm(test_folder, force = true, recursive = true)
+    end
 end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin
-    sys = PSB.build_system(PSITestSystems, "c_market_bid_cost")
-    UC_devices[:MSGenerators] =
-        DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
-    template =
-        OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
-    UC = OperationsProblem(
-        MockOperationProblem,
+    template = get_thermal_standard_uc_template()
+    set_component_model!(
         template,
-        sys;
-        optimizer = Cbc_optimizer,
-        use_parameters = true,
+        "MSGenerators",
+        DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
     )
-    moi_tests(UC, true, 38, 0, 18, 8, 13, true)
+    test_folder = mkpath(joinpath(test_path, randstring()))
+    try
+        UC = OperationsProblem(
+            UnitCommitmentProblem,
+            template,
+            PSB.build_system(PSITestSystems, "c_market_bid_cost");
+            optimizer = Cbc_optimizer,
+            use_parameters = true,
+        )
+        @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
+        moi_tests(UC, true, 38, 0, 18, 8, 13, true)
+    finally
+        rm(test_folder, force = true, recursive = true)
+    end
 end
