@@ -29,7 +29,8 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
     name = PSY.get_name(service)
-    constraint = get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
+    constraint =
+        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(optimization_container, name, SR)
     use_slacks = get_services_slack_variables(optimization_container.settings)
 
@@ -46,7 +47,8 @@ function service_requirement_constraint!(
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps
-            param[name, t] = PJ.add_parameter(optimization_container.JuMPmodel, ts_vector[t])
+            param[name, t] =
+                PJ.add_parameter(optimization_container.JuMPmodel, ts_vector[t])
             multiplier[name, t] = 1.0
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
@@ -80,7 +82,8 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
     name = PSY.get_name(service)
-    constraint = get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
+    constraint =
+        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(optimization_container, name, SR)
     use_slacks = get_services_slack_variables(optimization_container.settings)
 
@@ -93,8 +96,10 @@ function service_requirement_constraint!(
         if use_slacks
             resource_expression += slack_vars[t]
         end
-        constraint[name, t] =
-            JuMP.@constraint(optimization_container.JuMPmodel, resource_expression >= requirement)
+        constraint[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            resource_expression >= requirement
+        )
     end
 
     return
@@ -107,7 +112,11 @@ function cost_function!(
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     reserve = get_variable(optimization_container, PSY.get_name(service), SR)
     for r in reserve
-        JuMP.add_to_expression!(optimization_container.cost_function, r, DEFAULT_RESERVE_COST)
+        JuMP.add_to_expression!(
+            optimization_container.cost_function,
+            r,
+            DEFAULT_RESERVE_COST,
+        )
     end
     return
 end
@@ -121,7 +130,8 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
     name = PSY.get_name(service)
-    constraint = get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
+    constraint =
+        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(optimization_container, name, SR)
     requirement_variable = get_variable(optimization_container, SERVICE_REQUIREMENT, SR)
 
@@ -164,10 +174,17 @@ function add_to_cost!(
     if !use_forecast_data
         error("StepwiseCostReserve is only supported with forecast")
     end
-    variable_cost_forecast = get_time_series(optimization_container, service, "variable_cost")
+    variable_cost_forecast =
+        get_time_series(optimization_container, service, "variable_cost")
     variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
     for t in time_steps
-        variable_cost!(optimization_container, spec, component_name, variable_cost_forecast[t], t)
+        variable_cost!(
+            optimization_container,
+            spec,
+            component_name,
+            variable_cost_forecast[t],
+            t,
+        )
     end
     return
 end

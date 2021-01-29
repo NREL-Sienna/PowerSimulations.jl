@@ -27,9 +27,12 @@ function ptdf_networkflow(
 
     for t in time_steps
         for br in branches
-            flow_variable = get_variable(optimization_container, FLOW_ACTIVE_POWER, typeof(br))
+            flow_variable =
+                get_variable(optimization_container, FLOW_ACTIVE_POWER, typeof(br))
             name = PSY.get_name(br)
-            line_flow = model_has_parameters(optimization_container) ? zero(PGAE) : JuMP.AffExpr(0.0)
+            line_flow =
+                model_has_parameters(optimization_container) ? zero(PGAE) :
+                JuMP.AffExpr(0.0)
             for b in buses
                 bus_number = PSY.get_number(b)
                 _flow = PTDF[name, bus_number] * nodal_balance_expressions[bus_number, t]
@@ -48,7 +51,8 @@ function ptdf_networkflow(
             name = PSY.get_name(br)
             from_number = PSY.get_number(PSY.get_arc(br).from)
             to_number = PSY.get_number(PSY.get_arc(br).to)
-            flow_variable = get_variable(optimization_container, FLOW_ACTIVE_POWER, typeof(br))
+            flow_variable =
+                get_variable(optimization_container, FLOW_ACTIVE_POWER, typeof(br))
             add_to_expression!(
                 nodal_balance_expressions,
                 from_number,

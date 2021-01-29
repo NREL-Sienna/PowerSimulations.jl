@@ -38,7 +38,10 @@ where limits in constraint_infos.
 
 `` limits^{min} \leq x \leq limits^{max}, \text{ otherwise } ``
 """
-function device_range!(optimization_container::OptimizationContainer, inputs::RangeConstraintSpecInternal)
+function device_range!(
+    optimization_container::OptimizationContainer,
+    inputs::RangeConstraintSpecInternal,
+)
     time_steps = model_time_steps(optimization_container)
     variable = get_variable(optimization_container, inputs.variable_name)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
@@ -277,7 +280,10 @@ function device_multistart_range!(
         for val in constraint_info.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_products,
-                get_variable(optimization_container, val)[get_component_name(constraint_info), t],
+                get_variable(optimization_container, val)[
+                    get_component_name(constraint_info),
+                    t,
+                ],
             )
         end
         con_on[get_component_name(constraint_info), t] = JuMP.@constraint(

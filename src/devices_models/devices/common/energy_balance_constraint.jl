@@ -45,7 +45,8 @@ function energy_balance(
     varout = get_variable(optimization_container, var_names[2])
     varenergy = get_variable(optimization_container, var_names[3])
 
-    constraint = add_cons_container!(optimization_container, cons_name, name_index, time_steps)
+    constraint =
+        add_cons_container!(optimization_container, cons_name, name_index, time_steps)
 
     for (ix, name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in
@@ -54,8 +55,10 @@ function energy_balance(
         balance =
             initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
             (varout[name, 1]) * fraction_of_hour / eff_out
-        constraint[name, 1] =
-            JuMP.@constraint(optimization_container.JuMPmodel, varenergy[name, 1] == balance)
+        constraint[name, 1] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            varenergy[name, 1] == balance
+        )
     end
 
     for t in time_steps[2:end], (ix, name) in enumerate(name_index)
@@ -129,23 +132,37 @@ function energy_balance_hydro_param!(
     balance_param_reference = param_references[1]
     target_param_reference = param_references[2]
 
-    container_inflow =
-        add_param_container!(optimization_container, balance_param_reference, name_index, time_steps)
+    container_inflow = add_param_container!(
+        optimization_container,
+        balance_param_reference,
+        name_index,
+        time_steps,
+    )
     param_inflow = get_parameter_array(container_inflow)
     multiplier_inflow = get_multiplier_array(container_inflow)
-    container_target =
-        add_param_container!(optimization_container, target_param_reference, name_index, time_steps)
+    container_target = add_param_container!(
+        optimization_container,
+        target_param_reference,
+        name_index,
+        time_steps,
+    )
     param_target = get_parameter_array(container_target)
     multiplier_target = get_multiplier_array(container_target)
 
-    balance_constraint =
-        add_cons_container!(optimization_container, balance_cons_name, name_index, time_steps)
-    target_constraint = add_cons_container!(optimization_container, target_cons_name, name_index, 1)
+    balance_constraint = add_cons_container!(
+        optimization_container,
+        balance_cons_name,
+        name_index,
+        time_steps,
+    )
+    target_constraint =
+        add_cons_container!(optimization_container, target_cons_name, name_index, 1)
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
         multiplier_inflow[name, 1] = d.multiplier
-        param_inflow[name, 1] = PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
+        param_inflow[name, 1] =
+            PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
             (
@@ -165,8 +182,10 @@ function energy_balance_hydro_param!(
                     multiplier_inflow[name, t] * param_inflow[name, t] - varspill[name, t] -
                     varout[name, t]
                 ) * fraction_of_hour
-            balance_constraint[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, varenergy[name, t] == exp)
+            balance_constraint[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                varenergy[name, t] == exp
+            )
         end
     end
 
@@ -239,9 +258,14 @@ function energy_balance_hydro!(
     balance_cons_name = cons_names[1]
     target_cons_name = cons_names[2]
 
-    balance_constraint =
-        add_cons_container!(optimization_container, balance_cons_name, name_index, time_steps)
-    target_constraint = add_cons_container!(optimization_container, target_cons_name, name_index, 1)
+    balance_constraint = add_cons_container!(
+        optimization_container,
+        balance_cons_name,
+        name_index,
+        time_steps,
+    )
+    target_constraint =
+        add_cons_container!(optimization_container, target_cons_name, name_index, 1)
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
@@ -339,16 +363,25 @@ function energy_balance_hydro_param!(
     )
     param_outflow = get_parameter_array(container_outflow)
     multiplier_outflow = get_multiplier_array(container_outflow)
-    constraint_up =
-        add_cons_container!(optimization_container, cons_name[1], inflow_name_index, time_steps)
-    constraint_down =
-        add_cons_container!(optimization_container, cons_name[2], outflow_name_index, time_steps)
+    constraint_up = add_cons_container!(
+        optimization_container,
+        cons_name[1],
+        inflow_name_index,
+        time_steps,
+    )
+    constraint_down = add_cons_container!(
+        optimization_container,
+        cons_name[2],
+        outflow_name_index,
+        time_steps,
+    )
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)
         pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
         multiplier_inflow[name, 1] = d.multiplier
-        param_inflow[name, 1] = PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
+        param_inflow[name, 1] =
+            PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
             (
@@ -368,8 +401,10 @@ function energy_balance_hydro_param!(
                     multiplier_inflow[name, t] * param_inflow[name, t] +
                     varin[name, t] * pump_eff - varspill[name, t] - varout[name, t]
                 ) * fraction_of_hour
-            constraint_up[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, varenergy_up[name, t] == exp)
+            constraint_up[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                varenergy_up[name, t] == exp
+            )
         end
     end
 
@@ -377,7 +412,8 @@ function energy_balance_hydro_param!(
         name = get_component_name(d)
         pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
         multiplier_outflow[name, 1] = d.multiplier
-        param_outflow[name, 1] = PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
+        param_outflow[name, 1] =
+            PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
             (
@@ -385,8 +421,10 @@ function energy_balance_hydro_param!(
                 multiplier_outflow[name, 1] * param_outflow[name, 1] -
                 varin[name, 1] * pump_eff
             ) * fraction_of_hour
-        constraint_down[name, 1] =
-            JuMP.@constraint(optimization_container.JuMPmodel, varenergy_down[name, 1] == exp)
+        constraint_down[name, 1] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            varenergy_down[name, 1] == exp
+        )
 
         for t in time_steps[2:end]
             multiplier_outflow[name, t] = d.multiplier
@@ -399,8 +437,10 @@ function energy_balance_hydro_param!(
                     multiplier_outflow[name, t] * param_outflow[name, t] -
                     varin[name, t] * pump_eff
                 ) * fraction_of_hour
-            constraint_down[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, varenergy_down[name, t] == exp)
+            constraint_down[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                varenergy_down[name, t] == exp
+            )
         end
     end
 
@@ -452,10 +492,18 @@ function energy_balance_hydro!(
     varin = get_variable(optimization_container, var_names[4])
     varenergy_down = get_variable(optimization_container, var_names[5])
 
-    constraint_up =
-        add_cons_container!(optimization_container, cons_name[1], inflow_name_index, time_steps)
-    constraint_down =
-        add_cons_container!(optimization_container, cons_name[2], outflow_name_index, time_steps)
+    constraint_up = add_cons_container!(
+        optimization_container,
+        cons_name[1],
+        inflow_name_index,
+        time_steps,
+    )
+    constraint_down = add_cons_container!(
+        optimization_container,
+        cons_name[2],
+        outflow_name_index,
+        time_steps,
+    )
 
     for (ix, d) in enumerate(inflow_data)
         name = get_component_name(d)

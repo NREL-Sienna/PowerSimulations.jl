@@ -724,15 +724,18 @@ function device_energy_budget_param_ub(
     variable_out = get_variable(optimization_container, var_names)
     set_name = [get_component_name(r) for r in energy_budget_data]
     constraint = add_cons_container!(optimization_container, cons_name, set_name)
-    container = add_param_container!(optimization_container, param_reference, set_name, time_steps)
+    container =
+        add_param_container!(optimization_container, param_reference, set_name, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     for constraint_info in energy_budget_data
         name = get_component_name(constraint_info)
         for t in time_steps
             multiplier[name, t] = constraint_info.multiplier * inv_dt
-            param[name, t] =
-                PJ.add_parameter(optimization_container.JuMPmodel, constraint_info.timeseries[t])
+            param[name, t] = PJ.add_parameter(
+                optimization_container.JuMPmodel,
+                constraint_info.timeseries[t],
+            )
         end
         constraint[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,

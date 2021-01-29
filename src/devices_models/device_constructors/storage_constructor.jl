@@ -47,11 +47,23 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(optimization_container, devices, D, S, get_feedforward(model))
+    energy_balance_constraint!(
+        optimization_container,
+        devices,
+        D,
+        S,
+        get_feedforward(model),
+    )
 
     return
 end
@@ -99,11 +111,23 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(optimization_container, devices, D, S, get_feedforward(model))
+    energy_balance_constraint!(
+        optimization_container,
+        devices,
+        D,
+        S,
+        get_feedforward(model),
+    )
 
     return
 end
@@ -158,7 +182,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
@@ -213,7 +243,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
@@ -277,7 +313,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
@@ -334,7 +376,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits

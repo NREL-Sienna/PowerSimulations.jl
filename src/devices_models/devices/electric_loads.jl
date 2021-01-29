@@ -67,7 +67,8 @@ function custom_reactive_power_constraints!(
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
         reactive = get_variable(optimization_container, REACTIVE_POWER, T)[name, t]
         real = get_variable(optimization_container, ACTIVE_POWER, T)[name, t] * pf
-        constraint[name, t] = JuMP.@constraint(optimization_container.JuMPmodel, reactive == real)
+        constraint[name, t] =
+            JuMP.@constraint(optimization_container.JuMPmodel, reactive == real)
     end
 end
 

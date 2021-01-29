@@ -433,7 +433,8 @@ function _get_data_for_rocc(
         minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
     end
 
-    initial_conditions_power = get_initial_conditions(optimization_container, DevicePower, T)
+    initial_conditions_power =
+        get_initial_conditions(optimization_container, DevicePower, T)
     lenght_devices_power = length(initial_conditions_power)
     data = Vector{DeviceRampConstraintInfo}(undef, lenght_devices_power)
     idx = 0
@@ -600,8 +601,20 @@ function turbine_temperature(
     names = [get_component_name(st) for st in startup_data]
 
     con = [
-        add_cons_container!(optimization_container, hot_name, names, time_steps; sparse = true),
-        add_cons_container!(optimization_container, warm_name, names, time_steps; sparse = true),
+        add_cons_container!(
+            optimization_container,
+            hot_name,
+            names,
+            time_steps;
+            sparse = true,
+        ),
+        add_cons_container!(
+            optimization_container,
+            warm_name,
+            names,
+            time_steps;
+            sparse = true,
+        ),
     ]
 
     # constraint (15)
@@ -976,7 +989,8 @@ function time_constraints!(
 }
     parameters = model_has_parameters(optimization_container)
     resolution = model_resolution(optimization_container)
-    initial_conditions_on = get_initial_conditions(optimization_container, ICKey(TimeDurationON, T))
+    initial_conditions_on =
+        get_initial_conditions(optimization_container, ICKey(TimeDurationON, T))
     initial_conditions_off =
         get_initial_conditions(optimization_container, ICKey(TimeDurationOFF, T))
     ini_conds, time_params =
@@ -1022,7 +1036,8 @@ function time_constraints!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     parameters = model_has_parameters(optimization_container)
     resolution = model_resolution(optimization_container)
-    initial_conditions_on = get_initial_conditions(optimization_container, ICKey(TimeDurationON, T))
+    initial_conditions_on =
+        get_initial_conditions(optimization_container, ICKey(TimeDurationON, T))
     initial_conditions_off =
         get_initial_conditions(optimization_container, ICKey(TimeDurationOFF, T))
     ini_conds, time_params =

@@ -49,7 +49,13 @@ function construct_network!(
         add_slacks!(optimization_container, StandardPTDFModel)
     end
 
-    ptdf_networkflow(optimization_container, ac_branches, buses, :nodal_balance_active, ptdf)
+    ptdf_networkflow(
+        optimization_container,
+        ac_branches,
+        buses,
+        :nodal_balance_active,
+        ptdf,
+    )
 
     dc_branches = get_available_components(PSY.DCBranch, sys)
     dc_branch_types = typeof.(dc_branches)
@@ -102,7 +108,8 @@ function construct_network!(
         )
     end
 
-    get_balance_slack_variables(optimization_container.settings) && add_slacks!(optimization_container, T)
+    get_balance_slack_variables(optimization_container.settings) &&
+        add_slacks!(optimization_container, T)
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(optimization_container, T, sys, instantiate_model)

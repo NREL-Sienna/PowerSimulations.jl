@@ -10,7 +10,8 @@ function include_parameters!(
     time_steps = model_time_steps(optimization_container)
     names = [get_component_name(r) for r in constraint_infos]
     @debug "adding" param_reference "parameter"
-    container = add_param_container!(optimization_container, param_reference, names, time_steps)
+    container =
+        add_param_container!(optimization_container, param_reference, names, time_steps)
     param = get_parameter_array(container)
     mult = get_multiplier_array(container)
     expr = get_expression(optimization_container, expression_name)
@@ -38,7 +39,8 @@ function include_parameters!(
     @assert model_has_parameters(optimization_container)
     time_steps = model_time_steps(optimization_container)
     names = [get_component_name(r) for r in constraint_infos]
-    container = add_param_container!(optimization_container, param_reference, names, time_steps)
+    container =
+        add_param_container!(optimization_container, param_reference, names, time_steps)
     param = get_parameter_array(container)
     mult = get_multiplier_array(container)
     for t in time_steps, r in constraint_infos

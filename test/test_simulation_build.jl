@@ -355,7 +355,10 @@ function test_simulation_build(file_path::String)
             stages_sequence = sequence,
             simulation_folder = file_path,
         )
-        @test haskey(sim.stages["UC"].internal.optimization_container.JuMPmodel.ext, :PSI_Testing)
+        @test haskey(
+            sim.stages["UC"].internal.optimization_container.JuMPmodel.ext,
+            :PSI_Testing,
+        )
         @test !isnothing(sim.stages["ED"].internal.optimization_container.settings.PTDF)
     end
     @testset "Create Simulation using SOS-PWL cost function" begin

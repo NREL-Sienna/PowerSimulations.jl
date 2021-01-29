@@ -165,7 +165,8 @@ function _make_initial_conditions!(
         set_initial_conditions!(ic_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
             val_ = get_val_func(dev, key)
-            val = parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
+            val =
+                parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             ini_conds[ix] = ic
             @debug "set initial condition" key ic val_
@@ -177,7 +178,8 @@ function _make_initial_conditions!(
             IS.get_uuid(dev) in ic_devices && continue
             @debug "Setting $(key.ic_type) initial conditions device $(PSY.get_name(dev)) based on system data"
             val_ = get_val_func(dev, key)
-            val = parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
+            val =
+                parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             push!(ini_conds, ic)
             @debug "set initial condition" key ic val_
@@ -367,7 +369,10 @@ function storage_energy_init(
     return
 end
 
-function area_control_init(optimization_container::OptimizationContainer, services::Vector{PSY.AGC})
+function area_control_init(
+    optimization_container::OptimizationContainer,
+    services::Vector{PSY.AGC},
+)
     key = ICKey(AreaControlError, PSY.AGC)
     _make_initial_conditions!(
         optimization_container,

@@ -44,10 +44,15 @@ function device_commitment!(
     varstop = get_variable(optimization_container, var_names[2])
     varon = get_variable(optimization_container, var_names[3])
     varstart_names = axes(varstart, 1)
-    constraint = add_cons_container!(optimization_container, cons_name, varstart_names, time_steps)
+    constraint =
+        add_cons_container!(optimization_container, cons_name, varstart_names, time_steps)
     aux_cons_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "aux")
-    aux_constraint =
-        add_cons_container!(optimization_container, aux_cons_name, varstart_names, time_steps)
+    aux_constraint = add_cons_container!(
+        optimization_container,
+        aux_cons_name,
+        varstart_names,
+        time_steps,
+    )
 
     for ic in initial_conditions
         name = PSY.get_name(ic.device)

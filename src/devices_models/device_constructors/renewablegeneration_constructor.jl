@@ -109,7 +109,12 @@ function construct_device!(
         "The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to FixedOutput"
     )
 
-    construct_device!(optimization_container, sys, DeviceModel(PSY.RenewableFix, FixedOutput), S)
+    construct_device!(
+        optimization_container,
+        sys,
+        DeviceModel(PSY.RenewableFix, FixedOutput),
+        S,
+    )
 
     return
 end

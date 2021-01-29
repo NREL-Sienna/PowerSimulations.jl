@@ -47,7 +47,8 @@ function psi_checkbinvar_test(
 end
 
 function psi_checkobjfun_test(op_problem::OperationsProblem, exp_type)
-    @test JuMP.objective_function_type(op_problem.optimization_container.JuMPmodel) == exp_type
+    @test JuMP.objective_function_type(op_problem.optimization_container.JuMPmodel) ==
+          exp_type
     return
 end
 

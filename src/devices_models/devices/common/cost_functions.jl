@@ -103,18 +103,27 @@ function has_on_variable(
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
     return !(
-        get(optimization_container.variables, make_variable_name(variable_type, T), nothing) ===
-        nothing
+        get(
+            optimization_container.variables,
+            make_variable_name(variable_type, T),
+            nothing,
+        ) === nothing
     )
 end
 
-function has_on_parameter(optimization_container::OptimizationContainer, ::Type{T}) where {T <: PSY.Component}
+function has_on_parameter(
+    optimization_container::OptimizationContainer,
+    ::Type{T},
+) where {T <: PSY.Component}
     if !model_has_parameters(optimization_container)
         return false
     end
     return !(
-        get(optimization_container.parameters, encode_symbol(OnVariable, string(T)), nothing) ===
-        nothing
+        get(
+            optimization_container.parameters,
+            encode_symbol(OnVariable, string(T)),
+            nothing,
+        ) === nothing
     )
 end
 
@@ -422,7 +431,10 @@ function add_to_cost!(
     return
 end
 
-function check_single_start(optimization_container::OptimizationContainer, spec::AddCostSpec)
+function check_single_start(
+    optimization_container::OptimizationContainer,
+    spec::AddCostSpec,
+)
     for (st, var_type) in enumerate(START_VARIABLES)
         var_name = make_variable_name(var_type, spec.component_type)
         if !haskey(optimization_container.variables, var_name)
@@ -476,8 +488,13 @@ function add_to_cost!(
     variable_cost_data = PSY.get_cost(PSY.get_variable(cost_data))
     if !all(iszero.(last.(variable_cost_data)))
         for t in time_steps
-            gen_cost =
-                pwl_gencost_sos!(optimization_container, spec, component_name, variable_cost_data, t)
+            gen_cost = pwl_gencost_sos!(
+                optimization_container,
+                spec,
+                component_name,
+                variable_cost_data,
+                t,
+            )
             add_to_cost_expression!(optimization_container, spec.multiplier * gen_cost * dt)
         end
     else
@@ -827,7 +844,8 @@ function variable_cost!(
         @debug "Quadratic Variable Cost" component_name
         resolution = model_resolution(optimization_container)
         dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-        variable = get_variable(optimization_container, var_name)[component_name, time_period]
+        variable =
+            get_variable(optimization_container, var_name)[component_name, time_period]
         gen_cost =
             sum((variable .* base_power) .^ 2) * cost_data[1] +
             sum(variable .* base_power) * cost_data[2]
@@ -893,11 +911,21 @@ function variable_cost!(
       An SOS-2 formulation will be added to the model.
       This will result in additional binary variables added to the model."
         )
-        gen_cost =
-            pwl_gencost_sos!(optimization_container, spec, component_name, cost_data, time_period)
+        gen_cost = pwl_gencost_sos!(
+            optimization_container,
+            spec,
+            component_name,
+            cost_data,
+            time_period,
+        )
     else
-        gen_cost =
-            pwl_gencost_linear!(optimization_container, spec, component_name, cost_data, time_period)
+        gen_cost = pwl_gencost_linear!(
+            optimization_container,
+            spec,
+            component_name,
+            cost_data,
+            time_period,
+        )
     end
     add_to_cost_expression!(optimization_container, spec.multiplier * gen_cost * dt)
     return

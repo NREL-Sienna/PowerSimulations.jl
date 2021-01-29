@@ -77,8 +77,10 @@ function custom_reactive_power_constraints!(
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_power_factor(d)))
-        constraint_val[name, t] =
-            JuMP.@constraint(optimization_container.JuMPmodel, q_var[name, t] == p_var[name, t] * pf)
+        constraint_val[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            q_var[name, t] == p_var[name, t] * pf
+        )
     end
     return
 end

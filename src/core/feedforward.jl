@@ -355,10 +355,12 @@ function range_ff(
     @assert axes[2] == time_steps
 
     # Create containers for the constraints
-    container_lb = add_param_container!(optimization_container, param_reference[1], set_name)
+    container_lb =
+        add_param_container!(optimization_container, param_reference[1], set_name)
     param_lb = get_parameter_array(container_lb)
     multiplier_lb = get_multiplier_array(container_lb)
-    container_ub = add_param_container!(optimization_container, param_reference[2], set_name)
+    container_ub =
+        add_param_container!(optimization_container, param_reference[2], set_name)
     param_ub = get_parameter_array(container_ub)
     multiplier_ub = get_multiplier_array(container_ub)
     # Create containers for the parameters
@@ -367,10 +369,14 @@ function range_ff(
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
-        param_lb[name] =
-            PJ.add_parameter(optimization_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
-        param_ub[name] =
-            PJ.add_parameter(optimization_container.JuMPmodel, JuMP.upper_bound(variable[name, 1]))
+        param_lb[name] = PJ.add_parameter(
+            optimization_container.JuMPmodel,
+            JuMP.lower_bound(variable[name, 1]),
+        )
+        param_ub[name] = PJ.add_parameter(
+            optimization_container.JuMPmodel,
+            JuMP.upper_bound(variable[name, 1]),
+        )
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier_ub[name] = 1.0
         multiplier_lb[name] = 1.0
@@ -650,7 +656,8 @@ function get_stage_variable(
     device_name::AbstractString,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     step = axes(variable)[2][chron.periods]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
@@ -666,7 +673,8 @@ function get_stage_variable(
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     step = axes(variable)[2][get_end_of_interval_step(stages.first)]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
@@ -682,7 +690,8 @@ function get_stage_variable(
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     e_count = get_execution_count(stages.second)
     wait_count = get_execution_wait_count(get_trigger(chron))
     index = (floor(e_count / wait_count) + 1)
@@ -701,7 +710,8 @@ function get_stage_variable(
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     vars = variable[device_name, :]
     if JuMP.is_binary(first(vars))
         return round.(JuMP.value(vars))
@@ -716,7 +726,8 @@ function get_stage_variable(
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     vars = variable[device_name, chron.range]
     if JuMP.is_binary(first(vars))
         return round.(JuMP.value(vars))

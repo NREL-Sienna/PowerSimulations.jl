@@ -239,8 +239,11 @@ function powermodels_network!(
             optimization_container.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    optimization_container.pm =
-        instantiate_model(pm_data, system_formulation, jump_model = optimization_container.JuMPmodel)
+    optimization_container.pm = instantiate_model(
+        pm_data,
+        system_formulation,
+        jump_model = optimization_container.JuMPmodel,
+    )
     optimization_container.pm.ext[:PMmap] = PM_map
 
     return
@@ -261,12 +264,18 @@ function powermodels_network!(
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] =
-            optimization_container.expressions[:nodal_balance_active][PSY.get_number(bus), t]
+            optimization_container.expressions[:nodal_balance_active][
+                PSY.get_number(bus),
+                t,
+            ]
         # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    optimization_container.pm =
-        instantiate_model(pm_data, system_formulation, jump_model = optimization_container.JuMPmodel)
+    optimization_container.pm = instantiate_model(
+        pm_data,
+        system_formulation,
+        jump_model = optimization_container.JuMPmodel,
+    )
     optimization_container.pm.ext[:PMmap] = PM_map
 
     return

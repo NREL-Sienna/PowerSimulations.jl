@@ -92,7 +92,12 @@ function construct_service!(
         # Services without contributing devices should have been filtered out in the validation
         @assert !isempty(contributing_devices)
         # Variables
-        add_variables!(optimization_container, ActiveServiceVariable, service, contributing_devices)
+        add_variables!(
+            optimization_container,
+            ActiveServiceVariable,
+            service,
+            contributing_devices,
+        )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
@@ -133,7 +138,12 @@ function construct_service!(
                 [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
         end
         # Variables
-        add_variables!(optimization_container, ActiveServiceVariable, service, contributing_devices)
+        add_variables!(
+            optimization_container,
+            ActiveServiceVariable,
+            service,
+            contributing_devices,
+        )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)

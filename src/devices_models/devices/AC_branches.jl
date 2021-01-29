@@ -72,8 +72,18 @@ function branch_rate_bounds!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {B <: PSY.ACBranch}
     constraint_infos = _get_constraint_data(devices)
-    set_variable_bounds!(optimization_container, constraint_infos, FLOW_ACTIVE_POWER_FROM_TO, B)
-    set_variable_bounds!(optimization_container, constraint_infos, FLOW_ACTIVE_POWER_TO_FROM, B)
+    set_variable_bounds!(
+        optimization_container,
+        constraint_infos,
+        FLOW_ACTIVE_POWER_FROM_TO,
+        B,
+    )
+    set_variable_bounds!(
+        optimization_container,
+        constraint_infos,
+        FLOW_ACTIVE_POWER_TO_FROM,
+        B,
+    )
     return
 end
 

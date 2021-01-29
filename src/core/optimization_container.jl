@@ -70,8 +70,10 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
                 PJ.enable_parameters(optimization_container.JuMPmodel)
                 warm_start_enabled = get_warm_start(settings)
-                solver_supports_warm_start =
-                    _check_warm_start_support(optimization_container.JuMPmodel, warm_start_enabled)
+                solver_supports_warm_start = _check_warm_start_support(
+                    optimization_container.JuMPmodel,
+                    warm_start_enabled,
+                )
                 set_warm_start!(settings, solver_supports_warm_start)
             end
         end
@@ -179,7 +181,8 @@ function optimization_container_init!(
         # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
         # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
         # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
-        variable_count_estimate = length(optimization_container.time_steps) * total_number_of_devices
+        variable_count_estimate =
+            length(optimization_container.time_steps) * total_number_of_devices
         if variable_count_estimate > 10e6
             @warn(
                 "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
@@ -212,28 +215,44 @@ function get_initial_conditions(optimization_container::OptimizationContainer, k
     return get_initial_conditions(optimization_container.initial_conditions, key)
 end
 
-function set_initial_conditions!(optimization_container::OptimizationContainer, key::ICKey, value)
+function set_initial_conditions!(
+    optimization_container::OptimizationContainer,
+    key::ICKey,
+    value,
+)
     set_initial_conditions!(optimization_container.initial_conditions, key, value)
 end
 
 _variable_type(cm::OptimizationContainer) = JuMP.variable_type(cm.JuMPmodel)
-model_time_steps(optimization_container::OptimizationContainer) = optimization_container.time_steps
-model_resolution(optimization_container::OptimizationContainer) = optimization_container.resolution
+model_time_steps(optimization_container::OptimizationContainer) =
+    optimization_container.time_steps
+model_resolution(optimization_container::OptimizationContainer) =
+    optimization_container.resolution
 model_has_parameters(optimization_container::OptimizationContainer) =
     get_use_parameters(optimization_container.settings)
 model_uses_forecasts(optimization_container::OptimizationContainer) =
     get_use_forecast_data(optimization_container.settings)
-model_initial_time(optimization_container::OptimizationContainer) = get_initial_time(optimization_container.settings)
+model_initial_time(optimization_container::OptimizationContainer) =
+    get_initial_time(optimization_container.settings)
 # Internal Variables, Constraints and Parameters accessors
-get_variables(optimization_container::OptimizationContainer) = optimization_container.variables
-get_constraints(optimization_container::OptimizationContainer) = optimization_container.constraints
-get_parameters(optimization_container::OptimizationContainer) = optimization_container.parameters
-get_expression(optimization_container::OptimizationContainer, name::Symbol) = optimization_container.expressions[name]
-get_initial_conditions(optimization_container::OptimizationContainer) = optimization_container.initial_conditions
-get_PTDF(optimization_container::OptimizationContainer) = get_PTDF(optimization_container.settings)
-get_settings(optimization_container::OptimizationContainer) = optimization_container.settings
-get_jump_model(optimization_container::OptimizationContainer) = optimization_container.JuMPmodel
-get_base_power(optimization_container::OptimizationContainer) = optimization_container.base_power
+get_variables(optimization_container::OptimizationContainer) =
+    optimization_container.variables
+get_constraints(optimization_container::OptimizationContainer) =
+    optimization_container.constraints
+get_parameters(optimization_container::OptimizationContainer) =
+    optimization_container.parameters
+get_expression(optimization_container::OptimizationContainer, name::Symbol) =
+    optimization_container.expressions[name]
+get_initial_conditions(optimization_container::OptimizationContainer) =
+    optimization_container.initial_conditions
+get_PTDF(optimization_container::OptimizationContainer) =
+    get_PTDF(optimization_container.settings)
+get_settings(optimization_container::OptimizationContainer) =
+    optimization_container.settings
+get_jump_model(optimization_container::OptimizationContainer) =
+    optimization_container.JuMPmodel
+get_base_power(optimization_container::OptimizationContainer) =
+    optimization_container.base_power
 
 function get_variable(
     optimization_container::OptimizationContainer,
@@ -251,7 +270,10 @@ function get_variable(
     return get_variable(optimization_container, make_variable_name(T, U))
 end
 
-function get_variable(optimization_container::OptimizationContainer, var_type::AbstractString)
+function get_variable(
+    optimization_container::OptimizationContainer,
+    var_type::AbstractString,
+)
     return get_variable(optimization_container, make_variable_name(var_type))
 end
 
@@ -283,16 +305,26 @@ function assign_variable!(
     return
 end
 
-function assign_variable!(optimization_container::OptimizationContainer, variable_type::AbstractString, value)
+function assign_variable!(
+    optimization_container::OptimizationContainer,
+    variable_type::AbstractString,
+    value,
+)
     assign_variable!(optimization_container, make_variable_name(variable_type), value)
     return
 end
 
-function assign_variable!(optimization_container::OptimizationContainer, name::Symbol, value)
+function assign_variable!(
+    optimization_container::OptimizationContainer,
+    name::Symbol,
+    value,
+)
     @debug "assign_variable" name
 
     if haskey(optimization_container.variables, name)
-        @error "variable $name is already stored" sort!(get_variable_names(optimization_container))
+        @error "variable $name is already stored" sort!(
+            get_variable_names(optimization_container),
+        )
         throw(IS.InvalidValue("variable $name is already stored"))
     end
 
@@ -323,7 +355,10 @@ function get_constraint(
     return get_constraint(optimization_container, make_constraint_name(constraint_type, T))
 end
 
-function get_constraint(optimization_container::OptimizationContainer, constraint_type::AbstractString)
+function get_constraint(
+    optimization_container::OptimizationContainer,
+    constraint_type::AbstractString,
+)
     return get_constraint(optimization_container, make_constraint_name(constraint_type))
 end
 
@@ -347,7 +382,11 @@ function assign_constraint!(
     ::Type{T},
     value,
 ) where {T <: PSY.Component}
-    assign_constraint!(optimization_container, make_constraint_name(constraint_type, T), value)
+    assign_constraint!(
+        optimization_container,
+        make_constraint_name(constraint_type, T),
+        value,
+    )
     return
 end
 
@@ -360,7 +399,11 @@ function assign_constraint!(
     return
 end
 
-function assign_constraint!(optimization_container::OptimizationContainer, name::Symbol, value)
+function assign_constraint!(
+    optimization_container::OptimizationContainer,
+    name::Symbol,
+    value,
+)
     @debug "set_constraint" name
     optimization_container.constraints[name] = value
     return
@@ -385,11 +428,17 @@ function get_parameter_names(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.parameters))
 end
 
-function get_parameter_container(optimization_container::OptimizationContainer, name::AbstractString)
+function get_parameter_container(
+    optimization_container::OptimizationContainer,
+    name::AbstractString,
+)
     return get_parameter_container(optimization_container, Symbol(name))
 end
 
-function get_parameter_container(optimization_container::OptimizationContainer, name::Symbol)
+function get_parameter_container(
+    optimization_container::OptimizationContainer,
+    name::Symbol,
+)
     container = get(optimization_container.parameters, name, nothing)
     if container === nothing
         @error "$name is not stored" sort!(get_parameter_names(optimization_container))
@@ -406,7 +455,10 @@ function get_parameter_container(
     return get_parameter_container(optimization_container, encode_symbol(T, name))
 end
 
-function get_parameter_container(optimization_container::OptimizationContainer, ref::UpdateRef)
+function get_parameter_container(
+    optimization_container::OptimizationContainer,
+    ref::UpdateRef,
+)
     return get_parameter_container(optimization_container, ref.access_ref)
 end
 
@@ -414,7 +466,10 @@ function get_parameter_array(optimization_container::OptimizationContainer, ref)
     return get_parameter_array(get_parameter_container(optimization_container, ref))
 end
 
-function assign_parameter!(optimization_container::OptimizationContainer, container::ParameterContainer)
+function assign_parameter!(
+    optimization_container::OptimizationContainer,
+    container::ParameterContainer,
+)
     @debug "assign_parameter" container.update_ref
     name = container.update_ref.access_ref
     if name isa AbstractString
@@ -422,7 +477,9 @@ function assign_parameter!(optimization_container::OptimizationContainer, contai
     end
 
     if haskey(optimization_container.parameters, name)
-        @error "parameter $name is already stored" sort!(get_parameter_names(optimization_container))
+        @error "parameter $name is already stored" sort!(
+            get_parameter_names(optimization_container),
+        )
         throw(IS.InvalidValue("parameter $name is already stored"))
     end
 
@@ -452,13 +509,21 @@ function iterate_parameter_containers(optimization_container::OptimizationContai
     end
 end
 
-function assign_expression!(optimization_container::OptimizationContainer, name::Symbol, value)
+function assign_expression!(
+    optimization_container::OptimizationContainer,
+    name::Symbol,
+    value,
+)
     @debug "set_expression" name
     optimization_container.expressions[name] = value
     return
 end
 
-function add_expression_container!(optimization_container::OptimizationContainer, exp_name::Symbol, axs...)
+function add_expression_container!(
+    optimization_container::OptimizationContainer,
+    exp_name::Symbol,
+    axs...,
+)
     container = JuMP.Containers.DenseAxisArray{JuMP.GenericAffExpr}(undef, axs...)
     assign_expression!(optimization_container, exp_name, container)
     return container
@@ -478,7 +543,8 @@ function export_optimizer_log(
 )
     optimizer_log[:termination_status] =
         Int(JuMP.termination_status(optimization_container.JuMPmodel))
-    optimizer_log[:primal_status] = Int(JuMP.primal_status(optimization_container.JuMPmodel))
+    optimizer_log[:primal_status] =
+        Int(JuMP.primal_status(optimization_container.JuMPmodel))
     optimizer_log[:dual_status] = Int(JuMP.dual_status(optimization_container.JuMPmodel))
 
     if optimizer_log[:primal_status] == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
@@ -488,7 +554,8 @@ function export_optimizer_log(
     end
 
     try
-        optimizer_log[:solve_time] = MOI.get(optimization_container.JuMPmodel, MOI.SolveTime())
+        optimizer_log[:solve_time] =
+            MOI.get(optimization_container.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = NaN # "Not Supported by solver"
@@ -498,7 +565,10 @@ function export_optimizer_log(
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function write_optimization_container(optimization_container::OptimizationContainer, save_path::String)
+function write_optimization_container(
+    optimization_container::OptimizationContainer,
+    save_path::String,
+)
     MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
     MOI.copy_to(MOF_model, JuMP.backend(optimization_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
@@ -506,7 +576,9 @@ function write_optimization_container(optimization_container::OptimizationContai
 end
 
 function read_variables(optimization_container::OptimizationContainer)
-    return Dict(k => axis_array_to_dataframe(v) for (k, v) in get_variables(optimization_container))
+    return Dict(
+        k => axis_array_to_dataframe(v) for (k, v) in get_variables(optimization_container)
+    )
 end
 
 function read_duals(optimization_container::OptimizationContainer)
@@ -541,7 +613,11 @@ function read_parameters(optimization_container::OptimizationContainer)
     return params_dict
 end
 
-function add_to_setting_ext!(optimization_container::OptimizationContainer, key::String, value)
+function add_to_setting_ext!(
+    optimization_container::OptimizationContainer,
+    key::String,
+    value,
+)
     settings = get_settings(optimization_container)
     push!(get_ext(settings), key => value)
     @debug "Add to settings ext" key value
@@ -590,7 +666,11 @@ function _build!(
     end
 
     @debug "Building Objective"
-    JuMP.@objective(optimization_container.JuMPmodel, MOI.MIN_SENSE, optimization_container.cost_function)
+    JuMP.@objective(
+        optimization_container.JuMPmodel,
+        MOI.MIN_SENSE,
+        optimization_container.cost_function
+    )
     @debug "Total operation count $(optimization_container.JuMPmodel.operator_counter)"
 
     check_optimization_container(optimization_container)

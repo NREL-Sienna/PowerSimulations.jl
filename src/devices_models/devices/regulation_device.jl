@@ -58,8 +58,10 @@ function add_constraints!(
     end
 
     if parameters
-        base_points_param =
-            get_parameter_container(optimization_container, make_variable_name(ACTIVE_POWER, T))
+        base_points_param = get_parameter_container(
+            optimization_container,
+            make_variable_name(ACTIVE_POWER, T),
+        )
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -111,8 +113,10 @@ function add_constraints!(
     end
 
     if parameters
-        base_points_param =
-            get_parameter_container(optimization_container, make_variable_name(ACTIVE_POWER, T))
+        base_points_param = get_parameter_container(
+            optimization_container,
+            make_variable_name(ACTIVE_POWER, T),
+        )
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -154,8 +158,10 @@ function add_constraints!(
         name = PSY.get_name(d)
         limit_up = PSY.get_reserve_limit_up(d)
         for t in time_steps
-            container_up[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, var_up[name, t] <= limit_up)
+            container_up[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                var_up[name, t] <= limit_up
+            )
         end
     end
     return
@@ -183,8 +189,10 @@ function add_constraints!(
         name = PSY.get_name(d)
         limit_up = PSY.get_reserve_limit_dn(d)
         for t in time_steps
-            container_dn[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, var_dn[name, t] <= limit_up)
+            container_dn[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                var_dn[name, t] <= limit_up
+            )
         end
     end
     return
@@ -204,8 +212,10 @@ function ramp_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(optimization_container)
 
-    container_up = add_cons_container!(optimization_container, :ramp_limits_up, names, time_steps)
-    container_dn = add_cons_container!(optimization_container, :ramp_limits_dn, names, time_steps)
+    container_up =
+        add_cons_container!(optimization_container, :ramp_limits_up, names, time_steps)
+    container_dn =
+        add_cons_container!(optimization_container, :ramp_limits_dn, names, time_steps)
 
     for d in devices
         ramp_limits = PSY.get_ramp_limits(d)
@@ -236,10 +246,14 @@ function participation_assignment!(
     time_steps = model_time_steps(optimization_container)
     R_up = get_variable(optimization_container, DeltaActivePowerUpVariable, T)
     R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable, T)
-    R_up_emergency = get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
-    R_dn_emergency = get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
-    area_reserve_up = get_variable(optimization_container, DeltaActivePowerUpVariable, PSY.Area)
-    area_reserve_dn = get_variable(optimization_container, DeltaActivePowerDownVariable, PSY.Area)
+    R_up_emergency =
+        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
+    R_dn_emergency =
+        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
+    area_reserve_up =
+        get_variable(optimization_container, DeltaActivePowerUpVariable, PSY.Area)
+    area_reserve_dn =
+        get_variable(optimization_container, DeltaActivePowerDownVariable, PSY.Area)
 
     component_names = [PSY.get_name(d) for d in devices]
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
@@ -295,8 +309,10 @@ function regulation_cost!(
     time_steps = model_time_steps(optimization_container)
     R_up = get_variable(optimization_container, DeltaActivePowerUpVariable, T)
     R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable, T)
-    R_up_emergency = get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
-    R_dn_emergency = get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
+    R_up_emergency =
+        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
+    R_dn_emergency =
+        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
 
     for d in devices
         cost = PSY.get_cost(d)

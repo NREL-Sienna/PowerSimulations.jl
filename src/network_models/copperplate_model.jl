@@ -1,4 +1,8 @@
-function copper_plate(optimization_container::OptimizationContainer, expression::Symbol, bus_count::Int)
+function copper_plate(
+    optimization_container::OptimizationContainer,
+    expression::Symbol,
+    bus_count::Int,
+)
     time_steps = model_time_steps(optimization_container)
     remove_undef!(optimization_container.expressions[expression])
 

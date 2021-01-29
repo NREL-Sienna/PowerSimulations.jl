@@ -79,8 +79,11 @@ function OperationsProblem{M}(
     jump_model::Union{Nothing, JuMP.AbstractModel},
     settings::Settings,
 ) where {M <: AbstractOperationsProblem}
-    op_problem =
-        OperationsProblem{M}(template, sys, OptimizationContainer(sys, settings, jump_model))
+    op_problem = OperationsProblem{M}(
+        template,
+        sys,
+        OptimizationContainer(sys, settings, jump_model),
+    )
     build!(op_problem)
     return op_problem
 end
@@ -232,13 +235,18 @@ get_devices_ref(op_problem::OperationsProblem) = op_problem.template.devices
 get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
-get_optimization_container(op_problem::OperationsProblem) = op_problem.optimization_container
+get_optimization_container(op_problem::OperationsProblem) =
+    op_problem.optimization_container
 get_model_base_power(op_problem::OperationsProblem) = PSY.get_base_power(op_problem.sys)
-get_jump_model(op_problem::OperationsProblem) = get_jump_model(op_problem.optimization_container)
+get_jump_model(op_problem::OperationsProblem) =
+    get_jump_model(op_problem.optimization_container)
 
 function reset!(op_problem::OperationsProblem)
-    op_problem.optimization_container =
-        OptimizationContainer(op_problem.sys, op_problem.optimization_container.settings, nothing)
+    op_problem.optimization_container = OptimizationContainer(
+        op_problem.sys,
+        op_problem.optimization_container.settings,
+        nothing,
+    )
     return
 end
 
@@ -469,12 +477,14 @@ function solve!(
         _,
         timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.optimization_container.JuMPmodel)
+        timed_log[:sec_in_gc] =
+            @timed JuMP.optimize!(op_problem.optimization_container.JuMPmodel)
     else
         _,
         timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.optimization_container.JuMPmodel)
+        timed_log[:sec_in_gc] =
+            @timed JuMP.optimize!(op_problem.optimization_container.JuMPmodel)
     end
     model_status = JuMP.primal_status(op_problem.optimization_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
@@ -488,7 +498,8 @@ function solve!(
     base_power = PSY.get_base_power(op_problem.sys)
     dual_result = read_duals(op_problem)
     obj_value = Dict(
-        :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.optimization_container.JuMPmodel),
+        :OBJECTIVE_FUNCTION =>
+            JuMP.objective_value(op_problem.optimization_container.JuMPmodel),
     )
     base_power = get_model_base_power(op_problem)
     merge!(optimizer_log, timed_log)
@@ -513,13 +524,15 @@ function get_optimizer_log(op_m::OperationsProblem)
     optimization_container = op_m.optimization_container
     optimizer_log = Dict{Symbol, Any}()
     optimizer_log[:obj_value] = JuMP.objective_value(optimization_container.JuMPmodel)
-    optimizer_log[:termination_status] = JuMP.termination_status(optimization_container.JuMPmodel)
+    optimizer_log[:termination_status] =
+        JuMP.termination_status(optimization_container.JuMPmodel)
     optimizer_log[:primal_status] = JuMP.primal_status(optimization_container.JuMPmodel)
     optimizer_log[:dual_status] = JuMP.dual_status(optimization_container.JuMPmodel)
     optimizer_log[:solver] = JuMP.solver_name(optimization_container.JuMPmodel)
 
     try
-        optimizer_log[:solve_time] = MOI.get(optimization_container.JuMPmodel, MOI.SolveTime())
+        optimizer_log[:solve_time] =
+            MOI.get(optimization_container.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by $(optimizer_log[:solver])")
         optimizer_log[:solve_time] = "Not Supported by $(optimizer_log[:solver])"

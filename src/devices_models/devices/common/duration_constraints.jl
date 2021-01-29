@@ -71,14 +71,17 @@ function device_duration_retrospective!(
             if t <= max(0, duration_data[ix].up - ic.value) && ic.value > 0
                 JuMP.add_to_expression!(lhs_on, 1)
             end
-            con_up[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
+            con_up[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                lhs_on - varon[name, t] <= 0.0
+            )
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_off =
+                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
             for i in (t - duration_data[ix].down + 1):t
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, varstop[name, i])
@@ -87,8 +90,10 @@ function device_duration_retrospective!(
             if t <= max(0, duration_data[ix].down - ic.value) && ic.value > 0
                 JuMP.add_to_expression!(lhs_off, 1)
             end
-            con_down[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+            con_down[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                lhs_off + varon[name, t] <= 1.0
+            )
         end
     end
     return
@@ -174,7 +179,8 @@ function device_duration_look_ahead!(
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_off =
+                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
             for i in (t - duration_data[ix].down + 1):t
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
@@ -286,7 +292,8 @@ function device_duration_parameters!(
             @assert typeof(ic.value) == PJ.ParameterRef
             name = device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_off =
+                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
             for i in (t - duration_data[ix].down + 1):t
                 if t <= duration_data[ix].down
                     if in(i, time_steps)
@@ -377,14 +384,17 @@ function device_duration_compact_retrospective!(
             else
                 continue
             end
-            con_up[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
+            con_up[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                lhs_on - varon[name, t] <= 0.0
+            )
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_off =
+                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
             if t in min(duration_data[ix].down, total_time_steps):total_time_steps
                 for i in (t - duration_data[ix].down + 1):t
                     if i in time_steps
@@ -396,8 +406,10 @@ function device_duration_compact_retrospective!(
             else
                 continue
             end
-            con_down[name, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+            con_down[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                lhs_off + varon[name, t] <= 1.0
+            )
         end
     end
     return

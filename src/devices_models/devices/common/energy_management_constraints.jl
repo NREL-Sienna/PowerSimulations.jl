@@ -24,7 +24,8 @@ function energy_soft_target(
     varenergy = get_variable(optimization_container, var_names[1])
     varslack = get_variable(optimization_container, var_names[2])
 
-    target_constraint = add_cons_container!(optimization_container, cons_name, name_index, 1)
+    target_constraint =
+        add_cons_container!(optimization_container, cons_name, name_index, 1)
 
     for data in constriant_data
         name = get_component_name(data)

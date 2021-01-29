@@ -28,7 +28,8 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
     name = PSY.get_name(service)
-    constraint = get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
+    constraint =
+        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
     use_slacks = get_services_slack_variables(optimization_container.settings)
     reserve_variables = [
         get_variable(optimization_container, PSY.get_name(r), typeof(r)) for
@@ -44,8 +45,10 @@ function service_requirement_constraint!(
         if use_slacks
             resource_expression += slack_vars[t]
         end
-        constraint[name, t] =
-            JuMP.@constraint(optimization_container.JuMPmodel, resource_expression >= requirement)
+        constraint[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            resource_expression >= requirement
+        )
     end
 
     return

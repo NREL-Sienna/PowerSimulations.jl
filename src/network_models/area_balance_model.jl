@@ -14,12 +14,16 @@ function area_balance(
     area_balance = get_variable(optimization_container, ActivePowerVariable, PSY.Area)
     for (k, buses_in_area) in area_mapping
         for t in time_steps
-            area_net = model_has_parameters(optimization_container) ? zero(PGAE) : JuMP.AffExpr(0.0)
+            area_net =
+                model_has_parameters(optimization_container) ? zero(PGAE) :
+                JuMP.AffExpr(0.0)
             for b in buses_in_area
                 JuMP.add_to_expression!(area_net, nodal_net_balance[PSY.get_number(b), t])
             end
-            constraint_bal[k, t] =
-                JuMP.@constraint(optimization_container.JuMPmodel, area_balance[k, t] == area_net)
+            constraint_bal[k, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                area_balance[k, t] == area_net
+            )
         end
     end
 

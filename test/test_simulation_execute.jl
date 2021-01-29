@@ -24,8 +24,9 @@ function test_simulation_single_ed(file_path::String)
         execute_out = execute!(sim_single)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
         stage_single = PSI.get_stage(sim_single, "ED")
-        @test JuMP.termination_status(stage_single.internal.optimization_container.JuMPmodel) in
-              [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        @test JuMP.termination_status(
+            stage_single.internal.optimization_container.JuMPmodel,
+        ) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         _test_plain_print_methods([sim_single, sim_single.sequence])
     end
 end
@@ -94,8 +95,9 @@ function test_simulation_without_caches(file_path::String)
 
         for name in stage_names
             stage = PSI.get_stage(sim, name)
-            @test JuMP.termination_status(stage.internal.optimization_container.JuMPmodel) in
-                  [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+            @test JuMP.termination_status(
+                stage.internal.optimization_container.JuMPmodel,
+            ) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
 end

@@ -61,7 +61,8 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         settings::Settings,
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
-        internal = StageInternal(0, "", 0, 0, OptimizationContainer(sys, settings, jump_model))
+        internal =
+            StageInternal(0, "", 0, 0, OptimizationContainer(sys, settings, jump_model))
         new{M}(template, sys, internal)
     end
 end
@@ -170,7 +171,8 @@ get_settings(stage::Stage) = get_optimization_container(stage).settings
 get_system(stage::Stage) = stage.sys
 get_template(stage::Stage) = stage.template
 get_write_path(stage::Stage) = stage.internal.write_path
-warm_start_enabled(stage::Stage) = get_warm_start(get_optimization_container(stage).settings)
+warm_start_enabled(stage::Stage) =
+    get_warm_start(get_optimization_container(stage).settings)
 
 set_write_path!(stage::Stage, path::AbstractString) = stage.internal.write_path = path
 set_stage_status!(stage::Stage, status::BuildStatus) = stage.internal.status = status
@@ -236,7 +238,8 @@ function run_stage!(
     store::SimulationStore;
     exports = nothing,
 ) where {M <: PowerSimulationsOperationsProblem}
-    @assert get_optimization_container(stage).JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
+    @assert get_optimization_container(stage).JuMPmodel.moi_backend.state !=
+            MOIU.NO_OPTIMIZER
     status = RunStatus.RUNNING
     timed_log = Dict{Symbol, Any}()
     model = get_optimization_container(stage).JuMPmodel
@@ -279,15 +282,39 @@ function write_model_results!(store, stage, timestamp; exports = nothing)
     if is_milp(get_optimization_container(stage))
         @warn "Stage $(stage.internal.number) is a MILP, duals can't be exported"
     else
-        _write_model_dual_results!(store, optimization_container, stage, timestamp, export_params)
+        _write_model_dual_results!(
+            store,
+            optimization_container,
+            stage,
+            timestamp,
+            export_params,
+        )
     end
 
-    _write_model_parameter_results!(store, optimization_container, stage, timestamp, export_params)
-    _write_model_variable_results!(store, optimization_container, stage, timestamp, export_params)
+    _write_model_parameter_results!(
+        store,
+        optimization_container,
+        stage,
+        timestamp,
+        export_params,
+    )
+    _write_model_variable_results!(
+        store,
+        optimization_container,
+        stage,
+        timestamp,
+        export_params,
+    )
     return
 end
 
-function _write_model_dual_results!(store, optimization_container, stage, timestamp, exports)
+function _write_model_dual_results!(
+    store,
+    optimization_container,
+    stage,
+    timestamp,
+    exports,
+)
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
@@ -323,7 +350,13 @@ function _write_model_dual_results!(store, optimization_container, stage, timest
     end
 end
 
-function _write_model_parameter_results!(store, optimization_container, stage, timestamp, exports)
+function _write_model_parameter_results!(
+    store,
+    optimization_container,
+    stage,
+    timestamp,
+    exports,
+)
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
@@ -362,7 +395,13 @@ function _write_model_parameter_results!(store, optimization_container, stage, t
     end
 end
 
-function _write_model_variable_results!(store, optimization_container, stage, timestamp, exports)
+function _write_model_variable_results!(
+    store,
+    optimization_container,
+    stage,
+    timestamp,
+    exports,
+)
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
@@ -401,11 +440,17 @@ function get_initial_cache(cache::AbstractCache, stage::Stage)
 end
 
 function get_initial_cache(cache::TimeStatusChange, stage::Stage)
-    ini_cond_on =
-        get_initial_conditions(get_optimization_container(stage), TimeDurationON, cache.device_type)
+    ini_cond_on = get_initial_conditions(
+        get_optimization_container(stage),
+        TimeDurationON,
+        cache.device_type,
+    )
 
-    ini_cond_off =
-        get_initial_conditions(get_optimization_container(stage), TimeDurationOFF, cache.device_type)
+    ini_cond_off = get_initial_conditions(
+        get_optimization_container(stage),
+        TimeDurationOFF,
+        cache.device_type,
+    )
 
     device_axes = Set((
         PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
@@ -436,8 +481,11 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
 end
 
 function get_initial_cache(cache::StoredEnergy, stage::Stage)
-    ini_cond_level =
-        get_initial_conditions(get_optimization_container(stage), EnergyLevel, cache.device_type)
+    ini_cond_level = get_initial_conditions(
+        get_optimization_container(stage),
+        EnergyLevel,
+        cache.device_type,
+    )
 
     device_axes = Set([PSY.get_name(ic.device) for ic in ini_cond_level],)
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)

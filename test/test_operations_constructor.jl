@@ -150,7 +150,8 @@ end
                 PTDF = PTDF(system),
                 export_pwl_vars = true,
             )
-            @test :nodal_balance_active in keys(op_problem.optimization_container.expressions)
+            @test :nodal_balance_active in
+                  keys(op_problem.optimization_container.expressions)
             @test (:params in keys(op_problem.optimization_container.JuMPmodel.ext)) == p
         end
     end
