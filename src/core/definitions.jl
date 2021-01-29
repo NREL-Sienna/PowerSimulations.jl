@@ -27,7 +27,7 @@ IS.@scoped_enum(RunStatus, READY = -1, SUCCESSFUL = 0, RUNNING = 1, FAILED = 2,)
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
 # Settings constants
-const UNSET_HORIZON = Dates.Second(0)
+const UNSET_HORIZON = 0
 const UNSET_INI_TIME = Dates.DateTime(0)
 
 # Tolerance of comparisons
