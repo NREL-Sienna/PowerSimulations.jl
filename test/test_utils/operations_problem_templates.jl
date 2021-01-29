@@ -1,30 +1,16 @@
 function get_thermal_standard_uc_template()
     template = OperationsProblemTemplate(CopperPlatePowerModel)
-    set_component_model!(template, "Loads", DeviceModel(PowerLoad, StaticPowerLoad))
-    set_component_model!(
-        template,
-        "Generators",
-        DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
-    )
-    set_component_model!(template, device_type, formulation)
-    set_component_model!(templace, model)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
     return template
 end
 
 function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     template = OperationsProblemTemplate(network)
-    set_component_model!(
-        template,
-        "Generators",
-        DeviceModel(ThermalStandard, ThermalDispatch),
-    )
-    set_component_model!(template, "Load", DeviceModel(PowerLoad, StaticPowerLoad))
-    set_component_model!(
-        template,
-        "MonitoredLine",
-        DeviceModel(MonitoredLine, StaticLineBounds),
-    )
-    set_component_model!(template, "Line", DeviceModel(Line, StaticLineUnbounded))
+    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, MonitoredLine, StaticLineBounds)
+    set_device_model!(template, Line, StaticLineUnbounded)
     return template
 end
 

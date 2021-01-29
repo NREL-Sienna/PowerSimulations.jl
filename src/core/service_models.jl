@@ -1,3 +1,5 @@
+const NO_SERVICE_NAME_PROVIDED = ""
+
 """
 Abstract type for Service Formulations (a.k.a Models)
 
@@ -62,17 +64,26 @@ get_component_type(m::ServiceModel) = m.component_type
 get_formulation(m::ServiceModel) = m.formulation
 get_feedforward(m::ServiceModel) = m.feedforward
 
-function _set_model!(dict::Dict, label::String, model::ServiceModel)
-    if haskey(dict, label)
-        @info("Overwriting $(label) existing model")
+function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)
+    if haskey(dict, key)
+        @info("Overwriting $(key) existing model")
     end
-    dict[label] = model
-    device_models = [m for m in values(dict) if m.component_type == model.component_type]
-    if length(device_models) > 1
-        throw(
-            IS.ConflictingInputsError(
-                "A model for devices of type $(model.device_type) is already specified",
-            ),
-        )
+    dict[key] = model
+    return
+end
+
+function _set_model!(dict::Dict, service_name::String, model::ServiceModel{D, B}) where {D <: PSY.Service, B <: AbstractServiceFormulation}
+    if !model.use_service_name
+        throw(IS.ConflictingInputsError("The model provided has use_service_name false. This addition method can't be used"))
     end
+    _set_model!(dict, (service_name, Symbol(D)), model)
+    return
+end
+
+function _set_model!(dict::Dict, model::ServiceModel{D, B}) where {D <: PSY.Service, B <: AbstractServiceFormulation}
+    if model.use_service_name
+        throw(IS.ConflictingInputsError("The model provided has use_service_name set to true and no service name was provided. This addition method can't be used"))
+    end
+    _set_model!(dict, (NO_SERVICE_NAME_PROVIDED, Symbol(D)), model)
+    return
 end

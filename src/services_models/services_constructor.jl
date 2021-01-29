@@ -15,8 +15,8 @@ end
 function construct_services!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    services_template::Dict{String, ServiceModel},
-    devices_template::Dict{String, DeviceModel},
+    services_template::ServicesModelContainer,
+    devices_template::DevicesModelContainer,
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
