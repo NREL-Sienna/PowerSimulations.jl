@@ -6,7 +6,7 @@
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
     @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
         op_problem,
-        "Thermal",
+
         model,
     )
 end
@@ -29,7 +29,7 @@ end
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
-    mock_construct_device!(op_problem, "Thermal", model)
+    mock_construct_device!(op_problem,  model)
     moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
     psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -41,7 +41,7 @@ end
         c_sys5_uc;
         use_parameters = true,
     )
-    mock_construct_device!(op_problem, :Thermal, model)
+    mock_construct_device!(op_problem,  model)
     moi_tests(op_problem, true, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
     psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -56,7 +56,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -80,7 +80,7 @@ end
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
-    mock_construct_device!(op_problem, :Thermal, model)
+    mock_construct_device!(op_problem,  model)
     moi_tests(op_problem, false, 600, 0, 600, 240, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
     psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -92,7 +92,7 @@ end
         c_sys5_uc;
         use_parameters = true,
     )
-    mock_construct_device!(op_problem, :Thermal, model)
+    mock_construct_device!(op_problem,  model)
     moi_tests(op_problem, true, 600, 0, 600, 240, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
     psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -107,7 +107,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -137,7 +137,7 @@ end
             c_sys5_uc;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 384, 0, 240, 48, 144, true)
         psi_constraint_test(op_problem, uc_constraint_names)
         psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -168,7 +168,7 @@ end
             c_sys5_uc;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 432, 0, 288, 96, 144, true)
         psi_constraint_test(op_problem, uc_constraint_names)
         psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -188,7 +188,7 @@ end
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
-    mock_construct_device!(op_problem, :Thermal, model)
+    mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 480, 0, 240, 120, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -199,7 +199,7 @@ end
         c_sys5_uc;
         use_parameters = true,
     )
-    mock_construct_device!(op_problem, :Thermal, model)
+    mock_construct_device!(op_problem,  model)
     moi_tests(op_problem, true, 480, 0, 240, 120, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -213,7 +213,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -231,7 +231,7 @@ end
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
-    mock_construct_device!(op_problem, :Thermal, model)
+    mock_construct_device!(op_problem,  model)
     moi_tests(op_problem, false, 600, 0, 360, 240, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -242,7 +242,7 @@ end
         c_sys5_uc;
         use_parameters = true,
     )
-    mock_construct_device!(op_problem, :Thermal, model)
+    mock_construct_device!(op_problem,  model)
     moi_tests(op_problem, true, 600, 0, 360, 240, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -256,7 +256,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -280,7 +280,7 @@ end
             c_sys5_uc;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 384, 0, 96, 48, 144, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -304,7 +304,7 @@ end
             c_sys5_uc;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 432, 0, 144, 96, 144, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -323,7 +323,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -337,7 +337,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
@@ -354,7 +354,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -368,7 +368,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
@@ -385,7 +385,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 48, 48, 96, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -402,7 +402,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 288, 0, 96, 96, 96, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -421,7 +421,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -436,7 +436,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -454,7 +454,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -469,7 +469,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -487,7 +487,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 48, 48, 48, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalMultiStart__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -505,7 +505,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 288, 0, 96, 96, 48, false)
         moi_lbvalue_test(op_problem, :P_lb__ThermalMultiStart__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -528,7 +528,7 @@ end
             c_sys5_uc;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 120, 0, 216, 120, 0, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -543,7 +543,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
@@ -564,7 +564,7 @@ end
             c_sys5_uc;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 336, 240, 0, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -579,7 +579,7 @@ end
             c_sys14;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
@@ -600,7 +600,7 @@ end
             c_sys5_uc;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 144, 48, 96, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -622,7 +622,7 @@ end
             c_sys5_uc;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 288, 0, 192, 96, 96, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -652,7 +652,7 @@ end
             c_sys5_pglib;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 528, 0, no_less_than[p], 60, 192, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -680,7 +680,7 @@ end
             c_sys5_pglib;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 576, 0, no_less_than[p], 108, 192, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -700,7 +700,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 480, 0, 480, 120, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -719,7 +719,7 @@ end
             c_sys5_pglib;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 384, 0, 288, 0, 144, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -737,7 +737,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 600, 0, 600, 240, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -756,7 +756,7 @@ end
             c_sys5_pglib;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 432, 0, 336, 48, 144, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -776,7 +776,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 120, 0, 168, 120, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -793,7 +793,7 @@ end
             c_sys5_pglib;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 144, 48, 96, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -810,7 +810,7 @@ end
             c_sys5;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 240, 0, 288, 240, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -828,7 +828,7 @@ end
             c_sys5_pglib;
             use_parameters = p,
         )
-        mock_construct_device!(op_problem, :Thermal, model)
+        mock_construct_device!(op_problem,  model)
         moi_tests(op_problem, p, 288, 0, 192, 96, 96, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -839,12 +839,8 @@ test_path = mkpath(joinpath(pwd(), "test_thermal_constructors"))
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
     ramp_test_sys = PSB.build_system(PSITestSystems, "c_ramp_test")
     template = OperationsProblemTemplate(CopperPlatePowerModel)
-    set_component_model!(
-        template,
-        "Generators",
-        DeviceModel(ThermalStandard, ThermalRampLimited),
-    )
-    set_component_model!(template, "Loads", DeviceModel(PowerLoad, StaticPowerLoad))
+    set_device_model!(template, ThermalStandard, ThermalRampLimited)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
     test_folder = mkpath(joinpath(test_path, randstring()))
     try
         ED = OperationsProblem(
@@ -923,9 +919,8 @@ end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin
     template = get_thermal_standard_uc_template()
-    set_component_model!(
+    set_device_model!(
         template,
-        "MSGenerators",
         DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
     )
     test_folder = mkpath(joinpath(test_path, randstring()))

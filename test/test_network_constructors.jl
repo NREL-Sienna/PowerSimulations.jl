@@ -28,13 +28,13 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
             optimizer = OSQP_optimizer,
             use_parameters = p,
         )
-        mock_construct_device!(ps_model, :Thermal, thermal_model)
-        mock_construct_device!(ps_model, :Load, load_model)
+        mock_construct_device!(ps_model,thermal_model)
+        mock_construct_device!(ps_model, load_model)
         mock_construct_network!(ps_model, network)
-        mock_construct_device!(ps_model, :Line, line_model)
-        mock_construct_device!(ps_model, :Tf, transformer_model)
-        mock_construct_device!(ps_model, :TTf, ttransformer_model)
-        mock_construct_device!(ps_model, :DCLine, dc_line)
+        mock_construct_device!(ps_model,  line_model)
+        mock_construct_device!(ps_model,transformer_model)
+        mock_construct_device!(ps_model, ttransformer_model)
+        mock_construct_device!(ps_model, dc_line)
 
         moi_tests(
             ps_model,

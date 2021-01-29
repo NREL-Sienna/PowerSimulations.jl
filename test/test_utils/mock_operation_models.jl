@@ -21,10 +21,9 @@ end
 # Only used for testing
 function mock_construct_device!(
     problem::PSI.OperationsProblem{MockOperationProblem},
-    label,
     model,
 )
-    set_component_model!(problem.template, label, model)
+    set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
     PSI.optimization_container_init!(
         PSI.get_optimization_container(problem),
