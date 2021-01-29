@@ -127,7 +127,8 @@ export UnitCommitmentProblem
 export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
-export set_component_model!
+export set_device_model!
+export set_service_model!
 export get_transmission_model
 ## Results interfaces
 export SimulationResultsExport
