@@ -311,13 +311,14 @@ function build_pre_step!(problem::OperationsProblem)
     template = get_template(problem)
     optimization_container_init!(
         get_optimization_container(problem),
-        get_transmission(template),
+        get_transmission_model(template),
         system,
     )
     set_status!(problem, BuildStatus.IN_PROGRESS)
     return
 end
 
+# Rename this function
 function build!(
     problem::OperationsProblem{<:PowerSimulationsOperationsProblem};
     output_dir::String,
@@ -344,9 +345,8 @@ function build!(
             set_status!(problem, BuildStatus.BUILT)
         end
     catch e
-        rethrow(e)
-    finally
-        close(logger)
+        @error "Operation Problem Build Fail" exception = e
+        set_status!(problem, BuildStatus.FAILED)
     end
     return get_status(problem)
 end
@@ -447,9 +447,7 @@ function simulate!(
     exports = nothing,
 )
     solve_status = solve!(problem)
-    if solve_status != RunStatus.SUCCESSFUL
-        return solve_status
-    else
+    if solve_status == RunStatus.SUCCESSFUL
         stats = OptimizerStats(problem, step, start_time, timed_log)
         append_optimizer_stats!(store, stats)
         write_model_results!(store, problem, start_time; exports = exports)
@@ -458,8 +456,10 @@ function simulate!(
         if problem.internal.execution_count == problem.internal.executions
             problem.internal.execution_count = 0
         end
-        return status
+
     end
+
+    return solve_status
 end
 
 function write_model_results!(store, problem, timestamp; exports = nothing)

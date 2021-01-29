@@ -58,16 +58,16 @@ function template_unit_commitment(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
     template = OperationsProblemTemplate(network)
     for (k, v) in get(kwargs, :devices, _default_devices_uc())
-        set_model!(template, k, v)
+        set_component_model!(template, k, v)
     end
 
     for (k, v) in get(kwargs, :services, _default_services())
-        set_model!(template, k, v)
+        set_component_model!(template, k, v)
     end
 
     if network != CopperPlatePowerModel
         for (k, v) in get(kwargs, :branches, _default_branches())
-            set_model!(template, k, v)
+            set_component_model!(template, k, v)
         end
     end
     return template
@@ -94,16 +94,16 @@ function template_economic_dispatch(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
     template = OperationsProblemTemplate(network)
     for (k, v) in get(kwargs, :devices, _default_devices_dispatch())
-        set_model!(template, k, v)
+        set_component_model!(template, k, v)
     end
 
     for (k, v) in get(kwargs, :services, _default_services())
-        set_model!(template, k, v)
+        set_component_model!(template, k, v)
     end
 
     if network != CopperPlatePowerModel
         for (k, v) in get(kwargs, :branches, _default_branches())
-            set_model!(template, k, v)
+            set_component_model!(template, k, v)
         end
     end
     return template
@@ -124,24 +124,24 @@ function template_agc_reserve_deployment(; kwargs...)
         throw(ArgumentError("AGC Template doesn't currently support customization"))
     end
     template = OperationsProblemTemplate(AreaBalancePowerModel)
-    set_model!(template, "Generators", DeviceModel(PSY.ThermalStandard, FixedOutput))
-    set_model!(template, "Ren", DeviceModel(PSY.RenewableDispatch, FixedOutput))
-    set_model!(template, "Loads", DeviceModel(PSY.PowerLoad, StaticPowerLoad))
-    set_model!(template, "Hydro", DeviceModel(PSY.HydroEnergyReservoir, FixedOutput))
-    set_model!(template, "HydroROR", DeviceModel(PSY.HydroDispatch, FixedOutput))
-    set_model!(template, "RenFx", DeviceModel(PSY.RenewableFix, FixedOutput))
-    set_model!(
+    set_component_model!(template, "Generators", DeviceModel(PSY.ThermalStandard, FixedOutput))
+    set_component_model!(template, "Ren", DeviceModel(PSY.RenewableDispatch, FixedOutput))
+    set_component_model!(template, "Loads", DeviceModel(PSY.PowerLoad, StaticPowerLoad))
+    set_component_model!(template, "Hydro", DeviceModel(PSY.HydroEnergyReservoir, FixedOutput))
+    set_component_model!(template, "HydroROR", DeviceModel(PSY.HydroDispatch, FixedOutput))
+    set_component_model!(template, "RenFx", DeviceModel(PSY.RenewableFix, FixedOutput))
+    set_component_model!(
         template,
         "Regulation_thermal",
         DeviceModel(PSY.RegulationDevi)ce{PSY.ThermalStandard},
         DeviceLimitedRegulation,
     )
-    set_model!(
+    set_component_model!(
         template,
         "Regulation_hydro_dispatch",
         DeviceModel(PSY.RegulationDevice{PSY.HydroDispatch}, ReserveLimitedRegulation),
     )
-    set_model!(
+    set_component_model!(
         template,
         "Regulation_hydro_reservoir",
         DeviceModel(
@@ -149,6 +149,6 @@ function template_agc_reserve_deployment(; kwargs...)
             ReserveLimitedRegulation,
         ),
     )
-    set_model!(template, "AGC", ServiceModel(PSY.AGC, PIDSmoothACE))
+    set_component_model!(template, "AGC", ServiceModel(PSY.AGC, PIDSmoothACE))
     return template
 end

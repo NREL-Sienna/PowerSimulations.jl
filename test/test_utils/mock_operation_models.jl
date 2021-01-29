@@ -28,7 +28,7 @@ function mock_construct_device!(
     template = PSI.get_template(problem)
     PSI.optimization_container_init!(
         PSI.get_optimization_container(problem),
-        PSI.get_transmission(template),
+        PSI.get_transmission_model(template),
         PSI.get_system(problem),
     )
     PSI.construct_device!(
@@ -43,6 +43,12 @@ function mock_construct_device!(
         MOI.MIN_SENSE,
         PSI.get_optimization_container(problem).cost_function
     )
+end
+
+function mock_construct_network!(problem::PSI.OperationsProblem{MockOperationProblem},
+    model)
+    PSI.set_transmission_model!(problem.template, model)
+    PSI.construct_network!(PSI.get_optimization_container(problem), PSI.get_system(problem), model)
 end
 
 struct FakeStagesStruct
