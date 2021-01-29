@@ -47,10 +47,10 @@ end
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
-        set_component_model!(template, "Line", DeviceModel(Line, StaticLine))
-        set_component_model!(
+        set_device_model!(template, DeviceModel(Line, StaticLine))
+        set_device_model!(
             template,
-            "MonitoredLine",
+
             DeviceModel(MonitoredLine, StaticLineUnbounded),
         )
         test_folder = mkpath(joinpath(test_path, randstring()))
