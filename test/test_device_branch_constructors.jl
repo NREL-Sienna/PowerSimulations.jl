@@ -8,28 +8,32 @@ test_path = mkpath(joinpath(pwd(), "test_branch_constructors"))
         template = get_thermal_dispatch_template_network(model)
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
-        op_problem_m = OperationsProblem(
-            template,
-            system;
-            optimizer = OSQP_optimizer,
-            PTDF = PSY.PTDF(system),
-        )
-        @test build!(op_problem_m; output_dir = test_folder) == PSI.BuildStatus.BUILT
-        # TODO: use accessors to remove the use of Symbols Directly
-        monitored_line_variable = PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__MonitoredLine)
-        static_line_variable = PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__Line)
+            op_problem_m = OperationsProblem(
+                template,
+                system;
+                optimizer = OSQP_optimizer,
+                PTDF = PSY.PTDF(system),
+            )
+            @test build!(op_problem_m; output_dir = test_folder) == PSI.BuildStatus.BUILT
+            # TODO: use accessors to remove the use of Symbols Directly
+            monitored_line_variable = PSI.get_variable(
+                op_problem_m.internal.optimization_container,
+                :Fp__MonitoredLine,
+            )
+            static_line_variable =
+                PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__Line)
 
-        for b in monitored_line_variable
-            @test JuMP.has_lower_bound(b)
-            @test JuMP.has_upper_bound(b)
-        end
-        for b in static_line_variable
-            @test !JuMP.has_lower_bound(b)
-            @test !JuMP.has_upper_bound(b)
-        end
-        @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-        flow = JuMP.value(monitored_line_variable["1", 1])
-        @test isapprox(flow, limits.from_to, atol = 1e-2)
+            for b in monitored_line_variable
+                @test JuMP.has_lower_bound(b)
+                @test JuMP.has_upper_bound(b)
+            end
+            for b in static_line_variable
+                @test !JuMP.has_lower_bound(b)
+                @test !JuMP.has_upper_bound(b)
+            end
+            @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+            flow = JuMP.value(monitored_line_variable["1", 1])
+            @test isapprox(flow, limits.from_to, atol = 1e-2)
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -44,32 +48,40 @@ end
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
         set_component_model!(template, "Line", DeviceModel(Line, StaticLine))
-        set_component_model!(template, "MonitoredLine", DeviceModel(MonitoredLine, StaticLineUnbounded))
+        set_component_model!(
+            template,
+            "MonitoredLine",
+            DeviceModel(MonitoredLine, StaticLineUnbounded),
+        )
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
-        op_problem_m = OperationsProblem(
-            template,
-            system;
-            optimizer = OSQP_optimizer,
-            PTDF = PSY.PTDF(system),
-        )
-        @test build!(op_problem_m; output_dir = test_folder) == PSI.BuildStatus.BUILT
-        # TODO: use accessors to remove the use of Symbols Directly
-        monitored_line_variable = PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__MonitoredLine)
-        static_line_variable = PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__Line)
+            op_problem_m = OperationsProblem(
+                template,
+                system;
+                optimizer = OSQP_optimizer,
+                PTDF = PSY.PTDF(system),
+            )
+            @test build!(op_problem_m; output_dir = test_folder) == PSI.BuildStatus.BUILT
+            # TODO: use accessors to remove the use of Symbols Directly
+            monitored_line_variable = PSI.get_variable(
+                op_problem_m.internal.optimization_container,
+                :Fp__MonitoredLine,
+            )
+            static_line_variable =
+                PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__Line)
 
-        for b in monitored_line_variable
-            @test !JuMP.has_lower_bound(b)
-            @test !JuMP.has_upper_bound(b)
-        end
-        for b in static_line_variable
-            # Broken
-            #@test JuMP.has_lower_bound(b)
-            #@test JuMP.has_upper_bound(b)
-        end
-        @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-        @show flow = JuMP.value(static_line_variable["2", 1])
-        @test flow <= (1.5 + 1e-2)
+            for b in monitored_line_variable
+                @test !JuMP.has_lower_bound(b)
+                @test !JuMP.has_upper_bound(b)
+            end
+            for b in static_line_variable
+                # Broken
+                #@test JuMP.has_lower_bound(b)
+                #@test JuMP.has_upper_bound(b)
+            end
+            @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+            @show flow = JuMP.value(static_line_variable["2", 1])
+            @test flow <= (1.5 + 1e-2)
         finally
             rm(test_folder, force = true, recursive = true)
         end
