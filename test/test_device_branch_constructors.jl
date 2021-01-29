@@ -3,11 +3,11 @@
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     line = PSY.get_component(Line, system, "1")
     PSY.convert_component!(MonitoredLine, line, system)
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}(
+    branches = Dict{String, DeviceModel}(
         :ML => DeviceModel(MonitoredLine, StaticLineBounds),
         :L => DeviceModel(Line, StaticLineBounds),
     )
@@ -35,11 +35,11 @@ end
 
 @testset "AC Power Flow Monitored Line Flow Constraints" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}(
+    branches = Dict{String, DeviceModel}(
         :ML => DeviceModel(MonitoredLine, FlowMonitoredLine),
         :L => DeviceModel(Line, StaticLineBounds),
     )
@@ -62,11 +62,11 @@ end
 end
 
 @testset "DC PowerFlow Monitored Line Branch Flow constraints" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}(
+    branches = Dict{String, DeviceModel}(
         :ML => DeviceModel(MonitoredLine, FlowMonitoredLine),
         :L => DeviceModel(Line, StaticLineBounds),
     )
@@ -90,11 +90,11 @@ end
 end
 
 @testset "DC PowerFlow Static Unbounded Line Branch Flow" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLineUnbounded))
+    branches = Dict{String, DeviceModel}(:L => DeviceModel(Line, StaticLineUnbounded))
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     op_problem_m = OperationsProblem(

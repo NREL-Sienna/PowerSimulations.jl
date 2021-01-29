@@ -1,13 +1,13 @@
-devices = Dict{Symbol, DeviceModel}(
+devices = Dict{String, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )
-branches = Dict{Symbol, DeviceModel}(
+branches = Dict{String, DeviceModel}(
     :L => DeviceModel(Line, StaticLine),
     :T => DeviceModel(Transformer2W, StaticTransformer),
     :TT => DeviceModel(TapTransformer, StaticTransformer),
 )
-services = Dict{Symbol, ServiceModel}()
+services = Dict{String, ServiceModel}()
 
 @testset "Solving ED with CopperPlate" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
@@ -152,12 +152,12 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     systems = [c_sys5_re]
     for net in networks, thermal in thermal_gens, system in systems
-        devices = Dict{Symbol, DeviceModel}(
+        devices = Dict{String, DeviceModel}(
             :Generators => DeviceModel(ThermalStandard, thermal),
             :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
             :RE => DeviceModel(RenewableDispatch, FixedOutput),
         )
-        branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
+        branches = Dict{String, DeviceModel}(:L => DeviceModel(Line, StaticLine))
         template = OperationsProblemTemplate(net, devices, branches, services)
         op_problem = OperationsProblem(
             MockOperationProblem,
@@ -238,7 +238,7 @@ end
 
     test_results = Dict{Any, Float64}(ACPPowerModel => 12414.0, DCPPowerModel => 12218.0)
 
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
         :HydroGens => DeviceModel(HydroDispatch, HydroDispatchRunOfRiver),
@@ -270,7 +270,7 @@ end
     parameters_value = [true, false]
     net = DCPPowerModel
 
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
         :HydroGens => DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver),
@@ -308,7 +308,7 @@ end
     for net in networks, mod in models, p in parameters_value
         @info("Test solve HydroRoR ED with $(net) network")
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
-            devices = Dict{Symbol, DeviceModel}(
+            devices = Dict{String, DeviceModel}(
                 :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
                 :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
                 :HydroGens => DeviceModel(HydroEnergyReservoir, mod),
@@ -344,7 +344,7 @@ end
     for mod in models, p in parameters_value
         @info("Test solve HydroRoR ED with $(net) network")
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
-            devices = Dict{Symbol, DeviceModel}(
+            devices = Dict{String, DeviceModel}(
                 :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
                 :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
                 :HydroGens => DeviceModel(HydroEnergyReservoir, mod),
@@ -368,7 +368,7 @@ end
 end
 
 @testset "Solving UC Linear Networks" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
@@ -398,7 +398,7 @@ end
 
 @testset "Set optimizer at solve call" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )

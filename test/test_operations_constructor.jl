@@ -1,14 +1,14 @@
 
-devices = Dict{Symbol, DeviceModel}(
+devices = Dict{String, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )
-branches = Dict{Symbol, DeviceModel}(
+branches = Dict{String, DeviceModel}(
     :L => DeviceModel(Line, StaticLine),
     :T => DeviceModel(Transformer2W, StaticTransformer),
     :TT => DeviceModel(TapTransformer, StaticTransformer),
 )
-services = Dict{Symbol, ServiceModel}()
+services = Dict{String, ServiceModel}()
 
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
@@ -140,11 +140,11 @@ end
     systems = [c_sys5, c_sys5_re, c_sys5_bat, c_sys5_pwl_ed]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal)" begin
-            devices = Dict{Symbol, DeviceModel}(
+            devices = Dict{String, DeviceModel}(
                 :Generators => DeviceModel(ThermalStandard, thermal),
                 :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
             )
-            branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
+            branches = Dict{String, DeviceModel}(:L => DeviceModel(Line, StaticLine))
             template = OperationsProblemTemplate(net, devices, branches, services)
             op_problem = OperationsProblem(
                 MockOperationProblem,
@@ -163,11 +163,11 @@ end
 
 @testset "Operation Model CopperPlatePowerModel - ThermalDispatchNoMin - c_sys5_pwl_ed_nonconvex" begin
     c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
+    branches = Dict{String, DeviceModel}(:L => DeviceModel(Line, StaticLine))
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     @test_throws IS.InvalidValue OperationsProblem(
         MockOperationProblem,
