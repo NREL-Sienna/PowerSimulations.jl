@@ -201,7 +201,7 @@ function cost_function!(
 end
 
 function modify_device_model!(
-    devices_template::Dict{Symbol, DeviceModel},
+    devices_template::Dict{String, DeviceModel},
     service_model::ServiceModel{<:PSY.Reserve, <:AbstractReservesFormulation},
     contributing_devices::Vector{<:PSY.Device},
 )

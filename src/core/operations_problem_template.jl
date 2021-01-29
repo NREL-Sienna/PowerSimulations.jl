@@ -25,6 +25,8 @@ end
 
 OperationsProblemTemplate() = OperationsProblemTemplate(CopperPlatePowerModel)
 
+get_transmission(template::OperationsProblemTemplate) = template.transmission
+
 # Note to devs. PSY exports set_model! these names are choosen to avoid name clashes
 function set_transmission_model!(
     template::OperationsProblemTemplate,
