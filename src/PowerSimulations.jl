@@ -113,7 +113,7 @@ export EconomicDispatchProblem
 export solve!
 export simulate!
 export get_initial_conditions
-export serialize_model
+export serialize_problem
 export serialize_optimization_model
 ## Sim Model Exports
 export build!
@@ -128,6 +128,7 @@ export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
 export set_component_model!
+export get_transmission_model
 ## Results interfaces
 export SimulationResultsExport
 export StageResultsExport

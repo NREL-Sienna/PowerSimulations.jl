@@ -13,7 +13,7 @@ struct OptimizerStats
 end
 
 function OptimizerStats(
-    problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    problem, #::OperationsProblem{<:PowerSimulationsOperationsProblem},
     simulation_step,
     timestamp,
     timed_log::Dict,

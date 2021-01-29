@@ -1,3 +1,4 @@
+# TODO: A lot of this code can still be simplified into a more coherent interface
 """
     OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 Creates a model reference of the PowerSimulations Optimization Problem.
@@ -24,8 +25,9 @@ mutable struct OperationsProblemTemplate
 end
 
 OperationsProblemTemplate() = OperationsProblemTemplate(CopperPlatePowerModel)
-
-get_transmission(template::OperationsProblemTemplate) = template.transmission
+# TODO: make getter functions here
+# Note: use the file test_operations_template to test the getter functions
+get_transmission_model(template::OperationsProblemTemplate) = template.transmission
 
 # Note to devs. PSY exports set_model! these names are choosen to avoid name clashes
 function set_transmission_model!(

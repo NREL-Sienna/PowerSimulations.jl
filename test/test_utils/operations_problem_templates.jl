@@ -6,6 +6,8 @@ function get_thermal_standard_uc_template()
         "Generators",
         DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
     )
+    set_component_model!(template, device_type, formulation)
+    set_component_model!(templace, model)
     return template
 end
 

@@ -80,7 +80,7 @@ end
                 #@test JuMP.has_upper_bound(b)
             end
             @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-            @show flow = JuMP.value(static_line_variable["2", 1])
+            flow = JuMP.value(static_line_variable["2", 1])
             @test flow <= (1.5 + 1e-2)
         finally
             rm(test_folder, force = true, recursive = true)
