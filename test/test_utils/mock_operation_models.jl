@@ -18,16 +18,39 @@ function PSI.OperationsProblem(
     )
 end
 
+# Only used for testing
 function mock_construct_device!(
     problem::PSI.OperationsProblem{MockOperationProblem},
     label,
     model,
 )
     set_component_model!(problem.template, label, model)
+    template = PSI.get_template(problem)
+    PSI.optimization_container_init!(
+        PSI.get_optimization_container(problem),
+        PSI.get_transmission(template),
+        PSI.get_system(problem),
+    )
     PSI.construct_device!(
         PSI.get_optimization_container(problem),
         PSI.get_system(problem),
         model,
         problem.template.transmission,
     )
+
+    JuMP.@objective(
+        PSI.get_jump_model(problem),
+        MOI.MIN_SENSE,
+        PSI.get_optimization_container(problem).cost_function
+    )
+end
+
+struct FakeStagesStruct
+    stages::Dict{Int, Int}
+end
+
+function Base.show(io::IO, struct_stages::FakeStagesStruct)
+    PSI._print_inter_stages(io, struct_stages.stages)
+    println(io, "\n\n")
+    PSI._print_intra_stages(io, struct_stages.stages)
 end

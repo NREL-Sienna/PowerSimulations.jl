@@ -47,8 +47,8 @@ const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 
 include("test_utils/model_checks.jl")
 include("test_utils/mock_operation_models.jl")
-
-#include("test_utils/operations_problem_templates.jl")
+include("test_utils/solver_definitions.jl")
+include("test_utils/operations_problem_templates.jl")
 
 const LOG_FILE = "power-simulations-test.log"
 

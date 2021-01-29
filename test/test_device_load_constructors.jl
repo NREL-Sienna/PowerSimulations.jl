@@ -3,11 +3,11 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     warn_message = "The data doesn't include devices of type InterruptibleLoad, consider changing the device models"
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5)
-    @test_logs (:warn, warn_message) mock_construct_device!(op_problem, :Load, model)
+    @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(op_problem, :Load, model)
     model = DeviceModel(PowerLoad, DispatchablePowerLoad)
     warn_message = "The Formulation DispatchablePowerLoad only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5)
-    @test_logs (:warn, warn_message) mock_construct_device!(op_problem, :Load, model)
+    @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(op_problem, :Load, model)
 end
 
 @testset "StaticPowerLoad" begin

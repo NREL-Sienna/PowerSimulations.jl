@@ -1,6 +1,28 @@
+function get_thermal_standard_uc_template()
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_component_model!(template, "Loads", DeviceModel(PowerLoad, StaticPowerLoad))
+    set_component_model!(
+        template,
+        "Generators",
+        DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+    )
+    return template
+end
+
+function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
+    template = OperationsProblemTemplate(network)
+    set_component_model!(template, "Generators", DeviceModel(ThermalStandard, ThermalDispatch))
+    set_component_model!(template,"Load", DeviceModel(PowerLoad, StaticPowerLoad))
+    set_component_model!(template, "MonitoredLine", DeviceModel(MonitoredLine, StaticLineBounds))
+    set_component_model!(template, "Line", DeviceModel(Line, StaticLineUnbounded))
+    return template
+end
+
+
+#=
 ## UC Model Ref
-branches = Dict{Symbol, DeviceModel}()
-services = Dict{Symbol, ServiceModel}()
+branches = Dict{String, DeviceModel}()
+services = Dict{String, ServiceModel}()
 devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
     :Ren => DeviceModel(RenewableDispatch, FixedOutput),
@@ -116,40 +138,6 @@ devices = Dict(
 )
 template_multi_start_uc = template_unit_commitment(devices = devices)
 
-function PSI._jump_value(int::Int)
-    @warn("This is for testing purposes only.")
-    return int
-end
-
-function _test_plain_print_methods(list::Array)
-    for object in list
-        normal = repr(object)
-        io = IOBuffer()
-        show(io, "text/plain", object)
-        grabbed = String(take!(io))
-        @test !isnothing(grabbed)
-    end
-end
-
-function _test_html_print_methods(list::Array)
-    for object in list
-        normal = repr(object)
-        io = IOBuffer()
-        show(io, "text/html", object)
-        grabbed = String(take!(io))
-        @test !isnothing(grabbed)
-    end
-end
-
-struct FakeStagesStruct
-    stages::Dict{Int, Int}
-end
-function Base.show(io::IO, struct_stages::FakeStagesStruct)
-    PSI._print_inter_stages(io, struct_stages.stages)
-    println(io, "\n\n")
-    PSI._print_intra_stages(io, struct_stages.stages)
-end
-
 branches = Dict()
 services = Dict()
 devices = Dict(
@@ -206,4 +194,5 @@ devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatch, Semi
                                     :ILoads =>  DeviceModel(InterruptibleLoad, InterruptiblePowerLoad,))
 
 template_ed= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+=#
 =#
