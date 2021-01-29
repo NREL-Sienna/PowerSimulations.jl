@@ -168,9 +168,9 @@ end
     network = [DCPPowerModel, StandardPTDFModel]
     sys = PSB.build_system(PSITestSystems, "c_sys5")
     dual_constraint = [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow]]
-    services = Dict{Symbol, ServiceModel}()
+    services = Dict{String, ServiceModel}()
     devices = Dict(:Thermal => thermal_model, :Load => load_model)
-    branches = Dict{Symbol, DeviceModel}(
+    branches = Dict{String, DeviceModel}(
         :Line => line_model,
         :Tf => transformer_model,
         :Ttf => ttransformer_model,

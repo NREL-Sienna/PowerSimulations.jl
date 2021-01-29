@@ -1,9 +1,9 @@
 @testset "Test Reserves from Thermal Dispatch" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -40,11 +40,11 @@
 end
 
 @testset "Test Reserves from Thermal Standard UC" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :UpReserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -69,11 +69,11 @@ end
 end
 
 @testset "Test Upwards Reserves from Renewable Dispatch" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(RenewableDispatch, RenewableFullDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
@@ -97,14 +97,14 @@ end
 end
 
 @testset "Test Reserves from Storage" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
         :Storage => DeviceModel(GenericBattery, BookKeeping),
         # Added here to test it doesn't add reserve variables
         :Ren => DeviceModel(RenewableDispatch, FixedOutput),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -129,11 +129,11 @@ end
 end
 
 @testset "Test Reserves from Hydro" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -158,11 +158,11 @@ end
 end
 
 @testset "Test Reserves from with slack variables" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -206,11 +206,11 @@ end
 end
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -251,11 +251,11 @@ end
 end
 
 @testset "Test GroupReserve Errors" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -300,11 +300,11 @@ end
 end
 
 @testset "Test StaticReserve" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :UpReserve => ServiceModel(StaticReserve{ReserveUp}, RangeReserve),
     )

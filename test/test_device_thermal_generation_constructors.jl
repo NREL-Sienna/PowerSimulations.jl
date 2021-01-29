@@ -4,7 +4,7 @@
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
     c_sys5_re_only = PSB.build_system(PSITestSystems, "c_sys5_re_only")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
-    @test_logs (:warn, warn_message) mock_construct_device!(op_problem, :Thermal, model)
+    @test_logs (:info,) (:warn, warn_message) match_mode=:any mock_construct_device!(op_problem, "Thermal", model)
 end
 
 ################################### Unit Commitment tests ##################################
@@ -25,7 +25,7 @@ end
     @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
-    mock_construct_device!(op_problem, :Thermal, model)
+    mock_construct_device!(op_problem, "Thermal", model)
     moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
     psi_checkbinvar_test(op_problem, bin_variable_names)
@@ -830,29 +830,20 @@ end
     end
 end
 ############################# UC validation tests ##########################################
-branches = Dict{Symbol, DeviceModel}()
-services = Dict{Symbol, ServiceModel}()
-ED_devices = Dict{Symbol, DeviceModel}(
-    :Generators => DeviceModel(ThermalStandard, ThermalRampLimited),
-    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-)
-UC_devices = Dict{Symbol, DeviceModel}(
-    :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
-    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-)
 # Testing Ramping Constraint
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
     ramp_test_sys = PSB.build_system(PSITestSystems, "c_ramp_test")
-    template =
-        OperationsProblemTemplate(CopperPlatePowerModel, ED_devices, branches, services)
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_component_model!(template, "Generators", DeviceModel(ThermalStandard, ThermalRampLimited))
+    set_component_model!(template, "Loads", DeviceModel(PowerLoad, StaticPowerLoad))
     for p in [true, false]
         ED = OperationsProblem(
-            MockOperationProblem,
+            EconomicDispatchProblem,
             template,
             ramp_test_sys;
             optimizer = Cbc_optimizer,
-            use_parameters = p,
         )
+        build!(ED; save_path = pwd(), use_forecast_data = p)
         psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
         moi_tests(ED, p, 10, 0, 20, 10, 5, false)
     end
