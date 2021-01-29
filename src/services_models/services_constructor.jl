@@ -13,7 +13,7 @@ function get_incompatible_devices(devices_template::Dict{Symbol, DeviceModel})
 end
 
 function construct_services!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     services_template::Dict{Symbol, ServiceModel},
     devices_template::Dict{Symbol, DeviceModel},
@@ -31,7 +31,7 @@ function construct_services!(
             sys,
         )
             construct_service!(
-                psi_container,
+                optimization_container,
                 services,
                 sys,
                 service_model,
@@ -55,7 +55,7 @@ function construct_services!(
 end
 
 function construct_service!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, RangeReserve},
@@ -63,12 +63,12 @@ function construct_service!(
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
 
-    if model_has_parameters(psi_container)
+    if model_has_parameters(optimization_container)
         container = add_param_container!(
-            psi_container,
+            optimization_container,
             UpdateRef{SR}("service_requirement", "requirement"),
             names,
             time_steps,
@@ -76,7 +76,7 @@ function construct_service!(
     end
 
     add_cons_container!(
-        psi_container,
+        optimization_container,
         make_constraint_name(REQUIREMENT, SR),
         names,
         time_steps,
@@ -92,19 +92,19 @@ function construct_service!(
         # Services without contributing devices should have been filtered out in the validation
         @assert !isempty(contributing_devices)
         # Variables
-        add_variables!(psi_container, ActiveServiceVariable, service, contributing_devices)
+        add_variables!(optimization_container, ActiveServiceVariable, service, contributing_devices)
         # Constraints
-        service_requirement_constraint!(psi_container, service, model)
+        service_requirement_constraint!(optimization_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
 
         # Cost Function
-        cost_function!(psi_container, service, model)
+        cost_function!(optimization_container, service, model)
     end
     return
 end
 
 function construct_service!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, StepwiseCostReserve},
@@ -112,11 +112,11 @@ function construct_service!(
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
-    add_variables!(psi_container, ServiceRequirementVariable, services)
+    add_variables!(optimization_container, ServiceRequirementVariable, services)
     add_cons_container!(
-        psi_container,
+        optimization_container,
         make_constraint_name(REQUIREMENT, SR),
         names,
         time_steps,
@@ -133,19 +133,19 @@ function construct_service!(
                 [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
         end
         # Variables
-        add_variables!(psi_container, ActiveServiceVariable, service, contributing_devices)
+        add_variables!(optimization_container, ActiveServiceVariable, service, contributing_devices)
         # Constraints
-        service_requirement_constraint!(psi_container, service, model)
+        service_requirement_constraint!(optimization_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
 
         # Cost Function
-        cost_function!(psi_container, service, model)
+        cost_function!(optimization_container, service, model)
     end
     return
 end
 
 function construct_service!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     services::Vector{PSY.AGC},
     sys::PSY.System,
     ::ServiceModel{PSY.AGC, T},
@@ -163,41 +163,41 @@ function construct_service!(
             #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
         end
     end
-    add_variables!(psi_container, SteadyStateFrequencyDeviation)
-    add_variables!(psi_container, AreaMismatchVariable, areas)
-    add_variables!(psi_container, SmoothACE, areas)
-    add_variables!(psi_container, LiftVariable, areas)
-    add_variables!(psi_container, ActivePowerVariable, areas)
-    add_variables!(psi_container, DeltaActivePowerUpVariable, areas)
-    add_variables!(psi_container, DeltaActivePowerDownVariable, areas)
-    # add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, areas)
-    # add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, areas)
-    balancing_auxiliary_variables!(psi_container, sys)
+    add_variables!(optimization_container, SteadyStateFrequencyDeviation)
+    add_variables!(optimization_container, AreaMismatchVariable, areas)
+    add_variables!(optimization_container, SmoothACE, areas)
+    add_variables!(optimization_container, LiftVariable, areas)
+    add_variables!(optimization_container, ActivePowerVariable, areas)
+    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas)
+    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas)
+    # add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, areas)
+    # add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, areas)
+    balancing_auxiliary_variables!(optimization_container, sys)
 
-    absolute_value_lift(psi_container, areas)
-    frequency_response_constraint!(psi_container, sys)
-    area_control_init(psi_container, services)
-    smooth_ace_pid!(psi_container, services)
-    aux_constraints!(psi_container, sys)
+    absolute_value_lift(optimization_container, areas)
+    frequency_response_constraint!(optimization_container, sys)
+    area_control_init(optimization_container, services)
+    smooth_ace_pid!(optimization_container, services)
+    aux_constraints!(optimization_container, sys)
 end
 
 """
     Constructs a service for StaticReserveGroup.
 """
 function construct_service!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     services::Vector{SR},
     ::PSY.System,
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
 
-    if model_has_parameters(psi_container)
+    if model_has_parameters(optimization_container)
         container = add_param_container!(
-            psi_container,
+            optimization_container,
             UpdateRef{SR}("service_requirement", "requirement"),
             names,
             time_steps,
@@ -205,7 +205,7 @@ function construct_service!(
     end
 
     add_cons_container!(
-        psi_container,
+        optimization_container,
         make_constraint_name(REQUIREMENT, SR),
         names,
         time_steps,
@@ -215,10 +215,10 @@ function construct_service!(
         contributing_services = PSY.get_contributing_services(service)
 
         # check if variables exist
-        check_activeservice_variables(psi_container, contributing_services)
+        check_activeservice_variables(optimization_container, contributing_services)
         # Constraints
         service_requirement_constraint!(
-            psi_container,
+            optimization_container,
             service,
             model,
             contributing_services,

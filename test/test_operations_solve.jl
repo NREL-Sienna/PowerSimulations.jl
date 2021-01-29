@@ -168,7 +168,7 @@ end
             PTDF = PTDF(c_sys5_re),
         )
         res = solve!(op_problem)
-        @test termination_status(op_problem.psi_container.JuMPmodel) in
+        @test termination_status(op_problem.optimization_container.JuMPmodel) in
               [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
     end
 end
@@ -429,17 +429,17 @@ end
     @testset "test constraint duals in the operations problem" begin
         name = PSI.make_constraint_name("CopperPlateBalance")
         for i in 1:ncol(IS.get_timestamp(res))
-            dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
+            dual = JuMP.dual(op_problem.optimization_container.constraints[name][i])
             @test isapprox(dual, PSI.get_duals(res)[name][i, 1])
         end
-        dual_results = read_duals(op_problem.psi_container, duals)
+        dual_results = read_duals(op_problem.optimization_container, duals)
         @test dual_results == res.dual_values
     end
 
     @testset "Test parameter values" begin
         system = op_problem.sys
         params = PSI.get_parameter_array(
-            op_problem.psi_container.parameters[:P__max_active_power__PowerLoad],
+            op_problem.optimization_container.parameters[:P__max_active_power__PowerLoad],
         )
         params = PSI.axis_array_to_dataframe(params)
         devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))

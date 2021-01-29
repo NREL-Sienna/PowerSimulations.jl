@@ -49,25 +49,25 @@ function DeviceRangeConstraintSpec(
     use_forecasts::Bool,
 )
     return DeviceRangeConstraintSpec(;
-        custom_psi_container_func = custom_reactive_power_constraints!,
+        custom_optimization_container_func = custom_reactive_power_constraints!,
     )
 end
 
 function custom_reactive_power_constraints!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractControllablePowerLoadFormulation},
 ) where {T <: PSY.ElectricLoad}
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     constraint = JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
-    assign_constraint!(psi_container, REACTIVE, T, constraint)
+    assign_constraint!(optimization_container, REACTIVE, T, constraint)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
-        reactive = get_variable(psi_container, REACTIVE_POWER, T)[name, t]
-        real = get_variable(psi_container, ACTIVE_POWER, T)[name, t] * pf
-        constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel, reactive == real)
+        reactive = get_variable(optimization_container, REACTIVE_POWER, T)[name, t]
+        real = get_variable(optimization_container, ACTIVE_POWER, T)[name, t] * pf
+        constraint[name, t] = JuMP.@constraint(optimization_container.JuMPmodel, reactive == real)
     end
 end
 
@@ -185,7 +185,7 @@ end
 function AddCostSpec(
     ::Type{T},
     ::Type{DispatchablePowerLoad},
-    ::PSIContainer,
+    ::OptimizationContainer,
 ) where {T <: PSY.ControllableLoad}
     cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
@@ -199,7 +199,7 @@ end
 function AddCostSpec(
     ::Type{T},
     ::Type{InterruptiblePowerLoad},
-    ::PSIContainer,
+    ::OptimizationContainer,
 ) where {T <: PSY.ControllableLoad}
     cost_function = x -> (x === nothing ? 1.0 : PSY.get_fixed(x))
     return AddCostSpec(;

@@ -27,38 +27,38 @@ for their specific types.
 Users may also implement custom nodal_expression! methods.
 """
 function nodal_expression!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{U},
 ) where {T <: PSY.Device, U <: PM.AbstractPowerModel}
-    nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel)
-    _nodal_expression!(psi_container, devices, U, :nodal_balance_reactive)
+    nodal_expression!(optimization_container, devices, PM.AbstractActivePowerModel)
+    _nodal_expression!(optimization_container, devices, U, :nodal_balance_reactive)
     return
 end
 
 function nodal_expression!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{U},
 ) where {T <: PSY.Device, U <: PM.AbstractActivePowerModel}
-    _nodal_expression!(psi_container, devices, U, :nodal_balance_active)
+    _nodal_expression!(optimization_container, devices, U, :nodal_balance_active)
     return
 end
 
 function _nodal_expression!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{U},
     expression_name::Symbol,
 ) where {T <: PSY.Device, U <: PM.AbstractPowerModel}
     # Run the Active Power Loop.
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
+    parameters = model_has_parameters(optimization_container)
+    use_forecast_data = model_uses_forecasts(optimization_container)
     spec = NodalExpressionSpec(T, U, use_forecast_data)
     forecast_label = use_forecast_data ? spec.forecast_label : ""
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
+        ts_vector = get_time_series(optimization_container, d, forecast_label)
         @debug "building constraint info" get_name(d), summary(ts_vector)
         constraint_info =
             DeviceTimeSeriesConstraintInfo(d, spec.peak_value_function, ts_vector)
@@ -67,7 +67,7 @@ function _nodal_expression!(
     if parameters
         @debug spec.update_ref, spec.parameter_name forecast_label
         include_parameters!(
-            psi_container,
+            optimization_container,
             constraint_infos,
             UpdateRef{spec.update_ref}(spec.parameter_name, forecast_label),
             expression_name,
@@ -76,9 +76,9 @@ function _nodal_expression!(
         return
     else
         for constraint_info in constraint_infos
-            for t in model_time_steps(psi_container)
+            for t in model_time_steps(optimization_container)
                 add_to_expression!(
-                    psi_container.expressions[expression_name],
+                    optimization_container.expressions[expression_name],
                     constraint_info.bus_number,
                     t,
                     spec.multiplier *

@@ -71,11 +71,11 @@ end
         optimizer = GLPK_optimizer,
         use_parameters = true,
     )
-    MOIU.attach_optimizer(op_problem.psi_container.JuMPmodel)
+    MOIU.attach_optimizer(op_problem.optimization_container.JuMPmodel)
     constraint_indices = get_all_constraint_index(op_problem)
     for (key, index, moi_index) in constraint_indices
         val1 = get_con_index(op_problem, moi_index)
-        val2 = op_problem.psi_container.constraints[key].data[index]
+        val2 = op_problem.optimization_container.constraints[key].data[index]
         @test val1 == val2
     end
     @test isnothing(get_con_index(op_problem, length(constraint_indices) + 1))
@@ -83,7 +83,7 @@ end
     var_indices = get_all_var_index(op_problem)
     for (key, index, moi_index) in var_indices
         val1 = get_var_index(op_problem, moi_index)
-        val2 = op_problem.psi_container.variables[key].data[index]
+        val2 = op_problem.optimization_container.variables[key].data[index]
         @test val1 == val2
     end
     @test isnothing(get_var_index(op_problem, length(var_indices) + 1))
@@ -102,8 +102,8 @@ end
         optimizer = GLPK_optimizer,
         use_parameters = true,
     )
-    @test haskey(op_problem.psi_container.JuMPmodel.ext, :PSI_Testing)
-    @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == true
+    @test haskey(op_problem.optimization_container.JuMPmodel.ext, :PSI_Testing)
+    @test (:params in keys(op_problem.optimization_container.JuMPmodel.ext)) == true
 end
 
 @testset "Operation Model Constructors with Parameters" begin
@@ -150,8 +150,8 @@ end
                 PTDF = PTDF(system),
                 export_pwl_vars = true,
             )
-            @test :nodal_balance_active in keys(op_problem.psi_container.expressions)
-            @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == p
+            @test :nodal_balance_active in keys(op_problem.optimization_container.expressions)
+            @test (:params in keys(op_problem.optimization_container.JuMPmodel.ext)) == p
         end
     end
 end
@@ -195,7 +195,7 @@ end
         optimizer = GLPK_optimizer,
         use_parameters = true,
     )
-    list = [template, op_problem, op_problem.psi_container, services]
+    list = [template, op_problem, op_problem.optimization_container, services]
     _test_plain_print_methods(list)
     list = [services]
     _test_html_print_methods(list)

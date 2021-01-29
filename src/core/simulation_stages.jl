@@ -8,7 +8,7 @@ mutable struct StageInternal
     # This line keeps track of the executions of a stage relative to other stages.
     # This might be needed in the future to run multiple stages. For now it is disabled
     # synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
-    psi_container::PSIContainer
+    optimization_container::OptimizationContainer
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
@@ -21,7 +21,7 @@ mutable struct StageInternal
         name,
         executions,
         execution_count,
-        psi_container;
+        optimization_container;
         ext = Dict{String, Any}(),
     )
         new(
@@ -30,7 +30,7 @@ mutable struct StageInternal
             executions,
             execution_count,
             0,
-            psi_container,
+            optimization_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
             BuildStatus.EMPTY,
@@ -61,7 +61,7 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         settings::PSISettings,
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
-        internal = StageInternal(0, "", 0, 0, PSIContainer(sys, settings, jump_model))
+        internal = StageInternal(0, "", 0, 0, OptimizationContainer(sys, settings, jump_model))
         new{M}(template, sys, internal)
     end
 end
@@ -161,24 +161,24 @@ function get_initial_time(stage::Stage{T}) where {T <: AbstractOperationsProblem
 end
 get_name(stage::Stage) = stage.internal.name
 get_number(stage::Stage) = stage.internal.number
-get_psi_container(stage::Stage) = stage.internal.psi_container
+get_optimization_container(stage::Stage) = stage.internal.optimization_container
 function get_resolution(stage::Stage{T}) where {T <: AbstractOperationsProblem}
     resolution = PSY.get_time_series_resolution(get_system(stage))
     return IS.time_period_conversion(resolution)
 end
-get_settings(stage::Stage) = get_psi_container(stage).settings
+get_settings(stage::Stage) = get_optimization_container(stage).settings
 get_system(stage::Stage) = stage.sys
 get_template(stage::Stage) = stage.template
 get_write_path(stage::Stage) = stage.internal.write_path
-warm_start_enabled(stage::Stage) = get_warm_start(get_psi_container(stage).settings)
+warm_start_enabled(stage::Stage) = get_warm_start(get_optimization_container(stage).settings)
 
 set_write_path!(stage::Stage, path::AbstractString) = stage.internal.write_path = path
 set_stage_status!(stage::Stage, status::BuildStatus) = stage.internal.status = status
 
 function reset!(stage::Stage{T}) where {T <: AbstractOperationsProblem}
     stage.internal.execution_count = 0
-    container = PSIContainer(get_system(stage), get_settings(stage), nothing)
-    stage.internal.psi_container = container
+    container = OptimizationContainer(get_system(stage), get_settings(stage), nothing)
+    stage.internal.optimization_container = container
     set_stage_status!(stage, BuildStatus.EMPTY)
     return
 end
@@ -211,14 +211,14 @@ function build!(
     stage_interval::Dates.Period,
 ) where {M <: PowerSimulationsOperationsProblem}
     build_pre_step!(stage, initial_time, horizon, stage_interval)
-    psi_container = get_psi_container(stage)
+    optimization_container = get_optimization_container(stage)
     system = get_system(stage)
-    _build!(psi_container, get_template(stage), system)
+    _build!(optimization_container, get_template(stage), system)
     settings = get_settings(stage)
-    @assert get_horizon(settings) == length(psi_container.time_steps)
+    @assert get_horizon(settings) == length(optimization_container.time_steps)
     write_path = get_write_path(stage)
-    write_psi_container(
-        get_psi_container(stage),
+    write_optimization_container(
+        get_optimization_container(stage),
         joinpath(
             write_path,
             "models_json",
@@ -236,10 +236,10 @@ function run_stage!(
     store::SimulationStore;
     exports = nothing,
 ) where {M <: PowerSimulationsOperationsProblem}
-    @assert get_psi_container(stage).JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
+    @assert get_optimization_container(stage).JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     status = RunStatus.RUNNING
     timed_log = Dict{Symbol, Any}()
-    model = get_psi_container(stage).JuMPmodel
+    model = get_optimization_container(stage).JuMPmodel
 
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
@@ -263,7 +263,7 @@ function run_stage!(
 end
 
 function write_model_results!(store, stage, timestamp; exports = nothing)
-    psi_container = get_psi_container(stage)
+    optimization_container = get_optimization_container(stage)
     if exports !== nothing
         export_params = Dict{Symbol, Any}(
             :exports => exports,
@@ -276,18 +276,18 @@ function write_model_results!(store, stage, timestamp; exports = nothing)
         export_params = nothing
     end
 
-    if is_milp(get_psi_container(stage))
+    if is_milp(get_optimization_container(stage))
         @warn "Stage $(stage.internal.number) is a MILP, duals can't be exported"
     else
-        _write_model_dual_results!(store, psi_container, stage, timestamp, export_params)
+        _write_model_dual_results!(store, optimization_container, stage, timestamp, export_params)
     end
 
-    _write_model_parameter_results!(store, psi_container, stage, timestamp, export_params)
-    _write_model_variable_results!(store, psi_container, stage, timestamp, export_params)
+    _write_model_parameter_results!(store, optimization_container, stage, timestamp, export_params)
+    _write_model_variable_results!(store, optimization_container, stage, timestamp, export_params)
     return
 end
 
-function _write_model_dual_results!(store, psi_container, stage, timestamp, exports)
+function _write_model_dual_results!(store, optimization_container, stage, timestamp, exports)
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
@@ -295,8 +295,8 @@ function _write_model_dual_results!(store, psi_container, stage, timestamp, expo
         mkpath(exports_path)
     end
 
-    for name in get_constraint_duals(psi_container.settings)
-        constraint = get_constraint(psi_container, name)
+    for name in get_constraint_duals(optimization_container.settings)
+        constraint = get_constraint(optimization_container, name)
         write_result!(
             store,
             stage_name,
@@ -323,7 +323,7 @@ function _write_model_dual_results!(store, psi_container, stage, timestamp, expo
     end
 end
 
-function _write_model_parameter_results!(store, psi_container, stage, timestamp, exports)
+function _write_model_parameter_results!(store, optimization_container, stage, timestamp, exports)
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
@@ -331,7 +331,7 @@ function _write_model_parameter_results!(store, psi_container, stage, timestamp,
         mkpath(exports_path)
     end
 
-    parameters = get_parameters(psi_container)
+    parameters = get_parameters(optimization_container)
     (isnothing(parameters) || isempty(parameters)) && return
     horizon = get_horizon(get_settings(stage))
 
@@ -362,7 +362,7 @@ function _write_model_parameter_results!(store, psi_container, stage, timestamp,
     end
 end
 
-function _write_model_variable_results!(store, psi_container, stage, timestamp, exports)
+function _write_model_variable_results!(store, optimization_container, stage, timestamp, exports)
     stage_name_str = get_name(stage)
     stage_name = Symbol(stage_name_str)
     if exports !== nothing
@@ -370,7 +370,7 @@ function _write_model_variable_results!(store, psi_container, stage, timestamp, 
         mkpath(exports_path)
     end
 
-    for (name, variable) in get_variables(psi_container)
+    for (name, variable) in get_variables(optimization_container)
         write_result!(
             store,
             stage_name,
@@ -402,10 +402,10 @@ end
 
 function get_initial_cache(cache::TimeStatusChange, stage::Stage)
     ini_cond_on =
-        get_initial_conditions(get_psi_container(stage), TimeDurationON, cache.device_type)
+        get_initial_conditions(get_optimization_container(stage), TimeDurationON, cache.device_type)
 
     ini_cond_off =
-        get_initial_conditions(get_psi_container(stage), TimeDurationOFF, cache.device_type)
+        get_initial_conditions(get_optimization_container(stage), TimeDurationOFF, cache.device_type)
 
     device_axes = Set((
         PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
@@ -437,7 +437,7 @@ end
 
 function get_initial_cache(cache::StoredEnergy, stage::Stage)
     ini_cond_level =
-        get_initial_conditions(get_psi_container(stage), EnergyLevel, cache.device_type)
+        get_initial_conditions(get_optimization_container(stage), EnergyLevel, cache.device_type)
 
     device_axes = Set([PSY.get_name(ic.device) for ic in ini_cond_level],)
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)
@@ -451,7 +451,7 @@ end
 
 function get_timestamps(stage::Stage, start_time::Dates.DateTime)
     resolution = get_resolution(stage)
-    horizon = get_psi_container(stage).time_steps[end]
+    horizon = get_optimization_container(stage).time_steps[end]
     range_time = collect(start_time:resolution:(start_time + resolution * horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
@@ -459,7 +459,7 @@ function get_timestamps(stage::Stage, start_time::Dates.DateTime)
 end
 
 function write_data(stage::Stage, save_path::AbstractString; kwargs...)
-    write_data(get_psi_container(stage), save_path; kwargs...)
+    write_data(get_optimization_container(stage), save_path; kwargs...)
     return
 end
 

@@ -3,7 +3,7 @@ struct GenericOpProblem <: PowerSimulationsOperationsProblem end
 mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
-    psi_container::PSIContainer
+    optimization_container::OptimizationContainer
 end
 
 """
@@ -71,7 +71,7 @@ function OperationsProblem{M}(
 end
 
 # TODO: I think we should never call build in a constructor
-# The psi_container_init is called at the build! call in this constructor. This is meant to
+# The optimization_container_init is called at the build! call in this constructor. This is meant to
 # build an operation from a template.
 function OperationsProblem{M}(
     template::OperationsProblemTemplate,
@@ -80,7 +80,7 @@ function OperationsProblem{M}(
     settings::PSISettings,
 ) where {M <: AbstractOperationsProblem}
     op_problem =
-        OperationsProblem{M}(template, sys, PSIContainer(sys, settings, jump_model))
+        OperationsProblem{M}(template, sys, OptimizationContainer(sys, settings, jump_model))
     build!(op_problem)
     return op_problem
 end
@@ -198,7 +198,7 @@ function OperationsProblem{M}(
     return OperationsProblem{M}(
         OperationsProblemTemplate(T),
         sys,
-        PSIContainer(T, sys, settings, jump_model),
+        OptimizationContainer(T, sys, settings, jump_model),
     )
 end
 
@@ -232,13 +232,13 @@ get_devices_ref(op_problem::OperationsProblem) = op_problem.template.devices
 get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
-get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
+get_optimization_container(op_problem::OperationsProblem) = op_problem.optimization_container
 get_model_base_power(op_problem::OperationsProblem) = PSY.get_base_power(op_problem.sys)
-get_jump_model(op_problem::OperationsProblem) = get_jump_model(op_problem.psi_container)
+get_jump_model(op_problem::OperationsProblem) = get_jump_model(op_problem.optimization_container)
 
 function reset!(op_problem::OperationsProblem)
-    op_problem.psi_container =
-        PSIContainer(op_problem.sys, op_problem.psi_container.settings, nothing)
+    op_problem.optimization_container =
+        OptimizationContainer(op_problem.sys, op_problem.optimization_container.settings, nothing)
     return
 end
 
@@ -374,15 +374,15 @@ function construct_device!(
     set_model!(device_model.device_type, op_problem, name, device_model)
 
     construct_device!(
-        op_problem.psi_container,
+        op_problem.optimization_container,
         get_system(op_problem),
         device_model,
         get_transmission_ref(op_problem),
     )
     JuMP.@objective(
-        op_problem.psi_container.JuMPmodel,
+        op_problem.optimization_container.JuMPmodel,
         MOI.MIN_SENSE,
-        op_problem.psi_container.cost_function
+        op_problem.optimization_container.cost_function
     )
     return
 end
@@ -396,7 +396,7 @@ function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T},
 ) where {T <: PM.AbstractPowerModel}
-    construct_network!(op_problem.psi_container, get_system(op_problem), T)
+    construct_network!(op_problem.optimization_container, get_system(op_problem), T)
     return
 end
 
@@ -405,37 +405,37 @@ function get_initial_conditions(
     ic::InitialConditionType,
     device::PSY.Device,
 )
-    psi_container = op_problem.psi_container
+    optimization_container = op_problem.optimization_container
     key = ICKey(ic, device)
 
-    return get_initial_conditions(psi_container, key)
+    return get_initial_conditions(optimization_container, key)
 end
 
 function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
-    _build!(op_problem.psi_container, op_problem.template, sys)
+    _build!(op_problem.optimization_container, op_problem.template, sys)
     return
 end
 
-function check_problem_size(psi_container::PSIContainer)
-    vars = JuMP.num_variables(psi_container.JuMPmodel)
+function check_problem_size(optimization_container::OptimizationContainer)
+    vars = JuMP.num_variables(optimization_container.JuMPmodel)
     cons = 0
-    for (exp, c_type) in JuMP.list_of_constraint_types(psi_container.JuMPmodel)
-        cons += JuMP.num_constraints(psi_container.JuMPmodel, exp, c_type)
+    for (exp, c_type) in JuMP.list_of_constraint_types(optimization_container.JuMPmodel)
+        cons += JuMP.num_constraints(optimization_container.JuMPmodel, exp, c_type)
     end
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
 function read_variables(op_m::OperationsProblem)
-    return read_variables(op_m.psi_container)
+    return read_variables(op_m.optimization_container)
 end
 
 function read_duals(op_m::OperationsProblem)
-    return read_duals(op_m.psi_container)
+    return read_duals(op_m.optimization_container)
 end
 
 function read_parameters(op_m::OperationsProblem)
-    return read_parameters(op_m.psi_container)
+    return read_parameters(op_m.optimization_container)
 end
 
 """
@@ -461,22 +461,22 @@ function solve!(
     timed_log = Dict{Symbol, Any}()
     save_path = get(kwargs, :save_path, nothing)
 
-    if op_problem.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+    if op_problem.optimization_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
         if !(:optimizer in keys(kwargs))
             error("No Optimizer has been defined, can't solve the operational problem")
         end
-        JuMP.set_optimizer(op_problem.psi_container.JuMPmodel, kwargs[:optimizer])
+        JuMP.set_optimizer(op_problem.optimization_container.JuMPmodel, kwargs[:optimizer])
         _,
         timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel)
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.optimization_container.JuMPmodel)
     else
         _,
         timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel)
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.optimization_container.JuMPmodel)
     end
-    model_status = JuMP.primal_status(op_problem.psi_container.JuMPmodel)
+    model_status = JuMP.primal_status(op_problem.optimization_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("The Operational Problem $(T) status is $(model_status)")
     end
@@ -488,7 +488,7 @@ function solve!(
     base_power = PSY.get_base_power(op_problem.sys)
     dual_result = read_duals(op_problem)
     obj_value = Dict(
-        :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
+        :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.optimization_container.JuMPmodel),
     )
     base_power = get_model_base_power(op_problem)
     merge!(optimizer_log, timed_log)
@@ -510,16 +510,16 @@ end
 
 # Function to create a dictionary for the optimizer log of the simulation
 function get_optimizer_log(op_m::OperationsProblem)
-    psi_container = op_m.psi_container
+    optimization_container = op_m.optimization_container
     optimizer_log = Dict{Symbol, Any}()
-    optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
-    optimizer_log[:termination_status] = JuMP.termination_status(psi_container.JuMPmodel)
-    optimizer_log[:primal_status] = JuMP.primal_status(psi_container.JuMPmodel)
-    optimizer_log[:dual_status] = JuMP.dual_status(psi_container.JuMPmodel)
-    optimizer_log[:solver] = JuMP.solver_name(psi_container.JuMPmodel)
+    optimizer_log[:obj_value] = JuMP.objective_value(optimization_container.JuMPmodel)
+    optimizer_log[:termination_status] = JuMP.termination_status(optimization_container.JuMPmodel)
+    optimizer_log[:primal_status] = JuMP.primal_status(optimization_container.JuMPmodel)
+    optimizer_log[:dual_status] = JuMP.dual_status(optimization_container.JuMPmodel)
+    optimizer_log[:solver] = JuMP.solver_name(optimization_container.JuMPmodel)
 
     try
-        optimizer_log[:solve_time] = MOI.get(psi_container.JuMPmodel, MOI.SolveTime())
+        optimizer_log[:solve_time] = MOI.get(optimization_container.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by $(optimizer_log[:solver])")
         optimizer_log[:solve_time] = "Not Supported by $(optimizer_log[:solver])"
@@ -529,9 +529,9 @@ end
 
 # Function to create a dictionary for the time series of the simulation
 function get_timestamps(op_problem::OperationsProblem)
-    initial_time = model_initial_time(get_psi_container(op_problem))
+    initial_time = model_initial_time(get_optimization_container(op_problem))
     interval = PSY.get_time_series_resolution(op_problem.sys)
-    horizon = get_horizon(get_settings(get_psi_container(op_problem)))
+    horizon = get_horizon(get_settings(get_optimization_container(op_problem)))
     range_time = collect(initial_time:interval:(initial_time + interval .* horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
@@ -540,7 +540,7 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function export_operations_model(op_problem::OperationsProblem, save_path::String)
-    write_psi_container(op_problem.psi_container, save_path)
+    write_optimization_container(op_problem.optimization_container, save_path)
     return
 end
 
@@ -548,7 +548,7 @@ end
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_constraint_index(op_problem::OperationsProblem)
     con_index = Vector{Tuple{Symbol, Int, Int}}()
-    for (key, value) in op_problem.psi_container.constraints
+    for (key, value) in op_problem.optimization_container.constraints
         for (idx, constraint) in enumerate(value)
             moi_index = JuMP.optimizer_index(constraint)
             push!(con_index, (key, idx, moi_index.value))
@@ -560,7 +560,7 @@ end
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(op_problem::OperationsProblem)
     var_index = Vector{Tuple{Symbol, Int, Int}}()
-    for (key, value) in op_problem.psi_container.variables
+    for (key, value) in op_problem.optimization_container.variables
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)
             push!(var_index, (key, idx, moi_index.value))
@@ -572,7 +572,7 @@ end
 function get_con_index(op_problem::OperationsProblem, index::Int)
     for i in get_all_constraint_index(op_problem::OperationsProblem)
         if i[3] == index
-            return op_problem.psi_container.constraints[i[1]].data[i[2]]
+            return op_problem.optimization_container.constraints[i[1]].data[i[2]]
         end
     end
 
@@ -583,7 +583,7 @@ end
 function get_var_index(op_problem::OperationsProblem, index::Int)
     for i in get_all_var_index(op_problem::OperationsProblem)
         if i[3] == index
-            return op_problem.psi_container.variables[i[1]].data[i[2]]
+            return op_problem.optimization_container.variables[i[1]].data[i[2]]
         end
     end
     @info "Index not found"
@@ -599,7 +599,7 @@ function serialize_model(op_problem::OperationsProblem, filename::AbstractString
     obj = OperationsProblemSerializationWrapper(
         op_problem.template,
         sys_filename,
-        op_problem.psi_container.settings_copy,
+        op_problem.optimization_container.settings_copy,
         typeof(op_problem),
     )
     Serialization.serialize(filename, obj)

@@ -22,14 +22,14 @@ Users of this function must implement a method for
 Users may also implement custom reactive_power_constraints! methods.
 """
 function reactive_power_constraints!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
-    use_parameters = model_has_parameters(psi_container)
-    use_forecasts = model_uses_forecasts(psi_container)
+    use_parameters = model_has_parameters(optimization_container)
+    use_forecasts = model_uses_forecasts(optimization_container)
     @assert !(use_parameters && !use_forecasts)
     inputs = make_reactive_power_constraints_inputs(
         T,
@@ -39,5 +39,5 @@ function reactive_power_constraints!(
         use_parameters,
         use_forecasts,
     )
-    device_range_constraints!(psi_container, devices, model, feedforward, inputs)
+    device_range_constraints!(optimization_container, devices, model, feedforward, inputs)
 end

@@ -220,54 +220,54 @@ end
 
 ""
 function powermodels_network!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     system_formulation::Type{S},
     sys::PSY.System,
     instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
-    remove_undef!(psi_container.expressions[:nodal_balance_active])
-    remove_undef!(psi_container.expressions[:nodal_balance_reactive])
+    remove_undef!(optimization_container.expressions[:nodal_balance_active])
+    remove_undef!(optimization_container.expressions[:nodal_balance_reactive])
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] =
-            psi_container.expressions[:nodal_balance_active][bus.number, t]
+            optimization_container.expressions[:nodal_balance_active][bus.number, t]
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] =
-            psi_container.expressions[:nodal_balance_reactive][bus.number, t]
+            optimization_container.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    psi_container.pm =
-        instantiate_model(pm_data, system_formulation, jump_model = psi_container.JuMPmodel)
-    psi_container.pm.ext[:PMmap] = PM_map
+    optimization_container.pm =
+        instantiate_model(pm_data, system_formulation, jump_model = optimization_container.JuMPmodel)
+    optimization_container.pm.ext[:PMmap] = PM_map
 
     return
 end
 
 ""
 function powermodels_network!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     system_formulation::Type{S},
     sys::PSY.System,
     instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractActivePowerModel}
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
-    remove_undef!(psi_container.expressions[:nodal_balance_active])
+    remove_undef!(optimization_container.expressions[:nodal_balance_active])
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] =
-            psi_container.expressions[:nodal_balance_active][PSY.get_number(bus), t]
+            optimization_container.expressions[:nodal_balance_active][PSY.get_number(bus), t]
         # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    psi_container.pm =
-        instantiate_model(pm_data, system_formulation, jump_model = psi_container.JuMPmodel)
-    psi_container.pm.ext[:PMmap] = PM_map
+    optimization_container.pm =
+        instantiate_model(pm_data, system_formulation, jump_model = optimization_container.JuMPmodel)
+    optimization_container.pm.ext[:PMmap] = PM_map
 
     return
 end
@@ -343,38 +343,38 @@ function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
 end
 
 function add_pm_var_refs!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     system_formulation::Type{S},
     sys::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(psi_container)
-    bus_dict = psi_container.pm.ext[:PMmap].bus
-    ACbranch_dict = psi_container.pm.ext[:PMmap].arcs
+    time_steps = model_time_steps(optimization_container)
+    bus_dict = optimization_container.pm.ext[:PMmap].bus
+    ACbranch_dict = optimization_container.pm.ext[:PMmap].arcs
     ACbranch_types = typeof.(values(ACbranch_dict))
-    DCbranch_dict = psi_container.pm.ext[:PMmap].arcs_dc
+    DCbranch_dict = optimization_container.pm.ext[:PMmap].arcs_dc
     DCbranch_types = typeof.(values(DCbranch_dict))
 
-    pm_var_names = keys(psi_container.pm.var[:nw][1])
+    pm_var_names = keys(optimization_container.pm.var[:nw][1])
 
     pm_var_map = PMvarmap(system_formulation)
 
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_names
             container = PSI.container_spec(
-                psi_container.JuMPmodel,
+                optimization_container.JuMPmodel,
                 [PSY.get_name(b) for b in values(bus_dict)],
                 time_steps,
             )
-            assign_variable!(psi_container, ps_v, PSY.Bus, container)
+            assign_variable!(optimization_container, ps_v, PSY.Bus, container)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                container[name, t] = PM.var(psi_container.pm, t, pm_v)[pm_bus] # pm_vars[pm_v][pm_bus]
+                container[name, t] = PM.var(optimization_container.pm, t, pm_v)[pm_bus] # pm_vars[pm_v][pm_bus]
             end
         end
     end
 
     add_pm_var_refs!(
-        psi_container,
+        optimization_container,
         PSY.ACBranch,
         ACbranch_types,
         ACbranch_dict,
@@ -383,7 +383,7 @@ function add_pm_var_refs!(
         time_steps,
     )
     add_pm_var_refs!(
-        psi_container,
+        optimization_container,
         PSY.DCBranch,
         DCbranch_types,
         DCbranch_dict,
@@ -394,7 +394,7 @@ function add_pm_var_refs!(
 end
 
 function add_pm_var_refs!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     d_class::Type,
     device_types::Vector,
     pm_map::Dict,
@@ -411,14 +411,14 @@ function add_pm_var_refs!(
                     # TODO: make a better mapping with the var names in the definitions file
                     var_name = getfield(ps_v, dir)
                     container = PSI.container_spec(
-                        psi_container.JuMPmodel,
+                        optimization_container.JuMPmodel,
                         [PSY.get_name(d[2]) for d in devices],
                         time_steps,
                     )
-                    assign_variable!(psi_container, var_name, d_type, container)
+                    assign_variable!(optimization_container, var_name, d_type, container)
                     for t in time_steps, (pm_d, d) in devices
                         container[PSY.get_name(d), t] =
-                            PM.var(psi_container.pm, t, pm_v, getfield(pm_d, dir))
+                            PM.var(optimization_container.pm, t, pm_v, getfield(pm_d, dir))
                     end
                 end
             end
@@ -427,30 +427,30 @@ function add_pm_var_refs!(
 end
 
 function add_pm_con_refs!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     system_formulation::Type{S},
     sys::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(psi_container)
-    bus_dict = psi_container.pm.ext[:PMmap].bus
+    time_steps = model_time_steps(optimization_container)
+    bus_dict = optimization_container.pm.ext[:PMmap].bus
 
     pm_con_names = [
-        k for k in keys(psi_container.pm.con[:nw][1]) if
-        !isempty(PM.con(psi_container.pm, 1, k))
+        k for k in keys(optimization_container.pm.con[:nw][1]) if
+        !isempty(PM.con(optimization_container.pm, 1, k))
     ]
 
     pm_con_map = PMconmap(system_formulation)
     for (pm_v, ps_v) in pm_con_map[PSY.Bus]
         if pm_v in pm_con_names
             container = PSI.add_cons_container!(
-                psi_container,
+                optimization_container,
                 make_constraint_name(ps_v, PSY.Bus),
                 [PSY.get_name(b) for b in values(bus_dict)],
                 time_steps,
             )
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                container[name, t] = PM.con(psi_container.pm, t, pm_v)[pm_bus]
+                container[name, t] = PM.con(optimization_container.pm, t, pm_v)[pm_bus]
             end
         end
     end

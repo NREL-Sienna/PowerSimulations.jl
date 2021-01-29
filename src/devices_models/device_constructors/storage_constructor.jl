@@ -1,5 +1,5 @@
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{St, D},
     ::Type{S},
@@ -11,17 +11,17 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, ReactivePowerVariable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(optimization_container, ActivePowerInVariable, devices)
+    add_variables!(optimization_container, ActivePowerOutVariable, devices)
+    add_variables!(optimization_container, ReactivePowerVariable, devices)
+    add_variables!(optimization_container, EnergyVariable, devices)
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, D)
+    initial_conditions!(optimization_container, devices, D)
 
     # Constraints
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerOutVariable,
         devices,
@@ -30,7 +30,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerInVariable,
         devices,
@@ -39,7 +39,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ReactivePowerVariable,
         devices,
@@ -47,17 +47,17 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, devices, model, get_feedforward(model))
+    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(psi_container, devices, D, S, get_feedforward(model))
+    energy_balance_constraint!(optimization_container, devices, D, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{St, D},
     ::Type{S},
@@ -73,16 +73,16 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(optimization_container, ActivePowerInVariable, devices)
+    add_variables!(optimization_container, ActivePowerOutVariable, devices)
+    add_variables!(optimization_container, EnergyVariable, devices)
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, D)
+    initial_conditions!(optimization_container, devices, D)
 
     # Constraints
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerOutVariable,
         devices,
@@ -91,7 +91,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerInVariable,
         devices,
@@ -99,17 +99,17 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, devices, model, get_feedforward(model))
+    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(psi_container, devices, D, S, get_feedforward(model))
+    energy_balance_constraint!(optimization_container, devices, D, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{St, BookKeepingwReservation},
     ::Type{S},
@@ -121,18 +121,18 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, ReactivePowerVariable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
-    add_variables!(psi_container, ReserveVariable, devices)
+    add_variables!(optimization_container, ActivePowerInVariable, devices)
+    add_variables!(optimization_container, ActivePowerOutVariable, devices)
+    add_variables!(optimization_container, ReactivePowerVariable, devices)
+    add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, ReserveVariable, devices)
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, model.formulation)
+    initial_conditions!(optimization_container, devices, model.formulation)
 
     # Constraints
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerOutVariable,
         devices,
@@ -141,7 +141,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerInVariable,
         devices,
@@ -150,7 +150,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ReactivePowerVariable,
         devices,
@@ -158,12 +158,12 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, devices, model, get_feedforward(model))
+    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
     energy_balance_constraint!(
-        psi_container,
+        optimization_container,
         devices,
         model.formulation,
         S,
@@ -174,7 +174,7 @@ function construct_device!(
 end
 
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{St, BookKeepingwReservation},
     ::Type{S},
@@ -186,17 +186,17 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
-    add_variables!(psi_container, ReserveVariable, devices)
+    add_variables!(optimization_container, ActivePowerInVariable, devices)
+    add_variables!(optimization_container, ActivePowerOutVariable, devices)
+    add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, ReserveVariable, devices)
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, model.formulation)
+    initial_conditions!(optimization_container, devices, model.formulation)
 
     # Constraints
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerOutVariable,
         devices,
@@ -205,7 +205,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerInVariable,
         devices,
@@ -213,12 +213,12 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, devices, model, get_feedforward(model))
+    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
     energy_balance_constraint!(
-        psi_container,
+        optimization_container,
         devices,
         model.formulation,
         S,
@@ -229,7 +229,7 @@ function construct_device!(
 end
 
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{St, EndOfPeriodEnergyTarget},
     ::Type{S},
@@ -241,17 +241,17 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, ReactivePowerVariable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(optimization_container, ActivePowerInVariable, devices)
+    add_variables!(optimization_container, ActivePowerOutVariable, devices)
+    add_variables!(optimization_container, ReactivePowerVariable, devices)
+    add_variables!(optimization_container, EnergyVariable, devices)
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, model.formulation)
+    initial_conditions!(optimization_container, devices, model.formulation)
 
     # Constraints
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerOutVariable,
         devices,
@@ -260,7 +260,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerInVariable,
         devices,
@@ -269,7 +269,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ReactivePowerVariable,
         devices,
@@ -277,12 +277,12 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, devices, model, get_feedforward(model))
+    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
     energy_balance_constraint!(
-        psi_container,
+        optimization_container,
         devices,
         model.formulation,
         S,
@@ -290,13 +290,13 @@ function construct_device!(
     )
 
     # Cost Function
-    cost_function!(psi_container, devices, model, S, get_feedforward(model))
+    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{St, EndOfPeriodEnergyTarget},
     ::Type{S},
@@ -308,16 +308,16 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(optimization_container, ActivePowerInVariable, devices)
+    add_variables!(optimization_container, ActivePowerOutVariable, devices)
+    add_variables!(optimization_container, EnergyVariable, devices)
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, model.formulation)
+    initial_conditions!(optimization_container, devices, model.formulation)
 
     # Constraints
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerOutVariable,
         devices,
@@ -326,7 +326,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         ActivePowerInVariable,
         devices,
@@ -334,12 +334,12 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, devices, model, get_feedforward(model))
+    energy_capacity_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
     energy_balance_constraint!(
-        psi_container,
+        optimization_container,
         devices,
         model.formulation,
         S,
@@ -347,7 +347,7 @@ function construct_device!(
     )
 
     # Cost Function
-    cost_function!(psi_container, devices, model, S, get_feedforward(model))
+    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
 
     return
 end

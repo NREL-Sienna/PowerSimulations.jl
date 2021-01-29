@@ -7,6 +7,6 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         t = OperationsProblem(TestOpProblem, CopperPlatePowerModel, sys, use_parameters = p)
-        @test PSI.model_has_parameters(t.psi_container) == p
+        @test PSI.model_has_parameters(t.optimization_container) == p
     end
 end
