@@ -38,17 +38,6 @@ mutable struct OptimizationContainer
     end
 end
 
-function OptimizationContainer(
-    ::Type{T},
-    sys::PSY.System,
-    settings::Settings,
-    jump_model::Union{Nothing, JuMP.AbstractModel},
-) where {T <: PM.AbstractPowerModel}
-    container = OptimizationContainer(sys, settings, jump_model)
-    optimization_container_init!(container, T, sys)
-    return container
-end
-
 function _check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =
@@ -655,10 +644,7 @@ function _build!(
 )
     transmission = template.transmission
     # Order is required
-    # The container is initialized here because this build! call for optimization_container takes the
-    # information from the template with cached Settings. It allows having the same build! call for operations problems
-    # specified with template and simulation stage.
-    optimization_container_init!(optimization_container, transmission, sys)
+    #optimization_container_init!(optimization_container, transmission, sys)
     construct_services!(optimization_container, sys, template.services, template.devices)
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
