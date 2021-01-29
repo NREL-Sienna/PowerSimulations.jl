@@ -11,13 +11,20 @@ end
 
 function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     template = OperationsProblemTemplate(network)
-    set_component_model!(template, "Generators", DeviceModel(ThermalStandard, ThermalDispatch))
-    set_component_model!(template,"Load", DeviceModel(PowerLoad, StaticPowerLoad))
-    set_component_model!(template, "MonitoredLine", DeviceModel(MonitoredLine, StaticLineBounds))
+    set_component_model!(
+        template,
+        "Generators",
+        DeviceModel(ThermalStandard, ThermalDispatch),
+    )
+    set_component_model!(template, "Load", DeviceModel(PowerLoad, StaticPowerLoad))
+    set_component_model!(
+        template,
+        "MonitoredLine",
+        DeviceModel(MonitoredLine, StaticLineBounds),
+    )
     set_component_model!(template, "Line", DeviceModel(Line, StaticLineUnbounded))
     return template
 end
-
 
 #=
 ## UC Model Ref
