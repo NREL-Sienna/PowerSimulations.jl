@@ -1,4 +1,7 @@
-# TODO: A lot of this code can still be simplified into a more coherent interface
+const DevicesModelContainer = Dict{Symbol, DeviceModel}
+const BranchModelContainer = Dict{Symbol, DeviceModelForBranches}
+const ServicesModelContainer = Dict{Tuple{String, Symbol}, ServiceModel}
+
 """
     OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 Creates a model reference of the PowerSimulations Optimization Problem.
@@ -11,15 +14,15 @@ template = OperationsProblemTemplate(CopperPlatePowerModel)
 """
 mutable struct OperationsProblemTemplate
     transmission::Type{<:PM.AbstractPowerModel}
-    devices::Dict{String, DeviceModel}
-    branches::Dict{String, DeviceModel}
-    services::Dict{String, ServiceModel}
+    devices::DevicesModelContainer
+    branches::BranchModelContainer
+    services::ServicesModelContainer
     function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
         new(
             T,
-            Dict{String, DeviceModel}(),
-            Dict{String, DeviceModel}(),
-            Dict{String, ServiceModel}(),
+            DevicesModelContainer(),
+            BranchModelContainer(),
+            ServicesModelContainer(),
         )
     end
 end
@@ -30,6 +33,8 @@ OperationsProblemTemplate() = OperationsProblemTemplate(CopperPlatePowerModel)
 get_transmission_model(template::OperationsProblemTemplate) = template.transmission
 
 # Note to devs. PSY exports set_model! these names are choosen to avoid name clashes
+
+"""Sets the transmission model in a template"""
 function set_transmission_model!(
     template::OperationsProblemTemplate,
     model::Type{<:PM.AbstractPowerModel},
@@ -38,27 +43,76 @@ function set_transmission_model!(
     return
 end
 
-function set_component_model!(
+"""
+    Sets the device model in a template using the component type and formulation.
+    Builds a default DeviceModel
+"""
+function set_device_model!(
     template::OperationsProblemTemplate,
-    label,
-    model::DeviceModel{<:PSY.Device, <:AbstractDeviceFormulation},
+    component_type::Type{<:PSY.Device},
+    formulation::Type{<:AbstractDeviceFormulation}
 )
-    _set_model!(template.devices, string(label), model)
+    set_device_model!(template, DeviceModel(component_type, formulation))
     return
 end
 
-function set_component_model!(
+"""
+    Sets the device model in a template using a DeviceModel instance
+"""
+function set_device_model!(
     template::OperationsProblemTemplate,
-    label,
-    model::DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation},
+    model::DeviceModel{<:PSY.Device, <:AbstractDeviceFormulation},
 )
-    _set_model!(template.branches, string(label), model)
+    _set_model!(template.devices, model)
+    return
 end
 
-function set_component_model!(
+function set_device_model!(
     template::OperationsProblemTemplate,
-    label,
+    model::DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation},
+)
+    _set_model!(template.branches, model)
+    return
+end
+
+"""
+    Sets the service model in a template using a name and the service type and formulation. Builds a default ServiceModel with use_service_name set to true.
+"""
+function set_service_model!(
+    template::OperationsProblemTemplate,
+    service_name::String,
+    service_type::Type{<:PSY.Service},
+    formulation::Type{<:AbstractServiceFormulation},
+)
+    set_service_model!(template.services, service_name, ServiceModel(service_type, formulation, use_service_name = true))
+    return
+end
+
+"""
+    Sets the service model in a template using a ServiceModel instance.
+"""
+function set_service_model!(
+    template::OperationsProblemTemplate,
+    service_type::Type{<:PSY.Service},
+    formulation::Type{<:AbstractServiceFormulation},
+)
+    set_service_model!(template.services, ServiceModel(service_type, formulation))
+    return
+end
+
+function set_service_model!(
+    template::OperationsProblemTemplate,
+    service_name::String,
     model::ServiceModel{<:PSY.Service, <:AbstractServiceFormulation},
 )
-    _set_model!(template.services, string(label), model)
+    _set_model!(template.services, service_name, model)
+    return
+end
+
+function set_service_model!(
+    template::OperationsProblemTemplate,
+    model::ServiceModel{<:PSY.Service, <:AbstractServiceFormulation},
+)
+    _set_model!(template.services, model)
+    return
 end

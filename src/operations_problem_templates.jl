@@ -3,38 +3,32 @@ struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
 struct AGCReserveDeployment <: PowerSimulationsOperationsProblem end
 
 function _default_devices_uc()
-    return Dict(
-        "ThermalGenerators" => DeviceModel(PSY.ThermalStandard, ThermalBasicUnitCommitment),
-        "RenewableEnergy" => DeviceModel(PSY.RenewableDispatch, RenewableFullDispatch),
-        "DistributedRenewableEnergy" => DeviceModel(PSY.RenewableFix, FixedOutput),
-        "ReservoirHydroPower" =>
-            DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchRunOfRiver),
-        "RunofRiverHydroPower" => DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver),
-        "Loads" => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
-        "InterruptibleLoads" => DeviceModel(PSY.InterruptibleLoad, InterruptiblePowerLoad),
-    )
+    return [
+        DeviceModel(PSY.ThermalStandard, ThermalBasicUnitCommitment),
+        DeviceModel(PSY.RenewableDispatch, RenewableFullDispatch),
+        DeviceModel(PSY.RenewableFix, FixedOutput),
+        DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchRunOfRiver),
+        DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver),
+        DeviceModel(PSY.PowerLoad, StaticPowerLoad),
+        DeviceModel(PSY.InterruptibleLoad, InterruptiblePowerLoad),
+        DeviceModel(PSY.Line, StaticLine),
+        DeviceModel(PSY.Transformer2W, StaticTransformer),
+        DeviceModel(PSY.TapTransformer, StaticTransformer),
+        DeviceModel(PSY.HVDCLine, HVDCDispatch),
+    ]
 end
 
 function _default_devices_dispatch()
     default = _default_devices_uc()
-    default["ThermalGenerators"] = DeviceModel(PSY.ThermalStandard, ThermalDispatch)
+    default[1] = DeviceModel(PSY.ThermalStandard, ThermalDispatch)
     return default
 end
 
 function _default_services()
-    return Dict(
-        "ReserveUp" => ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
-        "ReserveDown" => ServiceModel(PSY.VariableReserve{PSY.ReserveDown}, RangeReserve),
-    )
-end
-
-function _default_branches()
-    return Dict(
-        "ACLines" => DeviceModel(PSY.Line, StaticLine),
-        "Transformers" => DeviceModel(PSY.Transformer2W, StaticTransformer),
-        "TapTransformers" => DeviceModel(PSY.TapTransformer, StaticTransformer),
-        "DCLines" => DeviceModel(PSY.HVDCLine, HVDCDispatch),
-    )
+    return [
+        ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
+        ServiceModel(PSY.VariableReserve{PSY.ReserveDown}, RangeReserve),
+    ]
 end
 
 """
@@ -50,25 +44,18 @@ template = template_unit_commitment()
 
 # Accepted Key Words
 - `network::Type{<:PM.AbstractPowerModel}` : override default network model settings
-- `devices::Dict{String, DeviceModel}` : override default `DeviceModel` settings
-- `branches::Dict{String, DeviceModel}` : override default `DeviceModel` settings
-- `services::Dict{String, ServiceModel}` : override default `ServiceModel` settings
+- `devices::Vector{DeviceModel}` : override default `DeviceModel` settings
+- `services::Vector{ServiceModel}` : override default `ServiceModel` settings
 """
 function template_unit_commitment(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
     template = OperationsProblemTemplate(network)
-    for (k, v) in get(kwargs, :devices, _default_devices_uc())
-        set_component_model!(template, k, v)
+    for model in get(kwargs, :devices, _default_devices_uc())
+        set_device_model!(template, model)
     end
 
-    for (k, v) in get(kwargs, :services, _default_services())
-        set_component_model!(template, k, v)
-    end
-
-    if network != CopperPlatePowerModel
-        for (k, v) in get(kwargs, :branches, _default_branches())
-            set_component_model!(template, k, v)
-        end
+    for model in get(kwargs, :services, _default_services())
+        set_service_model!(template, model)
     end
     return template
 end
@@ -86,26 +73,20 @@ template = template_economic_dispatch()
 
 # Accepted Key Words
 - `network::Type{<:PM.AbstractPowerModel}` : override default network model settings
-- `devices::Dict{String, DeviceModel}` : override default `DeviceModel` settings
-- `branches::Dict{String, DeviceModel}` : override default `DeviceModel` settings
-- `services::Dict{String, ServiceModel}` : override default `ServiceModel` settings
+- `devices::Vector{DeviceModel}` : override default `DeviceModel` settings
+- `services::Vector{ServiceModel}` : override default `ServiceModel` settings
 """
 function template_economic_dispatch(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
     template = OperationsProblemTemplate(network)
-    for (k, v) in get(kwargs, :devices, _default_devices_dispatch())
-        set_component_model!(template, k, v)
+    for model in get(kwargs, :devices, _default_devices_dispatch())
+        set_device_model!(template, model)
     end
 
-    for (k, v) in get(kwargs, :services, _default_services())
-        set_component_model!(template, k, v)
+    for model in get(kwargs, :services, _default_services())
+        set_service_model!(template, model)
     end
 
-    if network != CopperPlatePowerModel
-        for (k, v) in get(kwargs, :branches, _default_branches())
-            set_component_model!(template, k, v)
-        end
-    end
     return template
 end
 
@@ -124,24 +105,24 @@ function template_agc_reserve_deployment(; kwargs...)
         throw(ArgumentError("AGC Template doesn't currently support customization"))
     end
     template = OperationsProblemTemplate(AreaBalancePowerModel)
-    set_component_model!(template, "Generators", DeviceModel(PSY.ThermalStandard, FixedOutput))
-    set_component_model!(template, "Ren", DeviceModel(PSY.RenewableDispatch, FixedOutput))
-    set_component_model!(template, "Loads", DeviceModel(PSY.PowerLoad, StaticPowerLoad))
-    set_component_model!(template, "Hydro", DeviceModel(PSY.HydroEnergyReservoir, FixedOutput))
-    set_component_model!(template, "HydroROR", DeviceModel(PSY.HydroDispatch, FixedOutput))
-    set_component_model!(template, "RenFx", DeviceModel(PSY.RenewableFix, FixedOutput))
-    set_component_model!(
+    set_device_model!(template, "Generators", DeviceModel(PSY.ThermalStandard, FixedOutput))
+    set_device_model!(template, "Ren", DeviceModel(PSY.RenewableDispatch, FixedOutput))
+    set_device_model!(template, "Loads", DeviceModel(PSY.PowerLoad, StaticPowerLoad))
+    set_device_model!(template, "Hydro", DeviceModel(PSY.HydroEnergyReservoir, FixedOutput))
+    set_device_model!(template, "HydroROR", DeviceModel(PSY.HydroDispatch, FixedOutput))
+    set_device_model!(template, "RenFx", DeviceModel(PSY.RenewableFix, FixedOutput))
+    set_device_model!(
         template,
         "Regulation_thermal",
         DeviceModel(PSY.RegulationDevi)ce{PSY.ThermalStandard},
         DeviceLimitedRegulation,
     )
-    set_component_model!(
+    set_device_model!(
         template,
         "Regulation_hydro_dispatch",
         DeviceModel(PSY.RegulationDevice{PSY.HydroDispatch}, ReserveLimitedRegulation),
     )
-    set_component_model!(
+    set_device_model!(
         template,
         "Regulation_hydro_reservoir",
         DeviceModel(
@@ -149,6 +130,6 @@ function template_agc_reserve_deployment(; kwargs...)
             ReserveLimitedRegulation,
         ),
     )
-    set_component_model!(template, "AGC", ServiceModel(PSY.AGC, PIDSmoothACE))
+    set_device_model!(template, "AGC", ServiceModel(PSY.AGC, PIDSmoothACE))
     return template
 end

@@ -64,17 +64,12 @@ get_feedforward(m::DeviceModel) = m.feedforward
 get_services(m::DeviceModel) = m.services
 get_services(m::Nothing) = nothing
 
-function _set_model!(dict::Dict, label::String, model::DeviceModel)
-    if haskey(dict, label)
-        @info("Overwriting $(label) existing model")
+DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
+
+function _set_model!(dict::Dict, model::DeviceModel{D, B}) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
+    key = Symbol(D)
+    if haskey(dict, key)
+        @info("Overwriting $(D) existing model")
     end
-    dict[label] = model
-    device_models = [m for m in values(dict) if m.component_type == model.component_type]
-    if length(device_models) > 1
-        throw(
-            IS.ConflictingInputsError(
-                "A model for devices of type $(model.component_type) is already specified",
-            ),
-        )
-    end
+    dict[key] = model
 end
