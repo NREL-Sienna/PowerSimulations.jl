@@ -66,7 +66,7 @@ function OperationsProblem{M}(
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
-    settings = PSISettings(sys; kwargs...)
+    settings = Settings(sys; kwargs...)
     return OperationsProblem{M}(template, sys, jump_model, settings)
 end
 
@@ -77,7 +77,7 @@ function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.AbstractModel},
-    settings::PSISettings,
+    settings::Settings,
 ) where {M <: AbstractOperationsProblem}
     op_problem =
         OperationsProblem{M}(template, sys, OptimizationContainer(sys, settings, jump_model))
@@ -194,7 +194,7 @@ function OperationsProblem{M}(
     kwargs...,
 ) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
-    settings = PSISettings(sys; kwargs...)
+    settings = Settings(sys; kwargs...)
     return OperationsProblem{M}(
         OperationsProblemTemplate(T),
         sys,
@@ -628,6 +628,6 @@ end
 struct OperationsProblemSerializationWrapper
     template::OperationsProblemTemplate
     sys::String
-    settings::PSISettings
+    settings::Settings
     op_problem_type::DataType
 end

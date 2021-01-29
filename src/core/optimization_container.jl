@@ -2,8 +2,8 @@ mutable struct OptimizationContainer
     JuMPmodel::Union{Nothing, JuMP.AbstractModel}
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
-    settings::PSISettings
-    settings_copy::PSISettings
+    settings::Settings
+    settings_copy::Settings
     variables::Dict{Symbol, AbstractArray}
     constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
@@ -15,7 +15,7 @@ mutable struct OptimizationContainer
 
     function OptimizationContainer(
         sys::PSY.System,
-        settings::PSISettings,
+        settings::Settings,
         jump_model::Union{Nothing, JuMP.AbstractModel},
     )
         resolution = PSY.get_time_series_resolution(sys)
@@ -41,7 +41,7 @@ end
 function OptimizationContainer(
     ::Type{T},
     sys::PSY.System,
-    settings::PSISettings,
+    settings::Settings,
     jump_model::Union{Nothing, JuMP.AbstractModel},
 ) where {T <: PM.AbstractPowerModel}
     container = OptimizationContainer(sys, settings, jump_model)
@@ -570,7 +570,7 @@ function _build!(
     transmission = template.transmission
     # Order is required
     # The container is initialized here because this build! call for optimization_container takes the
-    # information from the template with cached PSISettings. It allows having the same build! call for operations problems
+    # information from the template with cached Settings. It allows having the same build! call for operations problems
     # specified with template and simulation stage.
     optimization_container_init!(optimization_container, transmission, sys)
     construct_services!(optimization_container, sys, template.services, template.devices)

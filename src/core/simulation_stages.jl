@@ -58,7 +58,7 @@ mutable struct Stage{M <: AbstractOperationsProblem}
     function Stage{M}(
         template::OperationsProblemTemplate,
         sys::PSY.System,
-        settings::PSISettings,
+        settings::Settings,
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
         internal = StageInternal(0, "", 0, 0, OptimizationContainer(sys, settings, jump_model))
@@ -81,7 +81,7 @@ function Stage{M}(
     allow_fails = false,
     optimizer_log_print = false,
 ) where {M <: AbstractOperationsProblem}
-    settings = PSISettings(
+    settings = Settings(
         sys;
         optimizer = optimizer,
         use_parameters = true,
@@ -466,6 +466,6 @@ end
 struct StageSerializationWrapper
     template::OperationsProblemTemplate
     sys::String
-    settings::PSISettings
+    settings::Settings
     stage_type::DataType
 end
