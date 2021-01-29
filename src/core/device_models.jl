@@ -73,7 +73,7 @@ function _set_model!(dict::Dict, label::String, model::DeviceModel)
     if length(device_models) > 1
         throw(
             IS.ConflictingInputsError(
-                "A model for devices of type $(model.device_type) is already specified",
+                "A model for devices of type $(model.component_type) is already specified",
             ),
         )
     end
