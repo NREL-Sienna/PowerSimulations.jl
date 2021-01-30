@@ -637,14 +637,13 @@ function check_problem_size(optimization_container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-function _build!(
+function _build_imp!(
     optimization_container::OptimizationContainer,
     template::OperationsProblemTemplate,
     sys::PSY.System,
 )
     transmission = template.transmission
     # Order is required
-    #optimization_container_init!(optimization_container, transmission, sys)
     construct_services!(optimization_container, sys, template.services, template.devices)
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
