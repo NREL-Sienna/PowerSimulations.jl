@@ -18,12 +18,7 @@ mutable struct OperationsProblemTemplate
     branches::BranchModelContainer
     services::ServicesModelContainer
     function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
-        new(
-            T,
-            DevicesModelContainer(),
-            BranchModelContainer(),
-            ServicesModelContainer(),
-        )
+        new(T, DevicesModelContainer(), BranchModelContainer(), ServicesModelContainer())
     end
 end
 
@@ -50,7 +45,7 @@ end
 function set_device_model!(
     template::OperationsProblemTemplate,
     component_type::Type{<:PSY.Device},
-    formulation::Type{<:AbstractDeviceFormulation}
+    formulation::Type{<:AbstractDeviceFormulation},
 )
     set_device_model!(template, DeviceModel(component_type, formulation))
     return
@@ -84,7 +79,11 @@ function set_service_model!(
     service_type::Type{<:PSY.Service},
     formulation::Type{<:AbstractServiceFormulation},
 )
-    set_service_model!(template.services, service_name, ServiceModel(service_type, formulation, use_service_name = true))
+    set_service_model!(
+        template.services,
+        service_name,
+        ServiceModel(service_type, formulation, use_service_name = true),
+    )
     return
 end
 

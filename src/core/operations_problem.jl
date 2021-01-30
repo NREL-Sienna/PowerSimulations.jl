@@ -318,9 +318,9 @@ function build_pre_step!(problem::OperationsProblem)
     return
 end
 
-# Rename this function
+"""Implementation of build for any OperationsProblem"""
 function build!(
-    problem::OperationsProblem{<:PowerSimulationsOperationsProblem};
+    problem::OperationsProblem{<:AbstractOperationsProblem};
     output_dir::String,
     console_level = Logging.Error,
     file_level = Logging.Info,
@@ -335,11 +335,7 @@ function build!(
     try
         Logging.with_logger(logger) do
             build_pre_step!(problem)
-            optimization_container = get_optimization_container(problem)
-            system = get_system(problem)
-            _build!(optimization_container, get_template(problem), system)
-            settings = get_settings(problem)
-            @assert get_horizon(settings) == length(optimization_container.time_steps)
+            problem_build!(problem)
             #serialize_problem(problem, "operations_problem")
             #serialize_optimization_model(problem)
             set_status!(problem, BuildStatus.BUILT)
@@ -351,11 +347,30 @@ function build!(
     return get_status(problem)
 end
 
-function serialize_optimization_model(problem::OperationsProblem)
+"""
+Default implementation of build method for Operational Problems for models conforming with PowerSimulationsOperationsProblem specification. Overload this function to implement a custom build method
+"""
+function problem_build!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem})
+    _build_imp!(
+        get_optimization_container(problem),
+        get_template(problem),
+        get_system(problem),
+    )
+end
+
+serialize_optimization_model(::OperationsProblem) = nothing
+serialize_problem(::OperationsProblem) = nothing
+
+function serialize_optimization_model(
+    problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+)
     serialize_optimization_model(get_optimization_container(problem), path)
 end
 
-function serialize_problem(op_problem::OperationsProblem, filename::AbstractString)
+function serialize_problem(
+    op_problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    filename::AbstractString,
+)
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
     sys_filename = "$(basename(filename))-system-$(IS.get_uuid(op_problem.sys)).json"
@@ -418,9 +433,8 @@ function _psi_solve_optimization_problem(problem::OperationsProblem; kwargs...)
 end
 
 """
-    solve!(op_problem::OperationsProblem; kwargs...)
-This solves the operational model for a single instance and
-outputs results of type OperationsProblemResult
+Default solve method the operational model for a single instance. Solves problems
+    that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
 # Arguments
 - `op_problem::OperationModel = op_problem`: operation model
 # Examples
@@ -432,13 +446,22 @@ results = solve!(OpModel)
 automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
-function solve!(
-    problem::OperationsProblem{T};
-    kwargs...,
-) where {T <: AbstractOperationsProblem}
+function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem}, kwargs...)
     return _psi_solve_optimization_problem(problem; kwargs...)
 end
 
+"""
+Default simulate method the operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
+
+# Arguments
+- `step::Int`: Simulation Step
+- `op_problem::OperationModel`: operation model
+- `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
+- `store::SimulationStore`: Simulation output store
+
+# Accepted Key Words
+- `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
+"""
 function simulate!(
     step::Int,
     problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
@@ -456,7 +479,6 @@ function simulate!(
         if problem.internal.execution_count == problem.internal.executions
             problem.internal.execution_count = 0
         end
-
     end
 
     return solve_status

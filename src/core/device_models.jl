@@ -66,7 +66,10 @@ get_services(m::Nothing) = nothing
 
 DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
 
-function _set_model!(dict::Dict, model::DeviceModel{D, B}) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
+function _set_model!(
+    dict::Dict,
+    model::DeviceModel{D, B},
+) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
     key = Symbol(D)
     if haskey(dict, key)
         @info("Overwriting $(D) existing model")
