@@ -1,17 +1,21 @@
 # Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
-abstract type AbstractBoundedBranchFormulation <: AbstractBranchFormulation end
 
 # Abstract Line Models
-struct StaticLine <: AbstractBranchFormulation end
-struct StaticLineBounds <: AbstractBoundedBranchFormulation end
-struct StaticLineUnbounded <: AbstractBranchFormulation end
-struct FlowMonitoredLine <: AbstractBranchFormulation end
+struct StaticBranch <: AbstractBranchFormulation end
+struct StaticBranchBounds <: AbstractBranchFormulation end
+struct StaticBranchUnbounded <: AbstractBranchFormulation end
 
-# Abstract Transformer Models
-struct StaticTransformer <: AbstractBranchFormulation end
-struct StaticTransformerBounds <: AbstractBoundedBranchFormulation end
-struct StaticTransformerUnbounded <: AbstractBranchFormulation end
+# Note: Any future concrete formulation requires the definition of
+
+# construct_device!(
+#     ::OptimizationContainer,
+#     ::PSY.System,
+#     ::DeviceModel{<:PSY.ACBranch, MyNewFormulation},
+#     ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
+# ) = nothing
+
+#
 
 # Not implemented yet
 # struct TapControl <: AbstractBranchFormulation end
@@ -21,7 +25,7 @@ struct StaticTransformerUnbounded <: AbstractBranchFormulation end
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
 # for the branch flows either in AC or DC.
 flow_variables!(
-    optimization_container::OptimizationContainer,
+    ::OptimizationContainer,
     ::Type{<:PM.AbstractPowerModel},
     ::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
 ) = nothing
@@ -29,9 +33,8 @@ flow_variables!(
 add_variables!(
     optimization_container::OptimizationContainer,
     ::StandardPTDFModel,
-    devices::IS.FlattenIteratorWrapper{B},
-) where {B <: PSY.ACBranch} =
-    add_variable!(optimization_container, FlowActivePowerVariable(), devices)
+    devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
+) = add_variable!(optimization_container, FlowActivePowerVariable(), devices)
 
 get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}) = false
 
@@ -57,7 +60,7 @@ end
 function branch_rate_bounds!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
     constraint_infos = _get_constraint_data(devices)
@@ -68,7 +71,7 @@ end
 function branch_rate_bounds!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
 ) where {B <: PSY.ACBranch}
     constraint_infos = _get_constraint_data(devices)
@@ -91,7 +94,7 @@ end
 function branch_rate_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractActivePowerModel},
     feedforward::Nothing,
 ) where {B <: PSY.ACBranch}
@@ -110,9 +113,9 @@ end
 function branch_rate_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    ::Nothing,
 ) where {B <: PSY.ACBranch}
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
     rating_constraint!(
@@ -137,6 +140,7 @@ function branch_rate_constraints!(
     return
 end
 
+#=
 ############################## Flow Limits Constraints #####################################
 function branch_flow_constraints!(
     optimization_container::OptimizationContainer,
@@ -215,3 +219,4 @@ function branch_flow_constraints!(
     )
     return
 end
+=#
