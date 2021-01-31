@@ -19,10 +19,7 @@ function PSI.OperationsProblem(
 end
 
 # Only used for testing
-function mock_construct_device!(
-    problem::PSI.OperationsProblem{MockOperationProblem},
-    model,
-)
+function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProblem}, model)
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
     PSI.optimization_container_init!(
@@ -44,10 +41,16 @@ function mock_construct_device!(
     )
 end
 
-function mock_construct_network!(problem::PSI.OperationsProblem{MockOperationProblem},
-    model)
+function mock_construct_network!(
+    problem::PSI.OperationsProblem{MockOperationProblem},
+    model,
+)
     PSI.set_transmission_model!(problem.template, model)
-    PSI.construct_network!(PSI.get_optimization_container(problem), PSI.get_system(problem), model)
+    PSI.construct_network!(
+        PSI.get_optimization_container(problem),
+        PSI.get_system(problem),
+        model,
+    )
 end
 
 struct FakeStagesStruct

@@ -2,8 +2,8 @@
 @testset "Manual Operations Template" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template,ThermalStandard, ThermalStandardUnitCommitment)
-    set_device_model!(template, Line, StaticLineUnbounded)
+    set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+    set_device_model!(template, Line, StaticBranchUnbounded)
     @test !isempty(template.devices)
     @test !isempty(template.branches)
     @test isempty(template.services)

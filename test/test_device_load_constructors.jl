@@ -5,7 +5,6 @@
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5)
     @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
         op_problem,
-
         model,
     )
     model = DeviceModel(PowerLoad, DispatchablePowerLoad)
@@ -13,7 +12,6 @@
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5)
     @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
         op_problem,
-
         model,
     )
 end
@@ -27,7 +25,7 @@ end
         model = DeviceModel(PowerLoad, m)
         op_problem =
             OperationsProblem(MockOperationProblem, n, c_sys5_il; use_parameters = p)
-        mock_construct_device!(op_problem,  model)
+        mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 0, 0, 0, 0, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -42,7 +40,7 @@ end
         model = DeviceModel(InterruptibleLoad, m)
         op_problem =
             OperationsProblem(MockOperationProblem, n, c_sys5_il; use_parameters = p)
-        mock_construct_device!(op_problem,  model)
+        mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 24, 0, 24, 0, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -57,7 +55,7 @@ end
         model = DeviceModel(InterruptibleLoad, m)
         op_problem =
             OperationsProblem(MockOperationProblem, n, c_sys5_il; use_parameters = p)
-        mock_construct_device!(op_problem,  model)
+        mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 48, 0, 24, 0, 24, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -72,7 +70,7 @@ end
         model = DeviceModel(InterruptibleLoad, m)
         op_problem =
             OperationsProblem(MockOperationProblem, n, c_sys5_il; use_parameters = p)
-        mock_construct_device!(op_problem,  model)
+        mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 48, 0, p * 48 + !p * 24, 0, 0, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -87,7 +85,7 @@ end
         model = DeviceModel(InterruptibleLoad, m)
         op_problem =
             OperationsProblem(MockOperationProblem, n, c_sys5_il; use_parameters = p)
-        mock_construct_device!(op_problem,  model)
+        mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 72, 0, p * 48 + !p * 24, 0, 24, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end

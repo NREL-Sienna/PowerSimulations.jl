@@ -72,17 +72,32 @@ function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel
     return
 end
 
-function _set_model!(dict::Dict, service_name::String, model::ServiceModel{D, B}) where {D <: PSY.Service, B <: AbstractServiceFormulation}
+function _set_model!(
+    dict::Dict,
+    service_name::String,
+    model::ServiceModel{D, B},
+) where {D <: PSY.Service, B <: AbstractServiceFormulation}
     if !model.use_service_name
-        throw(IS.ConflictingInputsError("The model provided has use_service_name false. This addition method can't be used"))
+        throw(
+            IS.ConflictingInputsError(
+                "The model provided has use_service_name false. This addition method can't be used",
+            ),
+        )
     end
     _set_model!(dict, (service_name, Symbol(D)), model)
     return
 end
 
-function _set_model!(dict::Dict, model::ServiceModel{D, B}) where {D <: PSY.Service, B <: AbstractServiceFormulation}
+function _set_model!(
+    dict::Dict,
+    model::ServiceModel{D, B},
+) where {D <: PSY.Service, B <: AbstractServiceFormulation}
     if model.use_service_name
-        throw(IS.ConflictingInputsError("The model provided has use_service_name set to true and no service name was provided. This addition method can't be used"))
+        throw(
+            IS.ConflictingInputsError(
+                "The model provided has use_service_name set to true and no service name was provided. This addition method can't be used",
+            ),
+        )
     end
     _set_model!(dict, (NO_SERVICE_NAME_PROVIDED, Symbol(D)), model)
     return
