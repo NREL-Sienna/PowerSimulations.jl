@@ -1,12 +1,6 @@
-thermal_model = DeviceModel(ThermalStandard, ThermalDispatch)
-load_model = DeviceModel(PowerLoad, StaticPowerLoad)
-line_model = DeviceModel(Line, StaticLine)
-transformer_model = DeviceModel(Transformer2W, StaticTransformer)
-ttransformer_model = DeviceModel(TapTransformer, StaticTransformer)
-dc_line = DeviceModel(HVDCLine, HVDCDispatch)
-
+test_path = mkpath(joinpath(pwd(), "test_network_constructors"))
 @testset "Network Copper Plate" begin
-    network = CopperPlatePowerModel
+    template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -21,40 +15,37 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
     objfuncs = [GAEVF, GQEVF, GQEVF]
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationsProblem(
-            MockOperationProblem,
-            network,
-            sys;
-            optimizer = OSQP_optimizer,
-            use_parameters = p,
-        )
-        mock_construct_device!(ps_model,thermal_model)
-        mock_construct_device!(ps_model, load_model)
-        mock_construct_network!(ps_model, network)
-        mock_construct_device!(ps_model,  line_model)
-        mock_construct_device!(ps_model,transformer_model)
-        mock_construct_device!(ps_model, ttransformer_model)
-        mock_construct_device!(ps_model, dc_line)
+        test_folder = mkpath(joinpath(test_path, randstring()))
+        try
+            ps_model = OperationsProblem(
+                template,
+                sys;
+                optimizer = OSQP_optimizer,
+                use_parameters = p,
+            )
 
-        moi_tests(
-            ps_model,
-            p,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
-            false,
-        )
-        psi_constraint_test(ps_model, constraint_names)
-        psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
+            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
+            psi_constraint_test(ps_model, constraint_names)
+            moi_tests(
+                ps_model,
+                p,
+                test_results[sys][1],
+                test_results[sys][2],
+                test_results[sys][3],
+                test_results[sys][4],
+                test_results[sys][5],
+                false,
+            )
+            psi_checkobjfun_test(ps_model, objfuncs[ix])
+            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
+        finally
+            rm(test_folder, force = true, recursive = true)
+        end
     end
 end
 
-#=
-@testset "Network DC-PF with PTDF formulation" begin
-    network = StandardPTDFModel
+@testset "Network DC-PF with PTDF Model" begin
+    template = get_thermal_dispatch_template_network(StandardPTDFModel)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -75,45 +66,40 @@ end
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationsProblem(
-            MockOperationProblem,
-            network,
-            sys;
-            optimizer = OSQP_optimizer,
-            use_parameters = p,
-            PTDF = PTDF_ref[sys],
-            constraint_duals = constraint_names,
-        )
-        mock_construct_device!(ps_model, :Thermal, thermal_model)
-        mock_construct_device!(ps_model, :Load, load_model)
-        construct_network!(ps_model, network)
-        mock_construct_device!(ps_model, :Line, line_model)
-        mock_construct_device!(ps_model, :Tf, transformer_model)
-        mock_construct_device!(ps_model, :TTf, ttransformer_model)
-        mock_construct_device!(ps_model, :DCLine, dc_line)
+        test_folder = mkpath(joinpath(test_path, randstring()))
+        try
+            ps_model = OperationsProblem(
+                template,
+                sys;
+                optimizer = OSQP_optimizer,
+                use_parameters = p,
+                PTDF = PTDF_ref[sys]
+            )
 
-        moi_tests(
-            ps_model,
-            p,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
-            false,
-        )
-        psi_constraint_test(ps_model, constraint_names)
-        psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(ps_model, [MOI.ALMOST_OPTIMAL, MOI.OPTIMAL])
+            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
+            psi_constraint_test(ps_model, constraint_names)
+            moi_tests(
+                ps_model,
+                p,
+                test_results[sys][1],
+                test_results[sys][2],
+                test_results[sys][3],
+                test_results[sys][4],
+                test_results[sys][5],
+                false,
+            )
+            psi_checkobjfun_test(ps_model, objfuncs[ix])
+            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
+        finally
+            rm(test_folder, force = true, recursive = true)
+        end
     end
-
-    #PTDF input Error testing
-    ps_model =
-        OperationsProblem(MockOperationProblem, network, c_sys5; optimizer = GLPK_optimizer)
-    mock_construct_device!(ps_model, :Thermal, thermal_model)
-    mock_construct_device!(ps_model, :Load, load_model)
+    # PTDF input Error testing
+    ps_model = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
+    test_folder = mkpath(joinpath(test_path, randstring()))
+    @test_logs (:error,) match_mode = :any @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.FAILED
 end
-
+#=
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
     network = DCPPowerModel
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -163,44 +149,6 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
     end
-end
-
-@testset "Test Locational Marginal Prices between DC lossless with PowerModels vs StandardPTDFModel" begin
-    network = [DCPPowerModel, StandardPTDFModel]
-    sys = PSB.build_system(PSITestSystems, "c_sys5")
-    dual_constraint = [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow]]
-    services = Dict{String, ServiceModel}()
-    devices = Dict(:Thermal => thermal_model, :Load => load_model)
-    branches = Dict{String, DeviceModel}(
-        :Line => line_model,
-        :Tf => transformer_model,
-        :Ttf => ttransformer_model,
-        :DCLine => dc_line,
-    )
-    parameters = [true, false]
-    ptdf = PTDF(sys)
-    LMPs = []
-    for (ix, net) in enumerate(network), p in parameters
-        template = OperationsProblemTemplate(net, devices, branches, services)
-        ps_model = OperationsProblem(
-            MockOperationProblem,
-            template,
-            sys;
-            optimizer = OSQP_optimizer,
-            use_parameters = p,
-            PTDF = ptdf,
-            constraint_duals = dual_constraint[ix],
-        )
-
-        if net == StandardPTDFModel
-            push!(LMPs, abs.(psi_ptdf_lmps(ps_model, ptdf)))
-        else
-            res = solve!(ps_model)
-            duals = abs.(res.dual_values[:nodal_balance_active__Bus])
-            push!(LMPs, duals[!, sort(propertynames(duals))])
-        end
-    end
-    @test isapprox(convert(Array, LMPs[1]), convert(Array, LMPs[2]), atol = 100.0)
 end
 
 @testset "Network Solve AC-PF PowerModels StandardACPModel" begin

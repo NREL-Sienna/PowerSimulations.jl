@@ -48,11 +48,7 @@ end
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
         set_device_model!(template, DeviceModel(Line, StaticLine))
-        set_device_model!(
-            template,
-
-            DeviceModel(MonitoredLine, StaticLineUnbounded),
-        )
+        set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
             op_problem_m = OperationsProblem(

@@ -5,8 +5,8 @@ devices = Dict{String, DeviceModel}(
 )
 branches = Dict{String, DeviceModel}(
     :L => DeviceModel(Line, StaticLine),
-    :T => DeviceModel(Transformer2W, StaticTransformer),
-    :TT => DeviceModel(TapTransformer, StaticTransformer),
+    :T => DeviceModel(Transformer2W, StaticBranch),
+    :TT => DeviceModel(TapTransformer, StaticBranch),
 )
 services = Dict{String, ServiceModel}()
 
@@ -206,15 +206,14 @@ end
     _test_html_print_methods(list)
 end
 
-
 devices = Dict{String, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )
 branches = Dict{String, DeviceModel}(
     :L => DeviceModel(Line, StaticLine),
-    :T => DeviceModel(Transformer2W, StaticTransformer),
-    :TT => DeviceModel(TapTransformer, StaticTransformer),
+    :T => DeviceModel(Transformer2W, StaticBranch),
+    :TT => DeviceModel(TapTransformer, StaticBranch),
 )
 services = Dict{String, ServiceModel}()
 
@@ -703,4 +702,42 @@ end
         @info("removing test files")
         rm(folder_path, recursive = true)
     end
+end
+
+@testset "Test Locational Marginal Prices between DC lossless with PowerModels vs StandardPTDFModel" begin
+    network = [DCPPowerModel, StandardPTDFModel]
+    sys = PSB.build_system(PSITestSystems, "c_sys5")
+    dual_constraint = [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow]]
+    services = Dict{String, ServiceModel}()
+    devices = Dict(:Thermal => thermal_model, :Load => load_model)
+    branches = Dict{String, DeviceModel}(
+        :Line => line_model,
+        :Tf => transformer_model,
+        :Ttf => ttransformer_model,
+        :DCLine => dc_line,
+    )
+    parameters = [true, false]
+    ptdf = PTDF(sys)
+    LMPs = []
+    for (ix, net) in enumerate(network), p in parameters
+        template = OperationsProblemTemplate(net, devices, branches, services)
+        ps_model = OperationsProblem(
+            MockOperationProblem,
+            template,
+            sys;
+            optimizer = OSQP_optimizer,
+            use_parameters = p,
+            PTDF = ptdf,
+            constraint_duals = dual_constraint[ix],
+        )
+
+        if net == StandardPTDFModel
+            push!(LMPs, abs.(psi_ptdf_lmps(ps_model, ptdf)))
+        else
+            res = solve!(ps_model)
+            duals = abs.(res.dual_values[:nodal_balance_active__Bus])
+            push!(LMPs, duals[!, sort(propertynames(duals))])
+        end
+    end
+    @test isapprox(convert(Array, LMPs[1]), convert(Array, LMPs[2]), atol = 100.0)
 end
