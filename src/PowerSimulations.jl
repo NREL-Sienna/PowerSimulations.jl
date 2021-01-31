@@ -28,13 +28,9 @@ export StepwiseCostReserve
 export PIDSmoothACE
 export GroupReserve
 ######## Branch Models ########
-export StaticLine
-export StaticLineBounds
-export StaticLineUnbounded
-export StaticTransformer
-export StaticTransformerBounds
-export StaticTransformerUnbounded
-export FlowMonitoredLine
+export StaticBranch
+export StaticBranchBounds
+export StaticBranchUnbounded
 export HVDCLossless
 export HVDCDispatch
 export HVDCUnbounded
