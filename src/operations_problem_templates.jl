@@ -12,8 +12,8 @@ function _default_devices_uc()
         DeviceModel(PSY.PowerLoad, StaticPowerLoad),
         DeviceModel(PSY.InterruptibleLoad, InterruptiblePowerLoad),
         DeviceModel(PSY.Line, StaticLine),
-        DeviceModel(PSY.Transformer2W, StaticTransformer),
-        DeviceModel(PSY.TapTransformer, StaticTransformer),
+        DeviceModel(PSY.Transformer2W, StaticBranch),
+        DeviceModel(PSY.TapTransformer, StaticBranch),
         DeviceModel(PSY.HVDCLine, HVDCDispatch),
     ]
 end

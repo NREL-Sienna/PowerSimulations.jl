@@ -9,8 +9,11 @@ function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     template = OperationsProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, MonitoredLine, StaticLineBounds)
-    set_device_model!(template, Line, StaticLineUnbounded)
+    #set_device_model!(template, MonitoredLine, StaticBranchBounds)
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    set_device_model!(template, TapTransformer, StaticBranch)
+    set_device_model!(template, HVDCLine, HVDCDispatch)
     return template
 end
 
@@ -162,8 +165,8 @@ template_hydro_st_ed =
 #=
 ## UC Model Ref
 branches = Dict(:L => DeviceModel(Line, StaticLine),
-                                     :T => DeviceModel(Transformer2W, StaticTransformer),
-                                     :TT => DeviceModel(TapTransformer, StaticTransformer),
+                                     :T => DeviceModel(Transformer2W, StaticBranch),
+                                     :TT => DeviceModel(TapTransformer, StaticBranch),
                                      :dc_line => DeviceModel(HVDCLine, HVDCDispatch))
 
 services = Dict()
@@ -177,8 +180,8 @@ template_basic_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, bra
 
 ## ED Model Ref
 branches = Dict(:L => DeviceModel(Line, StaticLine),
-                                     :T => DeviceModel(Transformer2W, StaticTransformer),
-                                     :TT => DeviceModel(TapTransformer, StaticTransformer),
+                                     :T => DeviceModel(Transformer2W, StaticBranch),
+                                     :TT => DeviceModel(TapTransformer, StaticBranch),
                                      :dc_line => DeviceModel(HVDCLine, HVDCDispatch))
 
 services = Dict()
