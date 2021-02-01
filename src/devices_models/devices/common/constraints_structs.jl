@@ -155,3 +155,30 @@ struct DeviceStartTypesConstraintInfo <: AbstractStartConstraintInfo
     component_name::String
     startup_types::Int
 end
+
+struct HybridPowerInflowConstraintInfo <: AbstractStartConstraintInfo
+    component_name::String
+    has_load::Bool
+    has_storage::Bool
+end
+
+
+struct HybridPowerOutflowConstraintInfo <: AbstractStartConstraintInfo
+    component_name::String
+    has_thermal::Bool
+    has_storage::Bool
+    has_renewable::Bool
+end
+
+struct HybridReactiveConstraintInfo <: AbstractStartConstraintInfo
+    component_name::String
+    has_thermal::Bool
+    has_storage::Bool
+    has_renewable::Bool
+    has_load::Bool
+end
+
+struct HybridInvertorConstraintInfo <: AbstractStartConstraintInfo
+    component_name::String
+    rating::Float64
+end

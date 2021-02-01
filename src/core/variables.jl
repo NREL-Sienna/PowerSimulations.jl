@@ -33,6 +33,10 @@ const ACTIVE_POWER_LOAD = "P_load"
 const ACTIVE_POWER_IN_STORAGE = "Pin_storage"
 const ACTIVE_POWER_OUT_STORAGE = "Pout_storage"
 const ACTIVE_POWER_RENEWABLE = "P_renewable"
+const REACTIVE_POWER_THERMAL = "Q_thermal"
+const REACTIVE_POWER_LOAD = "Q_load"
+const REACTIVE_POWER_STORAGE = "Q_storage"
+const REACTIVE_POWER_RENEWABLE = "Q_renewable"
 
 abstract type VariableType end
 
@@ -98,6 +102,14 @@ struct ActivePowerInVariableStorage <: VariableType end
 struct ActivePowerOutVariableStorage <: VariableType end
 
 struct ActivePowerVariableRenewable <: VariableType end
+
+struct ReactivePowerVariableThermal <: VariableType end
+
+struct ReactivePowerVariableLoad <: VariableType end
+
+struct ReactivePowerVariableStorage <: VariableType end
+
+struct ReactivePowerVariableRenewable <: VariableType end
 
 """Struct to dispatch the creation of Flow Active Power Variables"""
 struct FlowActivePowerVariable <: VariableType end
@@ -182,3 +194,11 @@ make_variable_name(::Type{ActivePowerInVariableStorage}, ::Type{T}) where {T <: 
 make_variable_name(::Type{ActivePowerOutVariableStorage}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Pout_storage")
 
 make_variable_name(::Type{ActivePowerVariableRenewable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "P_renewable")
+
+make_variable_name(::Type{ReactivePowerVariableThermal}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Q_thermal")
+
+make_variable_name(::Type{ReactivePowerVariableLoad}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Q_load")
+
+make_variable_name(::Type{ReactivePowerVariableStorage}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Q_storage")
+
+make_variable_name(::Type{ReactivePowerVariableRenewable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Q_renewable")
