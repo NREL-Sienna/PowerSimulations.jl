@@ -99,11 +99,19 @@ function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
     source_stage_sync = sync.periods
 
     if source_stage_sync > source_stage_horizon
-        throw(IS.ConflictingInputsError("The lookahead length $(source_stage_horizon) in stage is insufficient to syncronize with $(source_stage_sync) feedforward periods"))
+        throw(
+            IS.ConflictingInputsError(
+                "The lookahead length $(source_stage_horizon) in stage is insufficient to syncronize with $(source_stage_sync) feedforward periods",
+            ),
+        )
     end
 
     if (source_stage_sync % destination_stage_executions_per_solution) != 0
-        throw(IS.ConflictingInputsError("The current configuration implies $(source_stage_sync / destination_stage_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in stage $(key.first) needs to be a mutiple of the number of stage $(key.second) execution for every stage $(key.first) interval."))
+        throw(
+            IS.ConflictingInputsError(
+                "The current configuration implies $(source_stage_sync / destination_stage_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in stage $(key.first) needs to be a mutiple of the number of stage $(key.second) execution for every stage $(key.first) interval.",
+            ),
+        )
     end
 
     return
@@ -113,7 +121,9 @@ function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
     source_stage_horizon = get_sequence(sim).horizons[key.first]
     source_stage_interval = get_stage_interval(sim, key.first)
     if source_stage_horizon != source_stage_interval
-        @warn("Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_stage_horizon) in stage $(key.first) will be replaced with $(source_stage_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon")
+        @warn(
+            "Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_stage_horizon) in stage $(key.first) will be replaced with $(source_stage_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon"
+        )
     end
     get_sequence(sim).horizons[key.first] = get_stage_interval(sim, key.first)
     return
@@ -278,19 +288,24 @@ function ub_ff(
     @assert axes[2] == time_steps
     container = add_param_container!(psi_container, param_reference, set_name)
     param_ub = get_parameter_array(container)
+    multiplier_ub = get_multiplier_array(container)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
         value = JuMP.upper_bound(variable[name, 1])
         param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
                 JuMP.add_to_expression!(expression_ub, variable[name, t])
             end
-            con_ub[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
+            con_ub[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                expression_ub <= param_ub[name] * multiplier_ub[name]
+            )
         end
     end
     return
@@ -342,9 +357,10 @@ function range_ff(
     # Create containers for the constraints
     container_lb = add_param_container!(psi_container, param_reference[1], set_name)
     param_lb = get_parameter_array(container_lb)
+    multiplier_lb = get_multiplier_array(container_lb)
     container_ub = add_param_container!(psi_container, param_reference[2], set_name)
     param_ub = get_parameter_array(container_ub)
-
+    multiplier_ub = get_multiplier_array(container_ub)
     # Create containers for the parameters
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
@@ -355,6 +371,9 @@ function range_ff(
             PJ.add_parameter(psi_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
         param_ub[name] =
             PJ.add_parameter(psi_container.JuMPmodel, JuMP.upper_bound(variable[name, 1]))
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
+        multiplier_lb[name] = 1.0
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
@@ -364,10 +383,14 @@ function range_ff(
             for val in constraint_info.additional_terms_lb
                 JuMP.add_to_expression!(expression_lb, variable[name, t], -1.0)
             end
-            con_ub[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
-            con_lb[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= param_lb[name])
+            con_ub[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                expression_ub <= param_ub[name] * multiplier_ub[name]
+            )
+            con_lb[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                expression_lb >= param_lb[name] * multiplier_lb[name]
+            )
         end
     end
 
@@ -433,6 +456,8 @@ function semicontinuousrange_ff(
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
         @debug "SemiContinuousFF" name ub_value lb_value
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier[name] = 1.0
         param[name] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
@@ -450,13 +475,15 @@ function semicontinuousrange_ff(
                     -1.0,
                 )
             end
+            mul_ub = ub_value * multiplier[name]
+            mul_lb = lb_value * multiplier[name]
             con_ub[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                expression_ub <= ub_value * param[name]
+                expression_ub <= mul_ub * param[name]
             )
             con_lb[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                expression_lb >= lb_value * param[name]
+                expression_lb >= mul_lb * param[name]
             )
         end
     end
@@ -515,16 +542,19 @@ function integral_limit_ff(
     @assert axes[2] == time_steps
     container_ub = add_param_container!(psi_container, param_reference, set_name)
     param_ub = get_parameter_array(container_ub)
+    multiplier_ub = get_multiplier_array(container_ub)
     con_ub = add_cons_container!(psi_container, ub_name, set_name)
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
 
         param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
             sum(variable[name, t] for t in time_steps) / length(time_steps) <=
-            param_ub[name]
+            param_ub[name] * multiplier_ub[name]
         )
     end
 end

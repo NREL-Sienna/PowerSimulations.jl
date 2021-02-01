@@ -197,8 +197,8 @@ end
 
 function commitment_variables!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-)
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.ThermalGen}
     time_steps = model_time_steps(psi_container)
     if get_warm_start(psi_container.settings)
         initial_value = d -> (PSY.get_active_power(d) > 0 ? 1.0 : 0.0)
@@ -207,7 +207,7 @@ function commitment_variables!(
     end
 
     add_variable!(psi_container, OnVariable(), devices)
-    var_status = get_variable(psi_container, OnVariable, PSY.ThermalMultiStart)
+    var_status = get_variable(psi_container, OnVariable, T)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))

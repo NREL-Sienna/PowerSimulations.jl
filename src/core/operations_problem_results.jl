@@ -56,10 +56,9 @@ function write_to_CSV(res::OperationsProblemResults, save_path::String)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid."))
     end
-    folder_path = mkdir(joinpath(
-        save_path,
-        replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
-    ))
+    folder_path = mkdir(
+        joinpath(save_path, replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")),
+    )
     export_variables = Dict()
     for (k, v) in IS.get_variables(res)
         export_variables[k] = v

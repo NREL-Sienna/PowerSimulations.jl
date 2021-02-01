@@ -4,12 +4,19 @@
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
-struct ThermalBasicUnitCommitment <: AbstractThermalUnitCommitment end
-struct ThermalStandardUnitCommitment <: AbstractThermalUnitCommitment end
+
+abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
+abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
+
+struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
+struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
 struct ThermalDispatch <: AbstractThermalDispatchFormulation end
 struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
-struct ThermalMultiStartUnitCommitment <: AbstractThermalUnitCommitment end
+
+struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
+struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
+struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
 ############## ActivePowerVariable, ThermalGen ####################
 
@@ -137,7 +144,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
-    ::Type{<:AbstractThermalFormulation},
+    ::Type{<:AbstractThermalUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
@@ -202,7 +209,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
-    ::Type{<:ThermalMultiStartUnitCommitment},
+    ::Type{<:AbstractCompactUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
@@ -253,15 +260,19 @@ This function adds range constraint for the first time period. Constraint (10) f
 """
 function initial_range_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalMultiStart,
+    D <: AbstractCompactUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
-    key_status = ICKey(DeviceStatus, PSY.ThermalMultiStart)
+    key_power = ICKey(DevicePower, T)
+    key_status = ICKey(DeviceStatus, T)
     initial_conditions_power = get_initial_conditions(psi_container, key_power)
     initial_conditions_status = get_initial_conditions(psi_container, key_status)
     ini_conds = _get_data_for_range_ic(initial_conditions_power, initial_conditions_status)
@@ -282,8 +293,8 @@ function initial_range_constraints!(
             psi_container,
             constraint_data,
             ini_conds,
-            make_constraint_name(ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
-            make_variable_name(StopVariable, PSY.ThermalMultiStart),
+            make_constraint_name(ACTIVE_RANGE_IC, T),
+            make_variable_name(StopVariable, T),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -326,7 +337,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ReactivePowerVariable},
     ::Type{T},
-    ::Type{<:AbstractThermalFormulation},
+    ::Type{<:AbstractThermalUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -358,7 +369,11 @@ function commitment_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     device_commitment!(
         psi_container,
         get_initial_conditions(psi_container, ICKey(DeviceStatus, T)),
@@ -459,7 +474,11 @@ function ramp_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     time_steps = model_time_steps(psi_container)
     data = _get_data_for_rocc(psi_container, T)
     if !isempty(data)
@@ -510,12 +529,12 @@ end
 function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{T, ThermalMultiStartUnitCommitment},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractPowerModel}
+) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    data = _get_data_for_rocc(psi_container, T)
+    data = _get_data_for_rocc(psi_container, PSY.ThermalMultiStart)
 
     # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
     for r in data
@@ -593,8 +612,8 @@ function turbine_temperature(
                 con[ix][name, t] = JuMP.@constraint(
                     psi_container.JuMPmodel,
                     start_vars[ix][name, t] <= sum(
-                        varstop[name, t - i]
-                        for i in st.time_limits[ix]:(st.time_limits[ix + 1] - 1)
+                        varstop[name, t - i] for
+                        i in st.time_limits[ix]:(st.time_limits[ix + 1] - 1)
                     )
                 )
             end
@@ -950,7 +969,11 @@ function time_constraints!(
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
     parameters = model_has_parameters(psi_container)
     resolution = model_resolution(psi_container)
     initial_conditions_on = get_initial_conditions(psi_container, ICKey(TimeDurationON, T))
@@ -1043,7 +1066,7 @@ function AddCostSpec(
     ::Type{T},
     ::Type{U},
     psi_container::PSIContainer,
-) where {T <: PSY.ThermalGen, U <: AbstractThermalFormulation}
+) where {T <: PSY.ThermalGen, U <: AbstractThermalUnitCommitment}
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,
@@ -1081,20 +1104,92 @@ end
 
 function AddCostSpec(
     ::Type{T},
-    ::Type{ThermalMultiStartUnitCommitment},
+    ::Type{U},
     psi_container::PSIContainer,
-) where {T <: PSY.ThermalGen}
+) where {T <: PSY.ThermalGen, U <: AbstractCompactUnitCommitment}
     fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,
         has_status_variable = has_on_variable(psi_container, T),
         has_status_parameter = has_on_parameter(psi_container, T),
-        # variable_cost = PSY.get_variable, uses SOS by default
+        variable_cost = _get_compact_varcost,
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
         sos_status = SOSStatusVariable.VARIABLE,
     )
+end
+
+function AddCostSpec(
+    ::Type{T},
+    ::Type{ThermalCompactDispatch},
+    psi_container::PSIContainer,
+) where {T <: PSY.ThermalGen}
+    if has_on_parameter(psi_container, T)
+        sos_status = SOSStatusVariable.PARAMETER
+    else
+        sos_status = SOSStatusVariable.NO_VARIABLE
+    end
+    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        variable_cost = _get_compact_varcost,
+        fixed_cost = fixed_cost_func,
+        sos_status = sos_status,
+    )
+end
+
+function AddCostSpec(
+    ::Type{T},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {T <: PSY.ThermalGen, U <: ThermalMultiStartUnitCommitment}
+    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = T,
+        has_status_variable = has_on_variable(psi_container, T),
+        has_status_parameter = has_on_parameter(psi_container, T),
+        variable_cost = PSY.get_variable,
+        start_up_cost = PSY.get_start_up,
+        shut_down_cost = PSY.get_shut_down,
+        fixed_cost = fixed_cost_func,
+        sos_status = SOSStatusVariable.VARIABLE,
+        has_multistart_variables = true,
+    )
+end
+
+function PSY.get_no_load(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
+    var_cost, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    return no_load_cost
+end
+
+function _get_compact_varcost(cost)
+    return PSY.get_variable(cost)
+end
+
+function _get_compact_varcost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
+    var_cost, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    return var_cost
+end
+
+function _convert_variable_cost(var_cost::PSY.VariableCost)
+    return var_cost, 0.0
+end
+
+function _convert_variable_cost(var_cost::PSY.VariableCost{Float64})
+    return var_cost, var_cost
+end
+
+function _convert_variable_cost(variable_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}})
+    var_cost = PSY.get_cost(variable_cost)
+    no_load_cost, p_min = var_cost[1]
+    var_cost =
+        PSY.VariableCost([(c - no_load_cost, pp - var_cost[1][2]) for (c, pp) in var_cost])
+    return var_cost, no_load_cost
 end
 
 """
@@ -1122,7 +1217,11 @@ function cost_function!(
             @debug "PWL cost function detected for device $(component_name) using ThermalDispatchNoMin"
             slopes = PSY.get_slopes(cost_component)
             if any(slopes .< 0) || !pwlparamcheck(cost_component)
-                throw(IS.InvalidValue("The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost."))
+                throw(
+                    IS.InvalidValue(
+                        "The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost.",
+                    ),
+                )
             end
             if slopes[1] != 0.0
                 @debug "PWL has no 0.0 intercept for generator $(PSY.get_name(g))"

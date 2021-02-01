@@ -292,7 +292,11 @@ function set_device_model!(
         reset!(op_problem)
         build!(op_problem)
     else
-        throw(IS.ConflictingInputsError("Device Model with name $(name) doesn't exist in the model"))
+        throw(
+            IS.ConflictingInputsError(
+                "Device Model with name $(name) doesn't exist in the model",
+            ),
+        )
     end
     return
 end
@@ -307,7 +311,11 @@ function set_branch_model!(
         reset!(op_problem)
         build!(op_problem)
     else
-        throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
+        throw(
+            IS.ConflictingInputsError(
+                "Branch Model with name $(name) doesn't exist in the model",
+            ),
+        )
     end
     return
 end
@@ -322,7 +330,11 @@ function set_services_model!(
         reset!(op_problem)
         build!(op_problem)
     else
-        throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
+        throw(
+            IS.ConflictingInputsError(
+                "Branch Model with name $(name) doesn't exist in the model",
+            ),
+        )
     end
     return
 end
@@ -412,39 +424,6 @@ function check_problem_size(psi_container::PSIContainer)
         cons += JuMP.num_constraints(psi_container.JuMPmodel, exp, c_type)
     end
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
-end
-
-function _build!(
-    psi_container::PSIContainer,
-    template::OperationsProblemTemplate,
-    sys::PSY.System,
-)
-    transmission = template.transmission
-    # Order is required
-    # The container is initialized here because this build! call for psi_container takes the
-    # information from the template with cached PSISettings. It allows having the same build! call for operations problems
-    # specified with template and simulation stage.
-    psi_container_init!(psi_container, transmission, sys)
-    construct_services!(psi_container, sys, template.services, template.devices)
-    for device_model in values(template.devices)
-        @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
-        construct_device!(psi_container, sys, device_model, transmission)
-        @debug check_problem_size(psi_container)
-    end
-    @debug "Building $(transmission) network formulation"
-    construct_network!(psi_container, sys, transmission)
-    @debug check_problem_size(psi_container)
-
-    for branch_model in values(template.branches)
-        @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
-        construct_device!(psi_container, sys, branch_model, transmission)
-        @debug check_problem_size(psi_container)
-    end
-
-    @debug "Building Objective"
-    JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
-    @debug "Total operation count $(psi_container.JuMPmodel.operator_counter)"
-    return
 end
 
 function read_variables(op_m::OperationsProblem)

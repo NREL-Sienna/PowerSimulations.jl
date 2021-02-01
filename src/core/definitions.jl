@@ -20,25 +20,11 @@ const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
-IS.@scoped_enum(BuildStatus,
-    IN_PROGRESS = -1,
-    BUILT = 0,
-    FAILED = 1,
-    EMPTY = 2,
-)
+IS.@scoped_enum(BuildStatus, IN_PROGRESS = -1, BUILT = 0, FAILED = 1, EMPTY = 2,)
 
-IS.@scoped_enum(RunStatus,
-    READY = -1,
-    SUCCESSFUL = 0,
-    RUNNING = 1,
-    FAILED = 2,
-)
+IS.@scoped_enum(RunStatus, READY = -1, SUCCESSFUL = 0, RUNNING = 1, FAILED = 2,)
 
-IS.@scoped_enum(SOSStatusVariable,
-    NO_VARIABLE = 1,
-    PARAMETER = 2,
-    VARIABLE = 3,
-)
+IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
 # Settings constants
 const UNSET_HORIZON = 0

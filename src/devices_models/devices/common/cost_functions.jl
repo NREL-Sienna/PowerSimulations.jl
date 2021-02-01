@@ -9,6 +9,7 @@ struct AddCostSpec
     start_up_cost::Union{Nothing, Function}
     shut_down_cost::Union{Nothing, Function}
     fixed_cost::Union{Nothing, Function}
+    has_multistart_variables::Bool
     addtional_linear_terms::Dict{String, Symbol}
 end
 
@@ -23,6 +24,7 @@ function AddCostSpec(;
     start_up_cost = nothing,
     shut_down_cost = nothing,
     fixed_cost = nothing,
+    has_multistart_variables = false,
     addtional_linear_terms = Dict{String, Symbol}(),
 )
     return AddCostSpec(
@@ -36,6 +38,7 @@ function AddCostSpec(;
         start_up_cost,
         shut_down_cost,
         fixed_cost,
+        has_multistart_variables,
         addtional_linear_terms,
     )
 end
@@ -209,7 +212,9 @@ function pwl_gencost_sos!(
 
     if spec.sos_status == SOSStatusVariable.NO_VARIABLE
         bin = 1.0
-        @debug("Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)")
+        @debug(
+            "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)"
+        )
     elseif spec.sos_status == SOSStatusVariable.PARAMETER
         param_key = encode_symbol(OnVariable, string(spec.component_type))
         bin =
@@ -417,6 +422,16 @@ function add_to_cost!(
     return
 end
 
+function check_single_start(psi_container::PSIContainer, spec::AddCostSpec)
+    for (st, var_type) in enumerate(START_VARIABLES)
+        var_name = make_variable_name(var_type, spec.component_type)
+        if !haskey(psi_container.variables, var_name)
+            return true
+        end
+    end
+    return false
+end
+
 """
 Adds to the models costs represented by PowerSystems Multi-Start costs.
 """
@@ -468,22 +483,40 @@ function add_to_cost!(
     else
         @debug "No Variable Cost associated with $(component_name)"
     end
+    # variable_cost = PSY.get_variable(cost_data)
+    # for t in time_steps
+    #     variable_cost!(psi_container, spec, component_name, variable_cost, t)
+    # end
 
     # Start-up costs
-    start_cost_data = PSY.get_start_up(cost_data)
-    for (st, var_type) in enumerate(start_types)
-        var_name = make_variable_name(var_type, spec.component_type)
-        for t in time_steps
-            linear_gen_cost!(
-                psi_container,
-                var_name,
-                component_name,
-                start_cost_data[st] * spec.multiplier,
-                t,
-            )
+    if !isnothing(spec.start_up_cost)
+        start_cost_data = PSY.get_start_up(cost_data)
+        if spec.has_multistart_variables
+            for (st, var_type) in enumerate(START_VARIABLES)
+                var_name = make_variable_name(var_type, spec.component_type)
+                for t in time_steps
+                    linear_gen_cost!(
+                        psi_container,
+                        var_name,
+                        component_name,
+                        start_cost_data[st] * spec.multiplier,
+                        t,
+                    )
+                end
+            end
+        else
+            start_var = make_variable_name(StartVariable, spec.component_type)
+            for t in time_steps
+                linear_gen_cost!(
+                    psi_container,
+                    start_var,
+                    component_name,
+                    start_cost_data[1] * spec.multiplier,
+                    t,
+                )
+            end
         end
     end
-
     return
 end
 
@@ -522,7 +555,7 @@ function add_to_cost!(
 
     if !(spec.start_up_cost === nothing)
         start_cost_data = spec.start_up_cost(cost_data)
-        for (st, var_type) in enumerate(start_types)
+        for (st, var_type) in enumerate(START_VARIABLES)
             var_name = make_variable_name(var_type, spec.component_type)
             for t in time_steps
                 linear_gen_cost!(
@@ -688,7 +721,9 @@ function add_service_bid_cost!(
             )
         end
     else
-        error("Current version only supports linear cost bid for services, please change the forecast data for $(PSY.get_name(service))")
+        error(
+            "Current version only supports linear cost bid for services, please change the forecast data for $(PSY.get_name(service))",
+        )
     end
     return
 end
@@ -699,7 +734,9 @@ function add_service_bid_cost!(
     component::PSY.Component,
     service::PSY.ReserveDemandCurve{T},
 ) where {T <: PSY.ReserveDirection}
-    error("Current version doesn't supports cost bid for ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))")
+    error(
+        "Current version doesn't supports cost bid for ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))",
+    )
     return
 end
 
@@ -851,9 +888,11 @@ function variable_cost!(
 
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     if !pwlparamcheck(cost_component)
-        @warn("The cost function provided for $(var_name) device is not compatible with a linear PWL cost function.
-        An SOS-2 formulation will be added to the model.
-        This will result in additional binary variables added to the model.")
+        @warn(
+            "The cost function provided for $(var_name) device is not compatible with a linear PWL cost function.
+      An SOS-2 formulation will be added to the model.
+      This will result in additional binary variables added to the model."
+        )
         gen_cost =
             pwl_gencost_sos!(psi_container, spec, component_name, cost_data, time_period)
     else

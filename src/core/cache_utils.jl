@@ -3,11 +3,7 @@ const ParamCacheKey = NamedTuple{(:stage, :type, :name), NTuple{3, Symbol}}
 make_cache_key(stage, type, name) = (stage = stage, type = type, name = name)
 
 # Priority for keeping data in cache to serve reads. Currently unused.
-IS.@scoped_enum(CachePriority,
-    LOW = 1,
-    MEDIUM = 2,
-    HIGH = 3,
-)
+IS.@scoped_enum(CachePriority, LOW = 1, MEDIUM = 2, HIGH = 3,)
 
 struct CacheFlushRule
     keep_in_cache::Bool

@@ -145,6 +145,12 @@ get_ramp_limits(d::DeviceRampConstraintInfo) = d.ramp_limits
 get_additional_terms_ub(d::DeviceRampConstraintInfo) = d.additional_terms_ub
 get_additional_terms_lb(d::DeviceRampConstraintInfo) = d.additional_terms_lb
 
+struct DeviceEnergyTargetConstraintInfo <: AbstractStartConstraintInfo
+    component_name::String
+    multiplier::Float64
+    storage_target::Float64
+end
+
 struct DeviceStartUpConstraintInfo <: AbstractStartConstraintInfo
     component_name::String
     time_limits::StartUpStages
@@ -182,3 +188,4 @@ struct HybridInvertorConstraintInfo <: AbstractStartConstraintInfo
     component_name::String
     rating::Float64
 end
+

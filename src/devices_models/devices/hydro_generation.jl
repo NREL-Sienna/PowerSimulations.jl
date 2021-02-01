@@ -413,7 +413,11 @@ function energy_balance_constraint!(
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !has_initial_conditions(psi_container.initial_conditions, key)
-        throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
+        throw(
+            IS.DataFormatError(
+                "Initial Conditions for $(H) Energy Constraints not in the model",
+            ),
+        )
     end
 
     inflow_forecast_label = "inflow"
@@ -496,7 +500,11 @@ function energy_balance_constraint!(
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !has_initial_conditions(psi_container.initial_conditions, key)
-        throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
+        throw(
+            IS.DataFormatError(
+                "Initial Conditions for $(H) Energy Constraints not in the model",
+            ),
+        )
     end
 
     forecast_label_in = "inflow"
@@ -721,14 +729,14 @@ function device_energy_budget_param_ub(
     param = get_parameter_array(container)
     for constraint_info in energy_budget_data
         name = get_component_name(constraint_info)
-        multiplier[name, 1] = constraint_info.multiplier * inv_dt
         for t in time_steps
+            multiplier[name, t] = constraint_info.multiplier * inv_dt
             param[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, constraint_info.timeseries[t])
         end
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable_out[name, t] for t in time_steps]) <= multiplier[name, 1] * sum([param[name, t] for t in time_steps])
+            sum([variable_out[name, t] for t in time_steps]) <= sum([multiplier[name, t] * param[name, t] for t in time_steps])
         )
     end
 

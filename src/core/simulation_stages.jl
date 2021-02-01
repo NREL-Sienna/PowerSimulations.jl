@@ -79,7 +79,7 @@ function Stage{M}(
     system_to_file = true,
     export_pwl_vars = false,
     allow_fails = false,
-    optimizer_log_print = false
+    optimizer_log_print = false,
 ) where {M <: AbstractOperationsProblem}
     settings = PSISettings(
         sys;
@@ -93,7 +93,7 @@ function Stage{M}(
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
         PTDF = PTDF,
-        optimizer_log_print = optimizer_log_print
+        optimizer_log_print = optimizer_log_print,
     )
     return Stage{M}(template, sys, settings, jump_model)
 end
@@ -173,8 +173,7 @@ get_write_path(stage::Stage) = stage.internal.write_path
 warm_start_enabled(stage::Stage) = get_warm_start(get_psi_container(stage).settings)
 
 set_write_path!(stage::Stage, path::AbstractString) = stage.internal.write_path = path
-set_stage_status!(stage::Stage, status::BuildStatus) =
-    stage.internal.status = status
+set_stage_status!(stage::Stage, status::BuildStatus) = stage.internal.status = status
 
 function reset!(stage::Stage{T}) where {T <: AbstractOperationsProblem}
     stage.internal.execution_count = 0
@@ -346,8 +345,7 @@ function _write_model_parameter_results!(store, psi_container, stage, timestamp,
         for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
             val1 = _jump_value(param_array[name, r_ix])
             val2 = multiplier_array[name, r_ix]
-            data[r_ix, c_ix] =
-                _jump_value(param_array[name, r_ix]) * (multiplier_array[name, r_ix])
+            data[r_ix, c_ix] = val1 * val2
         end
 
         write_result!(store, stage_name, STORE_CONTAINER_PARAMETERS, name, timestamp, data)
@@ -426,7 +424,11 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
         condition = get_condition(ic)
         status = (condition > 0.0) ? 0.0 : 1.0
         if value_array[device_name][:status] != status
-            throw(IS.ConflictingInputsError("Initial Conditions for $(device_name) are not compatible. The values provided are invalid"))
+            throw(
+                IS.ConflictingInputsError(
+                    "Initial Conditions for $(device_name) are not compatible. The values provided are invalid",
+                ),
+            )
         end
     end
 

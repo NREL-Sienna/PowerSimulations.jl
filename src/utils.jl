@@ -68,7 +68,11 @@ function check_kwargs(input_kwargs, valid_set::Array{Symbol}, function_name::Str
     else
         for (key, value) in input_kwargs
             if !(key in valid_set)
-                throw(ArgumentError("keyword argument $(key) is not a valid input for $(function_name)"))
+                throw(
+                    ArgumentError(
+                        "keyword argument $(key) is not a valid input for $(function_name)",
+                    ),
+                )
             end
         end
     end
@@ -247,7 +251,9 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
         end
         return DataFrames.rename!(result_df, names)
     else
-        @warn("Dimension Number $(length(axes(input_array))) not Supported, returning empty DataFrame")
+        @warn(
+            "Dimension Number $(length(axes(input_array))) not Supported, returning empty DataFrame"
+        )
         return DataFrames.DataFrame()
     end
 end
@@ -272,20 +278,20 @@ function to_array(array::JuMP.Containers.DenseAxisArray)
         for t in ax[2], (ix, name) in enumerate(ax[1])
             data[t, ix] = _jump_value(array[name, t])
         end
-    # TODO: this needs a better plan
-    #elseif len_axes == 3
-    #    extra_dims = sum(length(axes(array)[2:(end - 1)]))
-    #    arrays = Vector{Array{Float64, 2}}()
+        # TODO: this needs a better plan
+        #elseif len_axes == 3
+        #    extra_dims = sum(length(axes(array)[2:(end - 1)]))
+        #    arrays = Vector{Array{Float64, 2}}()
 
-    #    for i in ax[2]
-    #        third_dim = collect(fill(i, size(array)[end]))
-    #        data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
-    #        for t in last(ax), (ix, name) in enumerate(first(ax))
-    #            data[t, ix] = _jump_value(array[name, i, t])
-    #        end
-    #        push!(arrays, data)
-    #    end
-    #    data = vcat(arrays)
+        #    for i in ax[2]
+        #        third_dim = collect(fill(i, size(array)[end]))
+        #        data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
+        #        for t in last(ax), (ix, name) in enumerate(first(ax))
+        #            data[t, ix] = _jump_value(array[name, i, t])
+        #        end
+        #        push!(arrays, data)
+        #    end
+        #    data = vcat(arrays)
     else
         error("array axes not supported: $(axes(array))")
     end
@@ -387,7 +393,11 @@ function check_file_integrity(path::String)
     end
 
     if !matched
-        throw(IS.HashMismatchError("The hash value in the written files does not match the read files, results may have been tampered."))
+        throw(
+            IS.HashMismatchError(
+                "The hash value in the written files does not match the read files, results may have been tampered.",
+            ),
+        )
     end
 end
 

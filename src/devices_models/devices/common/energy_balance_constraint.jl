@@ -156,12 +156,13 @@ function energy_balance_hydro_param!(
             JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == exp)
 
         for t in time_steps[2:end]
+            multiplier_inflow[name, t] = d.multiplier
             param_inflow[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
             exp =
                 varenergy[name, t - 1] +
                 (
-                    d.multiplier * param_inflow[name, t] - varspill[name, t] -
+                    multiplier_inflow[name, t] * param_inflow[name, t] - varspill[name, t] -
                     varout[name, t]
                 ) * fraction_of_hour
             balance_constraint[name, t] =
@@ -174,6 +175,7 @@ function energy_balance_hydro_param!(
         for t in time_steps
             param_target[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
+            multiplier_target[name, t] = d.multiplier
         end
         target_constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
@@ -357,13 +359,14 @@ function energy_balance_hydro_param!(
             JuMP.@constraint(psi_container.JuMPmodel, varenergy_up[name, 1] == exp)
 
         for t in time_steps[2:end]
+            multiplier_inflow[name, t] = d.multiplier
             param_inflow[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
             exp =
                 varenergy_up[name, t - 1] +
                 (
-                    d.multiplier * param_inflow[name, t] + varin[name, t] * pump_eff -
-                    varspill[name, t] - varout[name, t]
+                    multiplier_inflow[name, t] * param_inflow[name, t] +
+                    varin[name, t] * pump_eff - varspill[name, t] - varout[name, t]
                 ) * fraction_of_hour
             constraint_up[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, varenergy_up[name, t] == exp)
@@ -386,13 +389,15 @@ function energy_balance_hydro_param!(
             JuMP.@constraint(psi_container.JuMPmodel, varenergy_down[name, 1] == exp)
 
         for t in time_steps[2:end]
+            multiplier_outflow[name, t] = d.multiplier
             param_outflow[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
             exp =
                 varenergy_down[name, t - 1] +
                 (
                     varspill[name, t] + varout[name, t] -
-                    d.multiplier * param_outflow[name, t] - varin[name, t] * pump_eff
+                    multiplier_outflow[name, t] * param_outflow[name, t] -
+                    varin[name, t] * pump_eff
                 ) * fraction_of_hour
             constraint_down[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, varenergy_down[name, t] == exp)

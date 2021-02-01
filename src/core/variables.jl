@@ -116,7 +116,7 @@ struct FlowActivePowerVariable <: VariableType end
 
 ###############################
 
-const start_types = (HotStartVariable, WarmStartVariable, ColdStartVariable)
+const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 ###############################
 

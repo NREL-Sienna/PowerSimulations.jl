@@ -108,6 +108,14 @@ devices = Dict(
 template_pwl_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 
+devices = Dict(
+    :Generators => DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
+    :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :RenFx => DeviceModel(RenewableFix, FixedOutput),
+)
+template_multi_start_uc = template_unit_commitment(devices = devices)
+
 function PSI._jump_value(int::Int)
     @warn("This is for testing purposes only.")
     return int

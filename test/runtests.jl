@@ -20,8 +20,7 @@ using DataFrames
 using DataStructures
 import UUIDs
 import Aqua
-import PowerSystemCaseBuilder:
-    PSITestSystems
+import PowerSystemCaseBuilder: PSITestSystems
 using Random
 Aqua.test_unbound_args(PowerSimulations)
 Aqua.test_undefined_exports(PowerSimulations)
@@ -31,7 +30,7 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 const PJ = ParameterJuMP
-const PSB  = PowerSystemCaseBuilder
+const PSB = PowerSystemCaseBuilder
 const IS = InfrastructureSystems
 TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
@@ -40,7 +39,6 @@ const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 
 include("test_utils/model_checks.jl")
 include("test_utils/operations_problem_templates.jl")
-
 
 ipopt_optimizer =
     JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)

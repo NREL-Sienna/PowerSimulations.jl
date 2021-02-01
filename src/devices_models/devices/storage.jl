@@ -1,8 +1,10 @@
 #! format: off
 
 abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
+abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
+struct EndOfPeriodEnergyTarget <: AbstractEnergyManagement end
 
 ########################### ActivePowerInVariable, Storage #################################
 
@@ -45,7 +47,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerOutVariable},
     ::Type{T},
-    ::Type{<:BookKeeping},
+    ::Type{<:AbstractStorageFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -70,7 +72,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerInVariable},
     ::Type{T},
-    ::Type{<:BookKeeping},
+    ::Type{<:AbstractStorageFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -236,6 +238,16 @@ function energy_balance_constraint!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
     efficiency_data = make_efficiency_data(devices)
+    key = ICKey(EnergyLevel, St)
+
+    if !has_initial_conditions(psi_container.initial_conditions, key)
+        throw(
+            IS.DataFormatError(
+                "Initial Conditions for $(St) Energy Constraints not in the model",
+            ),
+        )
+    end
+
     energy_balance(
         psi_container,
         get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
@@ -247,5 +259,86 @@ function energy_balance_constraint!(
             make_variable_name(ENERGY, St),
         ),
     )
+    return
+end
+
+function energy_target_constraint!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    ::Type{EndOfPeriodEnergyTarget},
+    ::Type{S},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {St <: PSY.BatteryEMS, S <: PM.AbstractPowerModel}
+    constraint_infos_target =
+        Vector{DeviceEnergyTargetConstraintInfo}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        constraint_info_target = DeviceEnergyTargetConstraintInfo(
+            PSY.get_name(d),
+            PSY.get_rating(d),
+            PSY.get_storage_target(d),
+        )
+        constraint_infos_target[ix] = constraint_info_target
+    end
+
+    energy_soft_target(
+        psi_container,
+        constraint_infos_target,
+        make_constraint_name(ENERGY_TARGET, St),
+        (make_variable_name(ENERGY, St), make_variable_name(ENERGY_TARGET_SLACK, St)),
+    )
+
+    return
+end
+
+############################ Energy Management constraints ######################################
+
+function AddCostSpec(
+    ::Type{PSY.BatteryEMS},
+    ::Type{EndOfPeriodEnergyTarget},
+    psi_container::PSIContainer,
+)
+    variable_cost_func = x -> -PSY.get_energy_value(x) + PSY.get_penalty_cost(x)
+    return AddCostSpec(;
+        variable_type = EnergyVariable,
+        component_type = PSY.BatteryEMS,
+        variable_cost = variable_cost_func,
+        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+    )
+end
+
+function add_to_cost!(
+    psi_container::PSIContainer,
+    spec::AddCostSpec,
+    cost_data::Float64,
+    component::T,
+) where {T <: PSY.Storage}
+    component_name = PSY.get_name(component)
+    time_steps = model_time_steps(psi_container)
+
+    linear_gen_cost!(
+        psi_container,
+        make_variable_name(spec.variable_type, spec.component_type),
+        component_name,
+        cost_data,
+        time_steps[end],
+    )
+    return
+end
+
+"""
+Add variables to the PSIContainer for a Storage device.
+"""
+function cost_function!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
+) where {T <: PSY.Storage, U <: AbstractStorageFormulation}
+    for d in devices
+        spec = AddCostSpec(T, U, psi_container)
+        @debug T, spec
+        add_to_cost!(psi_container, spec, spec.variable_cost(d), d)
+    end
     return
 end
