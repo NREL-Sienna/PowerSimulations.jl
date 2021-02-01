@@ -99,7 +99,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    
+
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -111,7 +111,6 @@ function construct_device!(
 
     return
 end
-
 
 function construct_device!(
     psi_container::PSIContainer,
@@ -266,7 +265,6 @@ function construct_device!(
         get_feedforward(model),
     )
 
-    
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -378,7 +376,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    
+
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -397,7 +395,11 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, PhysicalCoupling},
     ::Type{S},
-) where {T <: PSY.HybridSystem, D <: Union{PhysicalCoupling, StandardHybridFormulation}, S <: PM.AbstractPowerModel}
+) where {
+    T <: PSY.HybridSystem,
+    D <: Union{PhysicalCoupling, StandardHybridFormulation},
+    S <: PM.AbstractPowerModel,
+}
     devices = get_available_components(T, sys)
 
     if !validate_available_devices(T, devices)
@@ -544,7 +546,6 @@ function construct_device!(
         get_feedforward(model),
     )
 
-    
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))

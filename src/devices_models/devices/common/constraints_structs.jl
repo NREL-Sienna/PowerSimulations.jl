@@ -168,7 +168,6 @@ struct HybridPowerInflowConstraintInfo <: AbstractStartConstraintInfo
     has_storage::Bool
 end
 
-
 struct HybridPowerOutflowConstraintInfo <: AbstractStartConstraintInfo
     component_name::String
     has_thermal::Bool
@@ -188,4 +187,3 @@ struct HybridInvertorConstraintInfo <: AbstractStartConstraintInfo
     component_name::String
     rating::Float64
 end
-

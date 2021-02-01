@@ -34,7 +34,6 @@ function power_inflow(
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
-
     time_steps = model_time_steps(psi_container)
     name_index = [d.name for d in constraint_infos]
     varin = get_variable(psi_container, var_names[1])
@@ -47,27 +46,18 @@ function power_inflow(
         name = info.name
         expr = JuMP.AffExpr(0.0)
         if info.has_load
-            JuMP.add_to_expression!(
-                expr,
-                varload[name, t],
-            )
+            JuMP.add_to_expression!(expr, varload[name, t])
         end
         if info.has_storage
-            JuMP.add_to_expression!(
-                expr,
-                varstorage[name, t],
-            )
+            JuMP.add_to_expression!(expr, varstorage[name, t])
         end
 
-        constraint[name, t] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            varin[name, t] == expr
-        )
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, varin[name, t] == expr)
     end
 
     return
 end
-
 
 function power_outflow(
     psi_container::PSIContainer,
@@ -75,7 +65,6 @@ function power_outflow(
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol, Symbol},
 )
-
     time_steps = model_time_steps(psi_container)
     name_index = [d.name for d in constraint_infos]
 
@@ -90,33 +79,21 @@ function power_outflow(
         name = info.name
         expr = JuMP.AffExpr(0.0)
         if info.has_thermal
-            JuMP.add_to_expression!(
-                expr,
-                varthermal[name, t],
-            )
+            JuMP.add_to_expression!(expr, varthermal[name, t])
         end
         if info.has_renewable
-            JuMP.add_to_expression!(
-                expr,
-                varrenewable[name, t],
-            )
+            JuMP.add_to_expression!(expr, varrenewable[name, t])
         end
         if info.has_storage
-            JuMP.add_to_expression!(
-                expr,
-                varstorage[name, t],
-            )
+            JuMP.add_to_expression!(expr, varstorage[name, t])
         end
 
-        constraint[name, t] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            varout[name, t] == expr
-        )
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, varout[name, t] == expr)
     end
 
     return
 end
-
 
 function invertor_rating(
     psi_container::PSIContainer,
@@ -124,7 +101,6 @@ function invertor_rating(
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
-
     time_steps = model_time_steps(psi_container)
     name_index = [d.name for d in constraint_infos]
 
@@ -138,13 +114,13 @@ function invertor_rating(
         name = info.name
         constraint[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            (var_active_out[name, t] - var_active_in[name, t])^2 + var_reactive[name, t]^2 == info.rating^2
+            (var_active_out[name, t] - var_active_in[name, t])^2 +
+            var_reactive[name, t]^2 == info.rating^2
         )
     end
 
     return
 end
-
 
 function reactive_balance(
     psi_container::PSIContainer,
@@ -152,7 +128,6 @@ function reactive_balance(
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol, Symbol, Symbol},
 )
-
     time_steps = model_time_steps(psi_container)
     name_index = [d.name for d in constraint_infos]
 
@@ -168,35 +143,20 @@ function reactive_balance(
         name = info.name
         expr = JuMP.AffExpr(0.0)
         if info.has_thermal
-            JuMP.add_to_expression!(
-                expr,
-                var_thermal[name, t],
-            )
+            JuMP.add_to_expression!(expr, var_thermal[name, t])
         end
         if info.has_load
-            JuMP.add_to_expression!(
-                expr,
-                var_load[name, t],
-            )
+            JuMP.add_to_expression!(expr, var_load[name, t])
         end
         if info.has_renewable
-            JuMP.add_to_expression!(
-                expr,
-                var_renewable[name, t],
-            )
+            JuMP.add_to_expression!(expr, var_renewable[name, t])
         end
         if info.has_storage
-            JuMP.add_to_expression!(
-                expr,
-                var_storage[name, t],
-            )
+            JuMP.add_to_expression!(expr, var_storage[name, t])
         end
-        constraint[name, t] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            var_reactive[name, t] == expr
-        )
+        constraint[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, var_reactive[name, t] == expr)
     end
 
     return
 end
-
