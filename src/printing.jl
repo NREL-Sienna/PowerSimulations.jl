@@ -178,8 +178,8 @@ function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     end
 end
 
-function Base.show(io::IO, stage::Stage)
-    println(io, "Stage()")
+function Base.show(io::IO, stage::OperationsProblem)
+    println(io, "OperationsProblem()")
 end
 
 function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})

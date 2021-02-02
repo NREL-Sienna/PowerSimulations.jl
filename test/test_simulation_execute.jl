@@ -2,7 +2,7 @@ function test_simulation_single_ed(file_path::String)
     @testset "Single stage sequential tests" begin
         c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
         single_stage_definition =
-            Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
+            Dict("ED" => OperationsProblem(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
 
         single_sequence = SimulationSequence(
             step_resolution = Hour(24),
@@ -42,14 +42,14 @@ function test_simulation_without_caches(file_path::String)
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
         stages_definition = Dict(
-            "UC" => Stage(
+            "UC" => OperationsProblem(
                 GenericOpProblem,
                 template_hydro_basic_uc,
                 c_sys5_hy_uc,
                 stage_info["UC"]["optimizer"];
                 constraint_duals = duals,
             ),
-            "ED" => Stage(
+            "ED" => OperationsProblem(
                 GenericOpProblem,
                 template_hydro_ed,
                 c_sys5_hy_ed,
@@ -107,7 +107,7 @@ function test_simulation_with_cache(file_path::String)
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     @testset "Simulation Single Stage with Cache" begin
         single_stage_definition = Dict(
-            "ED" => Stage(
+            "ED" => OperationsProblem(
                 GenericOpProblem,
                 template_hydro_st_ed,
                 c_sys5_hy_ed,
@@ -158,13 +158,13 @@ function test_simulation_with_cache(file_path::String)
 
     @testset "Simulation with 2-Stages and Cache" begin
         stages_definition = Dict(
-            "UC" => Stage(
+            "UC" => OperationsProblem(
                 GenericOpProblem,
                 template_hydro_st_uc,
                 c_sys5_hy_uc,
                 GLPK_optimizer,
             ),
-            "ED" => Stage(
+            "ED" => OperationsProblem(
                 GenericOpProblem,
                 template_hydro_st_ed,
                 c_sys5_hy_ed,
@@ -295,14 +295,14 @@ function test_stage_chronologies(file_path)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     stages_definition = Dict(
-        "UC" => Stage(
+        "UC" => OperationsProblem(
             GenericOpProblem,
             template_hydro_basic_uc,
             c_sys5_hy_uc,
             GLPK_optimizer,
         ),
         "ED" =>
-            Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
+            OperationsProblem(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
     )
 
     sequence = SimulationSequence(
@@ -400,14 +400,14 @@ function test_simulation_utils(file_path)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     stages_definition = Dict(
-        "UC" => Stage(
+        "UC" => OperationsProblem(
             GenericOpProblem,
             template_hydro_basic_uc,
             c_sys5_hy_uc,
             stage_info["UC"]["optimizer"];
             constraint_duals = duals,
         ),
-        "ED" => Stage(
+        "ED" => OperationsProblem(
             GenericOpProblem,
             template_hydro_ed,
             c_sys5_hy_ed,
