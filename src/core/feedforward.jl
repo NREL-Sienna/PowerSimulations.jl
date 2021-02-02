@@ -250,7 +250,7 @@ end
 ####################### Feed Forward Affects ###############################################
 
 @doc raw"""
-        ub_ff(psi_container::PSIContainer,
+        ub_ff(optimization_container::OptimizationContainer,
               cons_name::Symbol,
               constraint_infos::Vector{DeviceRangeConstraintInfo},
               param_reference::UpdateRef,
@@ -267,47 +267,52 @@ The Parameters are initialized using the uppper boundary values of the provided 
 `` x \leq param^{max}``
 
 # Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
 * var_name::Symbol : the name of the continuous variable
 """
 function ub_ff(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     cons_name::Symbol,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::UpdateRef,
     var_name::Symbol,
 )
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    variable = get_variable(psi_container, var_name)
+    variable = get_variable(optimization_container, var_name)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    container = add_param_container!(psi_container, param_reference, set_name)
+    container = add_param_container!(optimization_container, param_reference, set_name)
     param_ub = get_parameter_array(container)
-    con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
+    multiplier_ub = get_multiplier_array(container)
+    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
         value = JuMP.upper_bound(variable[name, 1])
-        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
+        param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
                 JuMP.add_to_expression!(expression_ub, variable[name, t])
             end
-            con_ub[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
+            con_ub[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                expression_ub <= param_ub[name] * multiplier_ub[name]
+            )
         end
     end
     return
 end
 
 @doc raw"""
-        range_ff(psi_container::PSIContainer,
+        range_ff(optimization_container::OptimizationContainer,
                         cons_name::Symbol,
                         param_reference::NTuple{2, UpdateRef},
                         var_name::Symbol)
@@ -327,44 +332,54 @@ where r in range_data.
 `` x \leq param^{max}``
 
 # Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * param_reference::NTuple{2, UpdateRef} : Tuple with the lower bound and upper bound parameter reference
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
 function range_ff(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     cons_name::Symbol,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::NTuple{2, UpdateRef},
     var_name::Symbol,
 )
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
 
-    variable = get_variable(psi_container, var_name)
+    variable = get_variable(optimization_container, var_name)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
 
     # Create containers for the constraints
-    container_lb = add_param_container!(psi_container, param_reference[1], set_name)
+    container_lb =
+        add_param_container!(optimization_container, param_reference[1], set_name)
     param_lb = get_parameter_array(container_lb)
-    container_ub = add_param_container!(psi_container, param_reference[2], set_name)
+    multiplier_lb = get_multiplier_array(container_lb)
+    container_ub =
+        add_param_container!(optimization_container, param_reference[2], set_name)
     param_ub = get_parameter_array(container_ub)
-
+    multiplier_ub = get_multiplier_array(container_ub)
     # Create containers for the parameters
-    con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
-    con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
+    con_lb = add_cons_container!(optimization_container, lb_name, set_name, time_steps)
+    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
-        param_lb[name] =
-            PJ.add_parameter(psi_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
-        param_ub[name] =
-            PJ.add_parameter(psi_container.JuMPmodel, JuMP.upper_bound(variable[name, 1]))
+        param_lb[name] = PJ.add_parameter(
+            optimization_container.JuMPmodel,
+            JuMP.lower_bound(variable[name, 1]),
+        )
+        param_ub[name] = PJ.add_parameter(
+            optimization_container.JuMPmodel,
+            JuMP.upper_bound(variable[name, 1]),
+        )
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
+        multiplier_lb[name] = 1.0
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
@@ -374,10 +389,14 @@ function range_ff(
             for val in constraint_info.additional_terms_lb
                 JuMP.add_to_expression!(expression_lb, variable[name, t], -1.0)
             end
-            con_ub[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
-            con_lb[name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= param_lb[name])
+            con_ub[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                expression_ub <= param_ub[name] * multiplier_ub[name]
+            )
+            con_lb[name, t] = JuMP.@constraint(
+                optimization_container.JuMPmodel,
+                expression_lb >= param_lb[name] * multiplier_lb[name]
+            )
         end
     end
 
@@ -385,7 +404,7 @@ function range_ff(
 end
 
 @doc raw"""
-            semicontinuousrange_ff(psi_container::PSIContainer,
+            semicontinuousrange_ff(optimization_container::OptimizationContainer,
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     param_reference::UpdateRef)
@@ -412,61 +431,65 @@ where r in range_data.
 `` r^{min} x^{param} \leq x^{var} \leq r^{min} x^{param}, \text{ otherwise } ``
 
 # Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * param_reference::UpdateRef : UpdateRef of the parameter
 """
 function semicontinuousrange_ff(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     cons_name::Symbol,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::UpdateRef,
     var_name::Symbol,
 )
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    variable = get_variable(psi_container, var_name)
+    variable = get_variable(optimization_container, var_name)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = [get_component_name(ci) for ci in constraint_infos]
     @assert axes[2] == time_steps
-    container = add_param_container!(psi_container, param_reference, set_name)
+    container = add_param_container!(optimization_container, param_reference, set_name)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
-    con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
-    con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
+    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
+    con_lb = add_cons_container!(optimization_container, lb_name, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
         @debug "SemiContinuousFF" name ub_value lb_value
-        param[name] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier[name] = 1.0
+        param[name] = PJ.add_parameter(optimization_container.JuMPmodel, 1.0)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(psi_container, val)[name, t],
+                    get_variable(optimization_container, val)[name, t],
                 )
             end
             expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_lb
                 JuMP.add_to_expression!(
                     expression_lb,
-                    get_variable(psi_container, val)[name, t],
+                    get_variable(optimization_container, val)[name, t],
                     -1.0,
                 )
             end
+            mul_ub = ub_value * multiplier[name]
+            mul_lb = lb_value * multiplier[name]
             con_ub[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_ub <= ub_value * param[name]
+                optimization_container.JuMPmodel,
+                expression_ub <= mul_ub * param[name]
             )
             con_lb[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_lb >= lb_value * param[name]
+                optimization_container.JuMPmodel,
+                expression_lb >= mul_lb * param[name]
             )
         end
     end
@@ -483,7 +506,7 @@ function semicontinuousrange_ff(
 end
 
 @doc raw"""
-        integral_limit_ff(psi_container::PSIContainer,
+        integral_limit_ff(optimization_container::OptimizationContainer,
                         cons_name::Symbol,
                         param_reference::UpdateRef,
                         var_name::Symbol)
@@ -504,44 +527,47 @@ TO DO: New formulation when Commitment is considered: SemiContinuousFF
     `` P_LL - P_min * ON_upper >= 0.0 ``
 
 # Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
 * var_name::Symbol : the name of the continuous variable
 """
 function integral_limit_ff(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     cons_name::Symbol,
     param_reference::UpdateRef,
     var_name::Symbol,
 )
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
-    variable = get_variable(psi_container, var_name)
+    variable = get_variable(optimization_container, var_name)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    container_ub = add_param_container!(psi_container, param_reference, set_name)
+    container_ub = add_param_container!(optimization_container, param_reference, set_name)
     param_ub = get_parameter_array(container_ub)
-    con_ub = add_cons_container!(psi_container, ub_name, set_name)
+    multiplier_ub = get_multiplier_array(container_ub)
+    con_ub = add_cons_container!(optimization_container, ub_name, set_name)
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
 
-        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
+        param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
-            psi_container.JuMPmodel,
+            optimization_container.JuMPmodel,
             sum(variable[name, t] for t in time_steps) / length(time_steps) <=
-            param_ub[name]
+            param_ub[name] * multiplier_ub[name]
         )
     end
 end
 
 ########################## FeedForward Constraints #########################################
 function feedforward!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::Nothing,
@@ -550,7 +576,7 @@ function feedforward!(
 end
 
 function feedforward!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::UpperBoundFF,
@@ -567,7 +593,7 @@ function feedforward!(
         var_name = make_variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         ub_ff(
-            psi_container,
+            optimization_container,
             constraint_name(FEEDFORWARD_UB, T),
             constraint_infos,
             parameter_ref,
@@ -577,7 +603,7 @@ function feedforward!(
 end
 
 function feedforward!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::SemiContinuousFF,
@@ -595,7 +621,7 @@ function feedforward!(
     for prefix in get_affected_variables(ff_model)
         var_name = make_variable_name(prefix, T)
         semicontinuousrange_ff(
-            psi_container,
+            optimization_container,
             make_constraint_name(FEEDFORWARD_BIN, T),
             constraint_infos,
             parameter_ref,
@@ -605,7 +631,7 @@ function feedforward!(
 end
 
 function feedforward!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::IntegralLimitFF,
@@ -614,7 +640,7 @@ function feedforward!(
         var_name = make_variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         integral_limit_ff(
-            psi_container,
+            optimization_container,
             make_constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
             parameter_ref,
             var_name,
@@ -630,7 +656,8 @@ function get_stage_variable(
     device_name::AbstractString,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     step = axes(variable)[2][chron.periods]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
@@ -646,7 +673,8 @@ function get_stage_variable(
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     step = axes(variable)[2][get_end_of_interval_step(stages.first)]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
@@ -662,7 +690,8 @@ function get_stage_variable(
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     e_count = get_execution_count(stages.second)
     wait_count = get_execution_wait_count(get_trigger(chron))
     index = (floor(e_count / wait_count) + 1)
@@ -681,7 +710,8 @@ function get_stage_variable(
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     vars = variable[device_name, :]
     if JuMP.is_binary(first(vars))
         return round.(JuMP.value(vars))
@@ -696,7 +726,8 @@ function get_stage_variable(
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
+    variable =
+        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
     vars = variable[device_name, chron.range]
     if JuMP.is_binary(first(vars))
         return round.(JuMP.value(vars))

@@ -355,8 +355,11 @@ function test_simulation_build(file_path::String)
             stages_sequence = sequence,
             simulation_folder = file_path,
         )
-        @test haskey(sim.stages["UC"].internal.psi_container.JuMPmodel.ext, :PSI_Testing)
-        @test !isnothing(sim.stages["ED"].internal.psi_container.settings.PTDF)
+        @test haskey(
+            sim.stages["UC"].internal.optimization_container.JuMPmodel.ext,
+            :PSI_Testing,
+        )
+        @test !isnothing(sim.stages["ED"].internal.optimization_container.settings.PTDF)
     end
     @testset "Create Simulation using SOS-PWL cost function" begin
         c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pwl_uc")

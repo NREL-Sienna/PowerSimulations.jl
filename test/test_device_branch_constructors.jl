@@ -20,11 +20,11 @@
         optimizer = OSQP_optimizer,
         PTDF = PSY.PTDF(system),
     )
-    for b in PSI.get_variable(op_problem_m.psi_container, :Fp__Line)
+    for b in PSI.get_variable(op_problem_m.optimization_container, :Fp__Line)
         @test JuMP.has_lower_bound(b)
         @test JuMP.has_upper_bound(b)
     end
-    for b in PSI.get_variable(op_problem_m.psi_container, :Fp__MonitoredLine)
+    for b in PSI.get_variable(op_problem_m.optimization_container, :Fp__MonitoredLine)
         @test JuMP.has_lower_bound(b)
         @test JuMP.has_upper_bound(b)
     end

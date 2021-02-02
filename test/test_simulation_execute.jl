@@ -24,8 +24,9 @@ function test_simulation_single_ed(file_path::String)
         execute_out = execute!(sim_single)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
         stage_single = PSI.get_stage(sim_single, "ED")
-        @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
-              [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        @test JuMP.termination_status(
+            stage_single.internal.optimization_container.JuMPmodel,
+        ) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         _test_plain_print_methods([sim_single, sim_single.sequence])
     end
 end
@@ -94,8 +95,9 @@ function test_simulation_without_caches(file_path::String)
 
         for name in stage_names
             stage = PSI.get_stage(sim, name)
-            @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in
-                  [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+            @test JuMP.termination_status(
+                stage.internal.optimization_container.JuMPmodel,
+            ) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
 end
@@ -142,7 +144,7 @@ function test_simulation_with_cache(file_path::String)
                 variable_ref =
                     PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[1]
                 initial_conditions =
-                    get_initial_conditions(PSI.get_psi_container(sim_single, "ED"), key)
+                    get_initial_conditions(PSI.get_optimization_container(sim_single, "ED"), key)
                 for ic in initial_conditions
                     raw_result =
                         PSI.read_arrow_file(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
@@ -208,11 +210,11 @@ function test_simulation_with_cache(file_path::String)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         var_names = axes(
-            PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard],
+            PSI.get_stage(sim_cache, "UC").internal.optimization_container.variables[:On__ThermalStandard],
         )[1]
         for name in var_names
             var =
-                PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard][
+                PSI.get_stage(sim_cache, "UC").internal.optimization_container.variables[:On__ThermalStandard][
                     name,
                     24,
                 ]
@@ -229,7 +231,7 @@ function test_simulation_with_cache(file_path::String)
                 variable_ref =
                     PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[end]
                 initial_conditions =
-                    get_initial_conditions(PSI.get_psi_container(sim_cache, "UC"), key)
+                    get_initial_conditions(PSI.get_optimization_container(sim_cache, "UC"), key)
                 for ic in initial_conditions
                     raw_result =
                         PSI.read_arrow_file(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
@@ -245,7 +247,7 @@ function test_simulation_with_cache(file_path::String)
             for (ik, key) in enumerate(ic_keys)
                 variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
                 initial_conditions =
-                    get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
+                    get_initial_conditions(PSI.get_optimization_container(sim, "UC"), key)
                 for ic in initial_conditions
                     name = PSI.device_name(ic)
                     raw_result = PSI.read_arrow_file(variable_ref)[end, Symbol(name)] # last value of last hour
@@ -270,7 +272,7 @@ function test_simulation_with_cache(file_path::String)
             for (ik, key) in enumerate(P_keys)
                 variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
                 array = PSI.get_parameter_array(PSI.get_parameter_container(
-                    sim.stages["ED"].internal.psi_container,
+                    sim.stages["ED"].internal.optimization_container,
                     Symbol(key[1]),
                     key[2],
                 ))
@@ -357,7 +359,7 @@ function test_stage_chronologies(file_path)
             variable_ref = PSI.get_reference(sim_results, "UC", 2, vars_names[ik])[1]
             raw_result = PSI.read_arrow_file(variable_ref)
             ic = PSI.get_parameter_array(PSI.get_parameter_container(
-                sim.stages["ED"].internal.psi_container,
+                sim.stages["ED"].internal.optimization_container,
                 Symbol(key[1]),
                 key[2],
             ))
@@ -377,7 +379,7 @@ function test_stage_chronologies(file_path)
         no_steps = PSI.get_steps(sim)
         for (ik, key) in enumerate(ic_keys)
             initial_conditions =
-                get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
+                get_initial_conditions(PSI.get_optimization_container(sim, "UC"), key)
             vars = results.variable_values[vars_names[ik]] # change to getter function
             for ic in initial_conditions
                 output = vars[ed_horizon * (no_steps - 1), Symbol(PSI.device_name(ic))] # change to getter function
