@@ -170,10 +170,10 @@ end
 function _apply_range_constraint_spec!(
     psi_container,
     spec,
-    devices::IS.FlattenIteratorWrapper{T},
+    devices::D,
     model,
     ff_affected_variables,
-) where {T <: PSY.Device}
+) where {D <:  Union{Vector{T}, IS.FlattenIteratorWrapper{T}}} where {T <: PSY.Device}
     constraint_struct = spec.constraint_struct
     constraint_infos = Vector{constraint_struct}(undef, length(devices))
     constraint_name = spec.constraint_name
@@ -218,10 +218,10 @@ end
 function _apply_timeseries_range_constraint_spec!(
     psi_container,
     spec,
-    devices::IS.FlattenIteratorWrapper{T},
+    devices::D,
     model,
     ff_affected_variables,
-) where {T <: PSY.Device}
+    ) where {D <:  Union{Vector{T}, IS.FlattenIteratorWrapper{T}}} where {T <: PSY.Device}
     variable_name = spec.variable_name
     if variable_name in ff_affected_variables
         @debug "Skip adding $variable_name because it is handled by feedforward"

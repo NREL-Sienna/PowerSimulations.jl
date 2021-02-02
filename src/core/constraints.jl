@@ -52,6 +52,9 @@ const MUST_RUN = "must_run"
 const MUST_RUN_LB = "must_run_lb"
 const NODAL_BALANCE_ACTIVE = "nodal_balance_active"
 const NODAL_BALANCE_REACTIVE = "nodal_balance_reactive"
+const POWER_BALANCE_INFLOW = "power_balance_inflow"
+const POWER_BALANCE_OUTFLOW = "power_balance_outflow"
+const INVERTOR_LIMIT = "invertor_limit"
 
 abstract type ConstraintType end
 

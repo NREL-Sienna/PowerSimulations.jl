@@ -35,7 +35,7 @@ function power_inflow(
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    name_index = [d.name for d in constraint_infos]
+    name_index = [d.component_name for d in constraint_infos]
     varin = get_variable(psi_container, var_names[1])
     varload = get_variable(psi_container, var_names[2])
     varstorage = get_variable(psi_container, var_names[3])
@@ -43,7 +43,7 @@ function power_inflow(
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, info) in enumerate(constraint_infos), t in time_steps
-        name = info.name
+        name = info.component_name
         expr = JuMP.AffExpr(0.0)
         if info.has_load
             JuMP.add_to_expression!(expr, varload[name, t])
@@ -66,7 +66,7 @@ function power_outflow(
     var_names::Tuple{Symbol, Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    name_index = [d.name for d in constraint_infos]
+    name_index = [d.component_name for d in constraint_infos]
 
     varout = get_variable(psi_container, var_names[1])
     varthermal = get_variable(psi_container, var_names[2])
@@ -76,7 +76,7 @@ function power_outflow(
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, info) in enumerate(constraint_infos), t in time_steps
-        name = info.name
+        name = info.component_name
         expr = JuMP.AffExpr(0.0)
         if info.has_thermal
             JuMP.add_to_expression!(expr, varthermal[name, t])
@@ -102,7 +102,7 @@ function invertor_rating(
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    name_index = [d.name for d in constraint_infos]
+    name_index = [d.component_name for d in constraint_infos]
 
     var_active_out = get_variable(psi_container, var_names[1])
     var_active_in = get_variable(psi_container, var_names[2])
@@ -111,7 +111,7 @@ function invertor_rating(
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, info) in enumerate(constraint_infos), t in time_steps
-        name = info.name
+        name = info.component_name
         constraint[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             (var_active_out[name, t] - var_active_in[name, t])^2 +
@@ -129,7 +129,7 @@ function reactive_balance(
     var_names::Tuple{Symbol, Symbol, Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    name_index = [d.name for d in constraint_infos]
+    name_index = [d.component_name for d in constraint_infos]
 
     var_reactive = get_variable(psi_container, var_names[1])
     var_thermal = get_variable(psi_container, var_names[2])
@@ -140,7 +140,7 @@ function reactive_balance(
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, info) in enumerate(constraint_infos), t in time_steps
-        name = info.name
+        name = info.component_name
         expr = JuMP.AffExpr(0.0)
         if info.has_thermal
             JuMP.add_to_expression!(expr, var_thermal[name, t])

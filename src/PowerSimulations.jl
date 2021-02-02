@@ -70,6 +70,15 @@ export ThermalDispatchNoMin
 export ThermalMultiStartUnitCommitment
 export ThermalCompactUnitCommitment
 
+######## HybridSystem Formulations ########
+export NoCoupling 
+export PhysicalCoupling 
+export FinancialCoupling 
+export StandardHybridFormulation 
+
+export FinancialCouplingDisaptch 
+export StandardHybridFormulationDisaptch
+
 ###### Regulation Device Formulation #######
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
@@ -360,6 +369,7 @@ include("devices_models/devices/common/pm_translator.jl")
 include("devices_models/devices/common/energy_balance_constraint.jl")
 include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
+include("devices_models/devices/common/hybrid_constraints.jl")
 
 include("core/feedforward.jl")
 include("core/simulation_results.jl")

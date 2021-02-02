@@ -90,15 +90,6 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
 
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -203,15 +194,6 @@ function construct_device!(
         psi_container,
         RangeConstraint,
         ActivePowerVariableRenewable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        EnergyVariable,
         devices,
         model,
         S,
@@ -367,21 +349,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
 
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_outflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    invertor_rating_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    # TODO : Figure out the right invertor rating constraint for active power models
+    # invertor_rating_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -484,15 +458,6 @@ function construct_device!(
         psi_container,
         RangeConstraint,
         ActivePowerVariableRenewable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        EnergyVariable,
         devices,
         model,
         S,

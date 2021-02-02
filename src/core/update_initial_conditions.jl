@@ -237,6 +237,20 @@ function output_init(
     )
 end
 
+function output_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.HybridSystem}
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DevicePower, T),
+        _make_initial_condition_active_power,
+        _get_active_power_output_value,
+    )
+    return
+end
+
 function duration_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -268,6 +282,23 @@ function storage_energy_init(
         key,
         _make_initial_condition_energy,
         _get_initial_energy_value,
+        StoredEnergy,
+    )
+
+    return
+end
+
+function storage_energy_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.HybridSystem}
+    key = ICKey(EnergyLevel, T)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        key,
+        _make_initial_condition_energy,
+        _get_initial_energy_value_hybrid,
         StoredEnergy,
     )
 
@@ -460,6 +491,13 @@ function _get_active_power_output_value(device::T, key) where {T <: PSY.HydroGen
     return PSY.get_active_power(device)
 end
 
+function _get_active_power_output_value(device::T, key) where {T <: PSY.HybridSystem}
+    if isnothing(PSY.get_thermal_unit(device))
+        return 0.0
+    end
+    return PSY.get_active_power(PSY.get_thermal_unit(device))
+end
+
 function _get_active_power_output_above_min_value(device, key)
     if !PSY.get_status(device)
         return 0.0
@@ -471,6 +509,14 @@ end
 
 function _get_initial_energy_value(device, key)
     return PSY.get_initial_energy(device)
+end
+
+function _get_initial_energy_value_hybrid(device, key)
+    if !isnothing(PSY.get_storage(device))
+        return PSY.get_initial_energy(PSY.get_storage(device))
+    else
+        return 0.0
+    end
 end
 
 function _get_reservoir_energy_value(device, key)

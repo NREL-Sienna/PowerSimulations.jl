@@ -74,7 +74,7 @@ get_variable_binary(::ActivePowerVariableRenewable, ::Type{<:PSY.HybridSystem}) 
 get_variable_initial_value(pv::ActivePowerVariableRenewable, d::PSY.HybridSystem, settings) = nothing
 
 get_variable_lower_bound(::ActivePowerVariableRenewable, d::PSY.HybridSystem, _) =  0.0
-get_variable_upper_bound(::ActivePowerVariableRenewable, d::PSY.HybridSystem, _) = isnothing(PSY.get_renewable_unit(d)) ? nothing : PSY.get_rating(PSY.get_renewable_unit(d)).max
+get_variable_upper_bound(::ActivePowerVariableRenewable, d::PSY.HybridSystem, _) = isnothing(PSY.get_renewable_unit(d)) ? nothing : PSY.get_rating(PSY.get_renewable_unit(d))
 
 ############## EnergyVariable, HybridSystem-Storage ####################
 
@@ -526,7 +526,7 @@ function make_efficiency_data(
     for (ix, d) in enumerate(devices)
         storage = PSY.get_storage(d)
         if !isnothing(storage)
-            names[ix] = PSY.get_name(storage)
+            names[ix] = PSY.get_name(d)
             in_out[ix] = PSY.get_efficiency(storage)
         end
     end
@@ -538,7 +538,7 @@ end
 function energy_balance_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    ::Type{D},
+    ::DeviceModel{H, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
@@ -562,7 +562,7 @@ end
 function power_inflow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    ::Type{D},
+    ::DeviceModel{H, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
@@ -579,7 +579,7 @@ function power_inflow_constraints!(
     power_inflow(
         psi_container,
         constraint_infos,
-        make_constraint_name(POWER_INFLOW_BALANCE, H),
+        make_constraint_name(POWER_BALANCE_INFLOW, H),
         (
             make_variable_name(ACTIVE_POWER_IN, H),
             make_variable_name(ACTIVE_POWER_LOAD, H),
@@ -592,7 +592,7 @@ end
 function power_outflow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    ::Type{D},
+    ::DeviceModel{H, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
@@ -610,7 +610,7 @@ function power_outflow_constraints!(
     power_outflow(
         psi_container,
         constraint_infos,
-        make_constraint_name(POWER_OUTFLOW_BALANCE, H),
+        make_constraint_name(POWER_BALANCE_OUTFLOW, H),
         (
             make_variable_name(ACTIVE_POWER_OUT, H),
             make_variable_name(ACTIVE_POWER_THERMAL, H),
@@ -624,7 +624,7 @@ end
 function reactive_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    ::Type{D},
+    ::DeviceModel{H, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
@@ -643,7 +643,7 @@ function reactive_power_constraints!(
     reactive_balance(
         psi_container,
         constraint_infos,
-        make_constraint_name(REACTIVE_BALANCE, H),
+        make_constraint_name(REACTIVE, H),
         (
             make_variable_name(REACTIVE_POWER, H),
             make_variable_name(REACTIVE_POWER_THERMAL, H),
@@ -659,7 +659,7 @@ end
 function invertor_rating_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    ::Type{D},
+    ::DeviceModel{H, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
@@ -685,6 +685,18 @@ function invertor_rating_constraints!(
     return
 end
 
+########################### Initial Conditions #############################################
+
+function initial_conditions!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::Type{D},
+) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation}
+    # output_init(psi_container, devices)
+    storage_energy_init(psi_container, devices)
+    return
+end
+
 ########################### Cost Function Calls#############################################
 
 function AddCostSpec(
@@ -693,7 +705,7 @@ function AddCostSpec(
     psi_container::PSIContainer,
 ) where {T <: PSY.HybridSystem, U <: AbstractHybridFormulation}
     return AddCostSpec(;
-        variable_type = ACTIVE_POWER_OUT,
+        variable_type = ActivePowerOutVariable,
         component_type = T,
         variable_cost = PSY.get_variable,
         start_up_cost = PSY.get_start_up,
@@ -710,7 +722,7 @@ function AddCostSpec(
 ) where {T <: PSY.HybridSystem, U <: Union{NoCoupling, PhysicalCoupling}}
 
     return AddCostSpec(;
-        variable_type = ActivePowerVariable,
+        variable_type = ActivePowerVariableThermal,
         component_type = T,
         has_status_variable = has_on_variable(psi_container, T),
         has_status_parameter = has_on_parameter(psi_container, T),
@@ -760,9 +772,9 @@ function cost_function!(
     components = _get_components(device)
     for comp in components
         if has_cost_data(comp) 
-            spec = AddCostSpec(T, U, typeof(comp), typeof(psi_container))
+            spec = AddCostSpec(T, U, typeof(comp), psi_container)
             @debug T, spec
-            add_to_cost!(psi_container, spec, get_operation_cost(comp), device)
+            add_to_cost!(psi_container, spec, PSY.get_operation_cost(comp), device)
         end
     end
 end
@@ -776,4 +788,4 @@ function _get_components(value::PSY.HybridSystem)
 end
 
 has_cost_data(v::PSY.Component) = false
-has_cost_data(v::Union{PSY.ThermalGen, PSY.ElectricLoad}) = true
+has_cost_data(v::Union{PSY.ThermalGen, PSY.ControllableLoad}) = true
