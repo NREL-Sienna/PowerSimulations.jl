@@ -126,7 +126,7 @@ function _add_initial_condition_caches(
     stage::Stage,
     caches::Union{Nothing, Vector{<:AbstractCache}},
 )
-    initial_conditions = stage.internal.psi_container.initial_conditions
+    initial_conditions = stage.internal.optimization_container.initial_conditions
     for (ic_key, init_conds) in initial_conditions.data
         _create_cache(ic_key, caches)
     end
@@ -497,7 +497,7 @@ end
 function _check_required_ini_cond_caches(sim::Simulation)
     for (stage_number, stage_name) in get_sequence(sim).order
         stage = get_stage(sim, stage_name)
-        for (k, v) in iterate_initial_conditions(stage.internal.psi_container)
+        for (k, v) in iterate_initial_conditions(stage.internal.optimization_container)
             # No cache needed for the initial condition -> continue
             v[1].cache_type === nothing && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
@@ -759,7 +759,7 @@ function update_cache!(
     # TODO: Remove debug statements and use recorder here
     c = get_cache(sim, TimeStatusChange, D)
     increment = get_increment(sim, stage, c)
-    variable = get_variable(stage.internal.psi_container, c.ref)
+    variable = get_variable(stage.internal.optimization_container, c.ref)
     t_range = 1:get_end_of_interval_step(stage)
     for name in variable.axes[1]
         # Store the initial condition
@@ -804,7 +804,7 @@ function update_cache!(
     stage::Stage,
 ) where {D <: PSY.Device}
     c = get_cache(sim, StoredEnergy, D)
-    variable = get_variable(stage.internal.psi_container, c.ref)
+    variable = get_variable(stage.internal.optimization_container, c.ref)
     t = get_end_of_interval_step(stage)
     for name in variable.axes[1]
         device_energy = JuMP.value(variable[name, t])
@@ -825,7 +825,7 @@ function update_parameter!(
 ) where {T <: PSY.Component}
     components = get_available_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
-    horizon = length(model_time_steps(stage.internal.psi_container))
+    horizon = length(model_time_steps(stage.internal.optimization_container))
     for d in components
         # RECORDER TODO: Parameter Update from forecast
         # TODO: Improve file read performance
@@ -862,7 +862,7 @@ function update_parameter!(
     # RECORDER TODO: Parameter Update from forecast
     components = get_available_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
-    horizon = length(model_time_steps(stage.internal.psi_container))
+    horizon = length(model_time_steps(stage.internal.optimization_container))
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, stage.sys, ix)
@@ -913,21 +913,21 @@ end
 
 function _update_initial_conditions!(stage::Stage, sim::Simulation)
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
-    for (k, v) in iterate_initial_conditions(stage.internal.psi_container)
+    for (k, v) in iterate_initial_conditions(stage.internal.optimization_container)
         initial_condition_update!(stage, k, v, ini_cond_chronology, sim)
     end
     return
 end
 
 function _update_parameters(stage::Stage, sim::Simulation)
-    for container in iterate_parameter_containers(stage.internal.psi_container)
+    for container in iterate_parameter_containers(stage.internal.optimization_container)
         update_parameter!(container.update_ref, container, stage, sim)
     end
     return
 end
 
 function _apply_warm_start!(stage::Stage)
-    for variable in values(stage.internal.psi_container.variables)
+    for variable in values(stage.internal.optimization_container.variables)
         for e in variable
             current_solution = JuMP.value(e)
             JuMP.set_start_value(e, current_solution)
@@ -1140,10 +1140,10 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         num_executions = executions_by_stage[stage_name]
         horizon = horizons[stage_name]
         stage = sim.stages[stage_name]
-        psi_container = get_psi_container(stage)
-        duals = get_constraint_duals(psi_container.settings)
-        parameters = get_parameters(psi_container)
-        variables = get_variables(psi_container)
+        optimization_container = get_optimization_container(stage)
+        duals = get_constraint_duals(optimization_container.settings)
+        parameters = get_parameters(optimization_container)
+        variables = get_variables(optimization_container)
         num_rows = num_executions * get_steps(sim)
 
         interval = intervals[stage_name][1]
@@ -1164,7 +1164,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         # TODO: configuration of keep_in_cache and priority are not correct
         stage_sym = Symbol(stage_name)
         for name in duals
-            array = get_constraint(psi_container, name)
+            array = get_constraint(optimization_container, name)
             reqs.duals[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
             add_rule!(
                 rules,
@@ -1307,7 +1307,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
             stages[key] = StageSerializationWrapper(
                 stage.template,
                 sys_filename,
-                stage.internal.psi_container.settings_copy,
+                stage.internal.optimization_container.settings_copy,
                 typeof(stage),
             )
         end

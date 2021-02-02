@@ -27,7 +27,7 @@
             :ORDC1__ReserveDemandCurve_ReserveUp,
         ]
         for sym in symbols
-            for v in op_problem.psi_container.variables[sym]
+            for v in op_problem.optimization_container.variables[sym]
                 @test JuMP.has_lower_bound(v)
                 @test JuMP.lower_bound(v) == 0.0
             end

@@ -149,7 +149,7 @@ end
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
 function add_constraints!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     ::Type{<:RangeConstraint},
     ::Type{ReactivePowerVariable},
     devices::IS.FlattenIteratorWrapper{St},
@@ -165,7 +165,7 @@ function add_constraints!(
     end
 
     device_range!(
-        psi_container,
+        optimization_container,
         RangeConstraintSpecInternal(
             constraint_infos,
             make_constraint_name(RangeConstraint, ReactivePowerVariable, St),
@@ -177,18 +177,18 @@ end
 
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
     ::Type{D},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation}
-    storage_energy_init(psi_container, devices)
+    storage_energy_init(optimization_container, devices)
     return
 end
 
 ############################ Energy Capacity Constraints####################################
 
 function energy_capacity_constraints!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St, D},
     ::Type{S},
@@ -204,7 +204,7 @@ function energy_capacity_constraints!(
     end
 
     device_range!(
-        psi_container,
+        optimization_container,
         RangeConstraintSpecInternal(
             constraint_infos,
             make_constraint_name(ENERGY_CAPACITY, St),
@@ -231,7 +231,7 @@ function make_efficiency_data(
 end
 
 function energy_balance_constraint!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
     ::Type{D},
     ::Type{S},
@@ -240,7 +240,7 @@ function energy_balance_constraint!(
     efficiency_data = make_efficiency_data(devices)
     key = ICKey(EnergyLevel, St)
 
-    if !has_initial_conditions(psi_container.initial_conditions, key)
+    if !has_initial_conditions(optimization_container.initial_conditions, key)
         throw(
             IS.DataFormatError(
                 "Initial Conditions for $(St) Energy Constraints not in the model",
@@ -249,8 +249,8 @@ function energy_balance_constraint!(
     end
 
     energy_balance(
-        psi_container,
-        get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
+        optimization_container,
+        get_initial_conditions(optimization_container, ICKey(EnergyLevel, St)),
         efficiency_data,
         make_constraint_name(ENERGY_LIMIT, St),
         (
@@ -263,7 +263,7 @@ function energy_balance_constraint!(
 end
 
 function energy_target_constraint!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
     ::Type{EndOfPeriodEnergyTarget},
     ::Type{S},
@@ -281,7 +281,7 @@ function energy_target_constraint!(
     end
 
     energy_soft_target(
-        psi_container,
+        optimization_container,
         constraint_infos_target,
         make_constraint_name(ENERGY_TARGET, St),
         (make_variable_name(ENERGY, St), make_variable_name(ENERGY_TARGET_SLACK, St)),
@@ -295,7 +295,7 @@ end
 function AddCostSpec(
     ::Type{PSY.BatteryEMS},
     ::Type{EndOfPeriodEnergyTarget},
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
 )
     variable_cost_func = x -> -PSY.get_energy_value(x) + PSY.get_penalty_cost(x)
     return AddCostSpec(;
@@ -307,16 +307,16 @@ function AddCostSpec(
 end
 
 function add_to_cost!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     spec::AddCostSpec,
     cost_data::Float64,
     component::T,
 ) where {T <: PSY.Storage}
     component_name = PSY.get_name(component)
-    time_steps = model_time_steps(psi_container)
+    time_steps = model_time_steps(optimization_container)
 
     linear_gen_cost!(
-        psi_container,
+        optimization_container,
         make_variable_name(spec.variable_type, spec.component_type),
         component_name,
         cost_data,
@@ -326,19 +326,19 @@ function add_to_cost!(
 end
 
 """
-Add variables to the PSIContainer for a Storage device.
+Add variables to the OptimizationContainer for a Storage device.
 """
 function cost_function!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
 ) where {T <: PSY.Storage, U <: AbstractStorageFormulation}
     for d in devices
-        spec = AddCostSpec(T, U, psi_container)
+        spec = AddCostSpec(T, U, optimization_container)
         @debug T, spec
-        add_to_cost!(psi_container, spec, spec.variable_cost(d), d)
+        add_to_cost!(optimization_container, spec, spec.variable_cost(d), d)
     end
     return
 end

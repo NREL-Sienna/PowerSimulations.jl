@@ -1,12 +1,12 @@
 construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{<:PSY.ACBranch, <:AbstractBranchFormulation},
     ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{<:PSY.DCBranch, <:AbstractDCLineFormulation},
     ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
@@ -14,21 +14,21 @@ construct_device!(
 
 # This method might be redundant but added for completness of the formulations
 construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::DeviceModel{<:PSY.Branch, <:UnboundedBranches},
     ::Type{<:PM.AbstractPowerModel},
 ) = nothing
 
 construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{<:PSY.ACBranch, <:UnboundedBranches},
     ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{<:PSY.ACBranch, <:UnboundedBranches},
     ::Type{<:PM.AbstractActivePowerModel},
@@ -36,7 +36,7 @@ construct_device!(
 
 # For DC Power only. Implements Bounds only and constraints
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, Br},
     ::Type{S},
@@ -54,14 +54,20 @@ function construct_device!(
             "$(Br) formulation doesn't support FeedForward. Use Constrained Branch Formulation instead",
         ),
     )
-    branch_rate_bounds!(psi_container, devices, model, S)
-    branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    branch_rate_bounds!(optimization_container, devices, model, S)
+    branch_rate_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     return
 end
 
 # For DC Power only. Implements Constraints only
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{S},
@@ -70,13 +76,19 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    branch_rate_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     return
 end
 
 # For AC Power only. Implements Bounds on the active power and rating constraints on the aparent power
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{S},
@@ -85,13 +97,19 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    branch_rate_bounds!(psi_container, devices, model, S)
-    branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    branch_rate_bounds!(optimization_container, devices, model, S)
+    branch_rate_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     return
 end
 
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, Br},
     ::Type{S},
@@ -100,12 +118,18 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    branch_rate_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     return
 end
 
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{S},
@@ -114,12 +138,18 @@ function construct_device!(
     if !validate_available_devices(PSY.MonitoredLine, devices)
         return
     end
-    branch_flow_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    branch_flow_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     return
 end
 
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{S},
@@ -128,7 +158,19 @@ function construct_device!(
     if !validate_available_devices(PSY.MonitoredLine, devices)
         return
     end
-    branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    branch_flow_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    branch_rate_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    branch_flow_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     return
 end

@@ -51,8 +51,8 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
     println(io, "============================================")
 end
 
-function Base.show(io::IO, psi_container::PSIContainer)
-    println(io, "PSIContainer()")
+function Base.show(io::IO, optimization_container::OptimizationContainer)
+    println(io, "OptimizationContainer()")
 end
 
 function Base.show(io::IO, sim::Simulation)
