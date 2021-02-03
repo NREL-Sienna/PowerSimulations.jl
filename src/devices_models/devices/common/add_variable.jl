@@ -91,7 +91,6 @@ function add_variable!(
         init = get_variable_initial_value(variable_type, d, optimization_container.settings)
         !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
 
-        @show sign, var_name
         if !((expression_name === nothing))
             bus_number = PSY.get_number(PSY.get_bus(d))
             add_to_expression!(
