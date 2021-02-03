@@ -2,7 +2,6 @@
 
 abstract type AbstractHybridFormulation <: AbstractDeviceFormulation end
 abstract type AbstractHybridDisaptchFormulation <: AbstractDeviceFormulation end
-struct NoCoupling <: AbstractHybridFormulation end
 struct PhysicalCoupling <: AbstractHybridFormulation end
 struct FinancialCoupling <: AbstractHybridFormulation end
 struct StandardHybridFormulation <: AbstractHybridFormulation end
@@ -16,65 +15,37 @@ get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.HybridSystem}) = false
 get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HybridSystem}) = :nodal_balance_active
 
 get_variable_sign(::ActivePowerInVariable, ::Type{<:PSY.HybridSystem}) = -1.0
-get_variable_initial_value(pv::ActivePowerInVariable, d::PSY.HybridSystem, settings) = nothing
 
-get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HybridSystem, _) = PSY.get_input_active_power_limits(d).min
-get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HybridSystem, _) = PSY.get_input_active_power_limits(d).max
+get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HybridSystem, _) = 0.0
 
 ########################### ActivePowerOutVariable, HybridSystem #################################
 
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.HybridSystem}) = false
 get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HybridSystem}) = :nodal_balance_active
 
-get_variable_initial_value(pv::ActivePowerOutVariable, d::PSY.HybridSystem, settings) = nothing
-
-get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, _) = PSY.get_output_active_power_limits(d).min
-get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, _) = PSY.get_output_active_power_limits(d).max
+get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, _) = 0.0
 
 ############## ActivePowerVariableThermal, HybridSystem ####################
 
 get_variable_binary(::ActivePowerVariableThermal, ::Type{<:PSY.HybridSystem}) = false
 
-get_variable_initial_value(pv::ActivePowerVariableThermal, d::PSY.HybridSystem, settings) = nothing
-
-get_variable_lower_bound(::ActivePowerVariableThermal, d::PSY.HybridSystem, _) = isnothing(PSY.get_thermal_unit(d)) ? nothing : PSY.get_active_power_limits(PSY.get_thermal_unit(d)).min
-get_variable_upper_bound(::ActivePowerVariableThermal, d::PSY.HybridSystem, _) = isnothing(PSY.get_thermal_unit(d)) ? nothing : PSY.get_active_power_limits(PSY.get_thermal_unit(d)).max
-
 ############## ActivePowerVariableLoad, HybridSystem ####################
 
 get_variable_binary(::ActivePowerVariableLoad, ::Type{<:PSY.HybridSystem}) = false
-
-get_variable_initial_value(pv::ActivePowerVariableLoad, d::PSY.HybridSystem, settings) = nothing
-
-get_variable_upper_bound(::ActivePowerVariableLoad, d::PSY.HybridSystem, _) = isnothing(PSY.get_electric_load(d)) ? nothing : PSY.get_max_active_power(PSY.get_electric_load(d))
-get_variable_lower_bound(::ActivePowerVariableLoad, d::PSY.HybridSystem, _) =  0.0
 
 ############## ActivePowerInVariableStorage, HybridSystem ####################
 
 get_variable_binary(::ActivePowerInVariableStorage, ::Type{<:PSY.HybridSystem}) = false
 
-get_variable_initial_value(pv::ActivePowerInVariableStorage, d::PSY.HybridSystem, settings) = nothing
-
-get_variable_lower_bound(::ActivePowerInVariableStorage, d::PSY.HybridSystem, _) = isnothing(PSY.get_storage(d)) ? nothing : PSY.get_input_active_power_limits(PSY.get_storage(d)).min
-get_variable_upper_bound(::ActivePowerInVariableStorage, d::PSY.HybridSystem, _) = isnothing(PSY.get_storage(d)) ? nothing : PSY.get_input_active_power_limits(PSY.get_storage(d)).max
-
 ############## ActivePowerOutVariableStorage, HybridSystem ####################
 
 get_variable_binary(::ActivePowerOutVariableStorage, ::Type{<:PSY.HybridSystem}) = false
-
-get_variable_initial_value(pv::ActivePowerOutVariableStorage, d::PSY.HybridSystem, settings) = nothing
-
-get_variable_lower_bound(::ActivePowerOutVariableStorage, d::PSY.HybridSystem, _) = isnothing(PSY.get_storage(d)) ? nothing : PSY.get_output_active_power_limits(PSY.get_storage(d)).min
-get_variable_upper_bound(::ActivePowerOutVariableStorage, d::PSY.HybridSystem, _) = isnothing(PSY.get_storage(d)) ? nothing : PSY.get_output_active_power_limits(PSY.get_storage(d)).max
 
 ############## ActivePowerVariableRenewable, HybridSystem ####################
 
 get_variable_binary(::ActivePowerVariableRenewable, ::Type{<:PSY.HybridSystem}) = false
 
-get_variable_initial_value(pv::ActivePowerVariableRenewable, d::PSY.HybridSystem, settings) = nothing
-
 get_variable_lower_bound(::ActivePowerVariableRenewable, d::PSY.HybridSystem, _) =  0.0
-get_variable_upper_bound(::ActivePowerVariableRenewable, d::PSY.HybridSystem, _) = isnothing(PSY.get_renewable_unit(d)) ? nothing : PSY.get_rating(PSY.get_renewable_unit(d))
 
 ############## EnergyVariable, HybridSystem-Storage ####################
 
@@ -86,41 +57,25 @@ get_variable_lower_bound(::EnergyVariable, d::PSY.HybridSystem, _) = 0.0
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.HybridSystem}) = false
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.HybridSystem}) = :nodal_balance_reactive
 
-get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HybridSystem, _) = PSY.get_reactive_power_limits(d).min
-get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HybridSystem, _) = PSY.get_reactive_power_limits(d).max
-
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HybridSystem, _) = 0.0
 
 ############## ReactivePowerVariable, ThermalGen ####################
 
 get_variable_binary(::ReactivePowerVariableThermal, ::Type{<:PSY.HybridSystem}) = false
 
-# get_variable_expression_name(::ReactivePowerVariableThermal, ::Type{<:PSY.HybridSystem}) = :nodal_balance_reactive
-
-get_variable_initial_value(pv::ReactivePowerVariableThermal, d::PSY.HybridSystem, settings) =
-get_variable_initial_value(pv, d, get_warm_start(settings) ? PSY.get_reactive_power(d) : nothing)
-
-get_variable_lower_bound(::ReactivePowerVariableThermal, d::PSY.HybridSystem, _) = isnothing(PSY.get_thermal_unit(d)) ? nothing : PSY.get_reactive_power_limits(PSY.get_thermal_unit(d)).min
-get_variable_upper_bound(::ReactivePowerVariableThermal, d::PSY.HybridSystem, _) = isnothing(PSY.get_thermal_unit(d)) ? nothing : PSY.get_reactive_power_limits(PSY.get_thermal_unit(d)).max
-
 ############## ReactivePowerVariable, Storage ####################
 
 get_variable_binary(::ReactivePowerVariableStorage, ::Type{<:PSY.HybridSystem}) = false
-
-get_variable_lower_bound(::ReactivePowerVariableStorage, d::PSY.HybridSystem, _) = isnothing(PSY.get_storage(d)) ? nothing : PSY.get_reactive_power_limits(PSY.get_storage(d)).min
-get_variable_upper_bound(::ReactivePowerVariableStorage, d::PSY.HybridSystem, _) = isnothing(PSY.get_storage(d)) ? nothing : PSY.get_reactive_power_limits(PSY.get_storage(d)).max
 
 ########################### ReactivePowerVariable, ElectricLoad ############################
 
 get_variable_binary(::ReactivePowerVariableLoad, ::Type{<:PSY.ElectricLoad}) = false
 
 get_variable_lower_bound(::ReactivePowerVariableLoad, d::PSY.ElectricLoad, _) = 0.0
-get_variable_upper_bound(::ReactivePowerVariableLoad, d::PSY.ElectricLoad, _) = PSY.get_reactive_power(d)
 
 ########################### ReactivePowerVariable, RenewableGen ############################
 
-get_variable_binary(::ReactivePowerVariableRenewable, ::Type{<:PSY.HybridSystem}) = false
-get_variable_lower_bound(::ReactivePowerVariableRenewable, d::PSY.HybridSystem, _) = isnothing(PSY.get_renewable_unit(d)) ? nothing : PSY.get_reactive_power_limits(PSY.get_renewable_unit(d)).min
-get_variable_upper_bound(::ReactivePowerVariableRenewable, d::PSY.HybridSystem, _) = isnothing(PSY.get_renewable_unit(d)) ? nothing : PSY.get_reactive_power_limits(PSY.get_renewable_unit(d)).max
+get_variable_binary(::ReactivePowerVariableRenewable, ::Type{<:PSY.HybridSystem}) = false 
 
 ########################### Active Device Range Constraint #################################
 
@@ -203,7 +158,7 @@ function DeviceRangeConstraintSpec(
             range_constraint_spec = RangeConstraintSpec(;
                 constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariableLoad, T),
                 variable_name = make_variable_name(ActivePowerVariableLoad, T),
-                limits_func = x -> (min = 0.0, max = PSY.get_active_power_limits(PSY.get_electric_load(x))),
+                limits_func = x -> (min = 0.0, max = PSY.get_max_active_power(PSY.get_electric_load(x))),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
             ),
@@ -406,7 +361,7 @@ function DeviceRangeConstraintSpec(
 end
 
 function custom_reactive_power_constraints!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractHybridFormulation},
 ) where {T <: PSY.HybridSystem}
@@ -425,7 +380,7 @@ function custom_reactive_power_constraints!(
 end
 
 function add_constraints!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     ::Type{<:RangeConstraint},
     ::Type{ReactivePowerVariableStorage},
     devices::IS.FlattenIteratorWrapper{St},
@@ -479,7 +434,7 @@ end
 ############################ Energy Capacity Constraints####################################
 
 function energy_capacity_constraints!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     model::DeviceModel{H, D},
     ::Type{S},
@@ -536,7 +491,7 @@ end
 
 
 function energy_balance_constraints!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     ::DeviceModel{H, D},
     ::Type{S},
@@ -560,7 +515,7 @@ end
 ################### Power Flow constraint #############################
 
 function power_inflow_constraints!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     ::DeviceModel{H, D},
     ::Type{S},
@@ -590,7 +545,7 @@ function power_inflow_constraints!(
 end
 
 function power_outflow_constraints!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     ::DeviceModel{H, D},
     ::Type{S},
@@ -622,7 +577,7 @@ function power_outflow_constraints!(
 end
 
 function reactive_power_constraints!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     ::DeviceModel{H, D},
     ::Type{S},
@@ -657,7 +612,7 @@ end
 
 
 function invertor_rating_constraints!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     ::DeviceModel{H, D},
     ::Type{S},
@@ -688,7 +643,7 @@ end
 ########################### Initial Conditions #############################################
 
 function initial_conditions!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{D},
 ) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation}
@@ -702,24 +657,22 @@ end
 function AddCostSpec(
     ::Type{T},
     ::Type{U},
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
 ) where {T <: PSY.HybridSystem, U <: AbstractHybridFormulation}
     return AddCostSpec(;
         variable_type = ActivePowerOutVariable,
         component_type = T,
         variable_cost = PSY.get_variable,
-        start_up_cost = PSY.get_start_up,
-        shut_down_cost = PSY.get_shut_down,
         fixed_cost = PSY.get_fixed,
     )
 end
 
 function AddCostSpec(
     ::Type{T},
-    ::Type{U},
+    ::Type{PhysicalCoupling},
     ::Type{<:PSY.ThermalGen},
-    psi_container::PSIContainer,
-) where {T <: PSY.HybridSystem, U <: Union{NoCoupling, PhysicalCoupling}}
+    psi_container::OptimizationContainer,
+) where {T <: PSY.HybridSystem}
 
     return AddCostSpec(;
         variable_type = ActivePowerVariableThermal,
@@ -734,10 +687,10 @@ end
 
 function AddCostSpec(
     ::Type{T},
-    ::Type{D},
+    ::Type{PhysicalCoupling},
     ::Type{PSY.ControllableLoad},
-    ::PSIContainer,
-) where {T <: PSY.HybridSystem, D <: Union{NoCoupling, PhysicalCoupling}}
+    ::OptimizationContainer,
+) where {T <: PSY.HybridSystem}
     cost_function = x -> (x == nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
         variable_type = ActivePowerVariableLoad,
@@ -749,12 +702,12 @@ end
 
 
 function cost_function!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    device_model::DeviceModel{T, U},
+    device_model::DeviceModel{T, PhysicalCoupling},
     network_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
-) where {T <: PSY.HybridSystem, U <: Union{NoCoupling, PhysicalCoupling}}
+) where {T <: PSY.HybridSystem}
     for d in devices
         cost_function!(psi_container, d, device_model, network_formulation, feedforward)
     end
@@ -762,7 +715,7 @@ function cost_function!(
 end
 
 function cost_function!(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     device::PSY.HybridSystem,
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},

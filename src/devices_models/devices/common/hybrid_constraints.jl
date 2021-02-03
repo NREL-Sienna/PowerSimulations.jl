@@ -18,7 +18,7 @@ If t > 1:
 `` x^{energy}_t == x^{energy}_{t-1} + frhr \eta^{in} x^{in}_t - \frac{frhr}{\eta^{out}} x^{out}_t, \forall t \geq 2 ``
 
 # Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* psi_container::OptimizationContainer : the psi_container model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
 * efficiency_data::Tuple{Vector{String}, Vector{InOut}} :: charging/discharging efficiencies
 * cons_name::Symbol : name of the constraint
@@ -29,7 +29,7 @@ If t > 1:
 
 """
 function power_inflow(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     constraint_infos::Vector{HybridPowerInflowConstraintInfo},
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
@@ -60,7 +60,7 @@ function power_inflow(
 end
 
 function power_outflow(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     constraint_infos::Vector{HybridPowerOutflowConstraintInfo},
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol, Symbol},
@@ -96,7 +96,7 @@ function power_outflow(
 end
 
 function invertor_rating(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     constraint_infos::Vector{HybridInvertorConstraintInfo},
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
@@ -123,7 +123,7 @@ function invertor_rating(
 end
 
 function reactive_balance(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     constraint_infos::Vector{HybridReactiveConstraintInfo},
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol, Symbol, Symbol},

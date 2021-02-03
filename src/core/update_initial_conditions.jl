@@ -240,7 +240,7 @@ function output_init(
 end
 
 function output_init(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HybridSystem}
     _make_initial_conditions!(
@@ -291,7 +291,7 @@ function storage_energy_init(
 end
 
 function storage_energy_init(
-    psi_container::PSIContainer,
+    psi_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HybridSystem}
     key = ICKey(EnergyLevel, T)
