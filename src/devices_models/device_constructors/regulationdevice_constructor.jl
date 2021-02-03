@@ -2,7 +2,7 @@
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
     ::Type{S},
@@ -18,15 +18,15 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, DeltaActivePowerUpVariable, devices)
-    add_variables!(psi_container, DeltaActivePowerDownVariable, devices)
-    add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, devices)
-    add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, devices)
+    add_variables!(optimization_container, DeltaActivePowerUpVariable, devices)
+    add_variables!(optimization_container, DeltaActivePowerDownVariable, devices)
+    add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, devices)
+    add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, devices)
 
     # Constraints
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(optimization_container, devices, S)
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         DeltaActivePowerUpVariable,
         devices,
@@ -35,7 +35,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         DeltaActivePowerDownVariable,
         devices,
@@ -43,9 +43,9 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    participation_assignment!(psi_container, devices, model, S, nothing)
-    regulation_cost!(psi_container, devices, model)
+    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    participation_assignment!(optimization_container, devices, model, S, nothing)
+    regulation_cost!(optimization_container, devices, model)
     return
 end
 
@@ -53,7 +53,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
     ::Type{S},
@@ -69,15 +69,15 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, DeltaActivePowerUpVariable, devices)
-    add_variables!(psi_container, DeltaActivePowerDownVariable, devices)
-    add_variables!(psi_container, AdditionalDeltaActivePowerUpVariable, devices)
-    add_variables!(psi_container, AdditionalDeltaActivePowerDownVariable, devices)
+    add_variables!(optimization_container, DeltaActivePowerUpVariable, devices)
+    add_variables!(optimization_container, DeltaActivePowerDownVariable, devices)
+    add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, devices)
+    add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, devices)
 
     # Constraints
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(optimization_container, devices, S)
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         DeltaActivePowerUpVariable,
         devices,
@@ -86,7 +86,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        psi_container,
+        optimization_container,
         RangeConstraint,
         DeltaActivePowerDownVariable,
         devices,
@@ -94,8 +94,8 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    participation_assignment!(psi_container, devices, model, S, nothing)
-    regulation_cost!(psi_container, devices, model)
+    participation_assignment!(optimization_container, devices, model, S, nothing)
+    regulation_cost!(optimization_container, devices, model)
     return
 end
 
@@ -103,7 +103,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
     ::Type{S},
@@ -116,6 +116,6 @@ function construct_device!(
     if !validate_available_devices(T, devices)
         return
     end
-    nodal_expression!(psi_container, devices, S)
+    nodal_expression!(optimization_container, devices, S)
     return
 end

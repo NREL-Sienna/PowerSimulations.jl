@@ -61,7 +61,7 @@ end
 struct DeviceRangeConstraintSpec
     range_constraint_spec::Union{Nothing, RangeConstraintSpec}
     timeseries_range_constraint_spec::Union{Nothing, TimeSeriesConstraintSpec}
-    custom_psi_container_func::Union{Nothing, Function}
+    custom_optimization_container_func::Union{Nothing, Function}
     devices_filter_func::Union{Nothing, Function}
 end
 
@@ -73,7 +73,7 @@ Users of this function must implement a method for
 Users may also implement custom active_power_constraints! methods.
 """
 function add_constraints!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
@@ -87,12 +87,12 @@ function add_constraints!(
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
-    use_parameters = model_has_parameters(psi_container)
-    use_forecasts = model_uses_forecasts(psi_container)
+    use_parameters = model_has_parameters(optimization_container)
+    use_forecasts = model_uses_forecasts(optimization_container)
     @assert !(use_parameters && !use_forecasts)
     spec =
         DeviceRangeConstraintSpec(T, U, V, W, X, feedforward, use_parameters, use_forecasts)
-    device_range_constraints!(psi_container, devices, model, feedforward, spec)
+    device_range_constraints!(optimization_container, devices, model, feedforward, spec)
 end
 
 """
@@ -101,8 +101,8 @@ Construct inputs for creating range constraints.
 # Arguments
 `range_constraint_spec::Vector{RangeConstraintSpec}`: May be emtpy.
 `timeseries_range_constraint_spec::Vector{TimeSeriesConstraintSpec}`: May be empty.
-`custom_psi_container_func::Union{Nothing, Function}`: Optional function to add custom
- constraints to the internals of a PSIContainer. Must accept PSIContainer, devices iterable,
+`custom_optimization_container_func::Union{Nothing, Function}`: Optional function to add custom
+ constraints to the internals of a OptimizationContainer. Must accept OptimizationContainer, devices iterable,
  and a subtype of AbstractDeviceFormulation.
 `devices_filter_func::Union{Nothing, Function}`: Optional function to filter the devices on
 
@@ -110,19 +110,19 @@ Construct inputs for creating range constraints.
 function DeviceRangeConstraintSpec(;
     range_constraint_spec = nothing,
     timeseries_range_constraint_spec = nothing,
-    custom_psi_container_func = nothing,
+    custom_optimization_container_func = nothing,
     devices_filter_func = nothing,
 )
     return DeviceRangeConstraintSpec(
         range_constraint_spec,
         timeseries_range_constraint_spec,
-        custom_psi_container_func,
+        custom_optimization_container_func,
         devices_filter_func,
     )
 end
 
 function device_range_constraints!(
-    psi_container::PSIContainer,
+    optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
@@ -130,7 +130,7 @@ function device_range_constraints!(
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     range_constraint_spec = spec.range_constraint_spec
     timeseries_range_constraint_spec = spec.timeseries_range_constraint_spec
-    custom_psi_container_func = spec.custom_psi_container_func
+    custom_optimization_container_func = spec.custom_optimization_container_func
 
     if !(spec.devices_filter_func === nothing)
         devices = filter!(spec.devices_filter_func, collect(devices))
@@ -144,7 +144,7 @@ function device_range_constraints!(
 
     if !(range_constraint_spec === nothing)
         _apply_range_constraint_spec!(
-            psi_container,
+            optimization_container,
             range_constraint_spec,
             devices,
             model,
@@ -154,7 +154,7 @@ function device_range_constraints!(
 
     if !(timeseries_range_constraint_spec === nothing)
         _apply_timeseries_range_constraint_spec!(
-            psi_container,
+            optimization_container,
             timeseries_range_constraint_spec,
             devices,
             model,
@@ -162,13 +162,13 @@ function device_range_constraints!(
         )
     end
 
-    if !(custom_psi_container_func === nothing)
-        custom_psi_container_func(psi_container, devices, U)
+    if !(custom_optimization_container_func === nothing)
+        custom_optimization_container_func(optimization_container, devices, U)
     end
 end
 
 function _apply_range_constraint_spec!(
-    psi_container,
+    optimization_container,
     spec,
     devices::D,
     model,
@@ -204,7 +204,7 @@ function _apply_range_constraint_spec!(
     end
 
     spec.constraint_func(
-        psi_container,
+        optimization_container,
         RangeConstraintSpecInternal(
             constraint_infos,
             constraint_name,
@@ -216,7 +216,7 @@ function _apply_range_constraint_spec!(
 end
 
 function _apply_timeseries_range_constraint_spec!(
-    psi_container,
+    optimization_container,
     spec,
     devices::D,
     model,
@@ -229,7 +229,7 @@ function _apply_timeseries_range_constraint_spec!(
     end
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (i, dev) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, dev, spec.forecast_label)
+        ts_vector = get_time_series(optimization_container, dev, spec.forecast_label)
         constraint_info =
             DeviceTimeSeriesConstraintInfo(dev, spec.multiplier_func, ts_vector)
         add_device_services!(constraint_info.range, dev, model)
@@ -244,6 +244,6 @@ function _apply_timeseries_range_constraint_spec!(
         spec.parameter_name === nothing ? nothing :
         UpdateRef{T}(spec.parameter_name, spec.forecast_label),
     )
-    spec.constraint_func(psi_container, ts_inputs)
+    spec.constraint_func(optimization_container, ts_inputs)
     return
 end

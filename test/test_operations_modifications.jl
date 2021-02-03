@@ -20,7 +20,7 @@ services = Dict{Symbol, ServiceModel}()
     )
     set_devices_template!(op_problem, new_devices)
     @test op_problem.template.devices[:Generators].formulation == ThermalBasicUnitCommitment
-    jump_model = op_problem.psi_container.JuMPmodel
+    jump_model = op_problem.optimization_container.JuMPmodel
     @test ((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(jump_model)) ==
           true
 
@@ -41,7 +41,7 @@ end
         DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
     )
     @test op_problem.template.devices[:Generators].formulation == ThermalBasicUnitCommitment
-    jump_model = op_problem.psi_container.JuMPmodel
+    jump_model = op_problem.optimization_container.JuMPmodel
     @test ((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(jump_model)) ==
           true
 
