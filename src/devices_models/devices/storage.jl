@@ -13,7 +13,7 @@ get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = :
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, _) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, _) = nothing
-get_variable_sign(::ActivePowerInVariable, d::PSY.Storage) = -1.0
+get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.Storage}) = -1.0
 
 ########################### ActivePowerOutVariable, Storage #################################
 
@@ -22,7 +22,7 @@ get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = 
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = nothing
-get_variable_sign(::ActivePowerOutVariable, d::PSY.Storage) = -1.0
+get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.Storage}) = 1.0
 
 ############## ReactivePowerVariable, Storage ####################
 
