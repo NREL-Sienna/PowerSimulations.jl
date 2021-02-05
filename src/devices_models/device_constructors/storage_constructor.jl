@@ -355,7 +355,7 @@ function construct_device!(
     add_variables!(optimization_container, ActivePowerOutVariable, devices)
     add_variables!(optimization_container, EnergyVariable, devices)
     add_variables!(optimization_container, ReserveVariable, devices)
-    
+
     # Initial Conditions
     initial_conditions!(optimization_container, devices, model.formulation)
 
