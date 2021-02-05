@@ -400,7 +400,7 @@ end
 
 @testset "Network Unsupported Power Model Formulations" begin
     for network in PSI.UNSUPPORTED_POWERMODELS
-    template = get_thermal_dispatch_template_network(network)
+        template = get_thermal_dispatch_template_network(network)
         ps_model = OperationsProblem(
             template,
             PSB.build_system(PSITestSystems, "c_sys5");
