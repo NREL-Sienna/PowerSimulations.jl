@@ -820,8 +820,8 @@ end
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
     template = get_thermal_standard_uc_template()
-    test_folder = mkpath(joinpath(test_path, randstring()))
     try
+        test_folder = mkpath(joinpath(test_path, randstring()))
         UC = OperationsProblem(
             UnitCommitmentProblem,
             template,
@@ -840,8 +840,8 @@ end
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Convex PWL" begin
     template = get_thermal_standard_uc_template()
-    test_folder = mkpath(joinpath(test_path, randstring()))
     try
+        test_folder = mkpath(joinpath(test_path, randstring()))
         UC = OperationsProblem(
             UnitCommitmentProblem,
             template,
@@ -859,8 +859,8 @@ end
 
 @testset "Solving UC with CopperPlate testing PWL-SOS2 implementation" begin
     template = get_thermal_standard_uc_template()
-    test_folder = mkpath(joinpath(test_path, randstring()))
     try
+        test_folder = mkpath(joinpath(test_path, randstring()))
         UC = OperationsProblem(
             UnitCommitmentProblem,
             template,
@@ -882,8 +882,8 @@ end
         template,
         DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
     )
-    test_folder = mkpath(joinpath(test_path, randstring()))
     try
+        test_folder = mkpath(joinpath(test_path, randstring()))
         UC = OperationsProblem(
             UnitCommitmentProblem,
             template,
