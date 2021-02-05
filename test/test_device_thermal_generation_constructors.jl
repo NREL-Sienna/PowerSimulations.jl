@@ -806,7 +806,7 @@ end
         ramp_test_sys;
         optimizer = Cbc_optimizer,
     )
-    @test build!(ED; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(ED, false, 10, 0, 20, 10, 5, false)
     res = solve!(ED)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
@@ -822,7 +822,7 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, true, 56, 0, 56, 14, 21, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
@@ -837,7 +837,7 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, true, 32, 0, 8, 4, 10, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
 end
@@ -851,7 +851,7 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, true, 32, 0, 8, 4, 14, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89716, 10.0)
 end
@@ -862,15 +862,15 @@ end
         template,
         DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
     )
-        UC = OperationsProblem(
-            UnitCommitmentProblem,
-            template,
-            PSB.build_system(PSITestSystems, "c_market_bid_cost");
-            optimizer = Cbc_optimizer,
-            use_parameters = true,
-        )
-        @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-        moi_tests(UC, true, 38, 0, 18, 8, 13, true)
+    UC = OperationsProblem(
+        UnitCommitmentProblem,
+        template,
+        PSB.build_system(PSITestSystems, "c_market_bid_cost");
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(UC, true, 38, 0, 18, 8, 13, true)
 end
 
 @testset "Operation ModelThermalDispatchNoMin - and PWL Non Convex" begin
@@ -909,7 +909,7 @@ end
             use_parameters = p,
             PTDF = PTDF_ref[sys],
         )
-        @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end
 end

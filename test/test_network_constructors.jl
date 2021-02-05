@@ -1,7 +1,5 @@
 # Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
-test_path = mktempdir()
-
 @testset "All PowerModels models construction" begin
     networks = [
         (PM.ACPPowerModel, fast_ipopt_optimizer),
@@ -26,16 +24,12 @@ test_path = mktempdir()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in networks
         template = get_thermal_dispatch_template_network(network)
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(template, c_sys5; optimizer = solver)
-            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            @test !isnothing(ps_model.internal.optimization_container.pm)
-            @test :nodal_balance_active in
-                  keys(ps_model.internal.optimization_container.expressions)
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+        ps_model = OperationsProblem(template, c_sys5; optimizer = solver)
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        @test !isnothing(ps_model.internal.optimization_container.pm)
+        @test :nodal_balance_active in
+              keys(ps_model.internal.optimization_container.expressions)
     end
 end
 
@@ -60,48 +54,35 @@ end
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(
-                template,
-                sys;
-                optimizer = OSQP_optimizer,
-                use_parameters = p,
-            )
+        ps_model =
+            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
 
-            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            psi_constraint_test(ps_model, constraint_names)
-            moi_tests(
-                ps_model,
-                p,
-                test_results[sys][1],
-                test_results[sys][2],
-                test_results[sys][3],
-                test_results[sys][4],
-                test_results[sys][5],
-                false,
-            )
-            psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.OPTIMAL], test_obj_values[sys], 10000)
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
-    end
-
-    test_folder = mkpath(joinpath(test_path, randstring()))
-    try
-        ps_model_re = OperationsProblem(
-            template,
-            PSB.build_system(PSITestSystems, "c_sys5_re");
-            optimizer = GLPK_optimizer,
-            use_parameters = true,
-            balance_slack_variables = true,
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_names)
+        moi_tests(
+            ps_model,
+            p,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
         )
-        @test build!(ps_model_re; output_dir = test_folder) == PSI.BuildStatus.BUILT
-        psi_checksolve_test(ps_model_re, [MOI.OPTIMAL], 240000.0, 10000)
-    finally
-        rm(test_folder, force = true, recursive = true)
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(ps_model, [MOI.OPTIMAL], test_obj_values[sys], 10000)
     end
+    ps_model_re = OperationsProblem(
+        template,
+        PSB.build_system(PSITestSystems, "c_sys5_re");
+        optimizer = GLPK_optimizer,
+        use_parameters = true,
+        balance_slack_variables = true,
+    )
+    @test build!(ps_model_re; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
+    psi_checksolve_test(ps_model_re, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
 @testset "Network DC-PF with PTDF Model" begin
@@ -130,45 +111,40 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems), p in parameters
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(
-                template,
-                sys;
-                optimizer = OSQP_optimizer,
-                use_parameters = p,
-                PTDF = PTDF_ref[sys],
-            )
+        ps_model = OperationsProblem(
+            template,
+            sys;
+            optimizer = OSQP_optimizer,
+            use_parameters = p,
+            PTDF = PTDF_ref[sys],
+        )
 
-            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            psi_constraint_test(ps_model, constraint_names)
-            moi_tests(
-                ps_model,
-                p,
-                test_results[sys][1],
-                test_results[sys][2],
-                test_results[sys][3],
-                test_results[sys][4],
-                test_results[sys][5],
-                false,
-            )
-            psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(
-                ps_model,
-                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
-                test_obj_values[sys],
-                10000,
-            )
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_names)
+        moi_tests(
+            ps_model,
+            p,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
     end
     # PTDF input Error testing
     ps_model = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
-    test_folder = mkpath(joinpath(test_path, randstring()))
     @test_logs (:error,) match_mode = :any @test build!(
         ps_model;
-        output_dir = test_folder,
+        output_dir = mktempdir(cleanup = true),
     ) == PSI.BuildStatus.FAILED
 end
 
@@ -196,36 +172,28 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems), p in parameters
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(
-                template,
-                sys;
-                optimizer = OSQP_optimizer,
-                use_parameters = p,
-            )
-            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            psi_constraint_test(ps_model, constraint_names)
-            moi_tests(
-                ps_model,
-                p,
-                test_results[sys][1],
-                test_results[sys][2],
-                test_results[sys][3],
-                test_results[sys][4],
-                test_results[sys][5],
-                false,
-            )
-            psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(
-                ps_model,
-                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
-                test_obj_values[sys],
-                1000,
-            )
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+        ps_model =
+            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_names)
+        moi_tests(
+            ps_model,
+            p,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            1000,
+        )
     end
 end
 
@@ -255,36 +223,32 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems), p in parameters
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(
-                template,
-                sys;
-                optimizer = ipopt_optimizer,
-                use_parameters = p,
-            )
-            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            psi_constraint_test(ps_model, constraint_names)
-            moi_tests(
-                ps_model,
-                p,
-                test_results[sys][1],
-                test_results[sys][2],
-                test_results[sys][3],
-                test_results[sys][4],
-                test_results[sys][5],
-                false,
-            )
-            psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(
-                ps_model,
-                [MOI.TIME_LIMIT, MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
-                test_obj_values[sys],
-                10000,
-            )
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+        ps_model = OperationsProblem(
+            template,
+            sys;
+            optimizer = ipopt_optimizer,
+            use_parameters = p,
+        )
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_names)
+        moi_tests(
+            ps_model,
+            p,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.TIME_LIMIT, MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
+            test_obj_values[sys],
+            10000,
+        )
     end
 end
 
@@ -310,37 +274,29 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems), p in parameters
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(
-                template,
-                sys;
-                optimizer = OSQP_optimizer,
-                use_parameters = p,
-            )
-            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            psi_constraint_test(ps_model, constraint_names)
-            # TODO: Enable these tests
-            # moi_tests(
-            #     ps_model,
-            #     p,
-            #     test_results[sys][1],
-            #     test_results[sys][2],
-            #     test_results[sys][3],
-            #     test_results[sys][4],
-            #     test_results[sys][5],
-            #     false,
-            # )
-            psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(
-                ps_model,
-                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
-                test_obj_values[sys],
-                10000,
-            )
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+        ps_model =
+            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_names)
+        # TODO: Enable these tests
+        # moi_tests(
+        #     ps_model,
+        #     p,
+        #     test_results[sys][1],
+        #     test_results[sys][2],
+        #     test_results[sys][3],
+        #     test_results[sys][4],
+        #     test_results[sys][5],
+        #     false,
+        # )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
     end
 end
 
@@ -366,31 +322,27 @@ end
 
     for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(
-                template,
-                sys;
-                optimizer = fast_ipopt_optimizer,
-                use_parameters = true,
-            )
-            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            psi_constraint_test(ps_model, constraint_names)
-            # TODO: Enable these tests
-            # moi_tests(
-            #     ps_model,
-            #     p,
-            #     test_results[sys][1],
-            #     test_results[sys][2],
-            #     test_results[sys][3],
-            #     test_results[sys][4],
-            #     test_results[sys][5],
-            #     false,
-            # )
-            @test !isnothing(ps_model.internal.optimization_container.pm)
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+        ps_model = OperationsProblem(
+            template,
+            sys;
+            optimizer = fast_ipopt_optimizer,
+            use_parameters = true,
+        )
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_names)
+        # TODO: Enable these tests
+        # moi_tests(
+        #     ps_model,
+        #     p,
+        #     test_results[sys][1],
+        #     test_results[sys][2],
+        #     test_results[sys][3],
+        #     test_results[sys][4],
+        #     test_results[sys][5],
+        #     false,
+        # )
+        @test !isnothing(ps_model.internal.optimization_container.pm)
     end
 end
 
@@ -416,56 +368,47 @@ end
     #)
     for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(
-                template,
-                sys;
-                optimizer = ipopt_optimizer,
-                use_parameters = true,
-            )
-            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            psi_constraint_test(ps_model, constraint_names)
-            # TODO: Enable these tests
-            # moi_tests(
-            #     ps_model,
-            #     p,
-            #     test_results[sys][1],
-            #     test_results[sys][2],
-            #     test_results[sys][3],
-            #     test_results[sys][4],
-            #     test_results[sys][5],
-            #     false,
-            # )
-            @test !isnothing(ps_model.internal.optimization_container.pm)
-            psi_checksolve_test(
-                ps_model,
-                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
-                test_obj_values[sys],
-                10000,
-            )
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+        ps_model = OperationsProblem(
+            template,
+            sys;
+            optimizer = ipopt_optimizer,
+            use_parameters = true,
+        )
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_names)
+        # TODO: Enable these tests
+        # moi_tests(
+        #     ps_model,
+        #     p,
+        #     test_results[sys][1],
+        #     test_results[sys][2],
+        #     test_results[sys][3],
+        #     test_results[sys][4],
+        #     test_results[sys][5],
+        #     false,
+        # )
+        @test !isnothing(ps_model.internal.optimization_container.pm)
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
+            test_obj_values[sys],
+            10000,
+        )
     end
 end
 
 @testset "Network Unsupported Power Model Formulations" begin
     for network in PSI.UNSUPPORTED_POWERMODELS
-        template = get_thermal_dispatch_template_network(network)
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            ps_model = OperationsProblem(
-                template,
-                PSB.build_system(PSITestSystems, "c_sys5");
-                optimizer = ipopt_optimizer,
-            )
-            @test_logs (:error, "Operation Problem Build Fail") match_mode = :any @test build!(
-                ps_model;
-                output_dir = test_folder,
-            ) == PSI.BuildStatus.FAILED
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+    template = get_thermal_dispatch_template_network(network)
+        ps_model = OperationsProblem(
+            template,
+            PSB.build_system(PSITestSystems, "c_sys5");
+            optimizer = ipopt_optimizer,
+        )
+        @test_logs (:error, "Operation Problem Build Fail") match_mode = :any @test build!(
+            ps_model;
+            output_dir = mktempdir(cleanup = true),
+        ) == PSI.BuildStatus.FAILED
     end
 end

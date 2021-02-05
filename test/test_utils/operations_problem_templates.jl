@@ -29,6 +29,7 @@ end
 function get_template_standard_uc_simulation()
     template = get_template_basic_uc_simulation()
     set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+    return template
 end
 #=
 ## UC Model Ref
