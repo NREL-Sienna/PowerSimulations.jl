@@ -1,59 +1,25 @@
-
-devices = Dict{String, DeviceModel}(
-    :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-)
-branches = Dict{String, DeviceModel}(
-    :L => DeviceModel(Line, StaticLine),
-    :T => DeviceModel(Transformer2W, StaticBranch),
-    :TT => DeviceModel(TapTransformer, StaticBranch),
-)
-services = Dict{String, ServiceModel}()
-
-@testset "Operation Model kwargs with CopperPlatePowerModel base" begin
-    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_operations_problem"))
+#TODO: Make more tests with Settings
+@testset "Operation Model kwargs" begin
+    template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
 
-    @test_throws ArgumentError OperationsProblem(
-        MockOperationProblem,
+    @test_throws MethodError OperationsProblem(
         template,
         c_sys5;
         bad_kwarg = 10,
     )
+
+    test_folder = mkpath(joinpath(test_path, randstring()))
     op_problem = OperationsProblem(
-        MockOperationProblem,
         template,
         c_sys5;
-        optimizer = GLPK_optimizer,
-        use_parameters = true,
-    )
-    moi_tests(op_problem, true, 120, 0, 120, 120, 24, false)
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        template,
-        c_sys14;
-        optimizer = OSQP_optimizer,
-    )
-    moi_tests(op_problem, false, 120, 0, 120, 120, 24, false)
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        template,
-        c_sys5_re;
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        template,
-        c_sys5_re;
-        use_forecast_data = false,
-        use_parameters = false,
-        optimizer = GLPK_optimizer,
-    )
-    moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
+    @test build!(op_problem; output_dir = test_folder) == PSI.BuildStatus.BUILT
+    # TODO: there is an inconsistency because Horizon isn't 1
+    @test PSI.get_use_forecast_data(PSI.get_settings(PSI.get_optimization_container(op_problem))) == false
 
     op_problem = OperationsProblem(
         MockOperationProblem,
@@ -62,8 +28,52 @@ services = Dict{String, ServiceModel}()
         optimizer = GLPK_optimizer,
         balance_slack_variables = true,
     )
-    moi_tests(op_problem, false, 168, 0, 120, 120, 24, false)
+
+
+    test_folder = mkpath(joinpath(test_path, randstring()))
+    op_problem = OperationsProblem(
+        template,
+        c_sys5;
+        use_forecast_data = false,
+        optimizer = GLPK_optimizer,
+    )
+    @test build!(op_problem; output_dir = test_folder) == PSI.BuildStatus.BUILT
+    # TODO: there is an inconsistency because Horizon isn't 1
+    @test PSI.get_use_forecast_data(PSI.get_settings(PSI.get_optimization_container(op_problem))) == false
+
+    #"Test passing custom JuMP model"
+    my_model = JuMP.Model()
+    my_model.ext[:PSI_Testing] = 1
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        template,
+        c_sys5,
+        my_model;
+        optimizer = GLPK_optimizer,
+        use_parameters = true,
+    )
+    @test haskey(op_problem.optimization_container.JuMPmodel.ext, :PSI_Testing)
+    @test (:params in keys(op_problem.optimization_container.JuMPmodel.ext)) == true
 end
+
+@testset "Set optimizer at solve call" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    devices = Dict{String, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    )
+    template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
+    UC = OperationsProblem(MockOperationProblem, template, c_sys5;)
+    set_services_template!(
+        UC,
+        Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
+    )
+    res = solve!(UC; optimizer = GLPK_optimizer)
+    @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
+end
+
 
 @testset "Test optimization debugging functions" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
@@ -93,103 +103,6 @@ end
     @test isnothing(get_var_index(op_problem, length(var_indices) + 1))
 end
 
-@testset "Test passing custom JuMP model" begin
-    my_model = JuMP.Model()
-    my_model.ext[:PSI_Testing] = 1
-    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        template,
-        c_sys5,
-        my_model;
-        optimizer = GLPK_optimizer,
-        use_parameters = true,
-    )
-    @test haskey(op_problem.optimization_container.JuMPmodel.ext, :PSI_Testing)
-    @test (:params in keys(op_problem.optimization_container.JuMPmodel.ext)) == true
-end
-
-@testset "Operation Model Constructors with Parameters" begin
-    networks = [
-        CopperPlatePowerModel,
-        StandardPTDFModel,
-        DCPPowerModel,
-        NFAPowerModel,
-        ACPPowerModel,
-        ACRPowerModel,
-        ACTPowerModel,
-        DCPLLPowerModel,
-        LPACCPowerModel,
-        SOCWRPowerModel,
-        QCRMPowerModel,
-        QCLSPowerModel,
-    ]
-
-    thermal_gens = [
-        ThermalStandardUnitCommitment,
-        ThermalDispatch,
-        ThermalRampLimited,
-        ThermalDispatchNoMin,
-    ]
-
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
-    c_sys5_pwl_ed = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed")
-    systems = [c_sys5, c_sys5_re, c_sys5_bat, c_sys5_pwl_ed]
-    for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
-        @testset "Operation Model $(net) - $(thermal)" begin
-            devices = Dict{String, DeviceModel}(
-                :Generators => DeviceModel(ThermalStandard, thermal),
-                :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-            )
-            branches = Dict{String, DeviceModel}(:L => DeviceModel(Line, StaticLine))
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            op_problem = OperationsProblem(
-                MockOperationProblem,
-                template,
-                system;
-                use_parameters = p,
-                PTDF = PTDF(system),
-                export_pwl_vars = true,
-            )
-            @test :nodal_balance_active in
-                  keys(op_problem.optimization_container.expressions)
-            @test (:params in keys(op_problem.optimization_container.JuMPmodel.ext)) == p
-        end
-    end
-end
-
-@testset "Operation Model CopperPlatePowerModel - ThermalDispatchNoMin - c_sys5_pwl_ed_nonconvex" begin
-    c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
-    devices = Dict{String, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-    )
-    branches = Dict{String, DeviceModel}(:L => DeviceModel(Line, StaticLine))
-    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    @test_throws IS.InvalidValue OperationsProblem(
-        MockOperationProblem,
-        template,
-        c_sys5_pwl_ed_nonconvex;
-        use_parameters = true,
-        PTDF = PTDF(c_sys5_pwl_ed_nonconvex),
-        export_pwl_vars = true,
-    )
-end
-@testset "Operations template constructors" begin
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
-    op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
-    moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
-    moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
-    ED = PSI.run_economic_dispatch(c_sys5; optimizer = fast_lp_optimizer)
-    UC = PSI.run_unit_commitment(c_sys5; optimizer = fast_lp_optimizer)
-    @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
-    @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
-end
-
 @testset "Test print methods" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -206,153 +119,7 @@ end
     _test_html_print_methods(list)
 end
 
-devices = Dict{String, DeviceModel}(
-    :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-)
-branches = Dict{String, DeviceModel}(
-    :L => DeviceModel(Line, StaticLine),
-    :T => DeviceModel(Transformer2W, StaticBranch),
-    :TT => DeviceModel(TapTransformer, StaticBranch),
-)
-services = Dict{String, ServiceModel}()
-
-@testset "Solving ED with CopperPlate" begin
-    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    parameters_value = [true, false]
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    systems = [c_sys5, c_sys14]
-    test_results = Dict{System, Float64}(c_sys5 => 240000.0, c_sys14 => 142000.0)
-    @info "Test solve ED with CopperPlatePowerModel network"
-    for sys in systems, p in parameters_value
-        @testset "ED CopperPlatePowerModel model use_parameters = $(p)" begin
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = OSQP_optimizer,
-                use_parameters = p,
-            )
-            psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
-        end
-    end
-    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
-    ED = OperationsProblem(
-        MockOperationProblem,
-        template,
-        c_sys5_re;
-        optimizer = GLPK_optimizer,
-        balance_slack_variables = true,
-    )
-    psi_checksolve_test(ED, [MOI.OPTIMAL], 240000.0, 10000)
-end
-
-@testset "Solving ED with PTDF Models" begin
-    template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services)
-    parameters_value = [true, false]
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5, c_sys14, c_sys14_dc]
-    PTDF_ref = IdDict{System, PTDF}(
-        c_sys5 => PTDF(c_sys5),
-        c_sys14 => PTDF(c_sys14),
-        c_sys14_dc => PTDF(c_sys14_dc),
-    )
-    test_results = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 142000.0,
-    )
-
-    @info "Test solve ED with StandardPTDFModel network"
-    for sys in systems, p in parameters_value
-        @testset "ED StandardPTDFModel model use_parameters = $(p)" begin
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = OSQP_optimizer,
-                use_parameters = p,
-                PTDF = PTDF_ref[sys],
-            )
-            psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
-        end
-    end
-end
-
-@testset "Solving ED With PowerModels with loss-less convex models" begin
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5, c_sys14, c_sys14_dc]
-    parameters_value = [true, false]
-    networks = [DCPPowerModel, NFAPowerModel]
-    test_results = Dict{System, Float64}(
-        c_sys5 => 330000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 142000.0,
-    )
-
-    for net in networks, p in parameters_value, sys in systems
-        @info("Test solve ED with $(net) network")
-        @testset "ED model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = ipopt_optimizer,
-                use_parameters = p,
-            )
-            #The tolerance range here is large because NFA has a much lower objective value
-            psi_checksolve_test(
-                ED,
-                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
-                test_results[sys],
-                35000,
-            )
-        end
-    end
-end
-
-@testset "Solving ED With PowerModels with linear convex models" begin
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5, c_sys14]
-    parameters_value = [true, false]
-    networks = [DCPLLPowerModel, LPACCPowerModel]
-    test_results = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 142000.0,
-    )
-
-    for net in networks, p in parameters_value, sys in systems
-        @info("Test solve ED with $(net) network")
-        @testset "ED model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = ipopt_optimizer,
-                use_parameters = p,
-            )
-            #The tolerance range here is large because NFA has a much lower objective value
-            psi_checksolve_test(
-                ED,
-                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
-                test_results[sys],
-                10000,
-            )
-        end
-    end
-end
-
-@testset "Operation Model Constructors with Slacks" begin
+@testset "Operation Model Solve with Slacks" begin
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
 
     thermal_gens = [ThermalDispatch]
@@ -380,244 +147,17 @@ end
               [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
     end
 end
-#=
-@testset "Solving ED With PowerModels with convex SOC and QC models" begin
-    systems = [c_sys5, c_sys14]
-    parameters_value = [true, false]
-    networks = [SOCWRPowerModel,
-                 QCRMPowerModel,
-                 QCLSPowerModel,]
-    test_results = Dict{System, Float64}(c_sys5 => 320000.0,
-                                             c_sys14 => 142000.0)
-    for  net in networks, p in parameters_value, sys in systems
-        @info("Test solve ED with $(net) network")
-        @testset "ED model $(net) and use_parameters = $(p)" begin
-        template = OperationsProblemTemplate(net, devices, branches, services);
-        ED = OperationsProblem(MockOperationProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
-        #The tolerance range here is large because Relaxations have a lower objective value
-        psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 25000)
-        end
-    end
-end
-=#
 
-@testset "Solving ED With PowerModels Non-Convex Networks" begin
+@testset "Operations constructors" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5, c_sys14, c_sys14_dc]
-    parameters_value = [true, false]
-    networks = [
-        ACPPowerModel,
-        #ACRPowerModel,
-        ACTPowerModel,
-    ]
-    test_results = Dict{System, Float64}(
-        c_sys5 => 340000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 142000.0,
-    )
-
-    for net in networks, p in parameters_value, sys in systems
-        @info("Test solve ED with $(net) network")
-        @testset "ED model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = ipopt_optimizer,
-                use_parameters = p,
-            )
-            psi_checksolve_test(
-                ED,
-                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
-                test_results[sys],
-                10000,
-            )
-        end
-    end
-end
-
-@testset "Solving ED Hydro System using Dispatch Run of River" begin
-    sys = PSB.build_system(PSITestSystems, "c_sys5_hy")
-    parameters_value = [true, false]
-    networks = [ACPPowerModel, DCPPowerModel]
-
-    test_results = Dict{Any, Float64}(ACPPowerModel => 12414.0, DCPPowerModel => 12218.0)
-
-    devices = Dict{String, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-        :HydroGens => DeviceModel(HydroDispatch, HydroDispatchRunOfRiver),
-    )
-
-    for net in networks, p in parameters_value
-        @info("Test solve HydroRoR ED with $(net) network")
-        @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = ipopt_optimizer,
-                use_parameters = p,
-            )
-            psi_checksolve_test(
-                ED,
-                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
-                test_results[net],
-                1000,
-            )
-        end
-    end
-end
-
-@testset "Solving ED Hydro System using Commitment Run of River" begin
-    sys = PSB.build_system(PSITestSystems, "c_sys5_hy")
-    parameters_value = [true, false]
-    net = DCPPowerModel
-
-    devices = Dict{String, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-        :HydroGens => DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver),
-    )
-
-    for p in parameters_value
-        @info("Test solve HydroRoR ED with $(net) network")
-        @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = GLPK_optimizer,
-                use_parameters = p,
-            )
-            psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 12218.0, 1000)
-        end
-    end
-end
-
-@testset "Solving ED Hydro System using Dispatch with Reservoir" begin
-    sys = PSB.build_system(PSITestSystems, "c_sys5_hyd")
-    parameters_value = [true, false]
-    networks = [ACPPowerModel, DCPPowerModel]
-    models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
-    test_results = Dict{Any, Float64}(
-        (ACPPowerModel, HydroDispatchReservoirBudget) => 338977.0,
-        (DCPPowerModel, HydroDispatchReservoirBudget) => 337646.0,
-        (ACPPowerModel, HydroDispatchReservoirStorage) => 303157.0,
-        (DCPPowerModel, HydroDispatchReservoirStorage) => 301826.0,
-    )
-    parameters_value = [true, false]
-
-    for net in networks, mod in models, p in parameters_value
-        @info("Test solve HydroRoR ED with $(net) network")
-        @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
-            devices = Dict{String, DeviceModel}(
-                :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-                :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-                :HydroGens => DeviceModel(HydroEnergyReservoir, mod),
-            )
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = ipopt_optimizer,
-                use_parameters = p,
-            )
-            psi_checksolve_test(
-                ED,
-                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
-                test_results[(net, mod)],
-                10000,
-            )
-        end
-    end
-end
-
-@testset "Solving ED Hydro System using Commitment with Reservoir" begin
-    sys = PSB.build_system(PSITestSystems, "c_sys5_hyd")
-    parameters_value = [true, false]
-    net = DCPPowerModel
-    models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
-    test_results = Dict{Any, Float64}(
-        HydroCommitmentReservoirBudget => 337646.0,
-        HydroCommitmentReservoirStorage => 301826.0,
-    )
-
-    for mod in models, p in parameters_value
-        @info("Test solve HydroRoR ED with $(net) network")
-        @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
-            devices = Dict{String, DeviceModel}(
-                :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-                :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-                :HydroGens => DeviceModel(HydroEnergyReservoir, mod),
-            )
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            ED = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = GLPK_optimizer,
-                use_parameters = p,
-            )
-            psi_checksolve_test(
-                ED,
-                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
-                test_results[mod],
-                10000,
-            )
-        end
-    end
-end
-
-@testset "Solving UC Linear Networks" begin
-    devices = Dict{String, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-    )
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
-    parameters_value = [true, false]
-    systems = [c_sys5, c_sys5_dc]
-    networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
-    PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
-
-    for net in networks, p in parameters_value, sys in systems
-        @info("Test solve UC with $(net) network")
-        @testset "UC model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            UC = OperationsProblem(
-                MockOperationProblem,
-                template,
-                sys;
-                optimizer = GLPK_optimizer,
-                use_parameters = p,
-                PTDF = PTDF_ref[sys],
-            )
-            psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
-        end
-    end
-end
-
-@testset "Set optimizer at solve call" begin
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    devices = Dict{String, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-    )
-    template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-    UC = OperationsProblem(MockOperationProblem, template, c_sys5;)
-    set_services_template!(
-        UC,
-        Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
-    )
-    res = solve!(UC; optimizer = GLPK_optimizer)
-    @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
+    op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
+    op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
+    moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
+    moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
+    ED = PSI.run_economic_dispatch(c_sys5; optimizer = fast_lp_optimizer)
+    UC = PSI.run_unit_commitment(c_sys5; optimizer = fast_lp_optimizer)
+    @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
+    @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
 end
 
 @testset "Test duals and variables getter functions" begin

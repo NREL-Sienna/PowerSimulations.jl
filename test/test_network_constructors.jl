@@ -94,7 +94,7 @@ end
             template,
             PSB.build_system(PSITestSystems, "c_sys5_re");
             optimizer = GLPK_optimizer,
-            use_parameters = p,
+            use_parameters = true,
             balance_slack_variables = true,
         )
         @test build!(ps_model_re; output_dir = test_folder) == PSI.BuildStatus.BUILT
@@ -355,7 +355,7 @@ end
                 template,
                 sys;
                 optimizer = fast_ipopt_optimizer,
-                use_parameters = p,
+                use_parameters = true,
             )
             @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
             psi_constraint_test(ps_model, constraint_names)
@@ -407,7 +407,7 @@ end
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
-                use_parameters = p,
+                use_parameters = true,
             )
             @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
             psi_constraint_test(ps_model, constraint_names)
@@ -444,8 +444,7 @@ end
             ps_model = OperationsProblem(
                 template,
                 sys;
-                optimizer = ipopt_optimizer,
-                use_parameters = p,
+                optimizer = ipopt_optimizer
             )
             @test_logs (:error, "Operation Problem Build Fail") match_mode = :any @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.FAILED
         finally

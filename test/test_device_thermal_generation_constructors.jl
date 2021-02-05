@@ -1,3 +1,4 @@
+test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_thermal_constructors"))
 @testset "ThermalGen data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
@@ -794,7 +795,6 @@ end
 end
 
 ############################# Model validation tests #######################################
-test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_thermal_constructors"))
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
     ramp_test_sys = PSB.build_system(PSITestSystems, "c_ramp_test")
     template = OperationsProblemTemplate(CopperPlatePowerModel)
