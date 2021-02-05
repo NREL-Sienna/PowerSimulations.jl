@@ -39,6 +39,16 @@ get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
 
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
 
+############## EnergySlackUp, Storage ####################
+
+get_variable_binary(::EnergySlackUp, ::Type{<:PSY.Storage}) = false
+get_variable_lower_bound(::EnergySlackUp, d::PSY.Storage, _) = 0.0
+
+############## EnergySlackDown, Storage ####################
+
+get_variable_binary(::EnergySlackDown, ::Type{<:PSY.Storage}) = false
+get_variable_upper_bound(::EnergySlackDown, d::PSY.Storage, _) = 0.0
+
 #! format: on
 
 ################################## output power constraints#################################
@@ -47,7 +57,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerOutVariable},
     ::Type{T},
-    ::Type{<:AbstractStorageFormulation},
+    ::Type{<:BookKeeping},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -72,7 +82,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerInVariable},
     ::Type{T},
-    ::Type{<:AbstractStorageFormulation},
+    ::Type{<:BookKeeping},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -97,7 +107,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerOutVariable},
     ::Type{T},
-    ::Type{<:BookKeepingwReservation},
+    ::Type{<:AbstractStorageFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -123,7 +133,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerInVariable},
     ::Type{T},
-    ::Type{<:BookKeepingwReservation},
+    ::Type{<:AbstractStorageFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
