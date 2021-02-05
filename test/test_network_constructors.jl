@@ -436,14 +436,13 @@ end
 end
 
 @testset "Network Unsupported Power Model Formulations" begin
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for network in PSI.UNSUPPORTED_POWERMODELS
         template = get_thermal_dispatch_template_network(network)
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
             ps_model = OperationsProblem(
                 template,
-                sys;
+                PSB.build_system(PSITestSystems, "c_sys5");
                 optimizer = ipopt_optimizer
             )
             @test_logs (:error, "Operation Problem Build Fail") match_mode = :any @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.FAILED
