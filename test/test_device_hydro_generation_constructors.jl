@@ -686,6 +686,142 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
+#= TODO: Enable these tests
+@testset "Solving ED Hydro System using Dispatch Run of River" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5_hy")
+    parameters_value = [true, false]
+    networks = [ACPPowerModel, DCPPowerModel]
+
+    test_results = Dict{Any, Float64}(ACPPowerModel => 12414.0, DCPPowerModel => 12218.0)
+
+    devices = Dict{String, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+        :HydroGens => DeviceModel(HydroDispatch, HydroDispatchRunOfRiver),
+    )
+
+    for net in networks, p in parameters_value
+        @info("Test solve HydroRoR ED with $(net) network")
+        @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
+            template = OperationsProblemTemplate(net, devices, branches, services)
+            ED = OperationsProblem(
+                MockOperationProblem,
+                template,
+                sys;
+                optimizer = ipopt_optimizer,
+                use_parameters = p,
+            )
+            psi_checksolve_test(
+                ED,
+                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
+                test_results[net],
+                1000,
+            )
+        end
+    end
+end
+
+@testset "Solving ED Hydro System using Commitment Run of River" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5_hy")
+    parameters_value = [true, false]
+    net = DCPPowerModel
+
+    devices = Dict{String, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+        :HydroGens => DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver),
+    )
+
+    for p in parameters_value
+        @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
+            template = OperationsProblemTemplate(net, devices, branches, services)
+            ED = OperationsProblem(
+                MockOperationProblem,
+                template,
+                sys;
+                optimizer = GLPK_optimizer,
+                use_parameters = p,
+            )
+            psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 12218.0, 1000)
+        end
+    end
+end
+
+@testset "Solving ED Hydro System using Dispatch with Reservoir" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    parameters_value = [true, false]
+    networks = [ACPPowerModel, DCPPowerModel]
+    models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
+    test_results = Dict{Any, Float64}(
+        (ACPPowerModel, HydroDispatchReservoirBudget) => 338977.0,
+        (DCPPowerModel, HydroDispatchReservoirBudget) => 337646.0,
+        (ACPPowerModel, HydroDispatchReservoirStorage) => 303157.0,
+        (DCPPowerModel, HydroDispatchReservoirStorage) => 301826.0,
+    )
+    parameters_value = [true, false]
+
+    for net in networks, mod in models, p in parameters_value
+        @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
+            devices = Dict{String, DeviceModel}(
+                :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+                :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+                :HydroGens => DeviceModel(HydroEnergyReservoir, mod),
+            )
+            template = OperationsProblemTemplate(net, devices, branches, services)
+            ED = OperationsProblem(
+                MockOperationProblem,
+                template,
+                sys;
+                optimizer = ipopt_optimizer,
+                use_parameters = p,
+            )
+            psi_checksolve_test(
+                ED,
+                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
+                test_results[(net, mod)],
+                10000,
+            )
+        end
+    end
+end
+
+@testset "Solving ED Hydro System using Commitment with Reservoir" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    parameters_value = [true, false]
+    net = DCPPowerModel
+    models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
+    test_results = Dict{Any, Float64}(
+        HydroCommitmentReservoirBudget => 337646.0,
+        HydroCommitmentReservoirStorage => 301826.0,
+    )
+
+    for mod in models, p in parameters_value
+        @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
+            devices = Dict{String, DeviceModel}(
+                :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+                :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+                :HydroGens => DeviceModel(HydroEnergyReservoir, mod),
+            )
+            template = OperationsProblemTemplate(net, devices, branches, services)
+            ED = OperationsProblem(
+                MockOperationProblem,
+                template,
+                sys;
+                optimizer = GLPK_optimizer,
+                use_parameters = p,
+            )
+            psi_checksolve_test(
+                ED,
+                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
+                test_results[mod],
+                10000,
+            )
+        end
+    end
+end
+
+=#
+
 #=
 # All Hydro UC formulations are currently not supported
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentRunOfRiver Formulations" begin
