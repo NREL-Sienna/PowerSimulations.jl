@@ -1,6 +1,6 @@
 # Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
-test_path = mkpath(joinpath(mktempdir(cleanup = true), "test_network_constructors"))
+test_path = mktempdir()
 
 @testset "All PowerModels models construction" begin
     networks = [

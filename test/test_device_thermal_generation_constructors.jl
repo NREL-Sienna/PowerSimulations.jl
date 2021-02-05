@@ -1,4 +1,4 @@
-test_path = mkpath(joinpath(mktempdir(cleanup = true), "test_thermal_constructors"))
+test_path = mktempdir()
 @testset "ThermalGen data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"

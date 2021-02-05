@@ -1,4 +1,4 @@
-test_path = mkpath(joinpath(mktempdir(cleanup = true), "test_operations_problem"))
+test_path = mktempdir()
 #TODO: Make more tests with Settings
 @testset "Operation Model kwargs" begin
     template = get_thermal_dispatch_template_network()
