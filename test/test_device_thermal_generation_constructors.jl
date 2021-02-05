@@ -800,7 +800,6 @@ end
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalRampLimited)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    test_folder = mkpath(joinpath(test_path, randstring()))
     ED = OperationsProblem(
         EconomicDispatchProblem,
         template,
@@ -831,40 +830,30 @@ end
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Convex PWL" begin
     template = get_thermal_standard_uc_template()
-    test_folder = mkpath(joinpath(test_path, randstring()))
-    try
-        UC = OperationsProblem(
-            UnitCommitmentProblem,
-            template,
-            PSB.build_system(PSITestSystems, "c_linear_pwl_test");
-            optimizer = Cbc_optimizer,
-            use_parameters = true,
-        )
-        @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
-        moi_tests(UC, true, 32, 0, 8, 4, 10, true)
-        psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
-    finally
-        rm(test_folder, force = true, recursive = true)
-    end
+    UC = OperationsProblem(
+        UnitCommitmentProblem,
+        template,
+        PSB.build_system(PSITestSystems, "c_linear_pwl_test");
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    moi_tests(UC, true, 32, 0, 8, 4, 10, true)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
 end
 
 @testset "Solving UC with CopperPlate testing PWL-SOS2 implementation" begin
     template = get_thermal_standard_uc_template()
-    test_folder = mkpath(joinpath(test_path, randstring()))
-    try
-        UC = OperationsProblem(
-            UnitCommitmentProblem,
-            template,
-            PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-            optimizer = Cbc_optimizer,
-            use_parameters = true,
-        )
-        @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
-        moi_tests(UC, true, 32, 0, 8, 4, 14, true)
-        psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89716, 10.0)
-    finally
-        rm(test_folder, force = true, recursive = true)
-    end
+    UC = OperationsProblem(
+        UnitCommitmentProblem,
+        template,
+        PSB.build_system(PSITestSystems, "c_sos_pwl_test");
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    moi_tests(UC, true, 32, 0, 8, 4, 14, true)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89716, 10.0)
 end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin
@@ -873,8 +862,6 @@ end
         template,
         DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
     )
-    test_folder = mkpath(joinpath(test_path, randstring()))
-    try
         UC = OperationsProblem(
             UnitCommitmentProblem,
             template,
@@ -882,11 +869,8 @@ end
             optimizer = Cbc_optimizer,
             use_parameters = true,
         )
-        @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
+        @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         moi_tests(UC, true, 38, 0, 18, 8, 13, true)
-    finally
-        rm(test_folder, force = true, recursive = true)
-    end
 end
 
 @testset "Operation ModelThermalDispatchNoMin - and PWL Non Convex" begin
@@ -916,21 +900,16 @@ end
     PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
 
     for net in networks, p in parameters_value, sys in systems
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        try
-            template = get_thermal_dispatch_template_network(net)
-            set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
-            UC = OperationsProblem(
-                template,
-                sys;
-                optimizer = GLPK_optimizer,
-                use_parameters = p,
-                PTDF = PTDF_ref[sys],
-            )
-            @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
-            psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
-        finally
-            rm(test_folder, force = true, recursive = true)
-        end
+        template = get_thermal_dispatch_template_network(net)
+        set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+        UC = OperationsProblem(
+            template,
+            sys;
+            optimizer = GLPK_optimizer,
+            use_parameters = p,
+            PTDF = PTDF_ref[sys],
+        )
+        @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end
 end
