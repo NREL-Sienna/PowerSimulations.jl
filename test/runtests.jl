@@ -59,7 +59,7 @@ const DISABLED_TEST_FILES = [
     #"test_simulation_build.jl",
     "test_simulation_execute.jl",
     "test_simulation_results.jl",
-    ]
+]
 
 LOG_LEVELS = Dict(
     "Debug" => Logging.Debug,

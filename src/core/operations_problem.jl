@@ -6,6 +6,7 @@ mutable struct SimulationInfo
     name::String
     executions::Int
     execution_count::Int
+    caches::Set{CacheKey}
     end_of_interval_step::Int
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     requires_rebuild::Bool

@@ -1,4 +1,4 @@
-test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_branch_constructors"))
+test_path = mkpath(joinpath(mktempdir(cleanup = true), "test_branch_constructors"))
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     line = PSY.get_component(Line, system, "1")

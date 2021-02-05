@@ -1,14 +1,10 @@
-test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_operations_problem"))
+test_path = mkpath(joinpath(mktempdir(cleanup = true), "test_operations_problem"))
 #TODO: Make more tests with Settings
 @testset "Operation Model kwargs" begin
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
 
-    @test_throws MethodError OperationsProblem(
-        template,
-        c_sys5;
-        bad_kwarg = 10,
-    )
+    @test_throws MethodError OperationsProblem(template, c_sys5; bad_kwarg = 10)
 
     test_folder = mkpath(joinpath(test_path, randstring()))
     op_problem = OperationsProblem(
@@ -19,7 +15,9 @@ test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_operations_problem"))
     )
     @test build!(op_problem; output_dir = test_folder) == PSI.BuildStatus.BUILT
     # TODO: there is an inconsistency because Horizon isn't 1
-    @test PSI.get_use_forecast_data(PSI.get_settings(PSI.get_optimization_container(op_problem))) == false
+    @test PSI.get_use_forecast_data(
+        PSI.get_settings(PSI.get_optimization_container(op_problem)),
+    ) == false
 
     op_problem = OperationsProblem(
         MockOperationProblem,
@@ -29,7 +27,6 @@ test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_operations_problem"))
         balance_slack_variables = true,
     )
 
-
     test_folder = mkpath(joinpath(test_path, randstring()))
     op_problem = OperationsProblem(
         template,
@@ -39,7 +36,9 @@ test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_operations_problem"))
     )
     @test build!(op_problem; output_dir = test_folder) == PSI.BuildStatus.BUILT
     # TODO: there is an inconsistency because Horizon isn't 1
-    @test PSI.get_use_forecast_data(PSI.get_settings(PSI.get_optimization_container(op_problem))) == false
+    @test PSI.get_use_forecast_data(
+        PSI.get_settings(PSI.get_optimization_container(op_problem)),
+    ) == false
 
     #"Test passing custom JuMP model"
     my_model = JuMP.Model()
@@ -73,7 +72,6 @@ end
     res = solve!(UC; optimizer = GLPK_optimizer)
     @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
 end
-
 
 @testset "Test optimization debugging functions" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)

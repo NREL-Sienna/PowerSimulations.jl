@@ -17,6 +17,19 @@ function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     return template
 end
 
+function get_template_basic_uc_simulation()
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template, RenewableDispatch, FixedOutput)
+    set_device_model!(template, PowerLoad, StaticPowerLoad),
+    set_device_model!(template, InterruptibleLoad, StaticPowerLoad)
+    return template
+end
+
+function get_template_standard_uc_simulation()
+    template = get_template_basic_uc_simulation()
+    set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+end
 #=
 ## UC Model Ref
 branches = Dict{String, DeviceModel}()

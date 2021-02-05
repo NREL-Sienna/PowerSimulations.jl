@@ -1,4 +1,4 @@
-test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_thermal_constructors"))
+test_path = mkpath(joinpath(mktempdir(cleanup = true), "test_thermal_constructors"))
 @testset "ThermalGen data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
@@ -909,7 +909,10 @@ end
         use_parameters = true,
         export_pwl_vars = true,
     )
-    @test_throws IS.InvalidValue mock_construct_device!(op_problem, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
+    @test_throws IS.InvalidValue mock_construct_device!(
+        op_problem,
+        DeviceModel(ThermalStandard, ThermalDispatchNoMin),
+    )
 end
 
 #TODO: Add test for newer UC models

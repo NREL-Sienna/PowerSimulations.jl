@@ -1,6 +1,6 @@
 # Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
-test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_network_constructors"))
+test_path = mkpath(joinpath(mktempdir(cleanup = true), "test_network_constructors"))
 
 @testset "All PowerModels models construction" begin
     networks = [
@@ -28,14 +28,10 @@ test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_network_constructors"
         template = get_thermal_dispatch_template_network(network)
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
-            ps_model = OperationsProblem(
-                template,
-                c_sys5;
-                optimizer = solver,
-            )
-        @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
-        @test !isnothing(ps_model.internal.optimization_container.pm)
-        @test :nodal_balance_active in
+            ps_model = OperationsProblem(template, c_sys5; optimizer = solver)
+            @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
+            @test !isnothing(ps_model.internal.optimization_container.pm)
+            @test :nodal_balance_active in
                   keys(ps_model.internal.optimization_container.expressions)
         finally
             rm(test_folder, force = true, recursive = true)
@@ -57,7 +53,11 @@ end
     )
     constraint_names = [:CopperPlateBalance]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    test_obj_values = IdDict{System, Float64}(c_sys5 => 240000.0, c_sys14 => 142000.0, c_sys14_dc => 142000.0)
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 240000.0,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
 
     for (ix, sys) in enumerate(systems), p in parameters
         test_folder = mkpath(joinpath(test_path, randstring()))
@@ -137,7 +137,7 @@ end
                 sys;
                 optimizer = OSQP_optimizer,
                 use_parameters = p,
-                PTDF = PTDF_ref[sys]
+                PTDF = PTDF_ref[sys],
             )
 
             @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
@@ -153,7 +153,12 @@ end
                 false,
             )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL], test_obj_values[sys], 10000)
+            psi_checksolve_test(
+                ps_model,
+                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+                test_obj_values[sys],
+                10000,
+            )
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -161,7 +166,10 @@ end
     # PTDF input Error testing
     ps_model = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
     test_folder = mkpath(joinpath(test_path, randstring()))
-    @test_logs (:error,) match_mode = :any @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.FAILED
+    @test_logs (:error,) match_mode = :any @test build!(
+        ps_model;
+        output_dir = test_folder,
+    ) == PSI.BuildStatus.FAILED
 end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
@@ -182,7 +190,7 @@ end
         c_sys14 => [936, 0, 1080, 1080, 840],
         c_sys14_dc => [984, 48, 984, 984, 840],
     )
-     test_obj_values = IdDict{System, Float64}(
+    test_obj_values = IdDict{System, Float64}(
         c_sys5 => 342000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
@@ -209,8 +217,12 @@ end
                 false,
             )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL], test_obj_values[sys],
-                1000,)
+            psi_checksolve_test(
+                ps_model,
+                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+                test_obj_values[sys],
+                1000,
+            )
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -264,8 +276,12 @@ end
                 false,
             )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.TIME_LIMIT, MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_obj_values[sys],
-                10000,)
+            psi_checksolve_test(
+                ps_model,
+                [MOI.TIME_LIMIT, MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
+                test_obj_values[sys],
+                10000,
+            )
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -280,9 +296,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names = [
-        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
-    ]
+    constraint_names = [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
     parameters = [true, false]
     # TODO: Enable these tests
     #test_results = Dict{System, Vector{Int}}(
@@ -318,7 +332,12 @@ end
             #     false,
             # )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL], test_obj_values[sys], 10000)
+            psi_checksolve_test(
+                ps_model,
+                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+                test_obj_values[sys],
+                10000,
+            )
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -337,9 +356,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Voltages, etc.
-    constraint_names = [
-        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
-    ]
+    constraint_names = [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
     # TODO: Enable these tests
     #test_results = Dict{System, Vector{Int}}(
     #    c_sys5 => [384, 0, 408, 408, 288],
@@ -380,14 +397,12 @@ end
 # TODO: Add constraint tests for these models, other is redundant with first test
 @testset "Network AC-PF PowerModels quadratic loss approximations models" begin
     networks = [DCPLLPowerModel, LPACCPowerModel]
-   c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Bi-direccional flows etc
-    constraint_names = [
-        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
-    ]
+    constraint_names = [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
         c_sys14 => 142000.0,
@@ -443,9 +458,12 @@ end
             ps_model = OperationsProblem(
                 template,
                 PSB.build_system(PSITestSystems, "c_sys5");
-                optimizer = ipopt_optimizer
+                optimizer = ipopt_optimizer,
             )
-            @test_logs (:error, "Operation Problem Build Fail") match_mode = :any @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.FAILED
+            @test_logs (:error, "Operation Problem Build Fail") match_mode = :any @test build!(
+                ps_model;
+                output_dir = test_folder,
+            ) == PSI.BuildStatus.FAILED
         finally
             rm(test_folder, force = true, recursive = true)
         end

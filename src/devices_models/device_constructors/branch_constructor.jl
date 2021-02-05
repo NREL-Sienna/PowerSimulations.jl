@@ -16,7 +16,7 @@ construct_device!(
 construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
-    ::DeviceModel{<: PSY.ACBranch, StaticBranchUnbounded},
+    ::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},
     ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
 ) = nothing
 
@@ -30,8 +30,8 @@ construct_device!(
 construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
-    ::DeviceModel{<: PSY.ACBranch, StaticBranchUnbounded},
-    ::Type{<: PM.AbstractPowerModel},
+    ::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},
+    ::Type{<:PM.AbstractPowerModel},
 ) = nothing
 
 # For DC Power only. Implements constraints
@@ -40,10 +40,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{B, StaticBranch},
     ::Type{S},
-) where {
-    B <: PSY.ACBranch,
-    S <: PM.AbstractActivePowerModel,
-}
+) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(B, sys)
     if !validate_available_devices(B, devices)
         return
@@ -91,19 +88,14 @@ function construct_device!(
         return
     end
     branch_rate_bounds!(optimization_container, devices, model, S)
-    branch_rate_bounds!(
-        optimization_container,
-        devices,
-        model,
-        S,
-    )
+    branch_rate_bounds!(optimization_container, devices, model, S)
     return
 end
 
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{B, <: AbstractDCLineFormulation},
+    model::DeviceModel{B, <:AbstractDCLineFormulation},
     ::Type{S},
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
