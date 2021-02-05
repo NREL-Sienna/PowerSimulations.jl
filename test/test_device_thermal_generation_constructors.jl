@@ -801,47 +801,38 @@ end
     set_device_model!(template, ThermalStandard, ThermalRampLimited)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     test_folder = mkpath(joinpath(test_path, randstring()))
-    try
-        ED = OperationsProblem(
-            EconomicDispatchProblem,
-            template,
-            ramp_test_sys;
-            optimizer = Cbc_optimizer,
-        )
-        @test build!(ED; output_dir = test_folder) == PSI.BuildStatus.BUILT
-        moi_tests(ED, false, 10, 0, 20, 10, 5, false)
-        res = solve!(ED)
-        psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
-    finally
-        rm(test_folder, force = true, recursive = true)
-    end
+    ED = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        ramp_test_sys;
+        optimizer = Cbc_optimizer,
+    )
+    @test build!(ED; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    moi_tests(ED, false, 10, 0, 20, 10, 5, false)
+    res = solve!(ED)
+    psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
 end
 
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
     template = get_thermal_standard_uc_template()
-    try
-        test_folder = mkpath(joinpath(test_path, randstring()))
-        UC = OperationsProblem(
-            UnitCommitmentProblem,
-            template,
-            PSB.build_system(PSITestSystems, "c_duration_test");
-            optimizer = Cbc_optimizer,
-            use_parameters = true,
-        )
-        @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
-        moi_tests(UC, true, 56, 0, 56, 14, 21, true)
-        psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
-    finally
-        rm(test_folder, force = true, recursive = true)
-    end
+    UC = OperationsProblem(
+        UnitCommitmentProblem,
+        template,
+        PSB.build_system(PSITestSystems, "c_duration_test");
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(UC; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    moi_tests(UC, true, 56, 0, 56, 14, 21, true)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
 
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Convex PWL" begin
     template = get_thermal_standard_uc_template()
+    test_folder = mkpath(joinpath(test_path, randstring()))
     try
-        test_folder = mkpath(joinpath(test_path, randstring()))
         UC = OperationsProblem(
             UnitCommitmentProblem,
             template,
@@ -859,8 +850,8 @@ end
 
 @testset "Solving UC with CopperPlate testing PWL-SOS2 implementation" begin
     template = get_thermal_standard_uc_template()
+    test_folder = mkpath(joinpath(test_path, randstring()))
     try
-        test_folder = mkpath(joinpath(test_path, randstring()))
         UC = OperationsProblem(
             UnitCommitmentProblem,
             template,
@@ -882,8 +873,8 @@ end
         template,
         DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
     )
+    test_folder = mkpath(joinpath(test_path, randstring()))
     try
-        test_folder = mkpath(joinpath(test_path, randstring()))
         UC = OperationsProblem(
             UnitCommitmentProblem,
             template,
