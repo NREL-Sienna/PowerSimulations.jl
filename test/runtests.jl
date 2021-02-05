@@ -52,6 +52,16 @@ include("test_utils/operations_problem_templates.jl")
 
 const LOG_FILE = "power-simulations-test.log"
 
+const DISABLED_TEST_FILES = [
+    "test_device_branch_constructors.jl",
+    "test_operations_problem.jl",
+    "test_services_constructor.jl",
+    "test_simulation_build.jl",
+    "test_simulation_execute.jl",
+    "test_simulation_results.jl",
+    "test_simulation_results_export.jl",
+    ]
+
 LOG_LEVELS = Dict(
     "Debug" => Logging.Debug,
     "Info" => Logging.Info,
@@ -98,6 +108,10 @@ macro includetests(testarg...)
         end
         println()
         for test in tests
+            if !isempty(DISABLED_TEST_FILES)
+                @warn("Some tests are disabled $DISABLED_TEST_FILES")
+            end
+            test ∈ DISABLED_TEST_FILES && continue
             print(splitext(test)[1], ": ")
             include(test)
             println()
