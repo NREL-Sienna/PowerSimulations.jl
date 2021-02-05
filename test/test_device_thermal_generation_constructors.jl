@@ -897,3 +897,46 @@ end
         rm(test_folder, force = true, recursive = true)
     end
 end
+
+@testset "Operation ModelThermalDispatchNoMin - and PWL Non Convex" begin
+    c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
+    template = get_thermal_dispatch_template_network()
+    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
+    op_problem = OperationsProblem(
+        MockOperationProblem,
+        CopperPlatePowerModel,
+        c_sys5_pwl_ed_nonconvex;
+        use_parameters = true,
+        export_pwl_vars = true,
+    )
+    @test_throws IS.InvalidValue mock_construct_device!(op_problem, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
+end
+
+#TODO: Add test for newer UC models
+@testset "Solving UC Models with Linear Networks" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
+    parameters_value = [true, false]
+    systems = [c_sys5, c_sys5_dc]
+    networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
+    PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
+
+    for net in networks, p in parameters_value, sys in systems
+        test_folder = mkpath(joinpath(test_path, randstring()))
+        try
+            template = get_thermal_dispatch_template_network(net)
+            set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+            UC = OperationsProblem(
+                template,
+                sys;
+                optimizer = GLPK_optimizer,
+                use_parameters = p,
+                PTDF = PTDF_ref[sys],
+            )
+            @test build!(UC; output_dir = test_folder) == PSI.BuildStatus.BUILT
+            psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
+        finally
+            rm(test_folder, force = true, recursive = true)
+        end
+    end
+end
