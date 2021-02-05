@@ -25,7 +25,6 @@ end
     ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
@@ -46,7 +45,6 @@ end
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -76,7 +74,6 @@ end
     ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
@@ -97,7 +94,6 @@ end
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -127,7 +123,6 @@ end
     ]
     model = DeviceModel(ThermalMultiStart, ThermalStandardUnitCommitment)
 
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -158,7 +153,6 @@ end
     ]
     model = DeviceModel(ThermalMultiStart, ThermalStandardUnitCommitment)
 
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -184,7 +178,6 @@ end
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
@@ -203,7 +196,6 @@ end
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -227,7 +219,6 @@ end
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
@@ -246,7 +237,6 @@ end
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -270,7 +260,6 @@ end
     ]
     model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
 
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -294,7 +283,6 @@ end
     ]
     model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
 
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -313,7 +301,6 @@ end
 ################################### Basic Dispatch tests ###################################
 @testset "Thermal Dispatch With DC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatch)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -327,7 +314,6 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -344,7 +330,6 @@ end
 
 @testset "Thermal Dispatch With AC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatch)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -358,7 +343,6 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -375,7 +359,6 @@ end
 
 @testset "ThermalMultiStart Dispatch With DC - PF" begin
     model = DeviceModel(ThermalMultiStart, ThermalDispatch)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -392,7 +375,6 @@ end
 
 @testset "ThermalMultiStart Dispatch With AC - PF" begin
     model = DeviceModel(ThermalMultiStart, ThermalDispatch)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -411,7 +393,6 @@ end
 
 @testset "Thermal Dispatch NoMin With DC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -426,7 +407,6 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -444,7 +424,6 @@ end
 
 @testset "Thermal Dispatch NoMin With AC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -459,7 +438,6 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -477,7 +455,6 @@ end
 
 @testset "Thermal Dispatch NoMin With DC - PF" begin
     model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -495,7 +472,6 @@ end
 
 @testset "ThermalMultiStart Dispatch NoMin With AC - PF" begin
     model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -518,7 +494,6 @@ end
         PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -533,7 +508,6 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -554,7 +528,6 @@ end
         PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -569,7 +542,6 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
-    @info "14-Bus testing"
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -590,7 +562,6 @@ end
         PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalRampLimited)
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -612,7 +583,6 @@ end
         PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalRampLimited)
-    @info "5-Bus testing"
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -642,7 +612,6 @@ end
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 334, false => 330)
-    @info "5-Bus testing"
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -670,7 +639,6 @@ end
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 382, false => 378)
-    @info "5-Bus testing"
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -690,7 +658,6 @@ end
 
 @testset "Thermal Standard with Compact UC and DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -709,7 +676,6 @@ end
     constraint_names =
         [PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart)]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
-    @info "5-Bus testing"
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -727,7 +693,6 @@ end
 
 @testset "Thermal Standard with Compact UC and AC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -746,7 +711,6 @@ end
     constraint_names =
         [PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart)]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
-    @info "5-Bus testing"
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -766,7 +730,6 @@ end
 
 @testset "Thermal Standard with Compact Dispatch and DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -783,7 +746,6 @@ end
 
 @testset "Thermal MultiStart with Compact Dispatch and DC - PF" begin
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
-    @info "5-Bus testing"
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -800,7 +762,6 @@ end
 
 @testset "Thermal Standard with Compact Dispatch and AC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
-    @info "5-Bus testing"
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -818,7 +779,6 @@ end
 @testset "Thermal MultiStart with Compact Dispatch and AC - PF" begin
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
     no_less_than = Dict(true => 382, false => 378)
-    @info "5-Bus testing"
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
         op_problem = OperationsProblem(
@@ -834,7 +794,7 @@ end
 end
 
 ############################# Model validation tests #######################################
-test_path = mkpath(joinpath(pwd(), "test_thermal_constructors"))
+test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_thermal_constructors"))
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
     ramp_test_sys = PSB.build_system(PSITestSystems, "c_ramp_test")
     template = OperationsProblemTemplate(CopperPlatePowerModel)

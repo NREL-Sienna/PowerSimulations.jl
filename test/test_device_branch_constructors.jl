@@ -1,4 +1,4 @@
-test_path = mkpath(joinpath(pwd(), "test_branch_constructors"))
+test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_branch_constructors"))
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     line = PSY.get_component(Line, system, "1")
@@ -85,7 +85,7 @@ end
 end
 
 # Missing tests for transformers and DC lines
-#= Test is failing due to ambiguities
+#=
 
 @testset "AC Power Flow Monitored Line Flow Constraints" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
