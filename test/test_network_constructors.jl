@@ -35,6 +35,8 @@ test_path = mkpath(joinpath(mktempdir(cleanup=true), "test_network_constructors"
             )
         @test build!(ps_model; output_dir = test_folder) == PSI.BuildStatus.BUILT
         @test !isnothing(ps_model.internal.optimization_container.pm)
+        @test :nodal_balance_active in
+                  keys(ps_model.internal.optimization_container.expressions)
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -55,6 +57,7 @@ end
     )
     constraint_names = [:CopperPlateBalance]
     objfuncs = [GAEVF, GQEVF, GQEVF]
+    test_obj_values = IdDict{System, Float64}(c_sys5 => 240000.0, c_sys14 => 142000.0, c_sys14_dc => 142000.0)
 
     for (ix, sys) in enumerate(systems), p in parameters
         test_folder = mkpath(joinpath(test_path, randstring()))
@@ -79,10 +82,25 @@ end
                 false,
             )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
+            psi_checksolve_test(ps_model, [MOI.OPTIMAL], test_obj_values[sys], 10000)
         finally
             rm(test_folder, force = true, recursive = true)
         end
+    end
+
+    test_folder = mkpath(joinpath(test_path, randstring()))
+    try
+        ps_model_re = OperationsProblem(
+            template,
+            PSB.build_system(PSITestSystems, "c_sys5_re");
+            optimizer = GLPK_optimizer,
+            use_parameters = p,
+            balance_slack_variables = true,
+        )
+        @test build!(ps_model_re; output_dir = test_folder) == PSI.BuildStatus.BUILT
+        psi_checksolve_test(ps_model_re, [MOI.OPTIMAL], 240000.0, 10000)
+    finally
+        rm(test_folder, force = true, recursive = true)
     end
 end
 
@@ -106,7 +124,11 @@ end
         c_sys14 => [600, 0, 600, 600, 504],
         c_sys14_dc => [600, 48, 552, 552, 456],
     )
-
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 340000.0,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
     for (ix, sys) in enumerate(systems), p in parameters
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
@@ -131,7 +153,7 @@ end
                 false,
             )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
+            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL], test_obj_values[sys], 10000)
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -155,12 +177,16 @@ end
         PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
     ]
     parameters = [true, false]
-    test_results = Dict{System, Vector{Int}}(
+    test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
         c_sys14 => [936, 0, 1080, 1080, 840],
         c_sys14_dc => [984, 48, 984, 984, 840],
     )
-
+     test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 342000.0,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
     for (ix, sys) in enumerate(systems), p in parameters
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
@@ -183,7 +209,8 @@ end
                 false,
             )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
+            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL], test_obj_values[sys],
+                1000,)
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -205,12 +232,16 @@ end
         PSI.make_constraint_name(PSI.NODAL_BALANCE_REACTIVE, PSY.Bus),
     ]
     parameters = [true, false]
-    test_results = Dict{System, Vector{Int}}(
+    test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 384, 384, 264],
         c_sys14 => [2832, 0, 720, 720, 696],
         c_sys14_dc => [2832, 96, 672, 672, 744],
     )
-
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 340000.0,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
     for (ix, sys) in enumerate(systems), p in parameters
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
@@ -233,9 +264,8 @@ end
                 false,
             )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.TIME_LIMIT, MOI.OPTIMAL, MOI.LOCALLY_SOLVED])
-            # Disabled because the primal status isn't consisten between operating systems
-            # @test primal_status(ps_model.optimization_container.JuMPmodel) == MOI.FEASIBLE_POINT
+            psi_checksolve_test(ps_model, [MOI.TIME_LIMIT, MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_obj_values[sys],
+                10000,)
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -260,7 +290,11 @@ end
     #    c_sys14 => [936, 0, 1080, 1080, 840],
     #    c_sys14_dc => [984, 48, 984, 984, 840],
     #)
-
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 300000.0,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
     for (ix, sys) in enumerate(systems), p in parameters
         test_folder = mkpath(joinpath(test_path, randstring()))
         try
@@ -284,7 +318,7 @@ end
             #     false,
             # )
             psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
+            psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL], test_obj_values[sys], 10000)
         finally
             rm(test_folder, force = true, recursive = true)
         end
@@ -292,15 +326,11 @@ end
 end
 
 # TODO: Add constraint tests for these models, other is redundant with first test
-@testset "Network AC-PF PowerModels models" begin
-    # Only tests construction and not FEASIBLE_POINT because of CI time output_dir
+@testset "Other Network AC PowerModels models" begin
     # TODO: Enable MOI tests for # of constraints
     networks = [#ACPPowerModel, Already tested
         ACRPowerModel,
         ACTPowerModel,
-        SOCWRPowerModel,
-        QCRMPowerModel,
-        QCLSPowerModel
     ]
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -310,6 +340,13 @@ end
     constraint_names = [
         PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
     ]
+    # TODO: Enable these tests
+    #test_results = Dict{System, Vector{Int}}(
+    #    c_sys5 => [384, 0, 408, 408, 288],
+    #    c_sys14 => [936, 0, 1080, 1080, 840],
+    #    c_sys14_dc => [984, 48, 984, 984, 840],
+    #)
+
     for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
         test_folder = mkpath(joinpath(test_path, randstring()))
@@ -351,6 +388,17 @@ end
     constraint_names = [
         PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
     ]
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 340000.0,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
+    # TODO: Enable these tests
+    #test_results = Dict{System, Vector{Int}}(
+    #    c_sys5 => [384, 0, 408, 408, 288],
+    #    c_sys14 => [936, 0, 1080, 1080, 840],
+    #    c_sys14_dc => [984, 48, 984, 984, 840],
+    #)
     for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
         test_folder = mkpath(joinpath(test_path, randstring()))
@@ -375,6 +423,12 @@ end
             #     false,
             # )
             @test !isnothing(ps_model.internal.optimization_container.pm)
+            psi_checksolve_test(
+                ps_model,
+                [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
+                test_obj_values[sys],
+                10000,
+            )
         finally
             rm(test_folder, force = true, recursive = true)
         end
