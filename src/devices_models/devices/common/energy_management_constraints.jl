@@ -81,7 +81,7 @@ function energy_target_param!(
     target_constraint =
         add_cons_container!(optimization_container, cons_name, name_index, time_steps)
 
-    for  d in target_data, t in time_steps
+    for d in target_data, t in time_steps
         name = get_component_name(d)
         param_target[name, t] =
             PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[t])

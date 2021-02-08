@@ -155,4 +155,3 @@ struct DeviceStartTypesConstraintInfo <: AbstractStartConstraintInfo
     component_name::String
     startup_types::Int
 end
-

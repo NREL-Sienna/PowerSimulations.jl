@@ -8,9 +8,7 @@ get_variable_lower_bound(::EnergySlackUp, d::PSY.Component, _) = 0.0
 get_variable_binary(::EnergySlackDown, ::Type{<:PSY.Component}) = false
 get_variable_upper_bound(::EnergySlackDown, d::PSY.Component, _) = 0.0
 
-
-
-get_target_multiplier(v::PSY.HydroEnergyReservoir) =  PSY.get_storage_capacity(v)
+get_target_multiplier(v::PSY.HydroEnergyReservoir) = PSY.get_storage_capacity(v)
 get_target_multiplier(v::PSY.BatteryEMS) = PSY.get_rating(v)
 
 """
@@ -23,10 +21,7 @@ function energy_target_constraint!(
     model::DeviceModel{T, S},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {
-    T <: PSY.Component,
-    S <: AbstractDeviceFormulation,
-}
+) where {T <: PSY.Component, S <: AbstractDeviceFormulation}
     key = ICKey(EnergyLevel, T)
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
@@ -46,7 +41,8 @@ function energy_target_constraint!(
         end
     else
         for (ix, d) in enumerate(devices)
-            ts_vector_target = length(time_steps) == 1 ? [PSY.get_storage_target(d)] : 
+            ts_vector_target =
+                length(time_steps) == 1 ? [PSY.get_storage_target(d)] :
                 vcat(zeros(time_steps[end - 1]), PSY.get_storage_target(d))
             constraint_info_target = DeviceTimeSeriesConstraintInfo(
                 d,
@@ -85,7 +81,6 @@ function energy_target_constraint!(
 end
 
 ###################
-
 
 # function cost_function!(
 #     optimization_container::OptimizationContainer,

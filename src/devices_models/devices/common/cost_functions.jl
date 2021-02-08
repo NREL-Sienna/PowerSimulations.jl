@@ -65,11 +65,22 @@ function add_service_variables!(spec::AddCostSpec, services)
     return
 end
 
-function add_energy_slack_variables!(spec::AddCostSpec, device::T) where T <: PSY.Component
+function add_energy_slack_variables!(
+    spec::AddCostSpec,
+    device::T,
+) where {T <: PSY.Component}
     if spec.has_target_cost
         name = PSY.get_name(device)
-        set_addtional_linear_terms!(spec, name, make_variable_name(EnergySlackDown, typeof(device)))
-        set_addtional_linear_terms!(spec, name, make_variable_name(EnergySlackUp, typeof(device)))
+        set_addtional_linear_terms!(
+            spec,
+            name,
+            make_variable_name(EnergySlackDown, typeof(device)),
+        )
+        set_addtional_linear_terms!(
+            spec,
+            name,
+            make_variable_name(EnergySlackUp, typeof(device)),
+        )
     end
     return
 end
@@ -346,7 +357,6 @@ function pwl_gencost_linear!(
     JuMP.add_to_expression!(total_gen_cost, gen_cost)
     return total_gen_cost
 end
-
 
 """
 Adds to the models costs represented by a constant Float64

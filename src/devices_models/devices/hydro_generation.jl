@@ -763,7 +763,6 @@ function AddCostSpec(
     )
 end
 
-
 function cost_function!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.HydroEnergyReservoir},

@@ -262,7 +262,6 @@ function energy_balance_constraint!(
     return
 end
 
-
 ############################ Energy Management constraints ######################################
 
 function AddCostSpec(
@@ -271,14 +270,12 @@ function AddCostSpec(
     optimization_container::OptimizationContainer,
 )
     return AddCostSpec(;
-            variable_type = ActivePowerOutVariable,
-            component_type = PSY.BatteryEMS,
-            variable_cost = PSY.get_variable,
-            multiplier = OBJECTIVE_FUNCTION_POSITIVE,
-
-        )
+        variable_type = ActivePowerOutVariable,
+        component_type = PSY.BatteryEMS,
+        variable_cost = PSY.get_variable,
+        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+    )
 end
-
 
 # function AddCostSpec(
 #     ::Type{PSY.BatteryEMS},
