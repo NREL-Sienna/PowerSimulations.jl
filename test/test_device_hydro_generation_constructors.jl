@@ -496,13 +496,13 @@ end
     op_problem =
         OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 72, 0, 0, 1, 24, false)
+    moi_tests(op_problem, true, 120, 0, 0, 0, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 72, 0, 0, 1, 24, false)
+    moi_tests(op_problem, false, 120, 0, 0, 0, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -513,7 +513,7 @@ end
         use_forecast_data = false,
     )
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 3, 0, 0, 1, 1, false)
+    moi_tests(op_problem, false, 5, 0, 0, 0, 2, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -525,13 +525,13 @@ end
     op_problem =
         OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 96, 0, 0, 1, 24, false)
+    moi_tests(op_problem, true, 144, 0, 0, 0, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_hyd)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 96, 0, 0, 1, 24, false)
+    moi_tests(op_problem, false, 144, 0, 0, 0, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -542,7 +542,7 @@ end
         use_forecast_data = false,
     )
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 4, 0, 0, 1, 1, false)
+    moi_tests(op_problem, false, 6, 0, 0, 0, 2, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -550,7 +550,7 @@ end
 ### RESERVOIR STORAGE COMMITMENT TESTS ##
 #########################################
 
-@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
@@ -558,13 +558,13 @@ end
     op_problem =
         OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 96, 0, 24, 25, 24, true)
+    moi_tests(op_problem, true, 144, 0, 24, 24, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 96, 0, 24, 25, 24, true)
+    moi_tests(op_problem, false, 144, 0, 24, 24, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -575,7 +575,7 @@ end
         use_forecast_data = false,
     )
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 4, 0, 1, 2, 1, true)
+    moi_tests(op_problem, false, 6, 0, 1, 1, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -587,13 +587,13 @@ end
     op_problem =
         OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_hyd; use_parameters = true)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 120, 0, 48, 49, 24, true)
+    moi_tests(op_problem, true, 168, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_hyd)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 120, 0, 48, 49, 24, true)
+    moi_tests(op_problem, false, 168, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -604,7 +604,7 @@ end
         use_forecast_data = false,
     )
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 5, 0, 2, 3, 1, true)
+    moi_tests(op_problem, false, 7, 0, 2, 2, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 

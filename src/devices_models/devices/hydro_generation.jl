@@ -464,55 +464,6 @@ end
 
 """
 This function defines the constraints for the water level (or state of charge)
-for the Hydro Reservoir.
-"""
-function energy_target_constraint!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, S},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {
-    H <: PSY.HydroEnergyReservoir,
-    S <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage},
-}
-    key = ICKey(EnergyLevel, H)
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-
-    target_forecast_label = "storage_target"
-    constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector_target = get_time_series(psi_container, d, target_forecast_label)
-        constraint_info_target = DeviceTimeSeriesConstraintInfo(
-            d,
-            x -> PSY.get_storage_target(x) * PSY.get_storage_capacity(x),
-            ts_vector_target,
-        )
-        constraint_infos_target[ix] = constraint_info_target
-    end
-
-    if parameters
-        energy_target_hydro_param!(
-            psi_container,
-            constraint_infos_target,
-            make_constraint_name(ENERGY_TARGET, H),
-            make_variable_name(ENERGY, H),
-            UpdateRef{H}(TARGET, target_forecast_label),
-        )
-    else
-        energy_target_hydro!(
-            psi_container,
-            constraint_infos_target,
-            make_constraint_name(ENERGY_TARGET, H),
-            make_variable_name(ENERGY, H),
-        )
-    end
-    return
-end
-
-"""
-This function defines the constraints for the water level (or state of charge)
 for the HydroPumpedStorage.
 """
 function energy_balance_constraint!(
@@ -659,32 +610,6 @@ function NodalExpressionSpec(
     )
 end
 
-function cost_function(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.HydroEnergyReservoir},
-    device_formulation::Type{D},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-) where {D <: AbstractHydroFormulation}
-    add_to_cost!(
-        optimization_container,
-        devices,
-        make_variable_name(ACTIVE_POWER, PSY.HydroEnergyReservoir),
-        :fixed,
-        -1.0,
-    )
-
-    return
-end
-
-function cost_function(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    device_formulation::Type{D},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-) where {D <: AbstractHydroFormulation, H <: PSY.HydroGen}
-    return
-end
-
 ##################################### Water/Energy Budget Constraint ############################
 function energy_budget_constraints!(
     optimization_container::OptimizationContainer,
@@ -817,7 +742,7 @@ function AddCostSpec(
         variable_type = ActivePowerVariable,
         component_type = T,
         fixed_cost = x -> 1.0,
-        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
 
@@ -837,3 +762,64 @@ function AddCostSpec(
         multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
+
+
+function cost_function!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.HydroEnergyReservoir},
+    device_formulation::Type{D},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+) where {D <: AbstractHydroFormulation}
+    add_to_cost!(
+        optimization_container,
+        devices,
+        make_variable_name(ACTIVE_POWER, PSY.HydroEnergyReservoir),
+        :fixed,
+        -1.0,
+    )
+
+    return
+end
+
+function cost_function!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{H},
+    device_formulation::Type{D},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+) where {D <: AbstractHydroFormulation, H <: PSY.HydroGen}
+    return
+end
+
+# ############################
+# function AddCostSpec(
+#     ::Type{PSY.HydroEnergyReservoir},
+#     ::Type{U},
+#     optimization_container::OptimizationContainer,
+# ) where {U <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
+#     # Hydro Generators currently have no OperationalCost
+#     cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
+#     # TODO: add cost fields to hydro
+#     penalty_cost = x -> BALANCE_SLACK_COST
+#     energy_value = x -> 0.0
+#     return [
+#         AddCostSpec(;
+#             variable_type = EnergySlackUp,
+#             component_type = PSY.HydroEnergyReservoir,
+#             variable_cost = penalty_cost,
+#             multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+#         ),
+#         AddCostSpec(;
+#             variable_type = EnergySlackDown,
+#             component_type = PSY.HydroEnergyReservoir,
+#             variable_cost = energy_value,
+#             multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+#         ),
+#         AddCostSpec(;
+#             variable_type = ActivePowerVariable,
+#             component_type = PSY.HydroEnergyReservoir,
+#             fixed_cost = PSY.get_fixed,
+#             variable_cost = cost_function,
+#             multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+#         ),
+#     ]
+# end

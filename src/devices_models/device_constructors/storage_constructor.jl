@@ -281,6 +281,8 @@ function construct_device!(
     add_variables!(optimization_container, ActivePowerOutVariable, devices)
     add_variables!(optimization_container, ReactivePowerVariable, devices)
     add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, EnergySlackUp, devices)
+    add_variables!(optimization_container, EnergySlackDown, devices)
     add_variables!(optimization_container, ReserveVariable, devices)
 
     # Initial Conditions
@@ -331,6 +333,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    energy_target_constraint!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
 
     # Cost Function
     cost_function!(optimization_container, devices, model, S, get_feedforward(model))
@@ -354,8 +363,10 @@ function construct_device!(
     add_variables!(optimization_container, ActivePowerInVariable, devices)
     add_variables!(optimization_container, ActivePowerOutVariable, devices)
     add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, EnergySlackUp, devices)
+    add_variables!(optimization_container, EnergySlackDown, devices)
     add_variables!(optimization_container, ReserveVariable, devices)
-    
+
     # Initial Conditions
     initial_conditions!(optimization_container, devices, model.formulation)
 
@@ -392,6 +403,13 @@ function construct_device!(
         optimization_container,
         devices,
         model.formulation,
+        S,
+        get_feedforward(model),
+    )
+    energy_target_constraint!(
+        optimization_container,
+        devices,
+        model,
         S,
         get_feedforward(model),
     )

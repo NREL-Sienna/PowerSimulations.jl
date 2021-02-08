@@ -121,8 +121,12 @@ function energy_balance_hydro_param!(
     varout = get_variable(optimization_container, var_names[2])
     varenergy = get_variable(optimization_container, var_names[3])
 
-    container_inflow =
-        add_param_container!(optimization_container, param_reference, name_index, time_steps)
+    container_inflow = add_param_container!(
+        optimization_container,
+        param_reference,
+        name_index,
+        time_steps,
+    )
     param_inflow = get_parameter_array(container_inflow)
     multiplier_inflow = get_multiplier_array(container_inflow)
 

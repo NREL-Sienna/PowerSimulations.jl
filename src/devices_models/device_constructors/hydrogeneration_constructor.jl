@@ -200,6 +200,8 @@ function construct_device!(
     add_variables!(optimization_container, ActivePowerVariable, devices)
     add_variables!(optimization_container, ReactivePowerVariable, devices)
     add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, EnergySlackUp, devices)
+    add_variables!(optimization_container, EnergySlackDown, devices)
     add_variables!(optimization_container, SpillageVariable, devices)
 
     # Initial Conditions
@@ -213,7 +215,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_target_constraint!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -241,6 +249,8 @@ function construct_device!(
     # Variables
     add_variables!(optimization_container, ActivePowerVariable, devices)
     add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, EnergySlackUp, devices)
+    add_variables!(optimization_container, EnergySlackDown, devices)
     add_variables!(optimization_container, SpillageVariable, devices)
 
     # Initial Conditions
@@ -253,7 +263,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_target_constraint!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -491,6 +507,8 @@ function construct_device!(
     add_variables!(optimization_container, ReactivePowerVariable, devices)
     add_variables!(optimization_container, OnVariable, devices)
     add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, EnergySlackUp, devices)
+    add_variables!(optimization_container, EnergySlackDown, devices)
     add_variables!(optimization_container, SpillageVariable, devices)
 
     # Constraints
@@ -523,7 +541,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_target_constraint!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -552,6 +576,8 @@ function construct_device!(
     add_variables!(optimization_container, ActivePowerVariable, devices)
     add_variables!(optimization_container, OnVariable, devices)
     add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, EnergySlackUp, devices)
+    add_variables!(optimization_container, EnergySlackDown, devices)
     add_variables!(optimization_container, SpillageVariable, devices)
 
     # Constraints
@@ -575,7 +601,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(optimization_container, devices, model, S, get_feedforward(model))
+    energy_target_constraint!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -642,7 +674,7 @@ function construct_device!(
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function(optimization_container, devices, HydroDispatchReservoirBudget, S)
+    cost_function!(optimization_container, devices, HydroDispatchReservoirBudget, S)
 
     return
 end
@@ -706,7 +738,7 @@ function construct_device!(
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function(optimization_container, devices, HydroDispatchReservoirBudget, S)
+    cost_function!(optimization_container, devices, HydroDispatchReservoirBudget, S)
 
     return
 end

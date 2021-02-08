@@ -22,7 +22,7 @@ get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = 
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = nothing
-get_variable_sign(::ActivePowerOutVariable, d::PSY.Storage) = -1.0
+get_variable_sign(::ActivePowerOutVariable, d::PSY.Storage) = 1.0
 
 ############## ReactivePowerVariable, Storage ####################
 
@@ -38,16 +38,6 @@ get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
 ############## ReserveVariable, Storage ####################
 
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
-
-############## EnergySlackUp, Storage ####################
-
-get_variable_binary(::EnergySlackUp, ::Type{<:PSY.Storage}) = false
-get_variable_lower_bound(::EnergySlackUp, d::PSY.Storage, _) = 0.0
-
-############## EnergySlackDown, Storage ####################
-
-get_variable_binary(::EnergySlackDown, ::Type{<:PSY.Storage}) = false
-get_variable_upper_bound(::EnergySlackDown, d::PSY.Storage, _) = 0.0
 
 #! format: on
 
@@ -272,33 +262,6 @@ function energy_balance_constraint!(
     return
 end
 
-function energy_target_constraint!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-    ::Type{EndOfPeriodEnergyTarget},
-    ::Type{S},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.BatteryEMS, S <: PM.AbstractPowerModel}
-    constraint_infos_target =
-        Vector{DeviceEnergyTargetConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        constraint_info_target = DeviceEnergyTargetConstraintInfo(
-            PSY.get_name(d),
-            PSY.get_rating(d),
-            PSY.get_storage_target(d),
-        )
-        constraint_infos_target[ix] = constraint_info_target
-    end
-
-    energy_soft_target(
-        optimization_container,
-        constraint_infos_target,
-        make_constraint_name(ENERGY_TARGET, St),
-        (make_variable_name(ENERGY, St), make_variable_name(ENERGY_TARGET_SLACK, St)),
-    )
-
-    return
-end
 
 ############################ Energy Management constraints ######################################
 
@@ -307,48 +270,33 @@ function AddCostSpec(
     ::Type{EndOfPeriodEnergyTarget},
     optimization_container::OptimizationContainer,
 )
-    variable_cost_func = x -> -PSY.get_energy_value(x) + PSY.get_penalty_cost(x)
     return AddCostSpec(;
-        variable_type = EnergyVariable,
-        component_type = PSY.BatteryEMS,
-        variable_cost = variable_cost_func,
-        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
-    )
+            variable_type = ActivePowerOutVariable,
+            component_type = PSY.BatteryEMS,
+            variable_cost = PSY.get_variable,
+            multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+
+        )
 end
 
-function add_to_cost!(
-    optimization_container::OptimizationContainer,
-    spec::AddCostSpec,
-    cost_data::Float64,
-    component::T,
-) where {T <: PSY.Storage}
-    component_name = PSY.get_name(component)
-    time_steps = model_time_steps(optimization_container)
 
-    linear_gen_cost!(
-        optimization_container,
-        make_variable_name(spec.variable_type, spec.component_type),
-        component_name,
-        cost_data,
-        time_steps[end],
-    )
-    return
-end
-
-"""
-Add variables to the OptimizationContainer for a Storage device.
-"""
-function cost_function!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
-) where {T <: PSY.Storage, U <: AbstractStorageFormulation}
-    for d in devices
-        spec = AddCostSpec(T, U, optimization_container)
-        @debug T, spec
-        add_to_cost!(optimization_container, spec, spec.variable_cost(d), d)
-    end
-    return
-end
+# function AddCostSpec(
+#     ::Type{PSY.BatteryEMS},
+#     ::Type{EndOfPeriodEnergyTarget},
+#     optimization_container::OptimizationContainer,
+# )
+#     return [
+#         AddCostSpec(;
+#             variable_type = EnergySlackUp,
+#             component_type = PSY.BatteryEMS,
+#             variable_cost = PSY.get_penalty_cost,
+#             multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+#         ),
+#         AddCostSpec(;
+#             variable_type = EnergySlackDown,
+#             component_type = PSY.BatteryEMS,
+#             variable_cost = PSY.get_energy_value,
+#             multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+#         ),
+#     ]
+# end
