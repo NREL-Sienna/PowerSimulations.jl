@@ -1,8 +1,6 @@
 #Some of these tests require building the full system to have a valid PM object
 @testset "AC Power Flow Monitored Line Flow Constraints and bounds" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    line = PSY.get_component(Line, system, "1")
-    PSY.convert_component!(MonitoredLine, line, system)
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -44,8 +42,6 @@ end
         :L => DeviceModel(Line, StaticLineBounds),
     )
     template = OperationsProblemTemplate(ACPPowerModel, devices, branches, services)
-    line = PSY.get_component(Line, system, "1")
-    PSY.convert_component!(MonitoredLine, line, system)
     line = PSY.get_component(MonitoredLine, system, "1")
     limits = PSY.get_flow_limits(line)
     op_problem_m =
@@ -68,11 +64,9 @@ end
     )
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    line = PSY.get_component(Line, system, "1")
-    PSY.convert_component!(MonitoredLine, line, system)
     line = PSY.get_component(MonitoredLine, system, "1")
-    limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
-    rate = PSY.get_rate(PSY.get_component(MonitoredLine, system, "1"))
+    limits = PSY.get_flow_limits(line)
+    rate = PSY.get_rate(line)
     op_problem_m =
         OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
     monitored = solve!(op_problem_m)
