@@ -74,9 +74,9 @@ function discard_results!(cache::ParamResultCache, timestamps)
 end
 
 function get_data_to_flush!(cache::ParamResultCache, flush_size)
-    num_chunks = trunc(Int, flush_size / cache.size_per_entry)
+    num_chunks = flush_size < cache.size_per_entry ? 1 : flush_size ÷ cache.size_per_entry
     num_chunks = minimum((num_chunks, length(cache.dirty_timestamps)))
-    num_chunks == 0 && return [], []
+    @assert_op num_chunks > 0
 
     timestamps = [popfirst!(cache.dirty_timestamps) for i in 1:num_chunks]
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Concatenate arrays for flush" begin

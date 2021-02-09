@@ -73,7 +73,7 @@ get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}) = 
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HydroGen, _) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HydroGen, _) = nothing
-get_variable_sign(::ActivePowerInVariable, d::PSY.HydroGen) = -1.0
+get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.HydroGen}) = -1.0
 
 ########################### ActivePowerOutVariable, HydroGen #################################
 
@@ -82,7 +82,7 @@ get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}) =
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HydroGen, _) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HydroGen, _) = nothing
-get_variable_sign(::ActivePowerOutVariable, d::PSY.HydroGen) = -1.0
+get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.HydroGen}) = 1.0
 
 ############## OnVariable, HydroGen ####################
 

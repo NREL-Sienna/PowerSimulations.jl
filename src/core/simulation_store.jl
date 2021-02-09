@@ -34,6 +34,24 @@ struct SimulationStoreStageParams
     resolution::Dates.Period
     base_power::Float64
     system_uuid::Base.UUID
+
+    function SimulationStoreStageParams(
+        num_executions,
+        horizon,
+        interval,
+        resolution,
+        base_power,
+        system_uuid,
+    )
+        new(
+            num_executions,
+            horizon,
+            Dates.Millisecond(interval),
+            Dates.Millisecond(resolution),
+            base_power,
+            system_uuid,
+        )
+    end
 end
 
 get_num_executions(params::SimulationStoreStageParams) = params.num_executions
@@ -49,6 +67,10 @@ struct SimulationStoreParams
     num_steps::Int
     # The key order is the stage execution order.
     stages::OrderedDict{Symbol, SimulationStoreStageParams}
+
+    function SimulationStoreParams(initial_time, step_resolution, num_steps, stages)
+        new(initial_time, Dates.Millisecond(step_resolution), num_steps, stages)
+    end
 end
 
 function SimulationStoreParams(initial_time, step_resolution, num_steps)
