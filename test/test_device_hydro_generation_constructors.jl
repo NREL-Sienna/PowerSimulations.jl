@@ -686,7 +686,6 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-#= TODO: Enable these tests
 @testset "Solving ED Hydro System using Dispatch Run of River" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_hy")
     parameters_value = [true, false]
@@ -694,23 +693,25 @@ end
 
     test_results = Dict{Any, Float64}(ACPPowerModel => 12414.0, DCPPowerModel => 12218.0)
 
-    devices = Dict{String, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-        :HydroGens => DeviceModel(HydroDispatch, HydroDispatchRunOfRiver),
-    )
-
     for net in networks, p in parameters_value
         @info("Test solve HydroRoR ED with $(net) network")
         @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net, devices, branches, services)
+            template = OperationsProblemTemplate(net)
+            set_device_model!(template, ThermalStandard, ThermalDispatch)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            set_device_model!(template, TapTransformer, StaticBranch)
+            set_device_model!(template, Line, StaticBranch)
+
             ED = OperationsProblem(
-                MockOperationProblem,
+                EconomicDispatchProblem,
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
-                use_parameters = p,
+                use_parameters = true,
             )
+            @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
             psi_checksolve_test(
                 ED,
                 [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -726,22 +727,24 @@ end
     parameters_value = [true, false]
     net = DCPPowerModel
 
-    devices = Dict{String, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-        :HydroGens => DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver),
-    )
+    template = OperationsProblemTemplate(net)
+    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    set_device_model!(template, TapTransformer, StaticBranch)
+    set_device_model!(template, Line, StaticBranch)
 
     for p in parameters_value
         @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
-                MockOperationProblem,
+                UnitCommitmentProblem,
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
                 use_parameters = p,
             )
+            @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
             psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 12218.0, 1000)
         end
     end
@@ -762,19 +765,22 @@ end
 
     for net in networks, mod in models, p in parameters_value
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
-            devices = Dict{String, DeviceModel}(
-                :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-                :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-                :HydroGens => DeviceModel(HydroEnergyReservoir, mod),
-            )
-            template = OperationsProblemTemplate(net, devices, branches, services)
+            template = OperationsProblemTemplate(net)
+            set_device_model!(template, ThermalStandard, ThermalDispatch)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            set_device_model!(template, HydroEnergyReservoir, mod)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            set_device_model!(template, TapTransformer, StaticBranch)
+            set_device_model!(template, Line, StaticBranch)
+
             ED = OperationsProblem(
-                MockOperationProblem,
+                EconomicDispatchProblem,
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
                 use_parameters = p,
             )
+            @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
             psi_checksolve_test(
                 ED,
                 [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -797,19 +803,22 @@ end
 
     for mod in models, p in parameters_value
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
-            devices = Dict{String, DeviceModel}(
-                :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-                :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-                :HydroGens => DeviceModel(HydroEnergyReservoir, mod),
-            )
-            template = OperationsProblemTemplate(net, devices, branches, services)
+            template = OperationsProblemTemplate(net)
+            set_device_model!(template, ThermalStandard, ThermalDispatch)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            set_device_model!(template, HydroEnergyReservoir, mod)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            set_device_model!(template, TapTransformer, StaticBranch)
+            set_device_model!(template, Line, StaticBranch)
+
             ED = OperationsProblem(
-                MockOperationProblem,
+                UnitCommitmentProblem,
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
                 use_parameters = p,
             )
+            @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
             psi_checksolve_test(
                 ED,
                 [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -819,152 +828,3 @@ end
         end
     end
 end
-
-=#
-
-#=
-# All Hydro UC formulations are currently not supported
-@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentRunOfRiver Formulations" begin
-    model = DeviceModel(HydroEnergyReservoir, HydroCommitmentRunOfRiver)
-
-    # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 96, 0, 72, 0, 24, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Parameters Testing
-    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 96, 0, 48, 0, 24, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 4, 0, 3, 0, 1, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast - No Parameters Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_forecast_data = false,
-    )
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 4, 0, 2, 1, 1, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-end
-
-@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentReservoirlFlow Formulations" begin
-    model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirFlow)
-
-    # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 96, 0, 72, 0, 24, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Parameters Testing
-    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 96, 0, 48, 0, 24, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 4, 0, 3, 0, 1, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast - No Parameters Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_forecast_data = false,
-    )
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 4, 0, 2, 1, 1, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-end
-
-@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
-    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    c_sys5_hyd = build_system("c_sys5_hyd")
-
-    # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 72, 0, 24, 24, 24, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Parameters Testing
-    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 72, 0, 24, 24, 24, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-end
-=#
-
-#=
-# All Hydro UC formulations are currently not supported
-@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentReservoirStorage Formulations" begin
-    model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-
-    # Parameters Testing
-    op_problem =
-        OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 96, 0, 72, 0, 24, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Parameters Testing
-    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 96, 0, 48, 0, 24, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 4, 0, 3, 0, 1, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast - No Parameters Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_forecast_data = false,
-    )
-    mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 4, 0, 2, 1, 1, true)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-end
-=#
