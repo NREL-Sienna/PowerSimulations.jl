@@ -357,7 +357,7 @@ function Base.show(io::IO, sequence::SimulationSequence)
         println(io, "$(k[1]): $(typeof(v)) -> $(k[3])\n")
         to = String.(v.affected_variables)
         if isa(v, SemiContinuousFF)
-            from = String.(v.binary_source_stage)
+            from = String.(v.binary_source_problem)
         elseif isa(v, RangeFF)
             from = String.([v.variable_source_stage_ub, v.variable_source_stage_lb])
         else

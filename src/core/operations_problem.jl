@@ -205,6 +205,7 @@ function OperationsProblem(
     return OperationsProblem{GenericOpProblem}(template, sys, jump_model; kwargs...)
 end
 
+# Default implemenations of getter/setter functions for OperationsProblem.
 is_built(problem::OperationsProblem) = problem.internal.status == BuildStatus.BUILT
 is_empty(problem::OperationsProblem) = problem.internal.status == BuildStatus.EMPTY
 warm_start_enabled(problem::OperationsProblem) =
@@ -217,11 +218,8 @@ get_end_of_interval_step(problem::OperationsProblem) =
 get_execution_count(problem::OperationsProblem) =
     get_simulation_info(problem).execution_count
 get_executions(problem::OperationsProblem) = get_simulation_info(problem).executions
-function get_initial_time(
-    problem::OperationsProblem{T},
-) where {T <: AbstractOperationsProblem}
-    return get_initial_time(get_settings(problem))
-end
+get_initial_time(problem::OperationsProblem) = get_initial_time(get_settings(problem))
+get_horizon(problem::OperationsProblem) = get_horizon(get_settings(problem))
 get_internal(problem::OperationsProblem) = problem.internal
 get_jump_model(problem::OperationsProblem) =
     get_internal(problem).optimization_container.JuMPmodel
@@ -236,6 +234,7 @@ end
 get_problem_base_power(problem::OperationsProblem) = PSY.get_base_power(problem.sys)
 get_settings(problem::OperationsProblem) = get_optimization_container(problem).settings
 get_simulation_info(problem::OperationsProblem) = problem.internal.simulation_info
+get_simulation_number(problem::OperationsProblem) = problem.internal.simulation_info.number
 get_status(problem::OperationsProblem) = problem.internal.status
 get_system(problem::OperationsProblem) = problem.sys
 get_template(problem::OperationsProblem) = problem.template
@@ -252,14 +251,15 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(problem), key)
 end
 
+set_executions!(problem::OperationsProblem, val::Int) = problem.internal.simulation_info.executions = val
 set_execution_count!(problem::OperationsProblem, val::Int) =
     get_simulation_info(problem).execution_count = val
+set_simulation_info!(problem::OperationsProblem, info::SimulationInfo) = problem.internal.simulation_info = info
 set_status!(problem::OperationsProblem, status::BuildStatus) =
     problem.internal.status = status
 set_write_path!(problem::OperationsProblem, path::AbstractString) =
     problem.internal.write_path = path
 
-set_simulation_info(problem::OperationsProblem, info::SimulationInfo) = problem.internal.simulation_info = info
 
 function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsProblem}
     if built_for_simulation(problem::OperationsProblem)
