@@ -18,6 +18,21 @@ function PSI.OperationsProblem(
     )
 end
 
+function PSI.OperationsProblem(
+    ::Type{MockOperationProblem};
+    kwargs...
+)
+    sys = System(100.0)
+    settings = PSI.Settings(sys; kwargs...)
+    return OperationsProblem{MockOperationProblem}(
+        OperationsProblemTemplate(CopperPlatePowerModel),
+        sys,
+        settings,
+        nothing,
+    )
+end
+
+
 # Only used for testing
 function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProblem}, model)
     set_device_model!(problem.template, model)
@@ -50,6 +65,13 @@ function mock_construct_network!(
         PSI.get_optimization_container(problem),
         PSI.get_system(problem),
         model,
+    )
+end
+
+function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
+    return SimulationProblems(
+        UC = OperationsProblem(MockOperationProblem; horizon = uc_horizon),
+        ED = OperationsProblem(MockOperationProblem; horizon = ed_horizon),
     )
 end
 
