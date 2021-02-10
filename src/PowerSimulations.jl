@@ -9,6 +9,7 @@ export Simulation
 export OperationsProblem
 export OperationsProblemTemplate
 export InitialCondition
+export SimulationProblems
 export SimulationSequence
 export SimulationResults
 export StageResults
@@ -259,6 +260,11 @@ import PowerModels
 import TimerOutputs
 import ProgressMeter
 
+# Base Imports
+import Base.getindex
+import Base.length
+import Base.first
+
 # TimeStamp Management Imports
 import Dates
 import TimeSeries
@@ -331,6 +337,7 @@ include("core/optimization_container.jl")
 include("core/update_initial_conditions.jl")
 include("core/operations_problem_results.jl")
 include("core/operations_problem.jl")
+include("core/simulation_problems.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 
