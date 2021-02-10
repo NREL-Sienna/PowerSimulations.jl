@@ -38,7 +38,7 @@ mutable struct OptimizationContainer
     end
 end
 
-function _check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
+function _validate_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =
         MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -59,7 +59,7 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
                 PJ.enable_parameters(optimization_container.JuMPmodel)
                 warm_start_enabled = get_warm_start(settings)
-                solver_supports_warm_start = _check_warm_start_support(
+                solver_supports_warm_start = _validate_warm_start_support(
                     optimization_container.JuMPmodel,
                     warm_start_enabled,
                 )
@@ -73,7 +73,7 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
         JuMPmodel = JuMP.Model(optimizer)
         warm_start_enabled = get_warm_start(settings)
         solver_supports_warm_start =
-            _check_warm_start_support(JuMPmodel, warm_start_enabled)
+            _validate_warm_start_support(JuMPmodel, warm_start_enabled)
         set_warm_start!(settings, solver_supports_warm_start)
         parameters && PJ.enable_parameters(JuMPmodel)
         optimization_container.JuMPmodel = JuMPmodel
@@ -627,7 +627,7 @@ function check_optimization_container(optimization_container::OptimizationContai
     return
 end
 
-function check_problem_size(optimization_container::OptimizationContainer)
+function get_problem_size(optimization_container::OptimizationContainer)
     model = optimization_container.JuMPmodel
     vars = JuMP.num_variables(model)
     cons = 0
@@ -648,16 +648,16 @@ function _build_imp!(
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(optimization_container, sys, device_model, transmission)
-        @debug check_problem_size(optimization_container)
+        @debug get_problem_size(optimization_container)
     end
     @debug "Building $(transmission) network formulation"
     construct_network!(optimization_container, sys, transmission)
-    @debug check_problem_size(optimization_container)
+    @debug get_problem_size(optimization_container)
 
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(optimization_container, sys, branch_model, transmission)
-        @debug check_problem_size(optimization_container)
+        @debug get_problem_size(optimization_container)
     end
 
     @debug "Building Objective"
