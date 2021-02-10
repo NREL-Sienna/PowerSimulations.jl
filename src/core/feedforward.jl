@@ -553,7 +553,6 @@ function integral_limit_ff(
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
-
         param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier_ub[name] = 1.0
@@ -652,7 +651,7 @@ end
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(
     chron::RecedingHorizon,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::AbstractString,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -669,7 +668,7 @@ end
 
 function get_stage_variable(
     ::Consecutive,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -686,7 +685,7 @@ end
 
 function get_stage_variable(
     chron::Synchronize,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -706,7 +705,7 @@ end
 
 function get_stage_variable(
     ::FullHorizon,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -722,7 +721,7 @@ end
 
 function get_stage_variable(
     chron::Range,
-    stages::Pair{Stage{T}, Stage{U}},
+    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
@@ -737,8 +736,8 @@ function get_stage_variable(
 end
 
 function feedforward_update!(
-    destination_stage::Stage,
-    source_stage::Stage,
+    destination_stage::OperationsProblem,
+    source_stage::OperationsProblem,
     chronology::FeedForwardChronology,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,

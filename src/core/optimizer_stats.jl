@@ -13,12 +13,13 @@ struct OptimizerStats
 end
 
 function OptimizerStats(
+    problem, #::OperationsProblem{<:PowerSimulationsOperationsProblem},
     simulation_step,
-    stage_number,
     timestamp,
-    model::JuMP.AbstractModel,
     timed_log::Dict,
 )
+    stage_number = get_number(problem)
+    model = get_jump_model(problem)
     solver_solve_time = NaN
     try
         solver_time = MOI.get(model, MOI.SolveTime())

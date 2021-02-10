@@ -49,25 +49,6 @@ const KiB = 1024
 const MiB = KiB * KiB
 const GiB = MiB * KiB
 
-# Interface limitations
-# TODO: Remove this and use Julia's default kwarg behavior
-const OPERATIONS_ACCEPTED_KWARGS = [
-    :horizon,
-    :initial_time,
-    :use_forecast_data,
-    :PTDF,
-    :use_parameters,
-    :optimizer,
-    :warm_start,
-    :balance_slack_variables,
-    :services_slack_variables,
-    :system_to_file,
-    :constraint_duals,
-    :export_pwl_vars,
-]
-
-const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
-
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 

@@ -38,18 +38,10 @@ mutable struct OptimizationContainer
     end
 end
 
-function OptimizationContainer(
-    ::Type{T},
-    sys::PSY.System,
-    settings::Settings,
-    jump_model::Union{Nothing, JuMP.AbstractModel},
-) where {T <: PM.AbstractPowerModel}
-    container = OptimizationContainer(sys, settings, jump_model)
-    optimization_container_init!(container, T, sys)
-    return container
-end
-
-function _check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
+function _validate_warm_start_support(
+    JuMPmodel::JuMP.AbstractModel,
+    warm_start_enabled::Bool,
+)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =
         MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -70,7 +62,7 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
                 PJ.enable_parameters(optimization_container.JuMPmodel)
                 warm_start_enabled = get_warm_start(settings)
-                solver_supports_warm_start = _check_warm_start_support(
+                solver_supports_warm_start = _validate_warm_start_support(
                     optimization_container.JuMPmodel,
                     warm_start_enabled,
                 )
@@ -84,7 +76,7 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
         JuMPmodel = JuMP.Model(optimizer)
         warm_start_enabled = get_warm_start(settings)
         solver_supports_warm_start =
-            _check_warm_start_support(JuMPmodel, warm_start_enabled)
+            _validate_warm_start_support(JuMPmodel, warm_start_enabled)
         set_warm_start!(settings, solver_supports_warm_start)
         parameters && PJ.enable_parameters(JuMPmodel)
         optimization_container.JuMPmodel = JuMPmodel
@@ -565,7 +557,7 @@ function export_optimizer_log(
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function write_optimization_container(
+function serialize_optimization_model(
     optimization_container::OptimizationContainer,
     save_path::String,
 )
@@ -638,31 +630,37 @@ function check_optimization_container(optimization_container::OptimizationContai
     return
 end
 
-function _build!(
+function get_problem_size(optimization_container::OptimizationContainer)
+    model = optimization_container.JuMPmodel
+    vars = JuMP.num_variables(model)
+    cons = 0
+    for (exp, c_type) in JuMP.list_of_constraint_types(model)
+        cons += JuMP.num_constraints(model, exp, c_type)
+    end
+    return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
+end
+
+function build_impl(
     optimization_container::OptimizationContainer,
     template::OperationsProblemTemplate,
     sys::PSY.System,
 )
     transmission = template.transmission
     # Order is required
-    # The container is initialized here because this build! call for optimization_container takes the
-    # information from the template with cached Settings. It allows having the same build! call for operations problems
-    # specified with template and simulation stage.
-    optimization_container_init!(optimization_container, transmission, sys)
     construct_services!(optimization_container, sys, template.services, template.devices)
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(optimization_container, sys, device_model, transmission)
-        @debug check_problem_size(optimization_container)
+        @debug get_problem_size(optimization_container)
     end
     @debug "Building $(transmission) network formulation"
     construct_network!(optimization_container, sys, transmission)
-    @debug check_problem_size(optimization_container)
+    @debug get_problem_size(optimization_container)
 
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(optimization_container, sys, branch_model, transmission)
-        @debug check_problem_size(optimization_container)
+        @debug get_problem_size(optimization_container)
     end
 
     @debug "Building Objective"

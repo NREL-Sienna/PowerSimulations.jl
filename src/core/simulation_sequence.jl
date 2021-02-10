@@ -262,7 +262,7 @@ end
 get_stage_interval(sequence::SimulationSequence, stage::String) =
     sequence.intervals[stage][1]
 
-function get_stage_name(sequence::SimulationSequence, stage::Stage)
+function get_stage_name(sequence::SimulationSequence, stage::OperationsProblem)
     name = get(get_order(sequence), get_number(stage), nothing)
     if name === nothing
         throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))

@@ -1,6 +1,40 @@
+function get_thermal_standard_uc_template()
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+    return template
+end
+
+function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
+    template = OperationsProblemTemplate(network)
+    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    #set_device_model!(template, MonitoredLine, StaticBranchBounds)
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    set_device_model!(template, TapTransformer, StaticBranch)
+    set_device_model!(template, HVDCLine, HVDCDispatch)
+    return template
+end
+
+function get_template_basic_uc_simulation()
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template, RenewableDispatch, FixedOutput)
+    set_device_model!(template, PowerLoad, StaticPowerLoad),
+    set_device_model!(template, InterruptibleLoad, StaticPowerLoad)
+    return template
+end
+
+function get_template_standard_uc_simulation()
+    template = get_template_basic_uc_simulation()
+    set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+    return template
+end
+#=
 ## UC Model Ref
-branches = Dict{Symbol, DeviceModel}()
-services = Dict{Symbol, ServiceModel}()
+branches = Dict{String, DeviceModel}()
+services = Dict{String, ServiceModel}()
 devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
     :Ren => DeviceModel(RenewableDispatch, FixedOutput),
@@ -116,40 +150,6 @@ devices = Dict(
 )
 template_multi_start_uc = template_unit_commitment(devices = devices)
 
-function PSI._jump_value(int::Int)
-    @warn("This is for testing purposes only.")
-    return int
-end
-
-function _test_plain_print_methods(list::Array)
-    for object in list
-        normal = repr(object)
-        io = IOBuffer()
-        show(io, "text/plain", object)
-        grabbed = String(take!(io))
-        @test !isnothing(grabbed)
-    end
-end
-
-function _test_html_print_methods(list::Array)
-    for object in list
-        normal = repr(object)
-        io = IOBuffer()
-        show(io, "text/html", object)
-        grabbed = String(take!(io))
-        @test !isnothing(grabbed)
-    end
-end
-
-struct FakeStagesStruct
-    stages::Dict{Int, Int}
-end
-function Base.show(io::IO, struct_stages::FakeStagesStruct)
-    PSI._print_inter_stages(io, struct_stages.stages)
-    println(io, "\n\n")
-    PSI._print_intra_stages(io, struct_stages.stages)
-end
-
 branches = Dict()
 services = Dict()
 devices = Dict(
@@ -179,8 +179,8 @@ template_hydro_st_ed =
 #=
 ## UC Model Ref
 branches = Dict(:L => DeviceModel(Line, StaticLine),
-                                     :T => DeviceModel(Transformer2W, StaticTransformer),
-                                     :TT => DeviceModel(TapTransformer, StaticTransformer),
+                                     :T => DeviceModel(Transformer2W, StaticBranch),
+                                     :TT => DeviceModel(TapTransformer, StaticBranch),
                                      :dc_line => DeviceModel(HVDCLine, HVDCDispatch))
 
 services = Dict()
@@ -194,8 +194,8 @@ template_basic_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, bra
 
 ## ED Model Ref
 branches = Dict(:L => DeviceModel(Line, StaticLine),
-                                     :T => DeviceModel(Transformer2W, StaticTransformer),
-                                     :TT => DeviceModel(TapTransformer, StaticTransformer),
+                                     :T => DeviceModel(Transformer2W, StaticBranch),
+                                     :TT => DeviceModel(TapTransformer, StaticBranch),
                                      :dc_line => DeviceModel(HVDCLine, HVDCDispatch))
 
 services = Dict()
@@ -206,4 +206,5 @@ devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatch, Semi
                                     :ILoads =>  DeviceModel(InterruptibleLoad, InterruptiblePowerLoad,))
 
 template_ed= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+=#
 =#

@@ -123,7 +123,7 @@ end
 
 function _add_initial_condition_caches(
     sim::SimulationInternal,
-    stage::Stage,
+    stage::OperationsProblem,
     caches::Union{Nothing, Vector{<:AbstractCache}},
 )
     initial_conditions = stage.internal.optimization_container.initial_conditions
@@ -175,7 +175,7 @@ end
 
 function _set_internal_caches(
     internal::SimulationInternal,
-    stage::Stage,
+    stage::OperationsProblem,
     caches::Vector{<:AbstractCache},
 )
     for c in caches
@@ -213,7 +213,7 @@ end
 # TODO: Add DocString
 @doc raw"""
     Simulation(steps::Int
-                stages::Dict{String, Stage{<:AbstractOperationsProblem}}
+                stages::Dict{String, OperationsProblem{<:AbstractOperationsProblem}}
                 sequence::Union{Nothing, SimulationSequence}
                 simulation_folder::String
                 name::String
@@ -223,7 +223,7 @@ end
 """
 mutable struct Simulation
     steps::Int
-    stages::Dict{String, Stage{<:AbstractOperationsProblem}}
+    stages::Dict{String, OperationsProblem{<:AbstractOperationsProblem}}
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::SimulationSequence
     simulation_folder::String
@@ -234,7 +234,7 @@ mutable struct Simulation
         stages_sequence::SimulationSequence,
         name::String,
         steps::Int,
-        stages = Dict{String, Stage{AbstractOperationsProblem}}(),
+        stages = Dict{String, OperationsProblem{AbstractOperationsProblem}}(),
         simulation_folder::String,
         initial_time = nothing,
     )
@@ -306,7 +306,8 @@ function get_simulation_time(sim::Simulation, stage_number::Int)
 end
 
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
-get_stage_name(sim::Simulation, stage::Stage) = get_stage_name(sim.sequence, stage)
+get_stage_name(sim::Simulation, stage::OperationsProblem) =
+    get_stage_name(sim.sequence, stage)
 IS.get_name(sim::Simulation) = sim.name
 get_simulation_folder(sim::Simulation) = sim.simulation_folder
 get_execution_order(sim::Simulation) = get_sequence(sim).execution_order
@@ -654,7 +655,7 @@ end
 
 """ Updates the initial conditions of the stage"""
 function initial_condition_update!(
-    stage::Stage,
+    stage::OperationsProblem,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
     ::IntraStageChronology,
@@ -692,7 +693,7 @@ end
 
 """ Updates the initial conditions of the stage"""
 function initial_condition_update!(
-    stage::Stage,
+    stage::OperationsProblem,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
     ::InterStageChronology,
@@ -741,7 +742,7 @@ function initial_condition_update!(
     return
 end
 
-function _update_caches!(sim::Simulation, stage::Stage)
+function _update_caches!(sim::Simulation, stage::OperationsProblem)
     for cache in stage.internal.caches
         update_cache!(sim, cache, stage)
     end
@@ -754,7 +755,7 @@ end
 function update_cache!(
     sim::Simulation,
     ::CacheKey{TimeStatusChange, D},
-    stage::Stage,
+    stage::OperationsProblem,
 ) where {D <: PSY.Device}
     # TODO: Remove debug statements and use recorder here
     c = get_cache(sim, TimeStatusChange, D)
@@ -789,7 +790,7 @@ function update_cache!(
     return
 end
 
-function get_increment(sim::Simulation, stage::Stage, cache::TimeStatusChange)
+function get_increment(sim::Simulation, stage::OperationsProblem, cache::TimeStatusChange)
     units = cache.units
     stage_name = get_stage_name(sim, stage)
     stage_interval = IS.time_period_conversion(get_stage_interval(sim, stage_name))
@@ -801,7 +802,7 @@ end
 function update_cache!(
     sim::Simulation,
     ::CacheKey{StoredEnergy, D},
-    stage::Stage,
+    stage::OperationsProblem,
 ) where {D <: PSY.Device}
     c = get_cache(sim, StoredEnergy, D)
     variable = get_variable(stage.internal.optimization_container, c.ref)
@@ -820,7 +821,7 @@ end
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    stage::Stage,
+    stage::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Component}
     components = get_available_components(T, stage.sys)
@@ -856,7 +857,7 @@ end
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    stage::Stage,
+    stage::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Service}
     # RECORDER TODO: Parameter Update from forecast
@@ -892,7 +893,7 @@ end
 function update_parameter!(
     param_reference::UpdateRef{JuMP.VariableRef},
     container::ParameterContainer,
-    stage::Stage,
+    stage::OperationsProblem,
     sim::Simulation,
 )
     param_array = get_parameter_array(container)
@@ -911,7 +912,7 @@ function update_parameter!(
     return
 end
 
-function _update_initial_conditions!(stage::Stage, sim::Simulation)
+function _update_initial_conditions!(stage::OperationsProblem, sim::Simulation)
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
     for (k, v) in iterate_initial_conditions(stage.internal.optimization_container)
         initial_condition_update!(stage, k, v, ini_cond_chronology, sim)
@@ -919,14 +920,14 @@ function _update_initial_conditions!(stage::Stage, sim::Simulation)
     return
 end
 
-function _update_parameters(stage::Stage, sim::Simulation)
+function _update_parameters(stage::OperationsProblem, sim::Simulation)
     for container in iterate_parameter_containers(stage.internal.optimization_container)
         update_parameter!(container.update_ref, container, stage, sim)
     end
     return
 end
 
-function _apply_warm_start!(stage::Stage)
+function _apply_warm_start!(stage::OperationsProblem)
     for variable in values(stage.internal.optimization_container.variables)
         for e in variable
             current_solution = JuMP.value(e)
@@ -937,7 +938,7 @@ function _apply_warm_start!(stage::Stage)
 end
 
 """ Required update stage function call"""
-function _update_stage!(stage::Stage, sim::Simulation)
+function _update_stage!(stage::OperationsProblem, sim::Simulation)
     _update_parameters(stage, sim)
     _update_initial_conditions!(stage, sim)
     return
@@ -947,7 +948,7 @@ end
 ## These are the functions that the user will have to implement to update a custom stage ###
 """ Generic Stage update function for most problems with no customization"""
 function update_stage!(
-    stage::Stage{M},
+    stage::OperationsProblem{M},
     sim::Simulation,
 ) where {M <: PowerSimulationsOperationsProblem}
     _update_stage!(stage, sim)
@@ -1356,7 +1357,7 @@ function deserialize_model(::Type{Simulation}, directory::AbstractString, stage_
             )
         end
 
-        stages = Dict{String, Stage{<:AbstractOperationsProblem}}()
+        stages = Dict{String, OperationsProblem{<:AbstractOperationsProblem}}()
         for (key, wrapper) in obj.stages
             sys_filename = wrapper.sys
             if !ispath(sys_filename)

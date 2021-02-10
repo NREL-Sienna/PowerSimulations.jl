@@ -20,6 +20,31 @@ IS.get_timestamp(res::OperationsProblemResults) = res.time_stamp
 get_duals(res::OperationsProblemResults) = res.dual_values
 IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
 
+function OperationsProblemResults()
+    #vars_result = read_variables(op_problem)
+    #param_values = read_parameters(op_problem)
+    #optimizer_log = get_optimizer_log(op_problem)
+    #time_stamp = get_timestamps(op_problem)
+    #time_stamp = shorten_time_stamp(time_stamp)
+    #base_power = PSY.get_base_power(op_problem.sys)
+    #dual_result = read_duals(op_problem)
+    #obj_value = Dict(
+    #    :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
+    #)
+    #base_power = get_model_base_power(op_problem)
+    #merge!(optimizer_log, timed_log)
+
+    #results = OperationsProblemResults(
+    #    base_power,
+    #    vars_result,
+    #    obj_value,
+    #    optimizer_log,
+    #    time_stamp,
+    #    dual_result,
+    #    param_values,
+    #)
+end
+
 # TODO:
 # - Handle PER-UNIT conversion of variables according to type
 # - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol

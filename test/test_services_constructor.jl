@@ -1,9 +1,9 @@
 @testset "Test Reserves from Thermal Dispatch" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -17,8 +17,12 @@
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_uc;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 648, 0, 120, 216, 72, false)
         symbols = [
             :Reserve1__VariableReserve_ReserveUp,
@@ -36,11 +40,11 @@
 end
 
 @testset "Test Reserves from Thermal Standard UC" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :UpReserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -54,18 +58,22 @@ end
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_uc;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 1008, 0, 240, 216, 192, true)
     end
 end
 
 @testset "Test Upwards Reserves from Renewable Dispatch" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(RenewableDispatch, RenewableFullDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
@@ -78,21 +86,25 @@ end
     )
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(TestOpProblem, model_template, c_sys5_re; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_re;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 360, 0, 72, 48, 72, false)
     end
 end
 
 @testset "Test Reserves from Storage" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
         :Storage => DeviceModel(GenericBattery, BookKeeping),
         # Added here to test it doesn't add reserve variables
         :Ren => DeviceModel(RenewableDispatch, FixedOutput),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -106,18 +118,22 @@ end
     )
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(TestOpProblem, model_template, c_sys5_bat; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_bat;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 408, 0, 192, 264, 96, false)
     end
 end
 
 @testset "Test Reserves from Hydro" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -131,18 +147,22 @@ end
     )
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
     for p in [true, false]
-        op_problem =
-            OperationsProblem(TestOpProblem, model_template, c_sys5_hyd; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_hyd;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 240, 0, 24, 96, 72, false)
     end
 end
 
 @testset "Test Reserves from with slack variables" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -156,7 +176,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
         op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             model_template,
             c_sys5_uc;
             use_parameters = p,
@@ -186,11 +206,11 @@ end
 end
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -220,18 +240,22 @@ end
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
     for p in [true, false]
-        op_problem =
-            OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
+        op_problem = OperationsProblem(
+            MockOperationProblem,
+            model_template,
+            c_sys5_uc;
+            use_parameters = p,
+        )
         moi_tests(op_problem, p, 648, 0, 120, 240, 72, false)
     end
 end
 
 @testset "Test GroupReserve Errors" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -267,7 +291,7 @@ end
         (:error, r"is not stored"),
         match_mode = :any,
         @test_throws InfrastructureSystems.InvalidValue op_problem = OperationsProblem(
-            TestOpProblem,
+            MockOperationProblem,
             model_template,
             c_sys5_uc;
             use_parameters = false,
@@ -276,11 +300,11 @@ end
 end
 
 @testset "Test StaticReserve" begin
-    devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{String, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
-    branches = Dict{Symbol, DeviceModel}()
+    branches = Dict{String, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :UpReserve => ServiceModel(StaticReserve{ReserveUp}, RangeReserve),
     )
@@ -293,6 +317,6 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
-    op_problem = OperationsProblem(TestOpProblem, model_template, c_sys5_uc)
+    op_problem = OperationsProblem(MockOperationProblem, model_template, c_sys5_uc)
     @test typeof(op_problem) <: OperationsProblem
 end

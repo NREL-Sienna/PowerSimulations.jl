@@ -1,7 +1,7 @@
 function create_stages(template_uc, c_sys5_uc, c_sys5_ed)
     return Dict(
-        "UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
-        "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer),
+        "UC" => OperationsProblem(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
+        "ED" => OperationsProblem(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer),
     )
 end
 
@@ -315,14 +315,14 @@ function test_simulation_build(file_path::String)
         my_model = JuMP.Model()
         my_model.ext[:PSI_Testing] = 1
         stages_definition_kwargs = Dict(
-            "UC" => Stage(
+            "UC" => OperationsProblem(
                 GenericOpProblem,
                 template_basic_uc,
                 c_sys5_uc,
                 GLPK_optimizer,
                 my_model,
             ),
-            "ED" => Stage(
+            "ED" => OperationsProblem(
                 GenericOpProblem,
                 template_ed_ptdf,
                 c_sys5_ed,
@@ -365,13 +365,18 @@ function test_simulation_build(file_path::String)
         c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pwl_uc")
         c_sys5_ed = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed")
         stages_definition_kwargs = Dict(
-            "UC" => Stage(
+            "UC" => OperationsProblem(
                 GenericOpProblem,
                 template_pwl_standard_uc,
                 c_sys5_uc,
                 Cbc_optimizer,
             ),
-            "ED" => Stage(GenericOpProblem, template_pwl_ed, c_sys5_ed, Cbc_optimizer),
+            "ED" => OperationsProblem(
+                GenericOpProblem,
+                template_pwl_ed,
+                c_sys5_ed,
+                Cbc_optimizer,
+            ),
         )
         sequence = SimulationSequence(
             step_resolution = Hour(24),
@@ -402,7 +407,7 @@ function test_simulation_build(file_path::String)
     @testset "Test Multistart Thermal UC Simulation" begin
         c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib_sim")
         stages_definition = Dict(
-            "UC" => Stage(
+            "UC" => OperationsProblem(
                 GenericOpProblem,
                 template_multi_start_uc,
                 c_sys5_pglib,

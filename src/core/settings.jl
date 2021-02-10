@@ -91,7 +91,8 @@ function set_horizon!(settings::Settings, horizon::Int)
     settings.horizon[] = horizon
     return
 end
-get_horizon(settings::Settings)::Int = settings.horizon[]
+
+get_horizon(settings::Settings) = settings.horizon[]
 get_use_forecast_data(settings::Settings) = settings.use_forecast_data
 get_use_parameters(settings::Settings) = settings.use_parameters
 function set_initial_time!(settings::Settings, initial_time::Dates.DateTime)
