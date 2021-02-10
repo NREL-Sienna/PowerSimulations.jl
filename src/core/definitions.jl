@@ -20,10 +20,9 @@ const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
+# Enums
 IS.@scoped_enum(BuildStatus, IN_PROGRESS = -1, BUILT = 0, FAILED = 1, EMPTY = 2,)
-
 IS.@scoped_enum(RunStatus, READY = -1, SUCCESSFUL = 0, RUNNING = 1, FAILED = 2,)
-
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
 # Settings constants
@@ -55,3 +54,13 @@ const UNSUPPORTED_POWERMODELS =
 const PSI_NAME_DELIMITER = "__"
 
 const M_VALUE = 1e6
+
+const NO_SERVICE_NAME_PROVIDED = ""
+
+# File Names definitions
+const PROBLEM_SERIALIZATION_FILENAME = "operations_problem.bin"
+const PROBLEM_BUILD_LOG_FILENAME = "operations_problem_build.log"
+const HASH_FILENAME = "check.sha256"
+const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
+const SIMULATION_LOG_FILENAME = "simulation.log"
+const REQUIRED_RECORDERS = (:simulation_status, :simulation)

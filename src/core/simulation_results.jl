@@ -1,6 +1,3 @@
-const KNOWN_PATHS =
-    ["data_store", "logs", "models_json", "recorder", "results", "simulation_files"]
-
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
     alien_files = [f for f in folder_files if f ∉ KNOWN_PATHS]

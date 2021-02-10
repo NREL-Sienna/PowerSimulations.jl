@@ -1,5 +1,3 @@
-const NO_SERVICE_NAME_PROVIDED = ""
-
 """
 Abstract type for Service Formulations (a.k.a Models)
 

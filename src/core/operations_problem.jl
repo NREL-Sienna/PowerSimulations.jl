@@ -1,6 +1,3 @@
-const PROBLEM_SERIALIZATION_FILENAME = "operations_problem.bin"
-const PROBLEM_BUILD_LOG_FILENAME = "operations_problem_build.log"
-
 # JDNOTE: Number might not be needed later
 mutable struct SimulationInfo
     number::Int
