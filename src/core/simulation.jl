@@ -9,7 +9,7 @@ mutable struct SimulationInternal
     models_dir::String
     recorder_dir::String
     results_dir::String
-    stages_count::Int
+    problems_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
     # Initial Time of the first forecast and Initial Time of the last forecast
@@ -25,7 +25,7 @@ end
 
 function SimulationInternal(
     steps::Int,
-    stages_keys::Base.KeySet,
+    problems_keys::Base.KeySet,
     sim_dir,
     name;
     output_dir = nothing,
@@ -37,7 +37,7 @@ function SimulationInternal(
 
     for s in 1:steps
         count_dict[s] = Dict{Int, Int}()
-        for st in stages_keys
+        for st in problems_keys
             count_dict[s][st] = 0
         end
     end
@@ -81,7 +81,7 @@ function SimulationInternal(
         models_dir,
         recorder_dir,
         results_dir,
-        length(stages_keys),
+        length(problems_keys),
         count_dict,
         Dict{Int, Dates.DateTime}(),
         (init_time, init_time),
@@ -123,10 +123,10 @@ end
 
 function _add_initial_condition_caches(
     sim::SimulationInternal,
-    stage::OperationsProblem,
+    problem::OperationsProblem,
     caches::Union{Nothing, Vector{<:AbstractCache}},
 )
-    initial_conditions = stage.internal.optimization_container.initial_conditions
+    initial_conditions = problem.internal.optimization_container.initial_conditions
     for (ic_key, init_conds) in initial_conditions.data
         _create_cache(ic_key, caches)
     end
@@ -175,17 +175,17 @@ end
 
 function _set_internal_caches(
     internal::SimulationInternal,
-    stage::OperationsProblem,
+    problem::OperationsProblem,
     caches::Vector{<:AbstractCache},
 )
     for c in caches
         cache_key = CacheKey(c)
-        push!(stage.internal.caches, cache_key)
+        push!(problem.internal.caches, cache_key)
         if !haskey(internal.simulation_cache, cache_key)
             @debug "Cache $(cache_key) added to the simulation"
             internal.simulation_cache[cache_key] = c
         end
-        internal.simulation_cache[cache_key].value = get_initial_cache(c, stage)
+        internal.simulation_cache[cache_key].value = get_initial_cache(c, problem)
     end
     return
 end
@@ -213,7 +213,7 @@ end
 # TODO: Add DocString
 @doc raw"""
     Simulation(steps::Int
-                stages::Dict{String, OperationsProblem{<:AbstractOperationsProblem}}
+                problems::Dict{String, OperationsProblem{<:AbstractOperationsProblem}}
                 sequence::Union{Nothing, SimulationSequence}
                 simulation_folder::String
                 name::String
@@ -223,7 +223,7 @@ end
 """
 mutable struct Simulation
     steps::Int
-    stages::Dict{String, OperationsProblem{<:AbstractOperationsProblem}}
+    problems::SimulationProblems
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::SimulationSequence
     simulation_folder::String
@@ -231,14 +231,19 @@ mutable struct Simulation
     internal::Union{Nothing, SimulationInternal}
 
     function Simulation(;
-        stages_sequence::SimulationSequence,
+        sequence::SimulationSequence,
         name::String,
         steps::Int,
-        stages = Dict{String, OperationsProblem{AbstractOperationsProblem}}(),
+        problems::SimulationProblems,
         simulation_folder::String,
         initial_time = nothing,
     )
-        new(steps, stages, initial_time, stages_sequence, simulation_folder, name, nothing)
+        for name in PSI.get_problem_names(problems)
+            if problems[name].internal.simulation_info.sequence_uuid != sequence.uuid
+                throw(IS.ConflictingInputsError("The Problem definition for $(name) doesn't correspond to the simulation sequence"))
+            end
+        end
+        new(steps, problems, initial_time, sequence, simulation_folder, name, nothing)
     end
 end
 
@@ -250,13 +255,13 @@ they passed to the original Simulation.
 
 # Arguments
 - `directory::AbstractString`: the directory returned from the call to serialize
-- `stage_info::Dict`: Two-level dictionary containing stage parameters that cannot be
-  serialized. The outer dict should be keyed by the stage name. The inner dict must contain
+- `problem_info::Dict`: Two-level dictionary containing problem parameters that cannot be
+  serialized. The outer dict should be keyed by the problem name. The inner dict must contain
   'optimizer' and may contain 'jump_model'. These should be the same values used for the
   original simulation.
 """
-function Simulation(directory::AbstractString, stage_info::Dict)
-    obj = deserialize_model(Simulation, directory, stage_info)
+function Simulation(directory::AbstractString, problem_info::Dict)
+    obj = deserialize_model(Simulation, directory, problem_info)
 end
 
 ################# accessor functions ####################
@@ -265,7 +270,7 @@ get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
 get_date_range(sim::Simulation) = sim.internal.date_range
 get_current_time(sim::Simulation) = sim.internal.current_time
-get_stages(sim::Simulation) = sim.stages
+get_problems(sim::Simulation) = sim.problems
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
 get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
@@ -279,35 +284,35 @@ set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
 
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
-    for (name, stage) in get_stages(sim)
-        base_powers[name] = PSY.get_base_power(get_system(stage))
+    for (name, problem) in get_problems(sim)
+        base_powers[name] = PSY.get_base_power(get_system(problem))
     end
     return base_powers
 end
 
-function get_stage(sim::Simulation, name::String)
-    stage = get(get_stages(sim), name, nothing)
-    stage === nothing && throw(ArgumentError("Stage $(name) not present in the simulation"))
-    return stage
+function get_problem(sim::Simulation, name::String)
+    problem = get(get_problems(sim), name, nothing)
+    problem === nothing && throw(ArgumentError("problem $(name) not present in the simulation"))
+    return problem
 end
 
-get_stage_interval(sim::Simulation, name::String) = get_stage_interval(sim.sequence, name)
+get_problem_interval(sim::Simulation, name::String) = get_problem_interval(sim.sequence, name)
 
-function get_stage(sim::Simulation, number::Int)
+function get_problem(sim::Simulation, number::Int)
     name = get(get_sequence(sim).order, number, nothing)
-    name === nothing && throw(ArgumentError("Stage with $(number) not defined"))
-    return get_stage(sim, name)
+    name === nothing && throw(ArgumentError("problem with $(number) not defined"))
+    return get_problem(sim, name)
 end
 
-get_stages_quantity(sim::Simulation) = sim.internal.stages_count
+get_problems_quantity(sim::Simulation) = sim.internal.problems_count
 
-function get_simulation_time(sim::Simulation, stage_number::Int)
-    return sim.internal.date_ref[stage_number]
+function get_simulation_time(sim::Simulation, problem_number::Int)
+    return sim.internal.date_ref[problem_number]
 end
 
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
-get_stage_name(sim::Simulation, stage::OperationsProblem) =
-    get_stage_name(sim.sequence, stage)
+get_problem_name(sim::Simulation, problem::OperationsProblem) =
+    get_problem_name(sim.sequence, problem)
 IS.get_name(sim::Simulation) = sim.name
 get_simulation_folder(sim::Simulation) = sim.simulation_folder
 get_execution_order(sim::Simulation) = get_sequence(sim).execution_order
@@ -315,12 +320,12 @@ get_current_execution_index(sim::Simulation) = get_sequence(sim).current_executi
 get_logs_folder(sim::Simulation) = sim.internal.logs_dir
 get_recorder_folder(sim::Simulation) = sim.internal.recorder_dir
 
-function get_stage_cache_definition(sim::Simulation, stage::String)
+function get_problem_cache_definition(sim::Simulation, problem::String)
     caches = get_sequence(sim).cache
     cache_ref = Array{AbstractCache, 1}()
-    for stage_names in keys(caches)
-        if stage in stage_names
-            push!(cache_ref, caches[stage_names])
+    for problem_names in keys(caches)
+        if problem in problem_names
+            push!(cache_ref, caches[problem_names])
         end
     end
     return cache_ref
@@ -349,15 +354,15 @@ function get_cache(
 end
 
 function _check_forecasts_sequence(sim::Simulation)
-    for (stage_number, stage_name) in get_sequence(sim).order
-        stage = get_stage(sim, stage_name)
-        resolution = get_resolution(stage)
-        horizon = get_stage_horizon(get_sequence(sim), stage_name)
-        interval = get_stage_interval(get_sequence(sim), stage_name)
+    for (problem_number, (problem_name, problem)) in enumerate(sim.problems)
+        problem = get_problem(sim, problem_name)
+        resolution = get_resolution(problem)
+        horizon = get_horizon(problem)
+        interval = get_interval(problem)
         horizon_time = resolution * horizon
         if horizon_time < interval
             throw(IS.ConflictingInputsError("horizon ($horizon_time) is
-                                shorter than interval ($interval) for $stage_name"))
+                                shorter than interval ($interval) for $problem_name"))
         end
     end
 end
@@ -371,19 +376,19 @@ end
 
 function _assign_feedforward_chronologies(sim::Simulation)
     for (key, chron) in get_sequence(sim).feedforward_chronologies
-        destination_stage = get_stage(sim, key.second)
-        destination_stage_interval =
-            IS.time_period_conversion(get_stage_interval(sim, key.second))
-        source_stage_number = find_key_with_value(get_sequence(sim).order, key.first)
-        if isempty(source_stage_number)
-            throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
+        destination_problem = get_problem(sim, key.second)
+        destination_problem_interval =
+            IS.time_period_conversion(get_problem_interval(sim, key.second))
+        source_problem_number = find_key_with_value(get_sequence(sim).order, key.first)
+        if isempty(source_problem_number)
+            throw(ArgumentError("problem $(key.first) not specified in the order dictionary"))
         end
-        for stage_number in source_stage_number
-            destination_stage.internal.chronolgy_dict[stage_number] = chron
-            source_stage = get_stage(sim, stage_number)
-            source_stage_resolution =
-                IS.time_period_conversion(PSY.get_time_series_resolution(source_stage.sys))
-            execution_wait_count = Int(source_stage_resolution / destination_stage_interval)
+        for problem_number in source_problem_number
+            destination_problem.internal.chronolgy_dict[problem_number] = chron
+            source_problem = get_problem(sim, problem_number)
+            source_problem_resolution =
+                IS.time_period_conversion(PSY.get_time_series_resolution(source_problem.sys))
+            execution_wait_count = Int(source_problem_resolution / destination_problem_interval)
             set_execution_wait_count!(get_trigger(chron), execution_wait_count)
             initialize_trigger_count!(get_trigger(chron))
         end
@@ -396,72 +401,72 @@ function _get_simulation_initial_times!(sim::Simulation)
     k_size = length(k)
     @assert_op k_size == maximum(k)
 
-    stage_initial_times = Dict{Int, Vector{Dates.DateTime}}()
+    problem_initial_times = Dict{Int, Vector{Dates.DateTime}}()
     time_range = Vector{Dates.DateTime}(undef, 2)
     sim_ini_time = get_initial_time(sim)
-    for (stage_number, stage_name) in get_sequence(sim).order
-        stage_system = sim.stages[stage_name].sys
-        system_interval = PSY.get_forecast_interval(stage_system)
-        stage_interval = get_stage_interval(get_sequence(sim), stage_name)
-        if system_interval != stage_interval
+    for (problem_number, problem_name) in get_sequence(sim).order
+        problem_system = sim.problems[problem_name].sys
+        system_interval = PSY.get_forecast_interval(problem_system)
+        problem_interval = get_problem_interval(get_sequence(sim), problem_name)
+        if system_interval != problem_interval
             throw(
                 IS.ConflictingInputsError(
-                    "Simulation interval ($stage_interval) and forecast interval ($system_interval) definitions are not compatible",
+                    "Simulation interval ($problem_interval) and forecast interval ($system_interval) definitions are not compatible",
                 ),
             )
         end
-        stage_horizon = get_stage_horizon(get_sequence(sim), stage_name)
-        system_horizon = PSY.get_forecast_horizon(stage_system)
-        if stage_horizon > system_horizon
+        problem_horizon = get_problem_horizon(get_sequence(sim), problem_name)
+        system_horizon = PSY.get_forecast_horizon(problem_system)
+        if problem_horizon > system_horizon
             throw(
                 IS.ConflictingInputsError(
-                    "Simulation horizon ($stage_horizon) and forecast horizon ($system_horizon) definitions are not compatible",
+                    "Simulation horizon ($problem_horizon) and forecast horizon ($system_horizon) definitions are not compatible",
                 ),
             )
         end
-        stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
-        for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
-            if !(element + system_interval == stage_initial_times[stage_number][ix + 1])
+        problem_initial_times[problem_number] = PSY.get_forecast_initial_times(problem_system)
+        for (ix, element) in enumerate(problem_initial_times[problem_number][1:(end - 1)])
+            if !(element + system_interval == problem_initial_times[problem_number][ix + 1])
                 throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
             end
         end
         if !(sim_ini_time === nothing) &&
-           !mapreduce(x -> x == sim_ini_time, |, stage_initial_times[stage_number])
+           !mapreduce(x -> x == sim_ini_time, |, problem_initial_times[problem_number])
             throw(
                 IS.ConflictingInputsError(
-                    "The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number.
-Manually provided initial times have to be compatible with the specified interval and horizon in the stages.",
+                    "The specified simulation initial_time $sim_ini_time isn't contained in problem $problem_number.
+Manually provided initial times have to be compatible with the specified interval and horizon in the problems.",
                 ),
             )
         end
-        stage_number == 1 && (time_range[1] = stage_initial_times[stage_number][1])
+        problem_number == 1 && (time_range[1] = problem_initial_times[problem_number][1])
         (
-            stage_number == k_size &&
-            (time_range[end] = stage_initial_times[stage_number][end])
+            problem_number == k_size &&
+            (time_range[end] = problem_initial_times[problem_number][end])
         )
     end
     sim.internal.date_range = Tuple(time_range)
 
     if get_initial_time(sim) === nothing
-        sim.initial_time = stage_initial_times[1][1]
+        sim.initial_time = problem_initial_times[1][1]
         @debug("Initial Simulation Time will be infered from the data.
                Initial Simulation Time set to $(sim.initial_time)")
     end
 
     sim.internal.current_time = sim.initial_time
-    return stage_initial_times
+    return problem_initial_times
 end
 
-function _attach_feedforward!(sim::Simulation, stage_name::String)
-    stage = get(sim.stages, stage_name, nothing)
-    feedforward = filter(p -> (p.first[1] == stage_name), get_sequence(sim).feedforward)
+function _attach_feedforward!(sim::Simulation, problem_name::String)
+    problem = get(sim.problems, problem_name, nothing)
+    feedforward = filter(p -> (p.first[1] == problem_name), get_sequence(sim).feedforward)
     for (key, ff) in feedforward
-        # Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
-        field_dict = getfield(stage.template, key[2])
+        # Note: key[1] = problem name, key[2] = template field name, key[3] = device model key
+        field_dict = getfield(problem.template, key[2])
         device_model = get(field_dict, key[3], nothing)
         device_model === nothing && throw(
             IS.ConflictingInputsError(
-                "Device model $(key[3]) not found in stage $(stage_name)",
+                "Device model $(key[3]) not found in problem $(problem_name)",
             ),
         )
         device_model.feedforward = ff
@@ -471,23 +476,23 @@ end
 
 function _check_steps(
     sim::Simulation,
-    stage_initial_times::Dict{Int, Vector{Dates.DateTime}},
+    problem_initial_times::Dict{Int, Vector{Dates.DateTime}},
 )
     execution_order = get_sequence(sim).execution_order
-    for (stage_number, stage_name) in get_sequence(sim).order
-        stage = sim.stages[stage_name]
-        execution_counts = get_executions(stage)
+    for (problem_number, problem_name) in get_sequence(sim).order
+        problem = sim.problems[problem_name]
+        execution_counts = get_executions(problem)
         transitions = execution_order[vcat(1, diff(execution_order)) .== 1]
         # Checks the consistency between two methods of calculating the number of executions
-        total_stage_executions = length(findall(x -> x == stage_number, execution_order))
-        total_stage_transitions = length(findall(x -> x == stage_number, transitions))
-        @assert_op total_stage_executions / total_stage_transitions == execution_counts
-        forecast_count = length(stage_initial_times[stage_number])
+        total_problem_executions = length(findall(x -> x == problem_number, execution_order))
+        total_problem_transitions = length(findall(x -> x == problem_number, transitions))
+        @assert_op total_problem_executions / total_problem_transitions == execution_counts
+        forecast_count = length(problem_initial_times[problem_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(
                 IS.ConflictingInputsError(
                     "The number of available time series ($(forecast_count)) is not enough to perform the
-desired amount of simulation steps ($(sim.steps*get_execution_count(stage))).",
+desired amount of simulation steps ($(sim.steps*get_execution_count(problem))).",
                 ),
             )
         end
@@ -496,45 +501,44 @@ desired amount of simulation steps ($(sim.steps*get_execution_count(stage))).",
 end
 
 function _check_required_ini_cond_caches(sim::Simulation)
-    for (stage_number, stage_name) in get_sequence(sim).order
-        stage = get_stage(sim, stage_name)
-        for (k, v) in iterate_initial_conditions(stage.internal.optimization_container)
+    for (problem_number, problem_name) in get_sequence(sim).order
+        problem = get_problem(sim, problem_name)
+        for (k, v) in iterate_initial_conditions(problem.internal.optimization_container)
             # No cache needed for the initial condition -> continue
             v[1].cache_type === nothing && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
             if c === nothing
                 throw(
                     ArgumentError(
-                        "Cache $(v[1].cache_type) not defined for initial condition $(k) in stage $stage_name",
+                        "Cache $(v[1].cache_type) not defined for initial condition $(k) in problem $problem_name",
                     ),
                 )
             end
-            @debug "found cache $(v[1].cache_type) for initial condition $(k) in stage $(stage_name)"
+            @debug "found cache $(v[1].cache_type) for initial condition $(k) in problem $(problem_name)"
         end
     end
     return
 end
 
-function _populate_caches!(sim::Simulation, stage_name::String)
-    caches = get_stage_cache_definition(sim, stage_name)
-    stage = get_stage(sim, stage_name)
-    _add_initial_condition_caches(sim.internal, stage, caches)
-    _set_internal_caches(sim.internal, stage, caches)
+function _populate_caches!(sim::Simulation, problem_name::String)
+    caches = get_problem_cache_definition(sim, problem_name)
+    problem = get_problem(sim, problem_name)
+    _add_initial_condition_caches(sim.internal, problem, caches)
+    _set_internal_caches(sim.internal, problem, caches)
     return
 end
 
-function _build_stages!(sim::Simulation)
-    for (stage_number, stage_name) in get_sequence(sim).order
-        TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Stage $(stage_name)" begin
-            @info("Building Stage $(stage_number)-$(stage_name)")
-            horizon = get_stage_horizon(get_sequence(sim), stage_name)
-            stage = get_stage(sim, stage_name)
-            stage_interval = get_stage_interval(get_sequence(sim), stage_name)
+function _build_problems!(sim::Simulation)
+    for (problem_number, problem_name) in get_sequence(sim).order
+        TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build problem $(problem_name)" begin
+            @info("Building problem $(problem_number)-$(problem_name)")
+            problem = get_problem(sim, problem_name)
+            problem_interval = get_problem_interval(get_sequence(sim), problem_name)
             initial_time = get_initial_time(sim)
-            set_write_path!(stage, get_simulation_dir(sim))
-            build!(stage, initial_time, horizon, stage_interval)
-            _populate_caches!(sim, stage_name)
-            sim.internal.date_ref[stage_number] = initial_time
+            set_write_path!(problem, get_simulation_dir(sim))
+            build!(problem, initial_time, problem_interval)
+            _populate_caches!(sim, problem_name)
+            sim.internal.date_ref[problem_number] = initial_time
         end
     end
     _check_required_ini_cond_caches(sim)
@@ -555,7 +559,7 @@ end
 """
     build!(sim::Simulation)
 
-Build the Simulation, stages and the related folder structure
+Build the Simulation, problems and the related folder structure
 
 # Arguments
 - `sim::Simulation`: simulation object
@@ -616,29 +620,29 @@ end
 
 function _build!(sim::Simulation, serialize::Bool)
     sim.internal.build_status = BuildStatus.IN_PROGRESS
-    stage_initial_times = _get_simulation_initial_times!(sim)
+    problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
-    for (stage_number, stage_name) in get_order(sequence)
-        stage = get_stage(sim, stage_name)
-        if stage === nothing
+    for (problem_number, problem_name) in get_order(sequence)
+        problem = get_problem(sim, problem_name)
+        if problem === nothing
             throw(
                 IS.ConflictingInputsError(
-                    "Stage $(stage_name) not found in the stages definitions",
+                    "problem $(problem_name) not found in the problems definitions",
                 ),
             )
         end
-        stage_interval = get_stage_interval(sim, stage_name)
+        problem_interval = get_problem_interval(sim, problem_name)
         step_resolution =
-            stage_number == 1 ? get_step_resolution(sim.sequence) :
-            get_stage_interval(sequence, get_order(sequence)[stage_number - 1])
-        stage.internal.executions = Int(step_resolution / stage_interval)
-        stage.internal.number = stage_number
-        stage.internal.name = stage_name
-        _attach_feedforward!(sim, stage_name)
+            problem_number == 1 ? get_step_resolution(sim.sequence) :
+            get_problem_interval(sequence, get_order(sequence)[problem_number - 1])
+        problem.internal.executions = Int(step_resolution / problem_interval)
+        problem.internal.number = problem_number
+        problem.internal.name = problem_name
+        _attach_feedforward!(sim, problem_name)
     end
     _assign_feedforward_chronologies(sim)
-    _check_steps(sim, stage_initial_times)
-    _build_stages!(sim)
+    _check_steps(sim, problem_initial_times)
+    _build_problems!(sim)
     if serialize
         TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Serializing Simulation Files" begin
             serialize_simulation(sim)
@@ -647,18 +651,18 @@ function _build!(sim::Simulation, serialize::Bool)
     return
 end
 
-# Defined here because it requires Stage and Simulation to defined
+# Defined here because it requires problem and Simulation to defined
 
 ############################# Interfacing Functions ##########################################
 # These are the functions that the user will have to implement to update a custom IC Chron #
 # or custom InitialConditionType #
 
-""" Updates the initial conditions of the stage"""
+""" Updates the initial conditions of the problem"""
 function initial_condition_update!(
-    stage::OperationsProblem,
+    problem::OperationsProblem,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
-    ::IntraStageChronology,
+    ::IntraproblemChronology,
     sim::Simulation,
 )
     # TODO: Replace this convoluted way to get information with access to data store
@@ -666,9 +670,9 @@ function initial_condition_update!(
     for ic in initial_conditions
         name = device_name(ic)
         interval_chronology =
-            get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
+            get_problem_interval_chronology(sim.sequence, get_problem_name(sim, problem))
         var_value =
-            get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
+            get_problem_variable(interval_chronology, (problem => problem), name, ic.update_ref)
         # We pass the simulation cache instead of the whole simulation to avoid definition dependencies.
         # All the inputs to calculate_ic_quantity are defined before the simulation object
         quantity = calculate_ic_quantity(
@@ -676,7 +680,7 @@ function initial_condition_update!(
             ic,
             var_value,
             simulation_cache,
-            get_resolution(stage),
+            get_resolution(problem),
         )
         previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
@@ -686,43 +690,43 @@ function initial_condition_update!(
             ic,
             quantity,
             previous_value,
-            get_number(stage),
+            get_number(problem),
         )
     end
 end
 
-""" Updates the initial conditions of the stage"""
+""" Updates the initial conditions of the problem"""
 function initial_condition_update!(
-    stage::OperationsProblem,
+    problem::OperationsProblem,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
-    ::InterStageChronology,
+    ::InterproblemChronology,
     sim::Simulation,
 )
     # TODO: Replace this convoluted way to get information with access to data store
     simulation_cache = sim.internal.simulation_cache
     execution_index = get_execution_order(sim)
-    execution_count = get_execution_count(stage)
-    stage_name = get_stage_name(sim, stage)
-    interval = get_stage_interval(sim, stage_name)
+    execution_count = get_execution_count(problem)
+    problem_name = get_problem_name(sim, problem)
+    interval = get_problem_interval(sim, problem_name)
     for ic in initial_conditions
         name = device_name(ic)
         current_ix = get_current_execution_index(sim)
-        source_stage_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
-        source_stage = get_stage(sim, execution_index[source_stage_ix])
-        source_stage_name = get_stage_name(sim, source_stage)
+        source_problem_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
+        source_problem = get_problem(sim, execution_index[source_problem_ix])
+        source_problem_name = get_problem_name(sim, source_problem)
 
-        # If the stage that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
-        if get_number(source_stage) >= get_number(stage)
+        # If the problem that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
+        if get_number(source_problem) >= get_number(problem)
             interval_chronology =
-                get_stage_interval_chronology(sim.sequence, source_stage_name)
-        elseif get_number(source_stage) < get_number(stage)
+                get_problem_interval_chronology(sim.sequence, source_problem_name)
+        elseif get_number(source_problem) < get_number(problem)
             interval_chronology = RecedingHorizon()
         end
 
-        var_value = get_stage_variable(
+        var_value = get_problem_variable(
             interval_chronology,
-            (source_stage => stage),
+            (source_problem => problem),
             name,
             ic.update_ref,
         )
@@ -736,32 +740,32 @@ function initial_condition_update!(
             ic,
             quantity,
             previous_value,
-            get_number(stage),
+            get_number(problem),
         )
     end
     return
 end
 
-function _update_caches!(sim::Simulation, stage::OperationsProblem)
-    for cache in stage.internal.caches
-        update_cache!(sim, cache, stage)
+function _update_caches!(sim::Simulation, problem::OperationsProblem)
+    for cache in problem.internal.caches
+        update_cache!(sim, cache, problem)
     end
     return
 end
 
 ################################ Cache Update ################################################
-# TODO: Need to be careful here if 2 stages modify the same cache. This function might need
+# TODO: Need to be careful here if 2 problems modify the same cache. This function might need
 # dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
 function update_cache!(
     sim::Simulation,
     ::CacheKey{TimeStatusChange, D},
-    stage::OperationsProblem,
+    problem::OperationsProblem,
 ) where {D <: PSY.Device}
     # TODO: Remove debug statements and use recorder here
     c = get_cache(sim, TimeStatusChange, D)
-    increment = get_increment(sim, stage, c)
-    variable = get_variable(stage.internal.optimization_container, c.ref)
-    t_range = 1:get_end_of_interval_step(stage)
+    increment = get_increment(sim, problem, c)
+    variable = get_variable(problem.internal.optimization_container, c.ref)
+    t_range = 1:get_end_of_interval_step(problem)
     for name in variable.axes[1]
         # Store the initial condition
         c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
@@ -790,23 +794,23 @@ function update_cache!(
     return
 end
 
-function get_increment(sim::Simulation, stage::OperationsProblem, cache::TimeStatusChange)
+function get_increment(sim::Simulation, problem::OperationsProblem, cache::TimeStatusChange)
     units = cache.units
-    stage_name = get_stage_name(sim, stage)
-    stage_interval = IS.time_period_conversion(get_stage_interval(sim, stage_name))
-    horizon = get_stage_horizon(sim.sequence, stage_name)
-    stage_resolution = stage_interval / horizon
-    return float(stage_resolution / units)
+    problem_name = get_problem_name(sim, problem)
+    problem_interval = IS.time_period_conversion(get_problem_interval(sim, problem_name))
+    horizon = get_problem_horizon(sim.sequence, problem_name)
+    problem_resolution = problem_interval / horizon
+    return float(problem_resolution / units)
 end
 
 function update_cache!(
     sim::Simulation,
     ::CacheKey{StoredEnergy, D},
-    stage::OperationsProblem,
+    problem::OperationsProblem,
 ) where {D <: PSY.Device}
     c = get_cache(sim, StoredEnergy, D)
-    variable = get_variable(stage.internal.optimization_container, c.ref)
-    t = get_end_of_interval_step(stage)
+    variable = get_variable(problem.internal.optimization_container, c.ref)
+    t = get_end_of_interval_step(problem)
     for name in variable.axes[1]
         device_energy = JuMP.value(variable[name, t])
         @debug name, device_energy
@@ -821,12 +825,12 @@ end
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    stage::OperationsProblem,
+    problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Component}
-    components = get_available_components(T, stage.sys)
-    initial_forecast_time = get_simulation_time(sim, get_number(stage))
-    horizon = length(model_time_steps(stage.internal.optimization_container))
+    components = get_available_components(T, problem.sys)
+    initial_forecast_time = get_simulation_time(sim, get_number(problem))
+    horizon = length(model_time_steps(problem.internal.optimization_container))
     for d in components
         # RECORDER TODO: Parameter Update from forecast
         # TODO: Improve file read performance
@@ -857,16 +861,16 @@ end
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    stage::OperationsProblem,
+    problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Service}
     # RECORDER TODO: Parameter Update from forecast
-    components = get_available_components(T, stage.sys)
-    initial_forecast_time = get_simulation_time(sim, get_number(stage))
-    horizon = length(model_time_steps(stage.internal.optimization_container))
+    components = get_available_components(T, problem.sys)
+    initial_forecast_time = get_simulation_time(sim, get_number(problem))
+    horizon = length(model_time_steps(problem.internal.optimization_container))
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
-        service = PSY.get_component(T, stage.sys, ix)
+        service = PSY.get_component(T, problem.sys, ix)
         forecast = PSY.get_time_series(
             PSY.Deterministic,
             service,
@@ -893,15 +897,15 @@ end
 function update_parameter!(
     param_reference::UpdateRef{JuMP.VariableRef},
     container::ParameterContainer,
-    stage::OperationsProblem,
+    problem::OperationsProblem,
     sim::Simulation,
 )
     param_array = get_parameter_array(container)
-    for (k, chronology) in stage.internal.chronolgy_dict
-        source_stage = get_stage(sim, k)
+    for (k, chronology) in problem.internal.chronolgy_dict
+        source_problem = get_problem(sim, k)
         feedforward_update!(
-            stage,
-            source_stage,
+            problem,
+            source_problem,
             chronology,
             param_reference,
             param_array,
@@ -912,23 +916,23 @@ function update_parameter!(
     return
 end
 
-function _update_initial_conditions!(stage::OperationsProblem, sim::Simulation)
+function _update_initial_conditions!(problem::OperationsProblem, sim::Simulation)
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
-    for (k, v) in iterate_initial_conditions(stage.internal.optimization_container)
-        initial_condition_update!(stage, k, v, ini_cond_chronology, sim)
+    for (k, v) in iterate_initial_conditions(problem.internal.optimization_container)
+        initial_condition_update!(problem, k, v, ini_cond_chronology, sim)
     end
     return
 end
 
-function _update_parameters(stage::OperationsProblem, sim::Simulation)
-    for container in iterate_parameter_containers(stage.internal.optimization_container)
-        update_parameter!(container.update_ref, container, stage, sim)
+function _update_parameters(problem::OperationsProblem, sim::Simulation)
+    for container in iterate_parameter_containers(problem.internal.optimization_container)
+        update_parameter!(container.update_ref, container, problem, sim)
     end
     return
 end
 
-function _apply_warm_start!(stage::OperationsProblem)
-    for variable in values(stage.internal.optimization_container.variables)
+function _apply_warm_start!(problem::OperationsProblem)
+    for variable in values(problem.internal.optimization_container.variables)
         for e in variable
             current_solution = JuMP.value(e)
             JuMP.set_start_value(e, current_solution)
@@ -937,21 +941,21 @@ function _apply_warm_start!(stage::OperationsProblem)
     return
 end
 
-""" Required update stage function call"""
-function _update_stage!(stage::OperationsProblem, sim::Simulation)
-    _update_parameters(stage, sim)
-    _update_initial_conditions!(stage, sim)
+""" Required update problem function call"""
+function _update_problem!(problem::OperationsProblem, sim::Simulation)
+    _update_parameters(problem, sim)
+    _update_initial_conditions!(problem, sim)
     return
 end
 
 ############################# Interfacing Functions##########################################
-## These are the functions that the user will have to implement to update a custom stage ###
-""" Generic Stage update function for most problems with no customization"""
-function update_stage!(
-    stage::OperationsProblem{M},
+## These are the functions that the user will have to implement to update a custom problem ###
+""" Generic problem update function for most problems with no customization"""
+function update_problem!(
+    problem::OperationsProblem{M},
     sim::Simulation,
 ) where {M <: PowerSimulationsOperationsProblem}
-    _update_stage!(stage, sim)
+    _update_problem!(problem, sim)
     return
 end
 
@@ -970,7 +974,7 @@ the simulation runs. Refer to [`export_results`](@ref) for a description of this
 
 # Example
 ```julia
-sim = Simulation("Test", 7, stages, "/Users/folder")
+sim = Simulation("Test", 7, problems, "/Users/folder")
 execute!(sim::Simulation; kwargs...)
 ```
 """
@@ -997,7 +1001,7 @@ function execute!(sim::Simulation; kwargs...)
             end
         end
     catch e
-        # TODO: Add Fallback when run_stage fails
+        # TODO: Add Fallback when run_problem fails
         set_simulation_status!(sim, RunStatus.FAILED)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
@@ -1020,7 +1024,7 @@ function _execute!(
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
-    store_params = _initialize_stage_storage!(sim, store, cache_size_mib)
+    store_params = _initialize_problem_storage!(sim, store, cache_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
     status = RunStatus.RUNNING
     if exports !== nothing
@@ -1041,78 +1045,78 @@ function _execute!(
                 step,
                 "start",
             )
-            for (ix, stage_number) in enumerate(execution_order)
-                IS.@record :simulation_status SimulationStageEvent(
+            for (ix, problem_number) in enumerate(execution_order)
+                IS.@record :simulation_status SimulationproblemEvent(
                     get_current_time(sim),
                     step,
-                    stage_number,
+                    problem_number,
                     "start",
                 )
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Stage $(stage_number)" begin
-                    # TODO: implement some efficient way of indexing with stage name.
-                    stage = get_stage(sim, stage_number)
-                    stage_name = get_stage_name(sim, stage)
-                    if !is_stage_built(stage)
-                        error("Stage $(stage_name) status is not BuildStatus.BUILT")
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution problem $(problem_number)" begin
+                    # TODO: implement some efficient way of indexing with problem name.
+                    problem = get_problem(sim, problem_number)
+                    problem_name = get_problem_name(sim, problem)
+                    if !is_problem_built(problem)
+                        error("problem $(problem_name) status is not BuildStatus.BUILT")
                     end
-                    stage_interval = get_stage_interval(sim, stage_name)
-                    sim.internal.current_time = sim.internal.date_ref[stage_number]
+                    problem_interval = get_problem_interval(sim, problem_name)
+                    sim.internal.current_time = sim.internal.date_ref[problem_number]
                     get_sequence(sim).current_execution_index = ix
-                    # Is first run of first stage? Yes -> don't update stage
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Stage $(stage_number)" begin
-                        !(step == 1 && ix == 1) && update_stage!(stage, sim)
+                    # Is first run of first problem? Yes -> don't update problem
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update problem $(problem_number)" begin
+                        !(step == 1 && ix == 1) && update_problem!(problem, sim)
                     end
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
-                        stage_name = get_stage_name(sim, stage)
-                        settings = get_settings(stage)
-                        status = run_stage!(
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run problem $(problem_number)" begin
+                        problem_name = get_problem_name(sim, problem)
+                        settings = get_settings(problem)
+                        status = run_problem!(
                             step,
-                            stage,
+                            problem,
                             get_current_time(sim),
                             store;
                             exports = exports,
                         )
-                        global_stage_execution_count =
+                        global_problem_execution_count =
                             (step - 1) * length(execution_order) + ix
-                        sim.internal.run_count[step][stage_number] += 1
-                        sim.internal.date_ref[stage_number] += stage_interval
+                        sim.internal.run_count[step][problem_number] += 1
+                        sim.internal.date_ref[problem_number] += problem_interval
                         if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
                             continue
                         elseif !get_allow_fails(settings) &&
                                (status != RunStatus.SUCCESSFUL)
                             throw(
                                 ErrorException(
-                                    "Simulation Failed in stage $(stage_number)",
+                                    "Simulation Failed in problem $(problem_number)",
                                 ),
                             )
                         else
                             @assert status == RunStatus.SUCCESSFUL
                         end
-                    end # Run stage Timer
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
-                        _update_caches!(sim, stage)
+                    end # Run problem Timer
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(problem_number)" begin
+                        _update_caches!(sim, problem)
                     end
-                    if warm_start_enabled(stage)
-                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(stage_number)" begin
-                            _apply_warm_start!(stage)
+                    if warm_start_enabled(problem)
+                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(problem_number)" begin
+                            _apply_warm_start!(problem)
                         end
                     end
-                    IS.@record :simulation_status SimulationStageEvent(
+                    IS.@record :simulation_status SimulationproblemEvent(
                         get_current_time(sim),
                         step,
-                        stage_number,
+                        problem_number,
                         "done",
                     )
                     ProgressMeter.update!(
                         progress_bar,
-                        global_stage_execution_count;
+                        global_problem_execution_count;
                         showvalues = [
                             (:Step, step),
-                            (:Stage, stage_name),
+                            (:problem, problem_name),
                             (:("Simulation Timestamp"), get_current_time(sim)),
                         ],
                     )
-                end #execution stage timer
+                end #execution problem timer
             end # execution order for loop
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
@@ -1124,35 +1128,35 @@ function _execute!(
     return nothing
 end
 
-function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
+function _initialize_problem_storage!(sim::Simulation, store, cache_size_mib)
     sequence = sim.sequence
     execution_order = sequence.execution_order
-    executions_by_stage = sequence.executions_by_stage
+    executions_by_problem = sequence.executions_by_problem
     horizons = sequence.horizons
     intervals = sequence.intervals
     order = sequence.order
 
-    stages = OrderedDict{Symbol, SimulationStoreStageParams}()
-    stage_reqs = Dict{Symbol, SimulationStoreStageRequirements}()
-    stage_order = [order[x] for x in sort!(collect(keys(order)))]
+    problems = OrderedDict{Symbol, SimulationStoreproblemParams}()
+    problem_reqs = Dict{Symbol, SimulationStoreproblemRequirements}()
+    problem_order = [order[x] for x in sort!(collect(keys(order)))]
     num_param_containers = 0
     rules = CacheFlushRules(max_size = cache_size_mib * MiB)
-    for stage_name in stage_order
-        num_executions = executions_by_stage[stage_name]
-        horizon = horizons[stage_name]
-        stage = sim.stages[stage_name]
-        optimization_container = get_optimization_container(stage)
+    for problem_name in problem_order
+        num_executions = executions_by_problem[problem_name]
+        horizon = horizons[problem_name]
+        problem = sim.problems[problem_name]
+        optimization_container = get_optimization_container(problem)
         duals = get_constraint_duals(optimization_container.settings)
         parameters = get_parameters(optimization_container)
         variables = get_variables(optimization_container)
         num_rows = num_executions * get_steps(sim)
 
-        interval = intervals[stage_name][1]
-        resolution = get_resolution(stage)
-        system = get_system(stage)
+        interval = intervals[problem_name][1]
+        resolution = get_resolution(problem)
+        system = get_system(problem)
         base_power = PSY.get_base_power(system)
         sys_uuid = IS.get_uuid(system)
-        stage_params = SimulationStoreStageParams(
+        problem_params = SimulationStoreproblemParams(
             num_executions,
             horizon,
             interval,
@@ -1160,16 +1164,16 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
             base_power,
             sys_uuid,
         )
-        reqs = SimulationStoreStageRequirements()
+        reqs = SimulationStoreproblemRequirements()
 
         # TODO: configuration of keep_in_cache and priority are not correct
-        stage_sym = Symbol(stage_name)
+        problem_sym = Symbol(problem_name)
         for name in duals
             array = get_constraint(optimization_container, name)
             reqs.duals[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
             add_rule!(
                 rules,
-                stage_sym,
+                problem_sym,
                 STORE_CONTAINER_DUALS,
                 name,
                 false,
@@ -1186,7 +1190,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
                     _calc_dimensions(array, name, num_rows, horizon)
                 add_rule!(
                     rules,
-                    stage_sym,
+                    problem_sym,
                     STORE_CONTAINER_PARAMETERS,
                     name,
                     false,
@@ -1199,7 +1203,7 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
             reqs.variables[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
             add_rule!(
                 rules,
-                stage_sym,
+                problem_sym,
                 STORE_CONTAINER_VARIABLES,
                 name,
                 true,
@@ -1207,8 +1211,8 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
             )
         end
 
-        stages[stage_sym] = stage_params
-        stage_reqs[stage_sym] = reqs
+        problems[problem_sym] = problem_params
+        problem_reqs[problem_sym] = reqs
 
         num_param_containers +=
             length(reqs.duals) + length(reqs.parameters) + length(reqs.variables)
@@ -1218,10 +1222,10 @@ function _initialize_stage_storage!(sim::Simulation, store, cache_size_mib)
         get_initial_time(sim),
         sequence.step_resolution,
         get_steps(sim),
-        stages,
+        problems,
     )
-    @debug "initialized stage requirements" store_params
-    initialize_stage_storage!(store, store_params, stage_reqs, rules)
+    @debug "initialized problem requirements" store_params
+    initialize_problem_storage!(store, store_params, problem_reqs, rules)
     return store_params
 end
 
@@ -1255,7 +1259,7 @@ end
 
 struct SimulationSerializationWrapper
     steps::Int
-    stages::Dict{String, StageSerializationWrapper}
+    problems::Dict{String, problemSerializationWrapper}
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
@@ -1281,7 +1285,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     else
         directory = path
     end
-    stages = Dict{String, StageSerializationWrapper}()
+    problems = Dict{String, problemSerializationWrapper}()
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
@@ -1296,20 +1300,20 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     cd(directory)
 
     try
-        for (key, stage) in get_stages(sim)
-            if stage.internal === nothing
-                throw(ArgumentError("stage $(stage.internal.number) has not been built"))
+        for (key, problem) in get_problems(sim)
+            if problem.internal === nothing
+                throw(ArgumentError("problem $(problem.internal.number) has not been built"))
             end
-            sys_filename = "system-$(IS.get_uuid(stage.sys)).json"
-            # Skip serialization if multiple stages have the same system.
+            sys_filename = "system-$(IS.get_uuid(problem.sys)).json"
+            # Skip serialization if multiple problems have the same system.
             if !ispath(sys_filename)
-                PSY.to_json(stage.sys, sys_filename)
+                PSY.to_json(problem.sys, sys_filename)
             end
-            stages[key] = StageSerializationWrapper(
-                stage.template,
+            problems[key] = problemSerializationWrapper(
+                problem.template,
                 sys_filename,
-                stage.internal.optimization_container.settings_copy,
-                typeof(stage),
+                problem.internal.optimization_container.settings_copy,
+                typeof(problem),
             )
         end
     finally
@@ -1319,7 +1323,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
     obj = SimulationSerializationWrapper(
         get_steps(sim),
-        stages,
+        problems,
         get_initial_time(sim),
         get_sequence(sim),
         get_simulation_dir(sim),
@@ -1330,7 +1334,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     return directory
 end
 
-function deserialize_model(::Type{Simulation}, directory::AbstractString, stage_info::Dict)
+function deserialize_model(::Type{Simulation}, directory::AbstractString, problem_info::Dict)
     orig = pwd()
     cd(directory)
 
@@ -1347,36 +1351,36 @@ function deserialize_model(::Type{Simulation}, directory::AbstractString, stage_
             )
         end
 
-        stages = Dict{String, OperationsProblem{<:AbstractOperationsProblem}}()
-        for (key, wrapper) in obj.stages
+        problems = Dict{String, OperationsProblem{<:AbstractOperationsProblem}}()
+        for (key, wrapper) in obj.problems
             sys_filename = wrapper.sys
             if !ispath(sys_filename)
                 throw(
                     ArgumentError(
-                        "stage PowerSystems serialized file $sys_filename does not exist",
+                        "problem PowerSystems serialized file $sys_filename does not exist",
                     ),
                 )
             end
             sys = PSY.System(sys_filename)
-            if !haskey(stage_info[key], "optimizer")
-                throw(ArgumentError("stage_info must define 'optimizer'"))
+            if !haskey(problem_info[key], "optimizer")
+                throw(ArgumentError("problem_info must define 'optimizer'"))
             end
-            stages[key] = wrapper.stage_type(
+            problems[key] = wrapper.problem_type(
                 wrapper.template,
                 sys,
                 restore_from_copy(
                     wrapper.settings;
-                    optimizer = stage_info[key]["optimizer"],
+                    optimizer = problem_info[key]["optimizer"],
                 ),
-                get(stage_info[key], "jump_model", nothing),
+                get(problem_info[key], "jump_model", nothing),
             )
         end
 
         sim = Simulation(;
             name = obj.name,
             steps = obj.steps,
-            stages = stages,
-            stages_sequence = obj.sequence,
+            problems = problems,
+            problems_sequence = obj.sequence,
             simulation_folder = obj.simulation_folder,
         )
         return sim
