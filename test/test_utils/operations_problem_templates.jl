@@ -31,6 +31,17 @@ function get_template_standard_uc_simulation()
     set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
     return template
 end
+
+# TODO: Check this template is adequate for testing simulations
+function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
+    template = OperationsProblemTemplate(network)
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad),
+    set_device_model!(template, InterruptibleLoad, StaticPowerLoad)
+    return template
+end
+
 #=
 ## UC Model Ref
 branches = Dict{String, DeviceModel}()
