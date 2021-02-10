@@ -38,7 +38,10 @@ mutable struct OptimizationContainer
     end
 end
 
-function _validate_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
+function _validate_warm_start_support(
+    JuMPmodel::JuMP.AbstractModel,
+    warm_start_enabled::Bool,
+)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =
         MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
