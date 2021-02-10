@@ -1,6 +1,7 @@
 const PROBLEM_SERIALIZATION_FILENAME = "operations_problem.bin"
 const PROBLEM_BUILD_LOG_FILENAME = "operations_problem_build.log"
 
+# JDNOTE: Number might not be needed later
 mutable struct SimulationInfo
     number::Int
     name::String
@@ -10,6 +11,7 @@ mutable struct SimulationInfo
     end_of_interval_step::Int
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     requires_rebuild::Bool
+    sequence_uuid::Base.UUID
 end
 
 mutable struct ProblemInternal
@@ -53,32 +55,6 @@ function configure_logging(internal::ProblemInternal, file_mode)
     )
 end
 
-#=
-function ProblemInternal(
-    optimization_container::OptimizationContainer,
-    name::String,
-    number::Int,
-    executions::Int,
-    execution_count::Int,
-)
-    return ProblemInternal(
-        optimization_container,
-        BuildStatus.EMPTY,
-        true,
-        "",
-        SimulationInfo(
-            number,
-            name,
-            executions,
-            execution_count,
-            0,
-            Dict{Int, FeedForwardChronology}(),
-            false,
-        ),
-        ext,
-    )
-end
-=#
 """Default PowerSimulations Operation Problem Type"""
 struct GenericOpProblem <: PowerSimulationsOperationsProblem end
 
@@ -282,6 +258,8 @@ set_status!(problem::OperationsProblem, status::BuildStatus) =
     problem.internal.status = status
 set_write_path!(problem::OperationsProblem, path::AbstractString) =
     problem.internal.write_path = path
+
+set_simulation_info(problem::OperationsProblem, info::SimulationInfo) = problem.internal.simulation_info = info
 
 function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsProblem}
     if built_for_simulation(problem::OperationsProblem)

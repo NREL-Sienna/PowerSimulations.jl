@@ -108,8 +108,8 @@ end
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
     bus_numbers::Vector{Int},
-    transmission::Type{S},
-) where {S <: PM.AbstractPowerModel}
+    ::Type{<: PM.AbstractPowerModel},
+)
     settings = optimization_container.settings
     parameters = get_use_parameters(settings)
     time_steps = 1:get_horizon(settings)
@@ -125,8 +125,8 @@ end
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
     bus_numbers::Vector{Int},
-    transmission::Type{S},
-) where {S <: PM.AbstractActivePowerModel}
+    ::Type{<: PM.AbstractActivePowerModel},
+)
     settings = optimization_container.settings
     parameters = get_use_parameters(settings)
     time_steps = 1:get_horizon(settings)
