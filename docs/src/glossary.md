@@ -14,7 +14,7 @@
 - Example: `horizons = Dict("stage-1" => 24, "stage-2" => 12)` *The first stage has a horizon of 24, representing 24 1-hour increments. The second stage has a horizon of 12, representing 12 5-min increments*
 
 **initial condition chronology:** The structure dictating how initial conditions get updated from previous results in the simulation.
-- Examples: `ini_cond_chronology = InterStageChronology()`
+- Examples: `ini_cond_chronology = InterProblemChronology()`
 ```julia
 1
 |
@@ -26,7 +26,7 @@
 
 *This represents an inter-stage chronology where the results of each stage feed back into the initial conditions of the stage above it.*
 
-`ini_cond_chronology = IntraStageChronology()`
+`ini_cond_chronology = IntraProblemChronology()`
 ```julia
 1
 

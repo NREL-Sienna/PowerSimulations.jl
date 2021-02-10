@@ -81,7 +81,7 @@ function test_simulation_results(file_path::String, export_path)
                 ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
                 ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
             ),
-            ini_cond_chronology = InterStageChronology(),
+            ini_cond_chronology = InterProblemChronology(),
         )
         sim = Simulation(
             name = "results_sim",

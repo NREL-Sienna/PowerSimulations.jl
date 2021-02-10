@@ -105,9 +105,9 @@ function _check_chronology_consistency(
         )
     end
     if length(problems) == 1
-        if isa(ini_cond_chronology, InterproblemChronology)
+        if isa(ini_cond_chronology, InterProblemChronology)
             @warn(
-                "Single problem detected, the default Initial Condition Chronology is IntraproblemChronology(), other values will be ignored."
+                "Single problem detected, the default Initial Condition Chronology is IntraProblemChronology(), other values will be ignored."
             )
         end
     end
@@ -157,7 +157,7 @@ mutable struct SimulationSequence
         intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
         feedforward_chronologies = Dict{Pair{String, String}, FeedForwardChronology}(),
         feedforward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
-        ini_cond_chronology = InterproblemChronology(),
+        ini_cond_chronology = InterProblemChronology(),
         cache = Dict{Tuple, AbstractCache}(),
     )
         horizons = determine_horizons!(problems)
@@ -175,7 +175,7 @@ mutable struct SimulationSequence
         _check_chronology_consistency(problems, feedforward_chronologies, ini_cond_chronology)
         _check_cache_definition(cache)
         if length(problems) == 1
-            ini_cond_chronology = IntraproblemChronology()
+            ini_cond_chronology = IntraProblemChronology()
         end
         execution_order = _get_execution_order_vector(_intervals)
         executions_by_problem = _get_num_executions_by_problem(problems, execution_order)

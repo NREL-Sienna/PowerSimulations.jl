@@ -85,8 +85,8 @@ export IntegralLimitFF
 export ParameterFF
 
 # InitialConditions chrons
-export InterStageChronology
-export IntraStageChronology
+export InterProblemChronology
+export IntraProblemChronology
 
 # Initial Conditions Quantities
 export DevicePower

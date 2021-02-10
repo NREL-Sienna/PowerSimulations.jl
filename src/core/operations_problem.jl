@@ -716,7 +716,7 @@ function write_data(problem::OperationsProblem, output_dir::AbstractString; kwar
     return
 end
 
-struct StageSerializationWrapper
+struct ProblemSerializationWrapper
     template::OperationsProblemTemplate
     sys::String
     settings::Settings

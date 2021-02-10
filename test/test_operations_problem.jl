@@ -1,4 +1,3 @@
-test_path = mktempdir()
 #TODO: Make more tests with Settings
 @testset "Operation Model kwargs" begin
     template = get_thermal_dispatch_template_network()
@@ -13,7 +12,7 @@ test_path = mktempdir()
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    @test build!(op_problem; output_dir = test_folder) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     # TODO: there is an inconsistency because Horizon isn't 1
     @test PSI.get_use_forecast_data(
         PSI.get_settings(PSI.get_optimization_container(op_problem)),
@@ -26,15 +25,13 @@ test_path = mktempdir()
         optimizer = GLPK_optimizer,
         balance_slack_variables = true,
     )
-
-    test_folder = mkpath(joinpath(test_path, randstring()))
     op_problem = OperationsProblem(
         template,
         c_sys5;
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    @test build!(op_problem; output_dir = test_folder) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     # TODO: there is an inconsistency because Horizon isn't 1
     @test PSI.get_use_forecast_data(
         PSI.get_settings(PSI.get_optimization_container(op_problem)),

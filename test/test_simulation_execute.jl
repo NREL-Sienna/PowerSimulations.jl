@@ -15,7 +15,7 @@ function test_simulation_single_ed(file_path::String)
             order = Dict(1 => "ED"),
             horizons = Dict("ED" => 24),
             intervals = Dict("ED" => (Hour(24), Consecutive())),
-            ini_cond_chronology = IntraStageChronology(),
+            ini_cond_chronology = IntraProblemChronology(),
         )
 
         sim_single = Simulation(
@@ -83,7 +83,7 @@ function test_simulation_without_caches(file_path::String)
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
-            ini_cond_chronology = InterStageChronology(),
+            ini_cond_chronology = InterProblemChronology(),
         )
         sim = Simulation(
             name = "aggregation",
@@ -127,7 +127,7 @@ function test_simulation_with_cache(file_path::String)
             horizons = Dict("ED" => 12),
             intervals = Dict("ED" => (Hour(1), Consecutive())),
             cache = Dict(("ED",) => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY)),
-            ini_cond_chronology = IntraStageChronology(),
+            ini_cond_chronology = IntraProblemChronology(),
         )
 
         sim_single_wcache = Simulation(
@@ -201,7 +201,7 @@ function test_simulation_with_cache(file_path::String)
                 ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
                 ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
             ),
-            ini_cond_chronology = InterStageChronology(),
+            ini_cond_chronology = InterProblemChronology(),
         )
         sim_cache = Simulation(
             name = "cache",
@@ -330,7 +330,7 @@ function test_stage_chronologies(file_path)
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
     sim = Simulation(
@@ -445,7 +445,7 @@ function test_simulation_utils(file_path)
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
     sim = Simulation(
         name = "aggregation",

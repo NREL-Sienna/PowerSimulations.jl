@@ -1,16 +1,19 @@
 @testset "Simulation Sequence Correct Execution Order" begin
+
     problems = SimulationProblems(
         DAUC = OperationsProblem(MockOperationProblem; horizon = 48),
         HAUC = OperationsProblem(MockOperationProblem; horizon = 24),
         ED = OperationsProblem(MockOperationProblem; horizon = 12),
         AGC = OperationsProblem(MockOperationProblem; horizon = 6),
     )
+
+
     feedforward_chronologies = Dict(
         ("UC" => "HAUC") => Synchronize(periods = 24),
         ("HAUC" => "ED") => RecedingHorizon(),
         ("ED" => "AGC") => RecedingHorizon(),
     )
-    ini_cond_chronology = InterStageChronology()
+    ini_cond_chronology = InterProblemChronology()
     intervals = Dict(
         "DAUC" => (Hour(24), Consecutive()),
         "HAUC" => (Hour(1), RecedingHorizon()),
@@ -38,10 +41,10 @@
             DAUC = OperationsProblem(MockOperationProblem; horizon = 48),
         ),
         intervals = Dict("DAUC" => (Hour(24), Consecutive())),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
-    @test isa(test_sequence.ini_cond_chronology, IntraStageChronology)
+    @test isa(test_sequence.ini_cond_chronology, IntraProblemChronology)
     @test test_sequence.execution_order == [1]
 end
 
@@ -59,7 +62,7 @@ end
             ),
         ),
         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
     @test_throws IS.ConflictingInputsError SimulationSequence(
@@ -76,7 +79,7 @@ end
             ),
         ),
         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 end
 
@@ -94,7 +97,7 @@ end
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
     sequence_4 = SimulationSequence(
@@ -110,7 +113,7 @@ end
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
     sequence_3 = SimulationSequence(
@@ -126,7 +129,7 @@ end
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
     sequence_5 = SimulationSequence(
@@ -143,7 +146,7 @@ end
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
     sequence_13 = SimulationSequence(
@@ -159,7 +162,7 @@ end
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        ini_cond_chronology = InterStageChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
     list = [sequence_2, sequence_3, sequence_4, sequence_5, sequence_13]
     _test_plain_print_methods(list)
