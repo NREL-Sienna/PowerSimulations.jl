@@ -994,6 +994,7 @@ function _execute!(
     sim::Simulation,
     store;
     cache_size_mib = 1024,
+    min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
     exports = nothing,
     kwargs...,
 )
@@ -1002,7 +1003,8 @@ function _execute!(
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
-    store_params = _initialize_problem_storage!(sim, store, cache_size_mib)
+    store_params =
+        _initialize_stage_storage!(sim, store, cache_size_mib, min_cache_flush_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
     status = RunStatus.RUNNING
     if exports !== nothing
@@ -1106,7 +1108,12 @@ function _execute!(
     return nothing
 end
 
-function _initialize_problem_storage!(sim::Simulation, store, cache_size_mib)
+function _initialize_stage_storage!(
+    sim::Simulation,
+    store,
+    cache_size_mib,
+    min_cache_flush_size_mib,
+)
     sequence = sim.sequence
     execution_order = sequence.execution_order
     executions_by_problem = sequence.executions_by_problem
@@ -1118,12 +1125,15 @@ function _initialize_problem_storage!(sim::Simulation, store, cache_size_mib)
     problem_reqs = Dict{Symbol, SimulationStoreproblemRequirements}()
     problem_order = [order[x] for x in sort!(collect(keys(order)))]
     num_param_containers = 0
-    rules = CacheFlushRules(max_size = cache_size_mib * MiB)
-    for problem_name in problem_order
-        num_executions = executions_by_problem[problem_name]
-        horizon = horizons[problem_name]
-        problem = sim.problems[problem_name]
-        optimization_container = get_optimization_container(problem)
+    rules = CacheFlushRules(
+        max_size = cache_size_mib * MiB,
+        min_flush_size = min_cache_flush_size_mib,
+    )
+    for stage_name in stage_order
+        num_executions = executions_by_stage[stage_name]
+        horizon = horizons[stage_name]
+        stage = sim.stages[stage_name]
+        optimization_container = get_optimization_container(stage)
         duals = get_constraint_duals(optimization_container.settings)
         parameters = get_parameters(optimization_container)
         variables = get_variables(optimization_container)

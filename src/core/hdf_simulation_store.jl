@@ -512,11 +512,7 @@ _make_column_name(name) = string(name) * "__columns"
 
 function _get_indices(store::HdfSimulationStore, stage, timestamp)
     time_diff = Dates.Millisecond(timestamp - store.params.initial_time)
-    if time_diff % store.params.step_resolution == 0
-        step = Int(time_diff / store.params.step_resolution)
-    else
-        step = trunc(Int, time_diff / store.params.step_resolution) + 1
-    end
+    step = time_diff ÷ store.params.step_resolution + 1
     if step > store.params.num_steps
         throw(
             ArgumentError("timestamp = $timestamp is beyond the simulation: step = $step"),
@@ -528,7 +524,7 @@ function _get_indices(store::HdfSimulationStore, stage, timestamp)
     if time_diff % stage_params.interval != Dates.Millisecond(0)
         throw(ArgumentError("timestamp = $timestamp is not a valid stage timestamp"))
     end
-    execution_index = Int(time_diff / stage_params.interval) + 1
+    execution_index = time_diff ÷ stage_params.interval + 1
     return step, execution_index
 end
 
