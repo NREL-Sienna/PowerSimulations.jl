@@ -21,6 +21,7 @@ mutable struct SimulationInternal
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
+    disable_progress_metter::Bool
 end
 
 function SimulationInternal(
@@ -92,6 +93,8 @@ function SimulationInternal(
         collect(unique_recorders),
         console_level,
         file_level,
+        # Default disable of progress bar when the simulation environment is an HPC or CI
+        isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
     )
 end
 
@@ -662,7 +665,7 @@ function initial_condition_update!(
     problem::OperationsProblem,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
-    ::IntraproblemChronology,
+    ::IntraProblemChronology,
     sim::Simulation,
 )
     # TODO: Replace this convoluted way to get information with access to data store
@@ -700,7 +703,7 @@ function initial_condition_update!(
     problem::OperationsProblem,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
-    ::InterproblemChronology,
+    ::InterProblemChronology,
     sim::Simulation,
 )
     # TODO: Replace this convoluted way to get information with access to data store
@@ -1259,7 +1262,7 @@ end
 
 struct SimulationSerializationWrapper
     steps::Int
-    problems::Dict{String, problemSerializationWrapper}
+    problems::Dict{String, ProblemSerializationWrapper}
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
@@ -1285,7 +1288,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     else
         directory = path
     end
-    problems = Dict{String, problemSerializationWrapper}()
+    problems = Dict{String, ProblemSerializationWrapper}()
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
@@ -1309,7 +1312,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
             if !ispath(sys_filename)
                 PSY.to_json(problem.sys, sys_filename)
             end
-            problems[key] = problemSerializationWrapper(
+            problems[key] = ProblemSerializationWrapper(
                 problem.template,
                 sys_filename,
                 problem.internal.optimization_container.settings_copy,
