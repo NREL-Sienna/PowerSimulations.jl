@@ -15,8 +15,12 @@ Base.getindex(problems::SimulationProblems, key) = getindex(problems, Symbol(key
 
 Base.length(problems::SimulationProblems) = length(problems.op_problems)
 Base.first(problems::SimulationProblems) = first(problems.op_problems)
+Base.iterate(problems::SimulationProblems, args...) = iterate(problems.op_problems, args...)
 
 get_problem_names(problems::SimulationProblems) = collect(keys(problems.op_problems))
+function get_problem_numer(problems::SimulationProblems, name)
+    return findfirst(x -> x == Symbol(name), get_problem_names(problems))
+end
 
 function determine_horizons!(problems::SimulationProblems)
     horizons = OrderedDict{Symbol, Int}()
@@ -51,8 +55,8 @@ function initialize_simulation_internals!(problems::SimulationProblems, uuid::Ba
             0,
             Dict{Int, FeedForwardChronology}(),
             false,
-            uuid
+            uuid,
         )
-        set_simulation_info(problem, info)
+        set_simulation_info!(problem, info)
     end
 end

@@ -108,7 +108,7 @@ end
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
     bus_numbers::Vector{Int},
-    ::Type{<: PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractPowerModel},
 )
     settings = optimization_container.settings
     parameters = get_use_parameters(settings)
@@ -125,7 +125,7 @@ end
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
     bus_numbers::Vector{Int},
-    ::Type{<: PM.AbstractActivePowerModel},
+    ::Type{<:PM.AbstractActivePowerModel},
 )
     settings = optimization_container.settings
     parameters = get_use_parameters(settings)

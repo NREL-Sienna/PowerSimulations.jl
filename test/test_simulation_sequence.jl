@@ -1,12 +1,10 @@
 @testset "Simulation Sequence Correct Execution Order" begin
-
     problems = SimulationProblems(
         DAUC = OperationsProblem(MockOperationProblem; horizon = 48),
         HAUC = OperationsProblem(MockOperationProblem; horizon = 24),
         ED = OperationsProblem(MockOperationProblem; horizon = 12),
         AGC = OperationsProblem(MockOperationProblem; horizon = 6),
     )
-
 
     feedforward_chronologies = Dict(
         ("UC" => "HAUC") => Synchronize(periods = 24),

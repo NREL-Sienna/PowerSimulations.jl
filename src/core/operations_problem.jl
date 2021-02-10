@@ -251,15 +251,16 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(problem), key)
 end
 
-set_executions!(problem::OperationsProblem, val::Int) = problem.internal.simulation_info.executions = val
+set_executions!(problem::OperationsProblem, val::Int) =
+    problem.internal.simulation_info.executions = val
 set_execution_count!(problem::OperationsProblem, val::Int) =
     get_simulation_info(problem).execution_count = val
-set_simulation_info!(problem::OperationsProblem, info::SimulationInfo) = problem.internal.simulation_info = info
+set_simulation_info!(problem::OperationsProblem, info::SimulationInfo) =
+    problem.internal.simulation_info = info
 set_status!(problem::OperationsProblem, status::BuildStatus) =
     problem.internal.status = status
 set_write_path!(problem::OperationsProblem, path::AbstractString) =
     problem.internal.write_path = path
-
 
 function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsProblem}
     if built_for_simulation(problem::OperationsProblem)

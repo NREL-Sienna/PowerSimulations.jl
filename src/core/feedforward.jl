@@ -187,7 +187,11 @@ struct RangeFF <: AbstractAffectFeedForward
     end
 end
 
-function RangeFF(; variable_source_problem_ub, variable_source_problem_lb, affected_variables)
+function RangeFF(;
+    variable_source_problem_ub,
+    variable_source_problem_lb,
+    affected_variables,
+)
     return RangeFF(
         variable_source_problem_ub,
         variable_source_problem_lb,

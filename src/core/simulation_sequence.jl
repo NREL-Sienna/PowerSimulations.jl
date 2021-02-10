@@ -126,6 +126,15 @@ function _check_cache_definition(cache::Dict{<:Tuple, <:AbstractCache})
     return
 end
 
+function _get_num_executions_by_problem(problems, execution_order)
+    problem_names = get_problem_names(problems)
+    executions_by_problem = Dict(x => 0 for x in problem_names)
+    for problem_number in execution_order
+        executions_by_problem[problem_names[problem_number]] += 1
+    end
+    return executions_by_problem
+end
+
 @doc raw"""
     SimulationSequence(horizons::Dict{String, Int}
                         step_resolution::Dates.TimePeriod
@@ -161,7 +170,8 @@ mutable struct SimulationSequence
         cache = Dict{Tuple, AbstractCache}(),
     )
         horizons = determine_horizons!(problems)
-        _intervals = OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}()
+        _intervals =
+            OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}()
         for k in get_problem_names(problems)
             # JDNOTES: Temporary conversion while we re-define how to do this
             k_ = string(k)
@@ -172,7 +182,11 @@ mutable struct SimulationSequence
         end
         step_resolution = determine_step_resolution(problems)
         _check_feedforward(feedforward, feedforward_chronologies)
-        _check_chronology_consistency(problems, feedforward_chronologies, ini_cond_chronology)
+        _check_chronology_consistency(
+            problems,
+            feedforward_chronologies,
+            ini_cond_chronology,
+        )
         _check_cache_definition(cache)
         if length(problems) == 1
             ini_cond_chronology = IntraProblemChronology()
@@ -192,18 +206,9 @@ mutable struct SimulationSequence
             execution_order,
             executions_by_problem,
             0,
-            sequence_uuid
+            sequence_uuid,
         )
     end
-end
-
-function _get_num_executions_by_problem(problems, execution_order)
-    problem_names = get_problem_names(problems)
-    executions_by_problem = Dict(x => 0 for x in problem_names)
-    for problem_number in execution_order
-        executions_by_problem[problem_names[problem_number]] += 1
-    end
-    return executions_by_problem
 end
 
 get_problem_interval(sequence::SimulationSequence, problem::Symbol) =
@@ -211,6 +216,16 @@ get_problem_interval(sequence::SimulationSequence, problem::Symbol) =
 
 get_step_resolution(sequence::SimulationSequence) = sequence.step_resolution
 
-function get_problem_interval_chronology(sequence::SimulationSequence, problem::String)
+function get_problem_interval_chronology(sequence::SimulationSequence, problem::Symbol)
     return sequence.intervals[problem][2]
 end
+
+function get_interval(sequence::SimulationSequence, problem::Symbol)
+    return sequence.intervals[problem][1]
+end
+
+function get_interval(sequence::SimulationSequence, problem)
+    return sequence.intervals[Symbol(problem)][1]
+end
+
+get_execution_order(sequence::SimulationSequence) = sequence.execution_order

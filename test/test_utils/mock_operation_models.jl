@@ -18,10 +18,7 @@ function PSI.OperationsProblem(
     )
 end
 
-function PSI.OperationsProblem(
-    ::Type{MockOperationProblem};
-    kwargs...
-)
+function PSI.OperationsProblem(::Type{MockOperationProblem}; kwargs...)
     sys = System(100.0)
     settings = PSI.Settings(sys; kwargs...)
     return OperationsProblem{MockOperationProblem}(
@@ -31,7 +28,6 @@ function PSI.OperationsProblem(
         nothing,
     )
 end
-
 
 # Only used for testing
 function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProblem}, model)
