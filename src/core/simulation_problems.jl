@@ -38,16 +38,15 @@ function determine_horizons!(problems::SimulationProblems)
     return horizons
 end
 
-function determine_step_resolution(problems::SimulationProblems)
-    resolution = get_resolution(first(problems)[2])
-    return IS.time_period_conversion(resolution)
+function determine_step_resolution(intervals)
+    return first(intervals)[2][1]
 end
 
 function initialize_simulation_internals!(problems::SimulationProblems, uuid::Base.UUID)
     for (ix, (name, problem)) in enumerate(problems.op_problems)
         info = SimulationInfo(
             ix,
-            # JDNOTES: Making conversion to avoid breaking things
+            # JDNOTE: Making conversion to avoid breaking things
             String(name),
             0,
             0,

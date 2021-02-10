@@ -12,7 +12,8 @@
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     # TODO: there is an inconsistency because Horizon isn't 1
     @test PSI.get_use_forecast_data(
         PSI.get_settings(PSI.get_optimization_container(op_problem)),
@@ -31,7 +32,8 @@
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     # TODO: there is an inconsistency because Horizon isn't 1
     @test PSI.get_use_forecast_data(
         PSI.get_settings(PSI.get_optimization_container(op_problem)),

@@ -1,7 +1,3 @@
-const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
-const SIMULATION_LOG_FILENAME = "simulation.log"
-const REQUIRED_RECORDERS = (:simulation_status, :simulation)
-
 mutable struct SimulationInternal
     sim_files_dir::String
     store_dir::String
@@ -9,11 +5,8 @@ mutable struct SimulationInternal
     models_dir::String
     recorder_dir::String
     results_dir::String
-    problems_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
-    # Initial Time of the first forecast and Initial Time of the last forecast
-    date_range::NTuple{2, Dates.DateTime}
     current_time::Dates.DateTime
     status::Union{Nothing, RunStatus}
     build_status::BuildStatus
@@ -26,7 +19,7 @@ end
 
 function SimulationInternal(
     steps::Int,
-    problems_keys::Base.KeySet,
+    problem_count::Int,
     sim_dir,
     name;
     output_dir = nothing,
@@ -38,7 +31,7 @@ function SimulationInternal(
 
     for s in 1:steps
         count_dict[s] = Dict{Int, Int}()
-        for st in problems_keys
+        for st in 1:problem_count
             count_dict[s][st] = 0
         end
     end
@@ -82,10 +75,8 @@ function SimulationInternal(
         models_dir,
         recorder_dir,
         results_dir,
-        length(problems_keys),
         count_dict,
         Dict{Int, Dates.DateTime}(),
-        (init_time, init_time),
         init_time,
         nothing,
         BuildStatus.EMPTY,
@@ -94,7 +85,8 @@ function SimulationInternal(
         console_level,
         file_level,
         # Default disable of progress bar when the simulation environment is an HPC or CI
-        isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
+        true,
+        #isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
     )
 end
 
@@ -242,8 +234,15 @@ mutable struct Simulation
         initial_time = nothing,
     )
         for name in PSI.get_problem_names(problems)
+            if !built_for_simulation(problems[name])
+                error("Stage $(name) is not part of any Simulation")
+            end
             if problems[name].internal.simulation_info.sequence_uuid != sequence.uuid
-                throw(IS.ConflictingInputsError("The Problem definition for $(name) doesn't correspond to the simulation sequence"))
+                throw(
+                    IS.ConflictingInputsError(
+                        "The Problem definition for $(name) doesn't correspond to the simulation sequence",
+                    ),
+                )
             end
         end
         new(steps, problems, initial_time, sequence, simulation_folder, name, nothing)
@@ -271,7 +270,6 @@ end
 get_initial_time(sim::Simulation) = sim.initial_time
 get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
-get_date_range(sim::Simulation) = sim.internal.date_range
 get_current_time(sim::Simulation) = sim.internal.current_time
 get_problems(sim::Simulation) = sim.problems
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
@@ -281,10 +279,6 @@ get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 
-set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
-set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
-    sim.internal.build_status = status
-
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
     for (name, problem) in get_problems(sim)
@@ -293,37 +287,28 @@ function get_base_powers(sim::Simulation)
     return base_powers
 end
 
-function get_problem(sim::Simulation, name::String)
-    problem = get(get_problems(sim), name, nothing)
-    problem === nothing && throw(ArgumentError("problem $(name) not present in the simulation"))
-    return problem
-end
-
-get_problem_interval(sim::Simulation, name::String) = get_problem_interval(sim.sequence, name)
-
-function get_problem(sim::Simulation, number::Int)
-    name = get(get_sequence(sim).order, number, nothing)
-    name === nothing && throw(ArgumentError("problem with $(number) not defined"))
-    return get_problem(sim, name)
-end
-
-get_problems_quantity(sim::Simulation) = sim.internal.problems_count
+get_interval(sim::Simulation, name::Symbol) = get_interval(sim.sequence, name)
 
 function get_simulation_time(sim::Simulation, problem_number::Int)
     return sim.internal.date_ref[problem_number]
 end
 
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
-get_problem_name(sim::Simulation, problem::OperationsProblem) =
-    get_problem_name(sim.sequence, problem)
 IS.get_name(sim::Simulation) = sim.name
 get_simulation_folder(sim::Simulation) = sim.simulation_folder
 get_execution_order(sim::Simulation) = get_sequence(sim).execution_order
 get_current_execution_index(sim::Simulation) = get_sequence(sim).current_execution_index
 get_logs_folder(sim::Simulation) = sim.internal.logs_dir
 get_recorder_folder(sim::Simulation) = sim.internal.recorder_dir
+get_console_level(sim::Simulation) = sim.internal.console_level
+get_file_level(sim::Simulation) = sim.internal.file_level
 
-function get_problem_cache_definition(sim::Simulation, problem::String)
+set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
+set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
+    sim.internal.build_status = status
+
+
+function get_problem_cache_definition(sim::Simulation, problem::Symbol)
     caches = get_sequence(sim).cache
     cache_ref = Array{AbstractCache, 1}()
     for problem_names in keys(caches)
@@ -358,10 +343,11 @@ end
 
 function _check_forecasts_sequence(sim::Simulation)
     for (problem_number, (problem_name, problem)) in enumerate(sim.problems)
-        problem = get_problem(sim, problem_name)
+        sequence = get_sequence(sim)
         resolution = get_resolution(problem)
         horizon = get_horizon(problem)
-        interval = get_interval(problem)
+        # JDNOTE: To be refactored when fixing interval in sequence
+        interval = get_interval(sequence, problem_name)
         horizon_time = resolution * horizon
         if horizon_time < interval
             throw(IS.ConflictingInputsError("horizon ($horizon_time) is
@@ -378,39 +364,31 @@ function _check_feedforward_chronologies(sim::Simulation)
 end
 
 function _assign_feedforward_chronologies(sim::Simulation)
+    sequence = get_sequence(sim)
+    problems = get_problems(sim)
+    # JDNOTE: this is limiting since it only allows updating from one problem
     for (key, chron) in get_sequence(sim).feedforward_chronologies
-        destination_problem = get_problem(sim, key.second)
-        destination_problem_interval =
-            IS.time_period_conversion(get_problem_interval(sim, key.second))
-        source_problem_number = find_key_with_value(get_sequence(sim).order, key.first)
-        if isempty(source_problem_number)
-            throw(ArgumentError("problem $(key.first) not specified in the order dictionary"))
-        end
-        for problem_number in source_problem_number
-            destination_problem.internal.chronolgy_dict[problem_number] = chron
-            source_problem = get_problem(sim, problem_number)
-            source_problem_resolution =
-                IS.time_period_conversion(PSY.get_time_series_resolution(source_problem.sys))
-            execution_wait_count = Int(source_problem_resolution / destination_problem_interval)
-            set_execution_wait_count!(get_trigger(chron), execution_wait_count)
-            initialize_trigger_count!(get_trigger(chron))
-        end
+        destination_problem = problems[key.second]
+        destination_problem_interval = get_interval(sequence, key.second)
+        source_problem = problems[key.first]
+        source_problem_number = get_simulation_number(source_problem)
+        sim_info = get_simulation_info(destination_problem)
+        sim_info.chronolgy_dict[source_problem_number] = chron
+        source_problem_resolution = PSY.get_time_series_resolution(source_problem.sys)
+        execution_wait_count = Int(source_problem_resolution / destination_problem_interval)
+        set_execution_wait_count!(get_trigger(chron), execution_wait_count)
+        initialize_trigger_count!(get_trigger(chron))
     end
     return
 end
 
 function _get_simulation_initial_times!(sim::Simulation)
-    k = keys(get_sequence(sim).order)
-    k_size = length(k)
-    @assert_op k_size == maximum(k)
-
     problem_initial_times = Dict{Int, Vector{Dates.DateTime}}()
-    time_range = Vector{Dates.DateTime}(undef, 2)
     sim_ini_time = get_initial_time(sim)
-    for (problem_number, problem_name) in get_sequence(sim).order
-        problem_system = sim.problems[problem_name].sys
+    for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
+        problem_system = get_system(problem)
         system_interval = PSY.get_forecast_interval(problem_system)
-        problem_interval = get_problem_interval(get_sequence(sim), problem_name)
+        problem_interval = get_interval(get_sequence(sim), problem_name)
         if system_interval != problem_interval
             throw(
                 IS.ConflictingInputsError(
@@ -418,7 +396,7 @@ function _get_simulation_initial_times!(sim::Simulation)
                 ),
             )
         end
-        problem_horizon = get_problem_horizon(get_sequence(sim), problem_name)
+        problem_horizon = get_horizon(problem)
         system_horizon = PSY.get_forecast_horizon(problem_system)
         if problem_horizon > system_horizon
             throw(
@@ -427,7 +405,8 @@ function _get_simulation_initial_times!(sim::Simulation)
                 ),
             )
         end
-        problem_initial_times[problem_number] = PSY.get_forecast_initial_times(problem_system)
+        problem_initial_times[problem_number] =
+            PSY.get_forecast_initial_times(problem_system)
         for (ix, element) in enumerate(problem_initial_times[problem_number][1:(end - 1)])
             if !(element + system_interval == problem_initial_times[problem_number][ix + 1])
                 throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
@@ -442,14 +421,7 @@ Manually provided initial times have to be compatible with the specified interva
                 ),
             )
         end
-        problem_number == 1 && (time_range[1] = problem_initial_times[problem_number][1])
-        (
-            problem_number == k_size &&
-            (time_range[end] = problem_initial_times[problem_number][end])
-        )
     end
-    sim.internal.date_range = Tuple(time_range)
-
     if get_initial_time(sim) === nothing
         sim.initial_time = problem_initial_times[1][1]
         @debug("Initial Simulation Time will be infered from the data.
@@ -460,8 +432,8 @@ Manually provided initial times have to be compatible with the specified interva
     return problem_initial_times
 end
 
-function _attach_feedforward!(sim::Simulation, problem_name::String)
-    problem = get(sim.problems, problem_name, nothing)
+function _attach_feedforward!(sim::Simulation, problem_name::Symbol)
+    problem = get_problems(sim)[problem_name]
     feedforward = filter(p -> (p.first[1] == problem_name), get_sequence(sim).feedforward)
     for (key, ff) in feedforward
         # Note: key[1] = problem name, key[2] = template field name, key[3] = device model key
@@ -481,14 +453,17 @@ function _check_steps(
     sim::Simulation,
     problem_initial_times::Dict{Int, Vector{Dates.DateTime}},
 )
-    execution_order = get_sequence(sim).execution_order
-    for (problem_number, problem_name) in get_sequence(sim).order
-        problem = sim.problems[problem_name]
-        execution_counts = get_executions(problem)
+    sequence = get_sequence(sim)
+    execution_order = get_execution_order(sequence)
+    for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
+         problem_name
+         execution_counts = get_executions(problem)
         transitions = execution_order[vcat(1, diff(execution_order)) .== 1]
         # Checks the consistency between two methods of calculating the number of executions
-        total_problem_executions = length(findall(x -> x == problem_number, execution_order))
-        total_problem_transitions = length(findall(x -> x == problem_number, transitions))
+         total_problem_executions =
+            length(findall(x -> x == problem_number, execution_order))
+         total_problem_transitions =
+            length(findall(x -> x == problem_number, transitions))
         @assert_op total_problem_executions / total_problem_transitions == execution_counts
         forecast_count = length(problem_initial_times[problem_number])
         if get_steps(sim) * execution_counts > forecast_count
@@ -504,9 +479,9 @@ desired amount of simulation steps ($(sim.steps*get_execution_count(problem)))."
 end
 
 function _check_required_ini_cond_caches(sim::Simulation)
-    for (problem_number, problem_name) in get_sequence(sim).order
-        problem = get_problem(sim, problem_name)
-        for (k, v) in iterate_initial_conditions(problem.internal.optimization_container)
+    for (ix, (problem_name, problem)) in enumerate(get_problems(sim))
+        optimization_container = get_optimization_container(problem)
+        for (k, v) in iterate_initial_conditions(optimization_container)
             # No cache needed for the initial condition -> continue
             v[1].cache_type === nothing && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
@@ -523,26 +498,26 @@ function _check_required_ini_cond_caches(sim::Simulation)
     return
 end
 
-function _populate_caches!(sim::Simulation, problem_name::String)
+function _populate_caches!(sim::Simulation, problem_name::Symbol)
     caches = get_problem_cache_definition(sim, problem_name)
-    problem = get_problem(sim, problem_name)
+    problem = get_problems(sim)[problem_name]
     _add_initial_condition_caches(sim.internal, problem, caches)
     _set_internal_caches(sim.internal, problem, caches)
     return
 end
 
 function _build_problems!(sim::Simulation)
-    for (problem_number, problem_name) in get_sequence(sim).order
-        TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build problem $(problem_name)" begin
+    for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
             @info("Building problem $(problem_number)-$(problem_name)")
-            problem = get_problem(sim, problem_name)
             problem_interval = get_problem_interval(get_sequence(sim), problem_name)
             initial_time = get_initial_time(sim)
-            set_write_path!(problem, get_simulation_dir(sim))
-            build!(problem, initial_time, problem_interval)
+            set_initial_time!(problem, initial_time)
+            build!(problem;
+                   output_dir = get_simulation_dir(sim),
+                   console_level = get_console_level(sim),
+                   file_level = get_file_level(sim))
             _populate_caches!(sim, problem_name)
             sim.internal.date_ref[problem_number] = initial_time
-        end
     end
     _check_required_ini_cond_caches(sim)
     return
@@ -590,7 +565,7 @@ function build!(
         _check_folder(sim)
         sim.internal = SimulationInternal(
             sim.steps,
-            keys(get_sequence(sim).order),
+            length(get_problems(sim)),
             get_simulation_folder(sim),
             get_name(sim);
             output_dir = output_dir,
@@ -622,25 +597,21 @@ function build!(
 end
 
 function _build!(sim::Simulation, serialize::Bool)
-    sim.internal.build_status = BuildStatus.IN_PROGRESS
+    set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
-    for (problem_number, problem_name) in get_order(sequence)
-        problem = get_problem(sim, problem_name)
-        if problem === nothing
-            throw(
-                IS.ConflictingInputsError(
-                    "problem $(problem_name) not found in the problems definitions",
-                ),
-            )
+    for (ix, (problem_name, problem)) in enumerate(get_problems(sim))
+        problem_interval = get_interval(sequence, problem_name)
+        # Note to devs: Here we are setting the number of operations problem executions we
+        # will see for every step of the simulation
+        if ix == 1
+            set_executions!(problem, 1)
+        else
+            step_resolution = get_step_resolution(sequence)
+            get_interval(sequence, problem_name)
+            set_executions!(problem, Int(step_resolution / problem_interval))
+            Int(step_resolution / problem_interval)
         end
-        problem_interval = get_problem_interval(sim, problem_name)
-        step_resolution =
-            problem_number == 1 ? get_step_resolution(sim.sequence) :
-            get_problem_interval(sequence, get_order(sequence)[problem_number - 1])
-        problem.internal.executions = Int(step_resolution / problem_interval)
-        problem.internal.number = problem_number
-        problem.internal.name = problem_name
         _attach_feedforward!(sim, problem_name)
     end
     _assign_feedforward_chronologies(sim)
@@ -648,7 +619,7 @@ function _build!(sim::Simulation, serialize::Bool)
     _build_problems!(sim)
     if serialize
         TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Serializing Simulation Files" begin
-            serialize_simulation(sim)
+            # serialize_simulation(sim)
         end
     end
     return
@@ -674,8 +645,12 @@ function initial_condition_update!(
         name = device_name(ic)
         interval_chronology =
             get_problem_interval_chronology(sim.sequence, get_problem_name(sim, problem))
-        var_value =
-            get_problem_variable(interval_chronology, (problem => problem), name, ic.update_ref)
+        var_value = get_problem_variable(
+            interval_chronology,
+            (problem => problem),
+            name,
+            ic.update_ref,
+        )
         # We pass the simulation cache instead of the whole simulation to avoid definition dependencies.
         # All the inputs to calculate_ic_quantity are defined before the simulation object
         quantity = calculate_ic_quantity(
@@ -1305,7 +1280,9 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     try
         for (key, problem) in get_problems(sim)
             if problem.internal === nothing
-                throw(ArgumentError("problem $(problem.internal.number) has not been built"))
+                throw(
+                    ArgumentError("problem $(problem.internal.number) has not been built"),
+                )
             end
             sys_filename = "system-$(IS.get_uuid(problem.sys)).json"
             # Skip serialization if multiple problems have the same system.
@@ -1337,7 +1314,11 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     return directory
 end
 
-function deserialize_model(::Type{Simulation}, directory::AbstractString, problem_info::Dict)
+function deserialize_model(
+    ::Type{Simulation},
+    directory::AbstractString,
+    problem_info::Dict,
+)
     orig = pwd()
     cd(directory)
 

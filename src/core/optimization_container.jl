@@ -640,7 +640,7 @@ function get_problem_size(optimization_container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-function build_impl(
+function build_impl!(
     optimization_container::OptimizationContainer,
     template::OperationsProblemTemplate,
     sys::PSY.System,

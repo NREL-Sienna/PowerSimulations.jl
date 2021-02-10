@@ -148,7 +148,7 @@ end
 """
 mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Int}
-    # JDNOTES: This field might be able to go away.
+    # JDNOTE: This field might be able to go away.
     step_resolution::Dates.TimePeriod
     # The string here is the name of the problem
     intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
@@ -163,6 +163,7 @@ mutable struct SimulationSequence
 
     function SimulationSequence(;
         problems::SimulationProblems,
+        # JDNOTE: We could remove interval here later
         intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
         feedforward_chronologies = Dict{Pair{String, String}, FeedForwardChronology}(),
         feedforward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
@@ -173,14 +174,14 @@ mutable struct SimulationSequence
         _intervals =
             OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}()
         for k in get_problem_names(problems)
-            # JDNOTES: Temporary conversion while we re-define how to do this
+            # JDNOTE: Temporary conversion while we re-define how to do this
             k_ = string(k)
             if !(k_ in keys(intervals))
                 throw(IS.ConflictingInputsError("Interval not defined for problem $(k_)"))
             end
             _intervals[k] = (IS.time_period_conversion(intervals[k_][1]), intervals[k_][2])
         end
-        step_resolution = determine_step_resolution(problems)
+        step_resolution = determine_step_resolution(_intervals)
         _check_feedforward(feedforward, feedforward_chronologies)
         _check_chronology_consistency(
             problems,

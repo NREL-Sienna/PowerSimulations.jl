@@ -248,16 +248,18 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(problem), key)
 end
 
+set_console_level(problem::OperationsProblem, val) = get_internal(problem).console_level = val
+set_file_level(problem::OperationsProblem, val) = get_internal(problem).file_level = val
 set_executions!(problem::OperationsProblem, val::Int) =
     problem.internal.simulation_info.executions = val
 set_execution_count!(problem::OperationsProblem, val::Int) =
     get_simulation_info(problem).execution_count = val
+set_initial_time!(problem::OperationsProblem, val::Dates.DateTime) = set_initial_time!(get_settings(problem), val)
 set_simulation_info!(problem::OperationsProblem, info::SimulationInfo) =
     problem.internal.simulation_info = info
 set_status!(problem::OperationsProblem, status::BuildStatus) =
     problem.internal.status = status
-set_write_path!(problem::OperationsProblem, path::AbstractString) =
-    problem.internal.write_path = path
+set_output_dir!(problem::OperationsProblem, path::AbstractString) = get_internal(problem).output_dir = path
 
 function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsProblem}
     if built_for_simulation(problem::OperationsProblem)
@@ -278,9 +280,9 @@ function build_pre_step!(problem::OperationsProblem)
     # Initial time are set here because the information is specified in the
     # Simulation Sequence object and not at the problem creation.
     system = get_system(problem)
-    if built_for_simulation(problem::OperationsProblem)
+    if built_for_simulation(problem)
         resolution = get_resolution(problem)
-        interval = 0
+        interval = PSY.get_forecast_interval(system)
         end_of_interval_step = Int(interval / resolution)
         get_simulation_info(problem).end_of_interval_step = Int(interval / resolution)
     end
@@ -305,22 +307,22 @@ function build!(
     if !ispath(output_dir)
         throw(ArgumentError("$output_dir does not exist"))
     end
-    problem.internal.output_dir = output_dir
+    set_output_dir!(problem, output_dir)
     problem.internal.console_level = console_level
     problem.internal.file_level = file_level
     logger = configure_logging(problem.internal, "w")
-    try
-        Logging.with_logger(logger) do
+    #try
+       # Logging.with_logger(logger) do
             build_pre_step!(problem)
             problem_build!(problem)
             #serialize_problem(problem, "operations_problem")
             #serialize_optimization_model(problem)
             set_status!(problem, BuildStatus.BUILT)
-        end
-    catch e
-        @error "Operation Problem Build Fail" exception = e
-        set_status!(problem, BuildStatus.FAILED)
-    end
+        #end
+   # catch e
+        #@error "Operation Problem Build Fail" exception = e
+        #set_status!(problem, BuildStatus.FAILED)
+    #end
     return get_status(problem)
 end
 
@@ -328,7 +330,7 @@ end
 Default implementation of build method for Operational Problems for models conforming with PowerSimulationsOperationsProblem specification. Overload this function to implement a custom build method
 """
 function problem_build!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem})
-    build_impl(
+    build_impl!(
         get_optimization_container(problem),
         get_template(problem),
         get_system(problem),
@@ -476,7 +478,7 @@ function write_model_results!(store, problem, timestamp; exports = nothing)
     end
 
     if is_milp(get_optimization_container(problem))
-        @warn "Stage $(problem.internal.number) is a MILP, duals can't be exported"
+        @warn "Problem $(get_simulation_info(problem).name) is a MILP, duals can't be exported"
     else
         _write_model_dual_results!(
             store,
