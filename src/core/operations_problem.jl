@@ -248,18 +248,21 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(problem), key)
 end
 
-set_console_level(problem::OperationsProblem, val) = get_internal(problem).console_level = val
+set_console_level(problem::OperationsProblem, val) =
+    get_internal(problem).console_level = val
 set_file_level(problem::OperationsProblem, val) = get_internal(problem).file_level = val
 set_executions!(problem::OperationsProblem, val::Int) =
     problem.internal.simulation_info.executions = val
 set_execution_count!(problem::OperationsProblem, val::Int) =
     get_simulation_info(problem).execution_count = val
-set_initial_time!(problem::OperationsProblem, val::Dates.DateTime) = set_initial_time!(get_settings(problem), val)
+set_initial_time!(problem::OperationsProblem, val::Dates.DateTime) =
+    set_initial_time!(get_settings(problem), val)
 set_simulation_info!(problem::OperationsProblem, info::SimulationInfo) =
     problem.internal.simulation_info = info
 set_status!(problem::OperationsProblem, status::BuildStatus) =
     problem.internal.status = status
-set_output_dir!(problem::OperationsProblem, path::AbstractString) = get_internal(problem).output_dir = path
+set_output_dir!(problem::OperationsProblem, path::AbstractString) =
+    get_internal(problem).output_dir = path
 
 function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsProblem}
     if built_for_simulation(problem::OperationsProblem)
@@ -312,16 +315,16 @@ function build!(
     problem.internal.file_level = file_level
     logger = configure_logging(problem.internal, "w")
     #try
-       # Logging.with_logger(logger) do
-            build_pre_step!(problem)
-            problem_build!(problem)
-            #serialize_problem(problem, "operations_problem")
-            #serialize_optimization_model(problem)
-            set_status!(problem, BuildStatus.BUILT)
-        #end
-   # catch e
-        #@error "Operation Problem Build Fail" exception = e
-        #set_status!(problem, BuildStatus.FAILED)
+    # Logging.with_logger(logger) do
+    build_pre_step!(problem)
+    problem_build!(problem)
+    #serialize_problem(problem, "operations_problem")
+    #serialize_optimization_model(problem)
+    set_status!(problem, BuildStatus.BUILT)
+    #end
+    # catch e
+    #@error "Operation Problem Build Fail" exception = e
+    #set_status!(problem, BuildStatus.FAILED)
     #end
     return get_status(problem)
 end

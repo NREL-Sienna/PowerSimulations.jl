@@ -307,7 +307,6 @@ set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
 set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
     sim.internal.build_status = status
 
-
 function get_problem_cache_definition(sim::Simulation, problem::Symbol)
     caches = get_sequence(sim).cache
     cache_ref = Array{AbstractCache, 1}()
@@ -456,14 +455,13 @@ function _check_steps(
     sequence = get_sequence(sim)
     execution_order = get_execution_order(sequence)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-         problem_name
-         execution_counts = get_executions(problem)
+        problem_name
+        execution_counts = get_executions(problem)
         transitions = execution_order[vcat(1, diff(execution_order)) .== 1]
         # Checks the consistency between two methods of calculating the number of executions
-         total_problem_executions =
+        total_problem_executions =
             length(findall(x -> x == problem_number, execution_order))
-         total_problem_transitions =
-            length(findall(x -> x == problem_number, transitions))
+        total_problem_transitions = length(findall(x -> x == problem_number, transitions))
         @assert_op total_problem_executions / total_problem_transitions == execution_counts
         forecast_count = length(problem_initial_times[problem_number])
         if get_steps(sim) * execution_counts > forecast_count
@@ -508,16 +506,18 @@ end
 
 function _build_problems!(sim::Simulation)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-            @info("Building problem $(problem_number)-$(problem_name)")
-            problem_interval = get_problem_interval(get_sequence(sim), problem_name)
-            initial_time = get_initial_time(sim)
-            set_initial_time!(problem, initial_time)
-            build!(problem;
-                   output_dir = get_simulation_dir(sim),
-                   console_level = get_console_level(sim),
-                   file_level = get_file_level(sim))
-            _populate_caches!(sim, problem_name)
-            sim.internal.date_ref[problem_number] = initial_time
+        @info("Building problem $(problem_number)-$(problem_name)")
+        problem_interval = get_problem_interval(get_sequence(sim), problem_name)
+        initial_time = get_initial_time(sim)
+        set_initial_time!(problem, initial_time)
+        build!(
+            problem;
+            output_dir = get_simulation_dir(sim),
+            console_level = get_console_level(sim),
+            file_level = get_file_level(sim),
+        )
+        _populate_caches!(sim, problem_name)
+        sim.internal.date_ref[problem_number] = initial_time
     end
     _check_required_ini_cond_caches(sim)
     return
