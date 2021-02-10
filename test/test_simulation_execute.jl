@@ -75,7 +75,7 @@ function test_simulation_without_caches(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_source_stage = PSI.ON,
+                    binary_source_problem = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
@@ -189,7 +189,7 @@ function test_simulation_with_cache(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_source_stage = PSI.ON,
+                    binary_source_problem = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
@@ -326,7 +326,7 @@ function test_stage_chronologies(file_path)
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
+                binary_source_problem = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -437,7 +437,7 @@ function test_simulation_utils(file_path)
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
+                binary_source_problem = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(

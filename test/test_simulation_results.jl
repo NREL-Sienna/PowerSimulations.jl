@@ -69,7 +69,7 @@ function test_simulation_results(file_path::String, export_path)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_source_stage = PSI.ON,
+                    binary_source_problem = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(

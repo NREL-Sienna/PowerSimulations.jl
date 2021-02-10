@@ -57,7 +57,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
+                binary_source_problem = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -74,7 +74,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
+                binary_source_problem = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -93,7 +93,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
+                binary_source_problem = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -109,7 +109,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
+                binary_source_problem = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -125,7 +125,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
+                binary_source_problem = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -158,7 +158,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_stage = PSI.ON,
+                binary_source_problem = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
