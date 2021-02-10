@@ -1,3 +1,5 @@
+# TODO: JD: clean up this file
+
 struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
 struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
 struct AGCReserveDeployment <: PowerSimulationsOperationsProblem end
@@ -100,7 +102,7 @@ Creates an `OperationsProblemTemplate` with default DeviceModels for an AGC Rese
 template = agc_reserve_deployment()
 ```
 """
-function template_agc_reserve_deployment(; kwargs...)
+function template_agc_reserve_deployment()
     if !isempty(kwargs)
         throw(ArgumentError("AGC Template doesn't currently support customization"))
     end

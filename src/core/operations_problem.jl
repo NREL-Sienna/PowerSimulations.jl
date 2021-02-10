@@ -352,7 +352,7 @@ end
 Default implementation of build method for Operational Problems for models conforming with PowerSimulationsOperationsProblem specification. Overload this function to implement a custom build method
 """
 function problem_build!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem})
-    _build_imp!(
+    build_impl(
         get_optimization_container(problem),
         get_template(problem),
         get_system(problem),

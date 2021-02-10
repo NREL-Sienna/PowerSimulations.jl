@@ -80,7 +80,7 @@ function _set_model!(
     if !model.use_service_name
         throw(
             IS.ConflictingInputsError(
-                "The model provided has use_service_name false. This addition method can't be used",
+                "The model provided has use_service_name false. This method can't be used",
             ),
         )
     end
@@ -95,7 +95,7 @@ function _set_model!(
     if model.use_service_name
         throw(
             IS.ConflictingInputsError(
-                "The model provided has use_service_name set to true and no service name was provided. This addition method can't be used",
+                "The model provided has use_service_name set to true and no service name was provided. This method can't be used",
             ),
         )
     end
