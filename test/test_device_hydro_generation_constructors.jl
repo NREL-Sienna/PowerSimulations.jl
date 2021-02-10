@@ -620,7 +620,7 @@ end
 ### RESERVOIR STORAGE COMMITMENT TESTS ##
 #########################################
 
-@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
@@ -696,14 +696,8 @@ end
     for net in networks, p in parameters_value
         @info("Test solve HydroRoR ED with $(net) network")
         @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net)
-            set_device_model!(template, ThermalStandard, ThermalDispatch)
-            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
-            set_device_model!(template, Transformer2W, StaticBranch)
-            set_device_model!(template, TapTransformer, StaticBranch)
-            set_device_model!(template, Line, StaticBranch)
-
             ED = OperationsProblem(
                 EconomicDispatchProblem,
                 template,
@@ -728,14 +722,8 @@ end
     parameters_value = [true, false]
     net = DCPPowerModel
 
-    template = OperationsProblemTemplate(net)
-    set_device_model!(template, ThermalStandard, ThermalDispatch)
-    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    template = get_thermal_dispatch_template_network(net)
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
-    set_device_model!(template, Transformer2W, StaticBranch)
-    set_device_model!(template, TapTransformer, StaticBranch)
-    set_device_model!(template, Line, StaticBranch)
-
     for p in parameters_value
         @testset "HydroRoR ED model $(net) and use_parameters = $(p)" begin
             ED = OperationsProblem(
@@ -767,13 +755,8 @@ end
 
     for net in networks, mod in models, p in parameters_value
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net)
-            set_device_model!(template, ThermalStandard, ThermalDispatch)
-            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroEnergyReservoir, mod)
-            set_device_model!(template, Transformer2W, StaticBranch)
-            set_device_model!(template, TapTransformer, StaticBranch)
-            set_device_model!(template, Line, StaticBranch)
 
             ED = OperationsProblem(
                 EconomicDispatchProblem,
@@ -806,13 +789,8 @@ end
 
     for mod in models, p in parameters_value
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
-            template = OperationsProblemTemplate(net)
-            set_device_model!(template, ThermalStandard, ThermalDispatch)
-            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroEnergyReservoir, mod)
-            set_device_model!(template, Transformer2W, StaticBranch)
-            set_device_model!(template, TapTransformer, StaticBranch)
-            set_device_model!(template, Line, StaticBranch)
 
             ED = OperationsProblem(
                 UnitCommitmentProblem,
