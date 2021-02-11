@@ -9,7 +9,7 @@ mutable struct OptimizationContainer
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, ParametersContainer}
-    initial_conditions::InitialConditions
+    initial_conditions::Union{Nothing, InitialConditions}
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
@@ -32,7 +32,7 @@ mutable struct OptimizationContainer
             zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
             nothing,
-            InitialConditions(use_parameters = get_use_parameters(settings)),
+            nothing,
             nothing,
             PSY.get_base_power(sys),
             Dict{Symbol, Any}(),
@@ -149,11 +149,12 @@ function optimization_container_init!(
     settings = optimization_container.settings
     _make_jump_model!(optimization_container)
     @assert !(optimization_container.JuMPmodel === nothing)
-    make_parameters_container = get_use_parameters(settings)
-    make_parameters_container && (optimization_container.parameters = ParametersContainer())
-
+    use_parameters = get_use_parameters(settings)
+    if use_parameters
+        optimization_container.parameters = ParametersContainer()
+    end
     use_forecasts = get_use_forecast_data(settings)
-    if make_parameters_container && !use_forecasts
+    if use_parameters && !use_forecasts
         throw(
             IS.ConflictingInputsError(
                 "enabling parameters without forecasts is not supported",
@@ -183,7 +184,8 @@ function optimization_container_init!(
             )
         end
     end
-
+    ini_cond_container = InitialConditions(use_parameters = use_parameters)
+    optimization_container.initial_conditions = ini_cond_container
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
     _make_expressions_dict!(optimization_container, bus_numbers, T)
     return
@@ -649,28 +651,44 @@ function build_impl!(
 )
     transmission = template.transmission
     # Order is required
-    construct_services!(optimization_container, sys, template.services, template.devices)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Services" begin
+        construct_services!(
+            optimization_container,
+            sys,
+            template.services,
+            template.devices,
+        )
+    end
     for device_model in values(template.devices)
         @debug "Building $(device_model.component_type) with $(device_model.formulation) formulation"
-        construct_device!(optimization_container, sys, device_model, transmission)
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(device_model.component_type)" begin
+            construct_device!(optimization_container, sys, device_model, transmission)
+            @debug get_problem_size(optimization_container)
+        end
+    end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(transmission)" begin
+        @debug "Building $(transmission) network formulation"
+        construct_network!(optimization_container, sys, transmission)
         @debug get_problem_size(optimization_container)
     end
-    @debug "Building $(transmission) network formulation"
-    construct_network!(optimization_container, sys, transmission)
-    @debug get_problem_size(optimization_container)
 
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
-        construct_device!(optimization_container, sys, branch_model, transmission)
-        @debug get_problem_size(optimization_container)
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(branch_model.component_type)" begin
+            construct_device!(optimization_container, sys, branch_model, transmission)
+            @debug get_problem_size(optimization_container)
+        end
     end
 
-    @debug "Building Objective"
-    JuMP.@objective(
-        optimization_container.JuMPmodel,
-        MOI.MIN_SENSE,
-        optimization_container.cost_function
-    )
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Objective" begin
+        @debug "Building Objective"
+        JuMP.@objective(
+            optimization_container.JuMPmodel,
+            MOI.MIN_SENSE,
+            optimization_container.cost_function
+        )
+    end
     @debug "Total operation count $(optimization_container.JuMPmodel.operator_counter)"
 
     check_optimization_container(optimization_container)

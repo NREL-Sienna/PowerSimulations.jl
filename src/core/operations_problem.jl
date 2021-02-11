@@ -1,4 +1,4 @@
-# JDNOTE: Number might not be needed later
+# JDNOTE: This might be merged with the structs in simulation_store
 mutable struct SimulationInfo
     number::Int
     name::String
@@ -296,28 +296,30 @@ function advance_execution_count!(problem::OperationsProblem)
 end
 
 function build_pre_step!(problem::OperationsProblem)
-    if !is_empty(problem)
-        @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
-        reset!(problem)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
+        if !is_empty(problem)
+            @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
+            reset!(problem)
+        end
+        settings = get_settings(problem)
+        # Initial time are set here because the information is specified in the
+        # Simulation Sequence object and not at the problem creation.
+        system = get_system(problem)
+        if built_for_simulation(problem)
+            resolution = get_resolution(problem)
+            interval = PSY.get_forecast_interval(system)
+            end_of_interval_step = Int(interval / resolution)
+            get_simulation_info(problem).end_of_interval_step = Int(interval / resolution)
+        end
+        @info "Initializing Optimization Container"
+        template = get_template(problem)
+        optimization_container_init!(
+            get_optimization_container(problem),
+            get_transmission_model(template),
+            system,
+        )
+        set_status!(problem, BuildStatus.IN_PROGRESS)
     end
-    settings = get_settings(problem)
-    # Initial time are set here because the information is specified in the
-    # Simulation Sequence object and not at the problem creation.
-    system = get_system(problem)
-    if built_for_simulation(problem)
-        resolution = get_resolution(problem)
-        interval = PSY.get_forecast_interval(system)
-        end_of_interval_step = Int(interval / resolution)
-        get_simulation_info(problem).end_of_interval_step = Int(interval / resolution)
-    end
-    @info "Initializing Optimization Container"
-    template = get_template(problem)
-    optimization_container_init!(
-        get_optimization_container(problem),
-        get_transmission_model(template),
-        system,
-    )
-    set_status!(problem, BuildStatus.IN_PROGRESS)
     return
 end
 
@@ -327,6 +329,7 @@ function build!(
     output_dir::String,
     console_level = Logging.Error,
     file_level = Logging.Info,
+    enable_timer_outputs = true,
 )
     if !ispath(output_dir)
         throw(ArgumentError("$output_dir does not exist"))
@@ -335,17 +338,22 @@ function build!(
     problem.internal.console_level = console_level
     problem.internal.file_level = file_level
     logger = configure_logging(problem.internal, "w")
-    try
-        Logging.with_logger(logger) do
-            build_pre_step!(problem)
-            problem_build!(problem)
-            #serialize_problem(problem, "operations_problem")
-            #serialize_optimization_model(problem)
-            set_status!(problem, BuildStatus.BUILT)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
+        try
+            Logging.with_logger(logger) do
+                build_pre_step!(problem)
+                problem_build!(problem)
+                #serialize_problem(problem, "operations_problem")
+                #serialize_optimization_model(problem)
+                set_status!(problem, BuildStatus.BUILT)
+                if !built_for_simulation(problem)
+                    @info "\n$(BUILD_PROBLEMS_TIMER)\n"
+                end
+            end
+        catch e
+            @error "Operation Problem Build Failed" exception = e
+            set_status!(problem, BuildStatus.FAILED)
         end
-    catch e
-        @error "Operation Problem Build Failed" exception = e
-        set_status!(problem, BuildStatus.FAILED)
     end
     return get_status(problem)
 end
