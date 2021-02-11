@@ -32,13 +32,32 @@ function get_template_standard_uc_simulation()
     return template
 end
 
-# TODO: Check this template is adequate for testing simulations
 function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
     template = OperationsProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad),
     set_device_model!(template, InterruptibleLoad, StaticPowerLoad)
+    return template
+end
+
+function get_template_hydro_st_uc(network = CopperPlatePowerModel)
+    template = OperationsProblemTemplate(network)
+    set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment),
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch),
+    set_device_model!(template, PowerLoad, StaticPowerLoad),
+    set_device_model!(template, InterruptibleLoad, DispatchablePowerLoad),
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage),
+    return template
+end
+
+function get_template_hydro_st_ed(network = CopperPlatePowerModel)
+    template = OperationsProblemTemplate(network)
+    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, InterruptibleLoad, DispatchablePowerLoad)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
     return template
 end
 
