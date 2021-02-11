@@ -128,7 +128,7 @@ function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
             "Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_problem_horizon) in problem $(key.first) will be replaced with $(source_problem_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon"
         )
     end
-    get_sequence(sim).horizons[key.first] = get_problem_interval(sim, key.first)
+    get_sequence(sim).horizons[key.first] = get_interval(sim, key.first)
     return
 end
 
@@ -775,5 +775,10 @@ function feedforward_update!(
         reset_trigger_count!(trigger)
     end
     update_count!(trigger)
+    return
+end
+
+function attach_feedforward(model, ff::AbstractAffectFeedForward)
+    model.feedforward = ff
     return
 end
