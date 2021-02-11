@@ -22,7 +22,9 @@
         sequence = sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
-    build!(sim)
+
+    build_out = build!(sim)
+    @test build_out == PSI.BuildStatus.BUILT
 
     @test isempty(values(sim.internal.simulation_cache))
     for field in fieldnames(SimulationSequence)
@@ -61,7 +63,8 @@
             simulation_folder = mktempdir(cleanup = true),
             initial_time = second_day,
         )
-        build!(sim)
+        build_out = build!(sim)
+        @test build_out == PSI.BuildStatus.BUILT
 
         for (_, problem) in PSI.get_problems(sim)
             @test PSI.get_initial_time(problem) == second_day
