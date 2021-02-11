@@ -97,7 +97,7 @@ function FeedForwardUpdateEvent(
     val::Float64,
     previous_value::Float64,
     destination_stage::OperationsProblem,
-    source_stage::OperationsProblem,
+    source_problem::OperationsProblem,
 )
     return FeedForwardUpdateEvent(
         IS.RecorderEventCommon("FeedForwardUpdateEvent"),
@@ -108,7 +108,7 @@ function FeedForwardUpdateEvent(
         previous_value,
         val,
         get_number(destination_stage),
-        get_number(source_stage),
+        get_number(source_problem),
     )
 end
 

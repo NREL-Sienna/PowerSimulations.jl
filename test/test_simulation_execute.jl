@@ -72,7 +72,7 @@ function test_simulation_without_caches(file_path::String)
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_source_stage = PSI.ACTIVE_POWER,
+                    variable_source_problem = PSI.ACTIVE_POWER,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -186,7 +186,7 @@ function test_simulation_with_cache(file_path::String)
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_source_stage = PSI.ACTIVE_POWER,
+                    variable_source_problem = PSI.ACTIVE_POWER,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -434,7 +434,7 @@ function test_simulation_utils(file_path)
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_stage = PSI.ACTIVE_POWER,
+                variable_source_problem = PSI.ACTIVE_POWER,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),

@@ -139,8 +139,8 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => RangeFF(
-                variable_source_stage_ub = PSI.ON,
-                variable_source_stage_lb = PSI.ON,
+                variable_source_problem_ub = PSI.ON,
+                variable_source_problem_lb = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),

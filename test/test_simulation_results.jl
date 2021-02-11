@@ -73,7 +73,7 @@ function test_simulation_results(file_path::String, export_path)
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_source_stage = PSI.ACTIVE_POWER,
+                    variable_source_problem = PSI.ACTIVE_POWER,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
