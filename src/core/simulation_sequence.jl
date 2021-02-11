@@ -214,8 +214,8 @@ end
 
 get_step_resolution(sequence::SimulationSequence) = sequence.step_resolution
 
-function get_problem_interval_chronology(sequence::SimulationSequence, problem::Symbol)
-    return sequence.intervals[problem][2]
+function get_problem_interval_chronology(sequence::SimulationSequence, problem)
+    return sequence.intervals[Symbol(problem)][2]
 end
 
 function get_interval(sequence::SimulationSequence, problem::Symbol)

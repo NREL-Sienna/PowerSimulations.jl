@@ -175,7 +175,8 @@ function _set_internal_caches(
 )
     for c in caches
         cache_key = CacheKey(c)
-        push!(problem.internal.caches, cache_key)
+        caches = get_caches(problem)
+        push!(caches, cache_key)
         if !haskey(internal.simulation_cache, cache_key)
             @debug "Cache $(cache_key) added to the simulation"
             internal.simulation_cache[cache_key] = c
@@ -272,6 +273,11 @@ get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
 get_current_time(sim::Simulation) = sim.internal.current_time
 get_problems(sim::Simulation) = sim.problems
+function get_problem(sim::Simulation, ix::Int)
+    problems = get_problems(sim)
+    names = get_problem_names(problems)
+    return problems[names[ix]]
+end
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
 get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
@@ -434,7 +440,9 @@ end
 
 function _attach_feedforward!(sim::Simulation, problem_name::Symbol)
     problem = get_problems(sim)[problem_name]
-    feedforward = filter(p -> (p.first[1] == problem_name), get_sequence(sim).feedforward)
+    # JDNOTES: making a conversion here isn't great. Needs refactor
+    feedforward =
+        filter(p -> (Symbol(p.first[1]) == problem_name), get_sequence(sim).feedforward)
     for (key, ff) in feedforward
         # Note: key[1] = problem name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(problem.template, key[2])
@@ -444,7 +452,7 @@ function _attach_feedforward!(sim::Simulation, problem_name::Symbol)
                 "Device model $(key[3]) not found in problem $(problem_name)",
             ),
         )
-        device_model.feedforward = ff
+        attach_feedforward(device_model, ff)
     end
     return
 end
@@ -500,6 +508,7 @@ end
 function _populate_caches!(sim::Simulation, problem_name::Symbol)
     caches = get_problem_cache_definition(sim, problem_name)
     problem = get_problems(sim)[problem_name]
+    # JDNOTES: Why passing here the internal and not the simulation cache ?
     _add_initial_condition_caches(sim.internal, problem, caches)
     _set_internal_caches(sim.internal, problem, caches)
     return
@@ -508,7 +517,7 @@ end
 function _build_problems!(sim::Simulation)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
         @info("Building problem $(problem_number)-$(problem_name)")
-        problem_interval = get_problem_interval(get_sequence(sim), problem_name)
+        problem_interval = get_interval(get_sequence(sim), problem_name)
         initial_time = get_initial_time(sim)
         set_initial_time!(problem, initial_time)
         problem_build_status = build!(
@@ -562,22 +571,23 @@ function build!(
     file_level = Logging.Info,
     serialize = true,
 )
-    TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
-    TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
-        _check_forecasts_sequence(sim)
-        _check_feedforward_chronologies(sim)
-        _check_folder(sim)
-        sim.internal = SimulationInternal(
-            sim.steps,
-            length(get_problems(sim)),
-            get_simulation_folder(sim),
-            get_name(sim);
-            output_dir = output_dir,
-            recorders = recorders,
-            console_level = console_level,
-            file_level = file_level,
-        )
-
+    TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Simulation" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation" begin
+            _check_forecasts_sequence(sim)
+            _check_feedforward_chronologies(sim)
+            _check_folder(sim)
+            sim.internal = SimulationInternal(
+                sim.steps,
+                length(get_problems(sim)),
+                get_simulation_folder(sim),
+                get_name(sim);
+                output_dir = output_dir,
+                recorders = recorders,
+                console_level = console_level,
+                file_level = file_level,
+            )
+        end
         file_mode = "w"
         logger = configure_logging(sim.internal, file_mode)
         register_recorders!(sim.internal, file_mode)
@@ -586,7 +596,7 @@ function build!(
                 _build!(sim, serialize)
                 set_simulation_build_status!(sim, BuildStatus.BUILT)
                 set_simulation_status!(sim, RunStatus.READY)
-                @info "\n$(BUILD_SIMULATION_TIMER)\n"
+                @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             end
         catch e
             set_simulation_build_status!(sim, BuildStatus.FAILED)
@@ -622,7 +632,7 @@ function _build!(sim::Simulation, serialize::Bool)
     _check_steps(sim, problem_initial_times)
     _build_problems!(sim)
     if serialize
-        TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Serializing Simulation Files" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
             # serialize_simulation(sim)
         end
     end
@@ -689,23 +699,23 @@ function initial_condition_update!(
     simulation_cache = sim.internal.simulation_cache
     execution_index = get_execution_order(sim)
     execution_count = get_execution_count(problem)
-    problem_name = get_problem_name(sim, problem)
-    interval = get_problem_interval(sim, problem_name)
+    problem_name = get_name(problem)
+    sequence = get_sequence(sim)
+    interval = get_interval(sequence, problem_name)
     for ic in initial_conditions
         name = device_name(ic)
         current_ix = get_current_execution_index(sim)
         source_problem_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
         source_problem = get_problem(sim, execution_index[source_problem_ix])
-        source_problem_name = get_problem_name(sim, source_problem)
+        source_problem_name = get_name(source_problem)
 
         # If the problem that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
         if get_simulation_number(source_problem) >= get_simulation_number(problem)
             interval_chronology =
-                get_problem_interval_chronology(sim.sequence, source_problem_name)
+                get_problem_interval_chronology(sequence, source_problem_name)
         elseif get_simulation_number(source_problem) < get_simulation_number(problem)
             interval_chronology = RecedingHorizon()
         end
-
         var_value = get_problem_variable(
             interval_chronology,
             (source_problem => problem),
@@ -778,9 +788,10 @@ end
 
 function get_increment(sim::Simulation, problem::OperationsProblem, cache::TimeStatusChange)
     units = cache.units
-    problem_name = get_problem_name(sim, problem)
-    problem_interval = IS.time_period_conversion(get_problem_interval(sim, problem_name))
-    horizon = get_problem_horizon(sim.sequence, problem_name)
+    problem_name = get_name(problem)
+    sequence = get_sequence(sim)
+    problem_interval = get_interval(sequence, problem_name)
+    horizon = get_horizon(problem)
     problem_resolution = problem_interval / horizon
     return float(problem_resolution / units)
 end
@@ -883,7 +894,8 @@ function update_parameter!(
     sim::Simulation,
 )
     param_array = get_parameter_array(container)
-    for (k, chronology) in problem.internal.chronolgy_dict
+    simulation_info = get_simulation_info(problem)
+    for (k, chronology) in simulation_info.chronolgy_dict
         source_problem = get_problem(sim, k)
         feedforward_update!(
             problem,
@@ -900,7 +912,8 @@ end
 
 function _update_initial_conditions!(problem::OperationsProblem, sim::Simulation)
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
-    for (k, v) in iterate_initial_conditions(problem.internal.optimization_container)
+    optimization_containter = get_optimization_container(problem)
+    for (k, v) in iterate_initial_conditions(optimization_containter)
         initial_condition_update!(problem, k, v, ini_cond_chronology, sim)
     end
     return
@@ -915,7 +928,9 @@ function _update_parameters(problem::OperationsProblem, sim::Simulation)
 end
 
 function _apply_warm_start!(problem::OperationsProblem)
-    for variable in values(problem.internal.optimization_container.variables)
+    optimization_container = get_optimization_container(problem)
+    variable_container = get_variables(optimization_container)
+    for variable in values(variable_container)
         for e in variable
             current_solution = JuMP.value(e)
             JuMP.set_start_value(e, current_solution)

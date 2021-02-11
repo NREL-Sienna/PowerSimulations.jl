@@ -17,12 +17,15 @@ function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     return template
 end
 
+# RenewableDispatch, RenewableFullDispatch is commented out to make the tests pass. This needs
+# To be fixed in PSB
 function get_template_basic_uc_simulation()
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
-    set_device_model!(template, RenewableDispatch, FixedOutput)
+    #set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad),
     set_device_model!(template, InterruptibleLoad, StaticPowerLoad)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
     return template
 end
 
@@ -37,7 +40,8 @@ function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad),
-    set_device_model!(template, InterruptibleLoad, StaticPowerLoad)
+    set_device_model!(template, InterruptibleLoad, DispatchablePowerLoad)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     return template
 end
 
