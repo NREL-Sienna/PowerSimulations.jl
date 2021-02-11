@@ -10,7 +10,7 @@ Provides storage of simulation data
 abstract type SimulationStore end
 
 # Required methods:
-# - initialize_stage_storage!
+# - initialize_problem_storage!
 # - read_array
 
 struct SimulationStoreProblemRequirements

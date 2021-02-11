@@ -3,7 +3,7 @@
 PowerSimulations provides the ability to record structured data as events
 during a simulation. These events can be post-processed to help debug problems.
 
-By default only SimulationStepEvent and SimulationStageEvent are recorded.  Here is an example.
+By default only SimulationStepEvent and SimulationProblemEvent are recorded.  Here is an example.
 
 Suppose a simulation is run in the directory ./output.
 
@@ -32,41 +32,41 @@ julia> show_simulation_events(PSI.SimulationStepEvent, "./output/aggregation/1")
 ```
 
 
-### Show events of type PSI.SimulationStageEvent for a specific step and stage.
+### Show events of type PSI.SimulationProblemEvent for a specific step and stage.
 
 ```julia
 show_simulation_events(
-    PSI.SimulationStageEvent,
+    PSI.SimulationProblemEvent,
     "./output/aggregation/1",
     x -> x.step == 1 && x.stage == 2 && x.status == "start"
 )
 ┌──────────────────────┬─────────────────────┬──────┬───────┬────────┐
 │                 name │     simulation_time │ step │ stage │ status │
 ├──────────────────────┼─────────────────────┼──────┼───────┼────────┤
-│ SimulationStageEvent │ 2024-01-01T00:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T00:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T01:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T02:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T03:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T04:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T05:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T06:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T07:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T08:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T09:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T10:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T11:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T12:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T13:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T14:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T15:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T16:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T17:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T18:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T19:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T20:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T21:00:00 │    1 │     2 │  start │
-│ SimulationStageEvent │ 2024-01-01T22:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T00:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T00:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T01:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T02:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T03:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T04:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T05:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T06:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T07:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T08:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T09:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T10:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T11:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T12:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T13:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T14:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T15:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T16:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T17:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T18:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T19:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T20:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T21:00:00 │    1 │     2 │  start │
+│ SimulationProblemEvent │ 2024-01-01T22:00:00 │    1 │     2 │  start │
 └──────────────────────┴─────────────────────┴──────┴───────┴────────┘
 ```
 

@@ -178,7 +178,7 @@ function initialize_optimizer_stats_storage!(store::HdfSimulationStore, num_stat
     return
 end
 
-function initialize_stage_storage!(
+function initialize_problem_storage!(
     store::HdfSimulationStore,
     params,
     stage_reqs,

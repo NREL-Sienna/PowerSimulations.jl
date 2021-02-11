@@ -10,7 +10,7 @@ import PowerSimulations:
     GiB,
     STORE_CONTAINER_VARIABLES,
     CachePriority,
-    initialize_stage_storage!,
+    initialize_problem_storage!,
     add_rule!,
     write_result!,
     read_result,
@@ -64,7 +64,7 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
         sim["num_steps"],
         stages,
     )
-    initialize_stage_storage!(store, params, stage_reqs, cache_rules)
+    initialize_problem_storage!(store, params, stage_reqs, cache_rules)
 end
 
 function _run_sim_test(path, sim, variables, stage_defs, cache_rules, seed)
