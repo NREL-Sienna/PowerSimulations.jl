@@ -13,12 +13,12 @@ struct OptimizerStats
 end
 
 function OptimizerStats(
-    problem, #::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    problem,
     simulation_step,
     timestamp,
-    timed_log::Dict,
 )
-    stage_number = get_number(problem)
+    timed_log = get_solve_timed_log(problem)
+    stage_number = get_simulation_number(problem)
     model = get_jump_model(problem)
     solver_solve_time = NaN
     try

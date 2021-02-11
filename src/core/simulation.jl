@@ -1,3 +1,6 @@
+# Default disable of progress bar when the simulation environment is an HPC or CI
+const _PROGRESS_METER_ENABLED = !(isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true"))
+
 mutable struct SimulationInternal
     sim_files_dir::String
     store_dir::String
@@ -14,8 +17,6 @@ mutable struct SimulationInternal
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
-    enabled_progress_metter::Bool
-    enabled_timer_outputs::Bool
 end
 
 function SimulationInternal(
@@ -85,9 +86,6 @@ function SimulationInternal(
         collect(unique_recorders),
         console_level,
         file_level,
-        # Default disable of progress bar when the simulation environment is an HPC or CI
-        !(isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")),
-        true
     )
 end
 
@@ -268,8 +266,6 @@ function Simulation(directory::AbstractString, problem_info::Dict)
 end
 
 ################# accessor functions ####################
-progress_bar_enabled(sim::Simulation) = sim.internal.enabled_progress_metter
-timer_outputs_enabled(sim::Simulation) = sim.internal.enabled_timer_outputs
 get_initial_time(sim::Simulation) = sim.initial_time
 get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
@@ -309,6 +305,7 @@ get_file_level(sim::Simulation) = sim.internal.file_level
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
 set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
     sim.internal.build_status = status
+set_current_time!(sim::Simulation, val) = sim.internal.current_time = val
 
 function get_problem_cache_definition(sim::Simulation, problem::Symbol)
     caches = get_sequence(sim).cache
@@ -671,7 +668,7 @@ function initial_condition_update!(
             ic,
             quantity,
             previous_value,
-            get_number(problem),
+            get_simulation_number(problem),
         )
     end
 end
@@ -698,10 +695,10 @@ function initial_condition_update!(
         source_problem_name = get_problem_name(sim, source_problem)
 
         # If the problem that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
-        if get_number(source_problem) >= get_number(problem)
+        if get_simulation_number(source_problem) >= get_simulation_number(problem)
             interval_chronology =
                 get_problem_interval_chronology(sim.sequence, source_problem_name)
-        elseif get_number(source_problem) < get_number(problem)
+        elseif get_simulation_number(source_problem) < get_simulation_number(problem)
             interval_chronology = RecedingHorizon()
         end
 
@@ -721,14 +718,14 @@ function initial_condition_update!(
             ic,
             quantity,
             previous_value,
-            get_number(problem),
+            get_simulation_number(problem),
         )
     end
     return
 end
 
 function _update_caches!(sim::Simulation, problem::OperationsProblem)
-    for cache in problem.internal.caches
+    for cache in get_caches(problem)
         update_cache!(sim, cache, problem)
     end
     return
@@ -810,7 +807,7 @@ function update_parameter!(
     sim::Simulation,
 ) where {T <: PSY.Component}
     components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_number(problem))
+    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
     horizon = length(model_time_steps(problem.internal.optimization_container))
     for d in components
         # RECORDER TODO: Parameter Update from forecast
@@ -847,7 +844,7 @@ function update_parameter!(
 ) where {T <: PSY.Service}
     # RECORDER TODO: Parameter Update from forecast
     components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_number(problem))
+    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
     horizon = length(model_time_steps(problem.internal.optimization_container))
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
@@ -906,7 +903,8 @@ function _update_initial_conditions!(problem::OperationsProblem, sim::Simulation
 end
 
 function _update_parameters(problem::OperationsProblem, sim::Simulation)
-    for container in iterate_parameter_containers(problem.internal.optimization_container)
+    optimization_container = get_optimization_container(problem)
+    for container in iterate_parameter_containers(optimization_container)
         update_parameter!(container.update_ref, container, problem, sim)
     end
     return
@@ -999,9 +997,11 @@ function _execute!(
     cache_size_mib = 1024,
     min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
     exports = nothing,
-    kwargs...,
+    enable_progress_bar = _PROGRESS_METER_ENABLED,
+    disable_timer_outputs = false
 )
     @assert !isnothing(sim.internal)
+
     set_simulation_status!(sim, RunStatus.RUNNING)
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
@@ -1020,11 +1020,12 @@ function _execute!(
         end
     end
     sequence = get_sequence(sim)
-    prog_bar = ProgressMeter.Progress(num_executions; enabled = progress_bar_enabled(sim))
-    run_simulation_timer = TimerOutputs.TimerOutput()
-    !timer_outputs_enabled(sim) && disable_timer!(TimerOutputs.TimerOutput())
+    problems = get_problems(sim)
+
+    prog_bar = ProgressMeter.Progress(num_executions; enabled = enable_progress_bar)
+    disable_timer_outputs && TimerOutputs.disable_timer!(RUN_SIMULATION_TIMER)
     for step in 1:steps
-        TimerOutputs.@timeit run_simulation_timer "Execution Step $(step)" begin
+        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
                 step,
@@ -1037,24 +1038,22 @@ function _execute!(
                     problem_number,
                     "start",
                 )
-                TimerOutputs.@timeit run_simulation_timer "Execution problem $(problem_number)" begin
-                    get_problem
-
-                    problem_name = get_problem_name(sim, problem)
-                    if !is_problem_built(problem)
+                problem_name = get_problem_names(problems)[problem_number]
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution problem $(problem_name)" begin
+                    problem = problems[problem_name]
+                    if !is_built(problem)
                         error("problem $(problem_name) status is not BuildStatus.BUILT")
                     end
                     problem_interval = get_interval(sequence, problem_name)
-                    sim.internal.current_time = sim.internal.date_ref[problem_number]
-                    get_sequence(sim).current_execution_index = ix
+                    set_current_time!(sim, sim.internal.date_ref[problem_number])
+                    sequence.current_execution_index = ix
                     # Is first run of first problem? Yes -> don't update problem
-                    TimerOutputs.@timeit run_simulation_timer "Update problem $(problem_number)" begin
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update problem $(problem_name)" begin
                         !(step == 1 && ix == 1) && update_problem!(problem, sim)
                     end
-                    TimerOutputs.@timeit run_simulation_timer "Run problem $(problem_number)" begin
-                        problem_name = get_problem_name(sim, problem)
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run problem $(problem_name)" begin
                         settings = get_settings(problem)
-                        status = run_problem!(
+                        status = solve!(
                             step,
                             problem,
                             get_current_time(sim),
@@ -1078,11 +1077,11 @@ function _execute!(
                             @assert status == RunStatus.SUCCESSFUL
                         end
                     end # Run problem Timer
-                    TimerOutputs.@timeit run_simulation_timer "Update Cache $(problem_number)" begin
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(problem_number)" begin
                         _update_caches!(sim, problem)
                     end
                     if warm_start_enabled(problem)
-                        TimerOutputs.@timeit run_simulation_timer "Warm Start $(problem_number)" begin
+                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(problem_number)" begin
                             _apply_warm_start!(problem)
                         end
                     end

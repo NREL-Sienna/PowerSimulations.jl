@@ -12,6 +12,7 @@ mutable struct OptimizationContainer
     initial_conditions::InitialConditions
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
+    solve_timed_log::Dict{Symbol, Any}
 
     function OptimizationContainer(
         sys::PSY.System,
@@ -34,6 +35,7 @@ mutable struct OptimizationContainer
             InitialConditions(use_parameters = get_use_parameters(settings)),
             nothing,
             PSY.get_base_power(sys),
+            Dict{Symbol, Any}()
         )
     end
 end

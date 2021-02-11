@@ -7,6 +7,7 @@ const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 const StartUpStages = NamedTuple{(:hot, :warm, :cold), NTuple{3, Float64}}
 
 const BUILD_SIMULATION_TIMER = TimerOutputs.TimerOutput()
+const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 # Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}

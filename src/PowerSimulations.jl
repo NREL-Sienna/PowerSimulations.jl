@@ -108,7 +108,6 @@ export EconomicDispatchProblem
 # Functions
 ## Op Model Exports
 export solve!
-export simulate!
 export get_initial_conditions
 export serialize_problem
 export serialize_optimization_model

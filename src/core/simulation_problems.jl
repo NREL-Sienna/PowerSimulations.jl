@@ -5,8 +5,10 @@ the simulation is executed.
 """
 mutable struct SimulationProblems
     op_problems::OrderedDict{Symbol, OperationsProblem}
+    names::Vector{Symbol}
     function SimulationProblems(; kwargs...)
-        new(OrderedDict(kwargs...))
+        prob_dict = OrderedDict(kwargs...)
+        new(prob_dict, collect(keys(prob_dict)))
     end
 end
 
@@ -17,7 +19,9 @@ Base.length(problems::SimulationProblems) = length(problems.op_problems)
 Base.first(problems::SimulationProblems) = first(problems.op_problems)
 Base.iterate(problems::SimulationProblems, args...) = iterate(problems.op_problems, args...)
 
-get_problem_names(problems::SimulationProblems) = collect(keys(problems.op_problems))
+get_problem_names(problems::SimulationProblems) = problems.names
+get_problem_instances(problems::SimulationProblems) = values(problems.op_problems)
+
 function get_problem_numer(problems::SimulationProblems, name)
     return findfirst(x -> x == Symbol(name), get_problem_names(problems))
 end
@@ -57,5 +61,7 @@ function initialize_simulation_internals!(problems::SimulationProblems, uuid::Ba
             uuid,
         )
         set_simulation_info!(problem, info)
+        settings = get_settings(problem)
+        set_use_parameters!(settings, true)
     end
 end

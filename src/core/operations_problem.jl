@@ -208,6 +208,7 @@ is_empty(problem::OperationsProblem) = problem.internal.status == BuildStatus.EM
 warm_start_enabled(problem::OperationsProblem) =
     get_warm_start(get_optimization_container(problem).settings)
 built_for_simulation(problem::OperationsProblem) = get_simulation_info(problem) !== nothing
+get_caches(problem::OperationsProblem) = get_simulation_info(problem).caches
 get_constraints(problem::OperationsProblem) =
     get_internal(problem).optimization_container.constraints
 get_end_of_interval_step(problem::OperationsProblem) =
@@ -220,8 +221,14 @@ get_horizon(problem::OperationsProblem) = get_horizon(get_settings(problem))
 get_internal(problem::OperationsProblem) = problem.internal
 get_jump_model(problem::OperationsProblem) =
     get_internal(problem).optimization_container.JuMPmodel
-get_name(problem::OperationsProblem) = problem.internal.name
-get_number(problem::OperationsProblem) = get_simulation_info(problem).number
+function get_name(problem::OperationsProblem)
+    name = ""
+    if built_for_simulation(problem)
+        name = get_simulation_info(problem).name
+    end
+    return name
+end
+
 get_optimization_container(problem::OperationsProblem) =
     problem.internal.optimization_container
 function get_resolution(problem::OperationsProblem{<:AbstractOperationsProblem})
@@ -230,6 +237,7 @@ function get_resolution(problem::OperationsProblem{<:AbstractOperationsProblem})
 end
 get_problem_base_power(problem::OperationsProblem) = PSY.get_base_power(problem.sys)
 get_settings(problem::OperationsProblem) = get_optimization_container(problem).settings
+get_solve_timed_log(problem::OperationsProblem) = get_optimization_container(problem).solve_timed_log
 get_simulation_info(problem::OperationsProblem) = problem.internal.simulation_info
 get_simulation_number(problem::OperationsProblem) = problem.internal.simulation_info.number
 get_status(problem::OperationsProblem) = problem.internal.status
@@ -271,6 +279,16 @@ function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsPro
     container = OptimizationContainer(get_system(problem), get_settings(problem), nothing)
     problem.internal.optimization_container = container
     set_status!(problem, BuildStatus.EMPTY)
+    return
+end
+
+function advance_execution_count!(problem::OperationsProblem)
+    info = get_simulation_info(problem)
+    info.execution_count += 1
+    # Reset execution count at the end of step
+    if get_execution_count(problem) == get_executions(problem)
+        info.execution_count = 0
+    end
     return
 end
 
@@ -402,7 +420,7 @@ function _psi_solve_optimization_problem(problem::OperationsProblem; kwargs...)
     end
     @assert model.moi_backend.state != MOIU.NO_OPTIMIZER
     status = RunStatus.RUNNING
-    timed_log = Dict{Symbol, Any}()
+    timed_log = get_solve_timed_log(problem)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
     model_status = JuMP.primal_status(model)
@@ -433,7 +451,7 @@ function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
 end
 
 """
-Default simulate method the operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
+Default solve method fo an operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
 
 # Arguments
 - `step::Int`: Simulation Step
@@ -444,7 +462,7 @@ Default simulate method the operational model used inside of a Simulation. Solve
 # Accepted Key Words
 - `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
 """
-function simulate!(
+function solve!(
     step::Int,
     problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
     start_time::Dates.DateTime,
@@ -453,14 +471,10 @@ function simulate!(
 )
     solve_status = solve!(problem)
     if solve_status == RunStatus.SUCCESSFUL
-        stats = OptimizerStats(problem, step, start_time, timed_log)
+        stats = OptimizerStats(problem, step, start_time)
         append_optimizer_stats!(store, stats)
         write_model_results!(store, problem, start_time; exports = exports)
-        problem.internal.execution_count += 1
-        # Reset execution count at the end of step
-        if problem.internal.execution_count == problem.internal.executions
-            problem.internal.execution_count = 0
-        end
+        advance_execution_count!(problem)
     end
 
     return solve_status
