@@ -1,15 +1,12 @@
-############## EnergySlackUp, Storage ####################
+############## EnergyShortageVariable, Storage ####################
 
-get_variable_binary(::EnergySlackUp, ::Type{<:PSY.Component}) = false
-get_variable_lower_bound(::EnergySlackUp, d::PSY.Component, _) = 0.0
+get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.Component}) = false
+get_variable_lower_bound(::EnergyShortageVariable, d::PSY.Component, _) = 0.0
 
 ############## EnergySlackDown, Storage ####################
 
-get_variable_binary(::EnergySlackDown, ::Type{<:PSY.Component}) = false
-get_variable_upper_bound(::EnergySlackDown, d::PSY.Component, _) = 0.0
-
-get_target_multiplier(v::PSY.HydroEnergyReservoir) = PSY.get_storage_capacity(v)
-get_target_multiplier(v::PSY.BatteryEMS) = PSY.get_rating(v)
+get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Component}) = false
+get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Component, _) = 0.0
 
 """
 This function defines the constraints for the water level (or state of charge)
@@ -60,8 +57,8 @@ function energy_target_constraint!(
             make_constraint_name(ENERGY_TARGET, T),
             (
                 make_variable_name(ENERGY, T),
-                make_variable_name(ENERGY_SLACK_UP, T),
-                make_variable_name(ENERGY_SLACK_DN, T),
+                make_variable_name(ENERGY_SHORTAGE, T),
+                make_variable_name(ENERGY_SURPLUS, T),
             ),
             UpdateRef{T}(TARGET, target_forecast_label),
         )
@@ -72,33 +69,10 @@ function energy_target_constraint!(
             make_constraint_name(ENERGY_TARGET, T),
             (
                 make_variable_name(ENERGY, T),
-                make_variable_name(ENERGY_SLACK_UP, T),
-                make_variable_name(ENERGY_SLACK_DN, T),
+                make_variable_name(ENERGY_SHORTAGE, T),
+                make_variable_name(ENERGY_SURPLUS, T),
             ),
         )
     end
     return
 end
-
-###################
-
-# function cost_function!(
-#     optimization_container::OptimizationContainer,
-#     devices::IS.FlattenIteratorWrapper{T},
-#     ::DeviceModel{T, U},
-#     ::Type{<:PM.AbstractPowerModel},
-#     feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
-# ) where {
-#     T <: PSY.Component,
-#     U <: Union{
-#         HydroDispatchReservoirStorage,
-#         HydroCommitmentReservoirStorage,
-#         EndOfPeriodEnergyTarget,
-#     },
-# }
-#     for d in devices
-#         spec = AddCostSpec(T, U, optimization_container)
-#         add_to_cost!(optimization_container, spec, spec.variable_cost(d), d)
-#     end
-#     return
-# end

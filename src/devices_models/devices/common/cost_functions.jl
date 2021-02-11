@@ -10,7 +10,6 @@ struct AddCostSpec
     shut_down_cost::Union{Nothing, Function}
     fixed_cost::Union{Nothing, Function}
     has_multistart_variables::Bool
-    has_target_cost::Bool
     addtional_linear_terms::Dict{String, Symbol}
 end
 
@@ -26,7 +25,6 @@ function AddCostSpec(;
     shut_down_cost = nothing,
     fixed_cost = nothing,
     has_multistart_variables = false,
-    has_target_cost = false,
     addtional_linear_terms = Dict{String, Symbol}(),
 )
     return AddCostSpec(
@@ -41,7 +39,6 @@ function AddCostSpec(;
         shut_down_cost,
         fixed_cost,
         has_multistart_variables,
-        has_target_cost,
         addtional_linear_terms,
     )
 end
@@ -65,26 +62,6 @@ function add_service_variables!(spec::AddCostSpec, services)
     return
 end
 
-function add_energy_slack_variables!(
-    spec::AddCostSpec,
-    device::T,
-) where {T <: PSY.Component}
-    if spec.has_target_cost
-        name = PSY.get_name(device)
-        set_addtional_linear_terms!(
-            spec,
-            name,
-            make_variable_name(EnergySlackDown, typeof(device)),
-        )
-        set_addtional_linear_terms!(
-            spec,
-            name,
-            make_variable_name(EnergySlackUp, typeof(device)),
-        )
-    end
-    return
-end
-
 """
 Add variables to the OptimizationContainer for a service.
 """
@@ -100,7 +77,6 @@ function cost_function!(
         @debug T, spec
         services = PSY.get_services(d)
         add_service_variables!(spec, services)
-        add_energy_slack_variables!(spec, d)
         add_to_cost!(optimization_container, spec, PSY.get_operation_cost(d), d)
     end
     return
@@ -752,7 +728,7 @@ end
 function add_to_cost!(
     optimization_container::OptimizationContainer,
     spec::AddCostSpec,
-    cost_data::PSY.EnergyTargetCost,
+    cost_data::PSY.StorageManagementCost,
     component::PSY.Component,
 )
     component_name = PSY.get_name(component)
@@ -806,24 +782,22 @@ function add_to_cost!(
         end
     end
 
-    if !(spec.has_target_cost === nothing)
-        @debug "Energy Target cost" component_name
-        for t in time_steps
-            linear_gen_cost!(
-                optimization_container,
-                make_variable_name(EnergySlackDown, spec.component_type),
-                component_name,
-                cost_data.energy_surplus_cost * OBJECTIVE_FUNCTION_NEGATIVE,
-                t,
-            )
-            linear_gen_cost!(
-                optimization_container,
-                make_variable_name(EnergySlackUp, spec.component_type),
-                component_name,
-                cost_data.energy_shortage_cost * spec.multiplier,
-                t,
-            )
-        end
+    @debug "Energy Surplus/Shortage cost" component_name
+    for t in time_steps
+        linear_gen_cost!(
+            optimization_container,
+            make_variable_name(EnergySurplusVariable, spec.component_type),
+            component_name,
+            cost_data.energy_surplus_cost * OBJECTIVE_FUNCTION_NEGATIVE,
+            t,
+        )
+        linear_gen_cost!(
+            optimization_container,
+            make_variable_name(EnergyShortageVariable, spec.component_type),
+            component_name,
+            cost_data.energy_shortage_cost * spec.multiplier,
+            t,
+        )
     end
 
     return
