@@ -39,7 +39,7 @@ end
 function StageResults(
     store::SimulationStore,
     stage_name::AbstractString,
-    stage_params::SimulationStoreStageParams,
+    stage_params::SimulationStoreProblemParams,
     sim_params::SimulationStoreParams,
     path;
     load_system = true,

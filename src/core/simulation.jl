@@ -1119,11 +1119,10 @@ function _initialize_stage_storage!(
     executions_by_problem = sequence.executions_by_problem
     horizons = sequence.horizons
     intervals = sequence.intervals
-    order = sequence.order
 
-    problems = OrderedDict{Symbol, SimulationStoreproblemParams}()
+    problems = OrderedDict{Symbol, SimulationStoreProblemParams}()
     problem_reqs = Dict{Symbol, SimulationStoreproblemRequirements}()
-    problem_order = [order[x] for x in sort!(collect(keys(order)))]
+    problem_order = get_problem_names(sim)
     num_param_containers = 0
     rules = CacheFlushRules(
         max_size = cache_size_mib * MiB,
@@ -1144,7 +1143,7 @@ function _initialize_stage_storage!(
         system = get_system(problem)
         base_power = PSY.get_base_power(system)
         sys_uuid = IS.get_uuid(system)
-        problem_params = SimulationStoreproblemParams(
+        problem_params = SimulationStoreProblemParams(
             num_executions,
             horizon,
             interval,

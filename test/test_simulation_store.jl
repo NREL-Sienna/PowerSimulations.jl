@@ -2,7 +2,7 @@ import PowerSimulations:
     h5_store_open,
     HDF_FILENAME,
     SimulationStoreParams,
-    SimulationStoreStageParams,
+    SimulationStoreProblemParams,
     SimulationStoreStageRequirements,
     CacheFlushRules,
     KiB,
@@ -18,7 +18,7 @@ import PowerSimulations:
     get_cache_hit_percentage
 
 function _initialize!(store, sim, variables, stage_defs, cache_rules)
-    stages = OrderedDict{Symbol, SimulationStoreStageParams}()
+    stages = OrderedDict{Symbol, SimulationStoreProblemParams}()
     stage_reqs = Dict{Symbol, SimulationStoreStageRequirements}()
     num_param_containers = 0
     for stage in keys(stage_defs)
@@ -26,7 +26,7 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
         horizon = stage_defs[stage]["horizon"]
         num_rows = execution_count * sim["num_steps"]
 
-        stage_params = SimulationStoreStageParams(
+        stage_params = SimulationStoreProblemParams(
             execution_count,
             horizon,
             stage_defs[stage]["interval"],

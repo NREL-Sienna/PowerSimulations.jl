@@ -403,7 +403,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     for stage in HDF5.read(HDF5.attributes(group)["stage_order"])
         stage_group = store.file["simulation/stages/$stage"]
         stage_name = Symbol(stage)
-        store.params.stages[stage_name] = SimulationStoreStageParams(
+        store.params.stages[stage_name] = SimulationStoreProblemParams(
             HDF5.read(HDF5.attributes(stage_group)["num_executions"]),
             HDF5.read(HDF5.attributes(stage_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(stage_group)["interval_ms"])),

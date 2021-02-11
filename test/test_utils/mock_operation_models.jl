@@ -71,6 +71,19 @@ function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
     )
 end
 
+function create_test_problems(
+    template_uc = get_template_standard_uc_simulation(),
+    template_ed = get_template_nomin_ed_simulation(),
+    sys_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"),
+    sys_ed = PSB.build_system(PSITestSystems, "c_sys5_ed"),
+)
+    c_sys5_uc =
+        c_sys5_ed = return SimulationProblems(
+            UC = OperationsProblem(template_uc, sys_uc; optimizer = GLPK_optimizer),
+            ED = OperationsProblem(template_ed, sys_ed, optimizer = GLPK_optimizer),
+        )
+end
+
 struct FakeStagesStruct
     stages::Dict{Int, Int}
 end
