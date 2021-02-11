@@ -212,9 +212,6 @@ mutable struct SimulationSequence
     end
 end
 
-get_problem_interval(sequence::SimulationSequence, problem::Symbol) =
-    sequence.intervals[problem][1]
-
 get_step_resolution(sequence::SimulationSequence) = sequence.step_resolution
 
 function get_problem_interval_chronology(sequence::SimulationSequence, problem::Symbol)
