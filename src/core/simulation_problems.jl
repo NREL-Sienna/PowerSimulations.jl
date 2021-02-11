@@ -20,7 +20,6 @@ Base.first(problems::SimulationProblems) = first(problems.op_problems)
 Base.iterate(problems::SimulationProblems, args...) = iterate(problems.op_problems, args...)
 
 get_problem_names(problems::SimulationProblems) = problems.names
-get_problem_instances(problems::SimulationProblems) = values(problems.op_problems)
 
 function get_problem_numer(problems::SimulationProblems, name)
     return findfirst(x -> x == Symbol(name), get_problem_names(problems))
