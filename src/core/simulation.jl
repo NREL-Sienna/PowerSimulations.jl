@@ -1121,7 +1121,7 @@ function _initialize_stage_storage!(
     intervals = sequence.intervals
 
     problems = OrderedDict{Symbol, SimulationStoreProblemParams}()
-    problem_reqs = Dict{Symbol, SimulationStoreproblemRequirements}()
+    problem_reqs = Dict{Symbol, SimulationStoreProblemRequirements}()
     problem_order = get_problem_names(sim)
     num_param_containers = 0
     rules = CacheFlushRules(
@@ -1151,7 +1151,7 @@ function _initialize_stage_storage!(
             base_power,
             sys_uuid,
         )
-        reqs = SimulationStoreproblemRequirements()
+        reqs = SimulationStoreProblemRequirements()
 
         # TODO: configuration of keep_in_cache and priority are not correct
         problem_sym = Symbol(problem_name)

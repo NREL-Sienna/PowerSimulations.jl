@@ -13,14 +13,14 @@ abstract type SimulationStore end
 # - initialize_stage_storage!
 # - read_array
 
-struct SimulationStoreStageRequirements
+struct SimulationStoreProblemRequirements
     duals::Dict{Symbol, Dict{String, Any}}
     parameters::Dict{Symbol, Dict{String, Any}}
     variables::Dict{Symbol, Dict{String, Any}}
 end
 
-function SimulationStoreStageRequirements()
-    return SimulationStoreStageRequirements(
+function SimulationStoreProblemRequirements()
+    return SimulationStoreProblemRequirements(
         Dict{Symbol, Dict{String, Any}}(),
         Dict{Symbol, Dict{String, Any}}(),
         Dict{Symbol, Dict{String, Any}}(),
