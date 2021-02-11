@@ -579,7 +579,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-@testset "Hydro ACPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
+@testset "Hydro ACPLossLess HydroEnergyReservoir with HydroCommitmentReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 

@@ -39,6 +39,8 @@ get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
 
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
 
+get_target_multiplier(v::PSY.BatteryEMS) = PSY.get_rating(v)
+get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage = PSY.get_efficiency(v)
 #! format: on
 
 ################################## output power constraints#################################
@@ -216,50 +218,24 @@ end
 
 ############################ book keeping constraints ######################################
 
-function make_efficiency_data(
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    names = Vector{String}(undef, length(devices))
-    in_out = Vector{InOut}(undef, length(devices))
-
-    for (ix, d) in enumerate(devices)
-        names[ix] = PSY.get_name(d)
-        in_out[ix] = PSY.get_efficiency(d)
-    end
-
-    return names, in_out
-end
-
-function energy_balance_constraint!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-    ::Type{D},
-    ::Type{S},
+function DeviceEnergyBalanceConstraintSpec(
+    ::Type{<:EnergyBalanceConstraint},
+    ::Type{EnergyVariable},
+    ::Type{St},
+    ::Type{<:AbstractStorageFormulation},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
-    efficiency_data = make_efficiency_data(devices)
-    key = ICKey(EnergyLevel, St)
-
-    if !has_initial_conditions(optimization_container.initial_conditions, key)
-        throw(
-            IS.DataFormatError(
-                "Initial Conditions for $(St) Energy Constraints not in the model",
-            ),
-        )
-    end
-
-    energy_balance(
-        optimization_container,
-        get_initial_conditions(optimization_container, ICKey(EnergyLevel, St)),
-        efficiency_data,
-        make_constraint_name(ENERGY_LIMIT, St),
-        (
-            make_variable_name(ACTIVE_POWER_IN, St),
-            make_variable_name(ACTIVE_POWER_OUT, St),
-            make_variable_name(ENERGY, St),
-        ),
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {St <: PSY.Storage}
+    return DeviceEnergyBalanceConstraintSpec(;
+        constraint_name = make_constraint_name(ENERGY_LIMIT, St),
+        energy_variable = make_variable_name(ENERGY, St),
+        initial_condition = EnergyLevel,
+        pin_variable_names = [make_variable_name(ACTIVE_POWER_IN, St)],
+        pout_variable_names = [make_variable_name(ACTIVE_POWER_OUT, St)],
+        constraint_func = energy_balance!,
     )
-    return
 end
 
 ############################ Energy Management constraints ######################################
@@ -276,24 +252,3 @@ function AddCostSpec(
         multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
-
-# function AddCostSpec(
-#     ::Type{PSY.BatteryEMS},
-#     ::Type{EndOfPeriodEnergyTarget},
-#     optimization_container::OptimizationContainer,
-# )
-#     return [
-#         AddCostSpec(;
-#             variable_type = EnergySlackUp,
-#             component_type = PSY.BatteryEMS,
-#             variable_cost = PSY.get_penalty_cost,
-#             multiplier = OBJECTIVE_FUNCTION_POSITIVE,
-#         ),
-#         AddCostSpec(;
-#             variable_type = EnergySlackDown,
-#             component_type = PSY.BatteryEMS,
-#             variable_cost = PSY.get_energy_value,
-#             multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
-#         ),
-#     ]
-# end

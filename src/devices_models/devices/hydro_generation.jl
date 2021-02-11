@@ -101,6 +101,12 @@ get_variable_lower_bound(::SpillageVariable, d::PSY.HydroGen, _) = 0.0
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroGen}) = true
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroPumpedStorage}) = true
 
+get_target_multiplier(v::PSY.HydroEnergyReservoir) = PSY.get_storage_capacity(v)
+
+get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HydroGen = (in = 1.0, out = 1.0)
+get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelUP}) = (in = PSY.get_pump_efficiency(v), out = 1.0)
+get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelDOWN}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
+
 #! format: on
 
 """
@@ -398,163 +404,86 @@ end
 This function defines the constraints for the water level (or state of charge)
 for the Hydro Reservoir.
 """
-function energy_balance_constraint!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, S},
-    system_formulation::Type{<:PM.AbstractPowerModel},
+function DeviceEnergyBalanceConstraintSpec(
+    ::Type{<:EnergyBalanceConstraint},
+    ::Type{EnergyVariable},
+    ::Type{H},
+    ::Type{<:AbstractHydroFormulation},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {
-    H <: PSY.HydroEnergyReservoir,
-    S <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage},
-}
-    key = ICKey(EnergyLevel, H)
-    parameters = model_has_parameters(optimization_container)
-    use_forecast_data = model_uses_forecasts(optimization_container)
-
-    if !has_initial_conditions(optimization_container.initial_conditions, key)
-        throw(
-            IS.DataFormatError(
-                "Initial Conditions for $(H) Energy Constraints not in the model",
-            ),
-        )
-    end
-
-    inflow_forecast_label = "inflow"
-    constraint_infos_inflow = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector_inflow = get_time_series(optimization_container, d, inflow_forecast_label)
-        constraint_info_inflow = DeviceTimeSeriesConstraintInfo(
-            d,
-            x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
-            ts_vector_inflow,
-        )
-        add_device_services!(constraint_info_inflow.range, d, model)
-        constraint_infos_inflow[ix] = constraint_info_inflow
-    end
-
-    if parameters
-        energy_balance_hydro_param!(
-            optimization_container,
-            get_initial_conditions(optimization_container, key),
-            constraint_infos_inflow,
-            make_constraint_name(ENERGY_CAPACITY, H),
-            (
-                make_variable_name(SPILLAGE, H),
-                make_variable_name(ACTIVE_POWER, H),
-                make_variable_name(ENERGY, H),
-            ),
-            UpdateRef{H}(INFLOW, inflow_forecast_label),
-        )
-    else
-        energy_balance_hydro!(
-            optimization_container,
-            get_initial_conditions(optimization_container, key),
-            constraint_infos_inflow,
-            make_constraint_name(ENERGY_CAPACITY, H),
-            (
-                make_variable_name(SPILLAGE, H),
-                make_variable_name(ACTIVE_POWER, H),
-                make_variable_name(ENERGY, H),
-            ),
-        )
-    end
-    return
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {H <: PSY.HydroEnergyReservoir}
+    return DeviceEnergyBalanceConstraintSpec(;
+        constraint_name = make_constraint_name(ENERGY_CAPACITY, H),
+        energy_variable = make_variable_name(ENERGY, H),
+        initial_condition = EnergyLevel,
+        pout_variable_names = [
+            make_variable_name(ACTIVE_POWER, H),
+            make_variable_name(SPILLAGE, H),
+        ],
+        constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
+        parameter_name = INFLOW,
+        forecast_label = "inflow",
+        multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
+    )
 end
 
 """
 This function defines the constraints for the water level (or state of charge)
 for the HydroPumpedStorage.
 """
-function energy_balance_constraint!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, S},
-    system_formulation::Type{<:PM.AbstractPowerModel},
+
+function DeviceEnergyBalanceConstraintSpec(
+    ::Type{<:EnergyBalanceConstraint},
+    ::Type{EnergyVariableUp},
+    ::Type{H},
+    ::Type{<:AbstractHydroFormulation},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {
-    H <: PSY.HydroPumpedStorage,
-    S <: Union{HydroDispatchPumpedStorage, HydroDispatchPumpedStoragewReservation},
-}
-    key = ICKey(EnergyLevelUP, H)
-    parameters = model_has_parameters(optimization_container)
-    use_forecast_data = model_uses_forecasts(optimization_container)
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {H <: PSY.HydroPumpedStorage}
+    return DeviceEnergyBalanceConstraintSpec(;
+        constraint_name = make_constraint_name(ENERGY_CAPACITY_UP, H),
+        energy_variable = make_variable_name(ENERGY_UP, H),
+        initial_condition = EnergyLevelUP,
+        pin_variable_names = [make_variable_name(ACTIVE_POWER_IN, H)],
+        pout_variable_names = [
+            make_variable_name(ACTIVE_POWER_OUT, H),
+            make_variable_name(SPILLAGE, H),
+        ],
+        constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
+        parameter_name = INFLOW,
+        forecast_label = "inflow",
+        multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
+    )
+end
 
-    if !has_initial_conditions(optimization_container.initial_conditions, key)
-        throw(
-            IS.DataFormatError(
-                "Initial Conditions for $(H) Energy Constraints not in the model",
-            ),
-        )
-    end
-
-    forecast_label_in = "inflow"
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, forecast_label_in)
-        constraint_info = DeviceTimeSeriesConstraintInfo(
-            d,
-            x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
-            ts_vector,
-        )
-        add_device_services!(constraint_info.range, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-
-    forecast_label_out = "outflow"
-    constraint_infos_outflow =
-        Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, forecast_label_out)
-        constraint_info = DeviceTimeSeriesConstraintInfo(
-            d,
-            x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
-            ts_vector,
-        )
-        add_device_services!(constraint_info.range, d, model)
-        constraint_infos_outflow[ix] = constraint_info
-    end
-
-    if parameters
-        energy_balance_hydro_param!(
-            optimization_container,
-            get_initial_conditions(optimization_container, key),
-            (constraint_infos, constraint_infos_outflow),
-            (
-                make_constraint_name(ENERGY_CAPACITY_UP, H),
-                make_constraint_name(ENERGY_CAPACITY_DOWN, H),
-            ),
-            (
-                make_variable_name(SPILLAGE, H),
-                make_variable_name(ACTIVE_POWER_OUT, H),
-                make_variable_name(ENERGY_UP, H),
-                make_variable_name(ACTIVE_POWER_IN, H),
-                make_variable_name(ENERGY_DOWN, H),
-            ),
-            (
-                UpdateRef{H}(INFLOW, forecast_label_in),
-                UpdateRef{H}(OUTFLOW, forecast_label_out),
-            ),
-        )
-    else
-        energy_balance_hydro!(
-            optimization_container,
-            get_initial_conditions(optimization_container, key),
-            (constraint_infos, constraint_infos_outflow),
-            (
-                make_constraint_name(ENERGY_CAPACITY_UP, H),
-                make_constraint_name(ENERGY_CAPACITY_DOWN, H),
-            ),
-            (
-                make_variable_name(SPILLAGE, H),
-                make_variable_name(ACTIVE_POWER_OUT, H),
-                make_variable_name(ENERGY_UP, H),
-                make_variable_name(ACTIVE_POWER_IN, H),
-                make_variable_name(ENERGY_DOWN, H),
-            ),
-        )
-    end
-    return
+function DeviceEnergyBalanceConstraintSpec(
+    ::Type{<:EnergyBalanceConstraint},
+    ::Type{EnergyVariableDown},
+    ::Type{H},
+    ::Type{<:AbstractHydroFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {H <: PSY.HydroPumpedStorage}
+    return DeviceEnergyBalanceConstraintSpec(;
+        constraint_name = make_constraint_name(ENERGY_CAPACITY_DOWN, H),
+        energy_variable = make_variable_name(ENERGY_DOWN, H),
+        initial_condition = EnergyLevelDOWN,
+        pout_variable_names = [make_variable_name(ACTIVE_POWER_IN, H)],
+        pin_variable_names = [
+            make_variable_name(ACTIVE_POWER_OUT, H),
+            make_variable_name(SPILLAGE, H),
+        ],
+        constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
+        parameter_name = OUTFLOW,
+        forecast_label = "outflow",
+        multiplier_func = x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
+    )
 end
 
 ########################## Make initial Conditions for a Model #############################
@@ -802,13 +731,13 @@ end
 #     energy_value = x -> 0.0
 #     return [
 #         AddCostSpec(;
-#             variable_type = EnergySlackUp,
+#             variable_type = EnergyShortageVariable,
 #             component_type = PSY.HydroEnergyReservoir,
 #             variable_cost = penalty_cost,
 #             multiplier = OBJECTIVE_FUNCTION_POSITIVE,
 #         ),
 #         AddCostSpec(;
-#             variable_type = EnergySlackDown,
+#             variable_type = EnergySurplusVariable,
 #             component_type = PSY.HydroEnergyReservoir,
 #             variable_cost = energy_value,
 #             multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
