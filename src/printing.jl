@@ -1,5 +1,5 @@
 function _display_model(
-    val::Dict{String, T},
+    val::Dict{Tuple{String,Symbol}, T},
     field::Symbol,
     io::IO,
 ) where {T <: ServiceModel}
@@ -21,7 +21,7 @@ function _display_model(
 end
 
 function _display_model(
-    val::Dict{String, T},
+    val::Dict{Symbol, T},
     field::Symbol,
     io::IO,
 ) where {T <: DeviceModel}
@@ -59,16 +59,14 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
 
     for field in fieldnames(OperationsProblemTemplate)
         val = getfield(template, Symbol(field))
-        if typeof(val) <: Dict{String, <:Union{DeviceModel, ServiceModel}}
+        if typeof(val) <: Dict{Symbol, <: DeviceModel}
+            println(io, "============================================")
+            _display_model(val, field, io)
+        elseif typeof(val) <: Dict{Tuple{String,Symbol}, <: ServiceModel}
             println(io, "============================================")
             _display_model(val, field, io)
         else
-            if !(val === nothing)
-                field = titlecase(string(field))
-                println(io, "$(field):\n\t$(val) \n")
-            else
-                println(io, "no data")
-            end
+            println(io, "")
         end
     end
     println(io, "============================================")
