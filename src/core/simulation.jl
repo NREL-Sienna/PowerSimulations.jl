@@ -511,12 +511,15 @@ function _build_problems!(sim::Simulation)
         problem_interval = get_problem_interval(get_sequence(sim), problem_name)
         initial_time = get_initial_time(sim)
         set_initial_time!(problem, initial_time)
-        build!(
+        problem_build_status = build!(
             problem;
             output_dir = get_simulation_dir(sim),
             console_level = get_console_level(sim),
             file_level = get_file_level(sim),
         )
+        if problem_build_status != BuildStatus.BUILT
+            error("Problem $(problem_name) failed to build succesfully")
+        end
         _populate_caches!(sim, problem_name)
         sim.internal.date_ref[problem_number] = initial_time
     end

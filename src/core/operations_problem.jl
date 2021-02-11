@@ -268,8 +268,10 @@ set_initial_time!(problem::OperationsProblem, val::Dates.DateTime) =
     set_initial_time!(get_settings(problem), val)
 set_simulation_info!(problem::OperationsProblem, info::SimulationInfo) =
     problem.internal.simulation_info = info
-set_status!(problem::OperationsProblem, status::BuildStatus) =
+function set_status!(problem::OperationsProblem, status::BuildStatus)
     problem.internal.status = status
+    return
+end
 set_output_dir!(problem::OperationsProblem, path::AbstractString) =
     get_internal(problem).output_dir = path
 
@@ -342,7 +344,7 @@ function build!(
             set_status!(problem, BuildStatus.BUILT)
         end
     catch e
-        @error "Operation Problem Build Fail" exception = e
+        @error "Operation Problem Build Failed" exception = e
         set_status!(problem, BuildStatus.FAILED)
     end
     return get_status(problem)

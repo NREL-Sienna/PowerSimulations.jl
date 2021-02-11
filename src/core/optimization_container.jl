@@ -651,7 +651,7 @@ function build_impl!(
     # Order is required
     construct_services!(optimization_container, sys, template.services, template.devices)
     for device_model in values(template.devices)
-        @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
+        @debug "Building $(device_model.component_type) with $(device_model.formulation) formulation"
         construct_device!(optimization_container, sys, device_model, transmission)
         @debug get_problem_size(optimization_container)
     end
@@ -660,7 +660,7 @@ function build_impl!(
     @debug get_problem_size(optimization_container)
 
     for branch_model in values(template.branches)
-        @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
+        @debug "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
         construct_device!(optimization_container, sys, branch_model, transmission)
         @debug get_problem_size(optimization_container)
     end
