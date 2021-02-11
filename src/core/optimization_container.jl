@@ -35,7 +35,7 @@ mutable struct OptimizationContainer
             InitialConditions(use_parameters = get_use_parameters(settings)),
             nothing,
             PSY.get_base_power(sys),
-            Dict{Symbol, Any}()
+            Dict{Symbol, Any}(),
         )
     end
 end

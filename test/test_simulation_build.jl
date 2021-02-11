@@ -40,20 +40,20 @@
     @testset "Simulation with provided initial time" begin
         problems = create_test_problems(get_template_basic_uc_simulation())
         sequence = SimulationSequence(
-        problems = problems,
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
-        feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+            problems = problems,
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
             ),
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_source_problem = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterProblemChronology(),
+        )
         second_day = DateTime("1/1/2024  23:00:00", "d/m/y  H:M:S") + Hour(1)
         sim = Simulation(
             name = "test",

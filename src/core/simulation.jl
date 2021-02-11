@@ -1,5 +1,6 @@
 # Default disable of progress bar when the simulation environment is an HPC or CI
-const _PROGRESS_METER_ENABLED = !(isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true"))
+const _PROGRESS_METER_ENABLED =
+    !(isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true"))
 
 mutable struct SimulationInternal
     sim_files_dir::String
@@ -998,7 +999,7 @@ function _execute!(
     min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
     exports = nothing,
     enable_progress_bar = _PROGRESS_METER_ENABLED,
-    disable_timer_outputs = false
+    disable_timer_outputs = false,
 )
     @assert !isnothing(sim.internal)
 
@@ -1130,7 +1131,7 @@ function _initialize_problem_storage!(
         max_size = cache_size_mib * MiB,
         min_flush_size = min_cache_flush_size_mib,
     )
-    for (problem_name, problem)  in get_problems(sim)
+    for (problem_name, problem) in get_problems(sim)
         num_executions = executions_by_problem[problem_name]
         horizon = get_horizon(problem)
         optimization_container = get_optimization_container(problem)

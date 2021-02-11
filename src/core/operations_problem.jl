@@ -237,7 +237,8 @@ function get_resolution(problem::OperationsProblem{<:AbstractOperationsProblem})
 end
 get_problem_base_power(problem::OperationsProblem) = PSY.get_base_power(problem.sys)
 get_settings(problem::OperationsProblem) = get_optimization_container(problem).settings
-get_solve_timed_log(problem::OperationsProblem) = get_optimization_container(problem).solve_timed_log
+get_solve_timed_log(problem::OperationsProblem) =
+    get_optimization_container(problem).solve_timed_log
 get_simulation_info(problem::OperationsProblem) = problem.internal.simulation_info
 get_simulation_number(problem::OperationsProblem) = problem.internal.simulation_info.number
 get_status(problem::OperationsProblem) = problem.internal.status
@@ -334,12 +335,12 @@ function build!(
     logger = configure_logging(problem.internal, "w")
     try
         Logging.with_logger(logger) do
-        build_pre_step!(problem)
-        problem_build!(problem)
-        #serialize_problem(problem, "operations_problem")
-        #serialize_optimization_model(problem)
-        set_status!(problem, BuildStatus.BUILT)
-    end
+            build_pre_step!(problem)
+            problem_build!(problem)
+            #serialize_problem(problem, "operations_problem")
+            #serialize_optimization_model(problem)
+            set_status!(problem, BuildStatus.BUILT)
+        end
     catch e
         @error "Operation Problem Build Fail" exception = e
         set_status!(problem, BuildStatus.FAILED)

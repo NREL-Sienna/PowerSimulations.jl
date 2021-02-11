@@ -1,22 +1,22 @@
 function test_simulation_single_ed(file_path::String)
-     @testset "Single stage sequential tests" begin
-    template_ed = get_template_nomin_ed_simulation()
-    c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    problems = SimulationProblems(
+    @testset "Single stage sequential tests" begin
+        template_ed = get_template_nomin_ed_simulation()
+        c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
+        problems = SimulationProblems(
             ED = OperationsProblem(template_ed, c_sys, optimizer = ipopt_optimizer),
         )
-    test_sequence = SimulationSequence(
-        problems = problems,
-        intervals = Dict("ED" => (Hour(24), Consecutive())),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-    sim_single = Simulation(
-        name = "consecutive",
-        steps = 2,
-        problems = problems,
-        sequence = test_sequence,
-        simulation_folder = file_path,
-    )
+        test_sequence = SimulationSequence(
+            problems = problems,
+            intervals = Dict("ED" => (Hour(24), Consecutive())),
+            ini_cond_chronology = InterProblemChronology(),
+        )
+        sim_single = Simulation(
+            name = "consecutive",
+            steps = 2,
+            problems = problems,
+            sequence = test_sequence,
+            simulation_folder = file_path,
+        )
         build_out = build!(sim_single)
         @test build_out == PSI.BuildStatus.BUILT
         execute_out = execute!(sim_single)
@@ -28,7 +28,6 @@ function test_simulation_single_ed(file_path::String)
         #_test_plain_print_methods([sim_single, sim_single.sequence])
     end
 end
-
 
 function test_simulation_without_caches(file_path::String)
     @testset "All stages executed - No Cache" begin
@@ -527,5 +526,4 @@ end
     for f in test_set
         f(mktempdir(cleanup = true))
     end
-
 end
