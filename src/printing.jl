@@ -1,5 +1,5 @@
 function _display_model(
-    val::Dict{Tuple{String,Symbol}, T},
+    val::Dict{Tuple{String, Symbol}, T},
     field::Symbol,
     io::IO,
 ) where {T <: ServiceModel}
@@ -10,10 +10,7 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(
-            io,
-            "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n",
-        )
+        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
         if ix.use_service_name
             println(io, "\tName specific Model\n")
         end
@@ -32,10 +29,7 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(
-            io,
-            "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n",
-        )
+        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
     end
 end
 
@@ -59,10 +53,10 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
 
     for field in fieldnames(OperationsProblemTemplate)
         val = getfield(template, Symbol(field))
-        if typeof(val) <: Dict{Symbol, <: DeviceModel}
+        if typeof(val) <: Dict{Symbol, <:DeviceModel}
             println(io, "============================================")
             _display_model(val, field, io)
-        elseif typeof(val) <: Dict{Tuple{String,Symbol}, <: ServiceModel}
+        elseif typeof(val) <: Dict{Tuple{String, Symbol}, <:ServiceModel}
             println(io, "============================================")
             _display_model(val, field, io)
         else
