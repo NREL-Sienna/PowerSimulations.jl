@@ -14,7 +14,8 @@ mutable struct SimulationInternal
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
-    disable_progress_metter::Bool
+    enabled_progress_metter::Bool
+    enabled_timer_outputs::Bool
 end
 
 function SimulationInternal(
@@ -85,8 +86,8 @@ function SimulationInternal(
         console_level,
         file_level,
         # Default disable of progress bar when the simulation environment is an HPC or CI
-        true,
-        #isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
+        !(isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")),
+        true
     )
 end
 
@@ -235,7 +236,7 @@ mutable struct Simulation
     )
         for name in PSI.get_problem_names(problems)
             if !built_for_simulation(problems[name])
-                error("Stage $(name) is not part of any Simulation")
+                error("problem $(name) is not part of any Simulation")
             end
             if problems[name].internal.simulation_info.sequence_uuid != sequence.uuid
                 throw(
@@ -267,6 +268,8 @@ function Simulation(directory::AbstractString, problem_info::Dict)
 end
 
 ################# accessor functions ####################
+progress_bar_enabled(sim::Simulation) = sim.internal.enabled_progress_metter
+timer_outputs_enabled(sim::Simulation) = sim.internal.enabled_timer_outputs
 get_initial_time(sim::Simulation) = sim.initial_time
 get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
@@ -1004,7 +1007,7 @@ function _execute!(
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
     store_params =
-        _initialize_stage_storage!(sim, store, cache_size_mib, min_cache_flush_size_mib)
+        _initialize_problem_storage!(sim, store, cache_size_mib, min_cache_flush_size_mib)
     initialize_optimizer_stats_storage!(store, num_executions)
     status = RunStatus.RUNNING
     if exports !== nothing
@@ -1016,37 +1019,39 @@ function _execute!(
             exports.path = get_results_dir(sim)
         end
     end
-
-    progress_bar = ProgressMeter.Progress(num_executions, 1)
+    sequence = get_sequence(sim)
+    prog_bar = ProgressMeter.Progress(num_executions; enabled = progress_bar_enabled(sim))
+    run_simulation_timer = TimerOutputs.TimerOutput()
+    !timer_outputs_enabled(sim) && disable_timer!(TimerOutputs.TimerOutput())
     for step in 1:steps
-        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
+        TimerOutputs.@timeit run_simulation_timer "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
                 step,
                 "start",
             )
             for (ix, problem_number) in enumerate(execution_order)
-                IS.@record :simulation_status SimulationproblemEvent(
+                IS.@record :simulation_status SimulationProblemEvent(
                     get_current_time(sim),
                     step,
                     problem_number,
                     "start",
                 )
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution problem $(problem_number)" begin
-                    # TODO: implement some efficient way of indexing with problem name.
-                    problem = get_problem(sim, problem_number)
+                TimerOutputs.@timeit run_simulation_timer "Execution problem $(problem_number)" begin
+                    get_problem
+
                     problem_name = get_problem_name(sim, problem)
                     if !is_problem_built(problem)
                         error("problem $(problem_name) status is not BuildStatus.BUILT")
                     end
-                    problem_interval = get_problem_interval(sim, problem_name)
+                    problem_interval = get_interval(sequence, problem_name)
                     sim.internal.current_time = sim.internal.date_ref[problem_number]
                     get_sequence(sim).current_execution_index = ix
                     # Is first run of first problem? Yes -> don't update problem
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update problem $(problem_number)" begin
+                    TimerOutputs.@timeit run_simulation_timer "Update problem $(problem_number)" begin
                         !(step == 1 && ix == 1) && update_problem!(problem, sim)
                     end
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run problem $(problem_number)" begin
+                    TimerOutputs.@timeit run_simulation_timer "Run problem $(problem_number)" begin
                         problem_name = get_problem_name(sim, problem)
                         settings = get_settings(problem)
                         status = run_problem!(
@@ -1073,22 +1078,22 @@ function _execute!(
                             @assert status == RunStatus.SUCCESSFUL
                         end
                     end # Run problem Timer
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(problem_number)" begin
+                    TimerOutputs.@timeit run_simulation_timer "Update Cache $(problem_number)" begin
                         _update_caches!(sim, problem)
                     end
                     if warm_start_enabled(problem)
-                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(problem_number)" begin
+                        TimerOutputs.@timeit run_simulation_timer "Warm Start $(problem_number)" begin
                             _apply_warm_start!(problem)
                         end
                     end
-                    IS.@record :simulation_status SimulationproblemEvent(
+                    IS.@record :simulation_status SimulationProblemEvent(
                         get_current_time(sim),
                         step,
                         problem_number,
                         "done",
                     )
                     ProgressMeter.update!(
-                        progress_bar,
+                        prog_bar,
                         global_problem_execution_count;
                         showvalues = [
                             (:Step, step),
@@ -1108,32 +1113,29 @@ function _execute!(
     return nothing
 end
 
-function _initialize_stage_storage!(
+function _initialize_problem_storage!(
     sim::Simulation,
     store,
     cache_size_mib,
     min_cache_flush_size_mib,
 )
-    sequence = sim.sequence
-    execution_order = sequence.execution_order
+    sequence = get_sequence(sim)
+    execution_order = get_execution_order(sequence)
     executions_by_problem = sequence.executions_by_problem
-    horizons = sequence.horizons
     intervals = sequence.intervals
 
     problems = OrderedDict{Symbol, SimulationStoreProblemParams}()
     problem_reqs = Dict{Symbol, SimulationStoreProblemRequirements}()
-    problem_order = get_problem_names(sim)
     num_param_containers = 0
     rules = CacheFlushRules(
         max_size = cache_size_mib * MiB,
         min_flush_size = min_cache_flush_size_mib,
     )
-    for stage_name in stage_order
-        num_executions = executions_by_stage[stage_name]
-        horizon = horizons[stage_name]
-        stage = sim.stages[stage_name]
-        optimization_container = get_optimization_container(stage)
-        duals = get_constraint_duals(optimization_container.settings)
+    for (problem_name, problem)  in get_problems(sim)
+        num_executions = executions_by_problem[problem_name]
+        horizon = get_horizon(problem)
+        optimization_container = get_optimization_container(problem)
+        duals = get_constraint_duals(get_settings(optimization_container))
         parameters = get_parameters(optimization_container)
         variables = get_variables(optimization_container)
         num_rows = num_executions * get_steps(sim)
