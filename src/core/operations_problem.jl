@@ -202,7 +202,7 @@ function OperationsProblem(
     return OperationsProblem{GenericOpProblem}(template, sys, jump_model; kwargs...)
 end
 
-# Default implemenations of getter/setter functions for OperationsProblem.
+# Default implementations of getter/setter functions for OperationsProblem.
 is_built(problem::OperationsProblem) = problem.internal.status == BuildStatus.BUILT
 is_empty(problem::OperationsProblem) = problem.internal.status == BuildStatus.EMPTY
 warm_start_enabled(problem::OperationsProblem) =
