@@ -325,9 +325,9 @@ function build_pre_step!(problem::OperationsProblem)
         system = get_system(problem)
         if built_for_simulation(problem)
             resolution = get_resolution(problem)
-            interval = PSY.get_forecast_interval(system)
+            interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
             end_of_interval_step = Int(interval / resolution)
-            get_simulation_info(problem).end_of_interval_step = Int(interval / resolution)
+            get_simulation_info(problem).end_of_interval_step = end_of_interval_step
         end
         @info "Initializing Optimization Container"
         template = get_template(problem)
