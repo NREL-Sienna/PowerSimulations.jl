@@ -218,14 +218,14 @@ function OperationsProblem(
     filename::AbstractString;
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
-    kwargs...
+    kwargs...,
 )
     return deserialize_problem(
         OperationsProblem,
         filename;
         jump_model = jump_model,
         optimizer = optimizer,
-        kwargs...
+        kwargs...,
     )
 end
 
@@ -343,7 +343,11 @@ function build_pre_step!(problem::OperationsProblem)
     return
 end
 
-function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serialize::Bool, logger)
+function _build!(
+    problem::OperationsProblem{<:AbstractOperationsProblem},
+    serialize::Bool,
+    logger,
+)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
         try
             Logging.with_logger(logger) do
@@ -371,7 +375,7 @@ function build!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
-    serialize = true
+    serialize = true,
 )
     !ispath(output_dir) && throw(ArgumentError("$output_dir does not exist"))
     set_output_dir!(problem, output_dir)
@@ -449,12 +453,19 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
     end
     sys = get(kwargs, :system, nothing)
     settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
-
     if sys === nothing
         if obj.sys === nothing && !settings[:sys_to_file]
-            throw(IS.DataFormatError("Operations Problem System was not serialized and a System has not been specified."))
-        else !isfile(obj.sys)
-            throw(IS.DataFormatError("PowerSystems.System file $(system_file) does not exist"))
+            throw(
+                IS.DataFormatError(
+                    "Operations Problem System was not serialized and a System has not been specified.",
+                ),
+            )
+        elseif !ispath(obj.sys)
+            throw(
+                IS.DataFormatError(
+                    "PowerSystems.System file $(obj.sys) does not exist",
+                ),
+            )
         end
         sys = PSY.System(obj.sys)
     end

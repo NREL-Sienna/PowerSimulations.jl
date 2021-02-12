@@ -519,7 +519,6 @@ function _populate_caches!(sim::Simulation, problem_name::Symbol)
     return
 end
 
-
 function _check_folder(sim::Simulation)
     folder = get_simulation_folder(sim)
     !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
@@ -555,19 +554,19 @@ function _build!(sim::Simulation, serialize::Bool, logger)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Assign FeedForward" begin
-    for (ix, (problem_name, problem)) in enumerate(get_problems(sim))
-        problem_interval = get_interval(sequence, problem_name)
-        # Note to devs: Here we are setting the number of operations problem executions we
-        # will see for every step of the simulation
-        if ix == 1
-            set_executions!(problem, 1)
-        else
-            step_resolution = get_step_resolution(sequence)
-            get_interval(sequence, problem_name)
-            set_executions!(problem, Int(step_resolution / problem_interval))
+        for (ix, (problem_name, problem)) in enumerate(get_problems(sim))
+            problem_interval = get_interval(sequence, problem_name)
+            # Note to devs: Here we are setting the number of operations problem executions we
+            # will see for every step of the simulation
+            if ix == 1
+                set_executions!(problem, 1)
+            else
+                step_resolution = get_step_resolution(sequence)
+                get_interval(sequence, problem_name)
+                set_executions!(problem, Int(step_resolution / problem_interval))
+            end
+            _attach_feedforward!(sim, problem_name)
         end
-        _attach_feedforward!(sim, problem_name)
-    end
         _assign_feedforward_chronologies(sim)
     end
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Check Steps" begin
