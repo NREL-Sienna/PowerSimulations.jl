@@ -505,6 +505,7 @@ function write_model_results!(store, problem, timestamp; exports = nothing)
         export_params = nothing
     end
 
+    # This line should only be called if the problem is exporting duals. Otherwise ignore.
     if is_milp(get_optimization_container(problem))
         @warn "Problem $(get_simulation_info(problem).name) is a MILP, duals can't be exported"
     else
