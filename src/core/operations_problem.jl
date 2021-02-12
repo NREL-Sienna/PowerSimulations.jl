@@ -767,7 +767,7 @@ end
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(problem::OperationsProblem)
     var_index = Vector{Tuple{Symbol, Int, Int}}()
-     optimization_container = get_optimization_container(problem)
+    optimization_container = get_optimization_container(problem)
     for (key, value) in get_variables(optimization_container)
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)

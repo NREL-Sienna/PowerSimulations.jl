@@ -262,8 +262,9 @@ function add_device_services!(
 }
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.component_type)
-            services =
-                (s for s in PSY.get_services(device) if isa(s, service_model.component_type))
+            services = (
+                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
+            )
             @assert !isempty(services)
             include_service!(constraint_info, services, service_model)
         end
@@ -279,8 +280,9 @@ function add_device_services!(
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.component_type)
-            services =
-                (s for s in PSY.get_services(device) if isa(s, service_model.component_type))
+            services = (
+                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
+            )
             @assert !isempty(services)
             if service_model.component_type <: PSY.Reserve{PSY.ReserveDown}
                 for service in services

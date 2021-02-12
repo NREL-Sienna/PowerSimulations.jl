@@ -51,7 +51,8 @@
     )
     build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test haskey(PSI.get_optimization_container(op_problem).JuMPmodel.ext, :PSI_Testing)
-    @test (:params in keys(PSI.get_optimization_container(op_problem).JuMPmodel.ext)) == true
+    @test (:params in keys(PSI.get_optimization_container(op_problem).JuMPmodel.ext)) ==
+          true
 end
 
 @testset "Set optimizer at solve call" begin
@@ -70,7 +71,8 @@ end
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     op_problem = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     optimization_container = PSI.get_optimization_container(op_problem)
     MOIU.attach_optimizer(optimization_container.JuMPmodel)
     constraint_indices = get_all_constraint_index(op_problem)
@@ -106,7 +108,6 @@ end
 #     _test_html_print_methods(list)
 # end
 
-
 @testset "Operation Model Solve with Slacks" begin
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
@@ -119,7 +120,8 @@ end
             optimizer = ipopt_optimizer,
             PTDF = PTDF(c_sys5_re),
         )
-        @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+        @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         @test solve!(op_problem) == RunStatus.SUCCESSFUL
     end
 end
@@ -130,8 +132,13 @@ end
     moi_tests(op_problem_ed, false, 120, 0, 120, 120, 24, false)
     op_problem_uc = UnitCommitmentProblem(c_sys5; output_dir = mktempdir())
     moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
-    ED_output = run_economic_dispatch(c_sys5; output_dir = mktempdir(), optimizer = fast_lp_optimizer)
-    UC_output = run_unit_commitment(c_sys5; output_dir = mktempdir(), optimizer = fast_lp_optimizer)
+    ED_output = run_economic_dispatch(
+        c_sys5;
+        output_dir = mktempdir(),
+        optimizer = fast_lp_optimizer,
+    )
+    UC_output =
+        run_unit_commitment(c_sys5; output_dir = mktempdir(), optimizer = fast_lp_optimizer)
     @test ED_output == RunStatus.SUCCESSFUL
     @test UC_output == RunStatus.SUCCESSFUL
 end
@@ -154,7 +161,8 @@ end
             PTDF = ptdf,
             constraint_duals = dual_constraint[ix],
         )
-        @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+        @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         @test solve!(op_problem) == RunStatus.SUCCESSFUL
 
         # These tests require results to be working
@@ -177,9 +185,10 @@ end
         sys;
         optimizer = OSQP_optimizer,
         use_parameters = true,
-        constraint_duals = [:CopperPlateBalance]
+        constraint_duals = [:CopperPlateBalance],
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     @test solve!(op_problem) == RunStatus.SUCCESSFUL
 
     optimization_container = PSI.get_optimization_container(op_problem)
@@ -197,7 +206,7 @@ end
     for load in get_components(PowerLoad, system)
         name = get_name(load)
         vals = get_time_series_values(Deterministic, load, "max_active_power")
-        @test all([-1*x == get_max_active_power(load) for x in param_mult[!, name]])
+        @test all([-1 * x == get_max_active_power(load) for x in param_mult[!, name]])
         @test all(vals .== param_vals[!, name])
     end
 end

@@ -183,7 +183,7 @@ function optimization_container_init!(
             )
         end
     else
-       set_horizon!(settings, 1)
+        set_horizon!(settings, 1)
     end
 
     ini_cond_container = InitialConditions(use_parameters = use_parameters)

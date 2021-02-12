@@ -1,5 +1,4 @@
 
-
 struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
 struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
 struct AGCReserveDeployment <: PowerSimulationsOperationsProblem end
