@@ -341,21 +341,7 @@ function build_pre_step!(problem::OperationsProblem)
     return
 end
 
-"""Implementation of build for any OperationsProblem"""
-function build!(
-    problem::OperationsProblem{<:AbstractOperationsProblem};
-    output_dir::String,
-    console_level = Logging.Error,
-    file_level = Logging.Info,
-    enable_timer_outputs = true,
-)
-    if !ispath(output_dir)
-        throw(ArgumentError("$output_dir does not exist"))
-    end
-    set_output_dir!(problem, output_dir)
-    problem.internal.console_level = console_level
-    problem.internal.file_level = file_level
-    logger = configure_logging(problem.internal, "w")
+function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, logger)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
         try
             Logging.with_logger(logger) do
@@ -364,9 +350,7 @@ function build!(
                 serialize_problem(problem)
                 serialize_optimization_model(problem)
                 set_status!(problem, BuildStatus.BUILT)
-                if !built_for_simulation(problem)
-                    @info "\n$(BUILD_PROBLEMS_TIMER)\n"
-                end
+                !built_for_simulation(problem) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             end
         catch e
             set_status!(problem, BuildStatus.FAILED)
@@ -374,7 +358,25 @@ function build!(
             @error "Operation Problem Build Failed" exception = e, bt
         end
     end
+    flush(logger)
     return get_status(problem)
+end
+
+"""Implementation of build for any OperationsProblem"""
+function build!(
+    problem::OperationsProblem{<:AbstractOperationsProblem};
+    output_dir::String,
+    console_level = Logging.Error,
+    file_level = Logging.Info,
+    disable_timer_outputs = false,
+)
+    !ispath(output_dir) && throw(ArgumentError("$output_dir does not exist"))
+    set_output_dir!(problem, output_dir)
+    set_console_level!(problem, console_level)
+    set_file_level!(problem, file_level)
+    logger = configure_logging(problem.internal, "w")
+    disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
+    return _build!(problem, logger)
 end
 
 """

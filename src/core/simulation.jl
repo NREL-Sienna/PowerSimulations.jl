@@ -518,18 +518,14 @@ function _populate_caches!(sim::Simulation, problem_name::Symbol)
     return
 end
 
-function _build_problems!(sim::Simulation)
+function _build_problems!(sim::Simulation, logger)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
         @info("Building problem $(problem_number)-$(problem_name)")
         problem_interval = get_interval(get_sequence(sim), problem_name)
         initial_time = get_initial_time(sim)
         set_initial_time!(problem, initial_time)
-        problem_build_status = build!(
-            problem;
-            output_dir = get_simulation_dir(sim),
-            console_level = get_console_level(sim),
-            file_level = get_file_level(sim),
-        )
+        set_output_dir!(problem, get_simulation_dir(sim))
+        problem_build_status = _build!(problem, logger)
         if problem_build_status != BuildStatus.BUILT
             error("Problem $(problem_name) failed to build succesfully")
         end
@@ -549,6 +545,40 @@ function _check_folder(sim::Simulation)
     catch e
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
+end
+
+function _build!(sim::Simulation, serialize::Bool, logger)
+    set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
+    problem_initial_times = _get_simulation_initial_times!(sim)
+    sequence = get_sequence(sim)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Assign FeedForward" begin
+    for (ix, (problem_name, problem)) in enumerate(get_problems(sim))
+        problem_interval = get_interval(sequence, problem_name)
+        # Note to devs: Here we are setting the number of operations problem executions we
+        # will see for every step of the simulation
+        if ix == 1
+            set_executions!(problem, 1)
+        else
+            step_resolution = get_step_resolution(sequence)
+            get_interval(sequence, problem_name)
+            set_executions!(problem, Int(step_resolution / problem_interval))
+        end
+        _attach_feedforward!(sim, problem_name)
+    end
+        _assign_feedforward_chronologies(sim)
+    end
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Check Steps" begin
+        _check_steps(sim, problem_initial_times)
+    end
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problems" begin
+        _build_problems!(sim, logger)
+    end
+    if serialize
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
+            serialize_simulation(sim)
+        end
+    end
+    return
 end
 
 """
@@ -597,10 +627,9 @@ function build!(
         register_recorders!(sim.internal, file_mode)
         try
             Logging.with_logger(logger) do
-                _build!(sim, serialize)
+                _build!(sim, serialize, logger)
                 set_simulation_build_status!(sim, BuildStatus.BUILT)
                 set_simulation_status!(sim, RunStatus.READY)
-                @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             end
         catch e
             set_simulation_build_status!(sim, BuildStatus.FAILED)
@@ -611,35 +640,8 @@ function build!(
             close(logger)
         end
     end
+    @info "\n$(BUILD_PROBLEMS_TIMER)\n"
     return get_simulation_build_status(sim)
-end
-
-function _build!(sim::Simulation, serialize::Bool)
-    set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
-    problem_initial_times = _get_simulation_initial_times!(sim)
-    sequence = get_sequence(sim)
-    for (ix, (problem_name, problem)) in enumerate(get_problems(sim))
-        problem_interval = get_interval(sequence, problem_name)
-        # Note to devs: Here we are setting the number of operations problem executions we
-        # will see for every step of the simulation
-        if ix == 1
-            set_executions!(problem, 1)
-        else
-            step_resolution = get_step_resolution(sequence)
-            get_interval(sequence, problem_name)
-            set_executions!(problem, Int(step_resolution / problem_interval))
-        end
-        _attach_feedforward!(sim, problem_name)
-    end
-    _assign_feedforward_chronologies(sim)
-    _check_steps(sim, problem_initial_times)
-    _build_problems!(sim)
-    if serialize
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
-            serialize_simulation(sim)
-        end
-    end
-    return
 end
 
 # Defined here because it requires problem and Simulation to defined
