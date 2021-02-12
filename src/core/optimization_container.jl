@@ -166,11 +166,10 @@ function optimization_container_init!(
         set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
     end
 
-    if get_horizon(settings) == UNSET_HORIZON
-        set_horizon!(settings, PSY.get_forecast_horizon(sys))
-    end
-
     if use_forecasts
+        if get_horizon(settings) == UNSET_HORIZON
+            set_horizon!(settings, PSY.get_forecast_horizon(sys))
+        end
         total_number_of_devices = length(get_available_components(PSY.Device, sys))
         optimization_container.time_steps = 1:get_horizon(settings)
         # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
@@ -183,7 +182,10 @@ function optimization_container_init!(
                 "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
             )
         end
+    else
+       set_horizon!(settings, 1)
     end
+
     ini_cond_container = InitialConditions(use_parameters = use_parameters)
     optimization_container.initial_conditions = ini_cond_container
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
