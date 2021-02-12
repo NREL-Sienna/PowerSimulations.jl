@@ -636,7 +636,7 @@ function _build!(sim::Simulation, serialize::Bool)
     _build_problems!(sim)
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
-            # serialize_simulation(sim)
+            serialize_simulation(sim)
         end
     end
     return
@@ -1269,7 +1269,7 @@ end
 
 struct SimulationSerializationWrapper
     steps::Int
-    problems::Dict{String, ProblemSerializationWrapper}
+    problems::Dict{Symbol, ProblemSerializationWrapper}
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
@@ -1295,7 +1295,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     else
         directory = path
     end
-    problems = Dict{String, ProblemSerializationWrapper}()
+    problems = Dict{Symbol, ProblemSerializationWrapper}()
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
@@ -1367,7 +1367,7 @@ function deserialize_model(
             )
         end
 
-        problems = Dict{String, OperationsProblem{<:AbstractOperationsProblem}}()
+        problems = Dict{Symbol, OperationsProblem{<:AbstractOperationsProblem}}()
         for (key, wrapper) in obj.problems
             sys_filename = wrapper.sys
             if !ispath(sys_filename)
@@ -1395,7 +1395,7 @@ function deserialize_model(
         sim = Simulation(;
             name = obj.name,
             steps = obj.steps,
-            problems = problems,
+            problems = SimulationProblems(problems...),
             problems_sequence = obj.sequence,
             simulation_folder = obj.simulation_folder,
         )
