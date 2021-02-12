@@ -73,18 +73,19 @@ function restore_from_copy(
     settings::Settings;
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
 )
-    vals = []
+    vals = Dict{Symbol, Any}()
     for name in fieldnames(Settings)
         if name == :optimizer
-            val = optimizer
+            vals[name] = optimizer
+        elseif name == :ext
+            continue
         else
             val = getfield(settings, name)
+            vals[name] = isa(val, Base.RefValue) ? val[] : val
         end
-
-        push!(vals, val)
     end
 
-    return Settings(vals...)
+    return vals
 end
 
 get_horizon(settings::Settings) = settings.horizon[]

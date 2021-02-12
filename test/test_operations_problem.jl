@@ -6,7 +6,6 @@
 
     @test_throws MethodError OperationsProblem(template, c_sys5; bad_kwarg = 10)
 
-    test_folder = mkpath(joinpath(test_path, randstring()))
     op_problem = OperationsProblem(
         template,
         c_sys5;
@@ -211,50 +210,26 @@ end
     end
 end
 
-#= Test require serialization to be enabled
-
-function test_op_problem_write_functions(file_path)
-    duals = [:CopperPlateBalance]
-    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
+@testset "Test Serialization, deserialization and write optimizer problem" begin
+    path = mktempdir(cleanup = true)
+    sys = PSB.build_system(PSITestSystems, "c_sys5_re")
+    template = get_template_dispatch_with_network(CopperPlatePowerModel)
     op_problem = OperationsProblem(
-        MockOperationProblem,
         template,
-        c_sys5_re;
+        sys;
         optimizer = OSQP_optimizer,
         use_parameters = true,
-        constraint_duals = duals,
+        constraint_duals = [:CopperPlateBalance],
     )
-    res = solve!(op_problem)
+    @test build!(op_problem; output_dir = path) ==
+          PSI.BuildStatus.BUILT
+    @test solve!(op_problem) == RunStatus.SUCCESSFUL
 
-    @testset "Test Serialization, deserialization and write optimizer problem" begin
-        path = mkpath(joinpath(file_path, "op_problem"))
-        file = joinpath(path, "op_problem.json")
-        export_operations_model(op_problem, file)
-        filename = joinpath(path, "test_op_problem.bin")
-        serialize_model(op_problem, filename)
-        file_list = sort!(collect(readdir(path)))
-        @test "op_problem.json" in file_list
-        @test "test_op_problem.bin" in file_list
-        ED2 = OperationsProblem(filename, optimizer = OSQP_optimizer)
-        psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
-    end
-
-    @testset "Test write_to_csv results functions" begin
-        results_path = mkdir(joinpath(file_path, "results"))
-        write_to_CSV(res, results_path)
-        file_list = sort!(collect(readdir(results_path)))
-    end
+    file_list = sort!(collect(readdir(path)))
+    @test "OptimizationModel.json" in file_list
+    @test "OperationProblem.bin" in file_list
+    filename = joinpath(path, "OperationProblem.bin")
+    ED2 = OperationsProblem(filename, optimizer = OSQP_optimizer)
+    build!(ED2, output_dir = path)
+    psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 end
-
-@testset "Operation write to disk functions" begin
-    folder_path = mkpath(joinpath(pwd(), "test_writing"))
-    try
-        test_op_problem_write_functions(folder_path)
-    finally
-        @info("removing test files")
-        rm(folder_path, recursive = true)
-    end
-end
-
-=#

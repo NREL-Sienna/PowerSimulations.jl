@@ -202,6 +202,31 @@ function OperationsProblem(
     return OperationsProblem{GenericOpProblem}(template, sys, jump_model; kwargs...)
 end
 
+"""
+    OperationsProblem(filename::AbstractString)
+
+Construct an OperationsProblem from a serialized file.
+
+# Arguments
+- `filename::AbstractString`: path to serialized file
+- `jump_model::Union{Nothing, JuMP.AbstractModel}` = nothing: The JuMP model does not get
+   serialized. Callers should pass whatever they passed to the original problem.
+- `optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes}` = nothing: The optimizer does
+   not get serialized. Callers should pass whatever they passed to the original problem.
+"""
+function OperationsProblem(
+    filename::AbstractString;
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+)
+    return deserialize_problem(
+        OperationsProblem,
+        filename;
+        jump_model = jump_model,
+        optimizer = optimizer,
+    )
+end
+
 # Default implementations of getter/setter functions for OperationsProblem.
 is_built(problem::OperationsProblem) = problem.internal.status == BuildStatus.BUILT
 is_empty(problem::OperationsProblem) = problem.internal.status == BuildStatus.EMPTY
@@ -238,9 +263,8 @@ get_simulation_number(problem::OperationsProblem) = problem.internal.simulation_
 get_status(problem::OperationsProblem) = problem.internal.status
 get_system(problem::OperationsProblem) = problem.sys
 get_template(problem::OperationsProblem) = problem.template
-get_write_path(problem::OperationsProblem) = problem.internal.write_path
-get_variables(problem::OperationsProblem) =
-    get_internal(problem).optimization_container.variables
+get_output_dir(problem::OperationsProblem) = problem.internal.output_dir
+get_variables(problem::OperationsProblem) = get_optimization_container(problem).variables
 
 function get_initial_conditions(
     problem::OperationsProblem,
@@ -337,8 +361,8 @@ function build!(
             Logging.with_logger(logger) do
                 build_pre_step!(problem)
                 problem_build!(problem)
-                #serialize_problem(problem, "operations_problem")
-                #serialize_optimization_model(problem)
+                serialize_problem(problem)
+                serialize_optimization_model(problem)
                 set_status!(problem, BuildStatus.BUILT)
                 if !built_for_simulation(problem)
                     @info "\n$(BUILD_PROBLEMS_TIMER)\n"
@@ -368,28 +392,43 @@ serialize_optimization_model(::OperationsProblem) = nothing
 serialize_problem(::OperationsProblem) = nothing
 
 function serialize_optimization_model(
-    problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    op_problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
 )
-    serialize_optimization_model(get_optimization_container(problem), path)
+    name = get_name(op_problem)
+    problem_name = isempty(name) ? "OptimizationModel" : "$(name)_OptimizationModel"
+    json_file_name = "$problem_name.json"
+    json_file_name = joinpath(get_output_dir(op_problem), json_file_name)
+    serialize_optimization_model(get_optimization_container(op_problem), json_file_name)
+end
+
+
+struct OperationsProblemSerializationWrapper
+    template::OperationsProblemTemplate
+    sys::String
+    settings::Settings
+    op_problem_type::DataType
 end
 
 function serialize_problem(
     op_problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
-    filename::AbstractString,
 )
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
-    sys_filename = "$(basename(filename))-system-$(IS.get_uuid(op_problem.sys)).json"
-    sys_filename = joinpath(dirname(filename), sys_filename)
+    problem_name = isempty(get_name(op_problem)) ? "OperationProblem" : get_name(op_problem)
+    sys_filename = "$(problem_name)-system-$(IS.get_uuid(op_problem.sys)).json"
+    sys_filename = joinpath(get_output_dir(op_problem), sys_filename)
     PSY.to_json(op_problem.sys, sys_filename)
+    optimization_container = get_optimization_container(op_problem)
     obj = OperationsProblemSerializationWrapper(
         op_problem.template,
         sys_filename,
-        op_problem.psi_container.settings_copy,
+        optimization_container.settings_copy,
         typeof(op_problem),
     )
-    Serialization.serialize(filename, obj)
-    @info "Serialized OperationsProblem to" filename
+    bin_file_name = "$problem_name.bin"
+    bin_file_name = joinpath(get_output_dir(op_problem), bin_file_name)
+    Serialization.serialize(bin_file_name, obj)
+    @info "Serialized OperationsProblem to" bin_file_name
 end
 
 function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString; kwargs...)
@@ -402,20 +441,12 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
         throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
     end
     sys = PSY.System(obj.sys)
-
+    settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
     return obj.op_problem_type(
         obj.template,
         sys,
-        kwargs[:jump_model],
-        restore_from_copy(obj.settings; optimizer = kwargs[:optimizer]),
-    )
-end
-
-struct OperationsProblemSerializationWrapper
-    template::OperationsProblemTemplate
-    sys::String
-    settings::Settings
-    op_problem_type::DataType
+        kwargs[:jump_model];
+        settings...)
 end
 
 function _psi_solve_optimization_problem(problem::OperationsProblem; optimizer = nothing)
