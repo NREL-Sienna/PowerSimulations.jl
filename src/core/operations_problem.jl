@@ -221,13 +221,7 @@ get_horizon(problem::OperationsProblem) = get_horizon(get_settings(problem))
 get_internal(problem::OperationsProblem) = problem.internal
 get_jump_model(problem::OperationsProblem) =
     get_internal(problem).optimization_container.JuMPmodel
-function get_name(problem::OperationsProblem)
-    name = ""
-    if built_for_simulation(problem)
-        name = get_simulation_info(problem).name
-    end
-    return name
-end
+get_name(x::OperationsProblem) = built_for_simulation(x) ? get_simulation_info(x).name : ""
 
 get_optimization_container(problem::OperationsProblem) =
     problem.internal.optimization_container
@@ -257,9 +251,9 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(problem), key)
 end
 
-set_console_level(problem::OperationsProblem, val) =
+set_console_level!(problem::OperationsProblem, val) =
     get_internal(problem).console_level = val
-set_file_level(problem::OperationsProblem, val) = get_internal(problem).file_level = val
+set_file_level!(problem::OperationsProblem, val) = get_internal(problem).file_level = val
 set_executions!(problem::OperationsProblem, val::Int) =
     problem.internal.simulation_info.executions = val
 set_execution_count!(problem::OperationsProblem, val::Int) =
@@ -351,8 +345,9 @@ function build!(
                 end
             end
         catch e
-            @error "Operation Problem Build Failed" exception = e
             set_status!(problem, BuildStatus.FAILED)
+            bt = catch_backtrace()
+            @error "Operation Problem Build Failed" exception = e, bt
         end
     end
     return get_status(problem)
@@ -465,7 +460,7 @@ function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem};
 end
 
 """
-Default solve method fo an operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
+Default solve method foran operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
 
 # Arguments
 - `step::Int`: Simulation Step
