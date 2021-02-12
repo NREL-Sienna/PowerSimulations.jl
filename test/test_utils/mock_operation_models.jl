@@ -71,7 +71,7 @@ function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
     )
 end
 
-function create_test_problems(
+function create_simulation_build_test_problems(
     template_uc = get_template_standard_uc_simulation(),
     template_ed = get_template_nomin_ed_simulation(),
     sys_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"),
