@@ -401,7 +401,6 @@ function serialize_optimization_model(
     serialize_optimization_model(get_optimization_container(op_problem), json_file_name)
 end
 
-
 struct OperationsProblemSerializationWrapper
     template::OperationsProblemTemplate
     sys::String
@@ -442,11 +441,7 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
     end
     sys = PSY.System(obj.sys)
     settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
-    return obj.op_problem_type(
-        obj.template,
-        sys,
-        kwargs[:jump_model];
-        settings...)
+    return obj.op_problem_type(obj.template, sys, kwargs[:jump_model]; settings...)
 end
 
 function _psi_solve_optimization_problem(problem::OperationsProblem; optimizer = nothing)

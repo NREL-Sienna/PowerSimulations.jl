@@ -236,7 +236,11 @@ mutable struct Simulation
     )
         for name in PSI.get_problem_names(problems)
             if !built_for_simulation(problems[name])
-                throw(IS.ConflictingInputsError("problem $(name) is not part of any Simulation"))
+                throw(
+                    IS.ConflictingInputsError(
+                        "problem $(name) is not part of any Simulation",
+                    ),
+                )
             end
             if problems[name].internal.simulation_info.sequence_uuid != sequence.uuid
                 throw(

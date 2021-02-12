@@ -221,8 +221,7 @@ end
         use_parameters = true,
         constraint_duals = [:CopperPlateBalance],
     )
-    @test build!(op_problem; output_dir = path) ==
-          PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = path) == PSI.BuildStatus.BUILT
     @test solve!(op_problem) == RunStatus.SUCCESSFUL
 
     file_list = sort!(collect(readdir(path)))
