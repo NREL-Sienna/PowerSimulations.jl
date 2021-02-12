@@ -1,6 +1,6 @@
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
-    alien_files = [f for f in folder_files if f ∉ KNOWN_PATHS]
+    alien_files = [f for f in folder_files if f ∉ KNOWN_SIMULATION_PATHS]
     if isempty(alien_files)
         return true
     end
