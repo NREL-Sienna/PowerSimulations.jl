@@ -93,34 +93,34 @@ end
     @test_throws UndefKeywordError sim = Simulation(name = "test", steps = 1)
 
     sim = Simulation(
-            name = "test",
-            steps = 1,
-            problems = problems,
-            sequence = sequence,
-            simulation_folder = mktempdir(cleanup = true),
-            initial_time = Dates.now(),
-        )
+        name = "test",
+        steps = 1,
+        problems = problems,
+        sequence = sequence,
+        simulation_folder = mktempdir(cleanup = true),
+        initial_time = Dates.now(),
+    )
 
     @test_throws IS.ConflictingInputsError build!(sim)
 
     sim = Simulation(
-            name = "fake_path",
-            steps = 1,
-            problems = problems,
-            sequence = sequence,
-            simulation_folder = "fake_path",
-        )
+        name = "fake_path",
+        steps = 1,
+        problems = problems,
+        sequence = sequence,
+        simulation_folder = "fake_path",
+    )
 
     @test_throws IS.ConflictingInputsError PSI._check_folder(sim)
 
     sequence.feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30))
     sim = Simulation(
-            name = "look_ahead",
-            steps = 1,
-            problems = problems,
-            sequence = sequence,
-            simulation_folder = mktempdir(cleanup = true),
-        )
+        name = "look_ahead",
+        steps = 1,
+        problems = problems,
+        sequence = sequence,
+        simulation_folder = mktempdir(cleanup = true),
+    )
     @test_throws IS.ConflictingInputsError PSI._check_feedforward_chronologies(sim)
 
     sequence.feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24))

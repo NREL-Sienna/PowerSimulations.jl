@@ -22,7 +22,6 @@
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
-
 @testset "All stages executed - No Cache" begin
     duals = [:CopperPlateBalance]
     template_uc = get_template_basic_uc_simulation()
@@ -31,15 +30,19 @@ end
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     problems = SimulationProblems(
-        UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer,
-        balance_slack_variables = true),
+        UC = OperationsProblem(
+            template_uc,
+            c_sys5_hy_uc;
+            optimizer = GLPK_optimizer,
+            balance_slack_variables = true,
+        ),
         ED = OperationsProblem(
             template_ed,
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,
             constraint_duals = duals,
             # Needed do to inconsistency in the test data
-            balance_slack_variables = true
+            balance_slack_variables = true,
         ),
     )
 
@@ -76,18 +79,12 @@ end
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
-
-
 @testset "Simulation Single Stage with Cache" begin
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     template = get_template_hydro_st_ed()
     problems = SimulationProblems(
-        ED = OperationsProblem(
-            template,
-            c_sys5_hy_ed;
-            optimizer = ipopt_optimizer,
-        ),
+        ED = OperationsProblem(template, c_sys5_hy_ed; optimizer = ipopt_optimizer),
     )
 
     single_sequence = SimulationSequence(
@@ -118,11 +115,7 @@ end
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     problems = SimulationProblems(
         UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
-        ED = OperationsProblem(
-            template_ed,
-            c_sys5_hy_ed;
-            optimizer = GLPK_optimizer,
-        ),
+        ED = OperationsProblem(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),
     )
 
     sequence_cache = SimulationSequence(
@@ -161,7 +154,6 @@ end
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
-
 @testset "Test Recedin Horizon Chronology" begin
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
@@ -174,7 +166,7 @@ end
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,
             # Added because of data issues
-            balance_slack_variables = true
+            balance_slack_variables = true,
         ),
     )
 
@@ -208,54 +200,59 @@ end
 end
 
 @testset "Test Simulation Utils" begin
-        template_uc = get_template_basic_uc_simulation()
-        template_ed = get_template_nomin_ed_simulation()
-        set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
-        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
-        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-        problems = SimulationProblems(
-            UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer, constraint_duals = [:CopperPlateBalance]),
-            ED = OperationsProblem(
-                template_ed,
-                c_sys5_hy_ed;
-                optimizer = ipopt_optimizer,
-                # Added because of data issues
-                balance_slack_variables = true,
-                constraint_duals = [:CopperPlateBalance],
-            ),
-        )
+    template_uc = get_template_basic_uc_simulation()
+    template_ed = get_template_nomin_ed_simulation()
+    set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    problems = SimulationProblems(
+        UC = OperationsProblem(
+            template_uc,
+            c_sys5_hy_uc;
+            optimizer = GLPK_optimizer,
+            constraint_duals = [:CopperPlateBalance],
+        ),
+        ED = OperationsProblem(
+            template_ed,
+            c_sys5_hy_ed;
+            optimizer = ipopt_optimizer,
+            # Added because of data issues
+            balance_slack_variables = true,
+            constraint_duals = [:CopperPlateBalance],
+        ),
+    )
 
-        sequence = SimulationSequence(
-            problems = problems,
-            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-            intervals = Dict(
-                "UC" => (Hour(24), Consecutive()),
-                "ED" => (Hour(1), Consecutive()),
+    sequence = SimulationSequence(
+        problems = problems,
+        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+        intervals = Dict(
+            "UC" => (Hour(24), Consecutive()),
+            "ED" => (Hour(1), Consecutive()),
+        ),
+        feedforward = Dict(
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+                binary_source_problem = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
-            feedforward = Dict(
-                ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                    binary_source_problem = PSI.ON,
-                    affected_variables = [PSI.ACTIVE_POWER],
-                ),
-                ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_source_problem = PSI.ACTIVE_POWER,
-                    affected_variables = [PSI.ACTIVE_POWER],
-                ),
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+                variable_source_problem = PSI.ACTIVE_POWER,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
-            ini_cond_chronology = InterProblemChronology(),
-        )
-        sim = Simulation(
-            name = "aggregation",
-            steps = 2,
-            problems = problems,
-            sequence = sequence,
-            simulation_folder = mktempdir(cleanup = true),
-        )
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+    sim = Simulation(
+        name = "aggregation",
+        steps = 2,
+        problems = problems,
+        sequence = sequence,
+        simulation_folder = mktempdir(cleanup = true),
+    )
 
-        build_out = build!(sim; console_level = Logging.Info)
-        @test build_out == PSI.BuildStatus.BUILT
-        execute_out = execute!(sim)
-        @test execute_out == PSI.RunStatus.SUCCESSFUL
+    build_out = build!(sim; console_level = Logging.Info)
+    @test build_out == PSI.BuildStatus.BUILT
+    execute_out = execute!(sim)
+    @test execute_out == PSI.RunStatus.SUCCESSFUL
 
     @testset "Verify simulation events" begin
         file = joinpath(PSI.get_simulation_dir(sim), "recorder", "simulation.log")
