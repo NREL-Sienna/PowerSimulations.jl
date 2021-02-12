@@ -51,7 +51,7 @@ function SimulationInternal(
     sim_files_dir = joinpath(simulation_dir, "simulation_files")
     store_dir = joinpath(simulation_dir, "data_store")
     logs_dir = joinpath(simulation_dir, "logs")
-    models_dir = joinpath(simulation_dir, "models_json")
+    models_dir = joinpath(simulation_dir, "problems")
     recorder_dir = joinpath(simulation_dir, "recorder")
     results_dir = joinpath(simulation_dir, "results")
 
@@ -288,6 +288,7 @@ get_store_dir(sim::Simulation) = sim.internal.store_dir
 get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
 get_results_dir(sim::Simulation) = sim.internal.results_dir
+get_problems_dir(sim::Simulation) = sim.internal.models_dir
 
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
@@ -518,23 +519,6 @@ function _populate_caches!(sim::Simulation, problem_name::Symbol)
     return
 end
 
-function _build_problems!(sim::Simulation, logger)
-    for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        @info("Building problem $(problem_number)-$(problem_name)")
-        problem_interval = get_interval(get_sequence(sim), problem_name)
-        initial_time = get_initial_time(sim)
-        set_initial_time!(problem, initial_time)
-        set_output_dir!(problem, get_simulation_dir(sim))
-        problem_build_status = _build!(problem, logger)
-        if problem_build_status != BuildStatus.BUILT
-            error("Problem $(problem_name) failed to build succesfully")
-        end
-        _populate_caches!(sim, problem_name)
-        sim.internal.date_ref[problem_number] = initial_time
-    end
-    _check_required_ini_cond_caches(sim)
-    return
-end
 
 function _check_folder(sim::Simulation)
     folder = get_simulation_folder(sim)
@@ -545,6 +529,25 @@ function _check_folder(sim::Simulation)
     catch e
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
+end
+
+function _build_problems!(sim::Simulation, serialize, logger)
+    for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
+        @info("Building problem $(problem_number)-$(problem_name)")
+        problem_interval = get_interval(get_sequence(sim), problem_name)
+        initial_time = get_initial_time(sim)
+        set_initial_time!(problem, initial_time)
+        output_dir = joinpath(get_problems_dir(sim))
+        set_output_dir!(problem, output_dir)
+        problem_build_status = _build!(problem, serialize, logger)
+        if problem_build_status != BuildStatus.BUILT
+            error("Problem $(problem_name) failed to build succesfully")
+        end
+        _populate_caches!(sim, problem_name)
+        sim.internal.date_ref[problem_number] = initial_time
+    end
+    _check_required_ini_cond_caches(sim)
+    return
 end
 
 function _build!(sim::Simulation, serialize::Bool, logger)
@@ -571,7 +574,7 @@ function _build!(sim::Simulation, serialize::Bool, logger)
         _check_steps(sim, problem_initial_times)
     end
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problems" begin
-        _build_problems!(sim, logger)
+        _build_problems!(sim, serialize, logger)
     end
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
@@ -1311,6 +1314,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     mkdir(directory)
     cd(directory)
 
+    # The problems are already serialized in the problems folder we should reload them from there
     try
         for (key, problem) in get_problems(sim)
             if problem.internal === nothing

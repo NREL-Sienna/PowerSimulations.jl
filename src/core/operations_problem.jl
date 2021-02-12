@@ -341,14 +341,14 @@ function build_pre_step!(problem::OperationsProblem)
     return
 end
 
-function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, logger)
+function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serialize::Bool, logger)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
         try
             Logging.with_logger(logger) do
                 build_pre_step!(problem)
                 problem_build!(problem)
-                serialize_problem(problem)
-                serialize_optimization_model(problem)
+                serialize && serialize_problem(problem)
+                serialize && serialize_optimization_model(problem)
                 set_status!(problem, BuildStatus.BUILT)
                 !built_for_simulation(problem) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             end
@@ -369,6 +369,7 @@ function build!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
+    serialize = true
 )
     !ispath(output_dir) && throw(ArgumentError("$output_dir does not exist"))
     set_output_dir!(problem, output_dir)
@@ -376,7 +377,7 @@ function build!(
     set_file_level!(problem, file_level)
     logger = configure_logging(problem.internal, "w")
     disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
-    return _build!(problem, logger)
+    return _build!(problem, logger, serialize)
 end
 
 """
@@ -405,7 +406,7 @@ end
 
 struct OperationsProblemSerializationWrapper
     template::OperationsProblemTemplate
-    sys::String
+    sys::Union{Nothing, String}
     settings::Settings
     op_problem_type::DataType
 end
@@ -416,11 +417,16 @@ function serialize_problem(
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
     problem_name = isempty(get_name(op_problem)) ? "OperationProblem" : get_name(op_problem)
-    sys = get_system(op_problem)
-    sys_filename = "$(problem_name)-system-$(IS.get_uuid(sys)).json"
-    sys_filename = joinpath(get_output_dir(op_problem), sys_filename)
-    # Skip serialization if the system is already in the folder
-    !ispath(sys_filename) && PSY.to_json(sys, sys_filename)
+    sys_to_file = get_system_to_file(get_settings(op_problem))
+    if sys_to_file
+        sys = get_system(op_problem)
+        sys_filename = "$(problem_name)-system-$(IS.get_uuid(sys)).json"
+        sys_filename = joinpath(get_output_dir(op_problem), sys_filename)
+        # Skip serialization if the system is already in the folder
+        !ispath(sys_filename) && PSY.to_json(sys, sys_filename)
+    else
+        sys_filename = nothing
+    end
     optimization_container = get_optimization_container(op_problem)
     obj = OperationsProblemSerializationWrapper(
         op_problem.template,
@@ -440,11 +446,16 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
         throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
     end
 
-    if !ispath(obj.sys)
+    settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
+    system_path = obj.sys === nothing ? get(kwargs, :system, nothing) : obj.sys
+
+    if system_path === nothing && !settings[:sys_to_file]
+        throw(IS.DataFormatError("Operations Problem System was not serialized and a PowerSystems.System file has not been specified."))
+    elseif !ispath(system_path)
         throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
     end
-    sys = PSY.System(obj.sys)
-    settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
+    sys = PSY.System(system_path)
+
     return obj.op_problem_type(obj.template, sys, kwargs[:jump_model]; settings...)
 end
 
