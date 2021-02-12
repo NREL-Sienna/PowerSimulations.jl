@@ -624,7 +624,6 @@ function _build!(sim::Simulation, serialize::Bool)
             step_resolution = get_step_resolution(sequence)
             get_interval(sequence, problem_name)
             set_executions!(problem, Int(step_resolution / problem_interval))
-            Int(step_resolution / problem_interval)
         end
         _attach_feedforward!(sim, problem_name)
     end
