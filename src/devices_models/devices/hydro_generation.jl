@@ -717,37 +717,3 @@ function cost_function!(
 ) where {D <: AbstractHydroFormulation, H <: PSY.HydroGen}
     return
 end
-
-# ############################
-# function AddCostSpec(
-#     ::Type{PSY.HydroEnergyReservoir},
-#     ::Type{U},
-#     optimization_container::OptimizationContainer,
-# ) where {U <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
-#     # Hydro Generators currently have no OperationalCost
-#     cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-#     # TODO: add cost fields to hydro
-#     penalty_cost = x -> BALANCE_SLACK_COST
-#     energy_value = x -> 0.0
-#     return [
-#         AddCostSpec(;
-#             variable_type = EnergyShortageVariable,
-#             component_type = PSY.HydroEnergyReservoir,
-#             variable_cost = penalty_cost,
-#             multiplier = OBJECTIVE_FUNCTION_POSITIVE,
-#         ),
-#         AddCostSpec(;
-#             variable_type = EnergySurplusVariable,
-#             component_type = PSY.HydroEnergyReservoir,
-#             variable_cost = energy_value,
-#             multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
-#         ),
-#         AddCostSpec(;
-#             variable_type = ActivePowerVariable,
-#             component_type = PSY.HydroEnergyReservoir,
-#             fixed_cost = PSY.get_fixed,
-#             variable_cost = cost_function,
-#             multiplier = OBJECTIVE_FUNCTION_POSITIVE,
-#         ),
-#     ]
-# end
