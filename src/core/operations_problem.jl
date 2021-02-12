@@ -416,7 +416,8 @@ function serialize_problem(
     problem_name = isempty(get_name(op_problem)) ? "OperationProblem" : get_name(op_problem)
     sys_filename = "$(problem_name)-system-$(IS.get_uuid(op_problem.sys)).json"
     sys_filename = joinpath(get_output_dir(op_problem), sys_filename)
-    PSY.to_json(op_problem.sys, sys_filename)
+    # Skip serialization if the system is already in the folder
+    !ispath(sys_filename) && PSY.to_json(problem.sys, sys_filename)
     optimization_container = get_optimization_container(op_problem)
     obj = OperationsProblemSerializationWrapper(
         op_problem.template,
