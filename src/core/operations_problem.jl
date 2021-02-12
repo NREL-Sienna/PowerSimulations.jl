@@ -414,10 +414,11 @@ function serialize_problem(
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
     problem_name = isempty(get_name(op_problem)) ? "OperationProblem" : get_name(op_problem)
-    sys_filename = "$(problem_name)-system-$(IS.get_uuid(op_problem.sys)).json"
+    sys = get_system(op_problem)
+    sys_filename = "$(problem_name)-system-$(IS.get_uuid(sys)).json"
     sys_filename = joinpath(get_output_dir(op_problem), sys_filename)
     # Skip serialization if the system is already in the folder
-    !ispath(sys_filename) && PSY.to_json(problem.sys, sys_filename)
+    !ispath(sys_filename) && PSY.to_json(sys, sys_filename)
     optimization_container = get_optimization_container(op_problem)
     obj = OperationsProblemSerializationWrapper(
         op_problem.template,
