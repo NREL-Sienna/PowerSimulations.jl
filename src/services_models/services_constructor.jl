@@ -1,4 +1,4 @@
-function get_incompatible_devices(devices_template::Dict{String, DeviceModel})
+function get_incompatible_devices(devices_template::Dict)
     incompatible_device_types = Vector{DataType}()
     for model in values(devices_template)
         formulation = get_formulation(model)
@@ -22,10 +22,10 @@ function construct_services!(
     incompatible_device_types = get_incompatible_devices(devices_template)
 
     function _construct_valid_services!(service_model::ServiceModel)
-        @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
-        services = service_model.service_type[]
+        @debug "Building $(service_model.component_type) with $(service_model.formulation) formulation"
+        services = service_model.component_type[]
         if validate_services!(
-            service_model.service_type,
+            service_model.component_type,
             services,
             incompatible_device_types,
             sys,

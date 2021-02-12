@@ -423,8 +423,11 @@ struct OperationsProblemSerializationWrapper
     op_problem_type::DataType
 end
 
-function _psi_solve_optimization_problem(problem::OperationsProblem; kwargs...)
+function _psi_solve_optimization_problem(problem::OperationsProblem; optimizer = nothing)
     model = get_jump_model(problem)
+    if optimizer !== nothing
+        JuMP.set_optimizer(model, optimizer)
+    end
     if model.moi_backend.state == MOIU.NO_OPTIMIZER
         @error("No Optimizer has been defined, can't solve the operational problem")
         return RunStatus.FAILED
@@ -457,7 +460,7 @@ results = solve!(OpModel)
 automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
-function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem}, kwargs...)
+function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem}; kwargs...)
     return _psi_solve_optimization_problem(problem; kwargs...)
 end
 
@@ -756,7 +759,8 @@ end
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_constraint_index(problem::OperationsProblem)
     con_index = Vector{Tuple{Symbol, Int, Int}}()
-    for (key, value) in problem.optimization_container.constraints
+    optimization_container = get_optimization_container(problem)
+    for (key, value) in get_constraints(optimization_container)
         for (idx, constraint) in enumerate(value)
             moi_index = JuMP.optimizer_index(constraint)
             push!(con_index, (key, idx, moi_index.value))
@@ -768,7 +772,8 @@ end
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(problem::OperationsProblem)
     var_index = Vector{Tuple{Symbol, Int, Int}}()
-    for (key, value) in problem.optimization_container.variables
+     optimization_container = get_optimization_container(problem)
+    for (key, value) in get_variables(optimization_container)
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)
             push!(var_index, (key, idx, moi_index.value))
@@ -778,20 +783,23 @@ function get_all_var_index(problem::OperationsProblem)
 end
 
 function get_con_index(problem::OperationsProblem, index::Int)
+    optimization_container = get_optimization_container(problem)
+    constraints = get_constraints(optimization_container)
     for i in get_all_constraint_index(problem::OperationsProblem)
         if i[3] == index
-            return problem.optimization_container.constraints[i[1]].data[i[2]]
+            return constraints[i[1]].data[i[2]]
         end
     end
-
     @info "Index not found"
     return
 end
 
 function get_var_index(problem::OperationsProblem, index::Int)
+    optimization_container = get_optimization_container(problem)
+    variables = get_variables(optimization_container)
     for i in get_all_var_index(problem::OperationsProblem)
         if i[3] == index
-            return problem.optimization_container.variables[i[1]].data[i[2]]
+            return variables[i[1]].data[i[2]]
         end
     end
     @info "Index not found"
