@@ -132,7 +132,27 @@ end
         simulation_folder = mktempdir(cleanup = true),
     )
     @test_throws IS.ConflictingInputsError build!(sim)
+
+    sequence.feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30))
+    sim = Simulation(
+        name = "look_ahead",
+        steps = 1,
+        problems = problems,
+        sequence = sequence,
+        simulation_folder = mktempdir(cleanup = true),
+    )
+    @test_throws IS.ConflictingInputsError PSI._check_feedforward_chronologies(sim)
+
+    @test_throws IS.ConflictingInputsError sim = Simulation(
+        name = "disconnected problems",
+        steps = 5,
+        problems = create_simulation_build_test_problems(),
+        sequence = sequence,
+        simulation_folder = mktempdir(cleanup = true),
+    )
 end
+
+# Pending tests to update
 
 # @testset "Test Creation of Simulations with Cache" begin
 #     stages_definition = create_stages(template_standard_uc, c_sys5_uc, c_sys5_ed)
