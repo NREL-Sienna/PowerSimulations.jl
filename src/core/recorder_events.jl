@@ -23,7 +23,7 @@ function SimulationStepEvent(
     )
 end
 
-struct SimulationProblemEvent <: AbstractSimulationStatusEvent
+struct ProblemExecutionEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
     step::Int
@@ -31,14 +31,14 @@ struct SimulationProblemEvent <: AbstractSimulationStatusEvent
     status::String
 end
 
-function SimulationProblemEvent(
+function ProblemExecutionEvent(
     simulation_time::Dates.DateTime,
     step::Int,
     problem::Int,
     status::AbstractString,
 )
-    return SimulationProblemEvent(
-        IS.RecorderEventCommon("SimulationProblemEvent"),
+    return ProblemExecutionEvent(
+        IS.RecorderEventCommon("ProblemExecutionEvent"),
         simulation_time,
         step,
         problem,
@@ -135,14 +135,14 @@ end
 
 function get_simulation_problem_range(filename::AbstractString, step::Int, problem::Int)
     events = IS.list_recorder_events(
-        SimulationProblemEvent,
+        ProblemExecutionEvent,
         filename,
         x -> x.step == step && x.problem == problem,
     )
     if length(events) != 2
         throw(
             ArgumentError(
-                "$filename does not have two SimulationProblemEvent for step = $step problem = $problem",
+                "$filename does not have two ProblemExecutionEvent for step = $step problem = $problem",
             ),
         )
     end

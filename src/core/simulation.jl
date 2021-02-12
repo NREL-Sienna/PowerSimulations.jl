@@ -1050,7 +1050,7 @@ function _execute!(
                 "start",
             )
             for (ix, problem_number) in enumerate(execution_order)
-                IS.@record :simulation_status SimulationProblemEvent(
+                IS.@record :simulation_status ProblemExecutionEvent(
                     get_current_time(sim),
                     step,
                     problem_number,
@@ -1103,7 +1103,7 @@ function _execute!(
                             _apply_warm_start!(problem)
                         end
                     end
-                    IS.@record :simulation_status SimulationProblemEvent(
+                    IS.@record :simulation_status ProblemExecutionEvent(
                         get_current_time(sim),
                         step,
                         problem_number,
