@@ -1089,7 +1089,7 @@ function _execute!(
                                (status != RunStatus.SUCCESSFUL)
                             throw(
                                 ErrorException(
-                                    "Simulation Failed in problem $(problem_number)",
+                                    "Simulation Failed in problem $(problem_name). Returned $(status)",
                                 ),
                             )
                         else
