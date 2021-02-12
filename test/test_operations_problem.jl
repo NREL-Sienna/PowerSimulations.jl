@@ -231,4 +231,24 @@ end
     ED2 = OperationsProblem(filename, optimizer = OSQP_optimizer)
     build!(ED2, output_dir = path)
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
+
+    path2 = mktempdir(cleanup = true)
+    op_problem_no_sys = OperationsProblem(
+        template,
+        sys;
+        optimizer = OSQP_optimizer,
+        use_parameters = true,
+        system_to_file = false,
+        constraint_duals = [:CopperPlateBalance],
+    )
+
+    @test build!(op_problem_no_sys; output_dir = path2) == PSI.BuildStatus.BUILT
+    @test solve!(op_problem) == RunStatus.SUCCESSFUL
+
+    file_list = sort!(collect(readdir(path2)))
+    @test .!all(occursin.(r".h5", file_list))
+    filename = joinpath(path2, "OperationProblem.bin")
+    ED3 = OperationsProblem(filename; system = sys, optimizer = OSQP_optimizer)
+    build!(ED3, output_dir = path2)
+    psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end

@@ -218,12 +218,14 @@ function OperationsProblem(
     filename::AbstractString;
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    kwargs...
 )
     return deserialize_problem(
         OperationsProblem,
         filename;
         jump_model = jump_model,
         optimizer = optimizer,
+        kwargs...
     )
 end
 
@@ -377,7 +379,7 @@ function build!(
     set_file_level!(problem, file_level)
     logger = configure_logging(problem.internal, "w")
     disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
-    return _build!(problem, logger, serialize)
+    return _build!(problem, serialize, logger)
 end
 
 """
@@ -445,16 +447,17 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
     if !(obj isa OperationsProblemSerializationWrapper)
         throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
     end
-
+    sys = get(kwargs, :system, nothing)
     settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
-    system_path = obj.sys === nothing ? get(kwargs, :system, nothing) : obj.sys
 
-    if system_path === nothing && !settings[:sys_to_file]
-        throw(IS.DataFormatError("Operations Problem System was not serialized and a PowerSystems.System file has not been specified."))
-    elseif !ispath(system_path)
-        throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
+    if sys === nothing
+        if obj.sys === nothing && !settings[:sys_to_file]
+            throw(IS.DataFormatError("Operations Problem System was not serialized and a System has not been specified."))
+        else !isfile(obj.sys)
+            throw(IS.DataFormatError("PowerSystems.System file $(system_file) does not exist"))
+        end
+        sys = PSY.System(obj.sys)
     end
-    sys = PSY.System(system_path)
 
     return obj.op_problem_type(obj.template, sys, kwargs[:jump_model]; settings...)
 end
