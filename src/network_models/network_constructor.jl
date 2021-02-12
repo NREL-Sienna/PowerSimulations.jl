@@ -73,6 +73,15 @@ function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::Type{T};
+    instantiate_model = instantiate_nip_ptdf_expr_model,
+) where {T <: PTDFPowerModel}
+    construct_network!(optimization_container, sys, T; instantiate_model = instantiate_model)
+end
+
+function construct_network!(
+    optimization_container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T};
     instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractPowerModel}
     if T in UNSUPPORTED_POWERMODELS

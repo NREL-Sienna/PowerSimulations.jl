@@ -20,6 +20,7 @@
         #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
         (PM.SDPWRMPowerModel, scs_solver),
         (PM.SparseSDPWRMPowerModel, scs_solver),
+        (PSI.PTDFPowerModel, fast_ipopt_optimizer),
     ]
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in networks

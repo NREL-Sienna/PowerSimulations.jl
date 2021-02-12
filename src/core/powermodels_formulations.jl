@@ -3,6 +3,7 @@
 struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
 struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end
 struct StandardPTDFModel <: PM.AbstractDCPModel end
+struct PTDFPowerModel <: PM.AbstractDCPModel end
 
 #================================================
     # exact non-convex models

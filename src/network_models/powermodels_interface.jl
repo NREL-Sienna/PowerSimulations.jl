@@ -2,7 +2,7 @@
 # Comments
 #
 # - Ideally the net_injection variables would be bounded.  This can be done using an adhoc data model extention
-#
+# - the `instantiate_*_expr_model` functions combine `PM.instantiate_model` and the `build_*` methods
 #################################################################################
 # Model Definitions
 
@@ -12,6 +12,7 @@ function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; 
 end
 
 ""
+# replicates PM.build_mn_opf
 function instantiate_nip_expr(pm::PM.AbstractPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw = n)
@@ -44,11 +45,50 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
     return
 end
 
+""
+function instantiate_nip_ptdf_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    return PM.instantiate_model(data, model_constructor, instantiate_nip_ptdf_expr; kwargs...)
+end
+
+""
+# replicates PM.build_opf_ptdf
+function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
+    for (n, network) in PM.nws(pm)
+        @assert !PM.ismulticonductor(pm, nw = n)
+
+        PM.constraint_model_voltage(pm, nw = n)
+
+        # this constraint is implicit in this model
+        #for i in PM.ids(pm, :ref_buses, nw = n)
+        #    PM.constraint_theta_ref(pm, i, nw = n)
+        #end
+
+        for i in PM.ids(pm, :bus, nw = n)
+            constraint_power_balance_ni_expr(pm, i, nw = n)
+        end
+
+        for (i, branch) in PM.ref(pm, :branch, nw = n)
+
+            if haskey(branch, "rate_a") # TODO: make sure that we have this
+                PM.expression_branch_power_ohms_yt_from_ptdf(pm, i, nw = n)
+                PM.expression_branch_power_ohms_yt_to_ptdf(pm, i, nw = n)
+            end
+
+            PM.constraint_thermal_limit_from(pm, i, nw = n)
+            PM.constraint_thermal_limit_to(pm, i, nw = n)
+        end
+    end
+
+    return
+end
+
+
 function instantiate_bfp_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_bfp_expr; kwargs...)
 end
 
 ""
+# replicates PM.build_mn_opf_bf_strg
 function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw = n)
