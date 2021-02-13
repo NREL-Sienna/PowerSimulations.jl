@@ -349,12 +349,12 @@ function _build!(
 )
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
         try
-                build_pre_step!(problem)
-                problem_build!(problem)
-                serialize && serialize_problem(problem)
-                serialize && serialize_optimization_model(problem)
-                set_status!(problem, BuildStatus.BUILT)
-                !built_for_simulation(problem) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
+            build_pre_step!(problem)
+            problem_build!(problem)
+            serialize && serialize_problem(problem)
+            serialize && serialize_optimization_model(problem)
+            set_status!(problem, BuildStatus.BUILT)
+            !built_for_simulation(problem) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
         catch e
             set_status!(problem, BuildStatus.FAILED)
             bt = catch_backtrace()
@@ -377,12 +377,12 @@ function build!(
     set_output_dir!(problem, output_dir)
     set_console_level!(problem, console_level)
     set_file_level!(problem, file_level)
+    disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
     logger = configure_logging(problem.internal, "w")
     try
         Logging.with_logger(logger) do
-            disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
             return _build!(problem, serialize)
-        end
+    end
     finally
         close(logger)
     end
