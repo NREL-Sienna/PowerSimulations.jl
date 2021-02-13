@@ -346,25 +346,21 @@ end
 function _build!(
     problem::OperationsProblem{<:AbstractOperationsProblem},
     serialize::Bool,
-    logger,
 )
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
         try
-            Logging.with_logger(logger) do
                 build_pre_step!(problem)
                 problem_build!(problem)
                 serialize && serialize_problem(problem)
                 serialize && serialize_optimization_model(problem)
                 set_status!(problem, BuildStatus.BUILT)
                 !built_for_simulation(problem) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
-            end
         catch e
             set_status!(problem, BuildStatus.FAILED)
             bt = catch_backtrace()
             @error "Operation Problem Build Failed" exception = e, bt
         end
     end
-    flush(logger)
     return get_status(problem)
 end
 
@@ -382,8 +378,14 @@ function build!(
     set_console_level!(problem, console_level)
     set_file_level!(problem, file_level)
     logger = configure_logging(problem.internal, "w")
-    disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
-    return _build!(problem, serialize, logger)
+    try
+        Logging.with_logger(logger) do
+            disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
+            return _build!(problem, serialize)
+        end
+    finally
+        close(logger)
+    end
 end
 
 """

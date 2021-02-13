@@ -530,7 +530,7 @@ function _check_folder(sim::Simulation)
     end
 end
 
-function _build_problems!(sim::Simulation, serialize, logger)
+function _build_problems!(sim::Simulation, serialize)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
         @info("Building problem $(problem_number)-$(problem_name)")
         problem_interval = get_interval(get_sequence(sim), problem_name)
@@ -538,7 +538,7 @@ function _build_problems!(sim::Simulation, serialize, logger)
         set_initial_time!(problem, initial_time)
         output_dir = joinpath(get_problems_dir(sim))
         set_output_dir!(problem, output_dir)
-        problem_build_status = _build!(problem, serialize, logger)
+        problem_build_status = _build!(problem, serialize)
         if problem_build_status != BuildStatus.BUILT
             error("Problem $(problem_name) failed to build succesfully")
         end
@@ -549,7 +549,7 @@ function _build_problems!(sim::Simulation, serialize, logger)
     return
 end
 
-function _build!(sim::Simulation, serialize::Bool, logger)
+function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
@@ -573,7 +573,7 @@ function _build!(sim::Simulation, serialize::Bool, logger)
         _check_steps(sim, problem_initial_times)
     end
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problems" begin
-        _build_problems!(sim, serialize, logger)
+        _build_problems!(sim, serialize)
     end
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
@@ -625,11 +625,12 @@ function build!(
             )
         end
         file_mode = "w"
+        # TODO: need a different log file for build vs execute
         logger = configure_logging(sim.internal, file_mode)
         register_recorders!(sim.internal, file_mode)
         try
             Logging.with_logger(logger) do
-                _build!(sim, serialize, logger)
+                _build!(sim, serialize)
                 set_simulation_build_status!(sim, BuildStatus.BUILT)
                 set_simulation_status!(sim, RunStatus.READY)
             end
