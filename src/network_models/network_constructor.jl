@@ -38,7 +38,6 @@ function construct_network!(
     ::Type{StandardPTDFModel},
 )
     buses = PSY.get_components(PSY.Bus, sys)
-    ac_branches = get_available_components(PSY.ACBranch, sys)
     ptdf = get_PTDF(optimization_container)
 
     if ptdf === nothing
@@ -49,33 +48,21 @@ function construct_network!(
         add_slacks!(optimization_container, StandardPTDFModel)
     end
 
-    ptdf_networkflow(
-        optimization_container,
-        ac_branches,
-        buses,
-        :nodal_balance_active,
-        ptdf,
-    )
-
-    dc_branches = get_available_components(PSY.DCBranch, sys)
-    dc_branch_types = typeof.(dc_branches)
-    for btype in Set(dc_branch_types)
-        typed_dc_branches = IS.FlattenIteratorWrapper(
-            btype,
-            Vector([[b for b in dc_branches if typeof(b) == btype]]),
-        )
-        add_variables!(optimization_container, StandardPTDFModel(), typed_dc_branches)
-    end
+    copper_plate(optimization_container, :nodal_balance_active, length(buses))
     return
 end
 
 function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T};
-    instantiate_model = instantiate_nip_ptdf_expr_model,
+    ::Type{T};,
 ) where {T <: PTDFPowerModel}
-    construct_network!(optimization_container, sys, T; instantiate_model = instantiate_model)
+    construct_network!(
+        optimization_container,
+        sys,
+        T;
+        instantiate_model = instantiate_nip_ptdf_expr_model,
+    )
 end
 
 function construct_network!(
@@ -100,6 +87,8 @@ function construct_network!(
     powermodels_network!(optimization_container, T, sys, instantiate_model)
     add_pm_var_refs!(optimization_container, T, sys)
     add_pm_con_refs!(optimization_container, T, sys)
+
+    construct_network!(optimization_container, sys, CopperPlatePowerModel)
     return
 end
 

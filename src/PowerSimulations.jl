@@ -378,7 +378,6 @@ include("services_models/services_constructor.jl")
 # Network models
 include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
-include("network_models/ptdf_model.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 
