@@ -144,10 +144,7 @@ end
     ps_model = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
     # Not capturing the logs
     # @test_logs (:error,) match_mode = :any
-    @test build!(
-        ps_model;
-        output_dir = mktempdir(cleanup = true),
-    ) == PSI.BuildStatus.FAILED
+    @test build!(ps_model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.FAILED
 end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
@@ -410,9 +407,7 @@ end
         )
         # Not capturing the logs
         # @test_logs (:error,) match_mode = :any
-        @test build!(
-            ps_model;
-            output_dir = mktempdir(cleanup = true),
-        ) == PSI.BuildStatus.FAILED
+        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.FAILED
     end
 end

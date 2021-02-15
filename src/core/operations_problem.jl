@@ -343,10 +343,7 @@ function build_pre_step!(problem::OperationsProblem)
     return
 end
 
-function _build!(
-    problem::OperationsProblem{<:AbstractOperationsProblem},
-    serialize::Bool,
-)
+function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
         try
             build_pre_step!(problem)
@@ -382,7 +379,7 @@ function build!(
     try
         Logging.with_logger(logger) do
             return _build!(problem, serialize)
-    end
+        end
     finally
         close(logger)
     end
