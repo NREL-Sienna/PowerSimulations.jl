@@ -510,7 +510,7 @@ function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem};
 end
 
 """
-Default solve method foran operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
+Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
 
 # Arguments
 - `step::Int`: Simulation Step
