@@ -198,8 +198,8 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
             "va" => PSY.get_angle(bus),
             "vm" => PSY.get_magnitude(bus),
             "base_kv" => PSY.get_base_voltage(bus),
-            "pni" => 0.0,
-            "qni" => 0.0,
+            "inj_p" => 0.0,
+            "inj_q" => 0.0,
             "name" => PSY.get_name(bus),
         )
         PM_buses["$(number)"] = PM_bus

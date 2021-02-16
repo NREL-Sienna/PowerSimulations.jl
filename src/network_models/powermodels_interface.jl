@@ -46,8 +46,18 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
 end
 
 ""
-function instantiate_nip_ptdf_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
-    return PM.instantiate_model(data, model_constructor, instantiate_nip_ptdf_expr; kwargs...)
+function instantiate_nip_ptdf_expr_model(
+    data::Dict{String, Any},
+    model_constructor;
+    kwargs...,
+)
+    return PM.instantiate_model(
+        data,
+        PM.DCPPowerModel,
+        instantiate_nip_ptdf_expr;
+        ref_extensions = [PM.ref_add_connected_components!, PM.ref_add_sm!],
+        kwargs...,
+    )
 end
 
 ""
@@ -56,6 +66,15 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw = n)
 
+        #PM.variable_gen_power(pm) #connect P__* with these
+
+        for i in PM.ids(pm, :bus)
+            if !haskey(PM.var(pm, n), :inj_p)
+                PM.var(pm, n)[:inj_p] = Dict{Int, Any}()
+            end
+            PM.var(pm, n, :inj_p)[i] = PM.ref(pm, :bus, i, nw = n)["inj_p"] # use :nodal_balance_expr
+        end
+
         PM.constraint_model_voltage(pm, nw = n)
 
         # this constraint is implicit in this model
@@ -63,25 +82,22 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
         #    PM.constraint_theta_ref(pm, i, nw = n)
         #end
 
-        for i in PM.ids(pm, :bus, nw = n)
-            constraint_power_balance_ni_expr(pm, i, nw = n)
-        end
-
+        #for i in PM.ids(pm, :bus, nw = n)
+        #    constraint_power_balance_ni_expr(pm, i, nw = n)
+        #end
         for (i, branch) in PM.ref(pm, :branch, nw = n)
-
             if haskey(branch, "rate_a") # TODO: make sure that we have this
                 PM.expression_branch_power_ohms_yt_from_ptdf(pm, i, nw = n)
                 PM.expression_branch_power_ohms_yt_to_ptdf(pm, i, nw = n)
             end
 
-            PM.constraint_thermal_limit_from(pm, i, nw = n)
-            PM.constraint_thermal_limit_to(pm, i, nw = n)
+            #PM.constraint_thermal_limit_from(pm, i, nw = n)
+            #PM.constraint_thermal_limit_to(pm, i, nw = n)
         end
     end
 
     return
 end
-
 
 function instantiate_bfp_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_bfp_expr; kwargs...)
@@ -145,10 +161,18 @@ function constraint_power_balance_ni_expr(
     bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
     bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
 
-    pni_expr = PM.ref(pm, nw, :bus, i, "pni")
-    qni_expr = PM.ref(pm, nw, :bus, i, "qni")
+    inj_p_expr = PM.ref(pm, nw, :bus, i, "inj_p")
+    inj_q_expr = PM.ref(pm, nw, :bus, i, "inj_q")
 
-    constraint_power_balance_ni_expr(pm, nw, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
+    constraint_power_balance_ni_expr(
+        pm,
+        nw,
+        i,
+        bus_arcs,
+        bus_arcs_dc,
+        inj_p_expr,
+        inj_q_expr,
+    )
 
     return
 end
@@ -160,8 +184,8 @@ function constraint_power_balance_ni_expr(
     i::Int,
     bus_arcs,
     bus_arcs_dc,
-    pni_expr,
-    qni_expr,
+    inj_p_expr,
+    inj_q_expr,
 )
     p = PM.var(pm, n, :p)
     q = PM.var(pm, n, :q)
@@ -170,11 +194,11 @@ function constraint_power_balance_ni_expr(
 
     PM.con(pm, n, :power_balance_p)[i] = JuMP.@constraint(
         pm.model,
-        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr
+        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == inj_p_expr
     )
     PM.con(pm, n, :power_balance_q)[i] = JuMP.@constraint(
         pm.model,
-        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr
+        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == inj_q_expr
     )
 
     return
@@ -197,10 +221,18 @@ function constraint_current_balance_ni_expr(
     bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
     bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
 
-    pni_expr = PM.ref(pm, nw, :bus, i, "pni")
-    qni_expr = PM.ref(pm, nw, :bus, i, "qni")
+    inj_p_expr = PM.ref(pm, nw, :bus, i, "inj_p")
+    inj_q_expr = PM.ref(pm, nw, :bus, i, "inj_q")
 
-    constraint_current_balance_ni_expr(pm, nw, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
+    constraint_current_balance_ni_expr(
+        pm,
+        nw,
+        i,
+        bus_arcs,
+        bus_arcs_dc,
+        inj_p_expr,
+        inj_q_expr,
+    )
 
     return
 end
@@ -212,8 +244,8 @@ function constraint_current_balance_ni_expr(
     i::Int,
     bus_arcs,
     bus_arcs_dc,
-    pni_expr,
-    qni_expr,
+    inj_p_expr,
+    inj_q_expr,
 )
     p = PM.var(pm, n, :p)
     q = PM.var(pm, n, :q)
@@ -222,11 +254,11 @@ function constraint_current_balance_ni_expr(
 
     PM.con(pm, n, :power_balance_p)[i] = JuMP.@constraint(
         pm.model,
-        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr
+        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == inj_p_expr
     )
     PM.con(pm, n, :power_balance_q)[i] = JuMP.@constraint(
         pm.model,
-        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr
+        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == inj_q_expr
     )
 
     return
@@ -244,15 +276,15 @@ function constraint_power_balance_ni_expr(
     i::Int,
     bus_arcs,
     bus_arcs_dc,
-    pni_expr,
-    qni_expr,
+    inj_p_expr,
+    inj_q_expr,
 )
     p = PM.var(pm, n, :p)
     p_dc = PM.var(pm, n, :p_dc)
 
     PM.con(pm, n, :power_balance_p)[i] = JuMP.@constraint(
         pm.model,
-        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr
+        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == inj_p_expr
     )
 
     return
@@ -273,9 +305,9 @@ function powermodels_network!(
     remove_undef!(optimization_container.expressions[:nodal_balance_reactive])
 
     for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] =
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_p"] =
             optimization_container.expressions[:nodal_balance_active][bus.number, t]
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] =
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] =
             optimization_container.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
@@ -303,12 +335,12 @@ function powermodels_network!(
     remove_undef!(optimization_container.expressions[:nodal_balance_active])
 
     for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] =
+        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["inj_p"] =
             optimization_container.expressions[:nodal_balance_active][
                 PSY.get_number(bus),
                 t,
             ]
-        # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
+        # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] = 0.0
     end
 
     optimization_container.pm = instantiate_model(
@@ -327,9 +359,10 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractDCPModel}
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA)
-    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = FLOW_ACTIVE_POWER, to_from = nothing))
+    pm_var_map[PSY.ACBranch] =
+        Dict(:p => (from_to = FlowActivePowerVariable, to_from = nothing))
     pm_var_map[PSY.DCBranch] =
-        Dict(:p_dc => (from_to = FLOW_ACTIVE_POWER, to_from = nothing))
+        Dict(:p_dc => (from_to = FlowActivePowerVariable, to_from = nothing))
 
     return pm_var_map
 end
@@ -339,13 +372,25 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowe
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA)
     pm_var_map[PSY.ACBranch] = Dict(
-        :p =>
-            (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p => FlowActivePowerFromToVariable,
+        #(from_to = FlowActivePowerFromToVariable, to_from = FlowActivePowerToFromVariable),
     )
     pm_var_map[PSY.DCBranch] = Dict(
-        :p_dc =>
-            (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p_dc => (
+            from_to = FlowActivePowerFromToVariable,
+            to_from = FlowActivePowerToFromVariable,
+        ),
     )
+
+    return pm_var_map
+end
+
+function PMvarmap(system_formulation::Type{PTDFPowerModel})
+    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
+
+    pm_var_map[PSY.Bus] = Dict()
+    pm_var_map[PSY.ACBranch] = Dict()
+    pm_var_map[PSY.DCBranch] = Dict()
 
     return pm_var_map
 end
@@ -355,19 +400,23 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA, :vm => VM)
     pm_var_map[PSY.ACBranch] = Dict(
-        :p =>
-            (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p => (
+            from_to = FlowActivePowerFromToVariable,
+            to_from = FlowActivePowerToFromVariable,
+        ),
         :q => (
-            from_to = FLOW_REACTIVE_POWER_FROM_TO,
-            to_from = FLOW_REACTIVE_POWER_TO_FROM,
+            from_to = FlowReactivePowerFromToVariable,
+            to_from = FlowReactivePowerToFromVariable,
         ),
     )
     pm_var_map[PSY.DCBranch] = Dict(
-        :p_dc =>
-            (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p_dc => (
+            from_to = FlowActivePowerFromToVariable,
+            to_from = FlowActivePowerToFromVariable,
+        ),
         :q_dc => (
-            from_to = FLOW_REACTIVE_POWER_FROM_TO,
-            to_from = FLOW_REACTIVE_POWER_TO_FROM,
+            from_to = FlowReactivePowerFromToVariable,
+            to_from = FlowReactivePowerToFromVariable,
         ),
     )
 
@@ -391,6 +440,39 @@ function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
     return pm_con_map
 end
 
+function PMexprmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel}
+    pm_expr_map = Dict{
+        Type,
+        NamedTuple{
+            (:pm_expr, :psi_con),
+            Tuple{Dict{Symbol, Union{String, NamedTuple}}, Symbol},
+        },
+    }()
+
+    return pm_expr_map
+end
+
+function PMexprmap(system_formulation::Type{PTDFPowerModel})
+    pm_expr_map = Dict{
+        Type,
+        NamedTuple{
+            (:pm_expr, :psi_con),
+            Tuple{Dict{Symbol, Union{String, NamedTuple}}, Symbol},
+        },
+    }()
+
+    pm_expr_map[PSY.ACBranch] = (
+        pm_expr = Dict(:p => (from_to = FlowActivePowerVariable, to_from = nothing)),
+        psi_con = :network_flow,
+    )
+    pm_expr_map[PSY.DCBranch] = (
+        pm_expr = Dict(:p_dc => (from_to = FlowActivePowerVariable, to_from = nothing)),
+        psi_con = :network_flow,
+    )
+
+    return pm_expr_map
+end
+
 function add_pm_var_refs!(
     optimization_container::OptimizationContainer,
     system_formulation::Type{S},
@@ -403,12 +485,12 @@ function add_pm_var_refs!(
     DCbranch_dict = optimization_container.pm.ext[:PMmap].arcs_dc
     DCbranch_types = typeof.(values(DCbranch_dict))
 
-    pm_var_names = keys(optimization_container.pm.var[:nw][1])
+    pm_var_types = keys(optimization_container.pm.var[:nw][1])
 
     pm_var_map = PMvarmap(system_formulation)
 
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
-        if pm_v in pm_var_names
+        if pm_v in pm_var_types
             container = PSI.container_spec(
                 optimization_container.JuMPmodel,
                 [PSY.get_name(b) for b in values(bus_dict)],
@@ -428,7 +510,7 @@ function add_pm_var_refs!(
         ACbranch_types,
         ACbranch_dict,
         pm_var_map,
-        pm_var_names,
+        pm_var_types,
         time_steps,
     )
     add_pm_var_refs!(
@@ -437,7 +519,7 @@ function add_pm_var_refs!(
         DCbranch_types,
         DCbranch_dict,
         pm_var_map,
-        pm_var_names,
+        pm_var_types,
         time_steps,
     )
 end
@@ -448,26 +530,30 @@ function add_pm_var_refs!(
     device_types::Vector,
     pm_map::Dict,
     pm_var_map::Dict,
-    pm_var_names::Base.KeySet,
+    pm_var_types::Base.KeySet,
     time_steps::UnitRange{Int},
 )
     for d_type in Set(device_types)
         devices = [d for d in pm_map if typeof(d[2]) == d_type]
         for (pm_v, ps_v) in pm_var_map[d_class]
-            if pm_v in pm_var_names
+            if pm_v in pm_var_types
                 for dir in fieldnames(typeof(ps_v))
-                    getfield(ps_v, dir) === nothing && continue
-                    # TODO: make a better mapping with the var names in the definitions file
-                    var_name = getfield(ps_v, dir)
+                    var_type = getfield(ps_v, dir)
+                    var_type === nothing && continue
                     container = PSI.container_spec(
                         optimization_container.JuMPmodel,
                         [PSY.get_name(d[2]) for d in devices],
                         time_steps,
                     )
-                    assign_variable!(optimization_container, var_name, d_type, container)
+                    assign_variable!(
+                        optimization_container,
+                        make_variable_name(var_type, d_type),
+                        container,
+                    )
                     for t in time_steps, (pm_d, d) in devices
-                        container[PSY.get_name(d), t] =
+                        var =
                             PM.var(optimization_container.pm, t, pm_v, getfield(pm_d, dir))
+                        container[PSY.get_name(d), t] = var
                     end
                 end
             end
@@ -500,6 +586,83 @@ function add_pm_con_refs!(
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
                 container[name, t] = PM.con(optimization_container.pm, t, pm_v)[pm_bus]
+            end
+        end
+    end
+end
+
+function add_pm_expr_refs!(
+    optimization_container::OptimizationContainer,
+    system_formulation::Type{S},
+    sys::PSY.System,
+) where {S <: PM.AbstractPowerModel}
+    time_steps = model_time_steps(optimization_container)
+
+    ACbranch_dict = optimization_container.pm.ext[:PMmap].arcs
+    ACbranch_types = typeof.(values(ACbranch_dict))
+
+    pm_var_types = keys(PM.var(optimization_container.pm))
+    pm_expr_map = PMexprmap(system_formulation)
+
+    add_pm_expr_refs!(
+        optimization_container,
+        PSY.ACBranch,
+        ACbranch_types,
+        ACbranch_dict,
+        pm_expr_map,
+        pm_var_types,
+        time_steps,
+    )
+end
+
+function add_pm_expr_refs!(
+    optimization_container::OptimizationContainer,
+    d_class::Type,
+    device_types::Vector,
+    pm_map::Dict,
+    pm_expr_map::Dict,
+    pm_var_types::Base.KeySet,
+    time_steps::UnitRange{Int},
+)
+    for d_type in Set(device_types)
+        mapped_devices = [d for d in pm_map if typeof(d[2]) == d_type]
+        devices = getfield.(mapped_devices, 2)
+        device_names = PSY.get_name.(devices)
+
+        for (pm_expr_var, ps_v) in pm_expr_map[d_class].pm_expr
+            if pm_expr_var in pm_var_types
+                # add variable in psi
+                # add psi_var = pm_expr_var as constraint
+                for dir in fieldnames(typeof(ps_v))
+                    var_type = getfield(ps_v, dir)
+                    var_type === nothing && continue
+
+                    add_variable!(optimization_container, var_type(), devices)
+                    psi_var_container = get_variable(
+                        optimization_container,
+                        make_variable_name(var_type, d_type),
+                    )
+
+                    psi_con_container = PSI.add_cons_container!(
+                        optimization_container,
+                        pm_expr_map[d_class].psi_con,
+                        device_names,
+                        time_steps,
+                    )
+                    for t in time_steps, (pm_d, d) in mapped_devices
+                        pm_expr = PM.var(
+                            optimization_container.pm,
+                            t,
+                            pm_expr_var,
+                            getfield(pm_d, dir),
+                        )
+                        name = PSY.get_name(d)
+                        psi_con_container[name, t] = JuMP.@constraint(
+                            optimization_container.JuMPmodel,
+                            psi_var_container[name, t] == pm_expr
+                        )
+                    end
+                end
             end
         end
     end

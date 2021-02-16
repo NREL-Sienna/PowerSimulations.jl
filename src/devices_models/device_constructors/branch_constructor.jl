@@ -140,7 +140,7 @@ function construct_device!(
         return
     end
     branch_rate_bounds!(optimization_container, devices, model, S)
-    branch_rate_bounds!(optimization_container, devices, model, S)
+    #branch_rate_bounds!(optimization_container, devices, model, S) #This was duplicated... I think it can be removed
     return
 end
 

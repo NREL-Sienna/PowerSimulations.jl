@@ -63,6 +63,7 @@ function construct_network!(
         T;
         instantiate_model = instantiate_nip_ptdf_expr_model,
     )
+    add_pm_expr_refs!(optimization_container, T, sys)
 end
 
 function construct_network!(
@@ -88,7 +89,6 @@ function construct_network!(
     add_pm_var_refs!(optimization_container, T, sys)
     add_pm_con_refs!(optimization_container, T, sys)
 
-    construct_network!(optimization_container, sys, CopperPlatePowerModel)
     return
 end
 

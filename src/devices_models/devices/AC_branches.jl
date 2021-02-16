@@ -32,7 +32,7 @@ flow_variables!(
 
 add_variables!(
     optimization_container::OptimizationContainer,
-    ::StandardPTDFModel,
+    ::AbstractPTDFModel,
     devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
 ) = add_variable!(optimization_container, FlowActivePowerVariable(), devices)
 
