@@ -18,6 +18,17 @@ function PSI.OperationsProblem(
     )
 end
 
+function PSI.OperationsProblem(::Type{MockOperationProblem}; kwargs...)
+    sys = System(100.0)
+    settings = PSI.Settings(sys; kwargs...)
+    return OperationsProblem{MockOperationProblem}(
+        OperationsProblemTemplate(CopperPlatePowerModel),
+        sys,
+        settings,
+        nothing,
+    )
+end
+
 # Only used for testing
 function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProblem}, model)
     set_device_model!(problem.template, model)
@@ -51,6 +62,26 @@ function mock_construct_network!(
         PSI.get_system(problem),
         model,
     )
+end
+
+function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
+    return SimulationProblems(
+        UC = OperationsProblem(MockOperationProblem; horizon = uc_horizon),
+        ED = OperationsProblem(MockOperationProblem; horizon = ed_horizon),
+    )
+end
+
+function create_simulation_build_test_problems(
+    template_uc = get_template_standard_uc_simulation(),
+    template_ed = get_template_nomin_ed_simulation(),
+    sys_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"),
+    sys_ed = PSB.build_system(PSITestSystems, "c_sys5_ed"),
+)
+    c_sys5_uc =
+        c_sys5_ed = return SimulationProblems(
+            UC = OperationsProblem(template_uc, sys_uc; optimizer = GLPK_optimizer),
+            ED = OperationsProblem(template_ed, sys_ed, optimizer = GLPK_optimizer),
+        )
 end
 
 struct FakeStagesStruct

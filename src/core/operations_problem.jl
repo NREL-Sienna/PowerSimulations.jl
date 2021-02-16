@@ -1,6 +1,4 @@
-const PROBLEM_SERIALIZATION_FILENAME = "operations_problem.bin"
-const PROBLEM_BUILD_LOG_FILENAME = "operations_problem_build.log"
-
+# JDNOTE: This might be merged with the structs in simulation_store
 mutable struct SimulationInfo
     number::Int
     name::String
@@ -10,6 +8,7 @@ mutable struct SimulationInfo
     end_of_interval_step::Int
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     requires_rebuild::Bool
+    sequence_uuid::Base.UUID
 end
 
 mutable struct ProblemInternal
@@ -53,32 +52,6 @@ function configure_logging(internal::ProblemInternal, file_mode)
     )
 end
 
-#=
-function ProblemInternal(
-    optimization_container::OptimizationContainer,
-    name::String,
-    number::Int,
-    executions::Int,
-    execution_count::Int,
-)
-    return ProblemInternal(
-        optimization_container,
-        BuildStatus.EMPTY,
-        true,
-        "",
-        SimulationInfo(
-            number,
-            name,
-            executions,
-            execution_count,
-            0,
-            Dict{Int, FeedForwardChronology}(),
-            false,
-        ),
-        ext,
-    )
-end
-=#
 """Default PowerSimulations Operation Problem Type"""
 struct GenericOpProblem <: PowerSimulationsOperationsProblem end
 
@@ -229,11 +202,40 @@ function OperationsProblem(
     return OperationsProblem{GenericOpProblem}(template, sys, jump_model; kwargs...)
 end
 
+"""
+    OperationsProblem(filename::AbstractString)
+
+Construct an OperationsProblem from a serialized file.
+
+# Arguments
+- `filename::AbstractString`: path to serialized file
+- `jump_model::Union{Nothing, JuMP.AbstractModel}` = nothing: The JuMP model does not get
+   serialized. Callers should pass whatever they passed to the original problem.
+- `optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes}` = nothing: The optimizer does
+   not get serialized. Callers should pass whatever they passed to the original problem.
+"""
+function OperationsProblem(
+    filename::AbstractString;
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    kwargs...,
+)
+    return deserialize_problem(
+        OperationsProblem,
+        filename;
+        jump_model = jump_model,
+        optimizer = optimizer,
+        kwargs...,
+    )
+end
+
+# Default implementations of getter/setter functions for OperationsProblem.
 is_built(problem::OperationsProblem) = problem.internal.status == BuildStatus.BUILT
 is_empty(problem::OperationsProblem) = problem.internal.status == BuildStatus.EMPTY
 warm_start_enabled(problem::OperationsProblem) =
     get_warm_start(get_optimization_container(problem).settings)
 built_for_simulation(problem::OperationsProblem) = get_simulation_info(problem) !== nothing
+get_caches(problem::OperationsProblem) = get_simulation_info(problem).caches
 get_constraints(problem::OperationsProblem) =
     get_internal(problem).optimization_container.constraints
 get_end_of_interval_step(problem::OperationsProblem) =
@@ -241,16 +243,13 @@ get_end_of_interval_step(problem::OperationsProblem) =
 get_execution_count(problem::OperationsProblem) =
     get_simulation_info(problem).execution_count
 get_executions(problem::OperationsProblem) = get_simulation_info(problem).executions
-function get_initial_time(
-    problem::OperationsProblem{T},
-) where {T <: AbstractOperationsProblem}
-    return get_initial_time(get_settings(problem))
-end
+get_initial_time(problem::OperationsProblem) = get_initial_time(get_settings(problem))
+get_horizon(problem::OperationsProblem) = get_horizon(get_settings(problem))
 get_internal(problem::OperationsProblem) = problem.internal
 get_jump_model(problem::OperationsProblem) =
     get_internal(problem).optimization_container.JuMPmodel
-get_name(problem::OperationsProblem) = problem.internal.name
-get_number(problem::OperationsProblem) = get_simulation_info(problem).number
+get_name(x::OperationsProblem) = built_for_simulation(x) ? get_simulation_info(x).name : ""
+
 get_optimization_container(problem::OperationsProblem) =
     problem.internal.optimization_container
 function get_resolution(problem::OperationsProblem{<:AbstractOperationsProblem})
@@ -259,13 +258,15 @@ function get_resolution(problem::OperationsProblem{<:AbstractOperationsProblem})
 end
 get_problem_base_power(problem::OperationsProblem) = PSY.get_base_power(problem.sys)
 get_settings(problem::OperationsProblem) = get_optimization_container(problem).settings
+get_solve_timed_log(problem::OperationsProblem) =
+    get_optimization_container(problem).solve_timed_log
 get_simulation_info(problem::OperationsProblem) = problem.internal.simulation_info
+get_simulation_number(problem::OperationsProblem) = problem.internal.simulation_info.number
 get_status(problem::OperationsProblem) = problem.internal.status
 get_system(problem::OperationsProblem) = problem.sys
 get_template(problem::OperationsProblem) = problem.template
-get_write_path(problem::OperationsProblem) = problem.internal.write_path
-get_variables(problem::OperationsProblem) =
-    get_internal(problem).optimization_container.variables
+get_output_dir(problem::OperationsProblem) = problem.internal.output_dir
+get_variables(problem::OperationsProblem) = get_optimization_container(problem).variables
 
 function get_initial_conditions(
     problem::OperationsProblem,
@@ -276,12 +277,23 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(problem), key)
 end
 
+set_console_level!(problem::OperationsProblem, val) =
+    get_internal(problem).console_level = val
+set_file_level!(problem::OperationsProblem, val) = get_internal(problem).file_level = val
+set_executions!(problem::OperationsProblem, val::Int) =
+    problem.internal.simulation_info.executions = val
 set_execution_count!(problem::OperationsProblem, val::Int) =
     get_simulation_info(problem).execution_count = val
-set_status!(problem::OperationsProblem, status::BuildStatus) =
+set_initial_time!(problem::OperationsProblem, val::Dates.DateTime) =
+    set_initial_time!(get_settings(problem), val)
+set_simulation_info!(problem::OperationsProblem, info::SimulationInfo) =
+    problem.internal.simulation_info = info
+function set_status!(problem::OperationsProblem, status::BuildStatus)
     problem.internal.status = status
-set_write_path!(problem::OperationsProblem, path::AbstractString) =
-    problem.internal.write_path = path
+    return
+end
+set_output_dir!(problem::OperationsProblem, path::AbstractString) =
+    get_internal(problem).output_dir = path
 
 function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsProblem}
     if built_for_simulation(problem::OperationsProblem)
@@ -293,30 +305,60 @@ function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsPro
     return
 end
 
-function build_pre_step!(problem::OperationsProblem)
-    if !is_empty(problem)
-        @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
-        reset!(problem)
+function advance_execution_count!(problem::OperationsProblem)
+    info = get_simulation_info(problem)
+    info.execution_count += 1
+    # Reset execution count at the end of step
+    if get_execution_count(problem) == get_executions(problem)
+        info.execution_count = 0
     end
-    settings = get_settings(problem)
-    # Initial time are set here because the information is specified in the
-    # Simulation Sequence object and not at the problem creation.
-    system = get_system(problem)
-    if built_for_simulation(problem::OperationsProblem)
-        resolution = get_resolution(problem)
-        interval = 0
-        end_of_interval_step = Int(interval / resolution)
-        get_simulation_info(problem).end_of_interval_step = Int(interval / resolution)
-    end
-    @info "Initializing Optimization Container"
-    template = get_template(problem)
-    optimization_container_init!(
-        get_optimization_container(problem),
-        get_transmission_model(template),
-        system,
-    )
-    set_status!(problem, BuildStatus.IN_PROGRESS)
     return
+end
+
+function build_pre_step!(problem::OperationsProblem)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
+        if !is_empty(problem)
+            @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
+            reset!(problem)
+        end
+        settings = get_settings(problem)
+        # Initial time are set here because the information is specified in the
+        # Simulation Sequence object and not at the problem creation.
+        system = get_system(problem)
+        if built_for_simulation(problem)
+            resolution = get_resolution(problem)
+            interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
+            end_of_interval_step = Int(interval / resolution)
+            get_simulation_info(problem).end_of_interval_step = end_of_interval_step
+        end
+        @info "Initializing Optimization Container"
+        template = get_template(problem)
+        optimization_container_init!(
+            get_optimization_container(problem),
+            get_transmission_model(template),
+            system,
+        )
+        set_status!(problem, BuildStatus.IN_PROGRESS)
+    end
+    return
+end
+
+function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serialize::Bool)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
+        try
+            build_pre_step!(problem)
+            problem_build!(problem)
+            serialize && serialize_problem(problem)
+            serialize && serialize_optimization_model(problem)
+            set_status!(problem, BuildStatus.BUILT)
+            !built_for_simulation(problem) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
+        catch e
+            set_status!(problem, BuildStatus.FAILED)
+            bt = catch_backtrace()
+            @error "Operation Problem Build Failed" exception = e, bt
+        end
+    end
+    return get_status(problem)
 end
 
 """Implementation of build for any OperationsProblem"""
@@ -325,34 +367,29 @@ function build!(
     output_dir::String,
     console_level = Logging.Error,
     file_level = Logging.Info,
+    disable_timer_outputs = false,
+    serialize = true,
 )
-    if !ispath(output_dir)
-        throw(ArgumentError("$output_dir does not exist"))
-    end
-    problem.internal.output_dir = output_dir
-    problem.internal.console_level = console_level
-    problem.internal.file_level = file_level
+    !ispath(output_dir) && throw(ArgumentError("$output_dir does not exist"))
+    set_output_dir!(problem, output_dir)
+    set_console_level!(problem, console_level)
+    set_file_level!(problem, file_level)
+    disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
     logger = configure_logging(problem.internal, "w")
     try
         Logging.with_logger(logger) do
-            build_pre_step!(problem)
-            problem_build!(problem)
-            #serialize_problem(problem, "operations_problem")
-            #serialize_optimization_model(problem)
-            set_status!(problem, BuildStatus.BUILT)
+            return _build!(problem, serialize)
         end
-    catch e
-        @error "Operation Problem Build Fail" exception = e
-        set_status!(problem, BuildStatus.FAILED)
+    finally
+        close(logger)
     end
-    return get_status(problem)
 end
 
 """
 Default implementation of build method for Operational Problems for models conforming with PowerSimulationsOperationsProblem specification. Overload this function to implement a custom build method
 """
 function problem_build!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem})
-    build_impl(
+    build_impl!(
         get_optimization_container(problem),
         get_template(problem),
         get_system(problem),
@@ -363,28 +400,49 @@ serialize_optimization_model(::OperationsProblem) = nothing
 serialize_problem(::OperationsProblem) = nothing
 
 function serialize_optimization_model(
-    problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    op_problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
 )
-    serialize_optimization_model(get_optimization_container(problem), path)
+    name = get_name(op_problem)
+    problem_name = isempty(name) ? "OptimizationModel" : "$(name)_OptimizationModel"
+    json_file_name = "$problem_name.json"
+    json_file_name = joinpath(get_output_dir(op_problem), json_file_name)
+    serialize_optimization_model(get_optimization_container(op_problem), json_file_name)
+end
+
+struct OperationsProblemSerializationWrapper
+    template::OperationsProblemTemplate
+    sys::Union{Nothing, String}
+    settings::Settings
+    op_problem_type::DataType
 end
 
 function serialize_problem(
     op_problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
-    filename::AbstractString,
 )
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
-    sys_filename = "$(basename(filename))-system-$(IS.get_uuid(op_problem.sys)).json"
-    sys_filename = joinpath(dirname(filename), sys_filename)
-    PSY.to_json(op_problem.sys, sys_filename)
+    problem_name = isempty(get_name(op_problem)) ? "OperationProblem" : get_name(op_problem)
+    sys_to_file = get_system_to_file(get_settings(op_problem))
+    if sys_to_file
+        sys = get_system(op_problem)
+        sys_filename = "$(problem_name)-system-$(IS.get_uuid(sys)).json"
+        sys_filename = joinpath(get_output_dir(op_problem), sys_filename)
+        # Skip serialization if the system is already in the folder
+        !ispath(sys_filename) && PSY.to_json(sys, sys_filename)
+    else
+        sys_filename = nothing
+    end
+    optimization_container = get_optimization_container(op_problem)
     obj = OperationsProblemSerializationWrapper(
         op_problem.template,
         sys_filename,
-        op_problem.psi_container.settings_copy,
+        optimization_container.settings_copy,
         typeof(op_problem),
     )
-    Serialization.serialize(filename, obj)
-    @info "Serialized OperationsProblem to" filename
+    bin_file_name = "$problem_name.bin"
+    bin_file_name = joinpath(get_output_dir(op_problem), bin_file_name)
+    Serialization.serialize(bin_file_name, obj)
+    @info "Serialized OperationsProblem to" bin_file_name
 end
 
 function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString; kwargs...)
@@ -392,36 +450,36 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
     if !(obj isa OperationsProblemSerializationWrapper)
         throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
     end
-
-    if !ispath(obj.sys)
-        throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
+    sys = get(kwargs, :system, nothing)
+    settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
+    if sys === nothing
+        if obj.sys === nothing && !settings[:sys_to_file]
+            throw(
+                IS.DataFormatError(
+                    "Operations Problem System was not serialized and a System has not been specified.",
+                ),
+            )
+        elseif !ispath(obj.sys)
+            throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
+        end
+        sys = PSY.System(obj.sys)
     end
-    sys = PSY.System(obj.sys)
 
-    return obj.op_problem_type(
-        obj.template,
-        sys,
-        kwargs[:jump_model],
-        restore_from_copy(obj.settings; optimizer = kwargs[:optimizer]),
-    )
+    return obj.op_problem_type(obj.template, sys, kwargs[:jump_model]; settings...)
 end
 
-struct OperationsProblemSerializationWrapper
-    template::OperationsProblemTemplate
-    sys::String
-    settings::Settings
-    op_problem_type::DataType
-end
-
-function _psi_solve_optimization_problem(problem::OperationsProblem; kwargs...)
+function _psi_solve_optimization_problem(problem::OperationsProblem; optimizer = nothing)
     model = get_jump_model(problem)
+    if optimizer !== nothing
+        JuMP.set_optimizer(model, optimizer)
+    end
     if model.moi_backend.state == MOIU.NO_OPTIMIZER
         @error("No Optimizer has been defined, can't solve the operational problem")
         return RunStatus.FAILED
     end
     @assert model.moi_backend.state != MOIU.NO_OPTIMIZER
     status = RunStatus.RUNNING
-    timed_log = Dict{Symbol, Any}()
+    timed_log = get_solve_timed_log(problem)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
     model_status = JuMP.primal_status(model)
@@ -447,12 +505,12 @@ results = solve!(OpModel)
 automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
-function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem}, kwargs...)
+function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem}; kwargs...)
     return _psi_solve_optimization_problem(problem; kwargs...)
 end
 
 """
-Default simulate method the operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
+Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
 
 # Arguments
 - `step::Int`: Simulation Step
@@ -463,7 +521,7 @@ Default simulate method the operational model used inside of a Simulation. Solve
 # Accepted Key Words
 - `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
 """
-function simulate!(
+function solve!(
     step::Int,
     problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
     start_time::Dates.DateTime,
@@ -472,14 +530,10 @@ function simulate!(
 )
     solve_status = solve!(problem)
     if solve_status == RunStatus.SUCCESSFUL
-        stats = OptimizerStats(problem, step, start_time, timed_log)
+        stats = OptimizerStats(problem, step, start_time)
         append_optimizer_stats!(store, stats)
         write_model_results!(store, problem, start_time; exports = exports)
-        problem.internal.execution_count += 1
-        # Reset execution count at the end of step
-        if problem.internal.execution_count == problem.internal.executions
-            problem.internal.execution_count = 0
-        end
+        advance_execution_count!(problem)
     end
 
     return solve_status
@@ -499,8 +553,9 @@ function write_model_results!(store, problem, timestamp; exports = nothing)
         export_params = nothing
     end
 
+    # This line should only be called if the problem is exporting duals. Otherwise ignore.
     if is_milp(get_optimization_container(problem))
-        @warn "Stage $(problem.internal.number) is a MILP, duals can't be exported"
+        @warn "Problem $(get_simulation_info(problem).name) is a MILP, duals can't be exported"
     else
         _write_model_dual_results!(
             store,
@@ -738,7 +793,7 @@ function write_data(problem::OperationsProblem, output_dir::AbstractString; kwar
     return
 end
 
-struct StageSerializationWrapper
+struct ProblemSerializationWrapper
     template::OperationsProblemTemplate
     sys::String
     settings::Settings
@@ -749,7 +804,8 @@ end
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_constraint_index(problem::OperationsProblem)
     con_index = Vector{Tuple{Symbol, Int, Int}}()
-    for (key, value) in problem.optimization_container.constraints
+    optimization_container = get_optimization_container(problem)
+    for (key, value) in get_constraints(optimization_container)
         for (idx, constraint) in enumerate(value)
             moi_index = JuMP.optimizer_index(constraint)
             push!(con_index, (key, idx, moi_index.value))
@@ -761,7 +817,8 @@ end
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(problem::OperationsProblem)
     var_index = Vector{Tuple{Symbol, Int, Int}}()
-    for (key, value) in problem.optimization_container.variables
+    optimization_container = get_optimization_container(problem)
+    for (key, value) in get_variables(optimization_container)
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)
             push!(var_index, (key, idx, moi_index.value))
@@ -771,20 +828,23 @@ function get_all_var_index(problem::OperationsProblem)
 end
 
 function get_con_index(problem::OperationsProblem, index::Int)
+    optimization_container = get_optimization_container(problem)
+    constraints = get_constraints(optimization_container)
     for i in get_all_constraint_index(problem::OperationsProblem)
         if i[3] == index
-            return problem.optimization_container.constraints[i[1]].data[i[2]]
+            return constraints[i[1]].data[i[2]]
         end
     end
-
     @info "Index not found"
     return
 end
 
 function get_var_index(problem::OperationsProblem, index::Int)
+    optimization_container = get_optimization_container(problem)
+    variables = get_variables(optimization_container)
     for i in get_all_var_index(problem::OperationsProblem)
         if i[3] == index
-            return problem.optimization_container.variables[i[1]].data[i[2]]
+            return variables[i[1]].data[i[2]]
         end
     end
     @info "Index not found"

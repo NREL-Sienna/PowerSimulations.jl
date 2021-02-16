@@ -1,5 +1,3 @@
-const NO_SERVICE_NAME_PROVIDED = ""
-
 """
 Abstract type for Service Formulations (a.k.a Models)
 
@@ -46,12 +44,12 @@ reserves = ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve)
 mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     component_type::Type{D}
     formulation::Type{B}
-    feedforward::Union{Nothing, Array{<:AbstractAffectFeedForward}}
+    feedforward::Union{Nothing, AbstractAffectFeedForward}
     use_service_name::Bool
     function ServiceModel(
         ::Type{D},
         ::Type{B};
-        feedforward::Union{Nothing, Array{<:AbstractAffectFeedForward}} = nothing,
+        feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
         use_service_name::Bool = false,
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)

@@ -34,7 +34,7 @@ end
 ############################ Chronologies For FeedForward ###################################
 @doc raw"""
     Synchronize(periods::Int)
-Defines the co-ordination of time between Two stages.
+Defines the co-ordination of time between Two problems.
 
 # Arguments
 - `periods::Int`: Number of time periods to grab data from
@@ -82,34 +82,35 @@ mutable struct Range <: FeedForwardChronology
 end
 
 function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
-    source_stage = get_stage(sim, key.first)
-    destination_stage = get_stage(sim, key.second)
-    source_stage_horizon = get_sequence(sim).horizons[key.first]
-    destination_stage_horizon = get_sequence(sim).horizons[key.second]
-    source_stage_interval = get_stage_interval(sim, key.first)
-    destination_stage_interval = get_stage_interval(sim, key.second)
+    source_problem = get_problems(sim)[key.first]
+    destination_problem = get_problems(sim)[key.second]
+    source_problem_horizon = get_horizon(source_problem)
+    destination_problem_horizon = get_horizon(destination_problem)
+    sequence = get_sequence(sim)
+    source_problem_interval = get_interval(sequence, key.first)
+    destination_problem_interval = get_interval(sequence, key.second)
 
-    source_stage_resolution = get_resolution(source_stage)
-    @debug source_stage_resolution, destination_stage_interval
-    # How many times the second stages executes per solution retireved from the source_stage.
-    # E.g. source_stage_resolution = 1 Hour, destination_stage_interval = 5 minutes => 12 executions per solution
-    destination_stage_executions_per_solution =
-        Int(source_stage_resolution / destination_stage_interval)
-    # Number of periods in the horizon that will be synchronized between the source_stage and the destination_stage
-    source_stage_sync = sync.periods
+    source_problem_resolution = get_resolution(source_problem)
+    @debug source_problem_resolution, destination_problem_interval
+    # How many times the second problem executes per solution retireved from the source_problem.
+    # E.g. source_problem_resolution = 1 Hour, destination_problem_interval = 5 minutes => 12 executions per solution
+    destination_problem_executions_per_solution =
+        Int(source_problem_resolution / destination_problem_interval)
+    # Number of periods in the horizon that will be synchronized between the source_problem and the destination_problem
+    source_problem_sync = sync.periods
 
-    if source_stage_sync > source_stage_horizon
+    if source_problem_sync > source_problem_horizon
         throw(
             IS.ConflictingInputsError(
-                "The lookahead length $(source_stage_horizon) in stage is insufficient to syncronize with $(source_stage_sync) feedforward periods",
+                "The lookahead length $(source_problem_horizon) in problem is insufficient to syncronize with $(source_problem_sync) feedforward periods",
             ),
         )
     end
 
-    if (source_stage_sync % destination_stage_executions_per_solution) != 0
+    if (source_problem_sync % destination_problem_executions_per_solution) != 0
         throw(
             IS.ConflictingInputsError(
-                "The current configuration implies $(source_stage_sync / destination_stage_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in stage $(key.first) needs to be a mutiple of the number of stage $(key.second) execution for every stage $(key.first) interval.",
+                "The current configuration implies $(source_problem_sync / destination_problem_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in problem $(key.first) needs to be a mutiple of the number of problem $(key.second) execution for every problem $(key.first) interval.",
             ),
         )
     end
@@ -118,14 +119,16 @@ function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
 end
 
 function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
-    source_stage_horizon = get_sequence(sim).horizons[key.first]
-    source_stage_interval = get_stage_interval(sim, key.first)
-    if source_stage_horizon != source_stage_interval
+    source_problem = get_problems(sim)[key.first]
+    destination_problem = get_problems(sim)[key.second]
+    source_problem_horizon = get_horizon(source_problem)
+    destination_problem_horizon = get_horizon(destination_problem)
+    if source_problem_horizon != source_problem_interval
         @warn(
-            "Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_stage_horizon) in stage $(key.first) will be replaced with $(source_stage_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon"
+            "Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_problem_horizon) in problem $(key.first) will be replaced with $(source_problem_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon"
         )
     end
-    get_sequence(sim).horizons[key.first] = get_stage_interval(sim, key.first)
+    get_sequence(sim).horizons[key.first] = get_interval(sim, key.first)
     return
 end
 
@@ -146,105 +149,109 @@ end
 ############################ FeedForward Definitions ########################################
 
 struct UpperBoundFF <: AbstractAffectFeedForward
-    variable_source_stage::Symbol
+    variable_source_problem::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
     function UpperBoundFF(
-        variable_source_stage::AbstractString,
+        variable_source_problem::AbstractString,
         affected_variables::Vector{<:AbstractString},
         cache::Union{Nothing, Type{<:AbstractCache}},
     )
-        new(Symbol(variable_source_stage), Symbol.(affected_variables), cache)
+        new(Symbol(variable_source_problem), Symbol.(affected_variables), cache)
     end
 end
 
-function UpperBoundFF(; variable_source_stage, affected_variables)
-    return UpperBoundFF(variable_source_stage, affected_variables, nothing)
+function UpperBoundFF(; variable_source_problem, affected_variables)
+    return UpperBoundFF(variable_source_problem, affected_variables, nothing)
 end
 
-get_variable_source_stage(p::UpperBoundFF) = p.variable_source_stage
+get_variable_source_problem(p::UpperBoundFF) = p.variable_source_problem
 
 struct RangeFF <: AbstractAffectFeedForward
-    variable_source_stage_ub::Symbol
-    variable_source_stage_lb::Symbol
+    variable_source_problem_ub::Symbol
+    variable_source_problem_lb::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
     function RangeFF(
-        variable_source_stage_ub::AbstractString,
-        variable_source_stage_lb::AbstractString,
+        variable_source_problem_ub::AbstractString,
+        variable_source_problem_lb::AbstractString,
         affected_variables::Vector{<:AbstractString},
         cache::Union{Nothing, Type{<:AbstractCache}},
     )
         new(
-            Symbol(variable_source_stage_ub),
-            Symbol(variable_source_stage_lb),
+            Symbol(variable_source_problem_ub),
+            Symbol(variable_source_problem_lb),
             Symbol.(affected_variables),
             cache,
         )
     end
 end
 
-function RangeFF(; variable_source_stage_ub, variable_source_stage_lb, affected_variables)
+function RangeFF(;
+    variable_source_problem_ub,
+    variable_source_problem_lb,
+    affected_variables,
+)
     return RangeFF(
-        variable_source_stage_ub,
-        variable_source_stage_lb,
+        variable_source_problem_ub,
+        variable_source_problem_lb,
         affected_variables,
         nothing,
     )
 end
 
-get_bounds_source_stage(p::RangeFF) =
-    (p.variable_source_stage_lb, p.variable_source_stage_lb)
+get_bounds_source_problem(p::RangeFF) =
+    (p.variable_source_problem_lb, p.variable_source_problem_lb)
 
 struct SemiContinuousFF <: AbstractAffectFeedForward
-    binary_source_stage::Symbol
+    binary_source_problem::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
     function SemiContinuousFF(
-        binary_source_stage::AbstractString,
+        binary_source_problem::AbstractString,
         affected_variables::Vector{<:AbstractString},
         cache::Union{Nothing, Type{<:AbstractCache}},
     )
-        new(Symbol(binary_source_stage), Symbol.(affected_variables), cache)
+        new(Symbol(binary_source_problem), Symbol.(affected_variables), cache)
     end
 end
 
-function SemiContinuousFF(; binary_source_stage, affected_variables)
-    return SemiContinuousFF(binary_source_stage, affected_variables, nothing)
+function SemiContinuousFF(; binary_source_problem, affected_variables)
+    return SemiContinuousFF(binary_source_problem, affected_variables, nothing)
 end
 
-get_binary_source_stage(p::SemiContinuousFF) = p.binary_source_stage
+get_binary_source_problem(p::SemiContinuousFF) = p.binary_source_problem
 get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
 
 struct IntegralLimitFF <: AbstractAffectFeedForward
-    variable_source_stage::Symbol
+    variable_source_problem::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
     function IntegralLimitFF(
-        variable_source_stage::AbstractString,
+        variable_source_problem::AbstractString,
         affected_variables::Vector{<:AbstractString},
         cache::Union{Nothing, Type{<:AbstractCache}},
     )
-        new(Symbol(variable_source_stage), Symbol.(affected_variables), cache)
+        new(Symbol(variable_source_problem), Symbol.(affected_variables), cache)
     end
 end
 
-function IntegralLimitFF(; variable_source_stage, affected_variables)
-    return IntegralLimitFF(variable_source_stage, affected_variables, nothing)
+function IntegralLimitFF(; variable_source_problem, affected_variables)
+    return IntegralLimitFF(variable_source_problem, affected_variables, nothing)
 end
 
-get_variable_source_stage(p::IntegralLimitFF) = p.variable_source_stage
+get_variable_source_problem(p::IntegralLimitFF) = p.variable_source_problem
 
 struct ParameterFF <: AbstractAffectFeedForward
-    variable_source_stage::Symbol
+    variable_source_problem::Symbol
     affected_parameters::Any
-    function ParameterFF(variable_source_stage::AbstractString, affected_parameters)
-        new(Symbol(variable_source_stage), affected_parameters)
+    function ParameterFF(variable_source_problem::AbstractString, affected_parameters)
+        new(Symbol(variable_source_problem), affected_parameters)
     end
 end
 
-function ParameterFF(; variable_source_stage, affected_parameters)
-    return ParameterFF(variable_source_stage, affected_parameters)
+function ParameterFF(; variable_source_problem, affected_parameters)
+    return ParameterFF(variable_source_problem, affected_parameters)
 end
 
 ####################### Feed Forward Affects ###############################################
@@ -607,7 +614,7 @@ function feedforward!(
     model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::SemiContinuousFF,
 ) where {T <: PSY.StaticInjection}
-    bin_var = make_variable_name(get_binary_source_stage(ff_model), T)
+    bin_var = make_variable_name(get_binary_source_problem(ff_model), T)
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -649,14 +656,14 @@ end
 
 ######################### FeedForward Variables Updating #####################################
 # This makes the choice in which variable to get from the results.
-function get_stage_variable(
+function get_problem_variable(
     chron::RecedingHorizon,
-    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::AbstractString,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
-        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
+        get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     step = axes(variable)[2][chron.periods]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
@@ -666,15 +673,15 @@ function get_stage_variable(
     end
 end
 
-function get_stage_variable(
+function get_problem_variable(
     ::Consecutive,
-    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
-        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
-    step = axes(variable)[2][get_end_of_interval_step(stages.first)]
+        get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
+    step = axes(variable)[2][get_end_of_interval_step(problems.first)]
     var = variable[device_name, step]
     if JuMP.is_binary(var)
         return round(JuMP.value(var))
@@ -683,15 +690,15 @@ function get_stage_variable(
     end
 end
 
-function get_stage_variable(
+function get_problem_variable(
     chron::Synchronize,
-    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
-        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
-    e_count = get_execution_count(stages.second)
+        get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
+    e_count = get_execution_count(problems.second)
     wait_count = get_execution_wait_count(get_trigger(chron))
     index = (floor(e_count / wait_count) + 1)
     step = axes(variable)[2][Int(index)]
@@ -703,14 +710,14 @@ function get_stage_variable(
     end
 end
 
-function get_stage_variable(
+function get_problem_variable(
     ::FullHorizon,
-    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
-        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
+        get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     vars = variable[device_name, :]
     if JuMP.is_binary(first(vars))
         return round.(JuMP.value(vars))
@@ -719,14 +726,14 @@ function get_stage_variable(
     end
 end
 
-function get_stage_variable(
+function get_problem_variable(
     chron::Range,
-    stages::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
-        get_variable(stages.first.internal.optimization_container, var_ref.access_ref)
+        get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     vars = variable[device_name, chron.range]
     if JuMP.is_binary(first(vars))
         return round.(JuMP.value(vars))
@@ -736,8 +743,8 @@ function get_stage_variable(
 end
 
 function feedforward_update!(
-    destination_stage::OperationsProblem,
-    source_stage::OperationsProblem,
+    destination_problem::OperationsProblem,
+    source_problem::OperationsProblem,
     chronology::FeedForwardChronology,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,
@@ -746,9 +753,9 @@ function feedforward_update!(
     trigger = get_trigger(chronology)
     if trigger_update(trigger)
         for device_name in axes(param_array)[1]
-            var_value = get_stage_variable(
+            var_value = get_problem_variable(
                 chronology,
-                (source_stage => destination_stage),
+                (source_problem => destination_problem),
                 device_name,
                 param_reference,
             )
@@ -761,12 +768,17 @@ function feedforward_update!(
                 device_name,
                 var_value,
                 previous_value,
-                destination_stage,
-                source_stage,
+                destination_problem,
+                source_problem,
             )
         end
         reset_trigger_count!(trigger)
     end
     update_count!(trigger)
+    return
+end
+
+function attach_feedforward(model, ff::AbstractAffectFeedForward)
+    model.feedforward = ff
     return
 end

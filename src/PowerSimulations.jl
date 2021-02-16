@@ -9,6 +9,7 @@ export Simulation
 export OperationsProblem
 export OperationsProblemTemplate
 export InitialCondition
+export SimulationProblems
 export SimulationSequence
 export SimulationResults
 export StageResults
@@ -84,8 +85,8 @@ export IntegralLimitFF
 export ParameterFF
 
 # InitialConditions chrons
-export InterStageChronology
-export IntraStageChronology
+export InterProblemChronology
+export IntraProblemChronology
 
 # Initial Conditions Quantities
 export DevicePower
@@ -107,7 +108,6 @@ export EconomicDispatchProblem
 # Functions
 ## Op Model Exports
 export solve!
-export simulate!
 export get_initial_conditions
 export serialize_problem
 export serialize_optimization_model
@@ -259,6 +259,11 @@ import PowerModels
 import TimerOutputs
 import ProgressMeter
 
+# Base Imports
+import Base.getindex
+import Base.length
+import Base.first
+
 # TimeStamp Management Imports
 import Dates
 import TimeSeries
@@ -331,6 +336,7 @@ include("core/optimization_container.jl")
 include("core/update_initial_conditions.jl")
 include("core/operations_problem_results.jl")
 include("core/operations_problem.jl")
+include("core/simulation_problems.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 

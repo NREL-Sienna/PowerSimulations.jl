@@ -44,7 +44,7 @@ thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
 mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     component_type::Type{D}
     formulation::Type{B}
-    feedforward::Union{Nothing, Array{<:AbstractAffectFeedForward}}
+    feedforward::Union{Nothing, AbstractAffectFeedForward}
     services::Vector{ServiceModel}
 
     function DeviceModel(
