@@ -39,6 +39,8 @@ get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
 
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
 
+get_target_multiplier(v::PSY.BatteryEMS) = PSY.get_rating(v)
+get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage = PSY.get_efficiency(v)
 #! format: on
 
 ################################## output power constraints#################################
@@ -47,7 +49,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerOutVariable},
     ::Type{T},
-    ::Type{<:AbstractStorageFormulation},
+    ::Type{<:BookKeeping},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -72,7 +74,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerInVariable},
     ::Type{T},
-    ::Type{<:AbstractStorageFormulation},
+    ::Type{<:BookKeeping},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -97,7 +99,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerOutVariable},
     ::Type{T},
-    ::Type{<:BookKeepingwReservation},
+    ::Type{<:AbstractStorageFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -123,7 +125,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerInVariable},
     ::Type{T},
-    ::Type{<:BookKeepingwReservation},
+    ::Type{<:AbstractStorageFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -216,78 +218,24 @@ end
 
 ############################ book keeping constraints ######################################
 
-function make_efficiency_data(
-    devices::IS.FlattenIteratorWrapper{St},
+function DeviceEnergyBalanceConstraintSpec(
+    ::Type{<:EnergyBalanceConstraint},
+    ::Type{EnergyVariable},
+    ::Type{St},
+    ::Type{<:AbstractStorageFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
 ) where {St <: PSY.Storage}
-    names = Vector{String}(undef, length(devices))
-    in_out = Vector{InOut}(undef, length(devices))
-
-    for (ix, d) in enumerate(devices)
-        names[ix] = PSY.get_name(d)
-        in_out[ix] = PSY.get_efficiency(d)
-    end
-
-    return names, in_out
-end
-
-function energy_balance_constraint!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-    ::Type{D},
-    ::Type{S},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
-    efficiency_data = make_efficiency_data(devices)
-    key = ICKey(EnergyLevel, St)
-
-    if !has_initial_conditions(optimization_container.initial_conditions, key)
-        throw(
-            IS.DataFormatError(
-                "Initial Conditions for $(St) Energy Constraints not in the model",
-            ),
-        )
-    end
-
-    energy_balance(
-        optimization_container,
-        get_initial_conditions(optimization_container, ICKey(EnergyLevel, St)),
-        efficiency_data,
-        make_constraint_name(ENERGY_LIMIT, St),
-        (
-            make_variable_name(ACTIVE_POWER_IN, St),
-            make_variable_name(ACTIVE_POWER_OUT, St),
-            make_variable_name(ENERGY, St),
-        ),
+    return DeviceEnergyBalanceConstraintSpec(;
+        constraint_name = make_constraint_name(ENERGY_LIMIT, St),
+        energy_variable = make_variable_name(ENERGY, St),
+        initial_condition = EnergyLevel,
+        pin_variable_names = [make_variable_name(ACTIVE_POWER_IN, St)],
+        pout_variable_names = [make_variable_name(ACTIVE_POWER_OUT, St)],
+        constraint_func = energy_balance!,
     )
-    return
-end
-
-function energy_target_constraint!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-    ::Type{EndOfPeriodEnergyTarget},
-    ::Type{S},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.BatteryEMS, S <: PM.AbstractPowerModel}
-    constraint_infos_target =
-        Vector{DeviceEnergyTargetConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        constraint_info_target = DeviceEnergyTargetConstraintInfo(
-            PSY.get_name(d),
-            PSY.get_rating(d),
-            PSY.get_storage_target(d),
-        )
-        constraint_infos_target[ix] = constraint_info_target
-    end
-
-    energy_soft_target(
-        optimization_container,
-        constraint_infos_target,
-        make_constraint_name(ENERGY_TARGET, St),
-        (make_variable_name(ENERGY, St), make_variable_name(ENERGY_TARGET_SLACK, St)),
-    )
-
-    return
 end
 
 ############################ Energy Management constraints ######################################
@@ -297,48 +245,10 @@ function AddCostSpec(
     ::Type{EndOfPeriodEnergyTarget},
     optimization_container::OptimizationContainer,
 )
-    variable_cost_func = x -> -PSY.get_energy_value(x) + PSY.get_penalty_cost(x)
     return AddCostSpec(;
-        variable_type = EnergyVariable,
+        variable_type = ActivePowerOutVariable,
         component_type = PSY.BatteryEMS,
-        variable_cost = variable_cost_func,
+        variable_cost = PSY.get_variable,
         multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
-end
-
-function add_to_cost!(
-    optimization_container::OptimizationContainer,
-    spec::AddCostSpec,
-    cost_data::Float64,
-    component::T,
-) where {T <: PSY.Storage}
-    component_name = PSY.get_name(component)
-    time_steps = model_time_steps(optimization_container)
-
-    linear_gen_cost!(
-        optimization_container,
-        make_variable_name(spec.variable_type, spec.component_type),
-        component_name,
-        cost_data,
-        time_steps[end],
-    )
-    return
-end
-
-"""
-Add variables to the OptimizationContainer for a Storage device.
-"""
-function cost_function!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
-) where {T <: PSY.Storage, U <: AbstractStorageFormulation}
-    for d in devices
-        spec = AddCostSpec(T, U, optimization_container)
-        @debug T, spec
-        add_to_cost!(optimization_container, spec, spec.variable_cost(d), d)
-    end
-    return
 end
