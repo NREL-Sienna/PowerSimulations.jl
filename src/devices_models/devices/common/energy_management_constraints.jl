@@ -27,18 +27,11 @@ function energy_target!(
 
     for data in target_data, t in time_steps
         name = get_component_name(data)
-        if data.timeseries[t] > 0.0
-            target_constraint[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                varenergy[name, t] + varslack_up[name, t] + varslack_dn[name, t] ==
-                data.multiplier * data.timeseries[t]
-            )
-        else
-            target_constraint[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                varslack_up[name, t] - varslack_dn[name, t] == 0.0
-            )
-        end
+        target_constraint[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            varenergy[name, t] + varslack_up[name, t] + varslack_dn[name, t] ==
+            data.multiplier * data.timeseries[t]
+        )
     end
 
     return
@@ -86,18 +79,11 @@ function energy_target_param!(
         param_target[name, t] =
             PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
         multiplier_target[name, t] = d.multiplier
-        if d.timeseries[t] > 0.0
-            target_constraint[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                varenergy[name, t] + varslack_up[name, t] + varslack_dn[name, t] ==
-                multiplier_target[name, t] * param_target[name, t]
-            )
-        else
-            target_constraint[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                varslack_up[name, t] - varslack_dn[name, t] == 0.0
-            )
-        end
+        target_constraint[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            varenergy[name, t] + varslack_up[name, t] + varslack_dn[name, t] ==
+            multiplier_target[name, t] * param_target[name, t]
+        )
     end
 
     return
