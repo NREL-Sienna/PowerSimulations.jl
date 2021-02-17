@@ -101,11 +101,11 @@ end
         sequence = single_sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
-    # Disabled due to https://github.com/NREL-SIIP/PowerSystemCaseBuilder.jl/issues/11
-    #build_out = build!(sim_single_wcache)
-    #@test build_out == PSI.BuildStatus.BUILT
-    #execute_out = execute!(sim_single_wcache)
-    #@test execute_out == PSI.RunStatus.SUCCESSFUL
+
+    build_out = build!(sim_single_wcache)
+    @test build_out == PSI.BuildStatus.BUILT
+    execute_out = execute!(sim_single_wcache)
+    @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
 @testset "Simulation with 2-Stages and Cache" begin
