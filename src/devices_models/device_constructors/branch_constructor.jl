@@ -140,7 +140,6 @@ function construct_device!(
         return
     end
     branch_rate_bounds!(optimization_container, devices, model, S)
-    #branch_rate_bounds!(optimization_container, devices, model, S) #This was duplicated... I think it can be removed
     return
 end
 
@@ -170,7 +169,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{B, <:AbstractDCLineFormulation},
     ::Type{S},
-) where {B <: PSY.DCBranch, S <: StandardPTDFModel}
+) where {B <: PSY.DCBranch, S <: Union{StandardPTDFModel, PTDFPowerModel}}
     devices = get_available_components(B, sys)
     if !validate_available_devices(B, devices)
         return

@@ -654,7 +654,7 @@ function build_impl(
         @debug get_problem_size(optimization_container)
     end
     @debug "Building $(transmission) network formulation"
-    construct_network!(optimization_container, sys, transmission)
+    construct_network!(optimization_container, sys, transmission, template)
     @debug get_problem_size(optimization_container)
 
     for branch_model in values(template.branches)

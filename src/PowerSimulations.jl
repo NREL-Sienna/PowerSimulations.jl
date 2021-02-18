@@ -15,6 +15,7 @@ export StageResults
 
 # Network Relevant Exports
 export StandardPTDFModel
+export PTDFPowerModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel
 

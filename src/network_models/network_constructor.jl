@@ -2,6 +2,7 @@ function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::Type{CopperPlatePowerModel},
+    template::OperationsProblemTemplate
 )
     buses = PSY.get_components(PSY.Bus, sys)
     bus_count = length(buses)
@@ -17,6 +18,7 @@ function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::Type{AreaBalancePowerModel},
+    template::OperationsProblemTemplate
 )
     area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
     branches = get_available_components(PSY.Branch, sys)
@@ -36,6 +38,7 @@ function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::Type{StandardPTDFModel},
+    template::OperationsProblemTemplate
 )
     buses = PSY.get_components(PSY.Bus, sys)
     ptdf = get_PTDF(optimization_container)
@@ -55,21 +58,32 @@ end
 function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T};,
+    ::Type{T},
+    template::OperationsProblemTemplate
 ) where {T <: PTDFPowerModel}
     construct_network!(
         optimization_container,
         sys,
-        T;
+        T,
+        template;
         instantiate_model = instantiate_nip_ptdf_expr_model,
     )
+
     add_pm_expr_refs!(optimization_container, T, sys)
+    copper_plate(
+        optimization_container,
+        :nodal_balance_active,
+        length(PSY.get_components(PSY.Bus, sys)),
+    )
+
+    return
 end
 
 function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T};
+    ::Type{T},
+    template::OperationsProblemTemplate;
     instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractPowerModel}
     if T in UNSUPPORTED_POWERMODELS
@@ -85,7 +99,7 @@ function construct_network!(
     end
 
     @debug "Building the $T network with $instantiate_model method"
-    powermodels_network!(optimization_container, T, sys, instantiate_model)
+    powermodels_network!(optimization_container, T, sys, template, instantiate_model)
     add_pm_var_refs!(optimization_container, T, sys)
     add_pm_con_refs!(optimization_container, T, sys)
 
@@ -95,7 +109,8 @@ end
 function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T};
+    ::Type{T},
+    template::OperationsProblemTemplate;
     instantiate_model = instantiate_bfp_expr_model,
 ) where {T <: PM.AbstractBFModel}
     if T in UNSUPPORTED_POWERMODELS
@@ -110,7 +125,7 @@ function construct_network!(
         add_slacks!(optimization_container, T)
 
     @debug "Building the $T network with $instantiate_model method"
-    powermodels_network!(optimization_container, T, sys, instantiate_model)
+    powermodels_network!(optimization_container, T, sys, template, instantiate_model)
     add_pm_var_refs!(optimization_container, T, sys)
     add_pm_con_refs!(optimization_container, T, sys)
     return
@@ -119,7 +134,8 @@ end
 function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T};
+    ::Type{T},
+    template::OperationsProblemTemplate;
     instantiate_model = instantiate_vip_expr_model,
 ) where {T <: PM.AbstractIVRModel}
     if T in UNSUPPORTED_POWERMODELS
@@ -135,7 +151,7 @@ function construct_network!(
     end
 
     @debug "Building the $T network with $instantiate_model method"
-    powermodels_network!(optimization_container, T, sys, instantiate_model)
+    powermodels_network!(optimization_container, T, sys, template, instantiate_model)
     add_pm_var_refs!(optimization_container, T, sys)
     add_pm_con_refs!(optimization_container, T, sys)
     return
