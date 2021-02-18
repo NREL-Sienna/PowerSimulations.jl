@@ -1,9 +1,6 @@
-const KNOWN_PATHS =
-    ["data_store", "logs", "models_json", "recorder", "results", "simulation_files"]
-
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
-    alien_files = [f for f in folder_files if f ∉ KNOWN_PATHS]
+    alien_files = filter(!∈(KNOWN_SIMULATION_PATHS), folder_files)
     if isempty(alien_files)
         return true
     end
@@ -42,7 +39,7 @@ end
 function StageResults(
     store::SimulationStore,
     stage_name::AbstractString,
-    stage_params::SimulationStoreStageParams,
+    stage_params::SimulationStoreProblemParams,
     sim_params::SimulationStoreParams,
     path;
     load_system = true,

@@ -1,5 +1,3 @@
-const HASH_FILENAME = "check.sha256"
-
 """
 Return a decoded JSON file.
 """

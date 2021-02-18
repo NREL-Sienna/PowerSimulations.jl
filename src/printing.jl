@@ -1,5 +1,5 @@
 function _display_model(
-    val::Dict{String, T},
+    val::Dict{Tuple{String, Symbol}, T},
     field::Symbol,
     io::IO,
 ) where {T <: ServiceModel}
@@ -10,10 +10,7 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(
-            io,
-            "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n",
-        )
+        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
         if ix.use_service_name
             println(io, "\tName specific Model\n")
         end
@@ -21,7 +18,7 @@ function _display_model(
 end
 
 function _display_model(
-    val::Dict{String, T},
+    val::Dict{Symbol, T},
     field::Symbol,
     io::IO,
 ) where {T <: DeviceModel}
@@ -32,10 +29,7 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(
-            io,
-            "\tLabel: $(i)\n \tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n",
-        )
+        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
     end
 end
 
@@ -59,16 +53,14 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
 
     for field in fieldnames(OperationsProblemTemplate)
         val = getfield(template, Symbol(field))
-        if typeof(val) <: Dict{String, <:Union{DeviceModel, ServiceModel}}
+        if typeof(val) <: Dict{Symbol, <:DeviceModel}
+            println(io, "============================================")
+            _display_model(val, field, io)
+        elseif typeof(val) <: Dict{Tuple{String, Symbol}, <:ServiceModel}
             println(io, "============================================")
             _display_model(val, field, io)
         else
-            if !(val === nothing)
-                field = titlecase(string(field))
-                println(io, "$(field):\n\t$(val) \n")
-            else
-                println(io, "no data")
-            end
+            println(io, "")
         end
     end
     println(io, "============================================")
@@ -357,19 +349,19 @@ function Base.show(io::IO, sequence::SimulationSequence)
         println(io, "$(k[1]): $(typeof(v)) -> $(k[3])\n")
         to = String.(v.affected_variables)
         if isa(v, SemiContinuousFF)
-            from = String.(v.binary_source_stage)
+            from = String.(v.binary_source_problem)
         elseif isa(v, RangeFF)
-            from = String.([v.variable_source_stage_ub, v.variable_source_stage_lb])
+            from = String.([v.variable_source_problem_ub, v.variable_source_problem_lb])
         else
-            from = String.(v.variable_source_stage)
+            from = String.(v.variable_source_problem)
         end
         _print_feedforward(io, sequence.feedforward_chronologies, to, from)
     end
     println(io, "Initial Condition Chronology")
     println(io, "----------------------------\n")
-    if sequence.ini_cond_chronology == IntraStageChronology()
+    if sequence.ini_cond_chronology == IntraProblemChronology()
         _print_intra_stages(io, stages)
-    elseif sequence.ini_cond_chronology == InterStageChronology()
+    elseif sequence.ini_cond_chronology == InterProblemChronology()
         _print_inter_stages(io, stages)
     end
 end

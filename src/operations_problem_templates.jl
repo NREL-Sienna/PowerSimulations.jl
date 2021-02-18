@@ -1,4 +1,3 @@
-# TODO: JD: clean up this file
 
 struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
 struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end

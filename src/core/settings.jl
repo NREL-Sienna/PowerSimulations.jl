@@ -1,7 +1,7 @@
 struct Settings
     horizon::Base.RefValue{Int}
     use_forecast_data::Bool
-    use_parameters::Bool
+    use_parameters::Base.RefValue{Bool}
     warm_start::Base.RefValue{Bool}
     balance_slack_variables::Bool
     services_slack_variables::Bool
@@ -37,7 +37,7 @@ function Settings(
     return Settings(
         Ref(horizon),
         use_forecast_data,
-        use_parameters,
+        Ref(use_parameters),
         Ref(warm_start),
         balance_slack_variables,
         services_slack_variables,
@@ -73,40 +73,28 @@ function restore_from_copy(
     settings::Settings;
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
 )
-    vals = []
+    vals = Dict{Symbol, Any}()
     for name in fieldnames(Settings)
         if name == :optimizer
-            val = optimizer
+            vals[name] = optimizer
+        elseif name == :ext
+            continue
         else
             val = getfield(settings, name)
+            vals[name] = isa(val, Base.RefValue) ? val[] : val
         end
-
-        push!(vals, val)
     end
 
-    return Settings(vals...)
-end
-
-function set_horizon!(settings::Settings, horizon::Int)
-    settings.horizon[] = horizon
-    return
+    return vals
 end
 
 get_horizon(settings::Settings) = settings.horizon[]
 get_use_forecast_data(settings::Settings) = settings.use_forecast_data
-get_use_parameters(settings::Settings) = settings.use_parameters
-function set_initial_time!(settings::Settings, initial_time::Dates.DateTime)
-    settings.initial_time[] = initial_time
-    return
-end
+get_use_parameters(settings::Settings) = settings.use_parameters[]
 get_initial_time(settings::Settings)::Dates.DateTime = settings.initial_time[]
 get_PTDF(settings::Settings) = settings.PTDF
 get_optimizer(settings::Settings) = settings.optimizer
 get_ext(settings::Settings) = settings.ext
-function set_warm_start!(settings::Settings, warm_start::Bool)
-    settings.warm_start[] = warm_start
-    return
-end
 get_warm_start(settings::Settings) = settings.warm_start[]
 get_constraint_duals(settings::Settings) = settings.constraint_duals
 get_balance_slack_variables(settings::Settings) = settings.balance_slack_variables
@@ -115,3 +103,23 @@ get_system_to_file(settings::Settings) = settings.system_to_file
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails
 get_optimizer_log_print(settings::Settings) = settings.optimizer_log_print
+
+function set_horizon!(settings::Settings, horizon::Int)
+    settings.horizon[] = horizon
+    return
+end
+
+function set_initial_time!(settings::Settings, initial_time::Dates.DateTime)
+    settings.initial_time[] = initial_time
+    return
+end
+
+function set_use_parameters!(settings::Settings, val::Bool)
+    settings.use_parameters[] = val
+    return
+end
+
+function set_warm_start!(settings::Settings, warm_start::Bool)
+    settings.warm_start[] = warm_start
+    return
+end
