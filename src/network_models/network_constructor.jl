@@ -2,7 +2,7 @@ function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::Type{CopperPlatePowerModel},
-    template::OperationsProblemTemplate
+    template::OperationsProblemTemplate,
 )
     buses = PSY.get_components(PSY.Bus, sys)
     bus_count = length(buses)
@@ -18,7 +18,7 @@ function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::Type{AreaBalancePowerModel},
-    template::OperationsProblemTemplate
+    template::OperationsProblemTemplate,
 )
     area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
     branches = get_available_components(PSY.Branch, sys)
@@ -38,7 +38,7 @@ function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::Type{StandardPTDFModel},
-    template::OperationsProblemTemplate
+    template::OperationsProblemTemplate,
 )
     buses = PSY.get_components(PSY.Bus, sys)
     ptdf = get_PTDF(optimization_container)
@@ -59,7 +59,7 @@ function construct_network!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     ::Type{T},
-    template::OperationsProblemTemplate
+    template::OperationsProblemTemplate,
 ) where {T <: PTDFPowerModel}
     construct_network!(
         optimization_container,

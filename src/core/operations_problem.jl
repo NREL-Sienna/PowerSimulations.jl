@@ -334,13 +334,13 @@ function build!(
     problem.internal.file_level = file_level
     logger = configure_logging(problem.internal, "w")
     #try
-        Logging.with_logger(logger) do
-            build_pre_step!(problem)
-            problem_build!(problem)
-            #serialize_problem(problem, "operations_problem")
-            #serialize_optimization_model(problem)
-            set_status!(problem, BuildStatus.BUILT)
-        end
+    Logging.with_logger(logger) do
+        build_pre_step!(problem)
+        problem_build!(problem)
+        #serialize_problem(problem, "operations_problem")
+        #serialize_optimization_model(problem)
+        set_status!(problem, BuildStatus.BUILT)
+    end
     #catch e
     #    @error "Operation Problem Build Fail" exception = e
     #    set_status!(problem, BuildStatus.FAILED)

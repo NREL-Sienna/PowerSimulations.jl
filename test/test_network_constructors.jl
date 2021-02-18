@@ -170,12 +170,8 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = OSQP_optimizer,
-            use_parameters = p,
-        )
+        ps_model =
+            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT

@@ -50,7 +50,7 @@ function mock_construct_network!(
         PSI.get_optimization_container(problem),
         PSI.get_system(problem),
         model,
-        problem.template.branches
+        problem.template.branches,
     )
 end
 

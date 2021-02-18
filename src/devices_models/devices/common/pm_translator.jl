@@ -11,7 +11,11 @@ struct PMmap
     }
 end
 
-function get_branch_to_pm(ix::Int, branch::PSY.PhaseShiftingTransformer, device_formulation::Type{D}) where D <: AbstractBranchFormulation
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.PhaseShiftingTransformer,
+    device_formulation::Type{D},
+) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),
@@ -35,7 +39,11 @@ function get_branch_to_pm(ix::Int, branch::PSY.PhaseShiftingTransformer, device_
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int, branch::PSY.PhaseShiftingTransformer, device_formulation::Type{StaticBranchUnbounded})
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.PhaseShiftingTransformer,
+    device_formulation::Type{StaticBranchUnbounded},
+)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => PSY.get_α(branch),
@@ -56,7 +64,11 @@ function get_branch_to_pm(ix::Int, branch::PSY.PhaseShiftingTransformer, device_
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int, branch::PSY.Transformer2W, device_formulation::Type{D}) where D <: AbstractBranchFormulation
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.Transformer2W,
+    device_formulation::Type{D},
+) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),
@@ -80,8 +92,11 @@ function get_branch_to_pm(ix::Int, branch::PSY.Transformer2W, device_formulation
     return PM_branch
 end
 
-
-function get_branch_to_pm(ix::Int, branch::PSY.Transformer2W, device_formulation::Type{StaticBranchUnbounded})
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.Transformer2W,
+    device_formulation::Type{StaticBranchUnbounded},
+)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => 0.0,
@@ -102,7 +117,11 @@ function get_branch_to_pm(ix::Int, branch::PSY.Transformer2W, device_formulation
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int, branch::PSY.TapTransformer, device_formulation::Type{D}) where D <: AbstractBranchFormulation
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.TapTransformer,
+    device_formulation::Type{D},
+) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),
@@ -126,8 +145,11 @@ function get_branch_to_pm(ix::Int, branch::PSY.TapTransformer, device_formulatio
     return PM_branch
 end
 
-
-function get_branch_to_pm(ix::Int, branch::PSY.TapTransformer, device_formulation::Type{StaticBranchUnbounded})
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.TapTransformer,
+    device_formulation::Type{StaticBranchUnbounded},
+)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => 0.0,
@@ -148,7 +170,11 @@ function get_branch_to_pm(ix::Int, branch::PSY.TapTransformer, device_formulatio
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int, branch::PSY.ACBranch, device_formulation::Type{D}) where D <: AbstractBranchFormulation
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.ACBranch,
+    device_formulation::Type{D},
+) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),
@@ -172,8 +198,11 @@ function get_branch_to_pm(ix::Int, branch::PSY.ACBranch, device_formulation::Typ
     return PM_branch
 end
 
-
-function get_branch_to_pm(ix::Int, branch::PSY.ACBranch, device_formulation::Type{StaticBranchUnbounded})
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.ACBranch,
+    device_formulation::Type{StaticBranchUnbounded},
+)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => 0.0,
@@ -194,7 +223,11 @@ function get_branch_to_pm(ix::Int, branch::PSY.ACBranch, device_formulation::Typ
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int, branch::PSY.HVDCLine, device_formulation::Type{D}) where D <: AbstractBranchFormulation
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.HVDCLine,
+    device_formulation::Type{D},
+) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "loss1" => PSY.get_loss(branch).l1,
         "mp_pmax" => PSY.get_reactive_power_limits_from(branch).max,
@@ -227,7 +260,13 @@ function get_branch_to_pm(ix::Int, branch::PSY.HVDCLine, device_formulation::Typ
     return PM_branch
 end
 
-function get_branches_to_pm(sys::PSY.System, system_formulation::Type{S}, branch_type::Type{T}, branch_template::BranchModelContainer, start_idx = 0) where {T <: PSY.Branch, S <: PM.AbstractPowerModel}
+function get_branches_to_pm(
+    sys::PSY.System,
+    system_formulation::Type{S},
+    branch_type::Type{T},
+    branch_template::BranchModelContainer,
+    start_idx = 0,
+) where {T <: PSY.Branch, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{
         NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}},
@@ -237,7 +276,8 @@ function get_branches_to_pm(sys::PSY.System, system_formulation::Type{S}, branch
     for (d, device_model) in branch_template
         !(device_model.component_type <: branch_type) && continue
         start_idx += length(PM_branches)
-        for (i, branch) in enumerate(get_available_components(device_model.component_type, sys))
+        for (i, branch) in
+            enumerate(get_available_components(device_model.component_type, sys))
             ix = i + start_idx
             PM_branches["$(ix)"] = get_branch_to_pm(ix, branch, device_model.formulation)
             if PM_branches["$(ix)"]["br_status"] == true
@@ -250,8 +290,13 @@ function get_branches_to_pm(sys::PSY.System, system_formulation::Type{S}, branch
     return PM_branches, PMmap_br
 end
 
-
-function get_branches_to_pm(sys::PSY.System, system_formulation::Type{PTDFPowerModel}, ::Type{T}, branch_template::BranchModelContainer, start_idx = 0) where {T <: PSY.DCBranch}
+function get_branches_to_pm(
+    sys::PSY.System,
+    system_formulation::Type{PTDFPowerModel},
+    ::Type{T},
+    branch_template::BranchModelContainer,
+    start_idx = 0,
+) where {T <: PSY.DCBranch}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{
         NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}},
@@ -299,8 +344,15 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
 end
 
 function pass_to_pm(sys::PSY.System, template::OperationsProblemTemplate, time_periods::Int)
-    ac_lines, PMmap_ac = get_branches_to_pm(sys, template.transmission, PSY.ACBranch, template.branches)
-    dc_lines, PMmap_dc = get_branches_to_pm(sys, template.transmission, PSY.DCBranch, template.branches, length(ac_lines))
+    ac_lines, PMmap_ac =
+        get_branches_to_pm(sys, template.transmission, PSY.ACBranch, template.branches)
+    dc_lines, PMmap_dc = get_branches_to_pm(
+        sys,
+        template.transmission,
+        PSY.DCBranch,
+        template.branches,
+        length(ac_lines),
+    )
     buses = PSY.get_components(PSY.Bus, sys)
     pm_buses, PMmap_buses = get_buses_to_pm(buses)
     PM_translation = Dict{String, Any}(

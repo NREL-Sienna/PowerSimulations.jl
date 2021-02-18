@@ -467,10 +467,6 @@ function PMexprmap(system_formulation::Type{PTDFPowerModel})
         pm_expr = Dict(:p => (from_to = FlowActivePowerVariable, to_from = nothing)),
         psi_con = :network_flow,
     )
-    pm_expr_map[PSY.DCBranch] = (
-        pm_expr = Dict(:p_dc => (from_to = FlowActivePowerVariable, to_from = nothing)),
-        psi_con = :network_flow,
-    )
 
     return pm_expr_map
 end
@@ -627,19 +623,29 @@ function add_pm_expr_refs!(
     time_steps::UnitRange{Int},
 )
     for d_type in Set(device_types)
-        mapped_devices = [d for d in pm_map if typeof(d[2]) == d_type]
-        devices = getfield.(mapped_devices, 2)
-        device_names = PSY.get_name.(devices)
-
         for (pm_expr_var, ps_v) in pm_expr_map[d_class].pm_expr
             if pm_expr_var in pm_var_types
+                pm_devices = keys(PM.var(optimization_container.pm, pm_expr_var))
+                mapped_pm_devices = Vector()
+                mapped_ps_devices = Vector{d_type}()
+                for d in pm_map
+                    if typeof(d[2]) == d_type &&
+                       d[1].from_to ∈ pm_devices &&
+                       d[1].to_from ∈ pm_devices
+                        push!(mapped_pm_devices, d[1])
+                        push!(mapped_ps_devices, d[2])
+                    end
+                end
+                isempty(mapped_ps_devices) && continue
+                mapped_ps_device_names = PSY.get_name.(mapped_ps_devices)
+
                 # add variable in psi
                 # add psi_var = pm_expr_var as constraint
                 for dir in fieldnames(typeof(ps_v))
                     var_type = getfield(ps_v, dir)
                     var_type === nothing && continue
 
-                    add_variable!(optimization_container, var_type(), devices)
+                    add_variable!(optimization_container, var_type(), mapped_ps_devices)
                     psi_var_container = get_variable(
                         optimization_container,
                         make_variable_name(var_type, d_type),
@@ -648,17 +654,18 @@ function add_pm_expr_refs!(
                     psi_con_container = PSI.add_cons_container!(
                         optimization_container,
                         pm_expr_map[d_class].psi_con,
-                        device_names,
+                        mapped_ps_device_names,
                         time_steps,
                     )
-                    for t in time_steps, (pm_d, d) in mapped_devices
+                    for t in time_steps,
+                        (pm_d, name) in zip(mapped_pm_devices, mapped_ps_device_names)
+
                         pm_expr = PM.var(
                             optimization_container.pm,
                             t,
                             pm_expr_var,
                             getfield(pm_d, dir),
                         )
-                        name = PSY.get_name(d)
                         psi_con_container[name, t] = JuMP.@constraint(
                             optimization_container.JuMPmodel,
                             psi_var_container[name, t] == pm_expr
