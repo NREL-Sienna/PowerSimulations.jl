@@ -134,6 +134,7 @@ function OperationsProblem{M}(
 ) where {M <: AbstractOperationsProblem}
     settings = Settings(
         sys;
+        horizon = horizon,
         initial_time = initial_time,
         optimizer = optimizer,
         use_parameters = use_parameters,
