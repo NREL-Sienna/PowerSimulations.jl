@@ -20,6 +20,15 @@ function verify_export_results(results, export_path)
                 compare_results(rpath, export_path, problem, "variables", name, timestamp)
             end
         end
+
+        # This file is not currently exported during the simulation.
+        @test isfile(
+            joinpath(
+                problem_results.results_output_folder,
+                problem_results.problem,
+                "optimizer_stats.csv",
+            ),
+        )
     end
 end
 
@@ -32,20 +41,29 @@ end
 
 function make_export_all(problems)
     return [
-        StageResultsExport(x, duals = [:all], variables = [:all], parameters = [:all]) for
+        ProblemResultsExport(x, duals = [:all], variables = [:all], parameters = [:all]) for
         x in problems
     ]
 end
 
 function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
+        #file_path = "test_sim"
+        #isdir(file_path) && rm(file_path, recursive=true)
+        #mkpath(file_path)
+        #export_path="export_path"
         template_uc = get_template_hydro_st_uc()
         template_ed = get_template_hydro_st_ed()
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
         problems = SimulationProblems(
             UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
-            ED = OperationsProblem(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),
+            ED = OperationsProblem(
+                template_ed,
+                c_sys5_hy_ed;
+                optimizer = GLPK_optimizer,
+                constraint_duals = [:CopperPlateBalance],
+            ),
         )
 
         sequence_cache = SimulationSequence(
@@ -97,6 +115,7 @@ function test_simulation_results(file_path::String, export_path)
                 ),
             ],
             "path" => export_path,
+            "optimizer_stats" => true,
         )
         execute_out = execute!(sim, exports = exports)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
@@ -106,7 +125,7 @@ function test_simulation_results(file_path::String, export_path)
         results_uc = get_problem_results(results, "UC")
         results_ed = get_problem_results(results, "ED")
 
-        results_from_file = SimulationResults(joinpath(file_path, "results_sim"))
+        results_from_file = SimulationResults(joinpath(file_path, "cache"))
         @test list_problems(results) == ["ED", "UC"]
         results_uc_from_file = get_problem_results(results_from_file, "UC")
         results_ed_from_file = get_problem_results(results_from_file, "ED")
@@ -152,6 +171,7 @@ function test_simulation_results(file_path::String, export_path)
             @test size(v) == (12, 6)
         end
 
+        # TODO: duals are not being stored any longer. Is that expected?
         network_duals = read_dual(results_ed, :CopperPlateBalance)
         @test length(keys(network_duals)) == 48
         for v in values(network_duals)

@@ -2,7 +2,7 @@
 import PowerSimulations:
     SimulationStoreParams,
     SimulationStoreProblemParams,
-    get_stage_exports,
+    get_problem_exports,
     should_export_dual,
     should_export_parameter,
     should_export_variable
@@ -13,7 +13,7 @@ function _make_params()
         "step_resolution" => Dates.Hour(24),
         "num_steps" => 2,
     )
-    stage_defs = OrderedDict(
+    problem_defs = OrderedDict(
         :ED => Dict(
             "execution_count" => 24,
             "horizon" => 12,
@@ -31,25 +31,25 @@ function _make_params()
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
     )
-    stages = OrderedDict{Symbol, SimulationStoreProblemParams}()
-    for stage in keys(stage_defs)
-        stage_params = SimulationStoreProblemParams(
-            stage_defs[stage]["execution_count"],
-            stage_defs[stage]["horizon"],
-            stage_defs[stage]["interval"],
-            stage_defs[stage]["resolution"],
-            stage_defs[stage]["base_power"],
-            stage_defs[stage]["system_uuid"],
+    problems = OrderedDict{Symbol, SimulationStoreProblemParams}()
+    for problem in keys(problem_defs)
+        problem_params = SimulationStoreProblemParams(
+            problem_defs[problem]["execution_count"],
+            problem_defs[problem]["horizon"],
+            problem_defs[problem]["interval"],
+            problem_defs[problem]["resolution"],
+            problem_defs[problem]["base_power"],
+            problem_defs[problem]["system_uuid"],
         )
 
-        stages[stage] = stage_params
+        problems[problem] = problem_params
     end
 
     return SimulationStoreParams(
         sim["initial_time"],
         sim["step_resolution"],
         sim["num_steps"],
-        stages,
+        problems,
     )
 end
 
@@ -87,31 +87,31 @@ end
 
     # Invalid start_time
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("start_time" => invalid, "stages" => [Dict("name" => "ED")]),
+        Dict("start_time" => invalid, "problems" => [Dict("name" => "ED")]),
         params,
     )
 
     # Invalid end_time
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("end_time" => invalid, "stages" => [Dict("name" => "ED")]),
+        Dict("end_time" => invalid, "problems" => [Dict("name" => "ED")]),
         params,
     )
 
     # Invalid format
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("format" => "invalid", "stages" => [Dict("name" => "ED")]),
+        Dict("format" => "invalid", "problems" => [Dict("name" => "ED")]),
         params,
     )
 
     # Missing name
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("stages" => [Dict("variables" => [:P__ThermalStandard, :all])]),
+        Dict("problems" => [Dict("variables" => [:P__ThermalStandard, :all])]),
         params,
     )
 
     # Can't have a variable and 'all'
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("stages" => [Dict("name" => "ED", "variables" => [:var, :all])]),
+        Dict("problems" => [Dict("name" => "ED", "variables" => [:var, :all])]),
         params,
     )
 end
