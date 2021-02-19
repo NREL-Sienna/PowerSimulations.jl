@@ -82,6 +82,7 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
         #    PM.constraint_theta_ref(pm, i, nw = n)
         #end
 
+        # done later with PSI copper_plate
         #for i in PM.ids(pm, :bus, nw = n)
         #    constraint_power_balance_ni_expr(pm, i, nw = n)
         #end
@@ -91,6 +92,7 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
                 PM.expression_branch_power_ohms_yt_to_ptdf(pm, i, nw = n)
             end
 
+            # done in PSI construct_branch!
             #PM.constraint_thermal_limit_from(pm, i, nw = n)
             #PM.constraint_thermal_limit_to(pm, i, nw = n)
         end
