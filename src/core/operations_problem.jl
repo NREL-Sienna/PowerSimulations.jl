@@ -119,7 +119,7 @@ function OperationsProblem{M}(
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
     optimizer::Union{MOI.OptimizerWithAttributes, Nothing} = nothing,
     PTDF = nothing,
-    horizon = nothing,
+    horizon = UNSET_HORIZON,
     warm_start = true,
     balance_slack_variables = false,
     services_slack_variables = false,
@@ -134,6 +134,7 @@ function OperationsProblem{M}(
 ) where {M <: AbstractOperationsProblem}
     settings = Settings(
         sys;
+        horizon = horizon,
         initial_time = initial_time,
         optimizer = optimizer,
         use_parameters = use_parameters,
