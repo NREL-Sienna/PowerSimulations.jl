@@ -1035,7 +1035,6 @@ function _execute!(
     num_executions = steps * length(execution_order)
     store_params =
         _initialize_problem_storage!(sim, store, cache_size_mib, min_cache_flush_size_mib)
-    initialize_optimizer_stats_storage!(store, num_executions)
     status = RunStatus.RUNNING
     if exports !== nothing
         if !(exports isa SimulationResultsExport)
