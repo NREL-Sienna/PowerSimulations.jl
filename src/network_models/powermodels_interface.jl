@@ -101,6 +101,21 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
     return
 end
 
+# can be removed once PJ expression issue is resolved.
+function PM.expression_bus_voltage(pm::PM.AbstractPowerModel, n::Int, i, am::Union{PM.AdmittanceMatrix,PM.AdmittanceMatrixInverse})
+    inj_factors = PM.injection_factors_va(am, i)
+
+    inj_p = PM.var(pm, n, :inj_p)
+
+    if length(inj_factors) == 0
+        # this can be removed once, JuMP.jl/issues/2120 is resolved
+        PM.var(pm, n, :va)[i] = 0.0
+    else
+        expr = sum(f*inj_p[j] for (j,f) in inj_factors)
+        PM.var(pm, n, :va)[i] = JuMP.@expression(pm.model, expr)
+    end
+end
+
 function instantiate_bfp_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_bfp_expr; kwargs...)
 end

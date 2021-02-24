@@ -12,7 +12,7 @@ function copper_plate(
     for t in time_steps
         constraint_val[t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            sum(optimization_container.expressions[expression].data[1:bus_count, t]) == 0
+            sum(optimization_container.expressions[expression].data[i, t] for i in 1:bus_count) == 0
         )
     end
 
