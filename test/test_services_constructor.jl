@@ -2,17 +2,16 @@
     template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
-    set_service_model!(template, ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve))
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+    )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
-        op_problem = OperationsProblem(
-            template,
-            c_sys5_uc;
-            use_parameters = p,
-        )
+        op_problem = OperationsProblem(template, c_sys5_uc; use_parameters = p)
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-        PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 648, 0, 120, 216, 72, false)
         symbols = [
             :Reserve1__VariableReserve_ReserveUp,
@@ -33,17 +32,16 @@ end
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
-    set_service_model!(template, ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve))
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+    )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
     for p in [true, false]
-        op_problem = OperationsProblem(
-            template,
-            c_sys5_uc;
-            use_parameters = p,
-        )
+        op_problem = OperationsProblem(template, c_sys5_uc; use_parameters = p)
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-        PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 1008, 0, 480, 216, 192, true)
     end
 end
@@ -53,61 +51,56 @@ end
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
-    set_service_model!(template, ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve))
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+    )
 
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
     for p in [true, false]
-        op_problem = OperationsProblem(
-            template,
-            c_sys5_re;
-            use_parameters = p,
-        )
+        op_problem = OperationsProblem(template, c_sys5_re; use_parameters = p)
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-        PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 360, 0, 72, 48, 72, false)
     end
 end
 
 @testset "Test Reserves from Storage" begin
-
     template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
     set_device_model!(template, GenericBattery, BookKeeping)
     set_device_model!(template, RenewableDispatch, FixedOutput)
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
-    set_service_model!(template, ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve))
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+    )
 
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves = true)
     for p in [true, false]
-        op_problem = OperationsProblem(
-            template,
-            c_sys5_bat;
-            use_parameters = p,
-        )
+        op_problem = OperationsProblem(template, c_sys5_bat; use_parameters = p)
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-        PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 408, 0, 192, 264, 96, false)
     end
 end
 
 @testset "Test Reserves from Hydro" begin
-
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
-    set_service_model!(template, ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve))
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+    )
 
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
     for p in [true, false]
-        op_problem = OperationsProblem(
-            template,
-            c_sys5_hyd;
-            use_parameters = p,
-        )
+        op_problem = OperationsProblem(template, c_sys5_hyd; use_parameters = p)
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-        PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 240, 0, 24, 96, 72, false)
     end
 end
@@ -127,7 +120,7 @@ end
             balance_slack_variables = true,
         )
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-        PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 504, 0, 120, 192, 24, false)
     end
 end
@@ -139,18 +132,23 @@ end
     template_agc = template_agc_reserve_deployment()
     agc_problem = OperationsProblem(AGCReserveDeployment, template_agc, c_sys5_reg)
     @test build!(agc_problem; output_dir = mktempdir(cleanup = true)) ==
-    PSI.BuildStatus.BUILT
+          PSI.BuildStatus.BUILT
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, false, 720, 0, 480, 0, 384, false)
 end
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
-
     template = get_thermal_dispatch_template_network()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
-    set_service_model!(template, ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve))
-    set_service_model!(template, ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve))
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve),
+    )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     services = get_components(Service, c_sys5_uc)
@@ -169,24 +167,25 @@ end
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
     for p in [true, false]
-        op_problem = OperationsProblem(
-            template,
-            c_sys5_uc;
-            use_parameters = p,
-        )
+        op_problem = OperationsProblem(template, c_sys5_uc; use_parameters = p)
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-        PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 648, 0, 120, 240, 72, false)
     end
 end
 
 @testset "Test GroupReserve Errors" begin
-
     template = get_thermal_dispatch_template_network()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
-    set_service_model!(template, ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve))
-    set_service_model!(template, ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve))
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve),
+    )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     services = get_components(Service, c_sys5_uc)
@@ -207,21 +206,24 @@ end
     off_service = VariableReserve{ReserveUp}("Reserveoff", true, 0.6, 10)
     push!(groupservice.contributing_services, off_service)
 
-    op_problem = OperationsProblem(
-            template,
-            c_sys5_uc;
-            use_parameters = false,
-        )
-    @test_logs(
-        (:error, r"is not stored"),
-        match_mode = :any,
-        @test_throws InfrastructureSystems.InvalidValue build!(op_problem; output_dir = mktempdir(cleanup = true))
-        
+    op_problem = OperationsProblem(template, c_sys5_uc; use_parameters = false)
+    # @test_logs(
+    #     (:error, r"is not stored"),
+    #     match_mode = :any,
+    #     @test_throws InfrastructureSystems.InvalidValue build!(op_problem; output_dir = mktempdir(cleanup = true))
+
+    # )
+    @test_throws InfrastructureSystems.InvalidValue build!(
+        op_problem;
+        output_dir = mktempdir(cleanup = true),
+    )
+    @test_logs (:error, r"is not stored") match_mode = :any build!(
+        op_problem;
+        output_dir = mktempdir(cleanup = true),
     )
 end
 
 @testset "Test StaticReserve" begin
-
     template = get_thermal_dispatch_template_network()
     set_service_model!(template, ServiceModel(StaticReserve{ReserveUp}, RangeReserve))
 
@@ -230,6 +232,6 @@ end
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
     op_problem = OperationsProblem(template, c_sys5_uc)
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-    PSI.BuildStatus.BUILT
+          PSI.BuildStatus.BUILT
     @test typeof(op_problem) <: OperationsProblem
 end

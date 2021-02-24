@@ -114,9 +114,8 @@ function template_agc_reserve_deployment(; kwargs...)
     set_device_model!(template, PSY.RenewableFix, FixedOutput)
     set_device_model!(
         template,
-        DeviceModel(PSY.RegulationDevice{PSY.ThermalStandard},
-        DeviceLimitedRegulation,
-    ))
+        DeviceModel(PSY.RegulationDevice{PSY.ThermalStandard}, DeviceLimitedRegulation),
+    )
     set_device_model!(
         template,
         DeviceModel(PSY.RegulationDevice{PSY.HydroDispatch}, ReserveLimitedRegulation),

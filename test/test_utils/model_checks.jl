@@ -116,7 +116,12 @@ function check_variable_bounded(op_problem::OperationsProblem, var_name)
     return true
 end
 
-function check_flow_variable_values(op_problem::OperationsProblem, var_name::Symbol, device_name::String, limit::Float64)
+function check_flow_variable_values(
+    op_problem::OperationsProblem,
+    var_name::Symbol,
+    device_name::String,
+    limit::Float64,
+)
     psi_cont = PSI.get_optimization_container(op_problem)
     variable = PSI.get_variable(psi_cont, var_name)
     for var in variable[device_name, :]
@@ -127,18 +132,32 @@ function check_flow_variable_values(op_problem::OperationsProblem, var_name::Sym
     return true
 end
 
-function check_flow_variable_values(op_problem::OperationsProblem, var_name::Symbol, device_name::String, limit_min::Float64, limit_max::Float64)
+function check_flow_variable_values(
+    op_problem::OperationsProblem,
+    var_name::Symbol,
+    device_name::String,
+    limit_min::Float64,
+    limit_max::Float64,
+)
     psi_cont = PSI.get_optimization_container(op_problem)
     variable = PSI.get_variable(psi_cont, var_name)
     for var in variable[device_name, :]
-        if !(JuMP.value(var) <= (limit_max + 1e-2)) || !(JuMP.value(var) >= (limit_min - 1e-2))
+        if !(JuMP.value(var) <= (limit_max + 1e-2)) ||
+           !(JuMP.value(var) >= (limit_min - 1e-2))
             return false
         end
     end
     return true
 end
 
-function check_flow_variable_values(op_problem::OperationsProblem, pvar_name::Symbol, qvar_name::Symbol, device_name::String, limit_min::Float64, limit_max::Float64)
+function check_flow_variable_values(
+    op_problem::OperationsProblem,
+    pvar_name::Symbol,
+    qvar_name::Symbol,
+    device_name::String,
+    limit_min::Float64,
+    limit_max::Float64,
+)
     psi_cont = PSI.get_optimization_container(op_problem)
     time_steps = PSI.model_time_steps(psi_cont)
     pvariable = PSI.get_variable(psi_cont, pvar_name)
@@ -154,7 +173,13 @@ function check_flow_variable_values(op_problem::OperationsProblem, pvar_name::Sy
     return true
 end
 
-function check_flow_variable_values(op_problem::OperationsProblem, pvar_name::Symbol, qvar_name::Symbol, device_name::String, limit::Float64)
+function check_flow_variable_values(
+    op_problem::OperationsProblem,
+    pvar_name::Symbol,
+    qvar_name::Symbol,
+    device_name::String,
+    limit::Float64,
+)
     psi_cont = PSI.get_optimization_container(op_problem)
     time_steps = PSI.model_time_steps(psi_cont)
     pvariable = PSI.get_variable(psi_cont, pvar_name)
@@ -169,7 +194,6 @@ function check_flow_variable_values(op_problem::OperationsProblem, pvar_name::Sy
     end
     return true
 end
-
 
 function PSI._jump_value(int::Int)
     @warn("This is for testing purposes only.")

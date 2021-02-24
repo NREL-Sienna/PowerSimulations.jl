@@ -25,7 +25,12 @@
         @test check_variable_unbounded(op_problem_m, :Fp__Line)
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-        @test check_flow_variable_values(op_problem_m, :Fp__MonitoredLine, "1", limits.from_to)
+        @test check_flow_variable_values(
+            op_problem_m,
+            :Fp__MonitoredLine,
+            "1",
+            limits.from_to,
+        )
     end
 end
 
@@ -69,25 +74,17 @@ end
     PSY.convert_component!(MonitoredLine, line, system)
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     template = get_thermal_dispatch_template_network(ACPPowerModel)
-    op_problem_m = OperationsProblem(
-        template,
-        system;
-        optimizer = ipopt_optimizer,
-    )
-    @test build!(op_problem_m; output_dir = mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    op_problem_m = OperationsProblem(template, system; optimizer = ipopt_optimizer)
+    @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
 
-    qFT_line_variable = PSI.get_variable(
-        op_problem_m.internal.optimization_container,
-        :FqFT__MonitoredLine,
-    )
+    qFT_line_variable =
+        PSI.get_variable(op_problem_m.internal.optimization_container, :FqFT__MonitoredLine)
     pFT_line_variable =
-        PSI.get_variable(op_problem_m.internal.optimization_container, 
-        :FpFT__MonitoredLine
-    )
+        PSI.get_variable(op_problem_m.internal.optimization_container, :FpFT__MonitoredLine)
 
     @test check_variable_bounded(op_problem_m, :FpFT__MonitoredLine)
     @test check_variable_unbounded(op_problem_m, :FqFT__MonitoredLine)
-
 
     @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
     fq = JuMP.value(qFT_line_variable["1", 1])
@@ -98,13 +95,13 @@ end
     # @test check_flow_variable_values(op_problem_m, :FpFT__MonitoredLine, :FqFT__MonitoredLine, "1", 0.0, limits.from_to,)
 end
 
-
 ###
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
-
     ratelimit_constraint_names = [
-        :RateLimit_ub__Transformer2W, :RateLimit_lb__Transformer2W,
-        :RateLimit_ub__TapTransformer, :RateLimit_lb__TapTransformer,
+        :RateLimit_ub__Transformer2W,
+        :RateLimit_lb__Transformer2W,
+        :RateLimit_ub__TapTransformer,
+        :RateLimit_lb__TapTransformer,
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -131,10 +128,8 @@ end
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         # TODO: use accessors to remove the use of Symbols Directly
-        hvdc_line_variable = PSI.get_variable(
-            op_problem_m.internal.optimization_container,
-            :Fp__HVDCLine,
-        )
+        hvdc_line_variable =
+            PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__HVDCLine)
         tap_transformer_variable = PSI.get_variable(
             op_problem_m.internal.optimization_container,
             :Fp__TapTransformer,
@@ -143,7 +138,7 @@ end
             op_problem_m.internal.optimization_container,
             :Fp__Transformer2W,
         )
-        if  model == DCPPowerModel
+        if model == DCPPowerModel
             @test check_variable_bounded(op_problem_m, :Fp__HVDCLine)
             @test check_variable_unbounded(op_problem_m, :Fp__TapTransformer)
             @test check_variable_unbounded(op_problem_m, :Fp__Transformer2W)
@@ -153,14 +148,31 @@ end
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 
-        @test check_flow_variable_values(op_problem_m, :Fp__HVDCLine, "DCLine3", limits_min, limits_max)
-        @test check_flow_variable_values(op_problem_m, :Fp__TapTransformer, "Trans3", -rate_limit, rate_limit)
-        @test check_flow_variable_values(op_problem_m, :Fp__Transformer2W, "Trans4", -rate_limit2w, rate_limit2w)
+        @test check_flow_variable_values(
+            op_problem_m,
+            :Fp__HVDCLine,
+            "DCLine3",
+            limits_min,
+            limits_max,
+        )
+        @test check_flow_variable_values(
+            op_problem_m,
+            :Fp__TapTransformer,
+            "Trans3",
+            -rate_limit,
+            rate_limit,
+        )
+        @test check_flow_variable_values(
+            op_problem_m,
+            :Fp__Transformer2W,
+            "Trans4",
+            -rate_limit2w,
+            rate_limit2w,
+        )
     end
 end
 
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
-
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
     hvdc_line = PSY.get_component(HVDCLine, system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
@@ -188,10 +200,8 @@ end
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         # TODO: use accessors to remove the use of Symbols Directly
-        hvdc_line_variable = PSI.get_variable(
-            op_problem_m.internal.optimization_container,
-            :Fp__HVDCLine,
-        )
+        hvdc_line_variable =
+            PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__HVDCLine)
         tap_transformer_variable = PSI.get_variable(
             op_problem_m.internal.optimization_container,
             :Fp__TapTransformer,
@@ -200,7 +210,7 @@ end
             op_problem_m.internal.optimization_container,
             :Fp__Transformer2W,
         )
-        if  model == DCPPowerModel
+        if model == DCPPowerModel
             # TODO: Currently Broken, remove variable bounds in HVDCUnbounded
             # @test check_variable_unbounded(op_problem_m, :Fp__HVDCLine)
 
@@ -210,20 +220,38 @@ end
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 
-        @test check_flow_variable_values(op_problem_m, :Fp__HVDCLine, "DCLine3", limits_min, limits_max)
-        @test check_flow_variable_values(op_problem_m, :Fp__TapTransformer, "Trans3", -rate_limit, rate_limit)
-        @test check_flow_variable_values(op_problem_m, :Fp__Transformer2W, "Trans4", -rate_limit2w, rate_limit2w)
+        @test check_flow_variable_values(
+            op_problem_m,
+            :Fp__HVDCLine,
+            "DCLine3",
+            limits_min,
+            limits_max,
+        )
+        @test check_flow_variable_values(
+            op_problem_m,
+            :Fp__TapTransformer,
+            "Trans3",
+            -rate_limit,
+            rate_limit,
+        )
+        @test check_flow_variable_values(
+            op_problem_m,
+            :Fp__Transformer2W,
+            "Trans4",
+            -rate_limit2w,
+            rate_limit2w,
+        )
     end
 end
 
-
-
 @testset "AC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
-
     ratelimit_constraint_names = [
-        :RateLimitFT__Transformer2W, :RateLimitTF__Transformer2W,
-        :RateLimitFT__TapTransformer, :RateLimitTF__TapTransformer,
-        :RateLimitFT__HVDCLine, :RateLimitTF__HVDCLine,
+        :RateLimitFT__Transformer2W,
+        :RateLimitTF__Transformer2W,
+        :RateLimitFT__TapTransformer,
+        :RateLimitTF__TapTransformer,
+        :RateLimitFT__HVDCLine,
+        :RateLimitTF__HVDCLine,
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -241,23 +269,15 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(ACPPowerModel)
-    op_problem_m = OperationsProblem(
-        template,
-        system;
-        optimizer = ipopt_optimizer,
-    )
+    op_problem_m = OperationsProblem(template, system; optimizer = ipopt_optimizer)
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
-            PSI.BuildStatus.BUILT
+          PSI.BuildStatus.BUILT
     # TODO: use accessors to remove the use of Symbols Directly
-    qFT_line_variable = PSI.get_variable(
-        op_problem_m.internal.optimization_container,
-        :FqTF__HVDCLine,
-    )
-    pFT_line_variable = PSI.get_variable(
-        op_problem_m.internal.optimization_container,
-        :FpFT__HVDCLine,
-    )
-    
+    qFT_line_variable =
+        PSI.get_variable(op_problem_m.internal.optimization_container, :FqTF__HVDCLine)
+    pFT_line_variable =
+        PSI.get_variable(op_problem_m.internal.optimization_container, :FpFT__HVDCLine)
+
     qFT_tap_variable = PSI.get_variable(
         op_problem_m.internal.optimization_container,
         :FqFT__TapTransformer,
@@ -267,14 +287,10 @@ end
         :FpFT__TapTransformer,
     )
 
-    qFT_transformer_variable = PSI.get_variable(
-        op_problem_m.internal.optimization_container,
-        :FqTF__Transformer2W,
-    )
-    pFT_transformer_variable = PSI.get_variable(
-        op_problem_m.internal.optimization_container,
-        :FpTF__Transformer2W,
-    )
+    qFT_transformer_variable =
+        PSI.get_variable(op_problem_m.internal.optimization_container, :FqTF__Transformer2W)
+    pFT_transformer_variable =
+        PSI.get_variable(op_problem_m.internal.optimization_container, :FpTF__Transformer2W)
 
     check_variable_bounded(op_problem_m, :FqTF__HVDCLine)
     check_variable_bounded(op_problem_m, :FpTF__HVDCLine)
@@ -287,7 +303,26 @@ end
 
     @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 
-    @test check_flow_variable_values(op_problem_m, :FpTF__HVDCLine, :FqTF__HVDCLine, "DCLine3", limits_min, limits_max)
-    @test check_flow_variable_values(op_problem_m, :FpFT__TapTransformer, :FqFT__TapTransformer, "Trans3", rate_limit)
-    @test check_flow_variable_values(op_problem_m, :FpTF__Transformer2W, :FqTF__Transformer2W, "Trans4", rate_limit2w)
+    @test check_flow_variable_values(
+        op_problem_m,
+        :FpTF__HVDCLine,
+        :FqTF__HVDCLine,
+        "DCLine3",
+        limits_min,
+        limits_max,
+    )
+    @test check_flow_variable_values(
+        op_problem_m,
+        :FpFT__TapTransformer,
+        :FqFT__TapTransformer,
+        "Trans3",
+        rate_limit,
+    )
+    @test check_flow_variable_values(
+        op_problem_m,
+        :FpTF__Transformer2W,
+        :FqTF__Transformer2W,
+        "Trans4",
+        rate_limit2w,
+    )
 end
