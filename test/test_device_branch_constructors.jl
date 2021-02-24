@@ -68,7 +68,14 @@ end
     @test check_variable_unbounded(op_problem_m, :FqFT__MonitoredLine)
 
     @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-    @test check_flow_variable_values(op_problem_m, :FpFT__MonitoredLine, :FqFT__MonitoredLine, "1", 0.0, limits.from_to,)
+    @test check_flow_variable_values(
+        op_problem_m,
+        :FpFT__MonitoredLine,
+        :FqFT__MonitoredLine,
+        "1",
+        0.0,
+        limits.from_to,
+    )
 end
 
 ###
