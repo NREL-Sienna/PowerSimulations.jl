@@ -4,9 +4,6 @@ struct HVDCLossless <: AbstractDCLineFormulation end
 struct HVDCDispatch <: AbstractDCLineFormulation end
 struct VoltageSourceDC <: AbstractDCLineFormulation end
 
-const UnboundedBranches =
-    Union{HVDCUnbounded, StaticLineUnbounded, StaticTransformerUnbounded}
-
 #################################### Branch Variables ##################################################
 flow_variables!(
     optimization_container::OptimizationContainer,
