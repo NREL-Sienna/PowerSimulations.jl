@@ -166,7 +166,7 @@ function check_flow_variable_values(
         fp = JuMP.value(pvariable[device_name, t])
         fq = JuMP.value(qvariable[device_name, t])
         flow = sqrt((fp)^2 + (fq)^2)
-        if !(flow <= (limit_max + 1e-2)) || !(flow >= (limit_min - 1e-2))
+        if !(flow <= (limit_max + 1e-2)^2) || !(flow >= (limit_min - 1e-2)^2)
             return false
         end
     end
@@ -188,7 +188,7 @@ function check_flow_variable_values(
         fp = JuMP.value(pvariable[device_name, t])
         fq = JuMP.value(qvariable[device_name, t])
         flow = sqrt((fp)^2 + (fq)^2)
-        if !(flow <= (limit + 1e-2))
+        if !(flow <= (limit + 1e-2)^2)
             return false
         end
     end

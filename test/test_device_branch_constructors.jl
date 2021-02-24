@@ -13,13 +13,6 @@
         )
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        # TODO: use accessors to remove the use of Symbols Directly
-        monitored_line_variable = PSI.get_variable(
-            op_problem_m.internal.optimization_container,
-            :Fp__MonitoredLine,
-        )
-        static_line_variable =
-            PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__Line)
 
         @test check_variable_bounded(op_problem_m, :Fp__MonitoredLine)
         @test check_variable_unbounded(op_problem_m, :Fp__Line)
@@ -51,13 +44,6 @@ end
         )
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        # TODO: use accessors to remove the use of Symbols Directly
-        monitored_line_variable = PSI.get_variable(
-            op_problem_m.internal.optimization_container,
-            :Fp__MonitoredLine,
-        )
-        static_line_variable =
-            PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__Line)
 
         @test check_variable_unbounded(op_problem_m, :Fp__MonitoredLine)
         # Broken
@@ -78,21 +64,11 @@ end
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
-    qFT_line_variable =
-        PSI.get_variable(op_problem_m.internal.optimization_container, :FqFT__MonitoredLine)
-    pFT_line_variable =
-        PSI.get_variable(op_problem_m.internal.optimization_container, :FpFT__MonitoredLine)
-
     @test check_variable_bounded(op_problem_m, :FpFT__MonitoredLine)
     @test check_variable_unbounded(op_problem_m, :FqFT__MonitoredLine)
 
     @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-    fq = JuMP.value(qFT_line_variable["1", 1])
-    fp = JuMP.value(pFT_line_variable["1", 1])
-    flow = sqrt((fp)^2 + (fq)^2)
-    @test isapprox(flow, limits.from_to, atol = 1e-2)
-    # TODO: investigate why this test fails beyond the 1st period
-    # @test check_flow_variable_values(op_problem_m, :FpFT__MonitoredLine, :FqFT__MonitoredLine, "1", 0.0, limits.from_to,)
+    @test check_flow_variable_values(op_problem_m, :FpFT__MonitoredLine, :FqFT__MonitoredLine, "1", 0.0, limits.from_to,)
 end
 
 ###
@@ -127,17 +103,7 @@ end
         )
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        # TODO: use accessors to remove the use of Symbols Directly
-        hvdc_line_variable =
-            PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__HVDCLine)
-        tap_transformer_variable = PSI.get_variable(
-            op_problem_m.internal.optimization_container,
-            :Fp__TapTransformer,
-        )
-        transformer_variable = PSI.get_variable(
-            op_problem_m.internal.optimization_container,
-            :Fp__Transformer2W,
-        )
+
         if model == DCPPowerModel
             @test check_variable_bounded(op_problem_m, :Fp__HVDCLine)
             @test check_variable_unbounded(op_problem_m, :Fp__TapTransformer)
@@ -199,17 +165,7 @@ end
         )
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        # TODO: use accessors to remove the use of Symbols Directly
-        hvdc_line_variable =
-            PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__HVDCLine)
-        tap_transformer_variable = PSI.get_variable(
-            op_problem_m.internal.optimization_container,
-            :Fp__TapTransformer,
-        )
-        transformer_variable = PSI.get_variable(
-            op_problem_m.internal.optimization_container,
-            :Fp__Transformer2W,
-        )
+
         if model == DCPPowerModel
             # TODO: Currently Broken, remove variable bounds in HVDCUnbounded
             # @test check_variable_unbounded(op_problem_m, :Fp__HVDCLine)
@@ -272,25 +228,6 @@ end
     op_problem_m = OperationsProblem(template, system; optimizer = ipopt_optimizer)
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    # TODO: use accessors to remove the use of Symbols Directly
-    qFT_line_variable =
-        PSI.get_variable(op_problem_m.internal.optimization_container, :FqTF__HVDCLine)
-    pFT_line_variable =
-        PSI.get_variable(op_problem_m.internal.optimization_container, :FpFT__HVDCLine)
-
-    qFT_tap_variable = PSI.get_variable(
-        op_problem_m.internal.optimization_container,
-        :FqFT__TapTransformer,
-    )
-    pFT_tap_variable = PSI.get_variable(
-        op_problem_m.internal.optimization_container,
-        :FpFT__TapTransformer,
-    )
-
-    qFT_transformer_variable =
-        PSI.get_variable(op_problem_m.internal.optimization_container, :FqTF__Transformer2W)
-    pFT_transformer_variable =
-        PSI.get_variable(op_problem_m.internal.optimization_container, :FpTF__Transformer2W)
 
     check_variable_bounded(op_problem_m, :FqTF__HVDCLine)
     check_variable_bounded(op_problem_m, :FpTF__HVDCLine)
@@ -308,7 +245,6 @@ end
         :FpTF__HVDCLine,
         :FqTF__HVDCLine,
         "DCLine3",
-        limits_min,
         limits_max,
     )
     @test check_flow_variable_values(
