@@ -105,6 +105,72 @@ function check_variable_unbounded(op_problem::OperationsProblem, var_name)
     return true
 end
 
+function check_variable_bounded(op_problem::OperationsProblem, var_name)
+    psi_cont = PSI.get_optimization_container(op_problem)
+    variable = PSI.get_variable(psi_cont, var_name)
+    for var in variable
+        if !JuMP.has_lower_bound(var) || !JuMP.has_upper_bound(var)
+            return false
+        end
+    end
+    return true
+end
+
+function check_flow_variable_values(op_problem::OperationsProblem, var_name::Symbol, device_name::String, limit::Float64)
+    psi_cont = PSI.get_optimization_container(op_problem)
+    variable = PSI.get_variable(psi_cont, var_name)
+    for var in variable[device_name, :]
+        if !(JuMP.value(var) <= (limit + 1e-2))
+            return false
+        end
+    end
+    return true
+end
+
+function check_flow_variable_values(op_problem::OperationsProblem, var_name::Symbol, device_name::String, limit_min::Float64, limit_max::Float64)
+    psi_cont = PSI.get_optimization_container(op_problem)
+    variable = PSI.get_variable(psi_cont, var_name)
+    for var in variable[device_name, :]
+        if !(JuMP.value(var) <= (limit_max + 1e-2)) || !(JuMP.value(var) >= (limit_min - 1e-2))
+            return false
+        end
+    end
+    return true
+end
+
+function check_flow_variable_values(op_problem::OperationsProblem, pvar_name::Symbol, qvar_name::Symbol, device_name::String, limit_min::Float64, limit_max::Float64)
+    psi_cont = PSI.get_optimization_container(op_problem)
+    time_steps = PSI.model_time_steps(psi_cont)
+    pvariable = PSI.get_variable(psi_cont, pvar_name)
+    qvariable = PSI.get_variable(psi_cont, qvar_name)
+    for t in time_steps
+        fp = JuMP.value(pvariable[device_name, t])
+        fq = JuMP.value(qvariable[device_name, t])
+        flow = sqrt((fp)^2 + (fq)^2)
+        if !(flow <= (limit_max + 1e-2)) || !(flow >= (limit_min - 1e-2))
+            return false
+        end
+    end
+    return true
+end
+
+function check_flow_variable_values(op_problem::OperationsProblem, pvar_name::Symbol, qvar_name::Symbol, device_name::String, limit::Float64)
+    psi_cont = PSI.get_optimization_container(op_problem)
+    time_steps = PSI.model_time_steps(psi_cont)
+    pvariable = PSI.get_variable(psi_cont, pvar_name)
+    qvariable = PSI.get_variable(psi_cont, qvar_name)
+    for t in time_steps
+        fp = JuMP.value(pvariable[device_name, t])
+        fq = JuMP.value(qvariable[device_name, t])
+        flow = sqrt((fp)^2 + (fq)^2)
+        if !(flow <= (limit + 1e-2))
+            return false
+        end
+    end
+    return true
+end
+
+
 function PSI._jump_value(int::Int)
     @warn("This is for testing purposes only.")
     return int

@@ -1,5 +1,7 @@
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
+    line = PSY.get_component(Line, system, "1")
+    PSY.convert_component!(MonitoredLine, line, system)
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
@@ -19,22 +21,18 @@
         static_line_variable =
             PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__Line)
 
-        for b in monitored_line_variable
-            @test JuMP.has_lower_bound(b)
-            @test JuMP.has_upper_bound(b)
-        end
-        for b in static_line_variable
-            @test !JuMP.has_lower_bound(b)
-            @test !JuMP.has_upper_bound(b)
-        end
+        @test check_variable_bounded(op_problem_m, :Fp__MonitoredLine)
+        @test check_variable_unbounded(op_problem_m, :Fp__Line)
+
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-        flow = JuMP.value(monitored_line_variable["1", 1])
-        @test isapprox(flow, limits.from_to, atol = 1e-2)
+        @test check_flow_variable_values(op_problem_m, :Fp__MonitoredLine, "1", limits.from_to)
     end
 end
 
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with Bounds" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
+    line = PSY.get_component(Line, system, "1")
+    PSY.convert_component!(MonitoredLine, line, system)
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
@@ -56,25 +54,20 @@ end
         static_line_variable =
             PSI.get_variable(op_problem_m.internal.optimization_container, :Fp__Line)
 
-        for b in monitored_line_variable
-            @test !JuMP.has_lower_bound(b)
-            @test !JuMP.has_upper_bound(b)
-        end
-        for b in static_line_variable
-            # Broken
-            #@test JuMP.has_lower_bound(b)
-            #@test JuMP.has_upper_bound(b)
-        end
+        @test check_variable_unbounded(op_problem_m, :Fp__MonitoredLine)
+        # Broken
+        # @test check_variable_bounded(op_problem_m, :Fp__MonitoredLine)
+
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-        flow = JuMP.value(static_line_variable["2", 1])
-        @test flow <= (1.5 + 1e-2)
+        @test check_flow_variable_values(op_problem_m, :Fp__Line, "2", 1.5)
     end
 end
 
 @testset "AC Power Flow Monitored Line Flow Constraints" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    line = PSY.get_component(MonitoredLine, system, "1")
-    limits = PSY.get_flow_limits(line)
+    line = PSY.get_component(Line, system, "1")
+    PSY.convert_component!(MonitoredLine, line, system)
+    limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     template = get_thermal_dispatch_template_network(ACPPowerModel)
     op_problem_m = OperationsProblem(
         template,
@@ -92,21 +85,17 @@ end
         :FpFT__MonitoredLine
     )
 
-    for b in pFT_line_variable
-        @test JuMP.has_lower_bound(b)
-        @test JuMP.has_upper_bound(b)
-    end
+    @test check_variable_bounded(op_problem_m, :FpFT__MonitoredLine)
+    @test check_variable_unbounded(op_problem_m, :FqFT__MonitoredLine)
 
-    for b in qFT_line_variable
-        @test !JuMP.has_lower_bound(b)
-        @test !JuMP.has_upper_bound(b)
-    end
 
     @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
     fq = JuMP.value(qFT_line_variable["1", 1])
     fp = JuMP.value(pFT_line_variable["1", 1])
-    flow = sqrt((fp[1])^2 + (fq[1])^2)
+    flow = sqrt((fp)^2 + (fq)^2)
     @test isapprox(flow, limits.from_to, atol = 1e-2)
+    # TODO: investigate why this test fails beyond the 1st period
+    # @test check_flow_variable_values(op_problem_m, :FpFT__MonitoredLine, :FqFT__MonitoredLine, "1", 0.0, limits.from_to,)
 end
 
 
@@ -155,35 +144,18 @@ end
             :Fp__Transformer2W,
         )
         if  model == DCPPowerModel
-            for v in hvdc_line_variable
-                @test JuMP.has_lower_bound(v)
-                @test JuMP.has_upper_bound(v)
-            end
-
-            for v in tap_transformer_variable
-                @test !JuMP.has_lower_bound(v)
-                @test !JuMP.has_upper_bound(v)
-            end
-
-            for v in transformer_variable
-                @test !JuMP.has_lower_bound(v)
-                @test !JuMP.has_upper_bound(v)
-            end
-
+            @test check_variable_bounded(op_problem_m, :Fp__HVDCLine)
+            @test check_variable_unbounded(op_problem_m, :Fp__TapTransformer)
+            @test check_variable_unbounded(op_problem_m, :Fp__Transformer2W)
         end
 
         psi_constraint_test(op_problem_m, ratelimit_constraint_names)
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 
-        flow = JuMP.value(hvdc_line_variable["DCLine3", 1])
-        @test flow <= (limits_max + 1e-2) && flow >= (limits_min + 1e-2)
-
-        flow_tap = JuMP.value(tap_transformer_variable["Trans3", 1])
-        @test flow_tap <= (rate_limit + 1e-2) && flow_tap >= -(rate_limit + 1e-2)
-
-        flow_trans = JuMP.value(transformer_variable["Trans4", 1])
-        @test flow_trans <= (rate_limit2w + 1e-2) && flow_trans >= -(rate_limit2w + 1e-2)
+        @test check_flow_variable_values(op_problem_m, :Fp__HVDCLine, "DCLine3", limits_min, limits_max)
+        @test check_flow_variable_values(op_problem_m, :Fp__TapTransformer, "Trans3", -rate_limit, rate_limit)
+        @test check_flow_variable_values(op_problem_m, :Fp__Transformer2W, "Trans4", -rate_limit2w, rate_limit2w)
     end
 end
 
@@ -229,33 +201,18 @@ end
             :Fp__Transformer2W,
         )
         if  model == DCPPowerModel
-            for v in hvdc_line_variable
-                # TODO: Remove variable bounds in HVDCUnbounded
-                # @test !JuMP.has_lower_bound(v)
-                # @test !JuMP.has_upper_bound(v)
-            end
+            # TODO: Currently Broken, remove variable bounds in HVDCUnbounded
+            # @test check_variable_unbounded(op_problem_m, :Fp__HVDCLine)
 
-            for v in tap_transformer_variable
-                @test JuMP.has_lower_bound(v)
-                @test JuMP.has_upper_bound(v)
-            end
-
-            for v in transformer_variable
-                @test JuMP.has_lower_bound(v)
-                @test JuMP.has_upper_bound(v)
-            end
+            @test check_variable_bounded(op_problem_m, :Fp__TapTransformer)
+            @test check_variable_bounded(op_problem_m, :Fp__TapTransformer)
         end
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 
-        flow = JuMP.value(hvdc_line_variable["DCLine3", 1])
-        @test flow <= (limits_max + 1e-2) && flow >= (limits_min + 1e-2)
-
-        flow_tap = JuMP.value(tap_transformer_variable["Trans3", 1])
-        @test flow_tap <= (rate_limit + 1e-2) && flow_tap >= -(rate_limit + 1e-2)
-
-        flow_trans = JuMP.value(transformer_variable["Trans4", 1])
-        @test flow_trans <= (rate_limit2w + 1e-2) && flow_trans >= -(rate_limit2w + 1e-2)
+        @test check_flow_variable_values(op_problem_m, :Fp__HVDCLine, "DCLine3", limits_min, limits_max)
+        @test check_flow_variable_values(op_problem_m, :Fp__TapTransformer, "Trans3", -rate_limit, rate_limit)
+        @test check_flow_variable_values(op_problem_m, :Fp__Transformer2W, "Trans4", -rate_limit2w, rate_limit2w)
     end
 end
 
@@ -319,52 +276,18 @@ end
         :FpTF__Transformer2W,
     )
 
-    for v in qFT_line_variable
-        @test JuMP.has_lower_bound(v)
-        @test JuMP.has_upper_bound(v)
-    end
-
-    for v in pFT_line_variable
-        @test JuMP.has_lower_bound(v)
-        @test JuMP.has_upper_bound(v)
-    end
-
-    for v in pFT_tap_variable
-        @test JuMP.has_lower_bound(v)
-        @test JuMP.has_upper_bound(v)
-    end
-
-    for v in qFT_tap_variable
-        @test !JuMP.has_lower_bound(v)
-        @test !JuMP.has_upper_bound(v)
-    end
-
-    for v in pFT_transformer_variable
-        @test JuMP.has_lower_bound(v)
-        @test JuMP.has_upper_bound(v)
-    end
-
-    for v in qFT_transformer_variable
-        @test !JuMP.has_lower_bound(v)
-        @test !JuMP.has_upper_bound(v)
-    end
+    check_variable_bounded(op_problem_m, :FqTF__HVDCLine)
+    check_variable_bounded(op_problem_m, :FpTF__HVDCLine)
+    @test check_variable_bounded(op_problem_m, :FpFT__TapTransformer)
+    @test check_variable_unbounded(op_problem_m, :FqFT__TapTransformer)
+    @test check_variable_bounded(op_problem_m, :FpTF__Transformer2W)
+    @test check_variable_unbounded(op_problem_m, :FqTF__Transformer2W)
 
     psi_constraint_test(op_problem_m, ratelimit_constraint_names)
 
     @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 
-    fq = JuMP.value(qFT_line_variable["DCLine3", 1])
-    fp = JuMP.value(pFT_line_variable["DCLine3", 1])
-    flow = sqrt((fp[1])^2 + (fq[1])^2)
-    @test flow <= (limits_max + 1e-2) && flow >= (limits_min + 1e-2)
-
-    fq = JuMP.value(qFT_tap_variable["Trans3", 1])
-    fp = JuMP.value(pFT_tap_variable["Trans3", 1])
-    flow = sqrt((fp[1])^2 + (fq[1])^2)
-    @test flow <= (rate_limit+1e-2)
-
-    fq = JuMP.value(qFT_transformer_variable["Trans4", 1])
-    fp = JuMP.value(pFT_transformer_variable["Trans4", 1])
-    flow = sqrt((fp[1])^2 + (fq[1])^2)
-    @test flow <= (rate_limit2w+1e-2)
+    @test check_flow_variable_values(op_problem_m, :FpTF__HVDCLine, :FqTF__HVDCLine, "DCLine3", limits_min, limits_max)
+    @test check_flow_variable_values(op_problem_m, :FpFT__TapTransformer, :FqFT__TapTransformer, "Trans3", rate_limit)
+    @test check_flow_variable_values(op_problem_m, :FpTF__Transformer2W, :FqTF__Transformer2W, "Trans4", rate_limit2w)
 end
