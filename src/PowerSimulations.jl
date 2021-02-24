@@ -7,12 +7,12 @@ module PowerSimulations
 # Base Models
 export Simulation
 export OperationsProblem
+export OperationsProblemResults
 export OperationsProblemTemplate
 export InitialCondition
 export SimulationProblems
 export SimulationSequence
 export SimulationResults
-export StageResults
 
 # Network Relevant Exports
 export StandardPTDFModel
@@ -128,16 +128,16 @@ export set_service_model!
 export get_transmission_model
 ## Results interfaces
 export SimulationResultsExport
-export StageResultsExport
+export ProblemResultsExport
 export export_results
 export get_existing_duals
 export get_existing_parameters
 export get_existing_timestamps
 export get_existing_variables
-export get_stage_name
-export get_stage_results
+export get_problem_name
+export get_problem_results
 export get_system
-export list_stages
+export list_problems
 export list_supported_formats
 export load_results!
 export read_dual
@@ -150,6 +150,9 @@ export read_variable
 export read_variables
 export read_parameter
 export read_parameters
+export get_problem_base_power
+export get_objective_value
+export read_optimizer_stats
 
 ## Utils Exports
 export get_all_constraint_index
@@ -242,7 +245,7 @@ import InfrastructureSystems
 import InfrastructureSystems:
     get_variables,
     get_total_cost,
-    get_optimizer_log,
+    get_optimizer_stats,
     write_results,
     get_timestamp,
     get_name,
@@ -252,7 +255,7 @@ export get_model_base_power
 export get_variables
 export get_duals
 export get_total_cost
-export get_optimizer_log
+export get_optimizer_stats
 export get_timestamp
 export write_results
 import PowerModels
@@ -332,10 +335,12 @@ include("core/param_result_cache.jl")
 include("core/result_cache.jl")
 include("core/simulation_store.jl")
 include("core/hdf_simulation_store.jl")
+include("core/problem_results_export.jl")
+include("core/simulation_results_export.jl")
 include("core/optimization_container.jl")
 include("core/update_initial_conditions.jl")
-include("core/operations_problem_results.jl")
 include("core/operations_problem.jl")
+include("core/operations_problem_results.jl")
 include("core/simulation_problems.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
@@ -358,7 +363,6 @@ include("devices_models/devices/common/get_time_series.jl")
 
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
-include("core/simulation_results_export.jl")
 include("core/recorder_events.jl")
 
 # Device Modeling components

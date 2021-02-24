@@ -1,6 +1,6 @@
-const ParamCacheKey = NamedTuple{(:stage, :type, :name), NTuple{3, Symbol}}
+const ParamCacheKey = NamedTuple{(:problem, :type, :name), NTuple{3, Symbol}}
 
-make_cache_key(stage, type, name) = (stage = stage, type = type, name = name)
+make_cache_key(problem, type, name) = (problem = problem, type = type, name = name)
 
 # Priority for keeping data in cache to serve reads. Currently unused.
 IS.@scoped_enum(CachePriority, LOW = 1, MEDIUM = 2, HIGH = 3,)
@@ -27,13 +27,13 @@ function CacheFlushRules(; max_size = GiB, min_flush_size = MIN_CACHE_FLUSH_SIZE
     return CacheFlushRules(Dict{ParamCacheKey, CacheFlushRule}(), min_flush_size, max_size)
 end
 
-function add_rule!(rules::CacheFlushRules, stage, type, name, keep_in_cache, priority)
-    key = make_cache_key(stage, type, name)
+function add_rule!(rules::CacheFlushRules, problem, type, name, keep_in_cache, priority)
+    key = make_cache_key(problem, type, name)
     rules.data[key] = CacheFlushRule(keep_in_cache, priority)
 end
 
-get_rule(x::CacheFlushRules, stage, type, name) =
-    get_rule(x, make_cache_key(stage, type, name))
+get_rule(x::CacheFlushRules, problem, type, name) =
+    get_rule(x, make_cache_key(problem, type, name))
 get_rule(x::CacheFlushRules, key) = x.data[key]
 
 mutable struct CacheStats
