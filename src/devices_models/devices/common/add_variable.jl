@@ -62,10 +62,10 @@ function add_variable!(
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
 
-    var_name = make_variable_name(typeof(variable_type), eltype(devices))
-    binary = get_variable_binary(variable_type, eltype(devices))
-    expression_name = get_variable_expression_name(variable_type, eltype(devices))
-    sign = get_variable_sign(variable_type, eltype(devices))
+    var_name = make_variable_name(typeof(variable_type), D)
+    binary = get_variable_binary(variable_type, D)
+    expression_name = get_variable_expression_name(variable_type, D, optimization_container.pm)
+    sign = get_variable_sign(variable_type, D)
 
     variable = add_var_container!(
         optimization_container,
@@ -93,12 +93,12 @@ function add_variable!(
 
         if !((expression_name === nothing))
             bus_number = PSY.get_number(PSY.get_bus(d))
+            ix = isa(optimization_container.pm, CopperPlatePowerModel) ? t : (bus_number, t)
             add_to_expression!(
                 get_expression(optimization_container, expression_name),
-                bus_number,
-                t,
                 variable[name, t],
-                get_variable_sign(variable_type, eltype(devices)),
+                get_variable_sign(variable_type, D),
+                ix...,
             )
         end
     end
@@ -116,10 +116,10 @@ function add_variable!(
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
 
-    var_name = make_variable_name(PSY.get_name(service), typeof(service))
-    binary = get_variable_binary(variable_type, typeof(service))
-    expression_name = get_variable_expression_name(variable_type, typeof(service))
-    sign = get_variable_sign(variable_type, typeof(service))
+    var_name = make_variable_name(PSY.get_name(service), D)
+    binary = get_variable_binary(variable_type, D)
+    expression_name = get_variable_expression_name(variable_type, D)
+    sign = get_variable_sign(variable_type, D)
 
     variable = add_var_container!(
         optimization_container,
@@ -154,17 +154,6 @@ function add_variable!(
 
         init = get_variable_initial_value(variable_type, d, optimization_container.settings)
         !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
-
-        if !((expression_name === nothing))
-            bus_number = PSY.get_number(PSY.get_bus(d))
-            add_to_expression!(
-                get_expression(optimization_container, expression_name),
-                bus_number,
-                t,
-                variable[name, t],
-                get_variable_sign(variable_type, eltype(devices)),
-            )
-        end
     end
 
     return

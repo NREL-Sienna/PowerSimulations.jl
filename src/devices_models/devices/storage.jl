@@ -9,7 +9,8 @@ struct EndOfPeriodEnergyTarget <: AbstractEnergyManagement end
 ########################### ActivePowerInVariable, Storage #################################
 
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = false
-get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}, _) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, _) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, _) = nothing
@@ -18,7 +19,8 @@ get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.Storage}) = -1.0
 ########################### ActivePowerOutVariable, Storage #################################
 
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = false
-get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, _) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = nothing

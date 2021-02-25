@@ -45,6 +45,15 @@ function nodal_expression!(
     return
 end
 
+function nodal_expression!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::Type{U},
+) where {T <: PSY.Device, U <: Union{CopperPlatePowerModel, StandardPTDFModel}}
+    _nodal_expression!(optimization_container, devices, U, :system_balance_active)
+    return
+end
+
 function _nodal_expression!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -77,13 +86,13 @@ function _nodal_expression!(
     else
         for constraint_info in constraint_infos
             for t in model_time_steps(optimization_container)
+                ix = U == CopperPlatePowerModel ? t : (constraint_info.bus_number, t)
                 add_to_expression!(
                     optimization_container.expressions[expression_name],
-                    constraint_info.bus_number,
-                    t,
                     spec.multiplier *
                     constraint_info.multiplier *
                     constraint_info.timeseries[t],
+                    ix...
                 )
             end
         end

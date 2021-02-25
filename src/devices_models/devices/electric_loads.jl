@@ -14,7 +14,8 @@ get_variable_sign(_, ::Type{<:PSY.ElectricLoad}) = -1.0
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = false
 
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, _) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = PSY.get_active_power(d)
@@ -23,7 +24,7 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = PSY.ge
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}) = false
 
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_reactive
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}, _) = :nodal_balance_reactive
 
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, _) = 0.0
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, _) = PSY.get_reactive_power(d)

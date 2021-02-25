@@ -22,7 +22,8 @@ struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = false
 
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, _) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_initial_value(pv::ActivePowerVariable, d::PSY.ThermalGen, settings) =
     get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
@@ -36,7 +37,6 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalMultiStart}) = false
 
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalMultiStart}) = :nodal_balance_active
 get_variable_initial_value(pv::ActivePowerVariable, d::PSY.ThermalMultiStart, settings) =
     get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
 get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalMultiStart, ::WarmStartVariable) = PSY.get_active_power(d)
@@ -49,7 +49,7 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalMultiStart, _) = P
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}) = false
 
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_reactive
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, _) = :nodal_balance_reactive
 
 get_variable_initial_value(pv::ReactivePowerVariable, d::PSY.ThermalGen, settings) =
 get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())

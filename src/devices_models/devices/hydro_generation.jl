@@ -16,7 +16,8 @@ struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 ########################### ActivePowerVariable, HydroGen #################################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = false
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, _) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_initial_value(pv::ActivePowerVariable, d::PSY.HydroGen, settings) = get_variable_initial_value(pv, d, WarmStartVariable())
 get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::WarmStartVariable) = PSY.get_active_power(d)

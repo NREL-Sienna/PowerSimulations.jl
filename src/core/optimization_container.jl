@@ -109,6 +109,21 @@ end
 
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
+    ::Vector{Int},
+    ::Type{<:Union{StandardPTDFModel, CopperPlatePowerModel}},
+)
+    settings = optimization_container.settings
+    parameters = get_use_parameters(settings)
+    time_steps = 1:get_horizon(settings)
+    optimization_container.expressions = DenseAxisArrayContainer(
+        :system_balance_active => _make_container_array(parameters, time_steps),
+    )
+    return
+end
+
+
+function _make_expressions_dict!(
+    optimization_container::OptimizationContainer,
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
@@ -251,6 +266,17 @@ get_jump_model(optimization_container::OptimizationContainer) =
     optimization_container.JuMPmodel
 get_base_power(optimization_container::OptimizationContainer) =
     optimization_container.base_power
+set_network_model!(
+    optimization_container::OptimizationContainer,
+    ::Type{<:PM.AbstractPowerModel},
+) = optimization_container.pm = nothing
+
+function set_network_model!(
+    optimization_container::OptimizationContainer,
+    ::Type{T},
+) where {T <: Union{StandardPTDFModel, CopperPlatePowerModel}}
+    optimization_container.pm = T()
+end
 
 function get_variable(
     optimization_container::OptimizationContainer,
@@ -652,6 +678,7 @@ function build_impl!(
     sys::PSY.System,
 )
     transmission = template.transmission
+    set_network_model!(optimization_container, transmission)
     # Order is required
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Services" begin
         construct_services!(
@@ -671,7 +698,7 @@ function build_impl!(
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(transmission)" begin
         @debug "Building $(transmission) network formulation"
-        construct_network!(optimization_container, sys, transmission, template)
+        construct_network!(optimization_container, sys, transmission)
         @debug get_problem_size(optimization_container)
     end
 

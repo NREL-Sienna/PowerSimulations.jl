@@ -1,16 +1,9 @@
 ###### Operations for JuMPExpressionMatrix ######
 
-function remove_undef!(expression_array::T) where {T <: JuMPExpressionMatrix}
-    for j in 1:size(expression_array)[2]
-        for i in 1:size(expression_array)[1]
-            if !isassigned(expression_array, i, j)
-                expression_array[i, j] = zero(eltype(expression_array))
-            else
-                continue
-            end
-        end
+function remove_undef!(expression_array::T) where {T}
+    for ix in eachindex(expression_array)
+        expression_array[ix] = zero(eltype(expression_array))
     end
-
     return
 end
 
@@ -23,15 +16,14 @@ end
 
 function add_to_expression!(
     expression_array::T,
-    ix::Int,
-    jx::Int,
     var::JV,
     multiplier::Float64,
+    ixs::Int...
 ) where {T, JV <: JuMP.AbstractVariableRef}
-    if isassigned(expression_array, ix, jx)
-        JuMP.add_to_expression!(expression_array[ix, jx], multiplier, var)
+    if isassigned(expression_array, ixs...)
+        JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
     else
-        expression_array[ix, jx] = multiplier * var
+        expression_array[ixs...] = multiplier * var
     end
 
     return
@@ -39,27 +31,26 @@ end
 
 function add_to_expression!(
     expression_array::T,
-    ix::Int,
-    jx::Int,
     var::JV,
     multiplier::Float64,
     constant::Float64,
+    ixs::Int...
 ) where {T, JV <: JuMP.AbstractVariableRef}
-    if isassigned(expression_array, ix, jx)
-        JuMP.add_to_expression!(expression_array[ix, jx], multiplier, var)
-        JuMP.add_to_expression!(expression_array[ix, jx], constant)
+    if isassigned(expression_array, ixs...)
+        JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
+        JuMP.add_to_expression!(expression_array[ixs...], constant)
     else
-        expression_array[ix, jx] = multiplier * var + constant
+        expression_array[ixs...] = multiplier * var + constant
     end
 
     return
 end
 
-function add_to_expression!(expression_array::T, ix::Int, jx::Int, value::Float64) where {T}
-    if isassigned(expression_array, ix, jx)
-        expression_array[ix, jx].constant += value
+function add_to_expression!(expression_array::T, value::Float64, ixs::Int...) where {T}
+    if isassigned(expression_array, ixs...)
+        expression_array[ixs...].constant += value
     else
-        expression_array[ix, jx] = zero(eltype(expression_array)) + value
+        expression_array[ix...] = zero(eltype(expression_array)) + value
     end
 
     return
@@ -67,14 +58,13 @@ end
 
 function add_to_expression!(
     expression_array::T,
-    ix::Int,
-    jx::Int,
     parameter::PJ.ParameterRef,
+    ixs::Int...
 ) where {T}
-    if isassigned(expression_array, ix, jx)
-        JuMP.add_to_expression!(expression_array[ix, jx], 1.0, parameter)
+    if isassigned(expression_array, ixs...)
+        JuMP.add_to_expression!(expression_array[ixs...], 1.0, parameter)
     else
-        expression_array[ix, jx] = zero(eltype(expression_array)) + parameter
+        expression_array[ix...] = zero(eltype(expression_array)) + parameter
     end
 
     return

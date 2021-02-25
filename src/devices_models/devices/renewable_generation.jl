@@ -9,7 +9,8 @@ struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}) = false
 
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}, _) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.RenewableGen, _) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, _) = PSY.get_max_active_power(d)
