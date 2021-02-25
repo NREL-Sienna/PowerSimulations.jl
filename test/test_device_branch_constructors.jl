@@ -47,7 +47,7 @@ end
 
         @test check_variable_unbounded(op_problem_m, :Fp__MonitoredLine)
         # Broken
-        # @test check_variable_bounded(op_problem_m, :Fp__MonitoredLine)
+        # @test check_variable_bounded(op_problem_m, :Fp__Line)
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
         @test check_flow_variable_values(op_problem_m, :Fp__Line, "2", 1.5)
@@ -78,8 +78,7 @@ end
     )
 end
 
-###
-@testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
+@testset "DC Power Flow Models for HVDCLine with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_names = [
         :RateLimit_ub__Transformer2W,
         :RateLimit_lb__Transformer2W,
@@ -145,7 +144,7 @@ end
     end
 end
 
-@testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
+@testset "DC Power Flow Models for Unbounded HVDCLine, and StaticBranchBounds for TapTransformer & Transformer2W" begin
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
     hvdc_line = PSY.get_component(HVDCLine, system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
@@ -207,7 +206,7 @@ end
     end
 end
 
-@testset "AC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
+@testset "AC Power Flow Models for HVDCLine Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_names = [
         :RateLimitFT__Transformer2W,
         :RateLimitTF__Transformer2W,
