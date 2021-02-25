@@ -18,7 +18,7 @@ function add_to_expression!(
     expression_array::T,
     var::JV,
     multiplier::Float64,
-    ixs::Int...
+    ixs::Int...,
 ) where {T, JV <: JuMP.AbstractVariableRef}
     if isassigned(expression_array, ixs...)
         JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
@@ -34,7 +34,7 @@ function add_to_expression!(
     var::JV,
     multiplier::Float64,
     constant::Float64,
-    ixs::Int...
+    ixs::Int...,
 ) where {T, JV <: JuMP.AbstractVariableRef}
     if isassigned(expression_array, ixs...)
         JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
@@ -59,7 +59,7 @@ end
 function add_to_expression!(
     expression_array::T,
     parameter::PJ.ParameterRef,
-    ixs::Int...
+    ixs::Int...,
 ) where {T}
     if isassigned(expression_array, ixs...)
         JuMP.add_to_expression!(expression_array[ixs...], 1.0, parameter)

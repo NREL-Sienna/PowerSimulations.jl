@@ -121,7 +121,6 @@ function _make_expressions_dict!(
     return
 end
 
-
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
     bus_numbers::Vector{Int},

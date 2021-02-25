@@ -64,7 +64,8 @@ function add_variable!(
 
     var_name = make_variable_name(typeof(variable_type), D)
     binary = get_variable_binary(variable_type, D)
-    expression_name = get_variable_expression_name(variable_type, D, optimization_container.pm)
+    expression_name =
+        get_variable_expression_name(variable_type, D, optimization_container.pm)
     sign = get_variable_sign(variable_type, D)
 
     variable = add_var_container!(

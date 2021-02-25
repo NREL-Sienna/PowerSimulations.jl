@@ -92,7 +92,7 @@ function _nodal_expression!(
                     spec.multiplier *
                     constraint_info.multiplier *
                     constraint_info.timeseries[t],
-                    ix...
+                    ix...,
                 )
             end
         end
