@@ -9,7 +9,7 @@ function construct_network!(
     if get_balance_slack_variables(optimization_container.settings)
         add_slacks!(optimization_container, CopperPlatePowerModel)
     end
-    copper_plate!(optimization_container)
+    copper_plate!(CopperPlatePowerModel, optimization_container)
     return
 end
 
@@ -34,10 +34,9 @@ end
 
 function construct_network!(
     optimization_container::OptimizationContainer,
-    sys::PSY.System,
+    ::PSY.System,
     ::Type{StandardPTDFModel},
 )
-    buses = PSY.get_components(PSY.Bus, sys)
     ptdf = get_PTDF(optimization_container)
 
     if ptdf === nothing
@@ -48,7 +47,7 @@ function construct_network!(
         add_slacks!(optimization_container, StandardPTDFModel)
     end
 
-    copper_plate!(optimization_container)
+    copper_plate!(StandardPTDFModel, optimization_container)
     return
 end
 

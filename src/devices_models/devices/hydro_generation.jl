@@ -17,7 +17,7 @@ struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = false
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, _) = :nodal_balance_active
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::Union{StandardPTDF,CopperPlatePowerModel}) = :system_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_initial_value(pv::ActivePowerVariable, d::PSY.HydroGen, settings) = get_variable_initial_value(pv, d, WarmStartVariable())
 get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::WarmStartVariable) = PSY.get_active_power(d)
@@ -71,7 +71,7 @@ get_variable_upper_bound(::EnergyVariableDown, d::PSY.HydroGen, _) = PSY.get_sto
 
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}) = false
 get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}, _) = :nodal_balance_active
-get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}, ::Union{StandardPTDF,CopperPlatePowerModel}) = :system_balance_active
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HydroGen, _) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HydroGen, _) = nothing
@@ -81,7 +81,7 @@ get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.HydroGen}) = -1.0
 
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}) = false
 get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}, _) = :nodal_balance_active
-get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}, ::Union{StandardPTDF,CopperPlatePowerModel}) = :system_balance_active
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HydroGen, _) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HydroGen, _) = nothing

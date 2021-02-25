@@ -110,7 +110,7 @@ end
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
     ::Vector{Int},
-    ::Type{<:Union{StandardPTDFModel, CopperPlatePowerModel}},
+    ::Type{CopperPlatePowerModel},
 )
     settings = optimization_container.settings
     parameters = get_use_parameters(settings)
@@ -688,7 +688,7 @@ function build_impl!(
         )
     end
     for device_model in values(template.devices)
-        @debug "Building $(device_model.component_type) with $(device_model.formulation) formulation"
+        @info "Building $(device_model.component_type) with $(device_model.formulation) formulation"
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(device_model.component_type)" begin
             construct_device!(optimization_container, sys, device_model, transmission)
             @debug get_problem_size(optimization_container)
@@ -696,13 +696,13 @@ function build_impl!(
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(transmission)" begin
-        @debug "Building $(transmission) network formulation"
+        @info "Building $(transmission) network formulation"
         construct_network!(optimization_container, sys, transmission)
         @debug get_problem_size(optimization_container)
     end
 
     for branch_model in values(template.branches)
-        @debug "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
+        @info "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(branch_model.component_type)" begin
             construct_device!(optimization_container, sys, branch_model, transmission)
             @debug get_problem_size(optimization_container)
@@ -710,7 +710,7 @@ function build_impl!(
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Objective" begin
-        @debug "Building Objective"
+        @info "Building Objective"
         JuMP.@objective(
             optimization_container.JuMPmodel,
             MOI.MIN_SENSE,

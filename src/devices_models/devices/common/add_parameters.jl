@@ -19,12 +19,12 @@ function include_parameters!(
         param[get_component_name(r), t] =
             PJ.add_parameter(optimization_container.JuMPmodel, r.timeseries[t])
         mult[get_component_name(r), t] = r.multiplier * multiplier
+        ix = isa(optimization_container.pm, CopperPlatePowerModel) ? t : (r.bus_number, t)
         add_to_expression!(
             expr,
-            r.bus_number,
-            t,
             param[get_component_name(r), t],
             r.multiplier * multiplier,
+            ix...
         )
     end
     return container

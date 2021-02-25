@@ -15,7 +15,7 @@ get_variable_sign(_, ::Type{<:PSY.ElectricLoad}) = -1.0
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = false
 
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, _) = :nodal_balance_active
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::Union{StandardPTDF,CopperPlatePowerModel}) = :system_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = PSY.get_active_power(d)

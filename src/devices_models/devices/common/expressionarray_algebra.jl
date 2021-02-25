@@ -50,7 +50,7 @@ function add_to_expression!(expression_array::T, value::Float64, ixs::Int...) wh
     if isassigned(expression_array, ixs...)
         expression_array[ixs...].constant += value
     else
-        expression_array[ix...] = zero(eltype(expression_array)) + value
+        expression_array[ixs...] = zero(eltype(expression_array)) + value
     end
 
     return
@@ -64,7 +64,7 @@ function add_to_expression!(
     if isassigned(expression_array, ixs...)
         JuMP.add_to_expression!(expression_array[ixs...], 1.0, parameter)
     else
-        expression_array[ix...] = zero(eltype(expression_array)) + parameter
+        expression_array[ixs...] = zero(eltype(expression_array)) + parameter
     end
 
     return

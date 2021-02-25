@@ -63,15 +63,17 @@ function construct_device!(
     ::Type{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
+
     if !validate_available_devices(B, devices)
         return
     end
-
+    @info B
     add_variables!(optimization_container, StandardPTDFModel(), devices)
 
-    # PTDF
+    # PTDF flow calculations
     ptdf = get_PTDF(optimization_container)
     buses = PSY.get_components(PSY.Bus, sys)
+
     time_steps = model_time_steps(optimization_container)
     constraint_val = JuMPConstraintArray(undef, time_steps)
     network_flow =
@@ -82,10 +84,12 @@ function construct_device!(
         get_expression(optimization_container, :nodal_balance_active)
     jump_model = get_jump_model(optimization_container)
     for t in time_steps, br in devices
-        network_flow[name, t] = JuMP.@constraint(
+        br_name = get_name(br)
+        network_flow[br_name, t] = JuMP.@constraint(
             jump_model,
-            flow_variables[name, t] ==
-            ptdf[name, bus_number] * nodal_balance_expressions[bus_number, t]
+            flow_variables[br_name, t] -
+            sum(ptdf[br_name, i] * nodal_balance_expressions[i, t] for i in ptdf.axes[2])
+            == 0.0
         )
     end
 

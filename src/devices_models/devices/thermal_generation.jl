@@ -23,7 +23,7 @@ struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = false
 
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, _) = :nodal_balance_active
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::Union{StandardPTDF,CopperPlatePowerModel}) = :system_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::CopperPlatePowerModel) = :system_balance_active
 
 get_variable_initial_value(pv::ActivePowerVariable, d::PSY.ThermalGen, settings) =
     get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())

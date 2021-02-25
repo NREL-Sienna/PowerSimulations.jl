@@ -48,9 +48,9 @@ end
 function nodal_expression!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{U},
-) where {T <: PSY.Device, U <: Union{CopperPlatePowerModel, StandardPTDFModel}}
-    _nodal_expression!(optimization_container, devices, U, :system_balance_active)
+    ::Type{CopperPlatePowerModel},
+) where {T <: PSY.Device}
+    _nodal_expression!(optimization_container, devices, CopperPlatePowerModel, :system_balance_active)
     return
 end
 
