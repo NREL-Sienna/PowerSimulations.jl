@@ -77,24 +77,14 @@ function construct_device!(
     network_flow =
         add_cons_container!(optimization_container, :network_flow, ptdf.axes[1], time_steps)
 
-    nodal_balance_expressions = optimization_container.expressions[:nodal_balance_active]
-    for t in time_steps
-        for br in devices
-            flow_variable = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
-            name = PSY.get_name(br)
-            line_flow =
-                model_has_parameters(optimization_container) ? zero(PGAE) :
-                JuMP.AffExpr(0.0)
-            for b in buses
-                bus_number = PSY.get_number(b)
-                _flow = ptdf[name, bus_number] * nodal_balance_expressions[bus_number, t]
-                JuMP.add_to_expression!(line_flow, _flow)
-            end
+    flow_variables = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
+    nodal_balance_expressions = get_expression(optimization_container, :nodal_balance_active)
+    jump_model = get_jump_model(optimization_container)
+    for t in time_steps, br in devices
             network_flow[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                flow_variable[name, t] == line_flow
+                jump_model,
+                flow_variables[name, t] == ptdf[name, bus_number] * nodal_balance_expressions[bus_number, t]
             )
-        end
     end
 
     branch_rate_constraints!(
