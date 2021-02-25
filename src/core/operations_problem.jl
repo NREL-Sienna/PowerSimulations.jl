@@ -14,6 +14,7 @@ end
 mutable struct ProblemInternal
     optimization_container::OptimizationContainer
     status::BuildStatus
+    run_status::RunStatus
     base_conversion::Bool
     output_dir::Union{Nothing, String}
     simulation_info::Union{Nothing, SimulationInfo}
@@ -29,6 +30,7 @@ function ProblemInternal(
     return ProblemInternal(
         optimization_container,
         BuildStatus.EMPTY,
+        RunStatus.READY,
         true,
         nothing,
         nothing,
@@ -119,7 +121,7 @@ function OperationsProblem{M}(
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
     optimizer::Union{MOI.OptimizerWithAttributes, Nothing} = nothing,
     PTDF = nothing,
-    horizon = nothing,
+    horizon = UNSET_HORIZON,
     warm_start = true,
     balance_slack_variables = false,
     services_slack_variables = false,
@@ -236,7 +238,8 @@ is_empty(problem::OperationsProblem) = problem.internal.status == BuildStatus.EM
 warm_start_enabled(problem::OperationsProblem) =
     get_warm_start(get_optimization_container(problem).settings)
 built_for_simulation(problem::OperationsProblem) = get_simulation_info(problem) !== nothing
-get_caches(problem::OperationsProblem) = get_simulation_info(problem).caches
+get_caches(x::OperationsProblem) =
+    built_for_simulation(x) ? get_simulation_info(x).caches : nothing
 get_constraints(problem::OperationsProblem) =
     get_internal(problem).optimization_container.constraints
 get_end_of_interval_step(problem::OperationsProblem) =
@@ -268,6 +271,8 @@ get_system(problem::OperationsProblem) = problem.sys
 get_template(problem::OperationsProblem) = problem.template
 get_output_dir(problem::OperationsProblem) = problem.internal.output_dir
 get_variables(problem::OperationsProblem) = get_optimization_container(problem).variables
+get_run_status(problem::OperationsProblem) = problem.internal.run_status
+set_run_status!(problem::OperationsProblem, status) = problem.internal.run_status = status
 
 function get_initial_conditions(
     problem::OperationsProblem,
@@ -371,7 +376,7 @@ function build!(
     disable_timer_outputs = false,
     serialize = true,
 )
-    !ispath(output_dir) && throw(ArgumentError("$output_dir does not exist"))
+    mkpath(output_dir)
     set_output_dir!(problem, output_dir)
     set_console_level!(problem, console_level)
     set_file_level!(problem, file_level)
@@ -469,7 +474,7 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
     return obj.op_problem_type(obj.template, sys, kwargs[:jump_model]; settings...)
 end
 
-function _psi_solve_optimization_problem(problem::OperationsProblem; optimizer = nothing)
+function solve_impl(problem::OperationsProblem; optimizer = nothing)
     model = get_jump_model(problem)
     if optimizer !== nothing
         JuMP.set_optimizer(model, optimizer)
@@ -507,7 +512,9 @@ automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
 function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem}; kwargs...)
-    return _psi_solve_optimization_problem(problem; kwargs...)
+    status = solve_impl(problem; kwargs...)
+    set_run_status!(problem, status)
+    return status
 end
 
 """
@@ -531,8 +538,8 @@ function solve!(
 )
     solve_status = solve!(problem)
     if solve_status == RunStatus.SUCCESSFUL
-        stats = OptimizerStats(problem, step, start_time)
-        append_optimizer_stats!(store, stats)
+        stats = OptimizerStats(problem, step)
+        write_optimizer_stats!(store, get_name(problem), stats)
         write_model_results!(store, problem, start_time; exports = exports)
         advance_execution_count!(problem)
     end
@@ -780,13 +787,11 @@ function get_initial_cache(cache::StoredEnergy, problem::OperationsProblem)
     return value_array
 end
 
-function get_timestamps(problem::OperationsProblem, start_time::Dates.DateTime)
+function get_timestamps(problem::OperationsProblem)
+    start_time = model_initial_time(get_optimization_container(problem))
     resolution = get_resolution(problem)
-    horizon = get_optimization_container(problem).time_steps[end]
-    range_time = collect(start_time:resolution:(start_time + resolution * horizon))
-    time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
-
-    return time_stamp
+    horizon = get_horizon(problem)
+    return range(start_time, length = horizon, step = resolution)
 end
 
 function write_data(problem::OperationsProblem, output_dir::AbstractString; kwargs...)

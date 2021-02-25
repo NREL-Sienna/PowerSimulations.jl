@@ -75,13 +75,13 @@ function Base.show(io::IO, sim::Simulation)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", results::SimulationResults)
-    for res in values(results.stage_results)
+    for res in values(results.problem_results)
         show(io, MIME"text/plain"(), res)
     end
 end
 
-function Base.show(io::IO, ::MIME"text/plain", results::StageResults)
-    title = results.stage * " Results"
+function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)
+    title = results.problem * " Results"
     println(io, "\n$title")
     bars = join(("=" for _ in 1:length(title)))
     println(io, "$bars\n")
@@ -159,7 +159,7 @@ function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
         end
     end
     println(io, "<p><b>Optimizer Log</b></p>")
-    for (k, v) in results.optimizer_log
+    for (k, v) in results.optimizer_stats
         if !(v === nothing)
             println(io, "<p>        $(k) = $(v)</p>")
         end
@@ -172,6 +172,17 @@ end
 
 function Base.show(io::IO, stage::OperationsProblem)
     println(io, "OperationsProblem()")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", results::OperationsProblemResults)
+    println(io, "OperationsProblemResults:")
+    println(io, "  Base power: $(results.base_power)")
+    vars = join(keys(results.variable_values), " ")
+    println(io, "  Variables: $vars")
+    duals = join(keys(results.dual_values), " ")
+    println(io, "  Duals: $duals")
+    params = join(keys(results.parameter_values), " ")
+    println(io, "  Parameters: $params")
 end
 
 function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})

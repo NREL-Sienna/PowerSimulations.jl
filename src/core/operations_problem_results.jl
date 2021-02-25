@@ -1,48 +1,96 @@
-# TODO: More refactoring to resemble Simulation Results and match interfaces
 struct OperationsProblemResults <: PSIResults
     base_power::Float64
     variable_values::Dict{Symbol, DataFrames.DataFrame}
-    total_cost::Dict
-    optimizer_log::Dict
-    time_stamp::DataFrames.DataFrame
     dual_values::Dict{Symbol, DataFrames.DataFrame}
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
+    optimizer_stats::OptimizerStats
+    output_dir::String
 end
 
 get_existing_variables(res::OperationsProblemResults) = keys(get_variables(res))
 get_existing_parameters(res::OperationsProblemResults) = keys(IS.get_parameters(res))
 get_existing_duals(res::OperationsProblemResults) = keys(get_duals(res))
 get_model_base_power(res::OperationsProblemResults) = res.base_power
+get_objective_value(res::OperationsProblemResults) = res.optimizer_stats.objective_value
 IS.get_variables(res::OperationsProblemResults) = res.variable_values
 IS.get_total_cost(res::OperationsProblemResults) = res.total_cost
-IS.get_optimizer_log(res::OperationsProblemResults) = res.optimizer_log
+IS.get_optimizer_stats(res::OperationsProblemResults) = res.optimizer_stats
 IS.get_timestamp(res::OperationsProblemResults) = res.time_stamp
 get_duals(res::OperationsProblemResults) = res.dual_values
 IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
 
-function OperationsProblemResults()
-    #vars_result = read_variables(op_problem)
-    #param_values = read_parameters(op_problem)
-    #optimizer_log = get_optimizer_log(op_problem)
-    #time_stamp = get_timestamps(op_problem)
-    #time_stamp = shorten_time_stamp(time_stamp)
-    #base_power = PSY.get_base_power(op_problem.sys)
-    #dual_result = read_duals(op_problem)
-    #obj_value = Dict(
-    #    :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
-    #)
-    #base_power = get_model_base_power(op_problem)
-    #merge!(optimizer_log, timed_log)
+function OperationsProblemResults(problem::OperationsProblem)
+    status = get_run_status(problem)
+    status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
 
-    #results = OperationsProblemResults(
-    #    base_power,
-    #    vars_result,
-    #    obj_value,
-    #    optimizer_log,
-    #    time_stamp,
-    #    dual_result,
-    #    param_values,
-    #)
+    container = get_optimization_container(problem)
+    variables = read_variables(container)
+    duals = read_duals(container)
+    parameters = read_parameters(container)
+    timestamps = get_timestamps(problem)
+    optimizer_stats = OptimizerStats(problem)
+
+    for df in Iterators.flatten(((values(variables), values(duals), values(parameters))))
+        DataFrames.insertcols!(df, 1, :DateTime => timestamps)
+    end
+
+    return OperationsProblemResults(
+        get_problem_base_power(problem),
+        variables,
+        duals,
+        parameters,
+        optimizer_stats,
+        mkpath(joinpath(get_output_dir(problem), "results")),
+    )
+end
+
+"""
+Exports all results from the operations problem.
+"""
+function export_results(results::OperationsProblemResults; kwargs...)
+    all_fields = Set(["all"])
+    exports = ProblemResultsExport(
+        "OperationsProblem",
+        variables = all_fields,
+        duals = all_fields,
+        parameters = all_fields,
+    )
+    export_results(results, exports; kwargs...)
+end
+
+function export_results(
+    results::OperationsProblemResults,
+    exports::ProblemResultsExport;
+    file_type = CSV.File,
+)
+    file_type != CSV.File && error("only CSV.File is currently supported")
+    export_path = mkpath(joinpath(results.output_dir, "variables"))
+    for (name, df) in results.variable_values
+        if should_export_variable(exports, name)
+            export_result(file_type, export_path, name, df)
+        end
+    end
+
+    export_path = mkpath(joinpath(results.output_dir, "duals"))
+    for (name, df) in results.dual_values
+        if should_export_dual(exports, name)
+            export_result(file_type, export_path, name, df)
+        end
+    end
+
+    export_path = mkpath(joinpath(results.output_dir, "parameters"))
+    for (name, df) in results.parameter_values
+        if should_export_parameter(exports, name)
+            export_result(file_type, export_path, name, df)
+        end
+    end
+
+    if exports.optimizer_stats
+        df = to_dataframe(results.optimizer_stats)
+        export_result(file_type, joinpath(results.output_dir, "optimizer_stats.csv"), df)
+    end
+
+    @info "Exported OperationsProblemResults to $(results.output_dir)"
 end
 
 # TODO:
@@ -99,10 +147,22 @@ function write_to_CSV(res::OperationsProblemResults, save_path::String)
         end
         write_data(export_parameters, folder_path; params = true)
     end
-    write_optimizer_log(res.optimizer_log, folder_path)
+    write_optimizer_stats(res, folder_path)
     write_data(IS.get_timestamp(res), folder_path, "time_stamp")
     files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
+end
+
+function write_optimizer_stats(res::OperationsProblemResults, directory::AbstractString)
+    data = to_dict(res.optimizer_stats)
+    JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(data))
+end
+
+function read_variables(
+    problem::OperationsProblem,
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+)
+    variables = get_variables(problem)
 end
