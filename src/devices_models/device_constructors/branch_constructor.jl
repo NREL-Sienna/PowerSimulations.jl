@@ -67,7 +67,6 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    @info B
     add_variables!(optimization_container, StandardPTDFModel(), devices)
 
     # PTDF flow calculations

@@ -689,13 +689,13 @@ function build_impl!(
     end
     for device_model in values(template.devices)
         @info "Building $(device_model.component_type) with $(device_model.formulation) formulation"
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(device_model.component_type)" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(device_model.component_type)" begin
             construct_device!(optimization_container, sys, device_model, transmission)
             @debug get_problem_size(optimization_container)
         end
     end
 
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(transmission)" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
         @info "Building $(transmission) network formulation"
         construct_network!(optimization_container, sys, transmission)
         @debug get_problem_size(optimization_container)
@@ -703,13 +703,13 @@ function build_impl!(
 
     for branch_model in values(template.branches)
         @info "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(branch_model.component_type)" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(branch_model.component_type)" begin
             construct_device!(optimization_container, sys, branch_model, transmission)
             @debug get_problem_size(optimization_container)
         end
     end
 
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Objective" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Objective" begin
         @info "Building Objective"
         JuMP.@objective(
             optimization_container.JuMPmodel,
