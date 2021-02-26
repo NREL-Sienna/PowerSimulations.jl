@@ -1,12 +1,12 @@
-function get_incompatible_devices(devices_template::Dict{Symbol, DeviceModel})
+function get_incompatible_devices(devices_template::Dict)
     incompatible_device_types = Vector{DataType}()
     for model in values(devices_template)
         formulation = get_formulation(model)
         if formulation == FixedOutput
             if !isempty(get_services(model))
-                @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
+                @info "$(formulation) for $(get_component_type(model)) is not compatible with the provision of reserve services"
             end
-            push!(incompatible_device_types, get_device_type(model))
+            push!(incompatible_device_types, get_component_type(model))
         end
     end
     return incompatible_device_types
@@ -15,17 +15,17 @@ end
 function construct_services!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    services_template::Dict{Symbol, ServiceModel},
-    devices_template::Dict{Symbol, DeviceModel},
+    services_template::ServicesModelContainer,
+    devices_template::DevicesModelContainer,
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
 
     function _construct_valid_services!(service_model::ServiceModel)
-        @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
-        services = service_model.service_type[]
+        @debug "Building $(service_model.component_type) with $(service_model.formulation) formulation"
+        services = service_model.component_type[]
         if validate_services!(
-            service_model.service_type,
+            service_model.component_type,
             services,
             incompatible_device_types,
             sys,
@@ -59,7 +59,7 @@ function construct_service!(
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, RangeReserve},
-    devices_template::Dict{Symbol, DeviceModel},
+    devices_template::Dict{String, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
@@ -113,7 +113,7 @@ function construct_service!(
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, StepwiseCostReserve},
-    devices_template::Dict{Symbol, DeviceModel},
+    devices_template::Dict{String, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
@@ -159,7 +159,7 @@ function construct_service!(
     services::Vector{PSY.AGC},
     sys::PSY.System,
     ::ServiceModel{PSY.AGC, T},
-    devices_template::Dict{Symbol, DeviceModel},
+    devices_template::Dict{String, DeviceModel},
     ::Vector{<:DataType},
 ) where {T <: AbstractAGCFormulation}
     # Order is important in the addition of these variables
@@ -199,7 +199,7 @@ function construct_service!(
     services::Vector{SR},
     ::PSY.System,
     model::ServiceModel{SR, GroupReserve},
-    ::Dict{Symbol, DeviceModel},
+    ::Dict{String, DeviceModel},
     ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
     time_steps = model_time_steps(optimization_container)

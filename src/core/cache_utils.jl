@@ -21,7 +21,9 @@ struct CacheFlushRules
     max_size::Int
 end
 
-function CacheFlushRules(; max_size = GiB, min_flush_size = MiB)
+const MIN_CACHE_FLUSH_SIZE_MiB = MiB
+
+function CacheFlushRules(; max_size = GiB, min_flush_size = MIN_CACHE_FLUSH_SIZE_MiB)
     return CacheFlushRules(Dict{ParamCacheKey, CacheFlushRule}(), min_flush_size, max_size)
 end
 

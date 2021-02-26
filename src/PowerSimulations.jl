@@ -5,11 +5,11 @@ module PowerSimulations
 # Exports
 
 # Base Models
-export Stage
 export Simulation
 export OperationsProblem
 export OperationsProblemTemplate
 export InitialCondition
+export SimulationProblems
 export SimulationSequence
 export SimulationResults
 export StageResults
@@ -29,13 +29,9 @@ export StepwiseCostReserve
 export PIDSmoothACE
 export GroupReserve
 ######## Branch Models ########
-export StaticLine
-export StaticLineBounds
-export StaticLineUnbounded
-export StaticTransformer
-export StaticTransformerBounds
-export StaticTransformerUnbounded
-export FlowMonitoredLine
+export StaticBranch
+export StaticBranchBounds
+export StaticBranchUnbounded
 export HVDCLossless
 export HVDCDispatch
 export HVDCUnbounded
@@ -97,8 +93,8 @@ export IntegralLimitFF
 export ParameterFF
 
 # InitialConditions chrons
-export InterStageChronology
-export IntraStageChronology
+export InterProblemChronology
+export IntraProblemChronology
 
 # Initial Conditions Quantities
 export DevicePower
@@ -118,22 +114,11 @@ export EconomicDispatchProblem
 # export OptimalPowerFlow
 
 # Functions
-## Construction Exports
-export construct_device!
-export construct_network!
 ## Op Model Exports
 export solve!
 export get_initial_conditions
-export set_transmission_model!
-export set_devices_template!
-export set_branches_template!
-export set_services_template!
-export set_device_model!
-export set_branch_model!
-export set_device_model!
-export set_model!
-export serialize_model
-export export_operations_model
+export serialize_problem
+export serialize_optimization_model
 ## Sim Model Exports
 export build!
 export execute!
@@ -146,6 +131,9 @@ export UnitCommitmentProblem
 export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
+export set_device_model!
+export set_service_model!
+export get_transmission_model
 ## Results interfaces
 export SimulationResultsExport
 export StageResultsExport
@@ -279,6 +267,11 @@ import PowerModels
 import TimerOutputs
 import ProgressMeter
 
+# Base Imports
+import Base.getindex
+import Base.length
+import Base.first
+
 # TimeStamp Management Imports
 import Dates
 import TimeSeries
@@ -328,7 +321,9 @@ include("core/results.jl")
 include("core/abstract_types.jl")
 include("core/aux_structs.jl")
 
-include("core/models.jl")
+include("core/powermodels_formulations.jl")
+include("core/service_models.jl")
+include("core/device_models.jl")
 
 include("core/parameters.jl")
 include("core/variables.jl")
@@ -340,16 +335,16 @@ include("core/initial_condition.jl")
 include("core/initial_conditions.jl")
 include("core/operations_problem_template.jl")
 include("core/settings.jl")
-include("core/optimization_container.jl")
-include("core/update_initial_conditions.jl")
-include("core/operations_problem_results.jl")
-include("core/operations_problem.jl")
 include("core/cache_utils.jl")
 include("core/param_result_cache.jl")
 include("core/result_cache.jl")
 include("core/simulation_store.jl")
 include("core/hdf_simulation_store.jl")
-include("core/simulation_stages.jl")
+include("core/optimization_container.jl")
+include("core/update_initial_conditions.jl")
+include("core/operations_problem_results.jl")
+include("core/operations_problem.jl")
+include("core/simulation_problems.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 
@@ -388,6 +383,7 @@ include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
 include("devices_models/devices/hybrid_generation.jl")
+include("devices_models/devices/common_models.jl")
 
 # Services Models
 include("services_models/agc.jl")
@@ -418,7 +414,10 @@ include("devices_models/device_constructors/hybrid_constructor.jl")
 include("network_models/network_constructor.jl")
 
 # Templates
-include("operations_problems_templates.jl")
+include("operations_problem_templates.jl")
+
+# Operations Problems
+include("operations_problems.jl")
 
 # Printing
 include("printing.jl")

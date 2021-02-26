@@ -59,6 +59,7 @@ const INVERTOR_LIMIT = "invertor_limit"
 abstract type ConstraintType end
 
 abstract type RangeConstraint <: ConstraintType end
+abstract type EnergyBalanceConstraint <: ConstraintType end
 
 function make_constraint_name(
     ::Type{T},

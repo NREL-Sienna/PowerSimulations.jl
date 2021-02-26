@@ -1,19 +1,35 @@
-function _organize_model(
+function _display_model(
+    val::Dict{Tuple{String, Symbol}, T},
+    field::Symbol,
+    io::IO,
+) where {T <: ServiceModel}
+    field = titlecase(string(field))
+    println(io, "$(field) Models:\n")
+    if isempty(val)
+        println("\t No Models Specified\n")
+        return
+    end
+    for (i, ix) in val
+        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
+        if ix.use_service_name
+            println(io, "\tName specific Model\n")
+        end
+    end
+end
+
+function _display_model(
     val::Dict{Symbol, T},
     field::Symbol,
     io::IO,
-) where {T <: Union{DeviceModel, ServiceModel}}
-    println(io, "  $(field): ")
+) where {T <: DeviceModel}
+    field = titlecase(string(field))
+    println(io, "$(field) Models: \n")
+    if isempty(val)
+        println("\t No Models Specified\n")
+        return
+    end
     for (i, ix) in val
-        println(io, "      $(i):")
-        for inner_field in fieldnames(T)
-            inner_field == :services && continue
-            value = getfield(val[i], Symbol(inner_field))
-
-            if !(value === nothing)
-                println(io, "        $(inner_field) = $value")
-            end
-        end
+        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
     end
 end
 
@@ -33,19 +49,18 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTemplate)
     println(io, "\nOperations Problem Specification")
-    println(io, "============================================\n")
+    println(io, "============================================")
 
     for field in fieldnames(OperationsProblemTemplate)
         val = getfield(template, Symbol(field))
-        if typeof(val) <: Dict{Symbol, <:Union{DeviceModel, ServiceModel}}
+        if typeof(val) <: Dict{Symbol, <:DeviceModel}
             println(io, "============================================")
-            _organize_model(val, field, io)
+            _display_model(val, field, io)
+        elseif typeof(val) <: Dict{Tuple{String, Symbol}, <:ServiceModel}
+            println(io, "============================================")
+            _display_model(val, field, io)
         else
-            if !(val === nothing)
-                println(io, "  $(field):  $(val)")
-            else
-                println(io, "no data")
-            end
+            println(io, "")
         end
     end
     println(io, "============================================")
@@ -155,8 +170,8 @@ function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     end
 end
 
-function Base.show(io::IO, stage::Stage)
-    println(io, "Stage()")
+function Base.show(io::IO, stage::OperationsProblem)
+    println(io, "OperationsProblem()")
 end
 
 function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})
@@ -334,19 +349,19 @@ function Base.show(io::IO, sequence::SimulationSequence)
         println(io, "$(k[1]): $(typeof(v)) -> $(k[3])\n")
         to = String.(v.affected_variables)
         if isa(v, SemiContinuousFF)
-            from = String.(v.binary_source_stage)
+            from = String.(v.binary_source_problem)
         elseif isa(v, RangeFF)
-            from = String.([v.variable_source_stage_ub, v.variable_source_stage_lb])
+            from = String.([v.variable_source_problem_ub, v.variable_source_problem_lb])
         else
-            from = String.(v.variable_source_stage)
+            from = String.(v.variable_source_problem)
         end
         _print_feedforward(io, sequence.feedforward_chronologies, to, from)
     end
     println(io, "Initial Condition Chronology")
     println(io, "----------------------------\n")
-    if sequence.ini_cond_chronology == IntraStageChronology()
+    if sequence.ini_cond_chronology == IntraProblemChronology()
         _print_intra_stages(io, stages)
-    elseif sequence.ini_cond_chronology == InterStageChronology()
+    elseif sequence.ini_cond_chronology == InterProblemChronology()
         _print_inter_stages(io, stages)
     end
 end

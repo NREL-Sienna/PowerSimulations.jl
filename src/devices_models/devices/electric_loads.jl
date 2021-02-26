@@ -9,7 +9,7 @@ struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 ########################### ElectricLoad ####################################
 
 get_variable_sign(_, ::Type{<:PSY.ElectricLoad}) = -1.0
-
+get_variable_sign(_, ::Type{<:PSY.InterruptibleLoad}) = 1.0
 ########################### ActivePowerVariable, ElectricLoad ####################################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = false
@@ -193,7 +193,7 @@ function AddCostSpec(
         variable_type = ActivePowerVariable,
         component_type = T,
         variable_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
 
@@ -202,11 +202,11 @@ function AddCostSpec(
     ::Type{InterruptiblePowerLoad},
     ::OptimizationContainer,
 ) where {T <: PSY.ControllableLoad}
-    cost_function = x -> (x === nothing ? 1.0 : PSY.get_fixed(x))
+    cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
         variable_type = OnVariable,
         component_type = T,
         fixed_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end

@@ -187,3 +187,21 @@ struct HybridInvertorConstraintInfo <: AbstractStartConstraintInfo
     component_name::String
     rating::Float64
 end
+
+struct EnergyBalanceConstraintInfo <: AbstractStartConstraintInfo
+    component_name::String
+    efficiency_data::InOut
+    ic_energy::InitialCondition
+    multiplier::Union{Nothing, Float64}
+    timeseries::Union{Nothing, Vector{Float64}}
+end
+
+function EnergyBalanceConstraintInfo(; component_name, efficiency_data, ic_energy)
+    return EnergyBalanceConstraintInfo(
+        component_name,
+        efficiency_data,
+        ic_energy,
+        nothing,
+        nothing,
+    )
+end

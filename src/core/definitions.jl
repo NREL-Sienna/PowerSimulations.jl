@@ -6,7 +6,7 @@ const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
 const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 const StartUpStages = NamedTuple{(:hot, :warm, :cold), NTuple{3, Float64}}
 
-const BUILD_SIMULATION_TIMER = TimerOutputs.TimerOutput()
+const BUILD_PROBLEMS_TIMER = TimerOutputs.TimerOutput()
 const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 # Type Alias for JuMP and PJ containers
@@ -20,10 +20,9 @@ const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
+# Enums
 IS.@scoped_enum(BuildStatus, IN_PROGRESS = -1, BUILT = 0, FAILED = 1, EMPTY = 2,)
-
 IS.@scoped_enum(RunStatus, READY = -1, SUCCESSFUL = 0, RUNNING = 1, FAILED = 2,)
-
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
 # Settings constants
@@ -49,28 +48,21 @@ const KiB = 1024
 const MiB = KiB * KiB
 const GiB = MiB * KiB
 
-# Interface limitations
-# TODO: Remove this and use Julia's default kwarg behavior
-const OPERATIONS_ACCEPTED_KWARGS = [
-    :horizon,
-    :initial_time,
-    :use_forecast_data,
-    :PTDF,
-    :use_parameters,
-    :optimizer,
-    :warm_start,
-    :balance_slack_variables,
-    :services_slack_variables,
-    :system_to_file,
-    :constraint_duals,
-    :export_pwl_vars,
-]
-
-const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
-
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 
 const PSI_NAME_DELIMITER = "__"
 
 const M_VALUE = 1e6
+
+const NO_SERVICE_NAME_PROVIDED = ""
+
+# File Names definitions
+const PROBLEM_SERIALIZATION_FILENAME = "operations_problem.bin"
+const PROBLEM_BUILD_LOG_FILENAME = "operations_problem_build.log"
+const HASH_FILENAME = "check.sha256"
+const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
+const SIMULATION_LOG_FILENAME = "simulation.log"
+const REQUIRED_RECORDERS = (:simulation_status, :simulation)
+const KNOWN_SIMULATION_PATHS =
+    ["data_store", "logs", "models_json", "recorder", "results", "simulation_files"]

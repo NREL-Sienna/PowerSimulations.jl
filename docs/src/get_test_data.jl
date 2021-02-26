@@ -21,8 +21,8 @@ devices = Dict{Symbol, DeviceModel}(
 )
 branches = Dict{Symbol, DeviceModel}(
     :L => DeviceModel(Line, StaticLine),
-    :T => DeviceModel(Transformer2W, StaticTransformer),
-    :TT => DeviceModel(TapTransformer, StaticTransformer),
+    :T => DeviceModel(Transformer2W, StaticBranch),
+    :TT => DeviceModel(TapTransformer, StaticBranch),
 );
 services = Dict{Symbol, ServiceModel}();
 

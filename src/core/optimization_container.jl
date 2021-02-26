@@ -9,9 +9,10 @@ mutable struct OptimizationContainer
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, ParametersContainer}
-    initial_conditions::InitialConditions
+    initial_conditions::Union{Nothing, InitialConditions}
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
+    solve_timed_log::Dict{Symbol, Any}
 
     function OptimizationContainer(
         sys::PSY.System,
@@ -31,25 +32,18 @@ mutable struct OptimizationContainer
             zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
             nothing,
-            InitialConditions(use_parameters = get_use_parameters(settings)),
+            nothing,
             nothing,
             PSY.get_base_power(sys),
+            Dict{Symbol, Any}(),
         )
     end
 end
 
-function OptimizationContainer(
-    ::Type{T},
-    sys::PSY.System,
-    settings::Settings,
-    jump_model::Union{Nothing, JuMP.AbstractModel},
-) where {T <: PM.AbstractPowerModel}
-    container = OptimizationContainer(sys, settings, jump_model)
-    optimization_container_init!(container, T, sys)
-    return container
-end
-
-function _check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
+function _validate_warm_start_support(
+    JuMPmodel::JuMP.AbstractModel,
+    warm_start_enabled::Bool,
+)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =
         MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -70,7 +64,7 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
                 PJ.enable_parameters(optimization_container.JuMPmodel)
                 warm_start_enabled = get_warm_start(settings)
-                solver_supports_warm_start = _check_warm_start_support(
+                solver_supports_warm_start = _validate_warm_start_support(
                     optimization_container.JuMPmodel,
                     warm_start_enabled,
                 )
@@ -84,7 +78,7 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
         JuMPmodel = JuMP.Model(optimizer)
         warm_start_enabled = get_warm_start(settings)
         solver_supports_warm_start =
-            _check_warm_start_support(JuMPmodel, warm_start_enabled)
+            _validate_warm_start_support(JuMPmodel, warm_start_enabled)
         set_warm_start!(settings, solver_supports_warm_start)
         parameters && PJ.enable_parameters(JuMPmodel)
         optimization_container.JuMPmodel = JuMPmodel
@@ -116,8 +110,8 @@ end
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
     bus_numbers::Vector{Int},
-    transmission::Type{S},
-) where {S <: PM.AbstractPowerModel}
+    ::Type{<:PM.AbstractPowerModel},
+)
     settings = optimization_container.settings
     parameters = get_use_parameters(settings)
     time_steps = 1:get_horizon(settings)
@@ -133,8 +127,8 @@ end
 function _make_expressions_dict!(
     optimization_container::OptimizationContainer,
     bus_numbers::Vector{Int},
-    transmission::Type{S},
-) where {S <: PM.AbstractActivePowerModel}
+    ::Type{<:PM.AbstractActivePowerModel},
+)
     settings = optimization_container.settings
     parameters = get_use_parameters(settings)
     time_steps = 1:get_horizon(settings)
@@ -155,11 +149,12 @@ function optimization_container_init!(
     settings = optimization_container.settings
     _make_jump_model!(optimization_container)
     @assert !(optimization_container.JuMPmodel === nothing)
-    make_parameters_container = get_use_parameters(settings)
-    make_parameters_container && (optimization_container.parameters = ParametersContainer())
-
+    use_parameters = get_use_parameters(settings)
+    if use_parameters
+        optimization_container.parameters = ParametersContainer()
+    end
     use_forecasts = get_use_forecast_data(settings)
-    if make_parameters_container && !use_forecasts
+    if use_parameters && !use_forecasts
         throw(
             IS.ConflictingInputsError(
                 "enabling parameters without forecasts is not supported",
@@ -171,11 +166,10 @@ function optimization_container_init!(
         set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
     end
 
-    if get_horizon(settings) == UNSET_HORIZON
-        set_horizon!(settings, PSY.get_forecast_horizon(sys))
-    end
-
     if use_forecasts
+        if get_horizon(settings) == UNSET_HORIZON
+            set_horizon!(settings, PSY.get_forecast_horizon(sys))
+        end
         total_number_of_devices = length(get_available_components(PSY.Device, sys))
         optimization_container.time_steps = 1:get_horizon(settings)
         # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
@@ -188,8 +182,12 @@ function optimization_container_init!(
                 "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
             )
         end
+    else
+        set_horizon!(settings, 1)
     end
 
+    ini_cond_container = InitialConditions(use_parameters = use_parameters)
+    optimization_container.initial_conditions = ini_cond_container
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
     _make_expressions_dict!(optimization_container, bus_numbers, T)
     return
@@ -565,7 +563,7 @@ function export_optimizer_log(
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function write_optimization_container(
+function serialize_optimization_model(
     optimization_container::OptimizationContainer,
     save_path::String,
 )
@@ -638,39 +636,61 @@ function check_optimization_container(optimization_container::OptimizationContai
     return
 end
 
-function _build!(
+function get_problem_size(optimization_container::OptimizationContainer)
+    model = optimization_container.JuMPmodel
+    vars = JuMP.num_variables(model)
+    cons = 0
+    for (exp, c_type) in JuMP.list_of_constraint_types(model)
+        cons += JuMP.num_constraints(model, exp, c_type)
+    end
+    return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
+end
+
+function build_impl!(
     optimization_container::OptimizationContainer,
     template::OperationsProblemTemplate,
     sys::PSY.System,
 )
     transmission = template.transmission
     # Order is required
-    # The container is initialized here because this build! call for optimization_container takes the
-    # information from the template with cached Settings. It allows having the same build! call for operations problems
-    # specified with template and simulation stage.
-    optimization_container_init!(optimization_container, transmission, sys)
-    construct_services!(optimization_container, sys, template.services, template.devices)
-    for device_model in values(template.devices)
-        @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
-        construct_device!(optimization_container, sys, device_model, transmission)
-        @debug check_problem_size(optimization_container)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Services" begin
+        construct_services!(
+            optimization_container,
+            sys,
+            template.services,
+            template.devices,
+        )
     end
-    @debug "Building $(transmission) network formulation"
-    construct_network!(optimization_container, sys, transmission)
-    @debug check_problem_size(optimization_container)
+    for device_model in values(template.devices)
+        @debug "Building $(device_model.component_type) with $(device_model.formulation) formulation"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(device_model.component_type)" begin
+            construct_device!(optimization_container, sys, device_model, transmission)
+            @debug get_problem_size(optimization_container)
+        end
+    end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(transmission)" begin
+        @debug "Building $(transmission) network formulation"
+        construct_network!(optimization_container, sys, transmission)
+        @debug get_problem_size(optimization_container)
+    end
 
     for branch_model in values(template.branches)
-        @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
-        construct_device!(optimization_container, sys, branch_model, transmission)
-        @debug check_problem_size(optimization_container)
+        @debug "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(branch_model.component_type)" begin
+            construct_device!(optimization_container, sys, branch_model, transmission)
+            @debug get_problem_size(optimization_container)
+        end
     end
 
-    @debug "Building Objective"
-    JuMP.@objective(
-        optimization_container.JuMPmodel,
-        MOI.MIN_SENSE,
-        optimization_container.cost_function
-    )
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Objective" begin
+        @debug "Building Objective"
+        JuMP.@objective(
+            optimization_container.JuMPmodel,
+            MOI.MIN_SENSE,
+            optimization_container.cost_function
+        )
+    end
     @debug "Total operation count $(optimization_container.JuMPmodel.operator_counter)"
 
     check_optimization_container(optimization_container)

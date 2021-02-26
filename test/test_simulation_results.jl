@@ -1,79 +1,67 @@
 function verify_export_results(results, export_path)
     exports = SimulationResultsExport(
-        make_export_all(keys(results.stage_results)),
+        make_export_all(keys(results.problem_results)),
         results.params,
     )
     export_results(results, exports)
 
-    for stage_results in values(results.stage_results)
-        stage = stage_results.stage
-        rpath = stage_results.results_output_folder
+    for problem_results in values(results.problem_results)
+        problem = problem_results.problem
+        rpath = problem_results.results_output_folder
         base_path = results.path
-        for timestamp in get_existing_timestamps(stage_results)
-            for name in get_existing_duals(stage_results)
-                compare_results(rpath, export_path, stage, "duals", name, timestamp)
+        for timestamp in get_existing_timestamps(problem_results)
+            for name in get_existing_duals(problem_results)
+                compare_results(rpath, export_path, problem, "duals", name, timestamp)
             end
-            for name in get_existing_parameters(stage_results)
-                compare_results(rpath, export_path, stage, "parameters", name, timestamp)
+            for name in get_existing_parameters(problem_results)
+                compare_results(rpath, export_path, problem, "parameters", name, timestamp)
             end
-            for name in get_existing_variables(stage_results)
-                compare_results(rpath, export_path, stage, "variables", name, timestamp)
+            for name in get_existing_variables(problem_results)
+                compare_results(rpath, export_path, problem, "variables", name, timestamp)
             end
         end
     end
 end
 
-function compare_results(rpath, epath, stage, field, name, timestamp)
+function compare_results(rpath, epath, problem, field, name, timestamp)
     filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
-    df1 = PSI.read_dataframe(joinpath(rpath, stage, field, filename))
-    df2 = PSI.read_dataframe(joinpath(epath, stage, field, filename))
+    df1 = PSI.read_dataframe(joinpath(rpath, problem, field, filename))
+    df2 = PSI.read_dataframe(joinpath(epath, problem, field, filename))
     @test df1 == df2
 end
 
-function make_export_all(stages)
+function make_export_all(problems)
     return [
         StageResultsExport(x, duals = [:all], variables = [:all], parameters = [:all]) for
-        x in stages
+        x in problems
     ]
 end
 
 function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
-        # TODO: make a simulation that has lookahead for better results extraction tests
+        template_uc = get_template_hydro_st_uc()
+        template_ed = get_template_hydro_st_ed()
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-        stages_definition = Dict(
-            "UC" => Stage(
-                GenericOpProblem,
-                template_hydro_st_uc,
-                c_sys5_hy_uc,
-                GLPK_optimizer,
-            ),
-            "ED" => Stage(
-                GenericOpProblem,
-                template_hydro_st_ed,
-                c_sys5_hy_ed,
-                GLPK_optimizer,
-                constraint_duals = [:CopperPlateBalance],
-            ),
+        problems = SimulationProblems(
+            UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
+            ED = OperationsProblem(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),
         )
 
         sequence_cache = SimulationSequence(
-            step_resolution = Hour(24),
-            order = Dict(1 => "UC", 2 => "ED"),
+            problems = problems,
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-            horizons = Dict("UC" => 24, "ED" => 12),
             intervals = Dict(
                 "UC" => (Hour(24), Consecutive()),
                 "ED" => (Hour(1), Consecutive()),
             ),
             feedforward = Dict(
-                ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_source_stage = PSI.ON,
+                ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+                    binary_source_problem = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_source_stage = PSI.ACTIVE_POWER,
+                    variable_source_problem = PSI.ACTIVE_POWER,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -81,20 +69,20 @@ function test_simulation_results(file_path::String, export_path)
                 ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
                 ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
             ),
-            ini_cond_chronology = InterStageChronology(),
+            ini_cond_chronology = InterProblemChronology(),
         )
         sim = Simulation(
-            name = "results_sim",
+            name = "cache",
             steps = 2,
-            stages = stages_definition,
-            stages_sequence = sequence_cache,
+            problems = problems,
+            sequence = sequence_cache,
             simulation_folder = file_path,
         )
         build_out = build!(sim)
         @test build_out == PSI.BuildStatus.BUILT
 
         exports = Dict(
-            "stages" => [
+            "problems" => [
                 Dict(
                     "name" => "UC",
                     "variables" => [:all],
@@ -114,14 +102,14 @@ function test_simulation_results(file_path::String, export_path)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         results = SimulationResults(sim)
-        @test list_stages(results) == ["ED", "UC"]
-        results_uc = get_stage_results(results, "UC")
-        results_ed = get_stage_results(results, "ED")
+        @test list_problems(results) == ["ED", "UC"]
+        results_uc = get_problem_results(results, "UC")
+        results_ed = get_problem_results(results, "ED")
 
         results_from_file = SimulationResults(joinpath(file_path, "results_sim"))
-        @test list_stages(results) == ["ED", "UC"]
-        results_uc_from_file = get_stage_results(results_from_file, "UC")
-        results_ed_from_file = get_stage_results(results_from_file, "ED")
+        @test list_problems(results) == ["ED", "UC"]
+        results_uc_from_file = get_problem_results(results_from_file, "UC")
+        results_ed_from_file = get_problem_results(results_from_file, "ED")
 
         ed_expected_vars = [
             :Sp__HydroEnergyReservoir

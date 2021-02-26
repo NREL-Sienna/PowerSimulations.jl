@@ -12,13 +12,10 @@ struct OptimizerStats
     sec_in_gc::Union{Nothing, Float64}
 end
 
-function OptimizerStats(
-    simulation_step,
-    stage_number,
-    timestamp,
-    model::JuMP.AbstractModel,
-    timed_log::Dict,
-)
+function OptimizerStats(problem, simulation_step, timestamp)
+    timed_log = get_solve_timed_log(problem)
+    stage_number = get_simulation_number(problem)
+    model = get_jump_model(problem)
     solver_solve_time = NaN
     try
         solver_time = MOI.get(model, MOI.SolveTime())
