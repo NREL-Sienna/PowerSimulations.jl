@@ -8,6 +8,7 @@ struct DeviceEnergyBalanceConstraintSpec
     forecast_label::Union{Nothing, String}
     multiplier_func::Union{Nothing, Function}
     constraint_func::Function
+    subcomponent_type::Union{Nothing, Type{<:PSY.Component}}
 end
 
 function DeviceEnergyBalanceConstraintSpec(;
@@ -20,6 +21,7 @@ function DeviceEnergyBalanceConstraintSpec(;
     parameter_name::Union{Nothing, String} = nothing,
     forecast_label::Union{Nothing, String} = nothing,
     multiplier_func::Union{Nothing, Function} = nothing,
+    subcomponent_type::Union{Nothing, Type{<:PSY.Component}} = nothing
 )
     return DeviceEnergyBalanceConstraintSpec(
         constraint_name,
@@ -31,6 +33,7 @@ function DeviceEnergyBalanceConstraintSpec(;
         forecast_label,
         multiplier_func,
         constraint_func,
+        subcomponent_type
     )
 end
 
@@ -91,6 +94,7 @@ struct DeviceEnergyBalanceConstraintSpecInternal
     pin_variable_names::Vector{Symbol}
     pout_variable_names::Vector{Symbol}
     param_reference::Union{Nothing, UpdateRef}
+    subcomponent_type::Union{Nothing, Type{<:PSY.Component}}
 end
 
 function _apply_energy_balance_constraint_spec!(
@@ -135,6 +139,7 @@ function _apply_energy_balance_constraint_spec!(
             spec.pout_variable_names,
             spec.parameter_name === nothing ? nothing :
             UpdateRef{T}(spec.parameter_name, spec.forecast_label),
+            spec.subcomponent_type,
         ),
     )
     return
@@ -188,19 +193,20 @@ function energy_balance!(
         eff_in = info.efficiency_data.in
         eff_out = info.efficiency_data.out
         name = get_component_name(info)
+        idx = get_index(name, 1, inputs.subcomponent_type)
         # Create the PGAE outside of the constraint definition
         !isnothing(info.timeseries) ? ts_value = info.timeseries[1] * info.multiplier :
         ts_value = 0.0
         expr = JuMP.AffExpr(0.0)
         for var in varin
-            JuMP.add_to_expression!(expr, var[name, 1], eff_in * fraction_of_hour)
+            JuMP.add_to_expression!(expr, var[idx], eff_in * fraction_of_hour)
         end
         for var in varout
-            JuMP.add_to_expression!(expr, var[name, 1], -1.0 * fraction_of_hour / eff_out)
+            JuMP.add_to_expression!(expr, var[idx], -1.0 * fraction_of_hour / eff_out)
         end
         constraint[name, 1] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            varenergy[name, 1] == info.ic_energy.value + expr + ts_value
+            varenergy[idx] == info.ic_energy.value + expr + ts_value
         )
     end
 
@@ -208,18 +214,21 @@ function energy_balance!(
         eff_in = info.efficiency_data.in
         eff_out = info.efficiency_data.out
         name = get_component_name(info)
+        idx = get_index(name, t, inputs.subcomponent_type)
+        idx_ = get_index(name, t-1, inputs.subcomponent_type)
         !isnothing(info.timeseries) ? ts_value = info.timeseries[t] * info.multiplier :
         ts_value = 0.0
-        expr = JuMP.AffExpr(0.0, varenergy[name, t - 1] => 1.0)
+
+        expr = JuMP.AffExpr(0.0, varenergy[idx_] => 1.0)
         for var in varin
-            JuMP.add_to_expression!(expr, var[name, t], eff_in * fraction_of_hour)
+            JuMP.add_to_expression!(expr, var[idx], eff_in * fraction_of_hour)
         end
         for var in varout
-            JuMP.add_to_expression!(expr, var[name, t], -1.0 * fraction_of_hour / eff_out)
+            JuMP.add_to_expression!(expr, var[idx], -1.0 * fraction_of_hour / eff_out)
         end
         constraint[name, t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            varenergy[name, t] == expr + ts_value
+            varenergy[idx] == expr + ts_value
         )
     end
 
@@ -286,13 +295,14 @@ function energy_balance_param!(
         eff_in = info.efficiency_data.in
         eff_out = info.efficiency_data.out
         name = get_component_name(info)
+        idx = get_index(name, 1, inputs.subcomponent_type)
         # Create the PGAE outside of the constraint definition
         expr = zero(PGAE)
         for var in varin
-            JuMP.add_to_expression!(expr, var[name, 1], eff_in * fraction_of_hour)
+            JuMP.add_to_expression!(expr, var[idx], eff_in * fraction_of_hour)
         end
         for var in varout
-            JuMP.add_to_expression!(expr, var[name, 1], -1 * fraction_of_hour / eff_out)
+            JuMP.add_to_expression!(expr, var[idx], -1 * fraction_of_hour / eff_out)
         end
         if has_parameter_data
             multiplier[name, 1] = info.multiplier
@@ -302,7 +312,7 @@ function energy_balance_param!(
         end
         constraint[name, 1] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            varenergy[name, 1] == info.ic_energy.value + expr
+            varenergy[idx] == info.ic_energy.value + expr
         )
     end
 
@@ -310,13 +320,15 @@ function energy_balance_param!(
         eff_in = info.efficiency_data.in
         eff_out = info.efficiency_data.out
         name = get_component_name(info)
-        expr = expr = zero(PGAE)
-        JuMP.add_to_expression!(expr, varenergy[name, t - 1])
+        idx = get_index(name, t, inputs.subcomponent_type)
+        _idx = get_index(name, t - 1, inputs.subcomponent_type)
+        expr = zero(PGAE)
+        JuMP.add_to_expression!(expr, varenergy[_idx])
         for var in varin
-            JuMP.add_to_expression!(expr, var[name, t], eff_in * fraction_of_hour)
+            JuMP.add_to_expression!(expr, var[idx], eff_in * fraction_of_hour)
         end
         for var in varout
-            JuMP.add_to_expression!(expr, var[name, t], -1 * fraction_of_hour / eff_out)
+            JuMP.add_to_expression!(expr, var[idx], -1 * fraction_of_hour / eff_out)
         end
         if has_parameter_data
             multiplier[name, t] = info.multiplier
@@ -325,7 +337,7 @@ function energy_balance_param!(
             JuMP.add_to_expression!(expr, param[name, t], multiplier[name, t])
         end
         constraint[name, t] =
-            JuMP.@constraint(optimization_container.JuMPmodel, varenergy[name, t] == expr)
+            JuMP.@constraint(optimization_container.JuMPmodel, varenergy[idx] == expr)
     end
 
     return

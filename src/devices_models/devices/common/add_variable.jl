@@ -237,3 +237,88 @@ function commitment_variables!(
 
     return
 end
+
+
+"""
+Add variables to the OptimizationContainer for any component.
+"""
+function add_variables!(
+    optimization_container::OptimizationContainer,
+    ::Type{T},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+) where {T <: SubComponentVariableType, U <: PSY.Component}
+    add_subcomponent_variables!(optimization_container, T(), devices)
+end
+
+
+function add_subcomponent_variables!(
+    optimization_container::OptimizationContainer,
+    variable_type::T,
+    devices::U,
+) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}, T <: SubComponentVariableType} where {D <: PSY.HybridSystem}
+    @assert !isempty(devices)
+    time_steps = model_time_steps(optimization_container)
+    var_name = make_variable_name(typeof(variable_type), eltype(devices))
+    binary = get_variable_binary(variable_type, eltype(devices))
+    expression_name = get_variable_expression_name(variable_type, eltype(devices))
+    sign = get_variable_sign(variable_type, eltype(devices))
+    subcomp_types = get_subcomponent_var_types(variable_type)
+    variable = add_var_container!(
+        optimization_container,
+        var_name,
+        [PSY.get_name(d) for d in devices],
+        subcomp_types,
+        time_steps;
+        sparse = true
+    )
+
+    for t in time_steps, d in devices, subcomp in subcomp_types
+        name = PSY.get_name(d)
+
+        if !check_subcomponent_exist(d, subcomp)
+            continue
+        end
+
+        variable[name, subcomp, t] = JuMP.@variable(
+            optimization_container.JuMPmodel,
+            base_name = "$(var_name)_{$(name), $(subcomp), $(t)}",
+            binary = binary
+        )
+
+        ub = get_variable_upper_bound(variable_type, d, optimization_container.settings)
+        !(ub === nothing) && JuMP.set_upper_bound(variable[name, subcomp, t], ub)
+
+        lb = get_variable_lower_bound(variable_type, d, optimization_container.settings)
+        !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, subcomp, t], lb)
+
+        init = get_variable_initial_value(variable_type, d, optimization_container.settings)
+        !(init === nothing) && JuMP.set_start_value(variable[name, subcomp, t], init)
+
+        if !((expression_name === nothing))
+            bus_number = PSY.get_number(PSY.get_bus(d))
+            add_to_expression!(
+                get_expression(optimization_container, expression_name),
+                bus_number,
+                t,
+                variable[name, subcomp, t],
+                get_variable_sign(variable_type, eltype(devices)),
+            )
+        end
+    end
+
+    return
+end
+
+get_subcomponent_var_types(::SubComponentActivePowerInVariable) = [PSY.Storage]
+get_subcomponent_var_types(::SubComponentActivePowerOutVariable) = [PSY.Storage]
+get_subcomponent_var_types(::SubComponentActivePowerVariable) = [PSY.ThermalGen , PSY.RenewableGen, PSY.ElectricLoad]
+get_subcomponent_var_types(::SubComponentReactivePowerVariable) = [PSY.ThermalGen , PSY.RenewableGen, PSY.ElectricLoad, PSY.Storage]
+get_subcomponent_var_types(::SubComponentEnergyVariable) = [PSY.Storage]
+
+check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) = isnothing(PSY.get_thermal_unit(v)) ? false : true
+check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.RenewableGen}) = isnothing(PSY.get_renewable_unit(v)) ? false : true
+check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) = isnothing(PSY.get_electric_load(v)) ? false : true
+check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.Storage}) = isnothing(PSY.get_storage(v)) ? false : true
+
+get_index(name, t, ::Nothing) = JuMP.Containers.DenseAxisArrayKey((name, t))
+get_index(name, t, type::Type{<:PSY.Component}) = (name, type, t)

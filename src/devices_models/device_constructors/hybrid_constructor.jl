@@ -1,11 +1,10 @@
 function construct_device!(
     psi_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{T, D},
+    model::DeviceModel{T, PhysicalCoupling},
     ::Type{S},
 ) where {
     T <: PSY.HybridSystem,
-    D <: AbstractHybridFormulation,
     S <: PM.AbstractActivePowerModel,
 }
     devices = get_available_components(T, sys)
@@ -18,12 +17,11 @@ function construct_device!(
     add_variables!(psi_container, ActivePowerInVariable, devices)
     add_variables!(psi_container, ActivePowerOutVariable, devices)
 
-    add_variables!(psi_container, ActivePowerVariableThermal, devices)
-    add_variables!(psi_container, ActivePowerVariableLoad, devices)
-    add_variables!(psi_container, ActivePowerInVariableStorage, devices)
-    add_variables!(psi_container, ActivePowerOutVariableStorage, devices)
-    add_variables!(psi_container, ActivePowerVariableRenewable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+
     # Initial Conditions
     initial_conditions!(psi_container, devices, PhysicalCoupling)
 
@@ -48,8 +46,17 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ActivePowerVariableThermal,
+        ThermalRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ElectricLoadRangeConstraint,
+        SubComponentActivePowerVariable,
         devices,
         model,
         S,
@@ -58,7 +65,7 @@ function construct_device!(
     add_constraints!(
         psi_container,
         RangeConstraint,
-        ActivePowerVariableLoad,
+        SubComponentActivePowerInVariable,
         devices,
         model,
         S,
@@ -67,7 +74,7 @@ function construct_device!(
     add_constraints!(
         psi_container,
         RangeConstraint,
-        ActivePowerInVariableStorage,
+        SubComponentActivePowerOutVariable,
         devices,
         model,
         S,
@@ -75,17 +82,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ActivePowerOutVariableStorage,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        ActivePowerVariableRenewable,
+        RenewableGenRangeConstraint,
+        SubComponentActivePowerVariable,
         devices,
         model,
         S,
@@ -93,7 +91,15 @@ function construct_device!(
     )
 
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        psi_container,
+        EnergyBalanceConstraint,
+        SubComponentEnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_outflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
@@ -107,9 +113,9 @@ end
 function construct_device!(
     psi_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{T, D},
+    model::DeviceModel{T, PhysicalCoupling},
     ::Type{S},
-) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
+) where {T <: PSY.HybridSystem, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
     if !validate_available_devices(T, devices)
@@ -121,17 +127,12 @@ function construct_device!(
     add_variables!(psi_container, ActivePowerOutVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
 
-    add_variables!(psi_container, ActivePowerVariableThermal, devices)
-    add_variables!(psi_container, ActivePowerVariableLoad, devices)
-    add_variables!(psi_container, ActivePowerInVariableStorage, devices)
-    add_variables!(psi_container, ActivePowerOutVariableStorage, devices)
-    add_variables!(psi_container, ActivePowerVariableRenewable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentEnergyVariable, devices)
 
-    add_variables!(psi_container, ReactivePowerVariableThermal, devices)
-    add_variables!(psi_container, ReactivePowerVariableLoad, devices)
-    add_variables!(psi_container, ReactivePowerVariableStorage, devices)
-    add_variables!(psi_container, ReactivePowerVariableRenewable, devices)
+    add_variables!(psi_container, SubComponentReactivePowerVariable, devices)
     # Initial Conditions
     initial_conditions!(psi_container, devices, PhysicalCoupling)
 
@@ -156,8 +157,17 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ActivePowerVariableThermal,
+        ThermalRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ElectricLoadRangeConstraint,
+        SubComponentActivePowerVariable,
         devices,
         model,
         S,
@@ -166,7 +176,7 @@ function construct_device!(
     add_constraints!(
         psi_container,
         RangeConstraint,
-        ActivePowerVariableLoad,
+        SubComponentActivePowerInVariable,
         devices,
         model,
         S,
@@ -175,7 +185,7 @@ function construct_device!(
     add_constraints!(
         psi_container,
         RangeConstraint,
-        ActivePowerInVariableStorage,
+        SubComponentActivePowerOutVariable,
         devices,
         model,
         S,
@@ -183,17 +193,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ActivePowerOutVariableStorage,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        ActivePowerVariableRenewable,
+        RenewableGenRangeConstraint,
+        SubComponentActivePowerVariable,
         devices,
         model,
         S,
@@ -212,8 +213,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ReactivePowerVariableThermal,
+        ThermalRangeConstraint,
+        SubComponentReactivePowerVariable,
         devices,
         model,
         S,
@@ -221,8 +222,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ReactivePowerVariableLoad,
+        ElectricLoadRangeConstraint,
+        SubComponentReactivePowerVariable,
         devices,
         model,
         S,
@@ -230,8 +231,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ReactivePowerVariableStorage,
+        StorageRangeConstraint,
+        SubComponentReactivePowerVariable,
         devices,
         model,
         S,
@@ -239,16 +240,25 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ReactivePowerVariableRenewable,
+        RenewableGenRangeConstraint,
+        SubComponentReactivePowerVariable,
         devices,
         model,
         S,
         get_feedforward(model),
     )
 
+    # Constraints
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        psi_container,
+        EnergyBalanceConstraint,
+        SubComponentEnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_outflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     reactive_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -277,20 +287,27 @@ function construct_device!(
     add_variables!(psi_container, ActivePowerInVariable, devices)
     add_variables!(psi_container, ActivePowerOutVariable, devices)
 
-    add_variables!(psi_container, ActivePowerVariableThermal, devices)
-    add_variables!(psi_container, ActivePowerVariableLoad, devices)
-    add_variables!(psi_container, ActivePowerInVariableStorage, devices)
-    add_variables!(psi_container, ActivePowerOutVariableStorage, devices)
-    add_variables!(psi_container, ActivePowerVariableRenewable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentEnergyVariable, devices)
     # Initial Conditions
     initial_conditions!(psi_container, devices, FinancialCoupling)
 
     # Constraints
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ActivePowerVariableThermal,
+        ThermalRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ElectricLoadRangeConstraint,
+        SubComponentActivePowerVariable,
         devices,
         model,
         S,
@@ -299,7 +316,7 @@ function construct_device!(
     add_constraints!(
         psi_container,
         RangeConstraint,
-        ActivePowerVariableLoad,
+        SubComponentActivePowerInVariable,
         devices,
         model,
         S,
@@ -308,7 +325,7 @@ function construct_device!(
     add_constraints!(
         psi_container,
         RangeConstraint,
-        ActivePowerInVariableStorage,
+        SubComponentActivePowerOutVariable,
         devices,
         model,
         S,
@@ -316,25 +333,25 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ActivePowerOutVariableStorage,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        ActivePowerVariableRenewable,
+        RenewableGenRangeConstraint,
+        SubComponentActivePowerVariable,
         devices,
         model,
         S,
         get_feedforward(model),
     )
 
+    # Constraints
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        psi_container,
+        EnergyBalanceConstraint,
+        SubComponentEnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_outflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
@@ -362,17 +379,12 @@ function construct_device!(
     add_variables!(psi_container, ActivePowerOutVariable, devices)
     add_variables!(psi_container, ReactivePowerVariable, devices)
 
-    add_variables!(psi_container, ActivePowerVariableThermal, devices)
-    add_variables!(psi_container, ActivePowerVariableLoad, devices)
-    add_variables!(psi_container, ActivePowerInVariableStorage, devices)
-    add_variables!(psi_container, ActivePowerOutVariableStorage, devices)
-    add_variables!(psi_container, ActivePowerVariableRenewable, devices)
-    add_variables!(psi_container, EnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentEnergyVariable, devices)
 
-    add_variables!(psi_container, ReactivePowerVariableThermal, devices)
-    add_variables!(psi_container, ReactivePowerVariableLoad, devices)
-    add_variables!(psi_container, ReactivePowerVariableStorage, devices)
-    add_variables!(psi_container, ReactivePowerVariableRenewable, devices)
+    add_variables!(psi_container, SubComponentReactivePowerVariable, devices)
 
     # Initial Conditions
     initial_conditions!(psi_container, devices, FinancialCoupling)
@@ -380,8 +392,17 @@ function construct_device!(
     # Constraints
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ActivePowerVariableThermal,
+        ThermalRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ElectricLoadRangeConstraint,
+        SubComponentActivePowerVariable,
         devices,
         model,
         S,
@@ -390,7 +411,7 @@ function construct_device!(
     add_constraints!(
         psi_container,
         RangeConstraint,
-        ActivePowerVariableLoad,
+        SubComponentActivePowerInVariable,
         devices,
         model,
         S,
@@ -399,7 +420,7 @@ function construct_device!(
     add_constraints!(
         psi_container,
         RangeConstraint,
-        ActivePowerInVariableStorage,
+        SubComponentActivePowerOutVariable,
         devices,
         model,
         S,
@@ -407,17 +428,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ActivePowerOutVariableStorage,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        ActivePowerVariableRenewable,
+        RenewableGenRangeConstraint,
+        SubComponentActivePowerVariable,
         devices,
         model,
         S,
@@ -436,8 +448,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ReactivePowerVariableThermal,
+        ThermalRangeConstraint,
+        SubComponentReactivePowerVariable,
         devices,
         model,
         S,
@@ -445,8 +457,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ReactivePowerVariableLoad,
+        ElectricLoadRangeConstraint,
+        SubComponentReactivePowerVariable,
         devices,
         model,
         S,
@@ -454,8 +466,8 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ReactivePowerVariableStorage,
+        StorageRangeConstraint,
+        SubComponentReactivePowerVariable,
         devices,
         model,
         S,
@@ -463,19 +475,300 @@ function construct_device!(
     )
     add_constraints!(
         psi_container,
-        RangeConstraint,
-        ReactivePowerVariableRenewable,
+        RenewableGenRangeConstraint,
+        SubComponentReactivePowerVariable,
         devices,
         model,
         S,
         get_feedforward(model),
     )
 
+    # Constraints
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    energy_balance_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        psi_container,
+        EnergyBalanceConstraint,
+        SubComponentEnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     power_outflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     reactive_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
+
+    # Cost Function
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
+
+    return
+end
+
+
+function construct_device!(
+    psi_container::OptimizationContainer,
+    sys::PSY.System,
+    model::DeviceModel{T, D},
+    ::Type{S},
+) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(T, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
+    # Variables
+    add_variables!(psi_container, ActivePowerInVariable, devices)
+    add_variables!(psi_container, ActivePowerOutVariable, devices)
+
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+    # Initial Conditions
+    initial_conditions!(psi_container, devices, D)
+
+    # Constraints
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ThermalRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ElectricLoadRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        SubComponentActivePowerInVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        SubComponentActivePowerOutVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RenewableGenRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+
+
+    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        psi_container,
+        EnergyBalanceConstraint,
+        SubComponentEnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    power_outflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
+
+    # Cost Function
+    cost_function!(psi_container, devices, model, S, get_feedforward(model))
+
+    return
+end
+
+function construct_device!(
+    psi_container::OptimizationContainer,
+    sys::PSY.System,
+    model::DeviceModel{T, D},
+    ::Type{S},
+) where {T <: PSY.HybridSystem,  D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
+    devices = get_available_components(T, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
+    # Variables
+    add_variables!(psi_container, ActivePowerInVariable, devices)
+    add_variables!(psi_container, ActivePowerOutVariable, devices)
+    add_variables!(psi_container, ReactivePowerVariable, devices)
+
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+
+    add_variables!(psi_container, SubComponentReactivePowerVariable, devices)
+
+    # Initial Conditions
+    initial_conditions!(psi_container, devices, D)
+
+    # Constraints
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ThermalRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ElectricLoadRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        SubComponentActivePowerInVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        SubComponentActivePowerOutVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RenewableGenRangeConstraint,
+        SubComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+
+    # Reactive power Constraints
+    add_constraints!(
+        psi_container,
+        RangeConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ThermalRangeConstraint,
+        SubComponentReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        ElectricLoadRangeConstraint,
+        SubComponentReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        StorageRangeConstraint,
+        SubComponentReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        psi_container,
+        RenewableGenRangeConstraint,
+        SubComponentReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+
+    # Constraints
+    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        psi_container,
+        EnergyBalanceConstraint,
+        SubComponentEnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    power_inflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    power_outflow_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    reactive_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    invertor_rating_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
     # Cost Function

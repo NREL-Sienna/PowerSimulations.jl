@@ -61,6 +61,11 @@ abstract type ConstraintType end
 abstract type RangeConstraint <: ConstraintType end
 abstract type EnergyBalanceConstraint <: ConstraintType end
 
+abstract type ThermalRangeConstraint <: RangeConstraint end
+abstract type ElectricLoadRangeConstraint <: RangeConstraint end
+abstract type RenewableGenRangeConstraint <: RangeConstraint end
+abstract type StorageRangeConstraint <: RangeConstraint end
+
 function make_constraint_name(
     ::Type{T},
     ::Type{U},

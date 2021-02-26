@@ -6,6 +6,7 @@ struct RangeConstraintSpec
     constraint_func::Function
     constraint_struct::Type{<:AbstractRangeConstraintInfo}
     lag_limits_func::Union{Function, Nothing}
+    subcomponent_type::Union{Nothing, Type{<:PSY.Component}}
 end
 
 function RangeConstraintSpec(;
@@ -16,6 +17,7 @@ function RangeConstraintSpec(;
     constraint_func,
     constraint_struct,
     lag_limits_func = nothing,
+    subcomponent_type = nothing,
 )
     return RangeConstraintSpec(
         constraint_name,
@@ -25,6 +27,7 @@ function RangeConstraintSpec(;
         constraint_func,
         constraint_struct,
         lag_limits_func,
+        subcomponent_type,
     )
 end
 
@@ -36,6 +39,7 @@ struct TimeSeriesConstraintSpec
     forecast_label::Union{Nothing, String}
     multiplier_func::Union{Nothing, Function}
     constraint_func::Function
+    subcomponent_type::Union{Nothing, Type{<:PSY.Component}}
 end
 
 function TimeSeriesConstraintSpec(;
@@ -46,6 +50,7 @@ function TimeSeriesConstraintSpec(;
     forecast_label,
     multiplier_func,
     constraint_func,
+    subcomponent_type = nothing,
 )
     return TimeSeriesConstraintSpec(
         constraint_name,
@@ -55,6 +60,7 @@ function TimeSeriesConstraintSpec(;
         forecast_label,
         multiplier_func,
         constraint_func,
+        subcomponent_type,
     )
 end
 
@@ -202,6 +208,7 @@ function _apply_range_constraint_spec!(
         add_device_services!(constraint_info, dev, model)
         constraint_infos[i] = constraint_info
     end
+    subcomp_type = !isnothing(spec.subcomponent_type) ? spec.subcomponent_type : nothing
 
     spec.constraint_func(
         optimization_container,
@@ -210,6 +217,7 @@ function _apply_range_constraint_spec!(
             constraint_name,
             variable_name,
             bin_var_name,
+            subcomp_type,
         ),
     )
     return
@@ -235,7 +243,7 @@ function _apply_timeseries_range_constraint_spec!(
         add_device_services!(constraint_info.range, dev, model)
         constraint_infos[i] = constraint_info
     end
-
+    sub_component_type = !isnothing(spec.subcomponent_type) ? spec.subcomponent_type : nothing
     ts_inputs = TimeSeriesConstraintSpecInternal(
         constraint_infos,
         spec.constraint_name,
@@ -243,6 +251,7 @@ function _apply_timeseries_range_constraint_spec!(
         spec.bin_variable_name,
         spec.parameter_name === nothing ? nothing :
         UpdateRef{T}(spec.parameter_name, spec.forecast_label),
+        sub_component_type
     )
     spec.constraint_func(optimization_container, ts_inputs)
     return

@@ -13,69 +13,53 @@ struct StandardHybridFormulationDisaptch <: AbstractHybridDisaptchFormulation en
 
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.HybridSystem}) = false
 get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HybridSystem}) = :nodal_balance_active
-
 get_variable_sign(::ActivePowerInVariable, ::Type{<:PSY.HybridSystem}) = -1.0
-
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HybridSystem, _) = 0.0
 
 ########################### ActivePowerOutVariable, HybridSystem #################################
 
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.HybridSystem}) = false
 get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HybridSystem}) = :nodal_balance_active
-
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, _) = 0.0
 
-############## ActivePowerVariableThermal, HybridSystem ####################
+############## SubComponentActivePowerVariable, HybridSystem ####################
 
-get_variable_binary(::ActivePowerVariableThermal, ::Type{<:PSY.HybridSystem}) = false
+get_variable_binary(::SubComponentActivePowerVariable, ::Type{<:PSY.HybridSystem}) = false
+get_variable_lower_bound(::SubComponentActivePowerVariable, d::PSY.HybridSystem, _) = 0.0
 
-############## ActivePowerVariableLoad, HybridSystem ####################
+############## SubComponentActivePowerInVariable, HybridSystem ####################
 
-get_variable_binary(::ActivePowerVariableLoad, ::Type{<:PSY.HybridSystem}) = false
+get_variable_binary(::SubComponentActivePowerInVariable, ::Type{<:PSY.HybridSystem}) = false
+get_variable_lower_bound(::SubComponentActivePowerInVariable, d::PSY.HybridSystem, _) = 0.0
 
-############## ActivePowerInVariableStorage, HybridSystem ####################
+############## SubComponentActivePowerOutVariable, HybridSystem ####################
 
-get_variable_binary(::ActivePowerInVariableStorage, ::Type{<:PSY.HybridSystem}) = false
+get_variable_binary(::SubComponentActivePowerOutVariable, ::Type{<:PSY.HybridSystem}) = false
+get_variable_lower_bound(::SubComponentActivePowerOutVariable, d::PSY.HybridSystem, _) = 0.0
 
-############## ActivePowerOutVariableStorage, HybridSystem ####################
+############## SubComponentEnergyVariable, HybridSystem ####################
 
-get_variable_binary(::ActivePowerOutVariableStorage, ::Type{<:PSY.HybridSystem}) = false
-
-############## ActivePowerVariableRenewable, HybridSystem ####################
-
-get_variable_binary(::ActivePowerVariableRenewable, ::Type{<:PSY.HybridSystem}) = false
-
-get_variable_lower_bound(::ActivePowerVariableRenewable, d::PSY.HybridSystem, _) =  0.0
+get_variable_binary(::SubComponentEnergyVariable, ::Type{<:PSY.HybridSystem}) = false
+get_variable_lower_bound(::SubComponentEnergyVariable, d::PSY.HybridSystem, _) = 0.0
 
 ############## EnergyVariable, HybridSystem-Storage ####################
 
 get_variable_binary(::EnergyVariable, ::Type{<:PSY.HybridSystem}) = false
 get_variable_lower_bound(::EnergyVariable, d::PSY.HybridSystem, _) = 0.0
 
+
 ############## ReactivePowerVariable, HybridSystem ####################
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.HybridSystem}) = false
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.HybridSystem}) = :nodal_balance_reactive
 
-get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HybridSystem, _) = 0.0
+############## SubComponentReactivePowerVariable, ThermalGen ####################
 
-############## ReactivePowerVariable, ThermalGen ####################
+get_variable_binary(::SubComponentReactivePowerVariable, ::Type{<:PSY.HybridSystem}) = false
 
-get_variable_binary(::ReactivePowerVariableThermal, ::Type{<:PSY.HybridSystem}) = false
+####################
 
-############## ReactivePowerVariable, Storage ####################
-
-get_variable_binary(::ReactivePowerVariableStorage, ::Type{<:PSY.HybridSystem}) = false
-
-########################### ReactivePowerVariable, ElectricLoad ############################
-
-get_variable_binary(::ReactivePowerVariableLoad, ::Type{<:PSY.ElectricLoad}) = false
-
-get_variable_lower_bound(::ReactivePowerVariableLoad, d::PSY.ElectricLoad, _) = 0.0
-
-########################### ReactivePowerVariable, RenewableGen ############################
-
-get_variable_binary(::ReactivePowerVariableRenewable, ::Type{<:PSY.HybridSystem}) = false 
+get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HybridSystem = PSY.get_efficiency(PSY.get_storage(v))
 
 ########################### Active Device Range Constraint #################################
 
@@ -122,8 +106,8 @@ function DeviceRangeConstraintSpec(
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ActivePowerVariableThermal},
+    ::Type{<:ThermalRangeConstraint},
+    ::Type{SubComponentActivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -133,19 +117,20 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.HybridSystem}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariableThermal, T),
-            variable_name = make_variable_name(ActivePowerVariableThermal, T),
+            constraint_name = make_constraint_name(ThermalRangeConstraint, SubComponentActivePowerVariable, T),
+            variable_name = make_variable_name(SubComponentActivePowerVariable, T),
             limits_func = x -> PSY.get_active_power_limits(PSY.get_thermal_unit(x)),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            subcomponent_type = PSY.ThermalGen,
         ),
         devices_filter_func = x -> !isnothing(PSY.get_thermal_unit(x))
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ActivePowerVariableLoad},
+    ::Type{<:ElectricLoadRangeConstraint},
+    ::Type{SubComponentActivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -156,11 +141,12 @@ function DeviceRangeConstraintSpec(
     if (!use_parameters && !use_forecasts)
         return DeviceRangeConstraintSpec(;
             range_constraint_spec = RangeConstraintSpec(;
-                constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariableLoad, T),
-                variable_name = make_variable_name(ActivePowerVariableLoad, T),
+                constraint_name = make_constraint_name(ElectricLoadRangeConstraint, SubComponentActivePowerVariable, T),
+                variable_name = make_variable_name(SubComponentActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_max_active_power(PSY.get_electric_load(x))),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
+                subcomponent_type = PSY.ElectricLoad,
             ),
             devices_filter_func = x -> !isnothing(PSY.get_electric_load(x))
         )
@@ -168,13 +154,14 @@ function DeviceRangeConstraintSpec(
 
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariableLoad, T),
-            variable_name = make_variable_name(ActivePowerVariableLoad, T),
+            constraint_name = make_constraint_name(ElectricLoadRangeConstraint, SubComponentActivePowerVariable, T),
+            variable_name = make_variable_name(SubComponentActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "max_active_power_load",
             multiplier_func = x -> PSY.get_max_active_power(PSY.get_electric_load(x)),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
+            subcomponent_type = PSY.ElectricLoad,
         ),
         devices_filter_func = x -> !isnothing(PSY.get_electric_load(x))
     )
@@ -184,7 +171,7 @@ end
 
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
-    ::Type{ActivePowerInVariableStorage},
+    ::Type{SubComponentActivePowerInVariable},
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -194,11 +181,12 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.HybridSystem}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerInVariableStorage, T),
-            variable_name = make_variable_name(ActivePowerInVariableStorage, T),
+            constraint_name = make_constraint_name(RangeConstraint, SubComponentActivePowerInVariable, T),
+            variable_name = make_variable_name(SubComponentActivePowerInVariable, T),
             limits_func = x -> PSY.get_input_active_power_limits(PSY.get_storage(x)),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            subcomponent_type = PSY.Storage,
         ),
         devices_filter_func = x -> !isnothing(PSY.get_storage(x))
     )
@@ -206,7 +194,7 @@ end
 
 function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
-    ::Type{ActivePowerOutVariableStorage},
+    ::Type{SubComponentActivePowerOutVariable},
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -216,19 +204,20 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.HybridSystem}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerOutVariableStorage, T),
-            variable_name = make_variable_name(ActivePowerOutVariableStorage, T),
+            constraint_name = make_constraint_name(RangeConstraint, SubComponentActivePowerOutVariable, T),
+            variable_name = make_variable_name(SubComponentActivePowerOutVariable, T),
             limits_func = x -> PSY.get_output_active_power_limits(PSY.get_storage(x)),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            subcomponent_type = PSY.Storage,
         ),
         devices_filter_func = x -> !isnothing(PSY.get_storage(x))
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ActivePowerVariableRenewable},
+    ::Type{<:RenewableGenRangeConstraint},
+    ::Type{SubComponentActivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -238,19 +227,20 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.HybridSystem}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariableRenewable, T),
-            variable_name = make_variable_name(ActivePowerVariableRenewable, T),
+            constraint_name = make_constraint_name(RenewableGenRangeConstraint, SubComponentActivePowerVariable, T),
+            variable_name = make_variable_name(SubComponentActivePowerVariable, T),
             limits_func = x -> (min = 0.0, max = PSY.get_rating(PSY.get_renewable_unit(x))),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            subcomponent_type = PSY.RenewableGen,
         ),
         devices_filter_func = x -> !isnothing(PSY.get_renewable_unit(x))
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ActivePowerVariableRenewable},
+    ::Type{<:RenewableGenRangeConstraint},
+    ::Type{SubComponentActivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -262,14 +252,15 @@ function DeviceRangeConstraintSpec(
         return DeviceRangeConstraintSpec(;
             range_constraint_spec = RangeConstraintSpec(;
                 constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariableRenewable,
+                    RenewableGenRangeConstraint,
+                    SubComponentActivePowerVariable,
                     T,
                 ),
-                variable_name = make_variable_name(ActivePowerVariableRenewable, T),
+                variable_name = make_variable_name(SubComponentActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_rating(PSY.get_renewable_unit(x))),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
+                subcomponent_type = PSY.RenewableGen,
             ),
             devices_filter_func = x -> !isnothing(PSY.get_renewable_unit(x))
         )
@@ -277,13 +268,14 @@ function DeviceRangeConstraintSpec(
 
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(;
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariableRenewable, T),
-            variable_name = make_variable_name(ActivePowerVariableRenewable, T),
+            constraint_name = make_constraint_name(RenewableGenRangeConstraint, SubComponentActivePowerVariable, T),
+            variable_name = make_variable_name(SubComponentActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "max_active_power_renewable",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
+            subcomponent_type = PSY.RenewableGen,
         ),
         devices_filter_func = x -> !isnothing(PSY.get_renewable_unit(x))
     )
@@ -319,8 +311,8 @@ function DeviceRangeConstraintSpec(
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ReactivePowerVariableThermal},
+    ::Type{<:ThermalRangeConstraint},
+    ::Type{SubComponentReactivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -331,22 +323,23 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(
-                RangeConstraint,
-                ReactivePowerVariableThermal,
+                ThermalRangeConstraint,
+                SubComponentReactivePowerVariable,
                 T,
             ),
-            variable_name = make_variable_name(ReactivePowerVariable, T),
+            variable_name = make_variable_name(SubComponentReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(PSY.get_thermal_unit(x)),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            subcomponent_type = PSY.ThermalGen,
         ),
         devices_filter_func = x -> !isnothing(PSY.get_thermal_unit(x))
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ReactivePowerVariableLoad},
+    ::Type{<:ElectricLoadRangeConstraint},
+    ::Type{SubComponentReactivePowerVariable},
     ::Type{<:PSY.HybridSystem},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -355,60 +348,34 @@ function DeviceRangeConstraintSpec(
     use_forecasts::Bool,
 )
     return DeviceRangeConstraintSpec(;
-        custom_psi_container_func = custom_reactive_power_constraints!,
+        custom_optimization_container_func = custom_reactive_power_constraints!,
         devices_filter_func = x -> !isnothing(PSY.get_electric_load(x))
     )
 end
 
 function custom_reactive_power_constraints!(
     psi_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ::Type{<:AbstractHybridFormulation},
 ) where {T <: PSY.HybridSystem}
     time_steps = model_time_steps(psi_container)
     constraint = JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
-    assign_constraint!(psi_container, REACTIVE_POWER_LOAD, T, constraint)
+    assign_constraint!(psi_container, SUBCOMPONENT_REACTIVE_POWER, T, constraint)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         load = PSY.get_electric_load(d)
+        idx = get_index(name, t, PSY.ElectricLoad)
         pf = sin(atan((PSY.get_max_reactive_power(load) / PSY.get_max_active_power(load))))
-        reactive = get_variable(psi_container, REACTIVE_POWER_LOAD, T)[name, t]
-        real = get_variable(psi_container, ACTIVE_POWER_LOAD, T)[name, t] * pf
+        reactive = get_variable(psi_container, SUBCOMPONENT_REACTIVE_POWER, T)[idx]
+        real = get_variable(psi_container, SUBCOMPONENT_ACTIVE_POWER, T)[idx] * pf
         constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel, reactive == real)
     end
 end
 
-function add_constraints!(
-    psi_container::OptimizationContainer,
-    ::Type{<:RangeConstraint},
-    ::Type{ReactivePowerVariableStorage},
-    devices::IS.FlattenIteratorWrapper{St},
-    model::DeviceModel{St, D},
-    ::Type{S},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        limits = PSY.get_reactive_power_limits(PSY.get_storage(x))
-        constraint_infos[ix] = DeviceRangeConstraintInfo(name, limits)
-    end
-
-    device_range!(
-        psi_container,
-        RangeConstraintSpecInternal(
-            constraint_infos,
-            make_constraint_name(RangeConstraint, ReactivePowerVariableStorage, St),
-            make_variable_name(ReactivePowerVariableStorage, St),
-        ),
-    )
-    return
-end
-
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ReactivePowerVariableRenewable},
+    ::Type{<:StorageRangeConstraint},
+    ::Type{SubComponentReactivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -419,15 +386,44 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(
-                RangeConstraint,
-                ReactivePowerVariableRenewable,
+                StorageRangeConstraint,
+                SubComponentReactivePowerVariable,
                 T,
             ),
-            variable_name = make_variable_name(ReactivePowerVariableRenewable, T),
+            variable_name = make_variable_name(SubComponentReactivePowerVariable, T),
+            limits_func = x -> PSY.get_reactive_power_limits(PSY.get_storage(x)),
+            constraint_func = device_range!,
+            constraint_struct = DeviceRangeConstraintInfo,
+            subcomponent_type = PSY.Storage,
+        ),
+        devices_filter_func = x -> !isnothing(PSY.get_storage(x))
+    )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RenewableGenRangeConstraint},
+    ::Type{SubComponentReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractHybridFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.HybridSystem}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RenewableGenRangeConstraint,
+                SubComponentReactivePowerVariable,
+                T,
+            ),
+            variable_name = make_variable_name(SubComponentReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(PSY.get_renewable_unit(x)),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            subcomponent_type = PSY.RenewableGen,
         ),
+        devices_filter_func = x -> !isnothing(PSY.get_renewable_unit(x))
     )
 end
 
@@ -459,10 +455,11 @@ function energy_capacity_constraints!(
     if !isempty(constraint_infos)
         device_range!(
             psi_container,
-            RangeConstraintSpecInternal(
-                constraint_infos,
-                make_constraint_name(ENERGY_CAPACITY, H),
-                make_variable_name(ENERGY, H),
+            RangeConstraintSpecInternal(;
+                constraint_infos = constraint_infos,
+                constraint_name = make_constraint_name(ENERGY_CAPACITY, H),
+                variable_name = make_variable_name(SUBCOMPONENT_ENERGY, H),
+                subcomponent_type = PSY.Storage
             ),
         )
     end
@@ -472,45 +469,27 @@ end
 
 ############################ Battery constraints ######################################
 
-function make_efficiency_data(
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.HybridSystem}
-    names = Vector{String}(undef, length(devices))
-    in_out = Vector{InOut}(undef, length(devices))
-
-    for (ix, d) in enumerate(devices)
-        storage = PSY.get_storage(d)
-        if !isnothing(storage)
-            names[ix] = PSY.get_name(d)
-            in_out[ix] = PSY.get_efficiency(storage)
-        end
-    end
-
-    return names, in_out
-end
-
-
-function energy_balance_constraints!(
-    psi_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    ::DeviceModel{H, D},
-    ::Type{S},
+function DeviceEnergyBalanceConstraintSpec(
+    ::Type{<:EnergyBalanceConstraint},
+    ::Type{SubComponentEnergyVariable},
+    ::Type{H},
+    ::Type{<:AbstractHybridFormulation},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
-    efficiency_data = make_efficiency_data(devices)
-    energy_balance(
-        psi_container,
-        get_initial_conditions(psi_container, ICKey(EnergyLevel, H)),
-        efficiency_data,
-        make_constraint_name(ENERGY_LIMIT, H),
-        (
-            make_variable_name(ACTIVE_POWER_IN_STORAGE, H),
-            make_variable_name(ACTIVE_POWER_OUT_STORAGE, H),
-            make_variable_name(ENERGY, H),
-        ),
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {H <: PSY.HybridSystem}
+    return DeviceEnergyBalanceConstraintSpec(;
+        constraint_name = make_constraint_name(ENERGY_LIMIT, H),
+        energy_variable = make_variable_name(SUBCOMPONENT_ENERGY, H),
+        initial_condition = EnergyLevel,
+        pin_variable_names = [make_variable_name(SUBCOMPONENT_ACTIVE_POWER_IN, H)],
+        pout_variable_names = [make_variable_name(SUBCOMPONENT_ACTIVE_POWER_OUT, H)],
+        constraint_func = energy_balance!,
+        subcomponent_type = PSY.Storage
     )
-    return
 end
+
 
 ################### Power Flow constraint #############################
 
@@ -537,8 +516,8 @@ function power_inflow_constraints!(
         make_constraint_name(POWER_BALANCE_INFLOW, H),
         (
             make_variable_name(ACTIVE_POWER_IN, H),
-            make_variable_name(ACTIVE_POWER_LOAD, H),
-            make_variable_name(ACTIVE_POWER_IN_STORAGE, H),
+            make_variable_name(SUBCOMPONENT_ACTIVE_POWER, H),
+            make_variable_name(SUBCOMPONENT_ACTIVE_POWER_IN, H),
         ),
     )
     return
@@ -568,9 +547,8 @@ function power_outflow_constraints!(
         make_constraint_name(POWER_BALANCE_OUTFLOW, H),
         (
             make_variable_name(ACTIVE_POWER_OUT, H),
-            make_variable_name(ACTIVE_POWER_THERMAL, H),
-            make_variable_name(ACTIVE_POWER_OUT_STORAGE, H),
-            make_variable_name(ACTIVE_POWER_RENEWABLE, H),
+            make_variable_name(SUBCOMPONENT_ACTIVE_POWER, H),
+            make_variable_name(SUBCOMPONENT_ACTIVE_POWER_OUT, H),
         ),
     )
     return
@@ -601,10 +579,7 @@ function reactive_power_constraints!(
         make_constraint_name(REACTIVE, H),
         (
             make_variable_name(REACTIVE_POWER, H),
-            make_variable_name(REACTIVE_POWER_THERMAL, H),
-            make_variable_name(REACTIVE_POWER_LOAD, H),
-            make_variable_name(REACTIVE_POWER_STORAGE, H),
-            make_variable_name(REACTIVE_POWER_RENEWABLE, H),
+            make_variable_name(SUBCOMPONENT_REACTIVE_POWER, H),
         ),
     )
     return
@@ -675,13 +650,14 @@ function AddCostSpec(
 ) where {T <: PSY.HybridSystem}
 
     return AddCostSpec(;
-        variable_type = ActivePowerVariableThermal,
+        variable_type = SubComponentActivePowerVariable,
         component_type = T,
         has_status_variable = has_on_variable(psi_container, T),
         has_status_parameter = has_on_parameter(psi_container, T),
         variable_cost = PSY.get_variable,
         fixed_cost = PSY.get_fixed,
         sos_status = SOSStatusVariable.NO_VARIABLE,
+        subcomponent_type = PSY.ThermalGen
     )
 end
 
@@ -697,6 +673,7 @@ function AddCostSpec(
         component_type = T,
         variable_cost = cost_function,
         multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+        subcomponent_type = PSY.ElectricLoad
     )
 end
 

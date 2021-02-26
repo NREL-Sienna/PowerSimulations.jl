@@ -5,6 +5,7 @@ struct TimeSeriesConstraintSpecInternal
     variable_name::Symbol
     bin_variable_name::Union{Nothing, Symbol}
     param_reference::Union{Nothing, UpdateRef}
+    subcomponent_type::Union{Nothing, Type{<:PSY.Component}}
 end
 
 function lazy_lb!(
@@ -25,11 +26,12 @@ function lazy_lb!(
             continue
         end
         for t in time_steps
-            expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
+            idx = get_index(ci_name, t, inputs.subcomponent_type)
+            expression_lb = JuMP.AffExpr(0.0, variable[idx] => 1.0)
             for val in constraint_info.range.additional_terms_lb
                 JuMP.add_to_expression!(
                     expression_lb,
-                    get_variable(optimization_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[idx],
                     -1.0,
                 )
             end
@@ -66,11 +68,12 @@ function device_timeseries_ub!(
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
         for t in time_steps
-            expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
+            idx = get_index(ci_name, t, inputs.subcomponent_type)
+            expression_ub = JuMP.AffExpr(0.0, variable[idx] => 1.0)
             for val in constraint_info.range.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(optimization_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[idx],
                 )
             end
             con_ub[ci_name, t] = JuMP.@constraint(
@@ -116,11 +119,12 @@ function device_timeseries_lb!(
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
         for t in time_steps
-            expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
+            idx = get_index(ci_name, t, inputs.subcomponent_type)
+            expression_lb = JuMP.AffExpr(0.0, variable[idx] => 1.0)
             for val in constraint_info.range.additional_terms_lb
                 JuMP.add_to_expression!(
                     expression_lb,
-                    get_variable(optimization_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[idx],
                     -1.0,
                 )
             end
@@ -167,11 +171,12 @@ function device_timeseries_param_ub!(
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
         for t in time_steps
-            expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
+            idx = get_index(ci_name, t, inputs.subcomponent_type)
+            expression_ub = JuMP.AffExpr(0.0, variable[idx] => 1.0)
             for val in constraint_info.range.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(optimization_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[idx],
                 )
             end
             param[ci_name, t] = PJ.add_parameter(
@@ -228,11 +233,12 @@ function device_timeseries_param_lb!(
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
         for t in time_steps
-            expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
+            idx = get_index(ci_name, t, inputs.subcomponent_type)
+            expression_lb = JuMP.AffExpr(0.0, variable[idx] => 1.0)
             for val in constraint_info.range.additional_terms_lb
                 JuMP.add_to_expression!(
                     expression_lb,
-                    get_variable(optimization_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[idx],
                     -1.0,
                 )
             end
@@ -278,18 +284,19 @@ function device_timeseries_ub_bin!(
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
         for t in time_steps
+            idx = get_index(ci_name, t, inputs.subcomponent_type)
             forecast = constraint_info.timeseries[t]
             multiplier = constraint_info.multiplier
-            expression_ub = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
+            expression_ub = JuMP.AffExpr(0.0, varcts[idx] => 1.0)
             for val in constraint_info.range.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(optimization_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[idx],
                 )
             end
             con_ub[ci_name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_ub <= varbin[ci_name, t] * multiplier * forecast
+                expression_ub <= varbin[idx] * multiplier * forecast
             )
         end
     end
@@ -337,27 +344,29 @@ function device_timeseries_ub_bigM!(
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
         for t in time_steps
-            expression_ub = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
+            idx = get_index(ci_name, t, inputs.subcomponent_type)
+            expression_ub = JuMP.AffExpr(0.0, varcts[idx] => 1.0)
             for val in constraint_info.range.additional_terms_ub
                 JuMP.add_to_expression!(
                     expression_ub,
-                    get_variable(optimization_container, val)[ci_name, t],
+                    get_variable(optimization_container, val)[idx],
                 )
             end
             param[ci_name, t] = PJ.add_parameter(
                 optimization_container.JuMPmodel,
                 constraint_info.timeseries[t],
             )
+            multiplier[ci_name, t] = constraint_info.multiplier
             con_ub[ci_name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_ub - param[ci_name, t] * constraint_info.multiplier <=
-                (1 - varbin[ci_name, t]) * M_VALUE
+                expression_ub - param[ci_name, t] * multiplier <=
+                (1 - varbin[idx]) * M_VALUE
             )
             con_status[ci_name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_ub <= varbin[ci_name, t] * M_VALUE
+                expression_ub <= varbin[idx] * M_VALUE
             )
-            multiplier[ci_name, t] = constraint_info.multiplier
+            
         end
     end
     return
