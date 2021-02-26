@@ -11,7 +11,7 @@ function construct_device!(
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
 
-    devices = get_available_components(model.device_type, sys)
+    devices = get_available_components(get_component_type(model), sys)
 
     if !validate_available_devices(T, devices)
         return
@@ -62,7 +62,7 @@ function construct_device!(
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
 
-    devices = get_available_components(model.device_type, sys)
+    devices = get_available_components(get_component_type(model), sys)
 
     if !validate_available_devices(T, devices)
         return
@@ -112,7 +112,7 @@ function construct_device!(
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
 
-    devices = get_available_components(model.device_type, sys)
+    devices = get_available_components(get_component_type(model), sys)
     if !validate_available_devices(T, devices)
         return
     end
