@@ -470,7 +470,10 @@ function _get_active_power_output_above_min_value(device, key)
         return 0.0
     end
     power_above_min = PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
-    @assert power_above_min >= -ABSOLUTE_TOLERANCE
+    if power_above_min >= -ABSOLUTE_TOLERANCE
+        @warn "Initial conditoin for power for $(get_name(device)) is invalid. Set to 0.0. This can make the simulation infeasible"
+        power_above_min = 0.0
+    end
     return power_above_min
 end
 
