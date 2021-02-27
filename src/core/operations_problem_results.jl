@@ -40,7 +40,6 @@ function OperationsProblemResults(problem::OperationsProblem)
         parameters,
         optimizer_stats,
         mkpath(joinpath(get_output_dir(problem), "results")),
-        timestamps
     )
 end
 
