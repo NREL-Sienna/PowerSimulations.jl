@@ -5,7 +5,6 @@ struct OperationsProblemResults <: PSIResults
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
     optimizer_stats::OptimizerStats
     output_dir::String
-    timestamps::StepRange
 end
 
 get_existing_variables(res::OperationsProblemResults) = keys(get_variables(res))
@@ -16,7 +15,6 @@ get_objective_value(res::OperationsProblemResults) = res.optimizer_stats.objecti
 IS.get_variables(res::OperationsProblemResults) = res.variable_values
 IS.get_total_cost(res::OperationsProblemResults) = res.total_cost
 IS.get_optimizer_stats(res::OperationsProblemResults) = res.optimizer_stats
-IS.get_timestamp(res::OperationsProblemResults) = res.time_stamp
 get_duals(res::OperationsProblemResults) = res.dual_values
 IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
 
@@ -150,7 +148,6 @@ function write_to_CSV(res::OperationsProblemResults, save_path::String)
         write_data(export_parameters, folder_path; params = true)
     end
     write_optimizer_stats(res, folder_path)
-    write_data(IS.get_timestamp(res), folder_path, "time_stamp")
     files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
