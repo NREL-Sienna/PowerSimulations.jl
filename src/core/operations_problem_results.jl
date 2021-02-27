@@ -5,6 +5,7 @@ struct OperationsProblemResults <: PSIResults
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
     optimizer_stats::OptimizerStats
     output_dir::String
+    timestamps::Range
 end
 
 get_existing_variables(res::OperationsProblemResults) = keys(get_variables(res))
@@ -41,6 +42,7 @@ function OperationsProblemResults(problem::OperationsProblem)
         parameters,
         optimizer_stats,
         mkpath(joinpath(get_output_dir(problem), "results")),
+        timestamps
     )
 end
 
