@@ -171,7 +171,25 @@ function construct_device!(
     end
 
     add_variables!(optimization_container, StandardPTDFModel(), devices)
+    flow_variables = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
+    time_steps = model_time_steps(optimization_container)
 
+    for t in time_steps, d in devices
+        br_name = PSY.get_name(d)
+        add_to_expression!(
+            optimization_container.expressions[:nodal_balance_active],
+            flow_variables[br_name, t],
+            -1.0,
+            (PSY.get_number(PSY.get_arc(d).from), t)...,
+        )
+        add_to_expression!(
+            optimization_container.expressions[:nodal_balance_active],
+            flow_variables[br_name, t],
+            1.0,
+            (PSY.get_number(PSY.get_arc(d).to), t)...,
+        )
+    end
+@show optimization_container.expressions[:nodal_balance_active]
     branch_rate_constraints!(
         optimization_container,
         devices,

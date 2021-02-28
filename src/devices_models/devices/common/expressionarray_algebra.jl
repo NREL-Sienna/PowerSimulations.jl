@@ -2,7 +2,9 @@
 
 function remove_undef!(expression_array::T) where {T}
     for ix in eachindex(expression_array)
-        expression_array[ix] = zero(eltype(expression_array))
+        if !isassigned(expression_array, ix)
+            expression_array[ix] = zero(eltype(expression_array))
+        end
     end
     return
 end

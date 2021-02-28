@@ -38,6 +38,7 @@ function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProb
         PSI.get_transmission_model(template),
         PSI.get_system(problem),
     )
+    PSI.set_network_model!(PSI.get_optimization_container(problem), PSI.get_transmission_model(template))
     PSI.construct_device!(
         PSI.get_optimization_container(problem),
         PSI.get_system(problem),

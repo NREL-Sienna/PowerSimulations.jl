@@ -25,8 +25,9 @@ function _add_system_balance_slacks!(
             base_name = "$(var_name_dn)_{$(ix), $(jx)}",
             lower_bound = 0.0
         )
-        add_to_expression!(expression_array, ix, jx, variable_up[ix, jx], 1.0)
-        add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
+        axs = typeof(optimization_container.pm) == CopperPlatePowerModel ? jx : (ix, jx)
+        add_to_expression!(expression_array, variable_up[ix, jx], 1.0, axs...)
+        add_to_expression!(expression_array, variable_dn[ix, jx], -1.0, axs...)
         JuMP.add_to_expression!(
             optimization_container.cost_function,
             (variable_dn[ix, jx] + variable_up[ix, jx]) * BALANCE_SLACK_COST,
@@ -42,7 +43,7 @@ function add_slacks!(
     _add_system_balance_slacks!(
         optimization_container,
         ACTIVE_POWER,
-        :nodal_balance_active,
+        :system_balance_active,
         true,
     )
     return

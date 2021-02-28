@@ -119,7 +119,6 @@ function add_variable!(
 
     var_name = make_variable_name(PSY.get_name(service), D)
     binary = get_variable_binary(variable_type, D)
-    expression_name = get_variable_expression_name(variable_type, D)
     sign = get_variable_sign(variable_type, D)
 
     variable = add_var_container!(
@@ -208,15 +207,26 @@ function commitment_variables!(
 
     add_variable!(optimization_container, OnVariable(), devices)
     var_status = get_variable(optimization_container, OnVariable, T)
+    if typeof(optimization_container.pm) == CopperPlatePowerModel
+        expression_name = :system_balance_active
+    else
+        expression_name = :nodal_balance_active
+    end
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        bus_number = PSY.get_number(PSY.get_bus(d))
+        if typeof(optimization_container.pm) == CopperPlatePowerModel
+            expression_name = :system_balance_active
+            ix = t
+        else
+            expression_name = :nodal_balance_active
+            bus_number = PSY.get_number(PSY.get_bus(d))
+            ix = (bus_number, t)
+        end
         add_to_expression!(
-            get_expression(optimization_container, :nodal_balance_active),
-            bus_number,
-            t,
+            get_expression(optimization_container, expression_name),
             var_status[name, t],
             PSY.get_active_power_limits(d).min,
+            ix...
         )
     end
 

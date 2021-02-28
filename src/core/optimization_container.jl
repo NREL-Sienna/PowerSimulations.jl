@@ -697,7 +697,7 @@ function build_impl!(
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
         @info "Building $(transmission) network formulation"
-        construct_network!(optimization_container, sys, transmission)
+        construct_network!(optimization_container, sys, transmission, template)
         @debug get_problem_size(optimization_container)
     end
 

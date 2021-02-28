@@ -12,7 +12,7 @@ function moi_tests(
     binary::Bool,
 )
     JuMPmodel = PSI.get_jump_model(op_problem)
-    @test (:params in keys(JuMPmodel.ext)) == params
+    @test (:ParameterJuMP in keys(JuMPmodel.ext)) == params
     @test JuMP.num_variables(JuMPmodel) == vars
     @test JuMP.num_constraints(JuMPmodel, GAEVF, MOI.Interval{Float64}) == interval
     @test JuMP.num_constraints(JuMPmodel, GAEVF, MOI.LessThan{Float64}) == lessthan

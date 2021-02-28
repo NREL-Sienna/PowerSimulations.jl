@@ -50,7 +50,7 @@
     )
     build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test haskey(PSI.get_optimization_container(op_problem).JuMPmodel.ext, :PSI_Testing)
-    @test (:params in keys(PSI.get_optimization_container(op_problem).JuMPmodel.ext)) ==
+    @test (:ParameterJuMP in keys(PSI.get_optimization_container(op_problem).JuMPmodel.ext)) ==
           true
 end
 

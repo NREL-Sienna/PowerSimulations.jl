@@ -11,11 +11,14 @@ flow_variables!(
     devices::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
 ) = nothing
 
-function add_variables!(
+add_variables!(
     optimization_container::OptimizationContainer,
     ::StandardPTDFModel,
-    devices::IS.FlattenIteratorWrapper{B},
-) where {B <: PSY.DCBranch}
+    devices::IS.FlattenIteratorWrapper{<:PSY.DCBranch}) = add_variable!(optimization_container, FlowActivePowerVariable(), devices)
+
+get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.DCBranch}) = false
+
+#=
     time_steps = model_time_steps(optimization_container)
     var_name = make_variable_name(FLOW_ACTIVE_POWER, B)
     container = container_spec(
@@ -35,22 +38,22 @@ function add_variables!(
             container[PSY.get_name(d), t] = jvariable
             add_to_expression!(
                 optimization_container.expressions[:nodal_balance_active],
-                PSY.get_number(PSY.get_arc(d).from),
-                t,
                 jvariable,
                 -1.0,
+                (PSY.get_number(PSY.get_arc(d).from), t)...,
             )
             add_to_expression!(
                 optimization_container.expressions[:nodal_balance_active],
-                PSY.get_number(PSY.get_arc(d).to),
-                t,
                 jvariable,
                 1.0,
+                (PSY.get_number(PSY.get_arc(d).to), t)...,
             )
+            @show optimization_container.expressions[:nodal_balance_active][:,t]
         end
     end
     return
 end
+=#
 
 #################################### Flow Variable Bounds ##################################################
 #################################### Rate Limits Constraints ##################################################
@@ -152,11 +155,10 @@ function branch_rate_constraints!(
             )
             add_to_expression!(
                 optimization_container.expressions[:nodal_balance_active],
-                PSY.get_number(PSY.get_arc(d).to),
-                t,
                 var[PSY.get_name(d), t],
                 -PSY.get_loss(d).l1,
                 -PSY.get_loss(d).l0,
+                (PSY.get_number(PSY.get_arc(d).to), t)...
             )
         end
     end
