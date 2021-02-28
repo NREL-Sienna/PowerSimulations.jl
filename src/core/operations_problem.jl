@@ -476,7 +476,9 @@ end
 
 function solve_impl(problem::OperationsProblem; optimizer = nothing)
     if !is_built(problem)
-        error("Operations Problem Build status is $(get_status(problem)). Solve can't continue")
+        error(
+            "Operations Problem Build status is $(get_status(problem)). Solve can't continue",
+        )
     end
     model = get_jump_model(problem)
     if optimizer !== nothing
