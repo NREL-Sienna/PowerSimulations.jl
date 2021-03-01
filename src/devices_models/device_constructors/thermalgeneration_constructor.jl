@@ -516,7 +516,6 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S};
-    kwargs...,
 ) where {S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
@@ -594,7 +593,6 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S};
-    kwargs...,
 ) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -657,7 +655,6 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S};
-    kwargs...,
 ) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -710,7 +707,6 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S};
-    kwargs...,
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -766,7 +762,6 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S};
-    kwargs...,
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -812,7 +807,6 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S};
-    kwargs...,
 ) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -859,7 +853,6 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S};
-    kwargs...,
 ) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
