@@ -534,31 +534,31 @@ function is_milp(container::OptimizationContainer)
     return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 
-function export_optimizer_log(
-    optimizer_log::Dict{Symbol, Any},
+function export_optimizer_stats(
+    optimizer_stats::Dict{Symbol, Any},
     optimization_container::OptimizationContainer,
     path::String,
 )
-    optimizer_log[:termination_status] =
+    optimizer_stats[:termination_status] =
         Int(JuMP.termination_status(optimization_container.JuMPmodel))
-    optimizer_log[:primal_status] =
+    optimizer_stats[:primal_status] =
         Int(JuMP.primal_status(optimization_container.JuMPmodel))
-    optimizer_log[:dual_status] = Int(JuMP.dual_status(optimization_container.JuMPmodel))
+    optimizer_stats[:dual_status] = Int(JuMP.dual_status(optimization_container.JuMPmodel))
 
-    if optimizer_log[:primal_status] == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        optimizer_log[:obj_value] = JuMP.objective_value(optimization_container.JuMPmodel)
+    if optimizer_stats[:primal_status] == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        optimizer_stats[:obj_value] = JuMP.objective_value(optimization_container.JuMPmodel)
     else
-        optimizer_log[:obj_value] = Inf
+        optimizer_stats[:obj_value] = Inf
     end
 
     try
-        optimizer_log[:solve_time] =
+        optimizer_stats[:solve_time] =
             MOI.get(optimization_container.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
-        optimizer_log[:solve_time] = NaN # "Not Supported by solver"
+        optimizer_stats[:solve_time] = NaN # "Not Supported by solver"
     end
-    write_optimizer_log(optimizer_log, path)
+    write_optimizer_stats(optimizer_stats, path)
     return
 end
 

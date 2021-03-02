@@ -112,10 +112,6 @@ function write_data(
     return
 end
 
-function write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
-    JSON.write(joinpath(save_path, "optimizer_log.json"), JSON.json(optimizer_log))
-end
-
 function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
@@ -302,11 +298,6 @@ function find_var_length(es::Dict, e_list::Array)
     return size(es[Symbol(splitext(e_list[1])[1])], 1)
 end
 
-function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time, 1) - 1), :]
-    return time
-end
-
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(m::M, axs...) where {M <: JuMP.AbstractModel}
     return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, axs...)
@@ -381,6 +372,8 @@ function check_file_integrity(path::String)
         )
     end
 end
+
+to_namedtuple(val) = (; (x => getfield(val, x) for x in fieldnames(typeof(val)))...)
 
 function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
     return Symbol(join((name1, name2, IS.strip_module_name(T)), PSI_NAME_DELIMITER))
