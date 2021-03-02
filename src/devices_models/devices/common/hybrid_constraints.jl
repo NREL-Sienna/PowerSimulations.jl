@@ -44,7 +44,7 @@ function power_inflow(
 
     for (ix, info) in enumerate(constraint_infos), t in time_steps
         name = info.component_name
-        
+
         expr = JuMP.AffExpr(0.0)
         if info.has_load
             idx = get_index(name, t, PSY.ElectricLoad)

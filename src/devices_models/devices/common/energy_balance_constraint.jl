@@ -21,7 +21,7 @@ function DeviceEnergyBalanceConstraintSpec(;
     parameter_name::Union{Nothing, String} = nothing,
     forecast_label::Union{Nothing, String} = nothing,
     multiplier_func::Union{Nothing, Function} = nothing,
-    subcomponent_type::Union{Nothing, Type{<:PSY.Component}} = nothing
+    subcomponent_type::Union{Nothing, Type{<:PSY.Component}} = nothing,
 )
     return DeviceEnergyBalanceConstraintSpec(
         constraint_name,
@@ -33,7 +33,7 @@ function DeviceEnergyBalanceConstraintSpec(;
         forecast_label,
         multiplier_func,
         constraint_func,
-        subcomponent_type
+        subcomponent_type,
     )
 end
 
@@ -215,7 +215,7 @@ function energy_balance!(
         eff_out = info.efficiency_data.out
         name = get_component_name(info)
         idx = get_index(name, t, inputs.subcomponent_type)
-        idx_ = get_index(name, t-1, inputs.subcomponent_type)
+        idx_ = get_index(name, t - 1, inputs.subcomponent_type)
         !isnothing(info.timeseries) ? ts_value = info.timeseries[t] * info.multiplier :
         ts_value = 0.0
 

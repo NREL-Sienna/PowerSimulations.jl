@@ -366,7 +366,6 @@ function device_timeseries_ub_bigM!(
                 optimization_container.JuMPmodel,
                 expression_ub <= varbin[idx] * M_VALUE
             )
-            
         end
     end
     return

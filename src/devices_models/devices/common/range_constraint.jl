@@ -24,8 +24,8 @@ function RangeConstraintSpecInternal(;
     constraint_infos,
     constraint_name,
     variable_name,
-    bin_variable_names=Vector{Symbol}(),
-    subcomponent_type=nothing,
+    bin_variable_names = Vector{Symbol}(),
+    subcomponent_type = nothing,
 )
     return RangeConstraintSpecInternal(
         constraint_infos,
@@ -298,8 +298,7 @@ function device_multistart_range!(
         if JuMP.has_lower_bound(varp[idx])
             JuMP.set_lower_bound(varp[idx], 0.0)
         end
-        expression_products =
-            JuMP.AffExpr(0.0, varp[idx] => 1.0)
+        expression_products = JuMP.AffExpr(0.0, varp[idx] => 1.0)
         for val in constraint_info.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_products,
@@ -309,8 +308,7 @@ function device_multistart_range!(
         con_on[name, t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
             expression_products <=
-            (constraint_info.limits.max - constraint_info.limits.min) *
-            varstatus[idx] -
+            (constraint_info.limits.max - constraint_info.limits.min) * varstatus[idx] -
             max(constraint_info.limits.max - constraint_info.lag_ramp_limits.startup, 0) * varon[idx]
         )
         if t == length(time_steps)
@@ -319,8 +317,7 @@ function device_multistart_range!(
             con_off[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
                 expression_products <=
-                (constraint_info.limits.max - constraint_info.limits.min) *
-                varstatus[idx] -
+                (constraint_info.limits.max - constraint_info.limits.min) * varstatus[idx] -
                 max(
                     constraint_info.limits.max - constraint_info.lag_ramp_limits.shutdown,
                     0,

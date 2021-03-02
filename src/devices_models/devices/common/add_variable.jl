@@ -238,7 +238,6 @@ function commitment_variables!(
     return
 end
 
-
 """
 Add variables to the OptimizationContainer for any component.
 """
@@ -250,12 +249,14 @@ function add_variables!(
     add_subcomponent_variables!(optimization_container, T(), devices)
 end
 
-
 function add_subcomponent_variables!(
     optimization_container::OptimizationContainer,
     variable_type::T,
     devices::U,
-) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}, T <: SubComponentVariableType} where {D <: PSY.HybridSystem}
+) where {
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    T <: SubComponentVariableType,
+} where {D <: PSY.HybridSystem}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
     var_name = make_variable_name(typeof(variable_type), eltype(devices))
@@ -269,7 +270,7 @@ function add_subcomponent_variables!(
         [PSY.get_name(d) for d in devices],
         subcomp_types,
         time_steps;
-        sparse = true
+        sparse = true,
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types
@@ -311,14 +312,20 @@ end
 
 get_subcomponent_var_types(::SubComponentActivePowerInVariable) = [PSY.Storage]
 get_subcomponent_var_types(::SubComponentActivePowerOutVariable) = [PSY.Storage]
-get_subcomponent_var_types(::SubComponentActivePowerVariable) = [PSY.ThermalGen , PSY.RenewableGen, PSY.ElectricLoad]
-get_subcomponent_var_types(::SubComponentReactivePowerVariable) = [PSY.ThermalGen , PSY.RenewableGen, PSY.ElectricLoad, PSY.Storage]
+get_subcomponent_var_types(::SubComponentActivePowerVariable) =
+    [PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad]
+get_subcomponent_var_types(::SubComponentReactivePowerVariable) =
+    [PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad, PSY.Storage]
 get_subcomponent_var_types(::SubComponentEnergyVariable) = [PSY.Storage]
 
-check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) = isnothing(PSY.get_thermal_unit(v)) ? false : true
-check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.RenewableGen}) = isnothing(PSY.get_renewable_unit(v)) ? false : true
-check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) = isnothing(PSY.get_electric_load(v)) ? false : true
-check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.Storage}) = isnothing(PSY.get_storage(v)) ? false : true
+check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) =
+    isnothing(PSY.get_thermal_unit(v)) ? false : true
+check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.RenewableGen}) =
+    isnothing(PSY.get_renewable_unit(v)) ? false : true
+check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) =
+    isnothing(PSY.get_electric_load(v)) ? false : true
+check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.Storage}) =
+    isnothing(PSY.get_storage(v)) ? false : true
 
 get_index(name, t, ::Nothing) = JuMP.Containers.DenseAxisArrayKey((name, t))
 get_index(name, t, type::Type{<:PSY.Component}) = (name, type, t)

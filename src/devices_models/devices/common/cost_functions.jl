@@ -27,7 +27,7 @@ function AddCostSpec(;
     fixed_cost = nothing,
     has_multistart_variables = false,
     addtional_linear_terms = Dict{String, Symbol}(),
-    subcomponent_type = nothing
+    subcomponent_type = nothing,
 )
     return AddCostSpec(
         variable_type,

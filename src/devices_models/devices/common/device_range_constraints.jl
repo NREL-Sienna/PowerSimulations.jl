@@ -243,7 +243,8 @@ function _apply_timeseries_range_constraint_spec!(
         add_device_services!(constraint_info.range, dev, model)
         constraint_infos[i] = constraint_info
     end
-    sub_component_type = !isnothing(spec.subcomponent_type) ? spec.subcomponent_type : nothing
+    sub_component_type =
+        !isnothing(spec.subcomponent_type) ? spec.subcomponent_type : nothing
     ts_inputs = TimeSeriesConstraintSpecInternal(
         constraint_infos,
         spec.constraint_name,
@@ -251,7 +252,7 @@ function _apply_timeseries_range_constraint_spec!(
         spec.bin_variable_name,
         spec.parameter_name === nothing ? nothing :
         UpdateRef{T}(spec.parameter_name, spec.forecast_label),
-        sub_component_type
+        sub_component_type,
     )
     spec.constraint_func(optimization_container, ts_inputs)
     return

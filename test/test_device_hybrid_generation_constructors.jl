@@ -3,12 +3,8 @@
     sys = PSB.build_system(PSITestSystems, "c_sys5_hybrid"; skip_serialization = true)
 
     # Parameters Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        sys;
-        use_parameters = true,
-    )
+    op_problem =
+        OperationsProblem(MockOperationProblem, DCPPowerModel, sys; use_parameters = true)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 624, 0, 624, 576, 288, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -31,18 +27,13 @@
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-
 @testset "Hybrid DCPLossLess FinancialCoupling" begin
     model = DeviceModel(HybridSystem, FinancialCoupling)
     sys = PSB.build_system(PSITestSystems, "c_sys5_hybrid"; skip_serialization = true)
 
     # Parameters Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        sys;
-        use_parameters = true,
-    )
+    op_problem =
+        OperationsProblem(MockOperationProblem, DCPPowerModel, sys; use_parameters = true)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 624, 0, 432, 432, 288, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -70,12 +61,8 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_hybrid"; skip_serialization = true)
 
     # Parameters Testing
-    op_problem = OperationsProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        sys;
-        use_parameters = true,
-    )
+    op_problem =
+        OperationsProblem(MockOperationProblem, DCPPowerModel, sys; use_parameters = true)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 624, 0, 624, 576, 288, false)
     psi_checkobjfun_test(op_problem, GAEVF)

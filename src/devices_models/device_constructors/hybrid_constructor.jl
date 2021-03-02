@@ -3,10 +3,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, PhysicalCoupling},
     ::Type{S},
-) where {
-    T <: PSY.HybridSystem,
-    S <: PM.AbstractActivePowerModel,
-}
+) where {T <: PSY.HybridSystem, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
     if !validate_available_devices(T, devices)
@@ -505,13 +502,16 @@ function construct_device!(
     return
 end
 
-
 function construct_device!(
     psi_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S},
-) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractActivePowerModel}
+) where {
+    T <: PSY.HybridSystem,
+    D <: AbstractHybridFormulation,
+    S <: PM.AbstractActivePowerModel,
+}
     devices = get_available_components(T, sys)
 
     if !validate_available_devices(T, devices)
@@ -594,7 +594,6 @@ function construct_device!(
         get_feedforward(model),
     )
 
-
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     add_constraints!(
         psi_container,
@@ -620,7 +619,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S},
-) where {T <: PSY.HybridSystem,  D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
+) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
     if !validate_available_devices(T, devices)
