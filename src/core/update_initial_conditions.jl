@@ -212,6 +212,21 @@ function status_init(
     return
 end
 
+function status_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.ThermalMultiStart}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        ICKey(DeviceStatus, T),
+        _make_initial_condition_status,
+        _get_status_value,
+    )
+
+    return
+end
+
 function output_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -256,6 +271,25 @@ function duration_init(
 
     return
 end
+
+function duration_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.ThermalMultiStart}
+    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+        _make_initial_conditions!(
+            optimization_container,
+            devices,
+            key,
+            _make_initial_condition_status,
+            _get_duration_value,
+            TimeStatusChange,
+        )
+    end
+
+    return
+end
+
 
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim
@@ -395,6 +429,15 @@ function _make_initial_condition_active_power(
     return InitialCondition(device, _get_ref_active_power(T, container), value, cache)
 end
 
+function _make_initial_condition_status(
+    container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T <: PSY.Component}
+    return InitialCondition(device, _get_ref_on_status(T, container), value, cache)
+end
+
 function _make_initial_condition_energy(
     container,
     device::T,
@@ -516,6 +559,17 @@ function _get_ref_active_power(
         return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
     else
         return UpdateRef{T}(ACTIVE_POWER, "active_power")
+    end
+end
+
+function _get_ref_on_status(
+    ::Type{T},
+    container::InitialConditions,
+) where {T <: PSY.Component}
+    if get_use_parameters(container)
+        return UpdateRef{JuMP.VariableRef}(T, ON)
+    else
+        return UpdateRef{T}(ON, "On")
     end
 end
 
