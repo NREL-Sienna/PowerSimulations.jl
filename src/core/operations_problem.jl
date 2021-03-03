@@ -375,6 +375,7 @@ function build!(
     set_output_dir!(problem, output_dir)
     set_console_level!(problem, console_level)
     set_file_level!(problem, file_level)
+    TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
     logger = configure_logging(problem.internal, "w")
     try
