@@ -60,10 +60,18 @@ end
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     UC = OperationsProblem(template, c_sys5)
-    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    output_dir = mktempdir(cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
-    # Test Disable because needs operations results
-    # @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
+    res = OperationsProblemResults(UC)
+    @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
+    vars = res.variable_values
+    @test :P__ThermalStandard in keys(vars)
+    export_results(res)
+    results_dir = joinpath(output_dir, "results")
+    @test isfile(joinpath(results_dir, "optimizer_stats.csv"))
+    variables_dir = joinpath(results_dir, "variables")
+    @test isfile(joinpath(variables_dir, "P__ThermalStandard.csv"))
 end
 
 @testset "Test optimization debugging functions" begin
@@ -164,15 +172,18 @@ end
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         @test solve!(op_problem) == RunStatus.SUCCESSFUL
+        res = OperationsProblemResults(op_problem)
 
         # These tests require results to be working
-        #if net == StandardPTDFModel
-        #    push!(LMPs, abs.(psi_ptdf_lmps(ps_model, ptdf)))
-        #else
-        #    res = solve!(ps_model)
-        #    duals = abs.(res.dual_values[:nodal_balance_active__Bus])
-        #    push!(LMPs, duals[!, sort(propertynames(duals))])
-        #end
+        if network == StandardPTDFModel
+            # TODO PENDING TESTS: what is ps_model?
+            #push!(LMPs, abs.(psi_ptdf_lmps(ps_model, ptdf)))
+        else
+            # TODO PENDING TESTS: this now includes a DateTime column. should this run on all other
+            # columns?
+            #duals = abs.(res.dual_values[:nodal_balance_active__Bus])
+            #push!(LMPs, duals[!, sort(propertynames(duals))])
+        end
     end
     #@test isapprox(convert(Array, LMPs[1]), convert(Array, LMPs[2]), atol = 100.0)
 end

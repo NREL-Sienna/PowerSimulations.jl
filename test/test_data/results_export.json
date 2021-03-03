@@ -1,5 +1,5 @@
 {
-  "stages": [
+  "problems": [
     {
       "name": "ED",
       "variables": [
@@ -8,7 +8,8 @@
       ],
       "parameters": [
         "all"
-      ]
+      ],
+      "optimizer_stats": true
     },
     {
       "name": "UC",
@@ -20,7 +21,8 @@
       ],
       "duals": [
         "all"
-      ]
+      ],
+      "optimizer_stats": true
     }
   ],
   "start_time": "2020-01-01T04:00:00",

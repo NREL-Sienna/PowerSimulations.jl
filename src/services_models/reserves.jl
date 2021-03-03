@@ -201,7 +201,7 @@ function cost_function!(
 end
 
 function modify_device_model!(
-    devices_template::Dict{String, DeviceModel},
+    devices_template::Dict{Symbol, DeviceModel},
     service_model::ServiceModel{<:PSY.Reserve, <:AbstractReservesFormulation},
     contributing_devices::Vector{<:PSY.Device},
 )
@@ -209,7 +209,7 @@ function modify_device_model!(
     for dt in device_types
         for (device_model_name, device_model) in devices_template
             # add message here when it exists
-            device_model.device_type != dt && continue
+            get_component_type(device_model) != dt && continue
             service_model in device_model.services && continue
             push!(device_model.services, service_model)
         end

@@ -101,36 +101,32 @@ Creates an `OperationsProblemTemplate` with default DeviceModels for an AGC Rese
 template = agc_reserve_deployment()
 ```
 """
-function template_agc_reserve_deployment()
+function template_agc_reserve_deployment(; kwargs...)
     if !isempty(kwargs)
         throw(ArgumentError("AGC Template doesn't currently support customization"))
     end
     template = OperationsProblemTemplate(AreaBalancePowerModel)
-    set_device_model!(template, "Generators", DeviceModel(PSY.ThermalStandard, FixedOutput))
-    set_device_model!(template, "Ren", DeviceModel(PSY.RenewableDispatch, FixedOutput))
-    set_device_model!(template, "Loads", DeviceModel(PSY.PowerLoad, StaticPowerLoad))
-    set_device_model!(template, "Hydro", DeviceModel(PSY.HydroEnergyReservoir, FixedOutput))
-    set_device_model!(template, "HydroROR", DeviceModel(PSY.HydroDispatch, FixedOutput))
-    set_device_model!(template, "RenFx", DeviceModel(PSY.RenewableFix, FixedOutput))
+    set_device_model!(template, PSY.ThermalStandard, FixedOutput)
+    set_device_model!(template, PSY.RenewableDispatch, FixedOutput)
+    set_device_model!(template, PSY.PowerLoad, StaticPowerLoad)
+    set_device_model!(template, PSY.HydroEnergyReservoir, FixedOutput)
+    set_device_model!(template, PSY.HydroDispatch, FixedOutput)
+    set_device_model!(template, PSY.RenewableFix, FixedOutput)
     set_device_model!(
         template,
-        "Regulation_thermal",
-        DeviceModel(PSY.RegulationDevi)ce{PSY.ThermalStandard},
-        DeviceLimitedRegulation,
+        DeviceModel(PSY.RegulationDevice{PSY.ThermalStandard}, DeviceLimitedRegulation),
     )
     set_device_model!(
         template,
-        "Regulation_hydro_dispatch",
         DeviceModel(PSY.RegulationDevice{PSY.HydroDispatch}, ReserveLimitedRegulation),
     )
     set_device_model!(
         template,
-        "Regulation_hydro_reservoir",
         DeviceModel(
             PSY.RegulationDevice{PSY.HydroEnergyReservoir},
             ReserveLimitedRegulation,
         ),
     )
-    set_device_model!(template, "AGC", ServiceModel(PSY.AGC, PIDSmoothACE))
+    set_service_model!(template, ServiceModel(PSY.AGC, PIDSmoothACE))
     return template
 end

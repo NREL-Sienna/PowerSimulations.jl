@@ -683,7 +683,7 @@ function initial_condition_update!(
             get_resolution(problem),
         )
         previous_value = get_condition(ic)
-        PJ.fix(ic.value, quantity)
+        PJ.set_value(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
@@ -733,7 +733,7 @@ function initial_condition_update!(
         quantity =
             calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
         previous_value = get_condition(ic)
-        PJ.fix(ic.value, quantity)
+        PJ.set_value(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
@@ -1035,7 +1035,6 @@ function _execute!(
     num_executions = steps * length(execution_order)
     store_params =
         _initialize_problem_storage!(sim, store, cache_size_mib, min_cache_flush_size_mib)
-    initialize_optimizer_stats_storage!(store, num_executions)
     status = RunStatus.RUNNING
     if exports !== nothing
         if !(exports isa SimulationResultsExport)

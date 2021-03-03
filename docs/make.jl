@@ -2,9 +2,9 @@ using Documenter
 using PowerSystems
 using PowerSimulations
 using Literate
-using PowerGraphics
+#using PowerGraphics
 using DataStructures
-const PG = PowerGraphics
+#const PG = PowerGraphics
 
 folders = Dict(
 #  "Operations" => readdir("docs/src/Operations"),
