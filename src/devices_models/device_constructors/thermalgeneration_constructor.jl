@@ -636,13 +636,7 @@ function construct_device!(
     )
     ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
     time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    initial_range_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     feedforward!(optimization_container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(optimization_container, devices, model, S, get_feedforward(model))
@@ -688,13 +682,7 @@ function construct_device!(
     )
     ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
     time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    initial_range_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     feedforward!(optimization_container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(optimization_container, devices, model, S, get_feedforward(model))
