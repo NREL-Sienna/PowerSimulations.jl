@@ -37,7 +37,7 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
             PM.constraint_voltage_angle_difference(pm, i, nw = n)
         end
 
-        for i in PM.ids(pm, :dcline)
+        for i in PM.ids(pm, :dcline, nw = n)
             PM.constraint_dcline_power_losses(pm, i, nw = n)
         end
     end
@@ -68,7 +68,7 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
 
         #PM.variable_gen_power(pm) #connect P__* with these
 
-        for i in PM.ids(pm, :bus)
+        for i in PM.ids(pm, :bus, nw = n)
             if !haskey(PM.var(pm, n), :inj_p)
                 PM.var(pm, n)[:inj_p] = Dict{Int, Any}()
             end
@@ -102,7 +102,12 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
 end
 
 # can be removed once PJ expression issue is resolved.
-function PM.expression_bus_voltage(pm::PM.AbstractPowerModel, n::Int, i, am::Union{PM.AdmittanceMatrix,PM.AdmittanceMatrixInverse})
+function PM.expression_bus_voltage(
+    pm::PM.AbstractPowerModel,
+    n::Int,
+    i,
+    am::Union{PM.AdmittanceMatrix, PM.AdmittanceMatrixInverse},
+)
     inj_factors = PM.injection_factors_va(am, i)
 
     inj_p = PM.var(pm, n, :inj_p)
@@ -111,7 +116,7 @@ function PM.expression_bus_voltage(pm::PM.AbstractPowerModel, n::Int, i, am::Uni
         # this can be removed once, JuMP.jl/issues/2120 is resolved
         PM.var(pm, n, :va)[i] = 0.0
     else
-        expr = sum(f*inj_p[j] for (j,f) in inj_factors)
+        expr = sum(f * inj_p[j] for (j, f) in inj_factors)
         PM.var(pm, n, :va)[i] = JuMP.@expression(pm.model, expr)
     end
 end
@@ -146,7 +151,7 @@ function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
             PM.constraint_voltage_angle_difference(pm, i, nw = n)
         end
 
-        for i in PM.ids(pm, :dcline)
+        for i in PM.ids(pm, :dcline, nw = n)
             PM.constraint_dcline_power_losses(pm, i, nw = n)
         end
     end
@@ -500,7 +505,7 @@ function add_pm_var_refs!(
     DCbranch_dict = optimization_container.pm.ext[:PMmap].arcs_dc
     DCbranch_types = typeof.(values(DCbranch_dict))
 
-    pm_var_types = keys(optimization_container.pm.var[:nw][1])
+    pm_var_types = keys(PM.var(optimization_container.pm, 1))
 
     pm_var_map = PMvarmap(system_formulation)
 
@@ -585,7 +590,7 @@ function add_pm_con_refs!(
     bus_dict = optimization_container.pm.ext[:PMmap].bus
 
     pm_con_names = [
-        k for k in keys(optimization_container.pm.con[:nw][1]) if
+        k for k in keys(PM.con(optimization_container.pm, 1)) if
         !isempty(PM.con(optimization_container.pm, 1, k))
     ]
 
@@ -616,7 +621,7 @@ function add_pm_expr_refs!(
     ACbranch_dict = optimization_container.pm.ext[:PMmap].arcs
     ACbranch_types = typeof.(values(ACbranch_dict))
 
-    pm_var_types = keys(PM.var(optimization_container.pm))
+    pm_var_types = keys(PM.var(optimization_container.pm, 1))
     pm_expr_map = PMexprmap(system_formulation)
 
     add_pm_expr_refs!(
@@ -642,7 +647,7 @@ function add_pm_expr_refs!(
     for d_type in Set(device_types)
         for (pm_expr_var, ps_v) in pm_expr_map[d_class].pm_expr
             if pm_expr_var in pm_var_types
-                pm_devices = keys(PM.var(optimization_container.pm, pm_expr_var))
+                pm_devices = keys(PM.var(optimization_container.pm, pm_expr_var, nw = 1))
                 mapped_pm_devices = Vector()
                 mapped_ps_devices = Vector{d_type}()
                 for d in pm_map

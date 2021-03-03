@@ -68,7 +68,7 @@ function construct_device!(
     end
 
     add_variables!(optimization_container, S, devices)
-    branch_flow_constraints!(optimization_container, devices, model, S)
+    branch_flow_values!(optimization_container, devices, model, S)
     branch_rate_constraints!(
         optimization_container,
         devices,

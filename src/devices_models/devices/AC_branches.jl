@@ -32,7 +32,7 @@ flow_variables!(
 
 add_variables!(
     optimization_container::OptimizationContainer,
-    ::Type{AbstractPTDFModel},
+    ::Type{<:AbstractPTDFModel},
     devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
 ) = add_variable!(optimization_container, FlowActivePowerVariable(), devices)
 
@@ -145,7 +145,6 @@ function branch_flow_values!(
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{StandardPTDFModel},
-    ::Nothing,
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF(optimization_container)
     buses = ptdf.axes[2]
@@ -153,19 +152,18 @@ function branch_flow_values!(
     time_steps = model_time_steps(optimization_container)
     constraint_val = JuMPConstraintArray(undef, time_steps)
     branch_flow =
-        add_cons_container!(optimization_container, :branch_flow, branches, time_steps)
+        add_cons_container!(optimization_container, :network_flow, branches, time_steps)
     nodal_balance_expressions = optimization_container.expressions[:nodal_balance_active]
     flow_variables = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
     jump_model = get_jump_model(optimization_container)
     for t in time_steps
         for br in devices
             name = PSY.get_name(br)
-            branch_flow[br_name, t] = JuMP.@constraint(
+            branch_flow[name, t] = JuMP.@constraint(
                 jump_model,
                 sum(
-                    ptdf[br_name, i] * nodal_balance_expressions[i, t] for
-                    i in ptdf.axes[2]
-                ) == flow_variables[br_name, t]
+                    ptdf[name, i] * nodal_balance_expressions[i, t] for i in ptdf.axes[2]
+                ) == flow_variables[name, t]
             )
         end
     end
