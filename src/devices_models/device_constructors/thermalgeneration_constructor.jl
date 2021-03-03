@@ -515,7 +515,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    ::Type{S};
+    ::Type{S};,
 ) where {S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
@@ -592,7 +592,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S};
+    ::Type{S};,
 ) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -654,7 +654,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S};
+    ::Type{S};,
 ) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -706,7 +706,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S};
+    ::Type{S};,
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -761,7 +761,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S};
+    ::Type{S};,
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -806,7 +806,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
+    ::Type{S};,
 ) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -852,7 +852,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
+    ::Type{S};,
 ) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
