@@ -52,6 +52,15 @@ function calculate_ic_quantity(
     return current_status
 end
 
+function _get_active_power_limits(dev::T) where T <: PSY.ThermalGen
+    min_power = PSY.get_active_power_limits(dev).min
+    return min_power
+end
+
+function _get_active_power_limits(dev::PSY.ThermalMultiStart)
+    return 0.0
+end
+
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
     ic::InitialCondition,
@@ -62,7 +71,7 @@ function calculate_ic_quantity(
     cache = get_cache(simulation_cache, TimeStatusChange, T)
     # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
     dev = get_device(ic)
-    min_power = PSY.get_active_power_limits(dev).min
+    min_power = _get_active_power_limits(dev)
     if cache === nothing
         # Transitions can't be calculated without cache
         status_change_to_on =
@@ -120,6 +129,8 @@ function calculate_ic_quantity(
         @assert false
     end
 end
+
+
 
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
