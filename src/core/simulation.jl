@@ -1331,6 +1331,7 @@ function deserialize_model(
     directory::AbstractString,
     problem_info::Dict,
 )
+    error("deserialization of a Simulation is not currently supported")
     orig = pwd()
     cd(directory)
 
