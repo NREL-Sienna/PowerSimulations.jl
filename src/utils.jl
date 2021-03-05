@@ -375,6 +375,9 @@ end
 
 to_namedtuple(val) = (; (x => getfield(val, x) for x in fieldnames(typeof(val)))...)
 
+make_system_filename(sys::PSY.System) = "system-$(IS.get_uuid(sys)).json"
+make_system_filename(sys_uuid::Base.UUID) = "system-$(sys_uuid).json"
+
 function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
     return Symbol(join((name1, name2, IS.strip_module_name(T)), PSI_NAME_DELIMITER))
 end
