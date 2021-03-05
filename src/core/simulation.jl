@@ -1273,7 +1273,7 @@ end
 
 struct SimulationSerializationWrapper
     steps::Int
-    problems::Dict{Symbol, ProblemSerializationWrapper}
+    problems::Vector{Symbol}
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
@@ -1299,7 +1299,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     else
         directory = path
     end
-    problems = Dict{Symbol, ProblemSerializationWrapper}()
+    problems = get_problem_names(get_problems(sim))
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
@@ -1311,31 +1311,6 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     end
     rm(directory, recursive = true, force = true)
     mkdir(directory)
-    cd(directory)
-
-    # The problems are already serialized in the problems folder we should reload them from there
-    try
-        for (key, problem) in get_problems(sim)
-            if problem.internal === nothing
-                throw(
-                    ArgumentError("problem $(problem.internal.number) has not been built"),
-                )
-            end
-            sys_filename = "system-$(IS.get_uuid(problem.sys)).json"
-            # Skip serialization if multiple problems have the same system.
-            if !ispath(sys_filename)
-                PSY.to_json(problem.sys, sys_filename)
-            end
-            problems[key] = ProblemSerializationWrapper(
-                problem.template,
-                sys_filename,
-                problem.internal.optimization_container.settings_copy,
-                typeof(problem),
-            )
-        end
-    finally
-        cd(orig)
-    end
 
     filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
     obj = SimulationSerializationWrapper(
@@ -1373,16 +1348,9 @@ function deserialize_model(
         end
 
         problems = Dict{Symbol, OperationsProblem{<:AbstractOperationsProblem}}()
-        for (key, wrapper) in obj.problems
-            sys_filename = wrapper.sys
-            if !ispath(sys_filename)
-                throw(
-                    ArgumentError(
-                        "problem PowerSystems serialized file $sys_filename does not exist",
-                    ),
-                )
-            end
-            sys = PSY.System(sys_filename)
+        for name in obj.problems
+            problem =
+                deserialize_problem(OperationsProblem, joinpath("problems", "$(name).bin"))
             if !haskey(problem_info[key], "optimizer")
                 throw(ArgumentError("problem_info must define 'optimizer'"))
             end

@@ -431,8 +431,7 @@ function serialize_problem(
     sys_to_file = get_system_to_file(get_settings(op_problem))
     if sys_to_file
         sys = get_system(op_problem)
-        sys_filename = "$(problem_name)-system-$(IS.get_uuid(sys)).json"
-        sys_filename = joinpath(get_output_dir(op_problem), sys_filename)
+        sys_filename = joinpath(get_output_dir(op_problem), make_system_filename(sys))
         # Skip serialization if the system is already in the folder
         !ispath(sys_filename) && PSY.to_json(sys, sys_filename)
     else

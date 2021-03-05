@@ -49,7 +49,8 @@ function ProblemResults(
 
     if load_system
         sys = PSY.System(
-            joinpath(path, "simulation_files", "system-$(problem_params.system_uuid).json"),
+            joinpath(path, "problems", make_system_filename(problem_params.system_uuid)),
+            time_series_read_only = true,
         )
     else
         sys = nothing
