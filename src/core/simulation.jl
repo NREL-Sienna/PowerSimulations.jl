@@ -666,17 +666,19 @@ function initial_condition_update!(
     for ic in initial_conditions
         name = device_name(ic)
         interval_chronology =
-            get_problem_interval_chronology(sim.sequence, get_problem_name(sim, problem))
-        var_value = get_problem_variable(
+            get_problem_interval_chronology(sim.sequence, get_name(problem))
+        var_value = get_problem_variables(
             interval_chronology,
             (problem => problem),
             name,
             ic.update_ref,
         )
+        device_model = _get_device_model(problem, ini_cond_key)
         # We pass the simulation cache instead of the whole simulation to avoid definition dependencies.
         # All the inputs to calculate_ic_quantity are defined before the simulation object
         quantity = calculate_ic_quantity(
             ini_cond_key,
+            device_model,
             ic,
             var_value,
             simulation_cache,
@@ -693,6 +695,12 @@ function initial_condition_update!(
             get_simulation_number(problem),
         )
     end
+end
+
+function _get_device_model(problem::OperationsProblem, ickey::ICKey)
+    models = get_template(problem).devices
+    device_model = models[Symbol(ickey.device_type)]
+    return device_model
 end
 
 """ Updates the initial conditions of the problem"""
@@ -724,14 +732,21 @@ function initial_condition_update!(
         elseif get_simulation_number(source_problem) < get_simulation_number(problem)
             interval_chronology = RecedingHorizon()
         end
-        var_value = get_problem_variable(
+        var_value = get_problem_variables(
             interval_chronology,
             (source_problem => problem),
             name,
             ic.update_ref,
         )
-        quantity =
-            calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
+        device_model = _get_device_model(problem, ini_cond_key)
+        quantity = calculate_ic_quantity(
+            ini_cond_key,
+            device_model,
+            ic,
+            var_value,
+            simulation_cache,
+            interval,
+        )
         previous_value = get_condition(ic)
         PJ.set_value(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
