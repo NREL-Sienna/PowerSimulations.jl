@@ -87,7 +87,7 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
         #    constraint_power_balance_ni_expr(pm, i, nw = n)
         #end
         for (i, branch) in PM.ref(pm, :branch, nw = n)
-            if haskey(branch, "rate_a") # TODO: make sure that we have this
+            if haskey(branch, "rate_a")
                 PM.expression_branch_power_ohms_yt_from_ptdf(pm, i, nw = n)
                 PM.expression_branch_power_ohms_yt_to_ptdf(pm, i, nw = n)
             end
@@ -99,26 +99,6 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
     end
 
     return
-end
-
-# can be removed once PJ expression issue is resolved.
-function PM.expression_bus_voltage(
-    pm::PM.AbstractPowerModel,
-    n::Int,
-    i,
-    am::Union{PM.AdmittanceMatrix, PM.AdmittanceMatrixInverse},
-)
-    inj_factors = PM.injection_factors_va(am, i)
-
-    inj_p = PM.var(pm, n, :inj_p)
-
-    if length(inj_factors) == 0
-        # this can be removed once, JuMP.jl/issues/2120 is resolved
-        PM.var(pm, n, :va)[i] = 0.0
-    else
-        expr = sum(f * inj_p[j] for (j, f) in inj_factors)
-        PM.var(pm, n, :va)[i] = JuMP.@expression(pm.model, expr)
-    end
 end
 
 function instantiate_bfp_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)

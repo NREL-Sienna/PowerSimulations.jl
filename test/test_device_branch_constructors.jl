@@ -1,7 +1,5 @@
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    line = PSY.get_component(Line, system, "1")
-    PSY.convert_component!(MonitoredLine, line, system)
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
@@ -29,8 +27,6 @@ end
 
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with Bounds" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    line = PSY.get_component(Line, system, "1")
-    PSY.convert_component!(MonitoredLine, line, system)
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
@@ -56,8 +52,6 @@ end
 
 @testset "AC Power Flow Monitored Line Flow Constraints" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    line = PSY.get_component(Line, system, "1")
-    PSY.convert_component!(MonitoredLine, line, system)
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     template = get_thermal_dispatch_template_network(ACPPowerModel)
     op_problem_m = OperationsProblem(template, system; optimizer = ipopt_optimizer)

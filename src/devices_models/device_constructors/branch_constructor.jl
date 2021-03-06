@@ -79,6 +79,39 @@ function construct_device!(
     return
 end
 
+function construct_device!(
+    optimization_container::OptimizationContainer,
+    sys::PSY.System,
+    model::DeviceModel{B, StaticBranchBounds},
+    ::Type{S},
+) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
+    devices = get_available_components(B, sys)
+    if !validate_available_devices(B, devices)
+        return
+    end
+
+    add_variables!(optimization_container, S, devices)
+    branch_flow_values!(optimization_container, devices, model, S)
+    branch_rate_bounds!(optimization_container, devices, model, S)
+    return
+end
+
+function construct_device!(
+    optimization_container::OptimizationContainer,
+    sys::PSY.System,
+    model::DeviceModel{B, StaticBranchUnbounded},
+    ::Type{S},
+) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
+    devices = get_available_components(B, sys)
+    if !validate_available_devices(B, devices)
+        return
+    end
+
+    add_variables!(optimization_container, S, devices)
+    branch_flow_values!(optimization_container, devices, model, S)
+    return
+end
+
 # For AC Power only. Implements Bounds on the active power and rating constraints on the aparent power
 function construct_device!(
     optimization_container::OptimizationContainer,
@@ -115,7 +148,6 @@ function construct_device!(
     return
 end
 
-# DC Branches
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
