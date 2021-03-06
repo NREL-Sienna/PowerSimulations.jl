@@ -21,16 +21,6 @@ Base.iterate(problems::SimulationProblems, args...) = iterate(problems.op_proble
 
 get_problem_names(problems::SimulationProblems) = problems.names
 
-function get_problem_name(problems::SimulationProblems, problem)
-    for (name, prob) in problems
-        if prob == problem
-            return name 
-        end
-    end
-end
-
-get_problem_name(sim, problem) = get_problem_name(sim.problems, problem)
-
 function get_problem_number(problems::SimulationProblems, name)
     return findfirst(x -> x == Symbol(name), get_problem_names(problems))
 end
