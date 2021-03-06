@@ -227,7 +227,7 @@ IC of the UC model
 """
 function status_init(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T}
+    devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
         optimization_container,
@@ -285,7 +285,6 @@ function duration_init(
 
     return
 end
-
 
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim
