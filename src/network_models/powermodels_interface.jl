@@ -87,7 +87,7 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
         #    constraint_power_balance_ni_expr(pm, i, nw = n)
         #end
         for (i, branch) in PM.ref(pm, :branch, nw = n)
-            if haskey(branch, "rate_a") # TODO: make sure that we have this
+            if haskey(branch, "rate_a")
                 PM.expression_branch_power_ohms_yt_from_ptdf(pm, i, nw = n)
                 PM.expression_branch_power_ohms_yt_to_ptdf(pm, i, nw = n)
             end

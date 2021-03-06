@@ -666,7 +666,7 @@ function initial_condition_update!(
     for ic in initial_conditions
         name = device_name(ic)
         interval_chronology =
-            get_problem_interval_chronology(sim.sequence, get_problem_name(sim, problem))
+            get_problem_interval_chronology(sim.sequence, get_name(problem))
         var_value = get_problem_variable(
             interval_chronology,
             (problem => problem),
