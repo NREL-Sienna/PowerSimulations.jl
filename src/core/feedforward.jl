@@ -742,6 +742,26 @@ function get_problem_variable(
     end
 end
 
+function get_problem_variables(
+    chron,
+    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    device_name::String,
+    var_ref::UpdateRef{D},
+) where {T, U <: AbstractOperationsProblem, D <: Union{JuMP.VariableRef, PJ.ParameterRef}}
+    variable_values = []
+    if typeof(var_ref.access_ref) == NTuple{2,Symbol}
+        for ref in var_ref.access_ref
+            update_ref = UpdateRef{D}(ref, var_ref.data_label)
+            variable_value = get_problem_variable(chron, problems, device_name, update_ref)
+            push!(variable_values, variable_value)
+        end
+    else
+        variable_value = get_problem_variable(chron, problems, device_name, var_ref)
+        push!(variable_values, variable_value)
+    end
+    return Tuple(variable_values)
+end
+
 function feedforward_update!(
     destination_problem::OperationsProblem,
     source_problem::OperationsProblem,
