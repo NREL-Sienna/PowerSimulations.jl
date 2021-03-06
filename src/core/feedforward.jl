@@ -749,7 +749,7 @@ function get_problem_variables(
     var_ref::UpdateRef{D},
 ) where {T, U <: AbstractOperationsProblem, D <: Union{JuMP.VariableRef, PJ.ParameterRef}}
     variable_values = []
-    if typeof(var_ref.access_ref) == NTuple{2,Symbol}
+    if typeof(var_ref.access_ref) == NTuple{2, Symbol}
         for ref in var_ref.access_ref
             update_ref = UpdateRef{D}(ref, var_ref.data_label)
             variable_value = get_problem_variable(chron, problems, device_name, update_ref)

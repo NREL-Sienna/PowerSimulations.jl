@@ -55,7 +55,10 @@ function UpdateRef{T}(
     data_label::AbstractString,
 ) where {T <: PSY.Component}
     # Combine these three fields together in order to guarantee uniqueness.
-    return UpdateRef{T}((encode_symbol(T, name[1], data_label), encode_symbol(T, name[2], data_label)), data_label)
+    return UpdateRef{T}(
+        (encode_symbol(T, name[1], data_label), encode_symbol(T, name[2], data_label)),
+        data_label,
+    )
 end
 
 function get_data_label(ref::UpdateRef{T}) where {T <: PSY.Component}

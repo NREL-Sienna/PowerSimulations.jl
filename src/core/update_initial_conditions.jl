@@ -97,10 +97,8 @@ function calculate_ic_quantity(
             get_condition(ic) <= min_power && p_value >= ABSOLUTE_TOLERANCE
         status_change_to_off =
             get_condition(ic) >= min_power && p_value <= ABSOLUTE_TOLERANCE
-        status_remains_off =
-            get_condition(ic) <= min_power && p_value <= ABSOLUTE_TOLERANCE
-        status_remains_on =
-            get_condition(ic) >= min_power && p_value >= ABSOLUTE_TOLERANCE
+        status_remains_off = get_condition(ic) <= min_power && p_value <= ABSOLUTE_TOLERANCE
+        status_remains_on = get_condition(ic) >= min_power && p_value >= ABSOLUTE_TOLERANCE
     else
         # If the min is 0.0 this calculation doesn't matter
         name = device_name(ic)
@@ -277,7 +275,10 @@ function output_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{D},
-) where {T <: PSY.ThermalGen, D <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch}}
+) where {
+    T <: PSY.ThermalGen,
+    D <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
+}
     _make_initial_conditions!(
         optimization_container,
         devices,
