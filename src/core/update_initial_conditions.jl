@@ -3,18 +3,22 @@
 # to be scaled.
 function calculate_ic_quantity(
     ::ICKey{TimeDurationON, T},
+    ::DeviceModel{T, D},
     ic::InitialCondition,
-    var_value::Float64,
+    var_value::Tuple{Float64, Float64},
     simulation_cache::Dict{<:CacheKey, AbstractCache},
     elapsed_period::Dates.Period,
-) where {T <: PSY.Component}
+) where {T <: PSY.Component, D <: AbstractDeviceFormulation}
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
+    dev = get_device(ic)
+    min_power = PSY.get_active_power_limits(dev).min
+    p_value = _get_power_value(var_value, min_power, D)
     time_cache = cache_value(cache, name)
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    var_status = isapprox(p_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     @debug last_status, var_status, abs(last_status - var_status)
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
@@ -23,18 +27,23 @@ end
 
 function calculate_ic_quantity(
     ::ICKey{TimeDurationOFF, T},
+    ::DeviceModel{T, D},
     ic::InitialCondition,
-    var_value::Float64,
+    var_value::Tuple{Float64, Float64},
     simulation_cache::Dict{<:CacheKey, AbstractCache},
     elapsed_period::Dates.Period,
-) where {T <: PSY.Component}
+) where {T <: PSY.Component, D <: AbstractDeviceFormulation}
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
+    dev = get_device(ic)
+    min_power = PSY.get_active_power_limits(dev).min
+    p_value = _get_power_value(var_value, min_power, D)
+
     time_cache = cache_value(cache, name)
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    var_status = isapprox(p_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     @debug last_status, var_status, abs(last_status - var_status)
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
@@ -43,45 +52,55 @@ end
 
 function calculate_ic_quantity(
     ::ICKey{DeviceStatus, T},
+    ::DeviceModel{T, D},
     ic::InitialCondition,
-    var_value::Float64,
+    var_value::Tuple{Float64, Float64},
     simulation_cache::Dict{<:CacheKey, AbstractCache},
     elapsed_period::Dates.Period,
-) where {T <: PSY.Component}
-    current_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+) where {T <: PSY.Component, D <: AbstractDeviceFormulation}
+    current_status = isapprox(var_value[1], 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     return current_status
 end
 
-function _get_active_power_limits(dev::T) where T <: PSY.ThermalGen
+function calculate_ic_quantity(
+    ::ICKey{DeviceStatus, T},
+    ::DeviceModel{T, D},
+    ic::InitialCondition,
+    var_value::Tuple{Float64, Float64},
+    simulation_cache::Dict{<:CacheKey, AbstractCache},
+    elapsed_period::Dates.Period,
+) where {T <: PSY.ThermalGen, D <: AbstractDeviceFormulation}
+    dev = get_device(ic)
     min_power = PSY.get_active_power_limits(dev).min
-    return min_power
-end
+    p_value = _get_power_value(var_value, min_power, D)
 
-function _get_active_power_limits(dev::PSY.ThermalMultiStart)
-    return 0.0
+    current_status = isapprox(p_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    return current_status
 end
 
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
+    ::DeviceModel{T, D},
     ic::InitialCondition,
-    var_value::Float64,
+    var_value::Tuple{Float64, Float64},
     simulation_cache::Dict{<:CacheKey, AbstractCache},
     elapsed_period::Dates.Period,
-) where {T <: PSY.ThermalGen}
+) where {T <: PSY.ThermalGen, D <: AbstractDeviceFormulation}
     cache = get_cache(simulation_cache, TimeStatusChange, T)
     # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
     dev = get_device(ic)
-    min_power = _get_active_power_limits(dev)
+    min_power = PSY.get_active_power_limits(dev).min
+    p_value = _get_power_value(var_value, min_power, D)
     if cache === nothing
         # Transitions can't be calculated without cache
         status_change_to_on =
-            get_condition(ic) <= min_power && var_value >= ABSOLUTE_TOLERANCE
+            get_condition(ic) <= min_power && p_value >= ABSOLUTE_TOLERANCE
         status_change_to_off =
-            get_condition(ic) >= min_power && var_value <= ABSOLUTE_TOLERANCE
+            get_condition(ic) >= min_power && p_value <= ABSOLUTE_TOLERANCE
         status_remains_off =
-            get_condition(ic) <= min_power && var_value <= ABSOLUTE_TOLERANCE
+            get_condition(ic) <= min_power && p_value <= ABSOLUTE_TOLERANCE
         status_remains_on =
-            get_condition(ic) >= min_power && var_value >= ABSOLUTE_TOLERANCE
+            get_condition(ic) >= min_power && p_value >= ABSOLUTE_TOLERANCE
     else
         # If the min is 0.0 this calculation doesn't matter
         name = device_name(ic)
@@ -122,38 +141,38 @@ function calculate_ic_quantity(
     elseif status_change_to_off
         return 0.0
     elseif status_change_to_on
-        return min_power
+        return _get_min_power_value(min_power, D)
     elseif status_remains_on
-        return var_value
+        return _transform_power_value(p_value, min_power, D)
     else
         @assert false
     end
 end
 
-
-
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
+    ::DeviceModel{T, D},
     ic::InitialCondition,
-    var_value::Float64,
+    var_value::Union{Tuple{Float64}, Tuple{Float64, Float64}},
     simulation_cache::Dict{<:CacheKey, AbstractCache},
     elapsed_period::Dates.Period,
-) where {T <: PSY.Device}
-    return var_value
+) where {T <: PSY.Device, D <: AbstractDeviceFormulation}
+    return var_value[1]
 end
 
 function calculate_ic_quantity(
     ::ICKey{EnergyLevel, T},
+    ::DeviceModel{T, D},
     ic::InitialCondition,
-    var_value::Float64,
+    var_value::Tuple{Float64},
     simulation_cache::Dict{<:CacheKey, AbstractCache},
     elapsed_period::Dates.Period,
-) where {T <: PSY.Device}
+) where {T <: PSY.Device, D <: AbstractDeviceFormulation}
     cache = get_cache(simulation_cache, ic.cache_type, T)
     name = device_name(ic)
     energy_cache = cache_value(cache, name)
-    if energy_cache != var_value
-        return var_value
+    if energy_cache != var_value[1]
+        return var_value[1]
     end
     return energy_cache
 end
@@ -211,7 +230,8 @@ IC of the UC model
 function status_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
+    ::Type{D},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -223,25 +243,26 @@ function status_init(
     return
 end
 
-function status_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalMultiStart}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        ICKey(DeviceStatus, T),
-        _make_initial_condition_status,
-        _get_status_value,
-    )
+# function status_init(
+#     optimization_container::OptimizationContainer,
+#     devices::IS.FlattenIteratorWrapper{T},
+# ) where {T <: PSY.ThermalMultiStart}
+#     _make_initial_conditions!(
+#         optimization_container,
+#         devices,
+#         ICKey(DeviceStatus, T),
+#         _make_initial_condition_status,
+#         _get_status_value,
+#     )
 
-    return
-end
+#     return
+# end
 
 function output_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
+    ::Type{D},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -254,8 +275,9 @@ end
 
 function output_init(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-)
+    devices::IS.FlattenIteratorWrapper{T},
+    ::Type{D},
+) where {T <: PSY.ThermalGen, D <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch}}
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -268,7 +290,8 @@ end
 function duration_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
+    ::Type{D},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
             optimization_container,
@@ -283,24 +306,22 @@ function duration_init(
     return
 end
 
-function duration_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalMultiStart}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
-        _make_initial_conditions!(
-            optimization_container,
-            devices,
-            key,
-            _make_initial_condition_status,
-            _get_duration_value,
-            TimeStatusChange,
-        )
-    end
-
-    return
-end
-
+# function duration_init(
+#     optimization_container::OptimizationContainer,
+#     devices::IS.FlattenIteratorWrapper{T},
+# ) where {T <: PSY.ThermalMultiStart}
+#     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+#         _make_initial_conditions!(
+#             optimization_container,
+#             devices,
+#             key,
+#             _make_initial_condition_status,
+#             _get_duration_value,
+#             TimeStatusChange,
+#         )
+#     end
+#     return
+# end
 
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim
@@ -570,6 +591,17 @@ function _get_ref_active_power(
         return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
     else
         return UpdateRef{T}(ACTIVE_POWER, "active_power")
+    end
+end
+
+function _get_ref_active_power(
+    ::Type{T},
+    container::InitialConditions,
+) where {T <: PSY.ThermalGen}
+    if get_use_parameters(container)
+        return UpdateRef{JuMP.VariableRef}(T, (ACTIVE_POWER, ON))
+    else
+        return UpdateRef{T}((ACTIVE_POWER, ON), "active_power")
     end
 end
 

@@ -85,6 +85,56 @@ get_variable_binary(::T, ::Type{PSY.ThermalMultiStart}) where T <: Union{ColdSta
 
 #! format: on
 
+############## Initial Condition Update Helper Functions ############
+
+function _get_power_value(
+    var_value::Tuple{Float64, Float64},
+    min_power::Float64,
+    ::Type{D},
+) where {D <: AbstractThermalFormulation}
+    return var_value[1]
+end
+
+function _get_power_value(
+    var_value::Tuple{Float64, Float64},
+    min_power::Float64,
+    ::Type{D},
+) where {D <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch}}
+    val = var_value[1] + var_value[2] * min_power
+    return val
+end
+
+function _transform_power_value(
+    var_value::Float64,
+    min_power::Float64,
+    ::Type{D},
+) where {D <: AbstractThermalFormulation}
+    return var_value
+end
+
+function _transform_power_value(
+    var_value::Float64,
+    min_power::Float64,
+    ::Type{D},
+) where {D <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch}}
+    val = var_value - min_power
+    return val
+end
+
+function _get_min_power_value(
+    min_power::Float64,
+    ::Type{D},
+) where {D <: AbstractThermalFormulation}
+    return min_power
+end
+
+function _get_min_power_value(
+    min_power::Float64,
+    ::Type{D},
+) where {D <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch}}
+    return 0.0
+end
+
 ######## CONSTRAINTS ############
 
 function DeviceRangeConstraintSpec(
@@ -261,8 +311,10 @@ function DeviceRangeConstraintSpec(
             ],
             constraint_func = device_multistart_range!,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
-            lag_limits_func = x -> (startup = PSY.get_active_power_limits(x).max, 
-                shutdown = PSY.get_active_power_limits(x).max),
+            lag_limits_func = x -> (
+                startup = PSY.get_active_power_limits(x).max,
+                shutdown = PSY.get_active_power_limits(x).max,
+            ),
         ),
     )
 end
@@ -424,9 +476,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
-    status_init(optimization_container, devices)
-    output_init(optimization_container, devices)
-    duration_init(optimization_container, devices)
+    status_init(optimization_container, devices, D)
+    output_init(optimization_container, devices, D)
+    duration_init(optimization_container, devices, D)
     return
 end
 
@@ -435,8 +487,8 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{ThermalBasicUnitCommitment},
 ) where {T <: PSY.ThermalGen}
-    status_init(optimization_container, devices)
-    output_init(optimization_container, devices)
+    status_init(optimization_container, devices, ThermalBasicUnitCommitment)
+    output_init(optimization_container, devices, ThermalBasicUnitCommitment)
     return
 end
 
@@ -445,7 +497,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    output_init(optimization_container, devices)
+    output_init(optimization_container, devices, D)
     return
 end
 ########################### Ramp/Rate of Change Constraints ################################
@@ -1234,8 +1286,7 @@ end
 function _convert_variable_cost(variable_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}})
     var_cost = PSY.get_cost(variable_cost)
     no_load_cost, p_min = var_cost[1]
-    var_cost =
-        PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+    var_cost = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
     return var_cost, no_load_cost
 end
 
