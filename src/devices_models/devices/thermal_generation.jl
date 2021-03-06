@@ -476,9 +476,10 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
-    status_init(optimization_container, devices, D)
-    output_init(optimization_container, devices, D)
-    duration_init(optimization_container, devices, D)
+    # @show "Called 479"
+    status_init(optimization_container, devices)
+    output_init(optimization_container, devices)
+    duration_init(optimization_container, devices)
     return
 end
 
@@ -487,8 +488,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{ThermalBasicUnitCommitment},
 ) where {T <: PSY.ThermalGen}
-    status_init(optimization_container, devices, ThermalBasicUnitCommitment)
-    output_init(optimization_container, devices, ThermalBasicUnitCommitment)
+    # @show "Called 491"
+    status_init(optimization_container, devices)
+    output_init(optimization_container, devices)
     return
 end
 
@@ -497,7 +499,8 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    output_init(optimization_container, devices, D)
+    # @show "Called 502"
+    output_init(optimization_container, devices)
     return
 end
 ########################### Ramp/Rate of Change Constraints ################################
@@ -1305,6 +1308,8 @@ function cost_function!(
         component_type = T,
         has_status_variable = has_on_variable(optimization_container, T),
         has_status_parameter = has_on_parameter(optimization_container, T),
+        variable_cost = PSY.get_variable,
+        fixed_cost = PSY.get_fixed,
     )
 
     for g in devices

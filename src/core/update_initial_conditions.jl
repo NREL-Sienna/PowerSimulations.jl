@@ -227,9 +227,8 @@ IC of the UC model
 """
 function status_init(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{D},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
+    devices::IS.FlattenIteratorWrapper{T}
+) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -241,26 +240,11 @@ function status_init(
     return
 end
 
-# function status_init(
-#     optimization_container::OptimizationContainer,
-#     devices::IS.FlattenIteratorWrapper{T},
-# ) where {T <: PSY.ThermalMultiStart}
-#     _make_initial_conditions!(
-#         optimization_container,
-#         devices,
-#         ICKey(DeviceStatus, T),
-#         _make_initial_condition_status,
-#         _get_status_value,
-#     )
-
-#     return
-# end
-
 function output_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{D},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
+) where {T <: PSY.ThermalGen}
+    # @show "called 247"
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -273,12 +257,8 @@ end
 
 function output_init(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{D},
-) where {
-    T <: PSY.ThermalGen,
-    D <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
-}
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+)
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -291,8 +271,7 @@ end
 function duration_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{D},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
+) where {T <: PSY.ThermalGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
             optimization_container,
@@ -307,22 +286,6 @@ function duration_init(
     return
 end
 
-# function duration_init(
-#     optimization_container::OptimizationContainer,
-#     devices::IS.FlattenIteratorWrapper{T},
-# ) where {T <: PSY.ThermalMultiStart}
-#     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
-#         _make_initial_conditions!(
-#             optimization_container,
-#             devices,
-#             key,
-#             _make_initial_condition_status,
-#             _get_duration_value,
-#             TimeStatusChange,
-#         )
-#     end
-#     return
-# end
 
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim
