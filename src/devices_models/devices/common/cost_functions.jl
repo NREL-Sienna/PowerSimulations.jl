@@ -383,7 +383,7 @@ function add_to_cost!(
     @debug "ThreePartCost" component_name
     resolution = model_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    variable_cost = PSY.get_variable(cost_data)
+    variable_cost = spec.variable_cost(cost_data)
     time_steps = model_time_steps(optimization_container)
     for t in time_steps
         variable_cost!(optimization_container, spec, component_name, variable_cost, t)
@@ -484,26 +484,11 @@ function add_to_cost!(
         end
     end
 
-    # Original implementation had SOS by default
-    variable_cost_data = PSY.get_cost(PSY.get_variable(cost_data))
-    if !all(iszero.(last.(variable_cost_data)))
-        for t in time_steps
-            gen_cost = pwl_gencost_sos!(
-                optimization_container,
-                spec,
-                component_name,
-                variable_cost_data,
-                t,
-            )
-            add_to_cost_expression!(optimization_container, spec.multiplier * gen_cost * dt)
-        end
-    else
-        @debug "No Variable Cost associated with $(component_name)"
+    # Original implementation had SOS by default, here it detects if that's needed
+    variable_cost_data = spec.variable_cost(cost_data)
+    for t in time_steps
+        variable_cost!(optimization_container, spec, component_name, variable_cost_data, t)
     end
-    # variable_cost = PSY.get_variable(cost_data)
-    # for t in time_steps
-    #     variable_cost!(optimization_container, spec, component_name, variable_cost, t)
-    # end
 
     # Start-up costs
     if !isnothing(spec.start_up_cost)
@@ -907,9 +892,8 @@ function variable_cost!(
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     if !pwlparamcheck(cost_component)
         @warn(
-            "The cost function provided for $(var_name) device is not compatible with a linear PWL cost function.
-      An SOS-2 formulation will be added to the model.
-      This will result in additional binary variables added to the model."
+            "The cost function provided for $(component_name) is not compatible with a linear PWL cost function.
+      An SOS-2 formulation will be added to the model. This will result in additional binary variables."
         )
         gen_cost = pwl_gencost_sos!(
             optimization_container,

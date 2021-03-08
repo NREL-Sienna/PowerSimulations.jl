@@ -60,7 +60,7 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
     optimizer = get_optimizer(settings)
     if !(optimization_container.JuMPmodel === nothing)
         if parameters
-            if !haskey(optimization_container.JuMPmodel.ext, :params)
+            if !haskey(optimization_container.JuMPmodel.ext, :ParameterJuMP)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
                 PJ.enable_parameters(optimization_container.JuMPmodel)
                 warm_start_enabled = get_warm_start(settings)
@@ -671,7 +671,7 @@ function build_impl!(
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(transmission)" begin
         @debug "Building $(transmission) network formulation"
-        construct_network!(optimization_container, sys, transmission)
+        construct_network!(optimization_container, sys, transmission, template)
         @debug get_problem_size(optimization_container)
     end
 

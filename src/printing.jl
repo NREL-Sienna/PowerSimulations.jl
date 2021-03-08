@@ -53,7 +53,9 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
 
     for field in fieldnames(OperationsProblemTemplate)
         val = getfield(template, Symbol(field))
-        if typeof(val) <: Dict{Symbol, <:DeviceModel}
+        if field == :transmission
+            println(io, "Transmission: $val")
+        elseif typeof(val) <: Dict{Symbol, <:DeviceModel}
             println(io, "============================================")
             _display_model(val, field, io)
         elseif typeof(val) <: Dict{Tuple{String, Symbol}, <:ServiceModel}

@@ -515,8 +515,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
@@ -593,8 +592,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -638,13 +636,7 @@ function construct_device!(
     )
     ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
     time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    initial_range_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     feedforward!(optimization_container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(optimization_container, devices, model, S, get_feedforward(model))
@@ -656,8 +648,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalMultiStart, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -691,13 +682,7 @@ function construct_device!(
     )
     ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
     time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    initial_range_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     feedforward!(optimization_container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(optimization_container, devices, model, S, get_feedforward(model))
@@ -709,8 +694,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -765,8 +749,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -811,8 +794,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
@@ -858,8 +840,7 @@ function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, D <: ThermalCompactDispatch, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 

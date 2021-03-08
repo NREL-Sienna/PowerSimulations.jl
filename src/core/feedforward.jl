@@ -760,7 +760,7 @@ function feedforward_update!(
                 param_reference,
             )
             previous_value = PJ.value(param_array[device_name])
-            PJ.fix(param_array[device_name], var_value)
+            PJ.set_value(param_array[device_name], var_value)
             IS.@record :simulation FeedForwardUpdateEvent(
                 "FeedForward",
                 current_time,

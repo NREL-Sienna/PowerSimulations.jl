@@ -666,7 +666,7 @@ function initial_condition_update!(
     for ic in initial_conditions
         name = device_name(ic)
         interval_chronology =
-            get_problem_interval_chronology(sim.sequence, get_problem_name(sim, problem))
+            get_problem_interval_chronology(sim.sequence, get_name(problem))
         var_value = get_problem_variable(
             interval_chronology,
             (problem => problem),
@@ -683,7 +683,7 @@ function initial_condition_update!(
             get_resolution(problem),
         )
         previous_value = get_condition(ic)
-        PJ.fix(ic.value, quantity)
+        PJ.set_value(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
@@ -733,7 +733,7 @@ function initial_condition_update!(
         quantity =
             calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
         previous_value = get_condition(ic)
-        PJ.fix(ic.value, quantity)
+        PJ.set_value(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,

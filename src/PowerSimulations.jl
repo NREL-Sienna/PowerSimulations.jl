@@ -16,6 +16,7 @@ export SimulationResults
 
 # Network Relevant Exports
 export StandardPTDFModel
+export PTDFPowerModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel
 
@@ -125,6 +126,7 @@ export run_economic_dispatch
 export run_unit_commitment
 export set_device_model!
 export set_service_model!
+export set_transmission_model!
 export get_transmission_model
 ## Results interfaces
 export SimulationResultsExport
@@ -356,7 +358,6 @@ include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/commitment_constraint.jl")
 include("devices_models/devices/common/timeseries_constraint.jl")
 include("devices_models/devices/common/expressionarray_algebra.jl")
-include("devices_models/devices/common/pm_translator.jl")
 include("devices_models/devices/common/energy_balance_constraint.jl")
 include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
@@ -388,7 +389,7 @@ include("services_models/services_constructor.jl")
 # Network models
 include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
-include("network_models/ptdf_model.jl")
+include("devices_models/devices/common/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 

@@ -209,7 +209,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
-    ::Type{<:AbstractCompactUnitCommitment},
+    ::Type{<:ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
@@ -232,6 +232,39 @@ function DeviceRangeConstraintSpec(
             constraint_func = device_multistart_range!,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
             lag_limits_func = PSY.get_power_trajectory,
+        ),
+    )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractCompactUnitCommitment},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Nothing,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
+            limits_func = x -> (
+                min = PSY.get_active_power_limits(x).min,
+                max = PSY.get_active_power_limits(x).max,
+            ),
+            bin_variable_names = [
+                make_variable_name(OnVariable, T),
+                make_variable_name(StartVariable, T),
+                make_variable_name(StopVariable, T),
+            ],
+            constraint_func = device_multistart_range!,
+            constraint_struct = DeviceMultiStartRangeConstraintsInfo,
+            lag_limits_func = x -> (
+                startup = PSY.get_active_power_limits(x).max,
+                shutdown = PSY.get_active_power_limits(x).max,
+            ),
         ),
     )
 end
@@ -1130,6 +1163,7 @@ function AddCostSpec(
         has_status_parameter = has_on_parameter(optimization_container, T),
         variable_cost = _get_compact_varcost,
         shut_down_cost = PSY.get_shut_down,
+        start_up_cost = PSY.get_start_up,
         fixed_cost = fixed_cost_func,
         sos_status = SOSStatusVariable.VARIABLE,
     )
@@ -1168,7 +1202,7 @@ function AddCostSpec(
         component_type = T,
         has_status_variable = has_on_variable(optimization_container, T),
         has_status_parameter = has_on_parameter(optimization_container, T),
-        variable_cost = PSY.get_variable,
+        variable_cost = _get_compact_varcost,
         start_up_cost = PSY.get_start_up,
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
@@ -1202,8 +1236,7 @@ end
 function _convert_variable_cost(variable_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}})
     var_cost = PSY.get_cost(variable_cost)
     no_load_cost, p_min = var_cost[1]
-    var_cost =
-        PSY.VariableCost([(c - no_load_cost, pp - var_cost[1][2]) for (c, pp) in var_cost])
+    var_cost = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
     return var_cost, no_load_cost
 end
 
