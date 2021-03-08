@@ -56,7 +56,8 @@ const DISABLED_TEST_FILES = [
     "test_device_thermal_generation_constructors.jl",
     "test_device_branch_constructors.jl",
     "test_simulation_build.jl",
-    "test_simulation_execute.jl"]
+    "test_simulation_execute.jl",
+]
 
 LOG_LEVELS = Dict(
     "Debug" => Logging.Debug,
