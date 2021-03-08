@@ -1255,6 +1255,8 @@ function cost_function!(
         component_type = T,
         has_status_variable = has_on_variable(optimization_container, T),
         has_status_parameter = has_on_parameter(optimization_container, T),
+        variable_cost = PSY.get_variable,
+        fixed_cost = PSY.get_fixed,
     )
 
     for g in devices
