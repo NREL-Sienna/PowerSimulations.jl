@@ -386,7 +386,7 @@ function _assign_feedforward_chronologies(sim::Simulation)
         sim_info = get_simulation_info(destination_problem)
         sim_info.chronolgy_dict[source_problem_number] = chron
         source_problem_resolution = PSY.get_time_series_resolution(source_problem.sys)
-        execution_wait_count = Int(source_problem_resolution / destination_problem_interval)
+        execution_wait_count = Int(IS.time_period_conversion(source_problem_resolution) / IS.time_period_conversion(destination_problem_interval))
         set_execution_wait_count!(get_trigger(chron), execution_wait_count)
         initialize_trigger_count!(get_trigger(chron))
     end

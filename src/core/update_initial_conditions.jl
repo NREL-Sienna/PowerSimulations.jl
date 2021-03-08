@@ -221,20 +221,19 @@ function status_init(
     return
 end
 
-function status_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalMultiStart}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        ICKey(DeviceStatus, T),
-        _make_initial_condition_status,
-        _get_status_value,
-    )
-
-    return
-end
+# function status_init(
+#     optimization_container::OptimizationContainer,
+#     devices::IS.FlattenIteratorWrapper{T},
+# ) where {T <: PSY.ThermalMultiStart}
+#     _make_initial_conditions!(
+#         optimization_container,
+#         devices,
+#         ICKey(DeviceStatus, T),
+#         _make_initial_condition_status,
+#         _get_status_value,
+#     )
+#     return
+# end
 
 function output_init(
     optimization_container::OptimizationContainer,
@@ -250,6 +249,7 @@ function output_init(
     return
 end
 
+#=
 function output_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
@@ -262,6 +262,7 @@ function output_init(
         _get_active_power_output_above_min_value,
     )
 end
+=#
 
 function duration_init(
     optimization_container::OptimizationContainer,
@@ -281,23 +282,23 @@ function duration_init(
     return
 end
 
-function duration_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalMultiStart}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
-        _make_initial_conditions!(
-            optimization_container,
-            devices,
-            key,
-            _make_initial_condition_status,
-            _get_duration_value,
-            TimeStatusChange,
-        )
-    end
+# function duration_init(
+#     optimization_container::OptimizationContainer,
+#     devices::IS.FlattenIteratorWrapper{T},
+# ) where {T <: PSY.ThermalMultiStart}
+#     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+#         _make_initial_conditions!(
+#             optimization_container,
+#             devices,
+#             key,
+#             _make_initial_condition_status,
+#             _get_duration_value,
+#             TimeStatusChange,
+#         )
+#     end
 
-    return
-end
+#     return
+# end
 
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim
