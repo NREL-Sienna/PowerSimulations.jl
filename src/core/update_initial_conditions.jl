@@ -52,7 +52,7 @@ function calculate_ic_quantity(
     return current_status
 end
 
-function _get_active_power_limits(dev::T) where T <: PSY.ThermalGen
+function _get_active_power_limits(dev::T) where {T <: PSY.ThermalGen}
     min_power = PSY.get_active_power_limits(dev).min
     return min_power
 end
@@ -129,8 +129,6 @@ function calculate_ic_quantity(
         @assert false
     end
 end
-
-
 
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
@@ -300,7 +298,6 @@ function duration_init(
 
     return
 end
-
 
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim

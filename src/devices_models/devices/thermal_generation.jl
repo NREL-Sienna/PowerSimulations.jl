@@ -261,8 +261,10 @@ function DeviceRangeConstraintSpec(
             ],
             constraint_func = device_multistart_range!,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
-            lag_limits_func = x -> (startup = PSY.get_active_power_limits(x).max, 
-                shutdown = PSY.get_active_power_limits(x).max),
+            lag_limits_func = x -> (
+                startup = PSY.get_active_power_limits(x).max,
+                shutdown = PSY.get_active_power_limits(x).max,
+            ),
         ),
     )
 end
@@ -1234,8 +1236,7 @@ end
 function _convert_variable_cost(variable_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}})
     var_cost = PSY.get_cost(variable_cost)
     no_load_cost, p_min = var_cost[1]
-    var_cost =
-        PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+    var_cost = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
     return var_cost, no_load_cost
 end
 
