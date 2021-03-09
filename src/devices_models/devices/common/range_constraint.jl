@@ -262,6 +262,7 @@ function device_multistart_range!(
     varp = get_variable(optimization_container, inputs.variable_name)
     @assert length(inputs.bin_variable_names) == 3
     varstatus = get_variable(optimization_container, inputs.bin_variable_names[1])
+    @show inputs.bin_variable_names[2]
     varon = get_variable(optimization_container, inputs.bin_variable_names[2])
     varoff = get_variable(optimization_container, inputs.bin_variable_names[3])
 
