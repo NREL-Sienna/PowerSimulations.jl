@@ -27,11 +27,6 @@ struct StaticBranchUnbounded <: AbstractBranchFormulation end
 #################################### Branch Variables ##################################################
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
 # for the branch flows either in AC or DC.
-flow_variables!(
-    ::OptimizationContainer,
-    ::Type{<:PM.AbstractPowerModel},
-    ::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
-) = nothing
 
 add_variables!(
     optimization_container::OptimizationContainer,
