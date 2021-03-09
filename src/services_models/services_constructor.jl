@@ -97,7 +97,7 @@ function construct_service!(
             ActiveServiceVariable,
             service,
             contributing_devices,
-            RangeReserve()
+            RangeReserve(),
         )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
@@ -121,7 +121,12 @@ function construct_service!(
     time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
     # Does not use the standard implementation of add_variable!()
-    add_variable!(optimization_container, ServiceRequirementVariable(), services, StepwiseCostReserve())
+    add_variable!(
+        optimization_container,
+        ServiceRequirementVariable(),
+        services,
+        StepwiseCostReserve(),
+    )
     add_cons_container!(
         optimization_container,
         make_constraint_name(REQUIREMENT, SR),
@@ -145,7 +150,7 @@ function construct_service!(
             ActiveServiceVariable,
             service,
             contributing_devices,
-            StepwiseCostReserve()
+            StepwiseCostReserve(),
         )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)

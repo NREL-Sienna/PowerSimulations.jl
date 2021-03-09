@@ -9,14 +9,14 @@ add_variables!(
     ::OptimizationContainer,
     ::Type{<:PM.AbstractPowerModel},
     devices::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
-    ::AbstractDCLineFormulation
+    ::AbstractDCLineFormulation,
 ) = nothing
 
 function add_variables!(
     optimization_container::OptimizationContainer,
-    ::Type{<: Union{StandardPTDFModel, PTDFPowerModel}},
+    ::Type{<:Union{StandardPTDFModel, PTDFPowerModel}},
     devices::IS.FlattenIteratorWrapper{B},
-    formulations::AbstractDCLineFormulation
+    formulations::AbstractDCLineFormulation,
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(optimization_container)
     var_name = make_variable_name(FLOW_ACTIVE_POWER, B)

@@ -5,7 +5,7 @@ function add_variables!(
     optimization_container::OptimizationContainer,
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
-    formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation}
+    formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
 ) where {T <: VariableType, U <: PSY.Component}
     add_variable!(optimization_container, T(), devices, formulation)
 end
@@ -18,7 +18,7 @@ function add_variables!(
     ::Type{T},
     service::U,
     devices::Vector{V},
-    formulation::AbstractReservesFormulation
+    formulation::AbstractReservesFormulation,
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
     add_variable!(optimization_container, T(), devices, service, formulation)
 end
@@ -117,8 +117,11 @@ function add_variable!(
     variable_type::VariableType,
     devices::U,
     service::T,
-    formulation::AbstractReservesFormulation
-) where {T<: PSY.Service, U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
+    formulation::AbstractReservesFormulation,
+) where {
+    T <: PSY.Service,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
 

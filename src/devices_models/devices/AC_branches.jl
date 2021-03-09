@@ -32,10 +32,14 @@ add_variables!(
     optimization_container::OptimizationContainer,
     ::Type{<:AbstractPTDFModel},
     devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
-    formulation::AbstractBranchFormulation
+    formulation::AbstractBranchFormulation,
 ) = add_variable!(optimization_container, FlowActivePowerVariable(), devices, formulation)
 
-get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation) = false
+get_variable_binary(
+    ::FlowActivePowerVariable,
+    ::Type{<:PSY.ACBranch},
+    ::AbstractBranchFormulation,
+) = false
 
 #################################### Flow Variable Bounds ##################################################
 function _get_constraint_data(

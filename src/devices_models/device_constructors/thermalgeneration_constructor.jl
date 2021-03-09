@@ -243,9 +243,24 @@ function construct_device!(
         devices,
         ThermalBasicUnitCommitment(),
     )
-    add_variables!(optimization_container, OnVariable, devices, ThermalBasicUnitCommitment())
-    add_variables!(optimization_container, StartVariable, devices, ThermalBasicUnitCommitment())
-    add_variables!(optimization_container, StopVariable, devices, ThermalBasicUnitCommitment())
+    add_variables!(
+        optimization_container,
+        OnVariable,
+        devices,
+        ThermalBasicUnitCommitment(),
+    )
+    add_variables!(
+        optimization_container,
+        StartVariable,
+        devices,
+        ThermalBasicUnitCommitment(),
+    )
+    add_variables!(
+        optimization_container,
+        StopVariable,
+        devices,
+        ThermalBasicUnitCommitment(),
+    )
 
     # Initial Conditions
     initial_conditions!(optimization_container, devices, ThermalBasicUnitCommitment())
@@ -862,16 +877,12 @@ function construct_device!(
     return
 end
 
-
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
-) where {
-    T <: PSY.ThermalGen,
-    S <: PM.AbstractPowerModel,
-}
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
     if !validate_available_devices(T, devices)
@@ -879,8 +890,18 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, ThermalCompactDispatch())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, ThermalCompactDispatch())
+    add_variables!(
+        optimization_container,
+        ActivePowerVariable,
+        devices,
+        ThermalCompactDispatch(),
+    )
+    add_variables!(
+        optimization_container,
+        ReactivePowerVariable,
+        devices,
+        ThermalCompactDispatch(),
+    )
 
     # Initial Conditions
     initial_conditions!(optimization_container, devices, ThermalCompactDispatch())
@@ -917,10 +938,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
-) where {
-    T <: PSY.ThermalGen,
-    S <: PM.AbstractActivePowerModel,
-}
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
     if !validate_available_devices(T, devices)
@@ -928,7 +946,12 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, ThermalCompactDispatch())
+    add_variables!(
+        optimization_container,
+        ActivePowerVariable,
+        devices,
+        ThermalCompactDispatch(),
+    )
 
     # Initial Conditions
     initial_conditions!(optimization_container, devices, ThermalCompactDispatch())
