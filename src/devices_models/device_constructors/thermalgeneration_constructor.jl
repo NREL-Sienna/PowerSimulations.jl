@@ -790,7 +790,6 @@ function construct_device!(
     return
 end
 
-
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,

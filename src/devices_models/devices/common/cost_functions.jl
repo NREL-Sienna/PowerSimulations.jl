@@ -353,12 +353,19 @@ function add_to_cost!(
         if spec.uses_compact_power
             var_cost = PSY.get_cost(spec.variable_cost(cost_data))
             no_load_cost, p_min = var_cost[1]
-            variable_cost_data = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+            variable_cost_data =
+                PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
         else
             variable_cost_data = spec.variable_cost(cost_data)
         end
         for t in time_steps
-            variable_cost!(optimization_container, spec, component_name, variable_cost_data, t)
+            variable_cost!(
+                optimization_container,
+                spec,
+                component_name,
+                variable_cost_data,
+                t,
+            )
         end
     else
         @warn "No variable cost defined for $component_name"
@@ -396,7 +403,8 @@ function add_to_cost!(
     if spec.uses_compact_power
         var_cost = PSY.get_cost(spec.variable_cost(cost_data))
         no_load_cost, p_min = var_cost[1]
-        variable_cost_data = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+        variable_cost_data =
+            PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
     else
         variable_cost_data = spec.variable_cost(cost_data)
     end
@@ -508,8 +516,9 @@ function add_to_cost!(
         base_power = PSY.get_base_power(component)
         min_gen = PSY.get_active_power_limits(component).min
         variable_cost_data_ = PSY.get_cost(spec.variable_cost(cost_data))
-        variable_cost_data_ =
-            [(v[1] + min_gen_cost, v[2] + min_gen * base_power) for v in variable_cost_data_]
+        variable_cost_data_ = [
+            (v[1] + min_gen_cost, v[2] + min_gen * base_power) for v in variable_cost_data_
+        ]
         variable_cost_data = PSY.VariableCost(variable_cost_data_)
     end
 
