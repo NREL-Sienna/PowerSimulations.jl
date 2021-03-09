@@ -1,5 +1,4 @@
 #! format: off
-abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables #########################################
