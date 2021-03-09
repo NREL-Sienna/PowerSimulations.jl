@@ -183,7 +183,7 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, StandardPTDFModel, devices, U())
+    add_variables!(optimization_container, S, devices, U())
 
     branch_rate_constraints!(
         optimization_container,
