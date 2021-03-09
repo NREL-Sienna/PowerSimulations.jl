@@ -647,7 +647,12 @@ function add_pm_expr_refs!(
                     var_type = getfield(ps_v, dir)
                     var_type === nothing && continue
 
-                    add_variable!(optimization_container, var_type(), mapped_ps_devices)
+                    add_variable!(
+                        optimization_container,
+                        var_type(),
+                        mapped_ps_devices,
+                        StaticBranchUnbounded(),
+                    )
                     psi_var_container = get_variable(
                         optimization_container,
                         make_variable_name(var_type, d_type),
