@@ -488,7 +488,16 @@ function add_to_cost!(
     end
 
     # Original implementation had SOS by default, here it detects if that's needed
-    variable_cost_data = spec.variable_cost(cost_data)
+    if spec.uses_compact_power
+        variable_cost_data = spec.variable_cost(cost_data)
+    else
+       min_gen_cost = spec.fixed_cost(cost_data)
+       min_gen = PSY.get_active_power_limits(component).min
+       variable_cost_data_ = PSY.get_variable(spec.variable_cost(cost_data))
+       variable_cost_data_ = [(v[1] + min_gen_cost, v[2] + min_gen) for v in variable_cost_data_]
+       variable_cost_data = PSY.VariableCost(variable_cost_data_)
+    end
+
     for t in time_steps
         variable_cost!(optimization_container, spec, component_name, variable_cost_data, t)
     end
