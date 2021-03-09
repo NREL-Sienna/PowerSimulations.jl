@@ -855,7 +855,7 @@ function update_parameter!(
         component_name = PSY.get_name(d)
         for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
             value = ts_vector[ix]
-            JuMP.fix(val, value)
+            JuMP.set_vaue(val, value)
         end
     end
 
@@ -890,7 +890,7 @@ function update_parameter!(
             ignore_scaling_factors = true,
         )
         for (jx, value) in enumerate(ts_vector)
-            JuMP.fix(get_parameter_array(container)[ix, jx], value)
+            JuMP.set_vaue(get_parameter_array(container)[ix, jx], value)
         end
     end
 
