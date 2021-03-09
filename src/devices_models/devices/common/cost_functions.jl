@@ -350,7 +350,8 @@ function add_to_cost!(
     time_steps = model_time_steps(optimization_container)
     @debug "TwoPartCost" component_name
     if !(spec.variable_cost === nothing)
-        if spec.uses_compact_power
+        variable_cost = spec.variable_cost(cost_data)
+        if spec.uses_compact_power && variable_cost == PSY.VariableCost{Vector{NTuple{2, Float64}}}
             var_cost = PSY.get_cost(spec.variable_cost(cost_data))
             no_load_cost, p_min = var_cost[1]
             variable_cost_data =
@@ -400,7 +401,7 @@ function add_to_cost!(
     resolution = model_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     variable_cost = spec.variable_cost(cost_data)
-    if spec.uses_compact_power
+    if spec.uses_compact_power && variable_cost == PSY.VariableCost{Vector{NTuple{2, Float64}}}
         var_cost = PSY.get_cost(spec.variable_cost(cost_data))
         no_load_cost, p_min = var_cost[1]
         variable_cost_data =
