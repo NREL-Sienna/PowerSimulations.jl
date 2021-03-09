@@ -289,49 +289,6 @@ function _make_initial_condition_area_control(
     return InitialCondition(device, _get_ref_ace_error(PSY.AGC, container), value, cache)
 end
 
-function _get_status_value(device, key)
-    return PSY.get_status(device) ? 1.0 : 0.0
-end
-
-function _get_active_power_output_value(device, key)
-    if !PSY.get_status(device)
-        return 0.0
-    end
-    return PSY.get_active_power(device)
-end
-
-function _get_active_power_output_value(device::T, key) where {T <: PSY.HydroGen}
-    return PSY.get_active_power(device)
-end
-
-function _get_active_power_output_above_min_value(device, key)
-    if !PSY.get_status(device)
-        return 0.0
-    end
-    power_above_min = PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
-    if power_above_min >= -ABSOLUTE_TOLERANCE
-        @warn "$(get_name(device)) Power initial condition is invalid. Set to 0.0. This can make the simulation infeasible"
-        power_above_min = 0.0
-    end
-    return power_above_min
-end
-
-function _get_initial_energy_value(device, key)
-    return PSY.get_initial_energy(device)
-end
-
-function _get_reservoir_energy_value(device, key)
-    return PSY.get_initial_storage(device)
-end
-
-function _get_reservoir_energy_value_up(device, key)
-    return PSY.get_initial_storage(device).up
-end
-
-function _get_reservoir_energy_value_down(device, key)
-    return PSY.get_initial_storage(device).down
-end
-
 function _get_ace_error(device, key)
     return PSY.get_initial_ace(device)
 end
