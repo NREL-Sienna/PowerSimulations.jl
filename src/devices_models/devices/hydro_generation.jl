@@ -570,9 +570,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::AbstractHydroUnitCommitment,
 ) where {H <: PSY.HydroGen}
-    status_init(optimization_container, devices)
-    output_init(optimization_container, devices)
-    duration_init(optimization_container, devices)
+    status_init(optimization_container, devices, device_formulation)
+    output_init(optimization_container, devices, device_formulation)
+    duration_init(optimization_container, devices, device_formulation)
 
     return
 end
@@ -583,6 +583,104 @@ function initial_conditions!(
     device_formulation::AbstractHydroDispatchFormulation,
 ) where {H <: PSY.HydroGen}
     output_init(optimization_container, devices)
+
+    return
+end
+
+######################### Initialize Functions for Hydro #################################
+function status_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::AbstractHydroUnitCommitment,
+) where {T <: PSY.HydroGen}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        ICKey(DeviceStatus, T),
+        _make_initial_condition_active_power,
+        _get_status_value,
+        # Doesn't require Cache
+    )
+end
+
+function output_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::AbstractHydroFormulation,
+) where {T <: PSY.HydroGen}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        ICKey(DevicePower, T),
+        _make_initial_condition_active_power,
+        _get_active_power_output_value,
+        # Doesn't require Cache
+    )
+
+    return
+end
+
+function duration_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::AbstractHydroUnitCommitment,
+) where {T <: PSY.HydroGen}
+    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+        _make_initial_conditions!(
+            optimization_container,
+            devices,
+            key,
+            _make_initial_condition_active_power,
+            _get_duration_value,
+            TimeStatusChange,
+        )
+    end
+
+    return
+end
+
+function storage_energy_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::AbstractHydroFormulation,
+) where {T <: PSY.HydroGen}
+    key = ICKey(EnergyLevel, T)
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        key,
+        _make_initial_condition_reservoir_energy,
+        _get_reservoir_energy_value,
+        StoredEnergy,
+    )
+
+    return
+end
+
+function storage_energy_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::AbstractHydroFormulation,
+) where {T <: PSY.HydroPumpedStorage}
+    key_up = ICKey(EnergyLevelUP, T)
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        key_up,
+        _make_initial_condition_reservoir_energy_up,
+        _get_reservoir_energy_value_up,
+        StoredEnergy,
+    )
+
+    key_down = ICKey(EnergyLevelDOWN, T)
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        key_down,
+        _make_initial_condition_reservoir_energy_down,
+        _get_reservoir_energy_value_down,
+        StoredEnergy,
+    )
 
     return
 end
