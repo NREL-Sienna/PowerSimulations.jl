@@ -1109,7 +1109,7 @@ function AddCostSpec(
 ) where {U <: AbstractStandardUnitCommitment}
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
-        component_type = T,
+        component_type = PSY.ThermalMultiStart,
         has_status_variable = has_on_variable(
             optimization_container,
             PSY.ThermalMultiStart,

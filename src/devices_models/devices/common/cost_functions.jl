@@ -493,7 +493,7 @@ function add_to_cost!(
     else
         min_gen_cost = spec.fixed_cost(cost_data)
         min_gen = PSY.get_active_power_limits(component).min
-        variable_cost_data_ = PSY.get_variable(spec.variable_cost(cost_data))
+        variable_cost_data_ = PSY.get_cost(spec.variable_cost(cost_data))
         variable_cost_data_ =
             [(v[1] + min_gen_cost, v[2] + min_gen) for v in variable_cost_data_]
         variable_cost_data = PSY.VariableCost(variable_cost_data_)
