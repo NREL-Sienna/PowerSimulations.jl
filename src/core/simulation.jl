@@ -380,12 +380,14 @@ function _assign_feedforward_chronologies(sim::Simulation)
     # JDNOTE: this is limiting since it only allows updating from one problem
     for (key, chron) in get_sequence(sim).feedforward_chronologies
         destination_problem = problems[key.second]
-        destination_problem_interval = get_interval(sequence, key.second)
+        destination_problem_interval_ = get_interval(sequence, key.second)
+        destination_problem_interval = IS.time_period_conversion(destination_problem_interval_)
         source_problem = problems[key.first]
         source_problem_number = get_simulation_number(source_problem)
         sim_info = get_simulation_info(destination_problem)
         sim_info.chronolgy_dict[source_problem_number] = chron
-        source_problem_resolution = PSY.get_time_series_resolution(source_problem.sys)
+        source_problem_resolution_ = PSY.get_time_series_resolution(source_problem.sys)
+        source_problem_resolution = IS.time_period_conversion(source_problem_resolution_)
         execution_wait_count = Int(source_problem_resolution / destination_problem_interval)
         set_execution_wait_count!(get_trigger(chron), execution_wait_count)
         initialize_trigger_count!(get_trigger(chron))
