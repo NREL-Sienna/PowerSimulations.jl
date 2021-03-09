@@ -381,7 +381,8 @@ function _assign_feedforward_chronologies(sim::Simulation)
     for (key, chron) in get_sequence(sim).feedforward_chronologies
         destination_problem = problems[key.second]
         destination_problem_interval_ = get_interval(sequence, key.second)
-        destination_problem_interval = IS.time_period_conversion(destination_problem_interval_)
+        destination_problem_interval =
+            IS.time_period_conversion(destination_problem_interval_)
         source_problem = problems[key.first]
         source_problem_number = get_simulation_number(source_problem)
         sim_info = get_simulation_info(destination_problem)
