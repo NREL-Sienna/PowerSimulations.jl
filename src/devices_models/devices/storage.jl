@@ -9,7 +9,7 @@ struct EndOfPeriodEnergyTarget <: AbstractEnergyManagement end
 ########################### ActivePowerInVariable, Storage #################################
 
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = nothing
@@ -18,7 +18,7 @@ get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.Storage}, ::AbstractSto
 ########################### ActivePowerOutVariable, Storage #################################
 
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = nothing
@@ -27,7 +27,7 @@ get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.Storage}, ::AbstractSt
 ############## ReactivePowerVariable, Storage ####################
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_reactive
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = :nodal_balance_reactive
 
 ############## EnergyVariable, Storage ####################
 
