@@ -5,6 +5,7 @@ abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulati
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
+get_variable_sign(_, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = 1.0
 ########################### ActivePowerVariable, RenewableGen #################################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false

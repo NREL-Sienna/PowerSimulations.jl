@@ -15,6 +15,7 @@ function add_variables!(optimization_container::OptimizationContainer, ::Type{St
     end
 end
 
+get_variable_sign(_, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = NaN
 ########################## ActivePowerVariable, Area ###########################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false

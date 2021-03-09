@@ -5,6 +5,9 @@ struct HVDCDispatch <: AbstractDCLineFormulation end
 struct VoltageSourceDC <: AbstractDCLineFormulation end
 
 #################################### Branch Variables ##################################################
+
+get_variable_sign(_, ::Type{<:PSY.DCBranch}, _) = NaN
+
 add_variables!(
     ::OptimizationContainer,
     ::Type{<:PM.AbstractPowerModel},

@@ -41,6 +41,8 @@ get_variable_binary(
     ::AbstractBranchFormulation,
 ) = false
 
+
+get_variable_sign(_, ::Type{<:PSY.ACBranch}, _) = NaN
 #################################### Flow Variable Bounds ##################################################
 function _get_constraint_data(
     devices::IS.FlattenIteratorWrapper{B},
