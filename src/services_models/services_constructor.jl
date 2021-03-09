@@ -97,6 +97,7 @@ function construct_service!(
             ActiveServiceVariable,
             service,
             contributing_devices,
+            RangeReserve()
         )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
@@ -119,7 +120,8 @@ function construct_service!(
     services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
-    add_variables!(optimization_container, ServiceRequirementVariable, services)
+    # Does not use the standard implementation of add_variable!()
+    add_variable!(optimization_container, ServiceRequirementVariable(), services, StepwiseCostReserve())
     add_cons_container!(
         optimization_container,
         make_constraint_name(REQUIREMENT, SR),
@@ -143,6 +145,7 @@ function construct_service!(
             ActiveServiceVariable,
             service,
             contributing_devices,
+            StepwiseCostReserve()
         )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
@@ -174,12 +177,12 @@ function construct_service!(
         end
     end
     add_variables!(optimization_container, SteadyStateFrequencyDeviation)
-    add_variables!(optimization_container, AreaMismatchVariable, areas)
-    add_variables!(optimization_container, SmoothACE, areas)
-    add_variables!(optimization_container, LiftVariable, areas)
-    add_variables!(optimization_container, ActivePowerVariable, areas)
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas)
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas)
+    add_variables!(optimization_container, AreaMismatchVariable, areas, T())
+    add_variables!(optimization_container, SmoothACE, areas, T())
+    add_variables!(optimization_container, LiftVariable, areas, T())
+    add_variables!(optimization_container, ActivePowerVariable, areas, T())
+    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas, T())
+    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas, T())
     # add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, areas)
     # add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, areas)
     balancing_auxiliary_variables!(optimization_container, sys)
