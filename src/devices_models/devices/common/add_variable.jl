@@ -63,10 +63,10 @@ function add_variable!(
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
-
+    settings = get_settings(optimization_container)
     var_name = make_variable_name(typeof(variable_type), D)
     binary = get_variable_binary(variable_type, D, formulation)
-    expression_name = get_variable_expression_name(variable_type, D, formulation)
+    expression_name = get_variable_expression_name(variable_type, D)
     sign = get_variable_sign(variable_type, D, formulation)
 
     variable = add_var_container!(
@@ -90,8 +90,10 @@ function add_variable!(
         lb = get_variable_lower_bound(variable_type, d, formulation)
         !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
-        init = get_variable_initial_value(variable_type, d, formulation)
-        !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
+        if get_warm_start(settings)
+            init = get_variable_initial_value(variable_type, d, formulation)
+            !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
+        end
 
         if !((expression_name === nothing))
             bus_number = PSY.get_number(PSY.get_bus(d))

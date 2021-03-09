@@ -736,7 +736,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
+        moi_tests(op_problem, p, 120, 0, 168, 120, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -768,7 +768,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
+        moi_tests(op_problem, p, 240, 0, 288, 240, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
