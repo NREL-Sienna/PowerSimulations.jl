@@ -253,7 +253,6 @@ end
     end
 end
 
-
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
     bin_variable_names = [
         PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
@@ -691,7 +690,6 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-
 
 @testset "Thermal Standard with Compact UC and AC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
