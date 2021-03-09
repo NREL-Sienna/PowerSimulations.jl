@@ -15,8 +15,8 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices)
-    add_variables!(optimization_container, ReactivePowerVariable, devices)
+    add_variables!(optimization_container, ActivePowerVariable, devices, D())
+    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
 
     # Constraints
     add_constraints!(
@@ -62,7 +62,7 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices)
+    add_variables!(optimization_container, ActivePowerVariable, devices, D())
 
     # Constraints
     add_constraints!(
