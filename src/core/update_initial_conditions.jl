@@ -57,9 +57,9 @@ function _get_active_power_limits(dev::T) where {T <: PSY.ThermalGen}
     return min_power
 end
 
-function _get_active_power_limits(dev::PSY.ThermalMultiStart)
-    return 0.0
-end
+# function _get_active_power_limits(dev::PSY.ThermalMultiStart)
+#     return 0.0
+# end
 
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},

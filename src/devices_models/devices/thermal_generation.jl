@@ -42,7 +42,7 @@ get_variable_initial_value(pv::ActivePowerVariable, d::PSY.ThermalMultiStart, se
 get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalMultiStart, ::WarmStartVariable) = PSY.get_active_power(d)
 get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalMultiStart, ::ColdStartVariable) = nothing
 
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalMultiStart, _) = 0
+# get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalMultiStart, _) = 0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalMultiStart, _) = PSY.get_active_power_limits(d).max
 
 ############## ReactivePowerVariable, ThermalGen ####################
