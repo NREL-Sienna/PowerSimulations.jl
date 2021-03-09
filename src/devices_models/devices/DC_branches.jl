@@ -5,15 +5,16 @@ struct HVDCDispatch <: AbstractDCLineFormulation end
 struct VoltageSourceDC <: AbstractDCLineFormulation end
 
 #################################### Branch Variables ##################################################
-flow_variables!(
-    optimization_container::OptimizationContainer,
+add_variables!(
+    ::OptimizationContainer,
     ::Type{<:PM.AbstractPowerModel},
     devices::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
+    ::AbstractDCLineFormulation
 ) = nothing
 
 function add_variables!(
     optimization_container::OptimizationContainer,
-    ::Type{StandardPTDFModel},
+    ::Type{<: Union{StandardPTDFModel, PTDFPowerModel}},
     devices::IS.FlattenIteratorWrapper{B},
     formulations::AbstractDCLineFormulation
 ) where {B <: PSY.DCBranch}
