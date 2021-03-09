@@ -15,7 +15,7 @@ struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
 
 get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 
@@ -27,7 +27,7 @@ get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::HydroDispatch
 
 ############## ReactivePowerVariable, HydroGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_reactive
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_reactive
 get_variable_initial_value(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).max
@@ -40,12 +40,12 @@ get_variable_upper_bound(::EnergyVariable, d::PSY.HydroGen, ::AbstractHydroFormu
 
 ########################### EnergyVariableUp, HydroGen #################################
 
-get_variable_binary(::EnergyVariableUp, ::Type{<:PSY.HydroGen}) = false
+get_variable_binary(::EnergyVariableUp, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 
-get_variable_initial_value(pv::EnergyVariableUp, d::PSY.HydroGen, settings) = PSY.get_initial_storage(d).up
+get_variable_initial_value(pv::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
 
-get_variable_lower_bound(::EnergyVariableUp, d::PSY.HydroGen, _) = 0.0
-get_variable_upper_bound(::EnergyVariableUp, d::PSY.HydroGen, _) = PSY.get_storage_capacity(d).up
+get_variable_lower_bound(::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
+get_variable_upper_bound(::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d).up
 
 ########################### EnergyVariableDown, HydroGen #################################
 
@@ -59,7 +59,7 @@ get_variable_upper_bound(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroF
 ########################### ActivePowerInVariable, HydroGen #################################
 
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = nothing
@@ -68,7 +68,7 @@ get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.HydroGen}, ::AbstractHy
 ########################### ActivePowerOutVariable, HydroGen #################################
 
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = nothing

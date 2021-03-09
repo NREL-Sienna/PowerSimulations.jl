@@ -535,11 +535,11 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
-    add_variables!(optimization_container, EnergyVariable, devices, D())
-    add_variables!(optimization_container, SpillageVariable, devices, D())
+    add_variables!(optimization_container, ActivePowerVariable, devices, HydroCommitmentReservoirStorage())
+    add_variables!(optimization_container, ReactivePowerVariable, devices, HydroCommitmentReservoirStorage())
+    add_variables!(optimization_container, OnVariable, devices, HydroCommitmentReservoirStorage())
+    add_variables!(optimization_container, EnergyVariable, devices, HydroCommitmentReservoirStorage())
+    add_variables!(optimization_container, SpillageVariable, devices, HydroCommitmentReservoirStorage())
 
     # Constraints
     add_constraints!(
