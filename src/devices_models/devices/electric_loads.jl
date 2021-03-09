@@ -14,7 +14,7 @@ get_variable_sign(_, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = -1
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
 
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_active
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_active_power(d)
@@ -23,7 +23,7 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractL
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
 
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_reactive
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_reactive
 
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_reactive_power(d)

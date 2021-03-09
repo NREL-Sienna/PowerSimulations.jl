@@ -95,9 +95,9 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
+    add_variables!(optimization_container, ActivePowerVariable, devices, InterruptiblePowerLoad())
+    add_variables!(optimization_container, ReactivePowerVariable, devices, InterruptiblePowerLoad())
+    add_variables!(optimization_container, OnVariable, devices, InterruptiblePowerLoad())
 
     # Constraints
     add_constraints!(
@@ -139,8 +139,8 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
+    add_variables!(optimization_container, ActivePowerVariable, devices, InterruptiblePowerLoad())
+    add_variables!(optimization_container, OnVariable, devices, InterruptiblePowerLoad())
 
     # Constraints
     add_constraints!(
