@@ -11,6 +11,7 @@ struct AddCostSpec
     fixed_cost::Union{Nothing, Function}
     has_multistart_variables::Bool
     addtional_linear_terms::Dict{String, Symbol}
+    uses_compact_power::Bool
 end
 
 function AddCostSpec(;
@@ -26,6 +27,7 @@ function AddCostSpec(;
     fixed_cost = nothing,
     has_multistart_variables = false,
     addtional_linear_terms = Dict{String, Symbol}(),
+    uses_compact_power = false
 )
     return AddCostSpec(
         variable_type,
@@ -40,6 +42,7 @@ function AddCostSpec(;
         fixed_cost,
         has_multistart_variables,
         addtional_linear_terms,
+        uses_compact_power
     )
 end
 
