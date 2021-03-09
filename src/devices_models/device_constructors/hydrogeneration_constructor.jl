@@ -238,7 +238,7 @@ function construct_device!(
     )
 
     # Initial Conditions
-    storage_energy_init(optimization_container, devices)
+    storage_energy_init(optimization_container, devices, HydroDispatchPumpedStorage())
     # Energy Balance Constraint
     energy_balance_constraint!(
         optimization_container,
@@ -293,7 +293,7 @@ function construct_device!(
     )
 
     # Initial Conditions
-    storage_energy_init(optimization_container, devices)
+    storage_energy_init(optimization_container, devices, HydroDispatchPumpedStorage())
     # Energy Balance Constraint
     energy_balance_constraint!(
         optimization_container,
@@ -587,7 +587,7 @@ function construct_device!(
     )
 
     # Initial Conditions
-    storage_energy_init(optimization_container, devices)
+    storage_energy_init(optimization_container, devices, HydroDispatchPumpedStorage())
     # Energy Balance Constraint
     energy_balance_constraint!(
         optimization_container,
@@ -659,7 +659,7 @@ function construct_device!(
     )
 
     # Initial Conditions
-    storage_energy_init(optimization_container, devices)
+    storage_energy_init(optimization_container, devices, HydroDispatchPumpedStorage())
     # Energy Balance Constraint
     energy_balance_constraint!(
         optimization_container,
@@ -745,7 +745,7 @@ function construct_device!(
     )
 
     # Initial Conditions
-    storage_energy_init(optimization_container, devices)
+    storage_energy_init(optimization_container, devices, HydroDispatchPumpedStorage())
 
     # Energy Balanace limits
     energy_balance_constraint!(
@@ -839,7 +839,7 @@ function construct_device!(
     )
 
     # Initial Conditions
-    storage_energy_init(optimization_container, devices)
+    storage_energy_init(optimization_container, devices, HydroDispatchPumpedStorage())
 
     # Energy Balanace limits
     energy_balance_constraint!(

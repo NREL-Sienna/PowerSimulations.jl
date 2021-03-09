@@ -487,7 +487,7 @@ function output_init(
     _make_initial_conditions!(
         optimization_container,
         devices,
-        ICKey(DevicePower, PSY.ThermalMultiStart),
+        ICKey(DevicePower, T),
         _make_initial_condition_active_power,
         _get_active_power_output_above_min_value,
     )
