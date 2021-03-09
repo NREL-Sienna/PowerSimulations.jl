@@ -18,10 +18,30 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, devices)
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, devices)
-    add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, devices)
-    add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, devices)
+    add_variables!(
+        optimization_container,
+        DeltaActivePowerUpVariable,
+        devices,
+        DeviceLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        DeltaActivePowerDownVariable,
+        devices,
+        DeviceLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        AdditionalDeltaActivePowerUpVariable,
+        devices,
+        DeviceLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        AdditionalDeltaActivePowerDownVariable,
+        devices,
+        DeviceLimitedRegulation(),
+    )
 
     # Constraints
     nodal_expression!(optimization_container, devices, S)
@@ -69,10 +89,30 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, devices)
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, devices)
-    add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, devices)
-    add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, devices)
+    add_variables!(
+        optimization_container,
+        DeltaActivePowerUpVariable,
+        devices,
+        ReserveLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        DeltaActivePowerDownVariable,
+        devices,
+        ReserveLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        AdditionalDeltaActivePowerUpVariable,
+        devices,
+        ReserveLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        AdditionalDeltaActivePowerDownVariable,
+        devices,
+        ReserveLimitedRegulation(),
+    )
 
     # Constraints
     nodal_expression!(optimization_container, devices, S)

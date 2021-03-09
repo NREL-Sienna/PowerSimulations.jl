@@ -67,7 +67,7 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, S, devices)
+    add_variables!(optimization_container, S, devices, StaticBranch())
     branch_flow_values!(optimization_container, devices, model, S)
     branch_rate_constraints!(
         optimization_container,
@@ -90,7 +90,7 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, S, devices)
+    add_variables!(optimization_container, S, devices, StaticBranchBounds())
     branch_flow_values!(optimization_container, devices, model, S)
     branch_rate_bounds!(optimization_container, devices, model, S)
     return
@@ -107,7 +107,7 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, S, devices)
+    add_variables!(optimization_container, S, devices, StaticBranchUnbounded())
     branch_flow_values!(optimization_container, devices, model, S)
     return
 end
@@ -171,15 +171,19 @@ end
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{B, <:AbstractDCLineFormulation},
+    model::DeviceModel{B, U},
     ::Type{S},
-) where {B <: PSY.DCBranch, S <: Union{StandardPTDFModel, PTDFPowerModel}}
+) where {
+    B <: PSY.DCBranch,
+    U <: AbstractDCLineFormulation,
+    S <: Union{StandardPTDFModel, PTDFPowerModel},
+}
     devices = get_available_components(B, sys)
     if !validate_available_devices(B, devices)
         return
     end
 
-    add_variables!(optimization_container, StandardPTDFModel(), devices)
+    add_variables!(optimization_container, S, devices, U())
 
     branch_rate_constraints!(
         optimization_container,

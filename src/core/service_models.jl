@@ -9,6 +9,7 @@ struct MyServiceFormulation <: PSI.AbstractServiceFormulation
 ```
 """
 abstract type AbstractServiceFormulation end
+abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 
 function _check_service_formulation(
     ::Type{D},

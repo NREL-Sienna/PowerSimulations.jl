@@ -110,8 +110,6 @@ end
     end
 end
 
-# This Formulation is currently broken
-#=
 @testset "Thermal MultiStart UC With DC - PF" begin
     bin_variable_names = [
         PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
@@ -135,7 +133,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 384, 0, 240, 48, 144, true)
+        moi_tests(op_problem, p, 384, 0, 240, 48, 96, true)
         psi_constraint_test(op_problem, uc_constraint_names)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -165,13 +163,13 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 432, 0, 288, 96, 144, true)
+        moi_tests(op_problem, p, 432, 0, 288, 96, 96, true)
         psi_constraint_test(op_problem, uc_constraint_names)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-=#
+
 ################################### Basic Unit Commitment tests ############################
 @testset "Thermal Basic UC With DC - PF" begin
     bin_variable_names = [
@@ -255,8 +253,6 @@ end
     end
 end
 
-# This Formulation is currently broken
-#=
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
     bin_variable_names = [
         PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
@@ -274,7 +270,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 384, 0, 96, 48, 144, true)
+        moi_tests(op_problem, p, 384, 0, 96, 48, 96, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -297,12 +293,12 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 432, 0, 144, 96, 144, true)
+        moi_tests(op_problem, p, 432, 0, 144, 96, 96, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-=#
+
 ################################### Basic Dispatch tests ###################################
 @testset "Thermal Dispatch With DC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatch)
@@ -363,7 +359,6 @@ end
 end
 
 # This Formulation is currently broken
-#=
 @testset "ThermalMultiStart Dispatch With DC - PF" begin
     model = DeviceModel(ThermalMultiStart, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
@@ -375,7 +370,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 240, 0, 48, 48, 96, false)
+        moi_tests(op_problem, p, 240, 0, 48, 48, 48, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -391,11 +386,11 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 288, 0, 96, 96, 96, false)
+        moi_tests(op_problem, p, 288, 0, 96, 96, 48, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-=#
+
 ################################### No Minimum Dispatch tests ##############################
 
 @testset "Thermal Dispatch NoMin With DC - PF" begin
@@ -565,8 +560,6 @@ end
     end
 end
 
-# This Formulation is currently broken
-#=
 @testset "Thermal Ramp Limited Dispatch With DC - PF" begin
     constraint_names = [
         PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
@@ -582,7 +575,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 240, 0, 144, 48, 96, false)
+        moi_tests(op_problem, p, 240, 0, 144, 48, 48, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -603,12 +596,12 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 288, 0, 192, 96, 96, false)
+        moi_tests(op_problem, p, 288, 0, 192, 96, 48, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-=#
+
 ################################### ThermalMultiStart Testing ##################################
 
 @testset "Thermal MultiStart with MultiStart UC and DC - PF" begin
@@ -666,8 +659,6 @@ end
 end
 
 ################################### Thermal Compact UC Testing ##################################
-# This Formulation is currently broken
-#=
 @testset "Thermal Standard with Compact UC and DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -679,11 +670,10 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 480, 0, 480, 120, 120, true)
+        moi_tests(op_problem, p, 480, 0, 595, 0, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-=#
 
 @testset "Thermal MultiStart with Compact UC and DC - PF" begin
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
@@ -701,8 +691,6 @@ end
     end
 end
 
-# This Formulation is currently broken
-#=
 @testset "Thermal Standard with Compact UC and AC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -714,11 +702,10 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 600, 0, 600, 240, 120, true)
+        moi_tests(op_problem, p, 600, 0, 715, 120, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-=#
 
 @testset "Thermal MultiStart with Compact UC and AC - PF" begin
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
@@ -737,8 +724,7 @@ end
 end
 
 ################################### Thermal Compact Dispatch Testing ##################################
-# This Formulation is currently broken
-#=
+
 @testset "Thermal Standard with Compact Dispatch and DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -754,7 +740,7 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-=#
+
 @testset "Thermal MultiStart with Compact Dispatch and DC - PF" begin
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
@@ -771,8 +757,6 @@ end
     end
 end
 
-# This Formulation is currently broken
-#=
 @testset "Thermal Standard with Compact Dispatch and AC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -788,7 +772,6 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-=#
 
 @testset "Thermal MultiStart with Compact Dispatch and AC - PF" begin
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)

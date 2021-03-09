@@ -7,16 +7,16 @@ struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### ActivePowerVariable, RenewableGen #################################
 
-get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}) = false
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false
 
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}) = :nodal_balance_active
 
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.RenewableGen, _) = 0.0
-get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, _) = PSY.get_max_active_power(d)
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = 0.0
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
 
 ########################### ReactivePowerVariable, RenewableGen #################################
 
-get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = false
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false
 
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = :nodal_balance_reactive
 
