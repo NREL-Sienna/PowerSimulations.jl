@@ -311,12 +311,11 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
     parameters = [true, false]
-    # TODO: Enable these tests
-    #test_results = Dict{System, Vector{Int}}(
-    #    c_sys5 => [384, 0, 408, 408, 288],
-    #    c_sys14 => [936, 0, 1080, 1080, 840],
-    #    c_sys14_dc => [984, 48, 984, 984, 840],
-    #)
+    test_results = Dict{System, Vector{Int}}(
+        c_sys5 => [264, 0, 264, 264, 120],
+        c_sys14 => [600, 0, 600, 600, 336],
+        c_sys14_dc => [648, 48, 552, 552, 384],
+    )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 300000.0,
         c_sys14 => 142000.0,
@@ -328,17 +327,16 @@ end
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_names)
-        # TODO: Enable these tests
-        # moi_tests(
-        #     ps_model,
-        #     p,
-        #     test_results[sys][1],
-        #     test_results[sys][2],
-        #     test_results[sys][3],
-        #     test_results[sys][4],
-        #     test_results[sys][5],
-        #     false,
-        # )
+        moi_tests(
+            ps_model,
+            p,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
+        )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(
             ps_model,
@@ -351,7 +349,6 @@ end
 
 # TODO: Add constraint tests for these models, other is redundant with first test
 @testset "Other Network AC PowerModels models" begin
-    # TODO: Enable MOI tests for # of constraints
     networks = [#ACPPowerModel, Already tested
         ACRPowerModel,
         ACTPowerModel,
@@ -361,14 +358,21 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Voltages, etc.
-    constraint_names = [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
-    # TODO: Enable these tests
-    #test_results = Dict{System, Vector{Int}}(
-    #    c_sys5 => [384, 0, 408, 408, 288],
-    #    c_sys14 => [936, 0, 1080, 1080, 840],
-    #    c_sys14_dc => [984, 48, 984, 984, 840],
-    #)
-
+    constraint_names = [
+        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
+        PSI.make_constraint_name(PSI.NODAL_BALANCE_REACTIVE, PSY.Bus),
+    ]
+    ACR_test_results = Dict{System, Vector{Int}}(
+        c_sys5 => [1056, 0, 240, 240, 264],
+        c_sys14 => [2832, 0, 240, 240, 696],
+        c_sys14_dc => [2832, 96, 240, 240, 744],
+    )
+    ACT_test_results = Dict{System, Vector{Int}}(
+        c_sys5 => [1344, 0, 384, 384, 840],
+        c_sys14 => [3792, 0, 720, 720, 2616],
+        c_sys14_dc => [3696, 96, 672, 672, 2472],
+    )
+    test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
     for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
         ps_model = OperationsProblem(
@@ -380,23 +384,22 @@ end
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_names)
-        # TODO: Enable these tests
-        # moi_tests(
-        #     ps_model,
-        #     p,
-        #     test_results[sys][1],
-        #     test_results[sys][2],
-        #     test_results[sys][3],
-        #     test_results[sys][4],
-        #     test_results[sys][5],
-        #     false,
-        # )
+        moi_tests(
+            ps_model,
+            p,
+            test_results[network][sys][1],
+            test_results[network][sys][2],
+            test_results[network][sys][3],
+            test_results[network][sys][4],
+            test_results[network][sys][5],
+            false,
+        )
         @test !isnothing(ps_model.internal.optimization_container.pm)
     end
 end
 
 # TODO: Add constraint tests for these models, other is redundant with first test
-@testset "Network AC-PF PowerModels quadratic loss approximations models" begin
+@testset "Network DC-PF PowerModels quadratic loss approximations models" begin
     networks = [DCPLLPowerModel, LPACCPowerModel]
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -409,12 +412,17 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    # TODO: Enable these tests
-    #test_results = Dict{System, Vector{Int}}(
-    #    c_sys5 => [384, 0, 408, 408, 288],
-    #    c_sys14 => [936, 0, 1080, 1080, 840],
-    #    c_sys14_dc => [984, 48, 984, 984, 840],
-    #)
+    DCPLL_test_results = Dict{System, Vector{Int}}(
+        c_sys5 => [528, 0, 408, 408, 288],
+        c_sys14 => [1416, 0, 1080, 1080, 840],
+        c_sys14_dc => [1416, 48, 984, 984, 840],
+    )
+    LPACC_test_results = Dict{System, Vector{Int}}(
+        c_sys5 => [1200, 0, 384, 384, 840],
+        c_sys14 => [3312, 0, 720, 720, 2616],
+        c_sys14_dc => [3264, 96, 672, 672, 2472],
+    )
+    test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
     for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
         ps_model = OperationsProblem(
@@ -426,17 +434,16 @@ end
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_names)
-        # TODO: Enable these tests
-        # moi_tests(
-        #     ps_model,
-        #     p,
-        #     test_results[sys][1],
-        #     test_results[sys][2],
-        #     test_results[sys][3],
-        #     test_results[sys][4],
-        #     test_results[sys][5],
-        #     false,
-        # )
+        moi_tests(
+            ps_model,
+            p,
+            test_results[network][sys][1],
+            test_results[network][sys][2],
+            test_results[network][sys][3],
+            test_results[network][sys][4],
+            test_results[network][sys][5],
+            false,
+        )
         @test !isnothing(ps_model.internal.optimization_container.pm)
         psi_checksolve_test(
             ps_model,
