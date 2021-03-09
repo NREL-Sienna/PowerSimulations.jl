@@ -5,8 +5,9 @@ function add_variables!(
     optimization_container::OptimizationContainer,
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    formulation::AbstractDeviceFormulation,
 ) where {T <: VariableType, U <: PSY.Component}
-    add_variable!(optimization_container, T(), devices)
+    add_variable!(optimization_container, T(), devices, formulation)
 end
 
 """
@@ -58,14 +59,15 @@ function add_variable!(
     optimization_container::OptimizationContainer,
     variable_type::VariableType,
     devices::U,
+    formulation,
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
 
-    var_name = make_variable_name(typeof(variable_type), eltype(devices))
-    binary = get_variable_binary(variable_type, eltype(devices))
-    expression_name = get_variable_expression_name(variable_type, eltype(devices))
-    sign = get_variable_sign(variable_type, eltype(devices))
+    var_name = make_variable_name(typeof(variable_type), D)
+    binary = get_variable_binary(variable_type, D, formulation)
+    expression_name = get_variable_expression_name(variable_type, D, formulation)
+    sign = get_variable_sign(variable_type, D, formulation)
 
     variable = add_var_container!(
         optimization_container,
@@ -82,13 +84,13 @@ function add_variable!(
             binary = binary
         )
 
-        ub = get_variable_upper_bound(variable_type, d, optimization_container.settings)
+        ub = get_variable_upper_bound(variable_type, d, formulation)
         !(ub === nothing) && JuMP.set_upper_bound(variable[name, t], ub)
 
-        lb = get_variable_lower_bound(variable_type, d, optimization_container.settings)
+        lb = get_variable_lower_bound(variable_type, d, formulation)
         !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
-        init = get_variable_initial_value(variable_type, d, optimization_container.settings)
+        init = get_variable_initial_value(variable_type, d, formulation)
         !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
 
         if !((expression_name === nothing))
@@ -98,7 +100,7 @@ function add_variable!(
                 bus_number,
                 t,
                 variable[name, t],
-                get_variable_sign(variable_type, eltype(devices)),
+                get_variable_sign(variable_type, eltype(devices), formulation),
             )
         end
     end
@@ -203,37 +205,4 @@ function set_variable_bounds!(
         JuMP.set_upper_bound(_var, bound.limits.max)
         JuMP.set_lower_bound(_var, bound.limits.min)
     end
-end
-
-function commitment_variables!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
-    time_steps = model_time_steps(optimization_container)
-    if get_warm_start(optimization_container.settings)
-        initial_value = d -> (PSY.get_active_power(d) > 0 ? 1.0 : 0.0)
-    else
-        initial_value = nothing
-    end
-
-    add_variable!(optimization_container, OnVariable(), devices)
-    var_status = get_variable(optimization_container, OnVariable, T)
-    for t in time_steps, d in devices
-        name = PSY.get_name(d)
-        bus_number = PSY.get_number(PSY.get_bus(d))
-        add_to_expression!(
-            get_expression(optimization_container, :nodal_balance_active),
-            bus_number,
-            t,
-            var_status[name, t],
-            PSY.get_active_power_limits(d).min,
-        )
-    end
-
-    variable_types = [StartVariable(), StopVariable()]
-    for variable_type in variable_types
-        add_variable!(optimization_container, variable_type, devices)
-    end
-
-    return
 end
