@@ -8,36 +8,35 @@ struct EndOfPeriodEnergyTarget <: AbstractEnergyManagement end
 
 ########################### ActivePowerInVariable, Storage #################################
 
-get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = false
-get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
+get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_active
 
-get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, _) = 0.0
-get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, _) = nothing
-get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.Storage}) = -1.0
+get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
+get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = nothing
+get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = -1.0
 
 ########################### ActivePowerOutVariable, Storage #################################
 
-get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = false
-get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
+get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_active
 
-get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = 0.0
-get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = nothing
-get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.Storage}) = 1.0
+get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
+get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = nothing
+get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
 
 ############## ReactivePowerVariable, Storage ####################
 
-get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = false
-
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = :nodal_balance_reactive
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::Type{<:PM.AbstractPowerModel}) = :nodal_balance_reactive
 
 ############## EnergyVariable, Storage ####################
 
-get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}) = false
-get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
+get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
+get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 
 ############## ReserveVariable, Storage ####################
 
-get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
+get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = true
 
 #! format: on
 
@@ -179,8 +178,8 @@ end
 function initial_conditions!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
-    ::Type{D},
-) where {St <: PSY.Storage, D <: AbstractStorageFormulation}
+    ::AbstractStorageFormulation,
+) where {St <: PSY.Storage}
     storage_energy_init(optimization_container, devices)
     return
 end

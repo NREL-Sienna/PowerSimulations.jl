@@ -6,23 +6,23 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 
 ############################ DeltaActivePowerUpVariable, RegulationDevice ###########################
 
-get_variable_binary(::DeltaActivePowerUpVariable, ::Type{<:PSY.RegulationDevice}) = false
-get_variable_lower_bound(::DeltaActivePowerUpVariable, ::PSY.RegulationDevice, _) = 0.0
+get_variable_binary(::DeltaActivePowerUpVariable, ::Type{<:PSY.RegulationDevice}, ::AbstractRegulationFormulation) = false
+get_variable_lower_bound(::DeltaActivePowerUpVariable, ::PSY.RegulationDevice, ::AbstractRegulationFormulation) = 0.0
 
 ############################ DeltaActivePowerDownVariable, RegulationDevice ###########################
 
-get_variable_binary(::DeltaActivePowerDownVariable, ::Type{<:PSY.RegulationDevice}) = false
-get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.RegulationDevice, _) = 0.0
+get_variable_binary(::DeltaActivePowerDownVariable, ::Type{<:PSY.RegulationDevice}, ::AbstractRegulationFormulation) = false
+get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.RegulationDevice, ::AbstractRegulationFormulation) = 0.0
 
 ############################ AdditionalDeltaActivePowerUpVariable, RegulationDevice ###########################
 
-get_variable_binary(::AdditionalDeltaActivePowerUpVariable, ::Type{<:PSY.RegulationDevice}) = false
-get_variable_lower_bound(::AdditionalDeltaActivePowerUpVariable, ::PSY.RegulationDevice, _) = 0.0
+get_variable_binary(::AdditionalDeltaActivePowerUpVariable, ::Type{<:PSY.RegulationDevice}, ::AbstractRegulationFormulation) = false
+get_variable_lower_bound(::AdditionalDeltaActivePowerUpVariable, ::PSY.RegulationDevice, ::AbstractRegulationFormulation) = 0.0
 
 ############################ AdditionalDeltaActivePowerDownVariable, RegulationDevice ###########################
 
-get_variable_binary(::AdditionalDeltaActivePowerDownVariable, ::Type{<:PSY.RegulationDevice}) = false
-get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.RegulationDevice, _) = 0.0
+get_variable_binary(::AdditionalDeltaActivePowerDownVariable, ::Type{<:PSY.RegulationDevice}, ::AbstractRegulationFormulation) = false
+get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.RegulationDevice, ::AbstractRegulationFormulation) = 0.0
 
 #! format: on
 
