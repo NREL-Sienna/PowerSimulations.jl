@@ -570,9 +570,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::AbstractHydroUnitCommitment,
 ) where {H <: PSY.HydroGen}
-    status_init(optimization_container, devices, device_formulation)
-    output_init(optimization_container, devices, device_formulation)
-    duration_init(optimization_container, devices, device_formulation)
+    status_initial_condition!(optimization_container, devices, device_formulation)
+    output_initial_condition!(optimization_container, devices, device_formulation)
+    duration_initial_condition!(optimization_container, devices, device_formulation)
 
     return
 end
@@ -582,45 +582,45 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::AbstractHydroDispatchFormulation,
 ) where {H <: PSY.HydroGen}
-    output_init(optimization_container, devices)
+    output_initial_condition!(optimization_container, devices, device_formulation)
 
     return
 end
 
 ######################### Initialize Functions for Hydro #################################
-function status_init(
+function status_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractHydroUnitCommitment,
-) where {T <: PSY.HydroGen}
+    ::D,
+) where {T <: PSY.HydroGen, D <: AbstractHydroUnitCommitment}
     _make_initial_conditions!(
         optimization_container,
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
-        _get_status_value,
+        (x, y) -> get_variable_initial_value(OnVariable(), x, D()),
         # Doesn't require Cache
     )
 end
 
-function output_init(
+function output_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractHydroFormulation,
-) where {T <: PSY.HydroGen}
+    ::D,
+) where {T <: PSY.HydroGen, D <: AbstractHydroFormulation}
     _make_initial_conditions!(
         optimization_container,
         devices,
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
-        _get_active_power_output_value,
+        (x, y) -> get_variable_initial_value(ActivePowerVariable(), x, D()),
         # Doesn't require Cache
     )
 
     return
 end
 
-function duration_init(
+function duration_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::AbstractHydroUnitCommitment,
@@ -639,36 +639,36 @@ function duration_init(
     return
 end
 
-function storage_energy_init(
+function storage_energy_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractHydroFormulation,
-) where {T <: PSY.HydroGen}
+    ::D,
+) where {T <: PSY.HydroGen, D <: AbstractHydroFormulation}
     key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
         optimization_container,
         devices,
         key,
         _make_initial_condition_reservoir_energy,
-        _get_reservoir_energy_value,
+        (x, y) -> get_variable_initial_value(EnergyVariable(), x, D()),
         StoredEnergy,
     )
 
     return
 end
 
-function storage_energy_init(
+function storage_energy_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractHydroFormulation,
-) where {T <: PSY.HydroPumpedStorage}
+    ::D,
+) where {T <: PSY.HydroPumpedStorage, D <: AbstractHydroFormulation}
     key_up = ICKey(EnergyLevelUP, T)
     _make_initial_conditions!(
         optimization_container,
         devices,
         key_up,
         _make_initial_condition_reservoir_energy_up,
-        _get_reservoir_energy_value_up,
+        (x, y) -> get_variable_initial_value(EnergyVariableUp(), x, D()),
         StoredEnergy,
     )
 
@@ -678,7 +678,7 @@ function storage_energy_init(
         devices,
         key_down,
         _make_initial_condition_reservoir_energy_down,
-        _get_reservoir_energy_value_down,
+        (x, y) -> get_variable_initial_value(EnergyVariableDown(), x, D()),
         StoredEnergy,
     )
 
