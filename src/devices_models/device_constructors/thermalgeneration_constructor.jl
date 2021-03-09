@@ -690,8 +690,6 @@ function construct_device!(
     return
 end
 
-#=
-Currently ThermalStandard and Compact UC formulations are incompatible
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
@@ -791,7 +789,7 @@ function construct_device!(
 
     return
 end
-=#
+
 
 function construct_device!(
     optimization_container::OptimizationContainer,
