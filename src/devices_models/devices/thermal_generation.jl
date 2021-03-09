@@ -1110,8 +1110,14 @@ function AddCostSpec(
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,
-        has_status_variable = has_on_variable(optimization_container, PSY.ThermalMultiStart),
-        has_status_parameter = has_on_parameter(optimization_container, PSY.ThermalMultiStart),
+        has_status_variable = has_on_variable(
+            optimization_container,
+            PSY.ThermalMultiStart,
+        ),
+        has_status_parameter = has_on_parameter(
+            optimization_container,
+            PSY.ThermalMultiStart,
+        ),
         variable_cost = PSY.get_variable,
         start_up_cost = x -> getfield(PSY.get_start_up(x), :cold),
         shut_down_cost = PSY.get_shut_down,
@@ -1119,7 +1125,6 @@ function AddCostSpec(
         sos_status = SOSStatusVariable.VARIABLE,
     )
 end
-
 
 function AddCostSpec(
     ::Type{T},
@@ -1159,7 +1164,7 @@ function AddCostSpec(
         start_up_cost = PSY.get_start_up,
         fixed_cost = fixed_cost_func,
         sos_status = SOSStatusVariable.VARIABLE,
-        uses_compact_power = true
+        uses_compact_power = true,
     )
 end
 
@@ -1182,7 +1187,7 @@ function AddCostSpec(
         variable_cost = _get_compact_varcost,
         fixed_cost = fixed_cost_func,
         sos_status = sos_status,
-        uses_compact_power = true
+        uses_compact_power = true,
     )
 end
 
@@ -1203,7 +1208,7 @@ function AddCostSpec(
         fixed_cost = fixed_cost_func,
         sos_status = SOSStatusVariable.VARIABLE,
         has_multistart_variables = true,
-        uses_compact_power = true
+        uses_compact_power = true,
     )
 end
 
