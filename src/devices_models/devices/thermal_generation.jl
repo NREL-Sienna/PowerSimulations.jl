@@ -400,9 +400,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractThermalUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    status_init(optimization_container, devices, formulation)
-    output_init(optimization_container, devices, formulation)
-    duration_init(optimization_container, devices, formulation)
+    status_initial_condition!(optimization_container, devices, formulation)
+    output_initial_condition!(optimization_container, devices, formulation)
+    duration_initial_condition!(optimization_container, devices, formulation)
     return
 end
 
@@ -411,8 +411,8 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::ThermalBasicUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    status_init(optimization_container, devices, formulation)
-    output_init(optimization_container, devices, formulation)
+    status_initial_condition!(optimization_container, devices, formulation)
+    output_initial_condition!(optimization_container, devices, formulation)
     return
 end
 
@@ -421,7 +421,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractThermalDispatchFormulation,
 ) where {T <: PSY.ThermalGen}
-    output_init(optimization_container, devices, formulation)
+    output_initial_condition!(optimization_container, devices, formulation)
     return
 end
 
@@ -432,68 +432,54 @@ This is to make it easier to calculate when the previous model doesn't
 contain binaries. For instance, looking back on an ED model to find the
 IC of the UC model
 """
-function status_init(
+function status_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractThermalFormulation,
-) where {T <: PSY.ThermalGen}
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
     _make_initial_conditions!(
         optimization_container,
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
-        _get_status_value,
+        (x, y) -> get_variable_initial_value(OnVariable(), x, D()),
     )
 
     return
 end
 
-function status_init(
+function status_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractCompactUnitCommitment,
-) where {T <: PSY.ThermalGen}
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
     _make_initial_conditions!(
         optimization_container,
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_status,
-        _get_status_value,
+        (x, y) -> get_variable_initial_value(OnVariable(), x, D()),
     )
 
     return
 end
 
-function output_init(
+function output_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractThermalFormulation,
-) where {T <: PSY.ThermalGen}
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
     _make_initial_conditions!(
         optimization_container,
         devices,
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
-        _get_active_power_output_value,
+        (x, y) -> get_variable_initial_value(ActivePowerVariable(), x, D()),
     )
     return
 end
 
-function output_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractCompactUnitCommitment,
-) where {T <: PSY.ThermalGen}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        ICKey(DevicePower, T),
-        _make_initial_condition_active_power,
-        _get_active_power_output_above_min_value,
-    )
-end
-
-function duration_init(
+function duration_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::AbstractThermalFormulation,
@@ -512,7 +498,7 @@ function duration_init(
     return
 end
 
-function duration_init(
+function duration_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::AbstractCompactUnitCommitment,
