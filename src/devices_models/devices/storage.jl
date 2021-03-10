@@ -196,9 +196,11 @@ function storage_energy_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        EnergyVariable(),
         key,
         _make_initial_condition_energy,
-        (x, y) -> get_variable_initial_value(EnergyVariable(), x, D()),
+        _get_variable_initial_value,
         StoredEnergy,
     )
 

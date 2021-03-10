@@ -160,6 +160,8 @@ end
 function _make_initial_conditions!(
     optimization_container::OptimizationContainer,
     devices::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
+    device_formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+    variable_type::Union{Nothing, VariableType},
     key::ICKey,
     make_ic_func::Function, # Function to make the initial condition object
     get_val_func::Function, # Function to get the value from the device to intialize
@@ -173,7 +175,7 @@ function _make_initial_conditions!(
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(ic_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
-            val_ = get_val_func(dev, key)
+            val_ = get_val_func(dev, key, device_formulation, variable_type)
             val =
                 parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
@@ -186,7 +188,7 @@ function _make_initial_conditions!(
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
             @debug "Setting $(key.ic_type) initial conditions device $(PSY.get_name(dev)) based on system data"
-            val_ = get_val_func(dev, key)
+            val_ = get_val_func(dev, key, device_formulation, variable_type)
             val =
                 parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
@@ -199,17 +201,20 @@ function _make_initial_conditions!(
     return
 end
 
-function area_control_init(
+function area_control_initial_condition!(
     optimization_container::OptimizationContainer,
     services::Vector{PSY.AGC},
-)
+    ::D,
+) where {D <: AbstractAGCFormulation}
     key = ICKey(AreaControlError, PSY.AGC)
     _make_initial_conditions!(
         optimization_container,
         services,
+        D(),
+        nothing,
         key,
         _make_initial_condition_area_control,
-        _get_ace_error,
+        _get_variable_initial_value,
         # Doesn't require Cache
     )
 
@@ -287,6 +292,33 @@ function _make_initial_condition_area_control(
     cache = nothing,
 )
     return InitialCondition(device, _get_ref_ace_error(PSY.AGC, container), value, cache)
+end
+
+function _get_variable_initial_value(
+    d::PSY.Component,
+    ::ICKey,
+    formulation::AbstractDeviceFormulation,
+    variable_type::VariableType,
+)
+    return get_variable_initial_value(variable_type, d, formulation)
+end
+
+function _get_variable_initial_value(
+    d::PSY.Component,
+    key::ICKey,
+    ::AbstractDeviceFormulation,
+    ::Nothing,
+)
+    return _get_duration_value(d, key)
+end
+
+function _get_variable_initial_value(
+    d::PSY.Component,
+    key::ICKey,
+    ::AbstractAGCFormulation,
+    ::Nothing,
+)
+    return _get_ace_error(d, key)
 end
 
 function _get_ace_error(device, key)

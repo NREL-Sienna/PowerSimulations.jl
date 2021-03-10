@@ -596,9 +596,11 @@ function status_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        OnVariable(),
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
-        (x, y) -> get_variable_initial_value(OnVariable(), x, D()),
+        _get_variable_initial_value,
         # Doesn't require Cache
     )
 end
@@ -611,9 +613,11 @@ function output_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        ActivePowerVariable(),
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
-        (x, y) -> get_variable_initial_value(ActivePowerVariable(), x, D()),
+        _get_variable_initial_value,
         # Doesn't require Cache
     )
 
@@ -623,15 +627,17 @@ end
 function duration_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractHydroUnitCommitment,
-) where {T <: PSY.HydroGen}
+    ::D,
+) where {T <: PSY.HydroGen, D <: AbstractHydroUnitCommitment}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
+            D(),
+            nothing,
             key,
             _make_initial_condition_active_power,
-            _get_duration_value,
+            _get_variable_initial_value,
             TimeStatusChange,
         )
     end
@@ -648,9 +654,11 @@ function storage_energy_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        EnergyVariable(),
         key,
         _make_initial_condition_reservoir_energy,
-        (x, y) -> get_variable_initial_value(EnergyVariable(), x, D()),
+        _get_variable_initial_value,
         StoredEnergy,
     )
 
@@ -666,9 +674,11 @@ function storage_energy_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        EnergyVariableUp(),
         key_up,
         _make_initial_condition_reservoir_energy_up,
-        (x, y) -> get_variable_initial_value(EnergyVariableUp(), x, D()),
+        _get_variable_initial_value,
         StoredEnergy,
     )
 
@@ -676,9 +686,11 @@ function storage_energy_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        EnergyVariableDown(),
         key_down,
         _make_initial_condition_reservoir_energy_down,
-        (x, y) -> get_variable_initial_value(EnergyVariableDown(), x, D()),
+        _get_variable_initial_value,
         StoredEnergy,
     )
 

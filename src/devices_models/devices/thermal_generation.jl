@@ -440,9 +440,11 @@ function status_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        OnVariable(),
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
-        (x, y) -> get_variable_initial_value(OnVariable(), x, D()),
+        _get_variable_initial_value,
     )
 
     return
@@ -456,9 +458,11 @@ function status_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        OnVariable(),
         ICKey(DeviceStatus, T),
         _make_initial_condition_status,
-        (x, y) -> get_variable_initial_value(OnVariable(), x, D()),
+        _get_variable_initial_value,
     )
 
     return
@@ -472,9 +476,11 @@ function output_initial_condition!(
     _make_initial_conditions!(
         optimization_container,
         devices,
+        D(),
+        ActivePowerVariable(),
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
-        (x, y) -> get_variable_initial_value(ActivePowerVariable(), x, D()),
+        _get_variable_initial_value,
     )
     return
 end
@@ -482,15 +488,17 @@ end
 function duration_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractThermalFormulation,
-) where {T <: PSY.ThermalGen}
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
+            D(),
+            nothing,
             key,
             _make_initial_condition_active_power,
-            _get_duration_value,
+            _get_variable_initial_value,
             TimeStatusChange,
         )
     end
@@ -501,15 +509,17 @@ end
 function duration_initial_condition!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::AbstractCompactUnitCommitment,
-) where {T <: PSY.ThermalGen}
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
+            D(),
+            nothing,
             key,
             _make_initial_condition_status,
-            _get_duration_value,
+            _get_variable_initial_value,
             TimeStatusChange,
         )
     end
