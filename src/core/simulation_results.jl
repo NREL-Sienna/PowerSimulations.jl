@@ -47,14 +47,13 @@ function ProblemResults(
 )
     name = Symbol(problem_name)
 
-    sys = nothing
     if load_system
-        file = joinpath(path, "problems", make_system_filename(problem_params.system_uuid))
-        if isfile(file)
-            sys = PSY.System(file, time_series_read_only = true)
-        else
-            @info "Skipping load of the system because it wasn't serialized"
-        end
+        sys = PSY.System(
+            joinpath(path, "problems", make_system_filename(problem_params.system_uuid)),
+            time_series_read_only = true,
+        )
+    else
+        sys = nothing
     end
 
     if results_output_path === nothing
@@ -638,11 +637,6 @@ function SimulationResults(path::AbstractString, execution = nothing; load_syste
         if !isdir(execution_path)
             error("Execution $execution not in the simulations results")
         end
-    end
-
-    status = deserialize_status(joinpath(execution_path, RESULTS_DIR))
-    if status != RunStatus.SUCCESSFUL
-        error("Results can only be read from a successful simulation: $status")
     end
 
     if !check_folder_integrity(execution_path)
