@@ -48,10 +48,6 @@ end
 
 function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
-        #file_path = "test_sim"
-        #isdir(file_path) && rm(file_path, recursive=true)
-        #mkpath(file_path)
-        #export_path="export_path"
         template_uc = get_template_hydro_st_uc()
         template_ed = get_template_hydro_st_ed()
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
@@ -311,6 +307,12 @@ function test_simulation_results(file_path::String, export_path)
         @test isempty(results)
 
         verify_export_results(results, export_path)
+
+        # Test that you can't read a failed simulation.
+        PSI.set_simulation_status!(sim, RunStatus.FAILED)
+        PSI.serialize_status(sim)
+        @test PSI.deserialize_status(sim) == RunStatus.FAILED
+        @test_throws ErrorException SimulationResults(sim)
     end
 end
 
