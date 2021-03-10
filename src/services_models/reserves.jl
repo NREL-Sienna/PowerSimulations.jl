@@ -47,8 +47,7 @@ function service_requirement_constraint!(
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps
-            param[name, t] =
-                PJ.add_parameter(optimization_container.JuMPmodel, ts_vector[t])
+            param[name, t] = add_parameter(optimization_container.JuMPmodel, ts_vector[t])
             multiplier[name, t] = 1.0
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
