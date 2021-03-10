@@ -241,6 +241,7 @@ export optimizer_with_attributes
 import MathOptInterface
 import ParameterJuMP
 import LinearAlgebra
+import JSON3
 import PowerSystems
 import InfrastructureSystems
 # so that users have access to IS.Results interfaces
