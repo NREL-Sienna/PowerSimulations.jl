@@ -33,7 +33,7 @@ using SCS
 import Aqua
 Aqua.test_unbound_args(PowerSimulations)
 Aqua.test_undefined_exports(PowerSimulations)
-#Aqua.test_ambiguities(PowerSimulations)
+Aqua.test_ambiguities(PowerSimulations)
 
 const PM = PowerModels
 const PSY = PowerSystems
@@ -52,7 +52,7 @@ include("test_utils/operations_problem_templates.jl")
 
 const LOG_FILE = "power-simulations-test.log"
 
-const DISABLED_TEST_FILES = ["test_device_branch_constructors.jl"]
+const DISABLED_TEST_FILES = []
 
 LOG_LEVELS = Dict(
     "Debug" => Logging.Debug,
