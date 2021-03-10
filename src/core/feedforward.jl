@@ -218,7 +218,7 @@ function ub_ff(
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
         value = JuMP.upper_bound(variable[name, 1])
-        param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
+        param_ub[name] = add_parameter(optimization_container.JuMPmodel, value)
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier_ub[name] = 1.0
         for t in time_steps
@@ -293,11 +293,11 @@ function range_ff(
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
-        param_lb[name] = PJ.add_parameter(
+        param_lb[name] = add_parameter(
             optimization_container.JuMPmodel,
             JuMP.lower_bound(variable[name, 1]),
         )
-        param_ub[name] = PJ.add_parameter(
+        param_ub[name] = add_parameter(
             optimization_container.JuMPmodel,
             JuMP.upper_bound(variable[name, 1]),
         )
@@ -388,7 +388,7 @@ function semicontinuousrange_ff(
         @debug "SemiContinuousFF" name ub_value lb_value
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier[name] = 1.0
-        param[name] = PJ.add_parameter(optimization_container.JuMPmodel, 1.0)
+        param[name] = add_parameter(optimization_container.JuMPmodel, 1.0)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
@@ -477,7 +477,7 @@ function integral_limit_ff(
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
-        param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
+        param_ub[name] = add_parameter(optimization_container.JuMPmodel, value)
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(

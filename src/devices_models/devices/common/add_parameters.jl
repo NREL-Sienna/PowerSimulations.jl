@@ -17,7 +17,7 @@ function include_parameters!(
     expr = get_expression(optimization_container, expression_name)
     for t in time_steps, r in constraint_infos
         param[get_component_name(r), t] =
-            PJ.add_parameter(optimization_container.JuMPmodel, r.timeseries[t])
+            add_parameter(optimization_container.JuMPmodel, r.timeseries[t])
         mult[get_component_name(r), t] = r.multiplier * multiplier
         add_to_expression!(
             expr,
@@ -45,7 +45,7 @@ function include_parameters!(
     mult = get_multiplier_array(container)
     for t in time_steps, r in constraint_infos
         param[get_component_name(r), t] =
-            PJ.add_parameter(optimization_container.JuMPmodel, r.timeseries[t])
+            add_parameter(optimization_container.JuMPmodel, r.timeseries[t])
         mult[get_component_name(r), t] = r.multiplier * multiplier
     end
     return container

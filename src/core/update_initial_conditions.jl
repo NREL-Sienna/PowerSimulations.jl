@@ -173,7 +173,7 @@ function _make_initial_conditions!(
         for (ix, dev) in enumerate(devices)
             val_ = get_val_func(dev, key, device_formulation, variable_type)
             val =
-                parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
+                parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             ini_conds[ix] = ic
             @debug "set initial condition" key ic val_
@@ -186,7 +186,7 @@ function _make_initial_conditions!(
             @debug "Setting $(key.ic_type) initial conditions device $(PSY.get_name(dev)) based on system data"
             val_ = get_val_func(dev, key, device_formulation, variable_type)
             val =
-                parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
+                parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             push!(ini_conds, ic)
             @debug "set initial condition" key ic val_
