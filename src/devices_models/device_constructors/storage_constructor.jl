@@ -354,9 +354,24 @@ function construct_device!(
         devices,
         EndOfPeriodEnergyTarget(),
     )
-    add_variables!(optimization_container, EnergyShortageVariable, devices, EndOfPeriodEnergyTarget())
-    add_variables!(optimization_container, EnergySurplusVariable, devices, EndOfPeriodEnergyTarget())
-    add_variables!(optimization_container, ReserveVariable, devices, EndOfPeriodEnergyTarget())
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        ReserveVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
     # Initial Conditions
     initial_conditions!(optimization_container, devices, EndOfPeriodEnergyTarget())
 
@@ -452,9 +467,24 @@ function construct_device!(
         devices,
         EndOfPeriodEnergyTarget(),
     )
-    add_variables!(optimization_container, EnergyShortageVariable, devices, EndOfPeriodEnergyTarget())
-    add_variables!(optimization_container, EnergySurplusVariable, devices, EndOfPeriodEnergyTarget())
-    add_variables!(optimization_container, ReserveVariable, devices, EndOfPeriodEnergyTarget())
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        ReserveVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
     # Initial Conditions
     initial_conditions!(optimization_container, devices, EndOfPeriodEnergyTarget())
 

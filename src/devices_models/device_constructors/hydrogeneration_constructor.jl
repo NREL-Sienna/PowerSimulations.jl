@@ -236,8 +236,18 @@ function construct_device!(
         devices,
         HydroDispatchReservoirStorage(),
     )
-    add_variables!(optimization_container, EnergyShortageVariable, devices, HydroDispatchReservoirStorage())
-    add_variables!(optimization_container, EnergySurplusVariable, devices, HydroDispatchReservoirStorage())
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        HydroDispatchReservoirStorage(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        HydroDispatchReservoirStorage(),
+    )
 
     # Initial Conditions
     storage_energy_init(optimization_container, devices)
@@ -302,8 +312,18 @@ function construct_device!(
         devices,
         HydroDispatchReservoirStorage(),
     )
-    add_variables!(optimization_container, EnergyShortageVariable, devices, HydroDispatchReservoirStorage())
-    add_variables!(optimization_container, EnergySurplusVariable, devices, HydroDispatchReservoirStorage())
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        HydroDispatchReservoirStorage(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        HydroDispatchReservoirStorage(),
+    )
 
     # Initial Conditions
     storage_energy_init(optimization_container, devices)
@@ -586,8 +606,18 @@ function construct_device!(
         devices,
         HydroCommitmentReservoirStorage(),
     )
-    add_variables!(optimization_container, EnergyShortageVariable, devices, HydroCommitmentReservoirStorage())
-    add_variables!(optimization_container, EnergySurplusVariable, devices, HydroCommitmentReservoirStorage())
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        HydroCommitmentReservoirStorage(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        HydroCommitmentReservoirStorage(),
+    )
     # Constraints
     add_constraints!(
         optimization_container,
@@ -676,8 +706,18 @@ function construct_device!(
         devices,
         HydroCommitmentReservoirStorage(),
     )
-    add_variables!(optimization_container, EnergyShortageVariable, devices, HydroCommitmentReservoirStorage())
-    add_variables!(optimization_container, EnergySurplusVariable, devices, HydroCommitmentReservoirStorage())
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        HydroCommitmentReservoirStorage(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        HydroCommitmentReservoirStorage(),
+    )
     # Constraints
     add_constraints!(
         optimization_container,
