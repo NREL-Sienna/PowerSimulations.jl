@@ -536,7 +536,8 @@ end
 function _build_problems!(sim::Simulation, serialize)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
         @info("Building problem $(problem_number)-$(problem_name)")
-        problem_chronology = get_problem_interval_chronology(get_sequence(sim), problem_name)
+        problem_chronology =
+            get_problem_interval_chronology(get_sequence(sim), problem_name)
         initial_time = get_initial_time(sim)
         set_initial_time!(problem, initial_time)
         output_dir = joinpath(get_problems_dir(sim))
