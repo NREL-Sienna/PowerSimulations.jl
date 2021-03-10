@@ -194,7 +194,7 @@ function construct_service!(
 
     absolute_value_lift(optimization_container, areas)
     frequency_response_constraint!(optimization_container, sys)
-    area_control_init(optimization_container, services)
+    area_control_initial_condition!(optimization_container, services, T())
     smooth_ace_pid!(optimization_container, services)
     aux_constraints!(optimization_container, sys)
 end
