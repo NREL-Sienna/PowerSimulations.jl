@@ -201,26 +201,6 @@ function _make_initial_conditions!(
     return
 end
 
-function area_control_initial_condition!(
-    optimization_container::OptimizationContainer,
-    services::Vector{PSY.AGC},
-    ::D,
-) where {D <: AbstractAGCFormulation}
-    key = ICKey(AreaControlError, PSY.AGC)
-    _make_initial_conditions!(
-        optimization_container,
-        services,
-        D(),
-        nothing,
-        key,
-        _make_initial_condition_area_control,
-        _get_variable_initial_value,
-        # Doesn't require Cache
-    )
-
-    return
-end
-
 function _make_initial_condition_active_power(
     container,
     device::T,
@@ -310,15 +290,6 @@ function _get_variable_initial_value(
     ::Nothing,
 )
     return _get_duration_value(d, key)
-end
-
-function _get_variable_initial_value(
-    d::PSY.Component,
-    key::ICKey,
-    ::AbstractAGCFormulation,
-    ::Nothing,
-)
-    return _get_ace_error(d, key)
 end
 
 function _get_ace_error(device, key)
