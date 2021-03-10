@@ -112,6 +112,13 @@ function write_data(
     return
 end
 
+#Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
+function add_parameter(model::JuMP.Model, val::Number)
+    param = JuMP.@variable(model, variable_type = PJ.Param())
+    PJ.set_value(param, val)
+    return param
+end
+
 function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
