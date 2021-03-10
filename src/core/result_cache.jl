@@ -47,8 +47,8 @@ end
 """
 Return true if the data for `timestamp` is stored in cache.
 """
-function is_cached(cache::ResultCache, type, name, stage, timestamp)
-    return is_cached(cache, make_cache_key(stage, type, name), timestamp)
+function is_cached(cache::ResultCache, type, name, problem, timestamp)
+    return is_cached(cache, make_cache_key(problem, type, name), timestamp)
 end
 
 is_cached(cache::ResultCache, key, timestamp) = has_timestamp(cache.data[key], timestamp)
@@ -68,8 +68,8 @@ end
 Read the result from cache. Callers must first call [`is_cached`](@ref) to check if the
 timestamp is present.
 """
-function read_result(cache::ResultCache, stage, type, name, timestamp)
-    return read_result(cache, make_cache_key(stage, type, name), timestamp)
+function read_result(cache::ResultCache, problem, type, name, timestamp)
+    return read_result(cache, make_cache_key(problem, type, name), timestamp)
 end
 
 read_result(cache::ResultCache, key, timestamp) = cache.data[key].data[timestamp]

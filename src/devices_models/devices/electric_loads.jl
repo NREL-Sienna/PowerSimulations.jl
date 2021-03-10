@@ -8,29 +8,30 @@ struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### ElectricLoad ####################################
 
-get_variable_sign(_, ::Type{<:PSY.ElectricLoad}) = -1.0
-get_variable_sign(_, ::Type{<:PSY.InterruptibleLoad}) = 1.0
+get_variable_sign(_, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = -1.0
+get_variable_sign(_, ::Type{<:PSY.InterruptibleLoad}, ::AbstractLoadFormulation) = 1.0
+
 ########################### ActivePowerVariable, ElectricLoad ####################################
 
-get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = false
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
 
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_active
 
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = 0.0
-get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, _) = PSY.get_active_power(d)
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_active_power(d)
 
 ########################### ReactivePowerVariable, ElectricLoad ####################################
 
-get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}) = false
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
 
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_reactive
 
-get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, _) = 0.0
-get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, _) = PSY.get_reactive_power(d)
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
+get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_reactive_power(d)
 
 ########################### ReactivePowerVariable, ElectricLoad ####################################
 
-get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}) = true
+get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = true
 
 #! format: on
 

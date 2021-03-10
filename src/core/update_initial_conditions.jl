@@ -52,6 +52,15 @@ function calculate_ic_quantity(
     return current_status
 end
 
+function _get_active_power_limits(dev::T) where {T <: PSY.ThermalGen}
+    min_power = PSY.get_active_power_limits(dev).min
+    return min_power
+end
+
+function _get_active_power_limits(dev::PSY.ThermalMultiStart)
+    return 0.0
+end
+
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
     ic::InitialCondition,
@@ -62,7 +71,7 @@ function calculate_ic_quantity(
     cache = get_cache(simulation_cache, TimeStatusChange, T)
     # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
     dev = get_device(ic)
-    min_power = PSY.get_active_power_limits(dev).min
+    min_power = _get_active_power_limits(dev)
     if cache === nothing
         # Transitions can't be calculated without cache
         status_change_to_on =
@@ -212,6 +221,21 @@ function status_init(
     return
 end
 
+function status_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.ThermalMultiStart}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        ICKey(DeviceStatus, T),
+        _make_initial_condition_status,
+        _get_status_value,
+    )
+
+    return
+end
+
 function output_init(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -249,6 +273,24 @@ function duration_init(
             devices,
             key,
             _make_initial_condition_active_power,
+            _get_duration_value,
+            TimeStatusChange,
+        )
+    end
+
+    return
+end
+
+function duration_init(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.ThermalMultiStart}
+    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+        _make_initial_conditions!(
+            optimization_container,
+            devices,
+            key,
+            _make_initial_condition_status,
             _get_duration_value,
             TimeStatusChange,
         )
@@ -395,6 +437,15 @@ function _make_initial_condition_active_power(
     return InitialCondition(device, _get_ref_active_power(T, container), value, cache)
 end
 
+function _make_initial_condition_status(
+    container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T <: PSY.Component}
+    return InitialCondition(device, _get_ref_on_status(T, container), value, cache)
+end
+
 function _make_initial_condition_energy(
     container,
     device::T,
@@ -470,7 +521,10 @@ function _get_active_power_output_above_min_value(device, key)
         return 0.0
     end
     power_above_min = PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
-    @assert power_above_min >= -ABSOLUTE_TOLERANCE
+    if power_above_min >= -ABSOLUTE_TOLERANCE
+        @warn "$(get_name(device)) Power initial condition is invalid. Set to 0.0. This can make the simulation infeasible"
+        power_above_min = 0.0
+    end
     return power_above_min
 end
 
@@ -513,6 +567,17 @@ function _get_ref_active_power(
         return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
     else
         return UpdateRef{T}(ACTIVE_POWER, "active_power")
+    end
+end
+
+function _get_ref_on_status(
+    ::Type{T},
+    container::InitialConditions,
+) where {T <: PSY.Component}
+    if get_use_parameters(container)
+        return UpdateRef{JuMP.VariableRef}(T, ON)
+    else
+        return UpdateRef{T}(ON, "On")
     end
 end
 

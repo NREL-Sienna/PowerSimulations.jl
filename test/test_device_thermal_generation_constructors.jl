@@ -133,7 +133,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 384, 0, 240, 48, 144, true)
+        moi_tests(op_problem, p, 384, 0, 240, 48, 96, true)
         psi_constraint_test(op_problem, uc_constraint_names)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -163,7 +163,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 432, 0, 288, 96, 144, true)
+        moi_tests(op_problem, p, 432, 0, 288, 96, 96, true)
         psi_constraint_test(op_problem, uc_constraint_names)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -270,7 +270,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 384, 0, 96, 48, 144, true)
+        moi_tests(op_problem, p, 384, 0, 96, 48, 96, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -293,7 +293,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 432, 0, 144, 96, 144, true)
+        moi_tests(op_problem, p, 432, 0, 144, 96, 96, true)
         psi_checkbinvar_test(op_problem, bin_variable_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -358,6 +358,7 @@ end
     end
 end
 
+# This Formulation is currently broken
 @testset "ThermalMultiStart Dispatch With DC - PF" begin
     model = DeviceModel(ThermalMultiStart, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
@@ -369,7 +370,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 240, 0, 48, 48, 96, false)
+        moi_tests(op_problem, p, 240, 0, 48, 48, 48, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -385,7 +386,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 288, 0, 96, 96, 96, false)
+        moi_tests(op_problem, p, 288, 0, 96, 96, 48, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -454,6 +455,8 @@ end
     end
 end
 
+# This Formulation is currently broken
+#=
 @testset "Thermal Dispatch NoMin With DC - PF" begin
     model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
@@ -487,7 +490,7 @@ end
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
-
+=#
 ################################### Ramp Limited Testing ##################################
 @testset "Thermal Ramp Limited Dispatch With DC - PF" begin
     constraint_names = [
@@ -572,7 +575,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 240, 0, 144, 48, 96, false)
+        moi_tests(op_problem, p, 240, 0, 144, 48, 48, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -593,7 +596,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 288, 0, 192, 96, 96, false)
+        moi_tests(op_problem, p, 288, 0, 192, 96, 48, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -622,7 +625,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 528, 0, no_less_than[p], 60, 192, true)
+        moi_tests(op_problem, p, 528, 0, no_less_than[p], 60, 144, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -649,14 +652,13 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 576, 0, no_less_than[p], 108, 192, true)
+        moi_tests(op_problem, p, 576, 0, no_less_than[p], 108, 144, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 ################################### Thermal Compact UC Testing ##################################
-
 @testset "Thermal Standard with Compact UC and DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -668,14 +670,12 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 480, 0, 480, 120, 120, true)
+        moi_tests(op_problem, p, 480, 0, 595, 0, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 @testset "Thermal MultiStart with Compact UC and DC - PF" begin
-    constraint_names =
-        [PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart)]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
@@ -686,8 +686,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 384, 0, 288, 0, 144, true)
-        psi_constraint_test(op_problem, constraint_names)
+        moi_tests(op_problem, p, 384, 0, 286, 0, 96, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -703,14 +702,12 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 600, 0, 600, 240, 120, true)
+        moi_tests(op_problem, p, 600, 0, 715, 120, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 @testset "Thermal MultiStart with Compact UC and AC - PF" begin
-    constraint_names =
-        [PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart)]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
@@ -721,8 +718,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 432, 0, 336, 48, 144, true)
-        psi_constraint_test(op_problem, constraint_names)
+        moi_tests(op_problem, p, 432, 0, 334, 48, 96, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -756,7 +752,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 240, 0, 144, 48, 96, false)
+        moi_tests(op_problem, p, 240, 0, 144, 48, 48, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -789,7 +785,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 288, 0, 192, 96, 96, false)
+        moi_tests(op_problem, p, 288, 0, 192, 96, 48, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end

@@ -65,11 +65,11 @@ struct SimulationStoreParams
     initial_time::Dates.DateTime
     step_resolution::Dates.Period
     num_steps::Int
-    # The key order is the stage execution order.
-    stages::OrderedDict{Symbol, SimulationStoreProblemParams}
+    # The key order is the problem execution order.
+    problems::OrderedDict{Symbol, SimulationStoreProblemParams}
 
-    function SimulationStoreParams(initial_time, step_resolution, num_steps, stages)
-        new(initial_time, Dates.Millisecond(step_resolution), num_steps, stages)
+    function SimulationStoreParams(initial_time, step_resolution, num_steps, problems)
+        new(initial_time, Dates.Millisecond(step_resolution), num_steps, problems)
     end
 end
 
@@ -92,4 +92,4 @@ function SimulationStoreParams()
 end
 
 get_initial_time(store_params::SimulationStoreParams) = store_params.initial_time
-get_stages(store_params::SimulationStoreParams) = store_params.stages
+get_problems(store_params::SimulationStoreParams) = store_params.problems

@@ -380,12 +380,15 @@ function _assign_feedforward_chronologies(sim::Simulation)
     # JDNOTE: this is limiting since it only allows updating from one problem
     for (key, chron) in get_sequence(sim).feedforward_chronologies
         destination_problem = problems[key.second]
-        destination_problem_interval = get_interval(sequence, key.second)
+        destination_problem_interval_ = get_interval(sequence, key.second)
+        destination_problem_interval =
+            IS.time_period_conversion(destination_problem_interval_)
         source_problem = problems[key.first]
         source_problem_number = get_simulation_number(source_problem)
         sim_info = get_simulation_info(destination_problem)
         sim_info.chronolgy_dict[source_problem_number] = chron
-        source_problem_resolution = PSY.get_time_series_resolution(source_problem.sys)
+        source_problem_resolution_ = PSY.get_time_series_resolution(source_problem.sys)
+        source_problem_resolution = IS.time_period_conversion(source_problem_resolution_)
         execution_wait_count = Int(source_problem_resolution / destination_problem_interval)
         set_execution_wait_count!(get_trigger(chron), execution_wait_count)
         initialize_trigger_count!(get_trigger(chron))
@@ -666,7 +669,7 @@ function initial_condition_update!(
     for ic in initial_conditions
         name = device_name(ic)
         interval_chronology =
-            get_problem_interval_chronology(sim.sequence, get_problem_name(sim, problem))
+            get_problem_interval_chronology(sim.sequence, get_name(problem))
         var_value = get_problem_variable(
             interval_chronology,
             (problem => problem),
@@ -683,7 +686,7 @@ function initial_condition_update!(
             get_resolution(problem),
         )
         previous_value = get_condition(ic)
-        PJ.fix(ic.value, quantity)
+        PJ.set_value(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
@@ -733,7 +736,7 @@ function initial_condition_update!(
         quantity =
             calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
         previous_value = get_condition(ic)
-        PJ.fix(ic.value, quantity)
+        PJ.set_value(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
@@ -852,7 +855,7 @@ function update_parameter!(
         component_name = PSY.get_name(d)
         for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
             value = ts_vector[ix]
-            JuMP.fix(val, value)
+            JuMP.set_value(val, value)
         end
     end
 
@@ -887,7 +890,7 @@ function update_parameter!(
             ignore_scaling_factors = true,
         )
         for (jx, value) in enumerate(ts_vector)
-            JuMP.fix(get_parameter_array(container)[ix, jx], value)
+            JuMP.set_value(get_parameter_array(container)[ix, jx], value)
         end
     end
 
@@ -1035,7 +1038,6 @@ function _execute!(
     num_executions = steps * length(execution_order)
     store_params =
         _initialize_problem_storage!(sim, store, cache_size_mib, min_cache_flush_size_mib)
-    initialize_optimizer_stats_storage!(store, num_executions)
     status = RunStatus.RUNNING
     if exports !== nothing
         if !(exports isa SimulationResultsExport)
@@ -1274,7 +1276,7 @@ end
 
 struct SimulationSerializationWrapper
     steps::Int
-    problems::Dict{Symbol, ProblemSerializationWrapper}
+    problems::Vector{Symbol}
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
@@ -1300,7 +1302,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     else
         directory = path
     end
-    problems = Dict{Symbol, ProblemSerializationWrapper}()
+    problems = get_problem_names(get_problems(sim))
 
     orig = pwd()
     if !isempty(readdir(directory)) && !force
@@ -1312,31 +1314,6 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     end
     rm(directory, recursive = true, force = true)
     mkdir(directory)
-    cd(directory)
-
-    # The problems are already serialized in the problems folder we should reload them from there
-    try
-        for (key, problem) in get_problems(sim)
-            if problem.internal === nothing
-                throw(
-                    ArgumentError("problem $(problem.internal.number) has not been built"),
-                )
-            end
-            sys_filename = "system-$(IS.get_uuid(problem.sys)).json"
-            # Skip serialization if multiple problems have the same system.
-            if !ispath(sys_filename)
-                PSY.to_json(problem.sys, sys_filename)
-            end
-            problems[key] = ProblemSerializationWrapper(
-                problem.template,
-                sys_filename,
-                problem.internal.optimization_container.settings_copy,
-                typeof(problem),
-            )
-        end
-    finally
-        cd(orig)
-    end
 
     filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
     obj = SimulationSerializationWrapper(
@@ -1357,6 +1334,7 @@ function deserialize_model(
     directory::AbstractString,
     problem_info::Dict,
 )
+    error("deserialization of a Simulation is not currently supported")
     orig = pwd()
     cd(directory)
 
@@ -1374,16 +1352,9 @@ function deserialize_model(
         end
 
         problems = Dict{Symbol, OperationsProblem{<:AbstractOperationsProblem}}()
-        for (key, wrapper) in obj.problems
-            sys_filename = wrapper.sys
-            if !ispath(sys_filename)
-                throw(
-                    ArgumentError(
-                        "problem PowerSystems serialized file $sys_filename does not exist",
-                    ),
-                )
-            end
-            sys = PSY.System(sys_filename)
+        for name in obj.problems
+            problem =
+                deserialize_problem(OperationsProblem, joinpath("problems", "$(name).bin"))
             if !haskey(problem_info[key], "optimizer")
                 throw(ArgumentError("problem_info must define 'optimizer'"))
             end

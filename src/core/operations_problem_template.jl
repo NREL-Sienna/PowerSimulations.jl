@@ -80,7 +80,7 @@ function set_service_model!(
     formulation::Type{<:AbstractServiceFormulation},
 )
     set_service_model!(
-        template.services,
+        template,
         service_name,
         ServiceModel(service_type, formulation, use_service_name = true),
     )
@@ -95,7 +95,7 @@ function set_service_model!(
     service_type::Type{<:PSY.Service},
     formulation::Type{<:AbstractServiceFormulation},
 )
-    set_service_model!(template.services, ServiceModel(service_type, formulation))
+    set_service_model!(template, ServiceModel(service_type, formulation))
     return
 end
 
