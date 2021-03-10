@@ -357,6 +357,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
+    parameters = [true, false]
     # TODO: add model specific constraints to this list. Voltages, etc.
     constraint_names = [
         PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
@@ -373,13 +374,13 @@ end
         c_sys14_dc => [3696, 96, 672, 672, 2472],
     )
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
-    for network in networks, sys in systems
+    for network in networks, sys in systems, p in parameters
         template = get_thermal_dispatch_template_network(network)
         ps_model = OperationsProblem(
             template,
             sys;
             optimizer = fast_ipopt_optimizer,
-            use_parameters = true,
+            use_parameters = p,
         )
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
@@ -405,6 +406,7 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
+    parameters = [true, false]
     # TODO: add model specific constraints to this list. Bi-direccional flows etc
     constraint_names = [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
     test_obj_values = IdDict{System, Float64}(
@@ -423,13 +425,13 @@ end
         c_sys14_dc => [3264, 96, 672, 672, 2472],
     )
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
-    for network in networks, sys in systems
+    for network in networks, sys in systems, p in parameters
         template = get_thermal_dispatch_template_network(network)
         ps_model = OperationsProblem(
             template,
             sys;
             optimizer = ipopt_optimizer,
-            use_parameters = true,
+            use_parameters = p,
         )
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
