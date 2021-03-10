@@ -13,6 +13,7 @@ struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
+get_variable_sign(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active

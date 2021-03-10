@@ -3,6 +3,7 @@ struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables #########################################
 
+get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
 ############################### ActiveServiceVariable, Reserve #########################################
 
 get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false

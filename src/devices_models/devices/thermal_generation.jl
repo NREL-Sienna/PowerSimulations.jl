@@ -18,9 +18,9 @@ struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
+get_variable_sign(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
 ############## ActivePowerVariable, ThermalGen ####################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
-
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_active
 get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
 get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
