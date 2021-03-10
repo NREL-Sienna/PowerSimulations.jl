@@ -536,11 +536,12 @@ end
 function _build_problems!(sim::Simulation, serialize)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
         @info("Building problem $(problem_number)-$(problem_name)")
-        problem_interval = get_interval(get_sequence(sim), problem_name)
+        problem_chronology = get_problem_interval_chronology(get_sequence(sim), problem_name)
         initial_time = get_initial_time(sim)
         set_initial_time!(problem, initial_time)
         output_dir = joinpath(get_problems_dir(sim))
         set_output_dir!(problem, output_dir)
+        initialize_simulation_info!(problem, problem_chronology)
         problem_build_status = _build!(problem, serialize)
         if problem_build_status != BuildStatus.BUILT
             error("Problem $(problem_name) failed to build succesfully")
@@ -628,7 +629,6 @@ function build!(
             )
         end
         file_mode = "w"
-        # TODO: need a different log file for build vs execute
         logger = configure_logging(sim.internal, file_mode)
         register_recorders!(sim.internal, file_mode)
         try
@@ -781,13 +781,13 @@ function update_cache!(
             c.value[name][:series][t + 1] = device_status
             if c.value[name][:status] == device_status
                 c.value[name][:count] += increment
-                @debug(
+                @info(
                     "Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])"
                 )
             else
                 c.value[name][:count] = increment
                 c.value[name][:status] = device_status
-                @debug(
+                @info(
                     "Cache value TimeStatus for device $name set to $device_status and count to 1.0"
                 )
             end
