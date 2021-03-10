@@ -89,11 +89,11 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
         optimization_container.JuMPmodel = JuMPmodel
     end
     if get_optimizer_log_print(settings)
-        @debug "optimizer set to silent"
-        JuMP.set_silent(optimization_container.JuMPmodel)
-    else
         JuMP.unset_silent(optimization_container.JuMPmodel)
         @debug "optimizer unset to silent"
+    else
+        JuMP.set_silent(optimization_container.JuMPmodel)
+        @debug "optimizer set to silent"
     end
     return
 end

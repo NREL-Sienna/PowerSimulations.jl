@@ -331,12 +331,6 @@ function build_pre_step!(problem::OperationsProblem)
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
         system = get_system(problem)
-        if built_for_simulation(problem)
-            resolution = get_resolution(problem)
-            interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
-            end_of_interval_step = Int(interval / resolution)
-            get_simulation_info(problem).end_of_interval_step = end_of_interval_step
-        end
         @info "Initializing Optimization Container"
         template = get_template(problem)
         optimization_container_init!(
@@ -347,6 +341,20 @@ function build_pre_step!(problem::OperationsProblem)
         set_status!(problem, BuildStatus.IN_PROGRESS)
     end
     return
+end
+
+function initialize_simulation_info!(problem::OperationsProblem, ::FeedForwardChronology)
+    @assert built_for_simulation(problem)
+    system = get_system(problem)
+    resolution = get_resolution(problem)
+    interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
+    end_of_interval_step = Int(interval / resolution)
+    get_simulation_info(problem).end_of_interval_step = end_of_interval_step
+end
+
+function initialize_simulation_info!(problem::OperationsProblem, ::RecedingHorizon)
+    @assert built_for_simulation(problem)
+    get_simulation_info(problem).end_of_interval_step = 1
 end
 
 function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serialize::Bool)
