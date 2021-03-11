@@ -2,6 +2,8 @@
 const _PROGRESS_METER_ENABLED =
     !(isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true"))
 
+const RESULTS_DIR = "results"
+
 mutable struct SimulationInternal
     sim_files_dir::String
     store_dir::String
@@ -53,7 +55,7 @@ function SimulationInternal(
     logs_dir = joinpath(simulation_dir, "logs")
     models_dir = joinpath(simulation_dir, "problems")
     recorder_dir = joinpath(simulation_dir, "recorder")
-    results_dir = joinpath(simulation_dir, "results")
+    results_dir = joinpath(simulation_dir, RESULTS_DIR)
 
     for path in (
         simulation_dir,
@@ -536,11 +538,13 @@ end
 function _build_problems!(sim::Simulation, serialize)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
         @info("Building problem $(problem_number)-$(problem_name)")
-        problem_interval = get_interval(get_sequence(sim), problem_name)
+        problem_chronology =
+            get_problem_interval_chronology(get_sequence(sim), problem_name)
         initial_time = get_initial_time(sim)
         set_initial_time!(problem, initial_time)
         output_dir = joinpath(get_problems_dir(sim))
         set_output_dir!(problem, output_dir)
+        initialize_simulation_info!(problem, problem_chronology)
         problem_build_status = _build!(problem, serialize)
         if problem_build_status != BuildStatus.BUILT
             error("Problem $(problem_name) failed to build succesfully")
@@ -628,7 +632,6 @@ function build!(
             )
         end
         file_mode = "w"
-        # TODO: need a different log file for build vs execute
         logger = configure_logging(sim.internal, file_mode)
         register_recorders!(sim.internal, file_mode)
         try
@@ -1018,6 +1021,7 @@ function execute!(sim::Simulation; kwargs...)
         close(logger)
     end
     compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+    serialize_status(sim)
     return get_simulation_status(sim)
 end
 
@@ -1325,7 +1329,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
         get_name(sim),
     )
     Serialization.serialize(filename, obj)
-    @info "Serialized simulation" get_name(sim) directory
+    @info "Serialized simulation name = $(get_name(sim))" directory
     return directory
 end
 
@@ -1380,4 +1384,31 @@ function deserialize_model(
     finally
         cd(orig)
     end
+end
+
+function serialize_status(sim::Simulation)
+    data = Dict("run_status" => string(get_simulation_status(sim)))
+    filename = joinpath(get_results_dir(sim), "status.json")
+    open(filename, "w") do io
+        JSON3.write(io, data)
+    end
+
+    return
+end
+
+function deserialize_status(sim::Simulation)
+    return deserialize_status(get_results_dir(sim))
+end
+
+function deserialize_status(results_path::AbstractString)
+    filename = joinpath(results_path, "status.json")
+    if !isfile(filename)
+        error("run status file $filename does not exist")
+    end
+
+    data = open(filename, "r") do io
+        JSON3.read(io, Dict)
+    end
+
+    return get_enum_value(RunStatus, data["run_status"])
 end

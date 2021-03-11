@@ -34,6 +34,7 @@ get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = :
 
 get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
+get_variable_initial_value(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
 
 ############## ReserveVariable, Storage ####################
 
@@ -181,9 +182,31 @@ end
 function initial_conditions!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
-    ::AbstractStorageFormulation,
+    formulation::AbstractStorageFormulation,
 ) where {St <: PSY.Storage}
-    storage_energy_init(optimization_container, devices)
+    storage_energy_initial_condition!(optimization_container, devices, formulation)
+    return
+end
+
+######################### Initialize Functions for Storage #################################
+# TODO: This IC needs a cache for Simulation over long periods of tim
+function storage_energy_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::D,
+) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
+    key = ICKey(EnergyLevel, T)
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        D(),
+        EnergyVariable(),
+        key,
+        _make_initial_condition_energy,
+        _get_variable_initial_value,
+        StoredEnergy,
+    )
+
     return
 end
 

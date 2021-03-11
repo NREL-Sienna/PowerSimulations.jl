@@ -1,86 +1,3 @@
-mutable struct UpdateTrigger
-    execution_wait_count::Int
-    current_count::Int
-end
-
-function set_execution_wait_count!(trigger::UpdateTrigger, val::Int)
-    trigger.execution_wait_count = val
-    return
-end
-
-function update_count!(trigger::UpdateTrigger)
-    trigger.current_count += 1
-    return
-end
-
-function trigger_update(trigger::UpdateTrigger)
-    return trigger.current_count == trigger.execution_wait_count
-end
-
-function reset_trigger_count!(trigger::UpdateTrigger)
-    trigger.current_count = 0
-    return
-end
-
-function initialize_trigger_count!(trigger::UpdateTrigger)
-    trigger.current_count = trigger.execution_wait_count
-    return
-end
-
-function get_execution_wait_count(trigger::UpdateTrigger)
-    return trigger.execution_wait_count
-end
-
-############################ Chronologies For FeedForward ###################################
-@doc raw"""
-    Synchronize(periods::Int)
-Defines the co-ordination of time between Two problems.
-
-# Arguments
-- `periods::Int`: Number of time periods to grab data from
-"""
-mutable struct Synchronize <: FeedForwardChronology
-    periods::Int
-    current::Int
-    trigger::UpdateTrigger
-    function Synchronize(; periods)
-        new(periods, 0, UpdateTrigger(-1, -1))
-    end
-end
-# TODO: Add DocString
-"""
-    RecedingHorizon(period::Int)
-"""
-mutable struct RecedingHorizon <: FeedForwardChronology
-    periods::Int
-    trigger::UpdateTrigger
-    function RecedingHorizon(; periods::Int = 1)
-        new(periods, UpdateTrigger(-1, -1))
-    end
-end
-
-mutable struct Consecutive <: FeedForwardChronology
-    trigger::UpdateTrigger
-    function Consecutive()
-        new(UpdateTrigger(-1, -1))
-    end
-end
-
-mutable struct FullHorizon <: FeedForwardChronology
-    trigger::UpdateTrigger
-    function FullHorizon()
-        new(UpdateTrigger(-1, -1))
-    end
-end
-
-mutable struct Range <: FeedForwardChronology
-    range::UnitRange{Int}
-    trigger::UpdateTrigger
-    function Range(; range::UnitRange{Int})
-        new(range, UpdateTrigger(-1, -1))
-    end
-end
-
 function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
     source_problem = get_problems(sim)[key.first]
     destination_problem = get_problems(sim)[key.second]
@@ -301,7 +218,7 @@ function ub_ff(
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
         value = JuMP.upper_bound(variable[name, 1])
-        param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
+        param_ub[name] = add_parameter(optimization_container.JuMPmodel, value)
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier_ub[name] = 1.0
         for t in time_steps
@@ -376,11 +293,11 @@ function range_ff(
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
-        param_lb[name] = PJ.add_parameter(
+        param_lb[name] = add_parameter(
             optimization_container.JuMPmodel,
             JuMP.lower_bound(variable[name, 1]),
         )
-        param_ub[name] = PJ.add_parameter(
+        param_ub[name] = add_parameter(
             optimization_container.JuMPmodel,
             JuMP.upper_bound(variable[name, 1]),
         )
@@ -471,7 +388,7 @@ function semicontinuousrange_ff(
         @debug "SemiContinuousFF" name ub_value lb_value
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier[name] = 1.0
-        param[name] = PJ.add_parameter(optimization_container.JuMPmodel, 1.0)
+        param[name] = add_parameter(optimization_container.JuMPmodel, 1.0)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
@@ -527,9 +444,7 @@ The Parameters are initialized using the upper boundary values of the provided v
 # LaTeX
 
 `` \sum_{t} x \leq param^{max}``
-TO DO: New formulation when DataStore available
 `` \sum_{t} x * DeltaT_lower \leq param^{max} * DeltaT_upper ``
-TO DO: New formulation when Commitment is considered: SemiContinuousFF
     `` P_LL - P_max * ON_upper <= 0.0 ``
     `` P_LL - P_min * ON_upper >= 0.0 ``
 
@@ -560,7 +475,7 @@ function integral_limit_ff(
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
-        param_ub[name] = PJ.add_parameter(optimization_container.JuMPmodel, value)
+        param_ub[name] = add_parameter(optimization_container.JuMPmodel, value)
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
