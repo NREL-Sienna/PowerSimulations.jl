@@ -47,13 +47,14 @@ function ProblemResults(
 )
     name = Symbol(problem_name)
 
+    sys = nothing
     if load_system
-        sys = PSY.System(
-            joinpath(path, "problems", make_system_filename(problem_params.system_uuid)),
-            time_series_read_only = true,
-        )
-    else
-        sys = nothing
+        file = joinpath(path, "problems", make_system_filename(problem_params.system_uuid))
+        if isfile(file)
+            sys = PSY.System(file, time_series_read_only = true)
+        else
+            @info "Skipping load of the system because it wasn't serialized"
+        end
     end
 
     if results_output_path === nothing
@@ -617,10 +618,20 @@ struct SimulationResults <: PSIResults
 end
 
 """
-Construct SimulationResults from a path and optionally an execution number.
-By default, choose the latest execution.
+Construct SimulationResults from a simulation output directory.
+
+# Arguments
+- `path::AbstractString`: Simulation output directory
+- `execution::AbstractString`: Execution number. Default is the most recent.
+- `load_systems::Bool`: If true, load all systems from serialized files.
+- `ignore_status::Bool`: If true, return results even if the simulation failed.
 """
-function SimulationResults(path::AbstractString, execution = nothing; load_systems = true)
+function SimulationResults(
+    path::AbstractString,
+    execution = nothing;
+    load_systems = true,
+    ignore_status = false,
+)
     # path will be either the execution_path or the directory containing all executions.
     contents = readdir(path)
     if "data_store" in contents
@@ -636,6 +647,17 @@ function SimulationResults(path::AbstractString, execution = nothing; load_syste
         execution_path = joinpath(path, string(execution))
         if !isdir(execution_path)
             error("Execution $execution not in the simulations results")
+        end
+    end
+
+    status = deserialize_status(joinpath(execution_path, RESULTS_DIR))
+    if status != RunStatus.SUCCESSFUL
+        if ignore_status
+            @warn "Simulation was not successful: $status. Results may not be valid."
+        else
+            error(
+                "Simulation was not successful: status = $status. Set ignore_status = true to override.",
+            )
         end
     end
 
