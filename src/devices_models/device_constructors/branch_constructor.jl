@@ -175,6 +175,34 @@ function construct_device!(
     ::Type{S},
 ) where {
     B <: PSY.DCBranch,
+    U <: Union{HVDCLossless, HVDCUnbounded},
+    S <: Union{StandardPTDFModel, PTDFPowerModel},
+}
+    devices = get_available_components(B, sys)
+    if !validate_available_devices(B, devices)
+        return
+    end
+
+    add_variables!(optimization_container, FlowActivePowerVariable, devices, U())
+    add_variable_to_expression!(optimization_container, devices, model, S)
+    branch_rate_constraints!(
+        optimization_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    return
+end
+
+
+function construct_device!(
+    optimization_container::OptimizationContainer,
+    sys::PSY.System,
+    model::DeviceModel{B, U},
+    ::Type{S},
+) where {
+    B <: PSY.DCBranch,
     U <: AbstractDCLineFormulation,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
@@ -183,7 +211,8 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, S, devices, U())
+    add_variables!(optimization_container, FlowActivePowerFromToVariable, devices, U())
+    add_variables!(optimization_container, FlowActivePowerToFromVariable, devices, U())
 
     branch_rate_constraints!(
         optimization_container,
@@ -194,52 +223,3 @@ function construct_device!(
     )
     return
 end
-
-#=
-function construct_device!(
-    optimization_container::OptimizationContainer,
-    sys::PSY.System,
-    model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
-    ::Type{S},
-) where {S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(PSY.MonitoredLine, sys)
-    if !validate_available_devices(PSY.MonitoredLine, devices)
-        return
-    end
-    branch_flow_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    return
-end
-
-function construct_device!(
-    optimization_container::OptimizationContainer,
-    sys::PSY.System,
-    model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
-    ::Type{S},
-) where {S <: PM.AbstractPowerModel}
-    devices = get_available_components(PSY.MonitoredLine, sys)
-    if !validate_available_devices(PSY.MonitoredLine, devices)
-        return
-    end
-    branch_rate_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    branch_flow_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    return
-end
-=#
