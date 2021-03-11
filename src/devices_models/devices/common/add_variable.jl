@@ -5,8 +5,9 @@ function add_variables!(
     optimization_container::OptimizationContainer,
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
 ) where {T <: VariableType, U <: PSY.Component}
-    add_variable!(optimization_container, T(), devices)
+    add_variable!(optimization_container, T(), devices, formulation)
 end
 
 """
@@ -17,8 +18,9 @@ function add_variables!(
     ::Type{T},
     service::U,
     devices::Vector{V},
+    formulation::AbstractReservesFormulation,
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
-    add_variable!(optimization_container, T(), devices, service)
+    add_variable!(optimization_container, T(), devices, service, formulation)
 end
 
 @doc raw"""
@@ -58,14 +60,15 @@ function add_variable!(
     optimization_container::OptimizationContainer,
     variable_type::VariableType,
     devices::U,
+    formulation,
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
-
-    var_name = make_variable_name(typeof(variable_type), eltype(devices))
-    binary = get_variable_binary(variable_type, eltype(devices))
-    expression_name = get_variable_expression_name(variable_type, eltype(devices))
-    sign = get_variable_sign(variable_type, eltype(devices))
+    settings = get_settings(optimization_container)
+    var_name = make_variable_name(typeof(variable_type), D)
+    binary = get_variable_binary(variable_type, D, formulation)
+    expression_name = get_variable_expression_name(variable_type, D)
+    sign = get_variable_sign(variable_type, D, formulation)
 
     variable = add_var_container!(
         optimization_container,
@@ -82,14 +85,16 @@ function add_variable!(
             binary = binary
         )
 
-        ub = get_variable_upper_bound(variable_type, d, optimization_container.settings)
+        ub = get_variable_upper_bound(variable_type, d, formulation)
         !(ub === nothing) && JuMP.set_upper_bound(variable[name, t], ub)
 
-        lb = get_variable_lower_bound(variable_type, d, optimization_container.settings)
+        lb = get_variable_lower_bound(variable_type, d, formulation)
         !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
-        init = get_variable_initial_value(variable_type, d, optimization_container.settings)
-        !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
+        if get_warm_start(settings)
+            init = get_variable_initial_value(variable_type, d, formulation)
+            !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
+        end
 
         if !((expression_name === nothing))
             bus_number = PSY.get_number(PSY.get_bus(d))
@@ -98,7 +103,7 @@ function add_variable!(
                 bus_number,
                 t,
                 variable[name, t],
-                get_variable_sign(variable_type, eltype(devices)),
+                get_variable_sign(variable_type, eltype(devices), formulation),
             )
         end
     end
@@ -111,15 +116,19 @@ function add_variable!(
     optimization_container::OptimizationContainer,
     variable_type::VariableType,
     devices::U,
-    service::PSY.Reserve,
-) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
+    service::T,
+    formulation::AbstractReservesFormulation,
+) where {
+    T <: PSY.Service,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
 
-    var_name = make_variable_name(PSY.get_name(service), typeof(service))
-    binary = get_variable_binary(variable_type, typeof(service))
-    expression_name = get_variable_expression_name(variable_type, typeof(service))
-    sign = get_variable_sign(variable_type, typeof(service))
+    var_name = make_variable_name(PSY.get_name(service), T)
+    binary = get_variable_binary(variable_type, T, formulation)
+    expression_name = get_variable_expression_name(variable_type, T)
+    sign = get_variable_sign(variable_type, T, formulation)
 
     variable = add_var_container!(
         optimization_container,
@@ -162,7 +171,7 @@ function add_variable!(
                 bus_number,
                 t,
                 variable[name, t],
-                get_variable_sign(variable_type, eltype(devices)),
+                get_variable_sign(variable_type, eltype(devices), formulation),
             )
         end
     end

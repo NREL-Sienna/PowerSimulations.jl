@@ -1,54 +1,8 @@
 
 const _SUPPORTED_FORMATS = ("csv",)
 
-struct StageResultsExport
-    name::String
-    duals::Set{Symbol}
-    parameters::Set{Symbol}
-    variables::Set{Symbol}
-
-    function StageResultsExport(name, duals, parameters, variables)
-        duals = _check_fields(duals)
-        parameters = _check_fields(parameters)
-        variables = _check_fields(variables)
-        new(name, duals, parameters, variables)
-    end
-end
-
-function StageResultsExport(
-    name::AbstractString;
-    duals = Set{Symbol}(),
-    parameters = Set{Symbol}(),
-    variables = Set{Symbol}(),
-)
-    return StageResultsExport(name, duals, parameters, variables)
-end
-
-function _check_fields(fields)
-    if !(typeof(fields) <: Set{Symbol})
-        fields = Set(Symbol.(fields))
-    end
-
-    if :all in fields && length(fields) > 1
-        throw(IS.InvalidValue("'all' can only be present if the array has one element"))
-    end
-
-    return fields
-end
-
-should_export_dual(x::StageResultsExport, name) = _should_export(x, :duals, name)
-should_export_parameter(x::StageResultsExport, name) = _should_export(x, :parameters, name)
-should_export_variable(x::StageResultsExport, name) = _should_export(x, :variables, name)
-
-function _should_export(exports::StageResultsExport, field_name, name)
-    container = getfield(exports, field_name)
-    isempty(container) && return false
-    first(container) == :all && return true
-    return name in container
-end
-
 mutable struct SimulationResultsExport
-    stages::Dict{String, StageResultsExport}
+    problems::Dict{String, ProblemResultsExport}
     start_time::Dates.DateTime
     end_time::Dates.DateTime
     path::Union{Nothing, String}
@@ -56,7 +10,7 @@ mutable struct SimulationResultsExport
 end
 
 function SimulationResultsExport(
-    stages::Vector{StageResultsExport},
+    problems::Vector{ProblemResultsExport},
     params::SimulationStoreParams;
     start_time = nothing,
     end_time = nothing,
@@ -84,7 +38,7 @@ function SimulationResultsExport(
     end
 
     return SimulationResultsExport(
-        Dict(x.name => x for x in stages),
+        Dict(x.name => x for x in problems),
         start_time,
         end_time,
         path,
@@ -101,19 +55,20 @@ function SimulationResultsExport(filename::AbstractString, params::SimulationSto
 end
 
 function SimulationResultsExport(data::AbstractDict, params::SimulationStoreParams)
-    stages = Vector{StageResultsExport}()
-    for stage in get(data, "stages", [])
-        if !haskey(stage, "name")
-            throw(IS.InvalidValue("stage data does not define 'name'"))
+    problems = Vector{ProblemResultsExport}()
+    for problem in get(data, "problems", [])
+        if !haskey(problem, "name")
+            throw(IS.InvalidValue("problem data does not define 'name'"))
         end
 
-        stage_export = StageResultsExport(
-            stage["name"],
-            Set(Symbol(x) for x in get(stage, "duals", Set{String}())),
-            Set(Symbol(x) for x in get(stage, "parameters", Set{String}())),
-            Set(Symbol(x) for x in get(stage, "variables", Set{String}())),
+        problem_export = ProblemResultsExport(
+            problem["name"],
+            Set(Symbol(x) for x in get(problem, "duals", Set{String}())),
+            Set(Symbol(x) for x in get(problem, "parameters", Set{String}())),
+            Set(Symbol(x) for x in get(problem, "variables", Set{String}())),
+            get(problem, "optimizer_stats", false),
         )
-        push!(stages, stage_export)
+        push!(problems, problem_export)
     end
 
     start_time = get(data, "start_time", nothing)
@@ -127,7 +82,7 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
     end
 
     return SimulationResultsExport(
-        stages,
+        problems,
         params;
         start_time = start_time,
         end_time = end_time,
@@ -136,12 +91,12 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
     )
 end
 
-function get_stage_exports(x::SimulationResultsExport, stage_name)
-    if !haskey(x.stages, stage_name)
-        throw(IS.InvalidValue("stage $stage_name is not stored"))
+function get_problem_exports(x::SimulationResultsExport, problem_name)
+    if !haskey(x.problems, problem_name)
+        throw(IS.InvalidValue("problem $problem_name is not stored"))
     end
 
-    return x.stages[stage_name]
+    return x.problems[problem_name]
 end
 
 function get_export_file_type(exports::SimulationResultsExport)
@@ -158,23 +113,23 @@ function should_export(exports::SimulationResultsExport, tstamp::Dates.DateTime)
     return tstamp >= exports.start_time && tstamp <= exports.end_time
 end
 
-function should_export_dual(exports::SimulationResultsExport, tstamp, stage, name)
-    return _should_export(exports, tstamp, stage, :duals, name)
+function should_export_dual(exports::SimulationResultsExport, tstamp, problem, name)
+    return _should_export(exports, tstamp, problem, :duals, name)
 end
 
-function should_export_parameter(exports::SimulationResultsExport, tstamp, stage, name)
-    return _should_export(exports, tstamp, stage, :parameters, name)
+function should_export_parameter(exports::SimulationResultsExport, tstamp, problem, name)
+    return _should_export(exports, tstamp, problem, :parameters, name)
 end
 
-function should_export_variable(exports::SimulationResultsExport, tstamp, stage, name)
-    return _should_export(exports, tstamp, stage, :variables, name)
+function should_export_variable(exports::SimulationResultsExport, tstamp, problem, name)
+    return _should_export(exports, tstamp, problem, :variables, name)
 end
 
-function _should_export(exports::SimulationResultsExport, tstamp, stage, field_name, name)
+function _should_export(exports::SimulationResultsExport, tstamp, problem, field_name, name)
     if tstamp < exports.start_time || tstamp >= exports.end_time
         return false
     end
 
-    stage_exports = get_stage_exports(exports, stage)
-    return _should_export(stage_exports, field_name, name)
+    problem_exports = get_problem_exports(exports, problem)
+    return _should_export(problem_exports, field_name, name)
 end

@@ -59,7 +59,7 @@ function construct_service!(
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, RangeReserve},
-    devices_template::Dict{String, DeviceModel},
+    devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
@@ -97,6 +97,7 @@ function construct_service!(
             ActiveServiceVariable,
             service,
             contributing_devices,
+            RangeReserve(),
         )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
@@ -113,13 +114,19 @@ function construct_service!(
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, StepwiseCostReserve},
-    devices_template::Dict{String, DeviceModel},
+    devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
-    add_variables!(optimization_container, ServiceRequirementVariable, services)
+    # Does not use the standard implementation of add_variable!()
+    add_variable!(
+        optimization_container,
+        ServiceRequirementVariable(),
+        services,
+        StepwiseCostReserve(),
+    )
     add_cons_container!(
         optimization_container,
         make_constraint_name(REQUIREMENT, SR),
@@ -143,6 +150,7 @@ function construct_service!(
             ActiveServiceVariable,
             service,
             contributing_devices,
+            StepwiseCostReserve(),
         )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
@@ -159,7 +167,7 @@ function construct_service!(
     services::Vector{PSY.AGC},
     sys::PSY.System,
     ::ServiceModel{PSY.AGC, T},
-    devices_template::Dict{String, DeviceModel},
+    devices_template::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {T <: AbstractAGCFormulation}
     # Order is important in the addition of these variables
@@ -174,19 +182,19 @@ function construct_service!(
         end
     end
     add_variables!(optimization_container, SteadyStateFrequencyDeviation)
-    add_variables!(optimization_container, AreaMismatchVariable, areas)
-    add_variables!(optimization_container, SmoothACE, areas)
-    add_variables!(optimization_container, LiftVariable, areas)
-    add_variables!(optimization_container, ActivePowerVariable, areas)
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas)
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas)
+    add_variables!(optimization_container, AreaMismatchVariable, areas, T())
+    add_variables!(optimization_container, SmoothACE, areas, T())
+    add_variables!(optimization_container, LiftVariable, areas, T())
+    add_variables!(optimization_container, ActivePowerVariable, areas, T())
+    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas, T())
+    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas, T())
     # add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, areas)
     # add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, areas)
     balancing_auxiliary_variables!(optimization_container, sys)
 
     absolute_value_lift(optimization_container, areas)
     frequency_response_constraint!(optimization_container, sys)
-    area_control_init(optimization_container, services)
+    area_control_initial_condition!(optimization_container, services, T())
     smooth_ace_pid!(optimization_container, services)
     aux_constraints!(optimization_container, sys)
 end
@@ -199,7 +207,7 @@ function construct_service!(
     services::Vector{SR},
     ::PSY.System,
     model::ServiceModel{SR, GroupReserve},
-    ::Dict{String, DeviceModel},
+    ::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
     time_steps = model_time_steps(optimization_container)

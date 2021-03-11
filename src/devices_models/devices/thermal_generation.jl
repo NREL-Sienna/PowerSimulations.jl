@@ -18,70 +18,44 @@ struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
+get_variable_sign(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
 ############## ActivePowerVariable, ThermalGen ####################
-
-get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = false
-
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_active
+get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
+get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
-get_variable_initial_value(pv::ActivePowerVariable, d::PSY.ThermalGen, settings) =
-    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
-get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::WarmStartVariable) = PSY.get_active_power(d)
-get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::ColdStartVariable) = nothing
-
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_active_power_limits(d).min
-get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_active_power_limits(d).max
-
-############## ActivePowerVariable, ThermalMultiStart ####################
-
-get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalMultiStart}) = false
-
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalMultiStart}) = :nodal_balance_active
-get_variable_initial_value(pv::ActivePowerVariable, d::PSY.ThermalMultiStart, settings) =
-    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
-get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalMultiStart, ::WarmStartVariable) = PSY.get_active_power(d)
-get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalMultiStart, ::ColdStartVariable) = nothing
-
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalMultiStart, _) = 0
-get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalMultiStart, _) = PSY.get_active_power_limits(d).max
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = 0.0
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
+get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = PSY.get_active_power_limits(d).max - PSY.get_active_power_limits(d).min
 
 ############## ReactivePowerVariable, ThermalGen ####################
-
-get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}) = false
-
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_reactive
 
-get_variable_initial_value(pv::ReactivePowerVariable, d::PSY.ThermalGen, settings) =
-get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
-get_variable_initial_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::WarmStartVariable) = PSY.get_active_power(d)
-get_variable_initial_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::ColdStartVariable) = nothing
+get_variable_initial_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power(d)
 
-get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_active_power_limits(d).min
-get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, _) = PSY.get_active_power_limits(d).max
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
+get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
 
 ############## OnVariable, ThermalGen ####################
-
-get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}) = true
-
-get_variable_initial_value(pv::OnVariable, d::PSY.ThermalGen, settings) =
-    get_variable_initial_value(pv, d, get_warm_start(settings) ? WarmStartVariable() : ColdStartVariable())
-get_variable_initial_value(::OnVariable, d::PSY.ThermalGen, ::WarmStartVariable) = PSY.get_active_power(d) > 0 ? 1.0 : 0.0
-get_variable_initial_value(::OnVariable, d::PSY.ThermalGen, ::ColdStartVariable) = nothing
+get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
+get_variable_initial_value(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
 
 ############## StopVariable, ThermalGen ####################
-
-get_variable_binary(::StopVariable, ::Type{<:PSY.ThermalGen}) = true
+get_variable_binary(::StopVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
+get_variable_lower_bound(::StopVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
+get_variable_upper_bound(::StopVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 
 ############## StartVariable, ThermalGen ####################
-
-get_variable_binary(::StartVariable, d::Type{<:PSY.ThermalGen}) = true
-get_variable_lower_bound(::StartVariable, d::PSY.ThermalGen, _) = 0.0
-get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, _) = 1.0
+get_variable_binary(::StartVariable, d::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
+get_variable_lower_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
+get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 
 ############## ColdStartVariable, WarmStartVariable, HotStartVariable ############
+get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariable}, ::Type{PSY.ThermalMultiStart}, ::AbstractThermalFormulation) = true
 
-get_variable_binary(v::T, d::PSY.ThermalMultiStart) where T <: Union{ColdStartVariable, WarmStartVariable, HotStartVariable} = get_variable_binary(v, typeof(d))
-get_variable_binary(::T, ::Type{PSY.ThermalMultiStart}) where T <: Union{ColdStartVariable, WarmStartVariable, HotStartVariable} = true
 
 #! format: on
 
@@ -209,7 +183,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:RangeConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
-    ::Type{<:AbstractCompactUnitCommitment},
+    ::Type{<:ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
@@ -232,6 +206,39 @@ function DeviceRangeConstraintSpec(
             constraint_func = device_multistart_range!,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
             lag_limits_func = PSY.get_power_trajectory,
+        ),
+    )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractCompactUnitCommitment},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Nothing,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
+            limits_func = x -> (
+                min = PSY.get_active_power_limits(x).min,
+                max = PSY.get_active_power_limits(x).max,
+            ),
+            bin_variable_names = [
+                make_variable_name(OnVariable, T),
+                make_variable_name(StartVariable, T),
+                make_variable_name(StopVariable, T),
+            ],
+            constraint_func = device_multistart_range!,
+            constraint_struct = DeviceMultiStartRangeConstraintsInfo,
+            lag_limits_func = x -> (
+                startup = PSY.get_active_power_limits(x).max,
+                shutdown = PSY.get_active_power_limits(x).max,
+            ),
         ),
     )
 end
@@ -391,32 +398,135 @@ end
 function initial_conditions!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{D},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
-    status_init(optimization_container, devices)
-    output_init(optimization_container, devices)
-    duration_init(optimization_container, devices)
-    return
-end
-
-function initial_conditions!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{ThermalBasicUnitCommitment},
+    formulation::AbstractThermalUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    status_init(optimization_container, devices)
-    output_init(optimization_container, devices)
+    status_initial_condition!(optimization_container, devices, formulation)
+    output_initial_condition!(optimization_container, devices, formulation)
+    duration_initial_condition!(optimization_container, devices, formulation)
     return
 end
 
 function initial_conditions!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{D},
-) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    output_init(optimization_container, devices)
+    formulation::ThermalBasicUnitCommitment,
+) where {T <: PSY.ThermalGen}
+    status_initial_condition!(optimization_container, devices, formulation)
+    output_initial_condition!(optimization_container, devices, formulation)
     return
 end
+
+function initial_conditions!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    formulation::AbstractThermalDispatchFormulation,
+) where {T <: PSY.ThermalGen}
+    output_initial_condition!(optimization_container, devices, formulation)
+    return
+end
+
+######################### Initialize Functions for ThermalGen ##############################
+"""
+Status Init is always calculated based on the Power Output of the device
+This is to make it easier to calculate when the previous model doesn't
+contain binaries. For instance, looking back on an ED model to find the
+IC of the UC model
+"""
+function status_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        D(),
+        OnVariable(),
+        ICKey(DeviceStatus, T),
+        _make_initial_condition_active_power,
+        _get_variable_initial_value,
+    )
+
+    return
+end
+
+function status_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        D(),
+        OnVariable(),
+        ICKey(DeviceStatus, T),
+        _make_initial_condition_status,
+        _get_variable_initial_value,
+    )
+
+    return
+end
+
+function output_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        D(),
+        ActivePowerVariable(),
+        ICKey(DevicePower, T),
+        _make_initial_condition_active_power,
+        _get_variable_initial_value,
+    )
+    return
+end
+
+function duration_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
+    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+        _make_initial_conditions!(
+            optimization_container,
+            devices,
+            D(),
+            nothing,
+            key,
+            _make_initial_condition_active_power,
+            _get_variable_initial_value,
+            TimeStatusChange,
+        )
+    end
+
+    return
+end
+
+function duration_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::D,
+) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
+    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+        _make_initial_conditions!(
+            optimization_container,
+            devices,
+            D(),
+            nothing,
+            key,
+            _make_initial_condition_status,
+            _get_variable_initial_value,
+            TimeStatusChange,
+        )
+    end
+
+    return
+end
+
 ########################### Ramp/Rate of Change Constraints ################################
 """
 This function gets the data for the generators for ramping constraints of thermal generators
@@ -1096,6 +1206,30 @@ function AddCostSpec(
 end
 
 function AddCostSpec(
+    ::Type{PSY.ThermalMultiStart},
+    ::Type{U},
+    optimization_container::OptimizationContainer,
+) where {U <: AbstractStandardUnitCommitment}
+    return AddCostSpec(;
+        variable_type = ActivePowerVariable,
+        component_type = PSY.ThermalMultiStart,
+        has_status_variable = has_on_variable(
+            optimization_container,
+            PSY.ThermalMultiStart,
+        ),
+        has_status_parameter = has_on_parameter(
+            optimization_container,
+            PSY.ThermalMultiStart,
+        ),
+        variable_cost = PSY.get_variable,
+        start_up_cost = x -> getfield(PSY.get_start_up(x), :cold),
+        shut_down_cost = PSY.get_shut_down,
+        fixed_cost = PSY.get_fixed,
+        sos_status = SOSStatusVariable.VARIABLE,
+    )
+end
+
+function AddCostSpec(
     ::Type{T},
     ::Type{U},
     optimization_container::OptimizationContainer,
@@ -1130,8 +1264,10 @@ function AddCostSpec(
         has_status_parameter = has_on_parameter(optimization_container, T),
         variable_cost = _get_compact_varcost,
         shut_down_cost = PSY.get_shut_down,
+        start_up_cost = PSY.get_start_up,
         fixed_cost = fixed_cost_func,
         sos_status = SOSStatusVariable.VARIABLE,
+        uses_compact_power = true,
     )
 end
 
@@ -1154,6 +1290,7 @@ function AddCostSpec(
         variable_cost = _get_compact_varcost,
         fixed_cost = fixed_cost_func,
         sos_status = sos_status,
+        uses_compact_power = true,
     )
 end
 
@@ -1168,12 +1305,13 @@ function AddCostSpec(
         component_type = T,
         has_status_variable = has_on_variable(optimization_container, T),
         has_status_parameter = has_on_parameter(optimization_container, T),
-        variable_cost = PSY.get_variable,
+        variable_cost = _get_compact_varcost,
         start_up_cost = PSY.get_start_up,
         shut_down_cost = PSY.get_shut_down,
         fixed_cost = fixed_cost_func,
         sos_status = SOSStatusVariable.VARIABLE,
         has_multistart_variables = true,
+        uses_compact_power = true,
     )
 end
 
@@ -1202,8 +1340,7 @@ end
 function _convert_variable_cost(variable_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}})
     var_cost = PSY.get_cost(variable_cost)
     no_load_cost, p_min = var_cost[1]
-    var_cost =
-        PSY.VariableCost([(c - no_load_cost, pp - var_cost[1][2]) for (c, pp) in var_cost])
+    var_cost = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
     return var_cost, no_load_cost
 end
 
@@ -1222,6 +1359,8 @@ function cost_function!(
         component_type = T,
         has_status_variable = has_on_variable(optimization_container, T),
         has_status_parameter = has_on_parameter(optimization_container, T),
+        variable_cost = PSY.get_variable,
+        fixed_cost = PSY.get_fixed,
     )
 
     for g in devices
@@ -1265,6 +1404,16 @@ function cost_function!(
         end
     end
     return
+end
+
+function cost_function!(
+    ::OptimizationContainer,
+    ::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    ::DeviceModel{PSY.ThermalMultiStart, ThermalDispatchNoMin},
+    ::Type{<:PM.AbstractPowerModel},
+    ::Union{Nothing, AbstractAffectFeedForward},
+)
+    error("DispatchNoMin is not compatible with ThermalMultiStart")
 end
 
 # TODO: Define for now just for Area Balance and reason about others later. This will

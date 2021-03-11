@@ -6,38 +6,39 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
 struct EndOfPeriodEnergyTarget <: AbstractEnergyManagement end
 
+get_variable_sign(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
 ########################### ActivePowerInVariable, Storage #################################
 
-get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = false
+get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
 
-get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, _) = 0.0
-get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, _) = nothing
-get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.Storage}) = -1.0
+get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
+get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = nothing
+get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = -1.0
 
 ########################### ActivePowerOutVariable, Storage #################################
 
-get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = false
+get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
 
-get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = 0.0
-get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, _) = nothing
-get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.Storage}) = 1.0
+get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
+get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = nothing
+get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
 
 ############## ReactivePowerVariable, Storage ####################
-
-get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = false
-
+get_variable_sign(::PowerSimulations.ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
+get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = :nodal_balance_reactive
 
 ############## EnergyVariable, Storage ####################
 
-get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}) = false
-get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, _) = 0.0
+get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
+get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
+get_variable_initial_value(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
 
 ############## ReserveVariable, Storage ####################
 
-get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}) = true
+get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = true
 
 get_target_multiplier(v::PSY.BatteryEMS) = PSY.get_rating(v)
 get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage = PSY.get_efficiency(v)
@@ -181,9 +182,31 @@ end
 function initial_conditions!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
-    ::Type{D},
-) where {St <: PSY.Storage, D <: AbstractStorageFormulation}
-    storage_energy_init(optimization_container, devices)
+    formulation::AbstractStorageFormulation,
+) where {St <: PSY.Storage}
+    storage_energy_initial_condition!(optimization_container, devices, formulation)
+    return
+end
+
+######################### Initialize Functions for Storage #################################
+# TODO: This IC needs a cache for Simulation over long periods of tim
+function storage_energy_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::D,
+) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
+    key = ICKey(EnergyLevel, T)
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        D(),
+        EnergyVariable(),
+        key,
+        _make_initial_condition_energy,
+        _get_variable_initial_value,
+        StoredEnergy,
+    )
+
     return
 end
 

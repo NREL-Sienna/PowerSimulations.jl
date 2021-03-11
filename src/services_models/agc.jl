@@ -15,23 +15,24 @@ function add_variables!(optimization_container::OptimizationContainer, ::Type{St
     end
 end
 
+get_variable_sign(_, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = NaN
 ########################## ActivePowerVariable, Area ###########################
 
-get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.Area}) = false
+get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
 
 ########################## SmoothACE, AggregationTopology ###########################
 
-get_variable_binary(::SmoothACE, ::Type{<:PSY.AggregationTopology}) = false
+get_variable_binary(::SmoothACE, ::Type{<:PSY.AggregationTopology}, ::AbstractAGCFormulation) = false
 
 ########################## DeltaActivePowerUpVariable, Area ###########################
 
-get_variable_binary(::DeltaActivePowerUpVariable, ::Type{<:PSY.Area}) = false
-get_variable_lower_bound(::DeltaActivePowerUpVariable, ::PSY.Area, _) = 0.0
+get_variable_binary(::DeltaActivePowerUpVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
+get_variable_lower_bound(::DeltaActivePowerUpVariable, ::PSY.Area, ::AbstractAGCFormulation) = 0.0
 
 ########################## DeltaActivePowerDownVariable, Area ###########################
 
-get_variable_binary(::DeltaActivePowerDownVariable, ::Type{<:PSY.Area}) = false
-get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, _) = 0.0
+get_variable_binary(::DeltaActivePowerDownVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
+get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractAGCFormulation) = 0.0
 
 ########################## AdditionalDeltaPowerUpVariable, Area ###########################
 
@@ -71,17 +72,48 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, _) = 0.0
 ########################## AreaMismatchVariable, Area ###########################
 
 make_variable_name(::Type{AreaMismatchVariable}, _) = make_variable_name(AreaMismatchVariable)
-get_variable_binary(::AreaMismatchVariable, ::Type{<:PSY.Area}) = false
+get_variable_binary(::AreaMismatchVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
 
 ########################## LiftVariable, Area ###########################
 
 make_variable_name(::Type{LiftVariable}, _) = make_variable_name(LiftVariable)
-get_variable_binary(::LiftVariable, ::Type{<:PSY.Area}) = false
-get_variable_lower_bound(::LiftVariable, ::PSY.Area, _) = 0.0
+get_variable_binary(::LiftVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
+get_variable_lower_bound(::LiftVariable, ::PSY.Area, ::AbstractAGCFormulation) = 0.0
+
+#! format: off
+
+########################## Initial Condition ###########################
+function area_control_initial_condition!(
+    optimization_container::OptimizationContainer,
+    services::Vector{PSY.AGC},
+    ::D,
+) where {D <: AbstractAGCFormulation}
+    key = ICKey(AreaControlError, PSY.AGC)
+    _make_initial_conditions!(
+        optimization_container,
+        services,
+        D(),
+        nothing,
+        key,
+        _make_initial_condition_area_control,
+        _get_variable_initial_value,
+        # Doesn't require Cache
+    )
+
+    return
+end
+
+function _get_variable_initial_value(
+    d::PSY.Component,
+    key::ICKey,
+    ::AbstractAGCFormulation,
+    ::Nothing,
+)
+    return _get_ace_error(d, key)
+end
 
 ########################## , ###########################
 
-#! format: off
 
 function balancing_auxiliary_variables!(optimization_container, sys)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]

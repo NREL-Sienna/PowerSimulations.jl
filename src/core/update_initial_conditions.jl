@@ -52,6 +52,11 @@ function calculate_ic_quantity(
     return current_status
 end
 
+function _get_active_power_min_limit(dev::T) where {T <: PSY.ThermalGen}
+    min_power = PSY.get_active_power_limits(dev).min
+    return min_power
+end
+
 function calculate_ic_quantity(
     ::ICKey{DevicePower, T},
     ic::InitialCondition,
@@ -62,7 +67,7 @@ function calculate_ic_quantity(
     cache = get_cache(simulation_cache, TimeStatusChange, T)
     # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
     dev = get_device(ic)
-    min_power = PSY.get_active_power_limits(dev).min
+    min_power = _get_active_power_min_limit(dev)
     if cache === nothing
         # Transitions can't be calculated without cache
         status_change_to_on =
@@ -151,6 +156,8 @@ end
 function _make_initial_conditions!(
     optimization_container::OptimizationContainer,
     devices::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
+    device_formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+    variable_type::Union{Nothing, VariableType},
     key::ICKey,
     make_ic_func::Function, # Function to make the initial condition object
     get_val_func::Function, # Function to get the value from the device to intialize
@@ -164,7 +171,7 @@ function _make_initial_conditions!(
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(ic_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
-            val_ = get_val_func(dev, key)
+            val_ = get_val_func(dev, key, device_formulation, variable_type)
             val =
                 parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
@@ -177,7 +184,7 @@ function _make_initial_conditions!(
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
             @debug "Setting $(key.ic_type) initial conditions device $(PSY.get_name(dev)) based on system data"
-            val_ = get_val_func(dev, key)
+            val_ = get_val_func(dev, key, device_formulation, variable_type)
             val =
                 parameters ? PJ.add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
@@ -190,233 +197,6 @@ function _make_initial_conditions!(
     return
 end
 
-######################### Initialize Functions for ThermalGen ##############################
-"""
-Status Init is always calculated based on the Power Output of the device
-This is to make it easier to calculate when the previous model doesn't
-contain binaries. For instance, looking back on an ED model to find the
-IC of the UC model
-"""
-function status_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        ICKey(DeviceStatus, T),
-        _make_initial_condition_active_power,
-        _get_status_value,
-    )
-
-    return
-end
-
-function output_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        ICKey(DevicePower, T),
-        _make_initial_condition_active_power,
-        _get_active_power_output_value,
-    )
-    return
-end
-
-function output_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-)
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        ICKey(DevicePower, PSY.ThermalMultiStart),
-        _make_initial_condition_active_power,
-        _get_active_power_output_above_min_value,
-    )
-end
-
-function output_init(
-    psi_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.HybridSystem}
-    _make_initial_conditions!(
-        psi_container,
-        devices,
-        ICKey(DevicePower, T),
-        _make_initial_condition_active_power,
-        _get_active_power_output_value,
-    )
-    return
-end
-
-function duration_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
-        _make_initial_conditions!(
-            optimization_container,
-            devices,
-            key,
-            _make_initial_condition_active_power,
-            _get_duration_value,
-            TimeStatusChange,
-        )
-    end
-
-    return
-end
-
-######################### Initialize Functions for Storage #################################
-# TODO: This IC needs a cache for Simulation over long periods of tim
-function storage_energy_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.Storage}
-    key = ICKey(EnergyLevel, T)
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        key,
-        _make_initial_condition_energy,
-        _get_initial_energy_value,
-        StoredEnergy,
-    )
-
-    return
-end
-
-function storage_energy_init(
-    psi_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.HybridSystem}
-    key = ICKey(EnergyLevel, T)
-    _make_initial_conditions!(
-        psi_container,
-        devices,
-        key,
-        _make_initial_condition_energy,
-        _get_initial_energy_value_hybrid,
-        StoredEnergy,
-    )
-
-    return
-end
-
-######################### Initialize Functions for Hydro #################################
-function status_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.HydroGen}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        ICKey(DeviceStatus, T),
-        _make_initial_condition_active_power,
-        _get_status_value,
-        # Doesn't require Cache
-    )
-end
-
-function output_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.HydroGen}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        ICKey(DevicePower, T),
-        _make_initial_condition_active_power,
-        _get_active_power_output_value,
-        # Doesn't require Cache
-    )
-
-    return
-end
-
-function duration_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.HydroGen}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
-        _make_initial_conditions!(
-            optimization_container,
-            devices,
-            key,
-            _make_initial_condition_active_power,
-            _get_duration_value,
-            TimeStatusChange,
-        )
-    end
-
-    return
-end
-
-function storage_energy_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.HydroGen}
-    key = ICKey(EnergyLevel, T)
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        key,
-        _make_initial_condition_reservoir_energy,
-        _get_reservoir_energy_value,
-        StoredEnergy,
-    )
-
-    return
-end
-
-function storage_energy_init(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.HydroPumpedStorage}
-    key_up = ICKey(EnergyLevelUP, T)
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        key_up,
-        _make_initial_condition_reservoir_energy_up,
-        _get_reservoir_energy_value_up,
-        StoredEnergy,
-    )
-
-    key_down = ICKey(EnergyLevelDOWN, T)
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        key_down,
-        _make_initial_condition_reservoir_energy_down,
-        _get_reservoir_energy_value_down,
-        StoredEnergy,
-    )
-
-    return
-end
-
-function area_control_init(
-    optimization_container::OptimizationContainer,
-    services::Vector{PSY.AGC},
-)
-    key = ICKey(AreaControlError, PSY.AGC)
-    _make_initial_conditions!(
-        optimization_container,
-        services,
-        key,
-        _make_initial_condition_area_control,
-        _get_ace_error,
-        # Doesn't require Cache
-    )
-
-    return
-end
-
 function _make_initial_condition_active_power(
     container,
     device::T,
@@ -424,6 +204,15 @@ function _make_initial_condition_active_power(
     cache = nothing,
 ) where {T <: PSY.Component}
     return InitialCondition(device, _get_ref_active_power(T, container), value, cache)
+end
+
+function _make_initial_condition_status(
+    container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T <: PSY.Component}
+    return InitialCondition(device, _get_ref_on_status(T, container), value, cache)
 end
 
 function _make_initial_condition_energy(
@@ -481,59 +270,22 @@ function _make_initial_condition_area_control(
     return InitialCondition(device, _get_ref_ace_error(PSY.AGC, container), value, cache)
 end
 
-function _get_status_value(device, key)
-    return PSY.get_status(device) ? 1.0 : 0.0
+function _get_variable_initial_value(
+    d::PSY.Component,
+    ::ICKey,
+    formulation::AbstractDeviceFormulation,
+    variable_type::VariableType,
+)
+    return get_variable_initial_value(variable_type, d, formulation)
 end
 
-function _get_active_power_output_value(device, key)
-    if !PSY.get_status(device)
-        return 0.0
-    end
-    return PSY.get_active_power(device)
-end
-
-function _get_active_power_output_value(device::T, key) where {T <: PSY.HydroGen}
-    return PSY.get_active_power(device)
-end
-
-function _get_active_power_output_value(device::T, key) where {T <: PSY.HybridSystem}
-    if isnothing(PSY.get_thermal_unit(device))
-        return 0.0
-    end
-    return PSY.get_active_power(PSY.get_thermal_unit(device))
-end
-
-function _get_active_power_output_above_min_value(device, key)
-    if !PSY.get_status(device)
-        return 0.0
-    end
-    power_above_min = PSY.get_active_power(device) - PSY.get_active_power_limits(device).min
-    @assert power_above_min >= -ABSOLUTE_TOLERANCE
-    return power_above_min
-end
-
-function _get_initial_energy_value(device, key)
-    return PSY.get_initial_energy(device)
-end
-
-function _get_initial_energy_value_hybrid(device, key)
-    if !isnothing(PSY.get_storage(device))
-        return PSY.get_initial_energy(PSY.get_storage(device))
-    else
-        return 0.0
-    end
-end
-
-function _get_reservoir_energy_value(device, key)
-    return PSY.get_initial_storage(device)
-end
-
-function _get_reservoir_energy_value_up(device, key)
-    return PSY.get_initial_storage(device).up
-end
-
-function _get_reservoir_energy_value_down(device, key)
-    return PSY.get_initial_storage(device).down
+function _get_variable_initial_value(
+    d::PSY.Component,
+    key::ICKey,
+    ::AbstractDeviceFormulation,
+    ::Nothing,
+)
+    return _get_duration_value(d, key)
 end
 
 function _get_ace_error(device, key)
@@ -559,6 +311,17 @@ function _get_ref_active_power(
         return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
     else
         return UpdateRef{T}(ACTIVE_POWER, "active_power")
+    end
+end
+
+function _get_ref_on_status(
+    ::Type{T},
+    container::InitialConditions,
+) where {T <: PSY.Component}
+    if get_use_parameters(container)
+        return UpdateRef{JuMP.VariableRef}(T, ON)
+    else
+        return UpdateRef{T}(ON, "On")
     end
 end
 
