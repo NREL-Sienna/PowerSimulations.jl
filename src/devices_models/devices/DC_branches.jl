@@ -28,6 +28,8 @@ get_variable_upper_bound(::FlowActivePowerFromToVariable, d::PSY.DCBranch, ::HVD
 get_variable_lower_bound(::FlowActivePowerToFromVariable, d::PSY.DCBranch, ::HVDCUnbounded) = nothing
 get_variable_upper_bound(::FlowActivePowerToFromVariable, d::PSY.DCBranch, ::HVDCUnbounded) = nothing
 
+get_variable_expression_name(::FlowActivePowerToFromVariable, ::Type{<:PSY.DCBranch}) = :nodal_balance_active
+get_variable_expression_name(::FlowActivePowerFromToVariable, ::Type{<:PSY.DCBranch}) = :nodal_balance_active
 #! format: on
 
 #################################### Flow Variable Bounds ##################################################
@@ -44,19 +46,19 @@ function add_variable_to_expression!(
         bus_fr = PSY.get_number(PSY.get_arc(d).from)
         bus_to = PSY.get_number(PSY.get_arc(d).to)
         for t in time_steps
-            var[PSY.get_name(d), t] = jvariable
+            flow_variable = var[PSY.get_name(d), t]
             add_to_expression!(
                 optimization_container.expressions[:nodal_balance_active],
                 PSY.get_number(PSY.get_arc(d).from),
                 t,
-                jvariable,
+                flow_variable,
                 -1.0,
             )
             add_to_expression!(
                 optimization_container.expressions[:nodal_balance_active],
                 PSY.get_number(PSY.get_arc(d).to),
                 t,
-                jvariable,
+                flow_variable,
                 1.0,
             )
         end
