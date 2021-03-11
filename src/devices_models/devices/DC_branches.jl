@@ -62,35 +62,6 @@ end
 function branch_rate_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractDCLineFormulation},
-    ::Type{<:PM.AbstractDCPModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {B <: PSY.DCBranch}
-    var = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
-    time_steps = model_time_steps(optimization_container)
-    constraint_val =
-        JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
-    assign_constraint!(optimization_container, FLOW_ACTIVE_POWER, B, constraint_val)
-    for t in time_steps, d in devices
-        min_rate = max(
-            PSY.get_active_power_limits_from(d).min,
-            PSY.get_active_power_limits_to(d).min,
-        )
-        max_rate = min(
-            PSY.get_active_power_limits_from(d).max,
-            PSY.get_active_power_limits_to(d).max,
-        )
-        constraint_val[PSY.get_name(d), t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            min_rate <= var[PSY.get_name(d), t] <= max_rate
-        )
-    end
-    return
-end
-
-function branch_rate_constraints!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, HVDCLossless},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
