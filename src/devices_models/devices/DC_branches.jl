@@ -34,7 +34,7 @@ get_variable_upper_bound(::FlowActivePowerToFromVariable, d::PSY.DCBranch, ::HVD
 function add_variable_to_expression!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, HVDCLossless},
+    ::DeviceModel{B, <:AbstractDCLineFormulation},
     ::Type{S},
     ) where {B <: PSY.DCBranch, S <: Union{StandardPTDFModel, PTDFPowerModel}}
     time_steps = model_time_steps(optimization_container)
