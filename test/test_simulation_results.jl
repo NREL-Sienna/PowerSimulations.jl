@@ -121,6 +121,14 @@ function test_simulation_results(file_path::String, export_path)
         results_uc = get_problem_results(results, "UC")
         results_ed = get_problem_results(results, "ED")
 
+        @test get_system(results_uc) === nothing
+        @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
+        set_system!(results_uc, c_sys5_hy_uc)
+        @test IS.get_uuid(get_system!(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
+
+        @test get_system(results_ed) === nothing
+        @test IS.get_uuid(get_system!(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
+
         results_from_file = SimulationResults(joinpath(file_path, "cache"))
         @test list_problems(results) == ["ED", "UC"]
         results_uc_from_file = get_problem_results(results_from_file, "UC")

@@ -31,6 +31,7 @@ mutable struct ProblemResults <: PSIResults
     existing_timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     results_timestamps::Vector{Dates.DateTime}
     system::Union{Nothing, PSY.System}
+    system_uuid::Base.UUID
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
@@ -42,21 +43,8 @@ function ProblemResults(
     problem_params::SimulationStoreProblemParams,
     sim_params::SimulationStoreParams,
     path;
-    load_system = true,
     results_output_path = nothing,
 )
-    name = Symbol(problem_name)
-
-    sys = nothing
-    if load_system
-        file = joinpath(path, "problems", make_system_filename(problem_params.system_uuid))
-        if isfile(file)
-            sys = PSY.System(file, time_series_read_only = true)
-        else
-            @info "Skipping load of the system because it wasn't serialized"
-        end
-    end
-
     if results_output_path === nothing
         results_output_path = joinpath(path, "results")
     end
@@ -66,6 +54,7 @@ function ProblemResults(
         length = problem_params.num_executions * sim_params.num_steps,
         step = problem_params.interval,
     )
+    name = Symbol(problem_name)
     variables = list_fields(store, name, STORE_CONTAINER_VARIABLES)
     parameters = list_fields(store, name, STORE_CONTAINER_PARAMETERS)
     duals = list_fields(store, name, STORE_CONTAINER_DUALS)
@@ -77,7 +66,8 @@ function ProblemResults(
         results_output_path,
         time_steps,
         Vector{Dates.DateTime}(),
-        sys,
+        nothing,
+        problem_params.system_uuid,
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
         _fill_result_value_container(parameters),
@@ -110,6 +100,38 @@ IS.get_variables(result::ProblemResults) = result.variable_values
 get_duals(result::ProblemResults) = result.dual_values
 IS.get_parameters(result::ProblemResults) = result.parameter_values
 IS.get_base_power(result::ProblemResults) = result.base_power
+
+"""
+Return the system used for the problem. If the system hasn't already been deserialized or
+set with [`set_system!`](@ref) then deserialize and store it.
+"""
+function get_system!(results::ProblemResults)
+    file = joinpath(
+        results.execution_path,
+        "problems",
+        make_system_filename(results.system_uuid),
+    )
+    results.system = PSY.System(file, time_series_read_only = true)
+    return results.system
+end
+
+"""
+Set the system in the results instance.
+
+Throws InvalidValue if the system UUID is incorrect.
+"""
+function set_system!(results::ProblemResults, system::PSY.System)
+    sys_uuid = IS.get_uuid(system)
+    if sys_uuid != results.system_uuid
+        throw(
+            IS.InvalidValue(
+                "System mismatch. $sys_uuid does not match the stored value of $results.system_uuid",
+            ),
+        )
+    end
+
+    results.system = system
+end
 
 _get_containers(x::ProblemResults) = (x.variable_values, x.parameter_values, x.dual_values)
 _get_dicts(res::ProblemResults) = (y for x in _get_containers(res) for y in values(x))
@@ -623,15 +645,9 @@ Construct SimulationResults from a simulation output directory.
 # Arguments
 - `path::AbstractString`: Simulation output directory
 - `execution::AbstractString`: Execution number. Default is the most recent.
-- `load_systems::Bool`: If true, load all systems from serialized files.
 - `ignore_status::Bool`: If true, return results even if the simulation failed.
 """
-function SimulationResults(
-    path::AbstractString,
-    execution = nothing;
-    load_systems = true,
-    ignore_status = false,
-)
+function SimulationResults(path::AbstractString, execution = nothing; ignore_status = false)
     # path will be either the execution_path or the directory containing all executions.
     contents = readdir(path)
     if "data_store" in contents
@@ -674,14 +690,8 @@ function SimulationResults(
         sim_params = get_params(store)
         for (name, problem_params) in sim_params.problems
             name = string(name)
-            problem_result = ProblemResults(
-                store,
-                name,
-                problem_params,
-                sim_params,
-                execution_path;
-                load_system = load_systems,
-            )
+            problem_result =
+                ProblemResults(store, name, problem_params, sim_params, execution_path;)
             problem_results[name] = problem_result
         end
 
