@@ -124,7 +124,7 @@ function service_requirement_constraint!(
     optimization_container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, StepwiseCostReserve},
-) where {SR <: PSY.Reserve}
+) where {SR <: PSY.ReserveDemandCurve}
     initial_time = model_initial_time(optimization_container)
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
