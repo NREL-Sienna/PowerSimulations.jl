@@ -11,16 +11,16 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
+    add_variables!(psi_container, ActivePowerInVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, ActivePowerOutVariable, devices, PhysicalCoupling())
 
-    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
-    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, SubComponentEnergyVariable, devices, PhysicalCoupling())
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, PhysicalCoupling)
+    initial_conditions!(psi_container, devices, PhysicalCoupling())
 
     # Constraints
     add_constraints!(
@@ -120,18 +120,18 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, ReactivePowerVariable, devices)
+    add_variables!(psi_container, ActivePowerInVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, ActivePowerOutVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, ReactivePowerVariable, devices, PhysicalCoupling())
 
-    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
-    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices, PhysicalCoupling())
+    add_variables!(psi_container, SubComponentEnergyVariable, devices, PhysicalCoupling())
 
-    add_variables!(psi_container, SubComponentReactivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentReactivePowerVariable, devices, PhysicalCoupling())
     # Initial Conditions
-    initial_conditions!(psi_container, devices, PhysicalCoupling)
+    initial_conditions!(psi_container, devices, PhysicalCoupling())
 
     # Constraints
     add_constraints!(
@@ -281,15 +281,15 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
+    add_variables!(psi_container, ActivePowerInVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, ActivePowerOutVariable, devices, FinancialCoupling())
 
-    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
-    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, SubComponentEnergyVariable, devices, FinancialCoupling())
     # Initial Conditions
-    initial_conditions!(psi_container, devices, FinancialCoupling)
+    initial_conditions!(psi_container, devices, FinancialCoupling())
 
     # Constraints
     add_constraints!(
@@ -372,19 +372,19 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, ReactivePowerVariable, devices)
+    add_variables!(psi_container, ActivePowerInVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, ActivePowerOutVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, ReactivePowerVariable, devices, FinancialCoupling())
 
-    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
-    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices, FinancialCoupling())
+    add_variables!(psi_container, SubComponentEnergyVariable, devices, FinancialCoupling())
 
-    add_variables!(psi_container, SubComponentReactivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentReactivePowerVariable, devices, FinancialCoupling())
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, FinancialCoupling)
+    initial_conditions!(psi_container, devices, FinancialCoupling())
 
     # Constraints
     add_constraints!(
@@ -519,15 +519,15 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
+    add_variables!(psi_container, ActivePowerInVariable, devices, D())
+    add_variables!(psi_container, ActivePowerOutVariable, devices, D())
 
-    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
-    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices, D())
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices, D())
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices, D())
+    add_variables!(psi_container, SubComponentEnergyVariable, devices, D())
     # Initial Conditions
-    initial_conditions!(psi_container, devices, D)
+    initial_conditions!(psi_container, devices, D())
 
     # Constraints
     add_constraints!(
@@ -627,19 +627,19 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices)
-    add_variables!(psi_container, ActivePowerOutVariable, devices)
-    add_variables!(psi_container, ReactivePowerVariable, devices)
+    add_variables!(psi_container, ActivePowerInVariable, devices, D())
+    add_variables!(psi_container, ActivePowerOutVariable, devices, D())
+    add_variables!(psi_container, ReactivePowerVariable, devices, D())
 
-    add_variables!(psi_container, SubComponentActivePowerInVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices)
-    add_variables!(psi_container, SubComponentActivePowerVariable, devices)
-    add_variables!(psi_container, SubComponentEnergyVariable, devices)
+    add_variables!(psi_container, SubComponentActivePowerInVariable, devices, D())
+    add_variables!(psi_container, SubComponentActivePowerOutVariable, devices, D())
+    add_variables!(psi_container, SubComponentActivePowerVariable, devices, D())
+    add_variables!(psi_container, SubComponentEnergyVariable, devices, D())
 
-    add_variables!(psi_container, SubComponentReactivePowerVariable, devices)
+    add_variables!(psi_container, SubComponentReactivePowerVariable, devices), D()
 
     # Initial Conditions
-    initial_conditions!(psi_container, devices, D)
+    initial_conditions!(psi_container, devices, D())
 
     # Constraints
     add_constraints!(
