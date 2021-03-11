@@ -48,10 +48,6 @@ end
 
 function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
-        #file_path = "test_sim"
-        #isdir(file_path) && rm(file_path, recursive=true)
-        #mkpath(file_path)
-        #export_path="export_path"
         template_uc = get_template_hydro_st_uc()
         template_ed = get_template_hydro_st_ed()
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
@@ -124,6 +120,14 @@ function test_simulation_results(file_path::String, export_path)
         @test list_problems(results) == ["ED", "UC"]
         results_uc = get_problem_results(results, "UC")
         results_ed = get_problem_results(results, "ED")
+
+        @test get_system(results_uc) === nothing
+        @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
+        set_system!(results_uc, c_sys5_hy_uc)
+        @test IS.get_uuid(get_system!(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
+
+        @test get_system(results_ed) === nothing
+        @test IS.get_uuid(get_system!(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
 
         results_from_file = SimulationResults(joinpath(file_path, "cache"))
         @test list_problems(results) == ["ED", "UC"]
@@ -311,6 +315,17 @@ function test_simulation_results(file_path::String, export_path)
         @test isempty(results)
 
         verify_export_results(results, export_path)
+
+        # Test that you can't read a failed simulation.
+        PSI.set_simulation_status!(sim, RunStatus.FAILED)
+        PSI.serialize_status(sim)
+        @test PSI.deserialize_status(sim) == RunStatus.FAILED
+        @test_throws ErrorException SimulationResults(sim)
+        @test_logs(
+            match_mode = :any,
+            (:warn, r"Results may not be valid"),
+            SimulationResults(sim, ignore_status = true),
+        )
     end
 end
 

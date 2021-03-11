@@ -139,6 +139,8 @@ export get_existing_variables
 export get_problem_name
 export get_problem_results
 export get_system
+export get_system!
+export set_system!
 export list_problems
 export list_supported_formats
 export load_results!
@@ -241,6 +243,7 @@ export optimizer_with_attributes
 import MathOptInterface
 import ParameterJuMP
 import LinearAlgebra
+import JSON3
 import PowerSystems
 import InfrastructureSystems
 # so that users have access to IS.Results interfaces
