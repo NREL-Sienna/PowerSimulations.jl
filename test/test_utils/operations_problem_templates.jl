@@ -70,6 +70,6 @@ function get_template_dispatch_with_network(network = StandardPTDFModel)
     set_device_model!(template, Line, StaticBranch)
     set_device_model!(template, Transformer2W, StaticBranch)
     set_device_model!(template, TapTransformer, StaticBranch)
-    set_device_model!(template, HVDCLine, HVDCDispatch)
+    set_device_model!(template, HVDCLine, HVDCLossless)
     return template
 end

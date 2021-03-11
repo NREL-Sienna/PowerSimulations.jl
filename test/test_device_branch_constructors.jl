@@ -104,11 +104,9 @@ end
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
-        if model == DCPPowerModel
-            @test check_variable_bounded(op_problem_m, :Fp__HVDCLine)
-            @test check_variable_unbounded(op_problem_m, :Fp__TapTransformer)
-            @test check_variable_unbounded(op_problem_m, :Fp__Transformer2W)
-        end
+        @test check_variable_bounded(op_problem_m, :Fp__HVDCLine)
+        @test check_variable_unbounded(op_problem_m, :Fp__TapTransformer)
+        @test check_variable_unbounded(op_problem_m, :Fp__Transformer2W)
 
         psi_constraint_test(op_problem_m, ratelimit_constraint_names)
 
@@ -225,6 +223,7 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(ACPPowerModel)
+    set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
     op_problem_m = OperationsProblem(template, system; optimizer = ipopt_optimizer)
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
