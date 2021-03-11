@@ -10,26 +10,70 @@ get_variable_binary(_, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = fa
 
 get_variable_sign(::FlowActivePowerVariable, ::Type{<:PSY.DCBranch}, _) = NaN
 
-get_variable_sign(::FlowActivePowerFromToVariable, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = -1.0
-get_variable_sign(::FlowActivePowerToFromVariable, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = 1.0
+get_variable_sign(
+    ::FlowActivePowerFromToVariable,
+    ::Type{<:PSY.DCBranch},
+    ::AbstractDCLineFormulation,
+) = -1.0
+get_variable_sign(
+    ::FlowActivePowerToFromVariable,
+    ::Type{<:PSY.DCBranch},
+    ::AbstractDCLineFormulation,
+) = 1.0
 
-get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCLossless) = max(PSY.get_active_power_limits_from(d).min, PSY.get_active_power_limits_to(d).min)
-get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCLossless) = min(PSY.get_active_power_limits_from(d).max, PSY.get_active_power_limits_to(d).max)
+get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCLossless) =
+    max(PSY.get_active_power_limits_from(d).min, PSY.get_active_power_limits_to(d).min)
+get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCLossless) =
+    min(PSY.get_active_power_limits_from(d).max, PSY.get_active_power_limits_to(d).max)
 
-get_variable_lower_bound(::FlowActivePowerFromToVariable, d::PSY.DCBranch, ::AbstractThermalFormulation) = PSY.get_active_power_limits_from(d).min
-get_variable_upper_bound(::FlowActivePowerFromToVariable, d::PSY.DCBranch, ::AbstractThermalFormulation) = PSY.get_active_power_limits_from(d).max
+get_variable_lower_bound(
+    ::FlowActivePowerFromToVariable,
+    d::PSY.DCBranch,
+    ::AbstractThermalFormulation,
+) = PSY.get_active_power_limits_from(d).min
+get_variable_upper_bound(
+    ::FlowActivePowerFromToVariable,
+    d::PSY.DCBranch,
+    ::AbstractThermalFormulation,
+) = PSY.get_active_power_limits_from(d).max
 
-get_variable_lower_bound(::FlowActivePowerToFromVariable, d::PSY.DCBranch, ::AbstractThermalFormulation) = PSY.get_active_power_limits_to(d).min
-get_variable_upper_bound(::FlowActivePowerToFromVariable, d::PSY.DCBranch, ::AbstractThermalFormulation) = PSY.get_active_power_limits_to(d).max
+get_variable_lower_bound(
+    ::FlowActivePowerToFromVariable,
+    d::PSY.DCBranch,
+    ::AbstractThermalFormulation,
+) = PSY.get_active_power_limits_to(d).min
+get_variable_upper_bound(
+    ::FlowActivePowerToFromVariable,
+    d::PSY.DCBranch,
+    ::AbstractThermalFormulation,
+) = PSY.get_active_power_limits_to(d).max
 
-get_variable_lower_bound(::FlowActivePowerFromToVariable, d::PSY.DCBranch, ::HVDCUnbounded) = nothing
-get_variable_upper_bound(::FlowActivePowerFromToVariable, d::PSY.DCBranch, ::HVDCUnbounded) = nothing
+get_variable_lower_bound(
+    ::FlowActivePowerFromToVariable,
+    d::PSY.DCBranch,
+    ::HVDCUnbounded,
+) = nothing
+get_variable_upper_bound(
+    ::FlowActivePowerFromToVariable,
+    d::PSY.DCBranch,
+    ::HVDCUnbounded,
+) = nothing
 
-get_variable_lower_bound(::FlowActivePowerToFromVariable, d::PSY.DCBranch, ::HVDCUnbounded) = nothing
-get_variable_upper_bound(::FlowActivePowerToFromVariable, d::PSY.DCBranch, ::HVDCUnbounded) = nothing
+get_variable_lower_bound(
+    ::FlowActivePowerToFromVariable,
+    d::PSY.DCBranch,
+    ::HVDCUnbounded,
+) = nothing
+get_variable_upper_bound(
+    ::FlowActivePowerToFromVariable,
+    d::PSY.DCBranch,
+    ::HVDCUnbounded,
+) = nothing
 
-get_variable_expression_name(::FlowActivePowerToFromVariable, ::Type{<:PSY.DCBranch}) = :nodal_balance_active
-get_variable_expression_name(::FlowActivePowerFromToVariable, ::Type{<:PSY.DCBranch}) = :nodal_balance_active
+get_variable_expression_name(::FlowActivePowerToFromVariable, ::Type{<:PSY.DCBranch}) =
+    :nodal_balance_active
+get_variable_expression_name(::FlowActivePowerFromToVariable, ::Type{<:PSY.DCBranch}) =
+    :nodal_balance_active
 #! format: on
 
 #################################### Flow Variable Bounds ##################################################
@@ -38,7 +82,7 @@ function add_variable_to_expression!(
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractDCLineFormulation},
     ::Type{S},
-    ) where {B <: PSY.DCBranch, S <: Union{StandardPTDFModel, PTDFPowerModel}}
+) where {B <: PSY.DCBranch, S <: Union{StandardPTDFModel, PTDFPowerModel}}
     time_steps = model_time_steps(optimization_container)
     var = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
 
@@ -103,48 +147,10 @@ branch_rate_constraints!(
     ::Union{Nothing, AbstractAffectFeedForward},
 ) = nothing
 
-#=
 function branch_rate_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, HVDCLossless},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {B <: PSY.DCBranch}
-    for (var_type, cons_type) in zip(
-        (FLOW_ACTIVE_POWER_FROM_TO, FLOW_ACTIVE_POWER_TO_FROM),
-        (RATE_LIMIT_FT, RATE_LIMIT_TF),
-    )
-        var = get_variable(optimization_container, var_type, B)
-        time_steps = model_time_steps(optimization_container)
-        constraint_val =
-            JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
-        assign_constraint!(optimization_container, cons_type, B, constraint_val)
-        time_steps = model_time_steps(optimization_container)
-
-        for t in time_steps, d in devices
-            min_rate = max(
-                PSY.get_active_power_limits_from(d).min,
-                PSY.get_active_power_limits_to(d).min,
-            )
-            max_rate = min(
-                PSY.get_active_power_limits_from(d).max,
-                PSY.get_active_power_limits_to(d).max,
-            )
-            name = PSY.get_name(d)
-            constraint_val[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                min_rate <= var[name, t] <= max_rate
-            )
-        end
-    end
-    return
-end
-=#
-function branch_rate_constraints!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, HVDCDispatch},
+    ::DeviceModel{B, <:AbstractDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
