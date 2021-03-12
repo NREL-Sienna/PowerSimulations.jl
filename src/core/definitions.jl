@@ -60,7 +60,7 @@ const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"
 const REQUIRED_RECORDERS = (:simulation_status, :simulation)
 const KNOWN_SIMULATION_PATHS =
-    ["data_store", "logs", "models_json", "recorder", "results", "simulation_files"]
+    ["data_store", "logs", "models_json", "problems", "recorder", "results", "simulation_files"]
 
 # Enums
 IS.@scoped_enum(BuildStatus, IN_PROGRESS = -1, BUILT = 0, FAILED = 1, EMPTY = 2,)
