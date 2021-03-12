@@ -691,7 +691,7 @@ end
     parameters_value = [true, false]
     networks = [ACPPowerModel, DCPPowerModel]
 
-    test_results = Dict{Any, Float64}(ACPPowerModel => 12414.0, DCPPowerModel => 12218.0)
+    test_results = Dict{Any, Float64}(ACPPowerModel => 177526.0, DCPPowerModel => 175521.0)
 
     for net in networks, p in parameters_value
         @info("Test solve HydroRoR ED with $(net) network")
@@ -735,7 +735,7 @@ end
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
-            psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 12218.0, 1000)
+            psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 175521.0, 1000)
         end
     end
 end
@@ -746,10 +746,10 @@ end
     networks = [ACPPowerModel, DCPPowerModel]
     models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
     test_results = Dict{Any, Float64}(
-        (ACPPowerModel, HydroDispatchReservoirBudget) => 338977.0,
-        (DCPPowerModel, HydroDispatchReservoirBudget) => 337646.0,
-        (ACPPowerModel, HydroDispatchReservoirStorage) => 303157.0,
-        (DCPPowerModel, HydroDispatchReservoirStorage) => 301826.0,
+        (ACPPowerModel, HydroDispatchReservoirBudget) => 33423.0,
+        (DCPPowerModel, HydroDispatchReservoirBudget) => 33042.0,
+        (ACPPowerModel, HydroDispatchReservoirStorage) => 292197.0,
+        (DCPPowerModel, HydroDispatchReservoirStorage) => 289853.0,
     )
     parameters_value = [true, false]
 
@@ -783,8 +783,8 @@ end
     net = DCPPowerModel
     models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
     test_results = Dict{Any, Float64}(
-        HydroCommitmentReservoirBudget => 337646.0,
-        HydroCommitmentReservoirStorage => 301826.0,
+        HydroCommitmentReservoirBudget => 33042.0,
+        HydroCommitmentReservoirStorage => 289853.0,
     )
 
     for mod in models, p in parameters_value
