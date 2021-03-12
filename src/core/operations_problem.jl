@@ -18,7 +18,6 @@ mutable struct ProblemInternal
     base_conversion::Bool
     output_dir::Union{Nothing, String}
     simulation_info::Union{Nothing, SimulationInfo}
-    ext::Dict{String, Any}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
 end
@@ -34,7 +33,6 @@ function ProblemInternal(
         true,
         nothing,
         nothing,
-        ext,
         Logging.Warn,
         Logging.Info,
     )
@@ -103,6 +101,7 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ProblemInternal}
+    ext::Dict{String, Any}
 
     function OperationsProblem{M}(
         template::OperationsProblemTemplate,
@@ -111,7 +110,7 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
         internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
-        new{M}(template, sys, internal)
+        new{M}(template, sys, internal, Dict{String, Any}())
     end
 end
 
