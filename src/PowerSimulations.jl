@@ -367,6 +367,7 @@ include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
 include("core/feedforward.jl")
+include("core/problem_results.jl")
 include("core/simulation_results.jl")
 include("core/recorder_events.jl")
 
