@@ -122,6 +122,7 @@ function test_simulation_results(file_path::String, export_path)
         results_ed = get_problem_results(results, "ED")
 
         @test get_system(results_uc) === nothing
+        @test length(read_realized_variables(results_uc)) == 8 #verifies this works without system
         @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
         set_system!(results_uc, c_sys5_hy_uc)
         @test IS.get_uuid(get_system!(results_uc)) === IS.get_uuid(c_sys5_hy_uc)

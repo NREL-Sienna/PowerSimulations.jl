@@ -15,6 +15,8 @@ mutable struct ProblemResults <: PSIResults
     existing_timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     results_timestamps::Vector{Dates.DateTime}
     system::Union{Nothing, PSY.System}
+    resolution::Dates.TimePeriod
+    forecast_horizon::Int
     system_uuid::Base.UUID
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
@@ -51,6 +53,8 @@ function ProblemResults(
         time_steps,
         Vector{Dates.DateTime}(),
         nothing,
+        get_resolution(problem_params),
+        get_horizon(problem_params),
         problem_params.system_uuid,
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
@@ -71,6 +75,8 @@ Base.length(res::ProblemResults) = mapreduce(length, +, _get_dicts(res))
 
 get_problem_name(res::ProblemResults) = res.problem
 get_system(res::ProblemResults) = res.system
+get_resolution(res::ProblemResults) = res.resolution
+get_forecast_horizon(res::ProblemResults) = res.forecast_horizon
 get_execution_path(res::ProblemResults) = res.execution_path
 get_existing_variables(res::ProblemResults) = collect(keys(res.variable_values))
 get_existing_duals(res::ProblemResults) = collect(keys(res.dual_values))
@@ -143,8 +149,8 @@ function _get_store_value(
     results = Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     problem_name = Symbol(get_problem_name(res))
     problem_interval = get_interval(res)
-    resolution = PSY.get_time_series_resolution(get_system(res))
-    horizon = PSY.get_forecast_horizon(get_system(res))
+    resolution = get_resolution(res)
+    horizon = get_forecast_horizon(res)
     for name in names
         _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
         for ts in timestamps
@@ -387,7 +393,7 @@ function RealizedMeta(
 )
     existing_timestamps = get_existing_timestamps(res)
     interval = existing_timestamps.step
-    resolution = PSY.get_time_series_resolution(get_system(res))
+    resolution = get_resolution(res)
     interval_len = Int(interval / resolution)
     realized_timestamps =
         get_realized_timestamps(res, initial_time = initial_time, len = len)
@@ -418,8 +424,8 @@ function get_realized_timestamps(
 )
     existing_timestamps = get_existing_timestamps(res)
     interval = existing_timestamps.step
-    resolution = PSY.get_time_series_resolution(get_system(res))
-    horizon = PSY.get_forecast_horizon(get_system(res))
+    resolution = get_resolution(res)
+    horizon = get_forecast_horizon(res)
     initial_time = isnothing(initial_time) ? first(existing_timestamps) : initial_time
     end_time =
         isnothing(len) ? last(existing_timestamps) + interval - resolution :
