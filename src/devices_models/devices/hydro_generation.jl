@@ -90,6 +90,16 @@ get_variable_lower_bound(::SpillageVariable, d::PSY.HydroGen, ::AbstractHydroFor
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = true
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroPumpedStorage}, ::AbstractHydroFormulation) = true
 
+############## EnergyShortageVariable, HydroGen ####################
+
+get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
+get_variable_lower_bound(::EnergyShortageVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
+
+############## EnergySlackDown, HydroGen ####################
+
+get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
+get_variable_upper_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
+
 get_target_multiplier(v::PSY.HydroEnergyReservoir) = PSY.get_storage_capacity(v)
 
 get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HydroGen = (in = 1.0, out = 1.0)

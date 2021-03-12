@@ -1,13 +1,3 @@
-############## EnergyShortageVariable, Storage ####################
-
-get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.Component}) = false
-get_variable_lower_bound(::EnergyShortageVariable, d::PSY.Component, _) = 0.0
-
-############## EnergySlackDown, Storage ####################
-
-get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Component}) = false
-get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Component, _) = 0.0
-
 """
 This function defines the constraints for the water level (or state of charge)
 for the Hydro Reservoir.

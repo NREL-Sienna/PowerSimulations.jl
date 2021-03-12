@@ -42,6 +42,17 @@ get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}, ::AbstractStorageF
 
 get_target_multiplier(v::PSY.BatteryEMS) = PSY.get_rating(v)
 get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage = PSY.get_efficiency(v)
+
+############## EnergyShortageVariable, Storage ####################
+
+get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
+get_variable_lower_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
+
+############## EnergySlackDown, Storage ####################
+
+get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
+get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
+
 #! format: on
 
 ################################## output power constraints#################################

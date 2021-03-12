@@ -192,7 +192,7 @@ function test_simulation_results(file_path::String, export_path)
         end
 
         realized_var_uc = read_realized_variables(results_uc)
-        @test length(keys(realized_var_uc)) == 8
+        @test length(keys(realized_var_uc)) == 10
         for var in values(realized_var_uc)
             @test size(var)[1] == 48
         end
