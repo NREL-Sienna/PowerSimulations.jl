@@ -1,17 +1,24 @@
 # Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
-abstract type AbstractBoundedBranchFormulation <: AbstractBranchFormulation end
 
 # Abstract Line Models
-struct StaticLine <: AbstractBranchFormulation end
-struct StaticLineBounds <: AbstractBoundedBranchFormulation end
-struct StaticLineUnbounded <: AbstractBranchFormulation end
-struct FlowMonitoredLine <: AbstractBranchFormulation end
+""" Branch type to add unbounded flow variables and use flow constraints"""
+struct StaticBranch <: AbstractBranchFormulation end
+""" Branch type to add bounded flow variables and use flow constraints"""
+struct StaticBranchBounds <: AbstractBranchFormulation end
+""" Branch type to avoid flow constraints"""
+struct StaticBranchUnbounded <: AbstractBranchFormulation end
 
-# Abstract Transformer Models
-struct StaticTransformer <: AbstractBranchFormulation end
-struct StaticTransformerBounds <: AbstractBoundedBranchFormulation end
-struct StaticTransformerUnbounded <: AbstractBranchFormulation end
+# Note: Any future concrete formulation requires the definition of
+
+# construct_device!(
+#     ::OptimizationContainer,
+#     ::PSY.System,
+#     ::DeviceModel{<:PSY.ACBranch, MyNewFormulation},
+#     ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
+# ) = nothing
+
+#
 
 # Not implemented yet
 # struct TapControl <: AbstractBranchFormulation end
@@ -20,21 +27,21 @@ struct StaticTransformerUnbounded <: AbstractBranchFormulation end
 #################################### Branch Variables ##################################################
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
 # for the branch flows either in AC or DC.
-flow_variables!(
-    optimization_container::OptimizationContainer,
-    ::Type{<:PM.AbstractPowerModel},
-    ::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
-) = nothing
 
 add_variables!(
     optimization_container::OptimizationContainer,
-    ::StandardPTDFModel,
-    devices::IS.FlattenIteratorWrapper{B},
-) where {B <: PSY.ACBranch} =
-    add_variable!(optimization_container, FlowActivePowerVariable(), devices)
+    ::Type{<:AbstractPTDFModel},
+    devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
+    formulation::AbstractBranchFormulation,
+) = add_variable!(optimization_container, FlowActivePowerVariable(), devices, formulation)
 
-get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}) = false
+get_variable_binary(
+    ::FlowActivePowerVariable,
+    ::Type{<:PSY.ACBranch},
+    ::AbstractBranchFormulation,
+) = false
 
+get_variable_sign(_, ::Type{<:PSY.ACBranch}, _) = NaN
 #################################### Flow Variable Bounds ##################################################
 function _get_constraint_data(
     devices::IS.FlattenIteratorWrapper{B},
@@ -57,7 +64,7 @@ end
 function branch_rate_bounds!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
     constraint_infos = _get_constraint_data(devices)
@@ -68,7 +75,7 @@ end
 function branch_rate_bounds!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
 ) where {B <: PSY.ACBranch}
     constraint_infos = _get_constraint_data(devices)
@@ -91,7 +98,7 @@ end
 function branch_rate_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractActivePowerModel},
     feedforward::Nothing,
 ) where {B <: PSY.ACBranch}
@@ -110,9 +117,9 @@ end
 function branch_rate_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    ::Nothing,
 ) where {B <: PSY.ACBranch}
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
     rating_constraint!(
@@ -137,6 +144,36 @@ function branch_rate_constraints!(
     return
 end
 
+function branch_flow_values!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{B},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
+    ::Type{StandardPTDFModel},
+) where {B <: PSY.ACBranch}
+    ptdf = get_PTDF(optimization_container)
+    buses = ptdf.axes[2]
+    branches = ptdf.axes[1]
+    time_steps = model_time_steps(optimization_container)
+    constraint_val = JuMPConstraintArray(undef, time_steps)
+    branch_flow =
+        add_cons_container!(optimization_container, :network_flow, branches, time_steps)
+    nodal_balance_expressions = optimization_container.expressions[:nodal_balance_active]
+    flow_variables = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
+    jump_model = get_jump_model(optimization_container)
+    for t in time_steps
+        for br in devices
+            name = PSY.get_name(br)
+            branch_flow[name, t] = JuMP.@constraint(
+                jump_model,
+                sum(
+                    ptdf[name, i] * nodal_balance_expressions[i, t] for i in ptdf.axes[2]
+                ) == flow_variables[name, t]
+            )
+        end
+    end
+end
+
+#=
 ############################## Flow Limits Constraints #####################################
 function branch_flow_constraints!(
     optimization_container::OptimizationContainer,
@@ -215,3 +252,4 @@ function branch_flow_constraints!(
     )
     return
 end
+=#

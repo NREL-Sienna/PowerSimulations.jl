@@ -15,8 +15,8 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices)
-    add_variables!(optimization_container, ReactivePowerVariable, devices)
+    add_variables!(optimization_container, ActivePowerVariable, devices, D())
+    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
 
     # Constraints
     add_constraints!(
@@ -62,7 +62,7 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices)
+    add_variables!(optimization_container, ActivePowerVariable, devices, D())
 
     # Constraints
     add_constraints!(
@@ -91,43 +91,6 @@ function construct_device!(
     devices = get_available_components(R, sys)
 
     if !validate_available_devices(R, devices)
-        return
-    end
-
-    nodal_expression!(optimization_container, devices, S)
-
-    return
-end
-
-function construct_device!(
-    optimization_container::OptimizationContainer,
-    sys::PSY.System,
-    ::DeviceModel{PSY.RenewableFix, D},
-    ::Type{S},
-) where {D <: AbstractRenewableDispatchFormulation, S <: PM.AbstractPowerModel}
-    @warn(
-        "The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to FixedOutput"
-    )
-
-    construct_device!(
-        optimization_container,
-        sys,
-        DeviceModel(PSY.RenewableFix, FixedOutput),
-        S,
-    )
-
-    return
-end
-
-function construct_device!(
-    optimization_container::OptimizationContainer,
-    sys::PSY.System,
-    ::DeviceModel{PSY.RenewableFix, FixedOutput},
-    ::Type{S},
-) where {S <: PM.AbstractPowerModel}
-    devices = get_available_components(PSY.RenewableFix, sys)
-
-    if !validate_available_devices(PSY.RenewableFix, devices)
         return
     end
 

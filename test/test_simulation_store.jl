@@ -2,15 +2,15 @@ import PowerSimulations:
     h5_store_open,
     HDF_FILENAME,
     SimulationStoreParams,
-    SimulationStoreStageParams,
-    SimulationStoreStageRequirements,
+    SimulationStoreProblemParams,
+    SimulationStoreProblemRequirements,
     CacheFlushRules,
     KiB,
     MiB,
     GiB,
     STORE_CONTAINER_VARIABLES,
     CachePriority,
-    initialize_stage_storage!,
+    initialize_problem_storage!,
     add_rule!,
     write_result!,
     read_result,
@@ -18,15 +18,15 @@ import PowerSimulations:
     get_cache_hit_percentage
 
 function _initialize!(store, sim, variables, stage_defs, cache_rules)
-    stages = OrderedDict{Symbol, SimulationStoreStageParams}()
-    stage_reqs = Dict{Symbol, SimulationStoreStageRequirements}()
+    stages = OrderedDict{Symbol, SimulationStoreProblemParams}()
+    stage_reqs = Dict{Symbol, SimulationStoreProblemRequirements}()
     num_param_containers = 0
     for stage in keys(stage_defs)
         execution_count = stage_defs[stage]["execution_count"]
         horizon = stage_defs[stage]["horizon"]
         num_rows = execution_count * sim["num_steps"]
 
-        stage_params = SimulationStoreStageParams(
+        stage_params = SimulationStoreProblemParams(
             execution_count,
             horizon,
             stage_defs[stage]["interval"],
@@ -34,7 +34,7 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
             stage_defs[stage]["base_power"],
             stage_defs[stage]["system_uuid"],
         )
-        reqs = SimulationStoreStageRequirements()
+        reqs = SimulationStoreProblemRequirements()
 
         for (name, array) in stage_defs[stage]["variables"]
             reqs.variables[name] = Dict(
@@ -64,7 +64,7 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
         sim["num_steps"],
         stages,
     )
-    initialize_stage_storage!(store, params, stage_reqs, cache_rules)
+    initialize_problem_storage!(store, params, stage_reqs, cache_rules)
 end
 
 function _run_sim_test(path, sim, variables, stage_defs, cache_rules, seed)

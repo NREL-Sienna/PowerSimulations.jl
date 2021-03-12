@@ -11,6 +11,7 @@ struct AddCostSpec
     fixed_cost::Union{Nothing, Function}
     has_multistart_variables::Bool
     addtional_linear_terms::Dict{String, Symbol}
+    uses_compact_power::Bool
 end
 
 function AddCostSpec(;
@@ -26,6 +27,7 @@ function AddCostSpec(;
     fixed_cost = nothing,
     has_multistart_variables = false,
     addtional_linear_terms = Dict{String, Symbol}(),
+    uses_compact_power = false,
 )
     return AddCostSpec(
         variable_type,
@@ -40,6 +42,7 @@ function AddCostSpec(;
         fixed_cost,
         has_multistart_variables,
         addtional_linear_terms,
+        uses_compact_power,
     )
 end
 
@@ -348,8 +351,23 @@ function add_to_cost!(
     @debug "TwoPartCost" component_name
     if !(spec.variable_cost === nothing)
         variable_cost = spec.variable_cost(cost_data)
+        if spec.uses_compact_power &&
+           variable_cost == PSY.VariableCost{Vector{NTuple{2, Float64}}}
+            var_cost = PSY.get_cost(spec.variable_cost(cost_data))
+            no_load_cost, p_min = var_cost[1]
+            variable_cost_data =
+                PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+        else
+            variable_cost_data = spec.variable_cost(cost_data)
+        end
         for t in time_steps
-            variable_cost!(optimization_container, spec, component_name, variable_cost, t)
+            variable_cost!(
+                optimization_container,
+                spec,
+                component_name,
+                variable_cost_data,
+                t,
+            )
         end
     else
         @warn "No variable cost defined for $component_name"
@@ -383,10 +401,19 @@ function add_to_cost!(
     @debug "ThreePartCost" component_name
     resolution = model_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    variable_cost = PSY.get_variable(cost_data)
+    variable_cost = spec.variable_cost(cost_data)
+    if spec.uses_compact_power &&
+       variable_cost == PSY.VariableCost{Vector{NTuple{2, Float64}}}
+        var_cost = PSY.get_cost(spec.variable_cost(cost_data))
+        no_load_cost, p_min = var_cost[1]
+        variable_cost_data =
+            PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+    else
+        variable_cost_data = spec.variable_cost(cost_data)
+    end
     time_steps = model_time_steps(optimization_container)
     for t in time_steps
-        variable_cost!(optimization_container, spec, component_name, variable_cost, t)
+        variable_cost!(optimization_container, spec, component_name, variable_cost_data, t)
     end
 
     if !(spec.start_up_cost === nothing)
@@ -484,26 +511,23 @@ function add_to_cost!(
         end
     end
 
-    # Original implementation had SOS by default
-    variable_cost_data = PSY.get_cost(PSY.get_variable(cost_data))
-    if !all(iszero.(last.(variable_cost_data)))
-        for t in time_steps
-            gen_cost = pwl_gencost_sos!(
-                optimization_container,
-                spec,
-                component_name,
-                variable_cost_data,
-                t,
-            )
-            add_to_cost_expression!(optimization_container, spec.multiplier * gen_cost * dt)
-        end
+    # Original implementation had SOS by default, here it detects if that's needed
+    if spec.uses_compact_power
+        variable_cost_data = spec.variable_cost(cost_data)
     else
-        @debug "No Variable Cost associated with $(component_name)"
+        min_gen_cost = PSY.get_no_load(cost_data)
+        base_power = PSY.get_base_power(component)
+        min_gen = PSY.get_active_power_limits(component).min
+        variable_cost_data_ = PSY.get_cost(spec.variable_cost(cost_data))
+        variable_cost_data_ = [
+            (v[1] + min_gen_cost, v[2] + min_gen * base_power) for v in variable_cost_data_
+        ]
+        variable_cost_data = PSY.VariableCost(variable_cost_data_)
     end
-    # variable_cost = PSY.get_variable(cost_data)
-    # for t in time_steps
-    #     variable_cost!(optimization_container, spec, component_name, variable_cost, t)
-    # end
+
+    for t in time_steps
+        variable_cost!(optimization_container, spec, component_name, variable_cost_data, t)
+    end
 
     # Start-up costs
     if !isnothing(spec.start_up_cost)
@@ -907,9 +931,8 @@ function variable_cost!(
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     if !pwlparamcheck(cost_component)
         @warn(
-            "The cost function provided for $(var_name) device is not compatible with a linear PWL cost function.
-      An SOS-2 formulation will be added to the model.
-      This will result in additional binary variables added to the model."
+            "The cost function provided for $(component_name) is not compatible with a linear PWL cost function.
+      An SOS-2 formulation will be added to the model. This will result in additional binary variables."
         )
         gen_cost = pwl_gencost_sos!(
             optimization_container,

@@ -11,17 +11,37 @@ function construct_device!(
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
 
-    devices = get_available_components(model.device_type, sys)
+    devices = get_available_components(get_component_type(model), sys)
 
     if !validate_available_devices(T, devices)
         return
     end
 
     # Variables
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, devices)
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, devices)
-    add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, devices)
-    add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, devices)
+    add_variables!(
+        optimization_container,
+        DeltaActivePowerUpVariable,
+        devices,
+        DeviceLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        DeltaActivePowerDownVariable,
+        devices,
+        DeviceLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        AdditionalDeltaActivePowerUpVariable,
+        devices,
+        DeviceLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        AdditionalDeltaActivePowerDownVariable,
+        devices,
+        DeviceLimitedRegulation(),
+    )
 
     # Constraints
     nodal_expression!(optimization_container, devices, S)
@@ -62,17 +82,37 @@ function construct_device!(
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
 
-    devices = get_available_components(model.device_type, sys)
+    devices = get_available_components(get_component_type(model), sys)
 
     if !validate_available_devices(T, devices)
         return
     end
 
     # Variables
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, devices)
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, devices)
-    add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, devices)
-    add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, devices)
+    add_variables!(
+        optimization_container,
+        DeltaActivePowerUpVariable,
+        devices,
+        ReserveLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        DeltaActivePowerDownVariable,
+        devices,
+        ReserveLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        AdditionalDeltaActivePowerUpVariable,
+        devices,
+        ReserveLimitedRegulation(),
+    )
+    add_variables!(
+        optimization_container,
+        AdditionalDeltaActivePowerDownVariable,
+        devices,
+        ReserveLimitedRegulation(),
+    )
 
     # Constraints
     nodal_expression!(optimization_container, devices, S)
@@ -112,7 +152,7 @@ function construct_device!(
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
 
-    devices = get_available_components(model.device_type, sys)
+    devices = get_available_components(get_component_type(model), sys)
     if !validate_available_devices(T, devices)
         return
     end

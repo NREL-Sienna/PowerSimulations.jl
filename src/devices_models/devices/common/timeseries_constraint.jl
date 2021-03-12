@@ -174,7 +174,7 @@ function device_timeseries_param_ub!(
                     get_variable(optimization_container, val)[ci_name, t],
                 )
             end
-            param[ci_name, t] = PJ.add_parameter(
+            param[ci_name, t] = add_parameter(
                 optimization_container.JuMPmodel,
                 constraint_info.timeseries[t],
             )
@@ -236,7 +236,7 @@ function device_timeseries_param_lb!(
                     -1.0,
                 )
             end
-            param[ci_name, t] = PJ.add_parameter(
+            param[ci_name, t] = add_parameter(
                 optimization_container.JuMPmodel,
                 constraint_info.timeseries[t],
             )
@@ -344,7 +344,7 @@ function device_timeseries_ub_bigM!(
                     get_variable(optimization_container, val)[ci_name, t],
                 )
             end
-            param[ci_name, t] = PJ.add_parameter(
+            param[ci_name, t] = add_parameter(
                 optimization_container.JuMPmodel,
                 constraint_info.timeseries[t],
             )

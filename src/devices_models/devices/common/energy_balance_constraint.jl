@@ -162,7 +162,7 @@ function energy_balance_hydro_param!(
         name = get_component_name(d)
         multiplier_inflow[name, 1] = d.multiplier
         param_inflow[name, 1] =
-            PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
+            add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
             (
@@ -175,7 +175,7 @@ function energy_balance_hydro_param!(
         for t in time_steps[2:end]
             multiplier_inflow[name, t] = d.multiplier
             param_inflow[name, t] =
-                PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
+                add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
             exp =
                 varenergy[name, t - 1] +
                 (
@@ -193,7 +193,7 @@ function energy_balance_hydro_param!(
         name = get_component_name(d)
         for t in time_steps
             param_target[name, t] =
-                PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
+                add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
             multiplier_target[name, t] = d.multiplier
         end
         target_constraint[name, 1] = JuMP.@constraint(
@@ -381,7 +381,7 @@ function energy_balance_hydro_param!(
         pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
         multiplier_inflow[name, 1] = d.multiplier
         param_inflow[name, 1] =
-            PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
+            add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
             (
@@ -394,7 +394,7 @@ function energy_balance_hydro_param!(
         for t in time_steps[2:end]
             multiplier_inflow[name, t] = d.multiplier
             param_inflow[name, t] =
-                PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
+                add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
             exp =
                 varenergy_up[name, t - 1] +
                 (
@@ -413,7 +413,7 @@ function energy_balance_hydro_param!(
         pump_eff = 1.0 # TODO: get pump efficiency PSY.get_pump_efficiency(d)
         multiplier_outflow[name, 1] = d.multiplier
         param_outflow[name, 1] =
-            PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
+            add_parameter(optimization_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
             (
@@ -429,7 +429,7 @@ function energy_balance_hydro_param!(
         for t in time_steps[2:end]
             multiplier_outflow[name, t] = d.multiplier
             param_outflow[name, t] =
-                PJ.add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
+                add_parameter(optimization_container.JuMPmodel, d.timeseries[t])
             exp =
                 varenergy_down[name, t - 1] +
                 (

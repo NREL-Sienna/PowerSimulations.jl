@@ -10,7 +10,12 @@ const ENERGY_DOWN = "Edown"
 const ENERGY_BUDGET = "energy_budget"
 const ENERGY_BUDGET_UP = "energy_budget_up"
 const ENERGY_BUDGET_DOWN = "energy_budget_down"
+const FLOW_REACTIVE_POWER_FROM_TO = "FqFT"
+const FLOW_REACTIVE_POWER_TO_FROM = "FqTF"
+const FLOW_ACTIVE_POWER_FROM_TO = "FpFT"
+const FLOW_ACTIVE_POWER_TO_FROM = "FpTF"
 const FLOW_ACTIVE_POWER = "Fp"
+const FLOW_REACTIVE_POWER = "Fq"
 const HOT_START = "start_hot"
 const INFLOW = "In"
 const TARGET = "Target"
@@ -87,6 +92,16 @@ struct SmoothACE <: VariableType end
 """Struct to dispatch the creation of Flow Active Power Variables"""
 struct FlowActivePowerVariable <: VariableType end
 
+struct FlowReactivePowerVariable <: VariableType end
+
+struct FlowActivePowerFromToVariable <: VariableType end
+
+struct FlowActivePowerToFromVariable <: VariableType end
+
+struct FlowReactivePowerFromToVariable <: VariableType end
+
+struct FlowReactivePowerToFromVariable <: VariableType end
+
 ###############################
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
@@ -157,3 +172,13 @@ make_variable_name(::Type{AdditionalDeltaActivePowerDownVariable}, ::Type{PSY.Re
 make_variable_name(::Type{SmoothACE}, ::Type{T}) where {T <: PSY.AggregationTopology} = encode_symbol(T, "SACE")
 
 make_variable_name(::Type{FlowActivePowerVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Fp")
+
+make_variable_name(::Type{FlowReactivePowerVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Fq")
+
+make_variable_name(::Type{FlowActivePowerFromToVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "FpFT")
+
+make_variable_name(::Type{FlowActivePowerToFromVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "FpTF")
+
+make_variable_name(::Type{FlowReactivePowerFromToVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "FqFT")
+
+make_variable_name(::Type{FlowReactivePowerToFromVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "FqTF")

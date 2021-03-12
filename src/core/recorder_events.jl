@@ -23,25 +23,25 @@ function SimulationStepEvent(
     )
 end
 
-struct SimulationStageEvent <: AbstractSimulationStatusEvent
+struct ProblemExecutionEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
     step::Int
-    stage::Int
+    problem::Int
     status::String
 end
 
-function SimulationStageEvent(
+function ProblemExecutionEvent(
     simulation_time::Dates.DateTime,
     step::Int,
-    stage::Int,
+    problem::Int,
     status::AbstractString,
 )
-    return SimulationStageEvent(
-        IS.RecorderEventCommon("SimulationStageEvent"),
+    return ProblemExecutionEvent(
+        IS.RecorderEventCommon("ProblemExecutionEvent"),
         simulation_time,
         step,
-        stage,
+        problem,
         status,
     )
 end
@@ -54,7 +54,7 @@ struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     device_name::String
     val::Float64
     previous_value::Float64
-    stage_number::Int
+    problem_number::Int
 end
 
 function InitialConditionUpdateEvent(
@@ -63,7 +63,7 @@ function InitialConditionUpdateEvent(
     ic::InitialCondition,
     val::Float64,
     previous_value::Float64,
-    stage_number::Int,
+    problem_number::Int,
 )
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
@@ -73,7 +73,7 @@ function InitialConditionUpdateEvent(
         device_name(ic),
         val,
         previous_value,
-        stage_number,
+        problem_number,
     )
 end
 
@@ -85,7 +85,7 @@ struct FeedForwardUpdateEvent <: IS.AbstractRecorderEvent
     device_name::String
     previous_value::Float64
     val::Float64
-    stage_number::Int
+    problem_number::Int
     source::Int
 end
 
@@ -96,8 +96,8 @@ function FeedForwardUpdateEvent(
     device_name::String,
     val::Float64,
     previous_value::Float64,
-    destination_stage::Stage,
-    source_stage::Stage,
+    destination_problem::OperationsProblem,
+    source_problem::OperationsProblem,
 )
     return FeedForwardUpdateEvent(
         IS.RecorderEventCommon("FeedForwardUpdateEvent"),
@@ -107,8 +107,8 @@ function FeedForwardUpdateEvent(
         device_name,
         previous_value,
         val,
-        get_number(destination_stage),
-        get_number(source_stage),
+        get_simulation_number(destination_problem),
+        get_simulation_number(source_problem),
     )
 end
 
@@ -133,16 +133,16 @@ function get_simulation_step_range(filename::AbstractString, step::Int)
     return (start = events[1].simulation_time, done = events[2].simulation_time)
 end
 
-function get_simulation_stage_range(filename::AbstractString, step::Int, stage::Int)
+function get_simulation_problem_range(filename::AbstractString, step::Int, problem::Int)
     events = IS.list_recorder_events(
-        SimulationStageEvent,
+        ProblemExecutionEvent,
         filename,
-        x -> x.step == step && x.stage == stage,
+        x -> x.step == step && x.problem == problem,
     )
     if length(events) != 2
         throw(
             ArgumentError(
-                "$filename does not have two SimulationStageEvent for step = $step stage = $stage",
+                "$filename does not have two ProblemExecutionEvent for step = $step problem = $problem",
             ),
         )
     end
@@ -150,7 +150,7 @@ function get_simulation_stage_range(filename::AbstractString, step::Int, stage::
     if events[1].status != "start" || events[2].status != "done"
         throw(
             ArgumentError(
-                "$filename does not contain start and done events for step = $step stage = $stage",
+                "$filename does not contain start and done events for step = $step problem = $problem",
             ),
         )
     end
@@ -183,7 +183,7 @@ end
         output_dir::AbstractString,
         filter_func::Union{Nothing, Function} = nothing;
         step = nothing,
-        stage = nothing,
+        problem = nothing,
     ) where {T <: IS.AbstractRecorderEvent}
 
 List simulation events of type T in a simulation output directory.
@@ -191,18 +191,18 @@ List simulation events of type T in a simulation output directory.
 # Arguments
 - `output_dir::AbstractString`: Simulation output directory
 - `filter_func::Union{Nothing, Function} = nothing`: Refer to [`show_simulation_events`](@ref).
-- `step::Int = nothing`: Filter events by step. Required if stage is passed.
-- `stage::Int = nothing`: Filter events by stage.
+- `step::Int = nothing`: Filter events by step. Required if problem is passed.
+- `problem::Int = nothing`: Filter events by problem.
 """
 function list_simulation_events(
     ::Type{T},
     output_dir::AbstractString,
     filter_func::Union{Nothing, Function} = nothing;
     step = nothing,
-    stage = nothing,
+    problem = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
-    if !(stage === nothing) && step === nothing
-        throw(ArgumentError("step is required if stage is passed"))
+    if !(problem === nothing) && step === nothing
+        throw(ArgumentError("step is required if problem is passed"))
     end
 
     recorder_file = _get_simulation_recorder_filename(output_dir)
@@ -214,10 +214,10 @@ function list_simulation_events(
         _filter_by_type_range!(events, step_range)
     end
 
-    if !(stage === nothing)
+    if !(problem === nothing)
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
-        stage_range = get_simulation_stage_range(recorder_file, step, stage)
-        _filter_by_type_range!(events, stage_range)
+        problem_range = get_simulation_problem_range(recorder_file, step, problem)
+        _filter_by_type_range!(events, problem_range)
     end
 
     return events
@@ -239,7 +239,7 @@ end
         output_dir::AbstractString,
         filter_func::Union{Nothing,Function} = nothing;
         step = nothing,
-        stage = nothing,
+        problem = nothing,
         wall_time = false,
         kwargs...,
     ) where { T <: IS.AbstractRecorderEvent}
@@ -250,8 +250,8 @@ Show all simulation events of type T in a simulation output directory.
 - `::Type{T}`: Recorder event type
 - `output_dir::AbstractString`: Simulation output directory
 - `filter_func::Union{Nothing, Function} = nothing`: Refer to [`show_recorder_events`](@ref).
-- `step::Int = nothing`: Filter events by step. Required if stage is passed.
-- `stage::Int = nothing`: Filter events by stage.
+- `step::Int = nothing`: Filter events by step. Required if problem is passed.
+- `problem::Int = nothing`: Filter events by problem.
 - `wall_time = false`: If true, show the wall_time timestamp.
 """
 function show_simulation_events(
@@ -259,7 +259,7 @@ function show_simulation_events(
     output_dir::AbstractString,
     filter_func::Union{Nothing, Function} = nothing;
     step = nothing,
-    stage = nothing,
+    problem = nothing,
     wall_time = false,
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
@@ -269,7 +269,7 @@ function show_simulation_events(
         output_dir,
         filter_func;
         step = step,
-        stage = stage,
+        problem = problem,
         wall_time = wall_time,
         kwargs...,
     )
@@ -310,11 +310,12 @@ function show_simulation_events(
     output_dir::AbstractString,
     filter_func::Union{Nothing, Function} = nothing;
     step = nothing,
-    stage = nothing,
+    problem = nothing,
     wall_time = false,
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    events = list_simulation_events(T, output_dir, filter_func; step = step, stage = stage)
+    events =
+        list_simulation_events(T, output_dir, filter_func; step = step, problem = problem)
     show_recorder_events(io, events, filter_func; wall_time = wall_time, kwargs...)
 end
 

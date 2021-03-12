@@ -1,20 +1,20 @@
 #! format: off
-abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables #########################################
 
+get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
 ############################### ActiveServiceVariable, Reserve #########################################
 
-get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}) = false
+get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
 get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = nothing
 get_variable_lower_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
 
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 
-get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}) = false
-get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, _) = nothing
-get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, _) = 0.0
+get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}, ::AbstractReservesFormulation) = false
+get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, ::AbstractReservesFormulation) = nothing
+get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, ::AbstractReservesFormulation) = 0.0
 
 #! format: on
 ################################## Reserve Requirement Constraint ##########################
@@ -47,8 +47,7 @@ function service_requirement_constraint!(
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps
-            param[name, t] =
-                PJ.add_parameter(optimization_container.JuMPmodel, ts_vector[t])
+            param[name, t] = add_parameter(optimization_container.JuMPmodel, ts_vector[t])
             multiplier[name, t] = 1.0
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
@@ -125,7 +124,7 @@ function service_requirement_constraint!(
     optimization_container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, StepwiseCostReserve},
-) where {SR <: PSY.Reserve}
+) where {SR <: PSY.ReserveDemandCurve}
     initial_time = model_initial_time(optimization_container)
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
@@ -209,7 +208,7 @@ function modify_device_model!(
     for dt in device_types
         for (device_model_name, device_model) in devices_template
             # add message here when it exists
-            device_model.device_type != dt && continue
+            get_component_type(device_model) != dt && continue
             service_model in device_model.services && continue
             push!(device_model.services, service_model)
         end
@@ -261,9 +260,10 @@ function add_device_services!(
     D <: PSY.Device,
 }
     for service_model in get_services(model)
-        if PSY.has_service(device, service_model.service_type)
-            services =
-                (s for s in PSY.get_services(device) if isa(s, service_model.service_type))
+        if PSY.has_service(device, service_model.component_type)
+            services = (
+                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
+            )
             @assert !isempty(services)
             include_service!(constraint_info, services, service_model)
         end
@@ -278,27 +278,28 @@ function add_device_services!(
     model::DeviceModel{D, <:AbstractStorageFormulation},
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
-        if PSY.has_service(device, service_model.service_type)
-            services =
-                (s for s in PSY.get_services(device) if isa(s, service_model.service_type))
+        if PSY.has_service(device, service_model.component_type)
+            services = (
+                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
+            )
             @assert !isempty(services)
-            if service_model.service_type <: PSY.Reserve{PSY.ReserveDown}
+            if service_model.component_type <: PSY.Reserve{PSY.ReserveDown}
                 for service in services
                     push!(
                         constraint_data_in.additional_terms_ub,
                         make_constraint_name(
                             PSY.get_name(service),
-                            service_model.service_type,
+                            service_model.component_type,
                         ),
                     )
                 end
-            elseif service_model.service_type <: PSY.Reserve{PSY.ReserveUp}
+            elseif service_model.component_type <: PSY.Reserve{PSY.ReserveUp}
                 for service in services
                     push!(
                         constraint_data_out.additional_terms_ub,
                         make_constraint_name(
                             PSY.get_name(service),
-                            service_model.service_type,
+                            service_model.component_type,
                         ),
                     )
                 end

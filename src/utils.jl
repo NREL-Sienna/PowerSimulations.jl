@@ -1,5 +1,3 @@
-const HASH_FILENAME = "check.sha256"
-
 """
 Return a decoded JSON file.
 """
@@ -62,23 +60,6 @@ function read_file_hashes(path)
     return data["files"]
 end
 
-function check_kwargs(input_kwargs, valid_set::Array{Symbol}, function_name::String)
-    if isempty(input_kwargs)
-        return
-    else
-        for (key, value) in input_kwargs
-            if !(key in valid_set)
-                throw(
-                    ArgumentError(
-                        "keyword argument $(key) is not a valid input for $(function_name)",
-                    ),
-                )
-            end
-        end
-    end
-    return
-end
-
 # writing a dictionary of dataframes to files
 
 function write_data(vars_results::Dict, save_path::String; kwargs...)
@@ -131,8 +112,11 @@ function write_data(
     return
 end
 
-function write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
-    JSON.write(joinpath(save_path, "optimizer_log.json"), JSON.json(optimizer_log))
+#Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
+function add_parameter(model::JuMP.Model, val::Number)
+    param = JuMP.@variable(model, variable_type = PJ.Param())
+    PJ.set_value(param, val)
+    return param
 end
 
 function write_data(base_power::Float64, save_path::String)
@@ -321,11 +305,6 @@ function find_var_length(es::Dict, e_list::Array)
     return size(es[Symbol(splitext(e_list[1])[1])], 1)
 end
 
-function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time, 1) - 1), :]
-    return time
-end
-
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(m::M, axs...) where {M <: JuMP.AbstractModel}
     return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, axs...)
@@ -400,6 +379,11 @@ function check_file_integrity(path::String)
         )
     end
 end
+
+to_namedtuple(val) = (; (x => getfield(val, x) for x in fieldnames(typeof(val)))...)
+
+make_system_filename(sys::PSY.System) = "system-$(IS.get_uuid(sys)).json"
+make_system_filename(sys_uuid::Base.UUID) = "system-$(sys_uuid).json"
 
 function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
     return Symbol(join((name1, name2, IS.strip_module_name(T)), PSI_NAME_DELIMITER))

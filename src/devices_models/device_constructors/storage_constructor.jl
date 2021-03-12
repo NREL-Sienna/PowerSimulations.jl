@@ -11,13 +11,13 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices)
-    add_variables!(optimization_container, ActivePowerOutVariable, devices)
-    add_variables!(optimization_container, ReactivePowerVariable, devices)
-    add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, ActivePowerInVariable, devices, D())
+    add_variables!(optimization_container, ActivePowerOutVariable, devices, D())
+    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
+    add_variables!(optimization_container, EnergyVariable, devices, D())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, D)
+    initial_conditions!(optimization_container, devices, D())
 
     # Constraints
     add_constraints!(
@@ -85,12 +85,12 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices)
-    add_variables!(optimization_container, ActivePowerOutVariable, devices)
-    add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(optimization_container, ActivePowerInVariable, devices, D())
+    add_variables!(optimization_container, ActivePowerOutVariable, devices, D())
+    add_variables!(optimization_container, EnergyVariable, devices, D())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, D)
+    initial_conditions!(optimization_container, devices, D())
 
     # Constraints
     add_constraints!(
@@ -145,14 +145,39 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices)
-    add_variables!(optimization_container, ActivePowerOutVariable, devices)
-    add_variables!(optimization_container, ReactivePowerVariable, devices)
-    add_variables!(optimization_container, EnergyVariable, devices)
-    add_variables!(optimization_container, ReserveVariable, devices)
+    add_variables!(
+        optimization_container,
+        ActivePowerInVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
+    add_variables!(
+        optimization_container,
+        ActivePowerOutVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
+    add_variables!(
+        optimization_container,
+        ReactivePowerVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergyVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
+    add_variables!(
+        optimization_container,
+        ReserveVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, model.formulation)
+    initial_conditions!(optimization_container, devices, BookKeepingwReservation())
 
     # Constraints
     add_constraints!(
@@ -216,13 +241,33 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices)
-    add_variables!(optimization_container, ActivePowerOutVariable, devices)
-    add_variables!(optimization_container, EnergyVariable, devices)
-    add_variables!(optimization_container, ReserveVariable, devices)
+    add_variables!(
+        optimization_container,
+        ActivePowerInVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
+    add_variables!(
+        optimization_container,
+        ActivePowerOutVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergyVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
+    add_variables!(
+        optimization_container,
+        ReserveVariable,
+        devices,
+        BookKeepingwReservation(),
+    )
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, model.formulation)
+    initial_conditions!(optimization_container, devices, BookKeepingwReservation())
 
     # Constraints
     add_constraints!(
@@ -277,13 +322,33 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices)
-    add_variables!(optimization_container, ActivePowerOutVariable, devices)
-    add_variables!(optimization_container, ReactivePowerVariable, devices)
-    add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(
+        optimization_container,
+        ActivePowerInVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        ActivePowerOutVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        ReactivePowerVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergyVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, model.formulation)
+    initial_conditions!(optimization_container, devices, EndOfPeriodEnergyTarget())
 
     # Constraints
     add_constraints!(
@@ -350,12 +415,27 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices)
-    add_variables!(optimization_container, ActivePowerOutVariable, devices)
-    add_variables!(optimization_container, EnergyVariable, devices)
+    add_variables!(
+        optimization_container,
+        ActivePowerInVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        ActivePowerOutVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergyVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, model.formulation)
+    initial_conditions!(optimization_container, devices, EndOfPeriodEnergyTarget())
 
     # Constraints
     add_constraints!(

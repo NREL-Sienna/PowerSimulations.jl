@@ -1,12 +1,12 @@
-function get_incompatible_devices(devices_template::Dict{Symbol, DeviceModel})
+function get_incompatible_devices(devices_template::Dict)
     incompatible_device_types = Vector{DataType}()
     for model in values(devices_template)
         formulation = get_formulation(model)
         if formulation == FixedOutput
             if !isempty(get_services(model))
-                @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
+                @info "$(formulation) for $(get_component_type(model)) is not compatible with the provision of reserve services"
             end
-            push!(incompatible_device_types, get_device_type(model))
+            push!(incompatible_device_types, get_component_type(model))
         end
     end
     return incompatible_device_types
@@ -15,17 +15,17 @@ end
 function construct_services!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    services_template::Dict{Symbol, ServiceModel},
-    devices_template::Dict{Symbol, DeviceModel},
+    services_template::ServicesModelContainer,
+    devices_template::DevicesModelContainer,
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
 
     function _construct_valid_services!(service_model::ServiceModel)
-        @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
-        services = service_model.service_type[]
+        @debug "Building $(service_model.component_type) with $(service_model.formulation) formulation"
+        services = service_model.component_type[]
         if validate_services!(
-            service_model.service_type,
+            service_model.component_type,
             services,
             incompatible_device_types,
             sys,
@@ -97,6 +97,7 @@ function construct_service!(
             ActiveServiceVariable,
             service,
             contributing_devices,
+            RangeReserve(),
         )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
@@ -119,7 +120,13 @@ function construct_service!(
     services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
-    add_variables!(optimization_container, ServiceRequirementVariable, services)
+    # Does not use the standard implementation of add_variable!()
+    add_variable!(
+        optimization_container,
+        ServiceRequirementVariable(),
+        services,
+        StepwiseCostReserve(),
+    )
     add_cons_container!(
         optimization_container,
         make_constraint_name(REQUIREMENT, SR),
@@ -143,6 +150,7 @@ function construct_service!(
             ActiveServiceVariable,
             service,
             contributing_devices,
+            StepwiseCostReserve(),
         )
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
@@ -174,19 +182,19 @@ function construct_service!(
         end
     end
     add_variables!(optimization_container, SteadyStateFrequencyDeviation)
-    add_variables!(optimization_container, AreaMismatchVariable, areas)
-    add_variables!(optimization_container, SmoothACE, areas)
-    add_variables!(optimization_container, LiftVariable, areas)
-    add_variables!(optimization_container, ActivePowerVariable, areas)
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas)
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas)
+    add_variables!(optimization_container, AreaMismatchVariable, areas, T())
+    add_variables!(optimization_container, SmoothACE, areas, T())
+    add_variables!(optimization_container, LiftVariable, areas, T())
+    add_variables!(optimization_container, ActivePowerVariable, areas, T())
+    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas, T())
+    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas, T())
     # add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, areas)
     # add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, areas)
     balancing_auxiliary_variables!(optimization_container, sys)
 
     absolute_value_lift(optimization_container, areas)
     frequency_response_constraint!(optimization_container, sys)
-    area_control_init(optimization_container, services)
+    area_control_initial_condition!(optimization_container, services, T())
     smooth_ace_pid!(optimization_container, services)
     aux_constraints!(optimization_container, sys)
 end
