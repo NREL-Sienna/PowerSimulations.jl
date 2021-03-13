@@ -463,10 +463,12 @@ function get_realization(
     realized_values = Dict{Symbol, DataFrames.DataFrame}()
     for (key, result_value) in result_values
         results_concat = Dict{Symbol, Vector{Float64}}()
+        datetime_concat = Vector{Dates.DateTime}()
         for (step, (t, df)) in enumerate(result_value)
             first_id = step > 1 ? 1 : meta.start_offset
             last_id =
                 step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
+            datetime_concat = vcat(datetime_concat, df[!, :DateTime][first_id:last_id])
             for colname in propertynames(df)
                 colname == :DateTime && continue
                 col = df[!, colname][first_id:last_id]
@@ -478,6 +480,7 @@ function get_realization(
             end
         end
         realized_values[key] = DataFrames.DataFrame(results_concat, copycols = false)
+        DataFrames.insertcols!(realized_values[key], 1, :DateTime => datetime_concat)
     end
     return realized_values
 end
