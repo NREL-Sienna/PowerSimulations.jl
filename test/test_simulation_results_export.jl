@@ -38,6 +38,7 @@ function _make_params()
             problem_defs[problem]["horizon"],
             problem_defs[problem]["interval"],
             problem_defs[problem]["resolution"],
+            problem_defs[problem]["end_of_interval_step"],
             problem_defs[problem]["base_power"],
             problem_defs[problem]["system_uuid"],
         )

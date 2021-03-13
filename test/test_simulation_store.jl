@@ -31,6 +31,7 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
             horizon,
             stage_defs[stage]["interval"],
             stage_defs[stage]["resolution"],
+            stage_defs[stage]["end_of_interval_step"],
             stage_defs[stage]["base_power"],
             stage_defs[stage]["system_uuid"],
         )
