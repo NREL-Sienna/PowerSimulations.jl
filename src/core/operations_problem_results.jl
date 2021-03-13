@@ -1,5 +1,7 @@
 struct OperationsProblemResults <: PSIResults
     base_power::Float64
+    timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
+    system::Union{Nothing, PSY.System}
     variable_values::Dict{Symbol, DataFrames.DataFrame}
     dual_values::Dict{Symbol, DataFrames.DataFrame}
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
@@ -10,6 +12,7 @@ end
 get_existing_variables(res::OperationsProblemResults) = keys(get_variables(res))
 get_existing_parameters(res::OperationsProblemResults) = keys(IS.get_parameters(res))
 get_existing_duals(res::OperationsProblemResults) = keys(get_duals(res))
+get_timestamps(res::OperationsProblemResults) = res.timestamps
 get_model_base_power(res::OperationsProblemResults) = res.base_power
 get_objective_value(res::OperationsProblemResults) = res.optimizer_stats.objective_value
 IS.get_variables(res::OperationsProblemResults) = res.variable_values
@@ -17,6 +20,9 @@ IS.get_total_cost(res::OperationsProblemResults) = res.total_cost
 IS.get_optimizer_stats(res::OperationsProblemResults) = res.optimizer_stats
 get_duals(res::OperationsProblemResults) = res.dual_values
 IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
+get_resolution(res::OperationsProblemResults) = res.timestamps.step
+get_horizon(res::OperationsProblemResults) = length(res.timestamps)
+get_system(res::OperationsProblemResults) = res.system
 
 function OperationsProblemResults(problem::OperationsProblem)
     status = get_run_status(problem)
@@ -35,6 +41,8 @@ function OperationsProblemResults(problem::OperationsProblem)
 
     return OperationsProblemResults(
         get_problem_base_power(problem),
+        timestamps,
+        problem.sys,
         variables,
         duals,
         parameters,
@@ -158,9 +166,79 @@ function write_optimizer_stats(res::OperationsProblemResults, directory::Abstrac
     JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(data))
 end
 
-function read_variables(
-    problem::OperationsProblem,
+function _read_realized_results(
+    result_values::Dict{Symbol, DataFrames.DataFrame},
+    names::Union{Nothing, Vector{Symbol}},
+)
+    existing_names = collect(keys(result_values))
+    names = isnothing(names) ? existing_names : names
+    _validate_names(existing_names, names)
+    return filter(p -> (p.first ∈ names), result_values)
+end
+
+function _read_results(
+    result_values::Dict{Symbol, DataFrames.DataFrame},
+    names::Union{Nothing, Vector{Symbol}},
+    initial_time::Dates.DateTime,
+)
+    realized_results = _read_realized_results(result_values, names)
+    results = FieldResultsByTime()
+    for (name, df) in realized_results
+        results[name] = ResultsByTime(initial_time => df)
+    end
+    return results
+end
+
+function read_realized_variables(
+    res::OperationsProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
 )
-    variables = get_variables(problem)
+    variable_values = get_variables(res)
+    return _read_realized_results(variable_values, names)
+end
+
+function read_realized_parameters(
+    res::OperationsProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+)
+    parameter_values = IS.get_parameters(res)
+    return _read_realized_results(parameter_values, names)
+end
+
+function read_realized_duals(
+    res::OperationsProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+)
+    dual_values = get_duals(res)
+    return _read_realized_results(dual_values, names)
+end
+
+function read_variables(
+    res::OperationsProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+)
+    result_values = get_variables(res)
+    return _read_results(result_values, names, first(get_timestamps(res)))
+end
+
+function read_parameters(
+    res::OperationsProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+)
+    result_values = IS.get_parameters(res)
+    return _read_results(result_values, names, first(get_timestamps(res)))
+end
+
+function read_duals(
+    res::OperationsProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+)
+    result_values = get_duals(res)
+    return _read_results(result_values, names, first(get_timestamps(res)))
+end
+
+function read_optimizer_stats(res::OperationsProblemResults)
+    data = get_optimizer_stats(res)
+    stats = [to_namedtuple(data)]
+    return DataFrames.DataFrame(stats)
 end

@@ -220,6 +220,14 @@ end
         @test all([-1 * x == get_max_active_power(load) for x in param_mult[!, name]])
         @test all(vals .== param_vals[!, name])
     end
+
+    res = OperationsProblemResults(op_problem)
+    @test isa(read_realized_variables(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(read_realized_parameters(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(read_realized_duals(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(read_variables(res), PSI.FieldResultsByTime)
+    @test isa(read_parameters(res), PSI.FieldResultsByTime)
+    @test isa(read_duals(res), PSI.FieldResultsByTime)
 end
 
 @testset "Test Serialization, deserialization and write optimizer problem" begin

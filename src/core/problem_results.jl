@@ -15,9 +15,9 @@ mutable struct ProblemResults <: PSIResults
     existing_timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     results_timestamps::Vector{Dates.DateTime}
     system::Union{Nothing, PSY.System}
+    system_uuid::Base.UUID
     resolution::Dates.TimePeriod
     forecast_horizon::Int
-    system_uuid::Base.UUID
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
@@ -53,9 +53,9 @@ function ProblemResults(
         time_steps,
         Vector{Dates.DateTime}(),
         nothing,
+        problem_params.system_uuid,
         get_resolution(problem_params),
         get_horizon(problem_params),
-        problem_params.system_uuid,
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
         _fill_result_value_container(parameters),
@@ -176,7 +176,7 @@ function _validate_names(existing_names::Vector{Symbol}, names::Vector{Symbol})
 end
 
 function _process_timestamps(
-    res::ProblemResults,
+    res::Union{ProblemResults, OperationsProblemResults},
     initial_time::Union{Nothing, Dates.DateTime},
     count::Union{Int, Nothing},
 )
@@ -204,7 +204,7 @@ function _process_timestamps(
 end
 
 function _read_variables(res::ProblemResults, names::Vector{Symbol}, timestamps, store)
-    isempty(names) && return ResultsByTime()
+    isempty(names) && return FieldResultsByTime()
     existing_names = get_existing_variables(res)
     _validate_names(existing_names, names)
     same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
@@ -245,8 +245,7 @@ function read_variables(
 end
 
 function _read_duals(res::ProblemResults, names::Vector{Symbol}, timestamps, store)
-    isempty(names) &&
-        return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
+    isempty(names) && return FieldResultsByTime()
     existing_names = get_existing_duals(res)
     _validate_names(existing_names, names)
     same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
@@ -286,8 +285,7 @@ function read_duals(
 end
 
 function _read_parameters(res::ProblemResults, names::Vector{Symbol}, timestamps, store)
-    isempty(names) &&
-        return Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
+    isempty(names) && return FieldResultsByTime()
     existing_names = get_existing_parameters(res)
     _validate_names(existing_names, names)
     same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
@@ -333,7 +331,11 @@ end
     - `count::Int`: Number of results
     - `store::SimulationStore`: a store that has been opened for reading
 """
-function read_variable(res::ProblemResults, name::Symbol; kwargs...)
+function read_variable(
+    res::Union{OperationsProblemResults, ProblemResults},
+    name::Symbol;
+    kwargs...,
+)
     return read_variables(res; names = [name], kwargs...)[name]
 end
 
@@ -344,7 +346,11 @@ end
     - `count::Int`: Number of results
     - `store::SimulationStore`: a store that has been opened for reading
 """
-function read_dual(res::ProblemResults, name::Symbol; kwargs...)
+function read_dual(
+    res::Union{OperationsProblemResults, ProblemResults},
+    name::Symbol;
+    kwargs...,
+)
     return read_duals(res; names = [name], kwargs...)[name]
 end
 
@@ -354,7 +360,11 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function read_parameter(res::ProblemResults, name::Symbol; kwargs...)
+function read_parameter(
+    res::Union{OperationsProblemResults, ProblemResults},
+    name::Symbol;
+    kwargs...,
+)
     return read_parameters(res; names = [name], kwargs...)[name]
 end
 
