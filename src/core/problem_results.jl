@@ -18,6 +18,7 @@ mutable struct ProblemResults <: PSIResults
     system_uuid::Base.UUID
     resolution::Dates.TimePeriod
     forecast_horizon::Int
+    end_of_interval_step::Int
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
@@ -56,6 +57,7 @@ function ProblemResults(
         problem_params.system_uuid,
         get_resolution(problem_params),
         get_horizon(problem_params),
+        get_end_of_interval_step(problem_params),
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
         _fill_result_value_container(parameters),
@@ -77,6 +79,7 @@ get_problem_name(res::ProblemResults) = res.problem
 get_system(res::ProblemResults) = res.system
 get_resolution(res::ProblemResults) = res.resolution
 get_forecast_horizon(res::ProblemResults) = res.forecast_horizon
+get_end_of_interval_step(res::ProblemResults) = res.end_of_interval_step
 get_execution_path(res::ProblemResults) = res.execution_path
 get_existing_variables(res::ProblemResults) = collect(keys(res.variable_values))
 get_existing_duals(res::ProblemResults) = collect(keys(res.dual_values))
@@ -390,10 +393,12 @@ end
 
 struct RealizedMeta
     initial_time::Dates.DateTime
+    resolution::Dates.TimePeriod
     count::Int
     start_offset::Int
     end_offset::Int
     interval_len::Int
+    end_of_interval_step::Int
 end
 
 function RealizedMeta(
@@ -405,6 +410,7 @@ function RealizedMeta(
     interval = existing_timestamps.step
     resolution = get_resolution(res)
     interval_len = Int(interval / resolution)
+    end_of_interval_step = get_end_of_interval_step(res)
     realized_timestamps =
         get_realized_timestamps(res, initial_time = initial_time, len = len)
 
@@ -424,7 +430,15 @@ function RealizedMeta(
         (last(realized_timestamps) + resolution):resolution:(result_end_time + interval - resolution),
     )
 
-    return RealizedMeta(result_initial_time, count, start_offset, end_offset, interval_len)
+    return RealizedMeta(
+        result_initial_time,
+        resolution,
+        count,
+        start_offset,
+        end_offset,
+        interval_len,
+        end_of_interval_step,
+    )
 end
 
 function get_realized_timestamps(
@@ -459,19 +473,23 @@ end
 function get_realization(
     result_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}},
     meta::RealizedMeta,
+    timestamps,
 )
     realized_values = Dict{Symbol, DataFrames.DataFrame}()
     for (key, result_value) in result_values
         results_concat = Dict{Symbol, Vector{Float64}}()
-        datetime_concat = Vector{Dates.DateTime}()
         for (step, (t, df)) in enumerate(result_value)
             first_id = step > 1 ? 1 : meta.start_offset
             last_id =
                 step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
-            datetime_concat = vcat(datetime_concat, df[!, :DateTime][first_id:last_id])
+            result_length = length(first_id:last_id)
             for colname in propertynames(df)
                 colname == :DateTime && continue
-                col = df[!, colname][first_id:last_id]
+                if meta.end_of_interval_step == 1 # indicates RH
+                    col = ones(result_length) .* df[!, colname][1] # realization is first period setpoint
+                else
+                    col = df[!, colname][first_id:last_id]
+                end
                 if !haskey(results_concat, colname)
                     results_concat[colname] = col
                 else
@@ -480,7 +498,7 @@ function get_realization(
             end
         end
         realized_values[key] = DataFrames.DataFrame(results_concat, copycols = false)
-        DataFrames.insertcols!(realized_values[key], 1, :DateTime => datetime_concat)
+        DataFrames.insertcols!(realized_values[key], 1, :DateTime => timestamps)
     end
     return realized_values
 end
@@ -509,7 +527,8 @@ function read_realized_variables(
         initial_time = meta.initial_time,
         count = meta.count,
     )
-    return get_realization(result_values, meta)
+    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    return get_realization(result_values, meta, timestamps)
 end
 
 """
@@ -536,7 +555,8 @@ function read_realized_parameters(
         initial_time = meta.initial_time,
         count = meta.count,
     )
-    return get_realization(result_values, meta)
+    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    return get_realization(result_values, meta, timestamps)
 end
 
 """
@@ -559,7 +579,8 @@ function read_realized_duals( # TODO: Should this be get_realized_duals_values?
     meta = RealizedMeta(res, initial_time = initial_time, len = len)
     result_values =
         read_duals(res, names = names, initial_time = meta.initial_time, count = meta.count)
-    return get_realization(result_values, meta)
+    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    return get_realization(result_values, meta, timestamps)
 end
 
 """
