@@ -222,12 +222,16 @@ end
     end
 
     res = OperationsProblemResults(op_problem)
-    @test isa(read_realized_variables(res), Dict{Symbol, DataFrames.DataFrame})
-    @test isa(read_realized_parameters(res), Dict{Symbol, DataFrames.DataFrame})
-    @test isa(read_realized_duals(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(read_realized_variables(res), Dict{Symbol,DataFrames.DataFrame})
+    @test isa(read_realized_parameters(res), Dict{Symbol,DataFrames.DataFrame})
+    @test isa(read_realized_duals(res), Dict{Symbol,DataFrames.DataFrame})
     @test isa(read_variables(res), PSI.FieldResultsByTime)
     @test isa(read_parameters(res), PSI.FieldResultsByTime)
     @test isa(read_duals(res), PSI.FieldResultsByTime)
+    @test length(read_variable(res, :P__ThermalStandard)) == 1
+    @test length(read_parameter(res, :P_PowerLoad)) == 1
+    @test length(read_dual(res, :CopperPlateBalance)) == 1
+
 end
 
 @testset "Test Serialization, deserialization and write optimizer problem" begin
