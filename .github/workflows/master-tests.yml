@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@latest
+        continue-on-error: true
         with:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}
