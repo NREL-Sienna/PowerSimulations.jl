@@ -236,6 +236,18 @@ function construct_device!(
         devices,
         HydroDispatchReservoirStorage(),
     )
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        HydroDispatchReservoirStorage(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        HydroDispatchReservoirStorage(),
+    )
 
     # Initial Conditions
     storage_energy_initial_condition!(
@@ -244,14 +256,22 @@ function construct_device!(
         HydroDispatchReservoirStorage(),
     )
     # Energy Balance Constraint
-    energy_balance_constraint!(
+    add_constraints!(
+        optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    energy_target_constraint!(
         optimization_container,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -277,6 +297,7 @@ function construct_device!(
     end
 
     # Variables
+
     add_variables!(
         optimization_container,
         ActivePowerVariable,
@@ -295,6 +316,18 @@ function construct_device!(
         devices,
         HydroDispatchReservoirStorage(),
     )
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        HydroDispatchReservoirStorage(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        HydroDispatchReservoirStorage(),
+    )
 
     # Initial Conditions
     storage_energy_initial_condition!(
@@ -303,7 +336,16 @@ function construct_device!(
         HydroDispatchReservoirStorage(),
     )
     # Energy Balance Constraint
-    energy_balance_constraint!(
+    add_constraints!(
+        optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    energy_target_constraint!(
         optimization_container,
         devices,
         model,
@@ -573,7 +615,18 @@ function construct_device!(
         devices,
         HydroCommitmentReservoirStorage(),
     )
-
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        HydroCommitmentReservoirStorage(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        HydroCommitmentReservoirStorage(),
+    )
     # Constraints
     add_constraints!(
         optimization_container,
@@ -601,14 +654,22 @@ function construct_device!(
         HydroCommitmentReservoirStorage(),
     )
     # Energy Balance Constraint
-    energy_balance_constraint!(
+    add_constraints!(
+        optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    energy_target_constraint!(
         optimization_container,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -658,7 +719,18 @@ function construct_device!(
         devices,
         HydroCommitmentReservoirStorage(),
     )
-
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        HydroCommitmentReservoirStorage(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        HydroCommitmentReservoirStorage(),
+    )
     # Constraints
     add_constraints!(
         optimization_container,
@@ -677,7 +749,16 @@ function construct_device!(
         HydroCommitmentReservoirStorage(),
     )
     # Energy Balance Constraint
-    energy_balance_constraint!(
+    add_constraints!(
+        optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    energy_target_constraint!(
         optimization_container,
         devices,
         model,
@@ -768,18 +849,28 @@ function construct_device!(
     )
 
     # Energy Balanace limits
-    energy_balance_constraint!(
+    add_constraints!(
         optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariableUp,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-
+    add_constraints!(
+        optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariableDown,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function(optimization_container, devices, HydroDispatchReservoirBudget, S)
+    cost_function!(optimization_container, devices, model, S, nothing)
 
     return
 end
@@ -866,18 +957,28 @@ function construct_device!(
     )
 
     # Energy Balanace limits
-    energy_balance_constraint!(
+    add_constraints!(
         optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariableUp,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-
+    add_constraints!(
+        optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariableDown,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function(optimization_container, devices, HydroDispatchReservoirBudget, S)
+    cost_function!(optimization_container, devices, model, S, nothing)
 
     return
 end
