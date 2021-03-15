@@ -57,10 +57,12 @@ function construct_device!(
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(
+    add_constraints!(
         optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
         devices,
-        D,
+        model,
         S,
         get_feedforward(model),
     )
@@ -121,10 +123,12 @@ function construct_device!(
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(
+    add_constraints!(
         optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
         devices,
-        D,
+        model,
         S,
         get_feedforward(model),
     )
@@ -217,10 +221,12 @@ function construct_device!(
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(
+    add_constraints!(
         optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
         devices,
-        model.formulation,
+        model,
         S,
         get_feedforward(model),
     )
@@ -298,10 +304,12 @@ function construct_device!(
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(
+    add_constraints!(
         optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
         devices,
-        model.formulation,
+        model,
         S,
         get_feedforward(model),
     )
@@ -346,7 +354,24 @@ function construct_device!(
         devices,
         EndOfPeriodEnergyTarget(),
     )
-
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        ReserveVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
     # Initial Conditions
     initial_conditions!(optimization_container, devices, EndOfPeriodEnergyTarget())
 
@@ -388,10 +413,19 @@ function construct_device!(
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(
+    add_constraints!(
+        optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    energy_target_constraint!(
         optimization_container,
         devices,
-        model.formulation,
+        model,
         S,
         get_feedforward(model),
     )
@@ -433,7 +467,24 @@ function construct_device!(
         devices,
         EndOfPeriodEnergyTarget(),
     )
-
+    add_variables!(
+        optimization_container,
+        EnergyShortageVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        EnergySurplusVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
+    add_variables!(
+        optimization_container,
+        ReserveVariable,
+        devices,
+        EndOfPeriodEnergyTarget(),
+    )
     # Initial Conditions
     initial_conditions!(optimization_container, devices, EndOfPeriodEnergyTarget())
 
@@ -466,10 +517,19 @@ function construct_device!(
     feedforward!(optimization_container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(
+    add_constraints!(
+        optimization_container,
+        EnergyBalanceConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    energy_target_constraint!(
         optimization_container,
         devices,
-        model.formulation,
+        model,
         S,
         get_feedforward(model),
     )
