@@ -562,13 +562,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 72, 0, 0, 1, 24, false)
+    moi_tests(op_problem, true, 120, 0, 0, 0, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 72, 0, 0, 1, 24, false)
+    moi_tests(op_problem, false, 120, 0, 0, 0, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -579,7 +579,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 3, 0, 0, 1, 1, false)
+    moi_tests(op_problem, false, 5, 0, 0, 0, 2, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -595,13 +595,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 96, 0, 0, 1, 24, false)
+    moi_tests(op_problem, true, 144, 0, 0, 0, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 96, 0, 0, 1, 24, false)
+    moi_tests(op_problem, false, 144, 0, 0, 0, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -612,7 +612,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 4, 0, 0, 1, 1, false)
+    moi_tests(op_problem, false, 6, 0, 0, 0, 2, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -632,13 +632,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 96, 0, 24, 25, 24, true)
+    moi_tests(op_problem, true, 144, 0, 24, 24, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 96, 0, 24, 25, 24, true)
+    moi_tests(op_problem, false, 144, 0, 24, 24, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -649,11 +649,11 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 4, 0, 1, 2, 1, true)
+    moi_tests(op_problem, false, 6, 0, 1, 1, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-@testset "Hydro ACPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
+@testset "Hydro ACPLossLess HydroEnergyReservoir with HydroCommitmentReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
@@ -665,13 +665,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 120, 0, 48, 49, 24, true)
+    moi_tests(op_problem, true, 168, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 120, 0, 48, 49, 24, true)
+    moi_tests(op_problem, false, 168, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -682,7 +682,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 5, 0, 2, 3, 1, true)
+    moi_tests(op_problem, false, 7, 0, 2, 2, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -691,7 +691,7 @@ end
     parameters_value = [true, false]
     networks = [ACPPowerModel, DCPPowerModel]
 
-    test_results = Dict{Any, Float64}(ACPPowerModel => 12414.0, DCPPowerModel => 12218.0)
+    test_results = Dict{Any, Float64}(ACPPowerModel => 177526.0, DCPPowerModel => 175521.0)
 
     for net in networks, p in parameters_value
         @info("Test solve HydroRoR ED with $(net) network")
@@ -735,7 +735,7 @@ end
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
-            psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 12218.0, 1000)
+            psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 175521.0, 1000)
         end
     end
 end
@@ -746,10 +746,10 @@ end
     networks = [ACPPowerModel, DCPPowerModel]
     models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
     test_results = Dict{Any, Float64}(
-        (ACPPowerModel, HydroDispatchReservoirBudget) => 338977.0,
-        (DCPPowerModel, HydroDispatchReservoirBudget) => 337646.0,
-        (ACPPowerModel, HydroDispatchReservoirStorage) => 303157.0,
-        (DCPPowerModel, HydroDispatchReservoirStorage) => 301826.0,
+        (ACPPowerModel, HydroDispatchReservoirBudget) => 33423.0,
+        (DCPPowerModel, HydroDispatchReservoirBudget) => 33042.0,
+        (ACPPowerModel, HydroDispatchReservoirStorage) => 217572.0,
+        (DCPPowerModel, HydroDispatchReservoirStorage) => 215228.0,
     )
     parameters_value = [true, false]
 
@@ -783,8 +783,8 @@ end
     net = DCPPowerModel
     models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
     test_results = Dict{Any, Float64}(
-        HydroCommitmentReservoirBudget => 337646.0,
-        HydroCommitmentReservoirStorage => 301826.0,
+        HydroCommitmentReservoirBudget => 33042.0,
+        HydroCommitmentReservoirStorage => 215228.0,
     )
 
     for mod in models, p in parameters_value
