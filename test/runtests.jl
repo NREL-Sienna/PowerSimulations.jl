@@ -52,7 +52,7 @@ include("test_utils/operations_problem_templates.jl")
 
 const LOG_FILE = "power-simulations-test.log"
 
-const DISABLED_TEST_FILES = []
+const DISABLED_TEST_FILES = ["test_device_storage_constructors.jl"]
 
 LOG_LEVELS = Dict(
     "Debug" => Logging.Debug,
