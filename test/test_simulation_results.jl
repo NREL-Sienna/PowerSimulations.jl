@@ -363,7 +363,7 @@ function test_simulation_results(file_path::String, export_path)
         results_rh = get_problem_results(results, "UC")
 
         @test get_system(results_rh) === nothing
-        @test length(read_realized_variables(results_rh)) == 8 #verifies this works without system
+        @test length(read_realized_variables(results_rh)) == 10 #verifies this works without system
         set_system!(results_rh, c_sys5_hy_uc)
         @test IS.get_uuid(get_system!(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
 
@@ -399,7 +399,7 @@ function test_simulation_results(file_path::String, export_path)
         end
 
         realized_var_rh = read_realized_variables(results_rh)
-        @test length(keys(realized_var_rh)) == 8
+        @test length(keys(realized_var_rh)) == 10
         for var in values(realized_var_rh)
             @test size(var)[1] == 48
             existing_timetsamps = get_existing_timestamps(results_rh)
