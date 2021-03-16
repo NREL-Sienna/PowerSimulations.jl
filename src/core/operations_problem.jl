@@ -357,7 +357,7 @@ function initialize_simulation_info!(problem::OperationsProblem, ::RecedingHoriz
 end
 
 function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serialize::Bool)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(problem))" begin
         try
             build_pre_step!(problem)
             problem_build!(problem)
