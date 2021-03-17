@@ -839,19 +839,20 @@ function add_to_cost!(
     end
 
     @debug "Energy Surplus/Shortage cost" component_name
+    base_power = get_base_power(optimization_container)
     for t in time_steps
         linear_gen_cost!(
             optimization_container,
             make_variable_name(EnergySurplusVariable, spec.component_type),
             component_name,
-            cost_data.energy_surplus_cost * OBJECTIVE_FUNCTION_NEGATIVE,
+            cost_data.energy_surplus_cost * OBJECTIVE_FUNCTION_NEGATIVE * base_power,
             t,
         )
         linear_gen_cost!(
             optimization_container,
             make_variable_name(EnergyShortageVariable, spec.component_type),
             component_name,
-            cost_data.energy_shortage_cost * spec.multiplier,
+            cost_data.energy_shortage_cost * spec.multiplier * base_power,
             t,
         )
     end
