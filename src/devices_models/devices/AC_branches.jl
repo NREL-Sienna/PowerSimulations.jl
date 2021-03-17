@@ -151,12 +151,11 @@ function branch_flow_values!(
     ::Type{StandardPTDFModel},
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF(optimization_container)
-    buses = ptdf.axes[2]
-    branches = ptdf.axes[1]
+    branches = PSY.get_name.(devices)
     time_steps = model_time_steps(optimization_container)
-    constraint_val = JuMPConstraintArray(undef, time_steps)
+    constraint_name = make_constraint_name(NETWORK_FLOW, B)
     branch_flow =
-        add_cons_container!(optimization_container, :network_flow, branches, time_steps)
+        add_cons_container!(optimization_container, constraint_name, branches, time_steps)
     nodal_balance_expressions = optimization_container.expressions[:nodal_balance_active]
     flow_variables = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
     jump_model = get_jump_model(optimization_container)

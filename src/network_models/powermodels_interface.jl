@@ -375,10 +375,7 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowe
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA)
-    pm_var_map[PSY.ACBranch] = Dict(
-        :p => FlowActivePowerFromToVariable,
-        #(from_to = FlowActivePowerFromToVariable, to_from = FlowActivePowerToFromVariable),
-    )
+    pm_var_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable)
     pm_var_map[PSY.DCBranch] = Dict(
         :p_dc => (
             from_to = FlowActivePowerFromToVariable,
@@ -415,8 +412,8 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
     )
     pm_var_map[PSY.DCBranch] = Dict(
         :p_dc => (
-            from_to = FlowActivePowerFromToVariable,
-            to_from = FlowActivePowerToFromVariable,
+            from_to = FlowActivePowerVariable,#FlowActivePowerFromToVariable,
+            to_from = nothing,#FlowActivePowerToFromVariable,
         ),
         :q_dc => (
             from_to = FlowReactivePowerFromToVariable,
@@ -467,7 +464,7 @@ function PMexprmap(system_formulation::Type{PTDFPowerModel})
 
     pm_expr_map[PSY.ACBranch] = (
         pm_expr = Dict(:p => (from_to = FlowActivePowerVariable, to_from = nothing)),
-        psi_con = :network_flow,
+        psi_con = Symbol(NETWORK_FLOW),
     )
 
     return pm_expr_map
@@ -658,9 +655,10 @@ function add_pm_expr_refs!(
                         make_variable_name(var_type, d_type),
                     )
 
-                    psi_con_container = PSI.add_cons_container!(
+                    con_name = make_constraint_name(pm_expr_map[d_class].psi_con, d_type)
+                    psi_con_container = add_cons_container!(
                         optimization_container,
-                        pm_expr_map[d_class].psi_con,
+                        con_name,
                         mapped_ps_device_names,
                         time_steps,
                     )

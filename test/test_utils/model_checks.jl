@@ -83,7 +83,7 @@ end
 function psi_ptdf_lmps(op_problem::OperationsProblem, ptdf)
     res = solve!(op_problem)
     λ = convert(Array, res.dual_values[:CopperPlateBalance])
-    μ = convert(Array, res.dual_values[:network_flow])
+    μ = convert(Array, res.dual_values[:network_flow__Line]) #TODO: should this collect all branch network flows
     buses = get_components(Bus, op_problem.sys)
     lmps = OrderedDict()
     for bus in buses

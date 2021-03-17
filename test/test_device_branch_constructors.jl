@@ -93,8 +93,11 @@ end
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
     rate_limit2w = PSY.get_rate(tap_transformer)
 
-    for model in [DCPPowerModel, StandardPTDFModel]
+    for model in [DCPPowerModel, StandardPTDFModel],
+        hvdc_model in [HVDCDispatch, HVDCLossless]
+
         template = get_template_dispatch_with_network(model)
+        set_device_model!(template, HVDCLine, hvdc_model)
         op_problem_m = OperationsProblem(
             template,
             system;
@@ -229,7 +232,7 @@ end
           PSI.BuildStatus.BUILT
 
     check_variable_bounded(op_problem_m, :FqTF__HVDCLine)
-    check_variable_bounded(op_problem_m, :FpTF__HVDCLine)
+    check_variable_bounded(op_problem_m, :Fp__HVDCLine)
     @test check_variable_bounded(op_problem_m, :FpFT__TapTransformer)
     @test check_variable_unbounded(op_problem_m, :FqFT__TapTransformer)
     @test check_variable_bounded(op_problem_m, :FpTF__Transformer2W)
@@ -241,7 +244,7 @@ end
 
     @test check_flow_variable_values(
         op_problem_m,
-        :FpTF__HVDCLine,
+        :Fp__HVDCLine,
         :FqTF__HVDCLine,
         "DCLine3",
         limits_max,

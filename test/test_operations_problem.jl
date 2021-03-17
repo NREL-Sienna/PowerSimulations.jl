@@ -157,7 +157,8 @@ end
     parameters = [true, false]
     ptdf = PTDF(sys)
     # These are the duals of interest for the test
-    dual_constraint = [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow]]
+    dual_constraint =
+        [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow__Line]]
     LMPs = []
     for (ix, network) in enumerate(networks), p in parameters
         template = get_template_dispatch_with_network(network)
