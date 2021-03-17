@@ -421,7 +421,11 @@ function add_cons_container!(
         end
         assign_constraint!(optimization_container, cons_name, container)
     else
+<<<<<<< HEAD
         Throw(error("constraint container already exists: $cons_name"))
+=======
+        container = optimization_container.constraints[cons_name]
+>>>>>>> d291bef1488cc4383402b03d2e60be0df2477574
     end
     return container
 end
