@@ -529,26 +529,29 @@ function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem};
     return status
 end
 
-function write_problem_results!(step::Int,
+function write_problem_results!(
+    step::Int,
     problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
     start_time::Dates.DateTime,
     store::SimulationStore,
-    exports)
+    exports,
+)
     stats = OptimizerStats(problem, step)
     write_optimizer_stats!(store, get_name(problem), stats)
     write_model_results!(store, problem, start_time; exports = exports)
     return
 end
 
-function write_problem_results!(::Int,
+function write_problem_results!(
+    ::Int,
     ::OperationsProblem{T},
     ::Dates.DateTime,
     ::SimulationStore,
-    _) where {T <: AbstractOperationsProblem }
+    _,
+) where {T <: AbstractOperationsProblem}
     @info "Write results to Store not implemented for problems T"
     return
 end
-
 
 """
 Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
