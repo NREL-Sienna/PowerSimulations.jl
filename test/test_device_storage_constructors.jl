@@ -86,7 +86,7 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
-    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 44.0, 10.0)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 5811.0, 10.0)
 end
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1c-2c" begin
@@ -126,7 +126,7 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 28, 0, 20, 16, 12, true)
-    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -176.0, 10.0)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -11118.0, 10.0)
 end
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1e-2e" begin
@@ -145,7 +145,7 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
-    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 47.0, 10.0)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 5547.0, 10.0)
 end
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1f-2f" begin
@@ -165,5 +165,5 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
-    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -80.0, 10.0)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -1825.0, 10.0)
 end

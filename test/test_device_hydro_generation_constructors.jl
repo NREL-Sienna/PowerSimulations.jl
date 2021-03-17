@@ -751,8 +751,8 @@ end
     test_results = Dict{Any, Float64}(
         (ACPPowerModel, HydroDispatchReservoirBudget) => 33423.0,
         (DCPPowerModel, HydroDispatchReservoirBudget) => 33042.0,
-        (ACPPowerModel, HydroDispatchReservoirStorage) => 217572.0,
-        (DCPPowerModel, HydroDispatchReservoirStorage) => 215228.0,
+        (ACPPowerModel, HydroDispatchReservoirStorage) => 232497.0,
+        (DCPPowerModel, HydroDispatchReservoirStorage) => 230153.0,
     )
     parameters_value = [true, false]
 
@@ -790,7 +790,7 @@ end
     models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
     test_results = Dict{Any, Float64}(
         HydroCommitmentReservoirBudget => 33042.0,
-        HydroCommitmentReservoirStorage => 215228.0,
+        HydroCommitmentReservoirStorage => 230153.0,
     )
 
     for (mod, sys) in zip(models, systems), p in parameters_value
@@ -833,7 +833,7 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
-    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 77.0, 10.0)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 5621.0, 10.0)
 end
 
 @testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1c-2c)" begin
@@ -871,7 +871,7 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
-    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -33.5)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -5429.0, 10.0)
 end
 
 @testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1e-2e)" begin
@@ -890,7 +890,7 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
-    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 21.0)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 21.0, 10.0)
 end
 
 @testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1f-2f)" begin
@@ -909,5 +909,5 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
-    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -151.0)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -17179.0)
 end
