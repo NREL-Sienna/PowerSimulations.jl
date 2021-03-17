@@ -352,13 +352,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 24, 0, 1, 0, 0, false)
+    moi_tests(op_problem, true, 24, 0, 25, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 24, 0, 1, 0, 0, false)
+    moi_tests(op_problem, false, 24, 0, 25, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -369,7 +369,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 1, 0, 1, 0, 0, false)
+    moi_tests(op_problem, false, 1, 0, 2, 1, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -385,13 +385,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 48, 0, 1, 0, 0, false)
+    moi_tests(op_problem, true, 48, 0, 49, 48, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 48, 0, 1, 0, 0, false)
+    moi_tests(op_problem, false, 48, 0, 49, 48, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -402,7 +402,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 2, 0, 1, 0, 0, false)
+    moi_tests(op_problem, false, 2, 0, 3, 2, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -552,7 +552,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
 
     # Parameters Testing
     op_problem = OperationsProblem(
@@ -562,13 +562,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 120, 0, 0, 0, 48, false)
+    moi_tests(op_problem, true, 120, 0, 48, 48, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 120, 0, 0, 0, 48, false)
+    moi_tests(op_problem, false, 120, 0, 48, 48, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -579,13 +579,13 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 5, 0, 0, 0, 2, false)
+    moi_tests(op_problem, false, 5, 0, 2, 2, 2, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
 @testset "Hydro ACPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
 
     # Parameters Testing
     op_problem = OperationsProblem(
@@ -595,13 +595,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 144, 0, 0, 0, 48, false)
+    moi_tests(op_problem, true, 144, 0, 72, 72, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 144, 0, 0, 0, 48, false)
+    moi_tests(op_problem, false, 144, 0, 72, 72, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -612,7 +612,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 6, 0, 0, 0, 2, false)
+    moi_tests(op_problem, false, 6, 0, 3, 3, 2, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -622,7 +622,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
 
     # Parameters Testing
     op_problem = OperationsProblem(
@@ -632,13 +632,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 144, 0, 24, 24, 48, true)
+    moi_tests(op_problem, true, 144, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 144, 0, 24, 24, 48, true)
+    moi_tests(op_problem, false, 144, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -649,13 +649,13 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 6, 0, 1, 1, 2, true)
+    moi_tests(op_problem, false, 6, 0, 2, 2, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
 @testset "Hydro ACPLossLess HydroEnergyReservoir with HydroCommitmentReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
 
     # Parameters Testing
     op_problem = OperationsProblem(
@@ -665,13 +665,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 168, 0, 48, 48, 48, true)
+    moi_tests(op_problem, true, 168, 0, 72, 72, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 168, 0, 48, 48, 48, true)
+    moi_tests(op_problem, false, 168, 0, 72, 72, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -682,7 +682,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 7, 0, 2, 2, 2, true)
+    moi_tests(op_problem, false, 7, 0, 3, 3, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -741,7 +741,7 @@ end
 end
 
 @testset "Solving ED Hydro System using Dispatch with Reservoir" begin
-    sys = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    systems = [PSB.build_system(PSITestSystems, "c_sys5_hyd"), PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")]
     parameters_value = [true, false]
     networks = [ACPPowerModel, DCPPowerModel]
     models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
@@ -753,7 +753,7 @@ end
     )
     parameters_value = [true, false]
 
-    for net in networks, mod in models, p in parameters_value
+    for net in networks, (mod,sys) in zip(models, systems), p in parameters_value
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
             template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroEnergyReservoir, mod)
@@ -778,7 +778,7 @@ end
 end
 
 @testset "Solving ED Hydro System using Commitment with Reservoir" begin
-    sys = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    systems = [PSB.build_system(PSITestSystems, "c_sys5_hyd"), PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")]
     parameters_value = [true, false]
     net = DCPPowerModel
     models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
@@ -787,7 +787,7 @@ end
         HydroCommitmentReservoirStorage => 215228.0,
     )
 
-    for mod in models, p in parameters_value
+    for (mod,sys) in zip(models, systems), p in parameters_value
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
             template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroEnergyReservoir, mod)
@@ -809,4 +809,95 @@ end
             )
         end
     end
+end
+
+
+@testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1b-2b)" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "hydro_test_case_b_sys")
+
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5_hyd;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 77.0, 10.0)
+end
+
+@testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1c-2c)" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "hydro_test_case_c_sys")
+
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5_hyd;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 21.0)
+end
+
+@testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1d-2d)" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "hydro_test_case_d_sys")
+
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5_hyd;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -33.5)
+end
+
+@testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1e-2e)" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "hydro_test_case_e_sys")
+
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5_hyd;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 21.0)
+end
+
+@testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1f-2f)" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "hydro_test_case_f_sys")
+
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5_hyd;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -151.0)
 end

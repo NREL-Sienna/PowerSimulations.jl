@@ -57,7 +57,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 144, 0, 72, 72, 48, true)
+    moi_tests(op_problem, false, 144, 0, 96, 96, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -66,6 +66,101 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 168, 0, 96, 96, 48, true)
+    moi_tests(op_problem, false, 168, 0, 120, 120, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
+end
+
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1b-2b" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_b_sys")
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 44.0, 10.0)
+end
+
+
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1c-2c" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_c_sys")
+
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -63.0, 10.0)
+end
+
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1d-2d" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_d_sys")
+
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 28, 0, 20, 16, 12, true)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -176.0, 10.0)
+end
+
+
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1e-2e" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_e_sys")
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], 47.0, 10.0)
+end
+
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1f-2f" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_f_sys")
+
+    op_problem = OperationsProblem(
+        EconomicDispatchProblem,
+        template,
+        c_sys5;
+        optimizer = Cbc_optimizer,
+        use_parameters = true,
+    )
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
+    psi_checksolve_test(op_problem, [MOI.OPTIMAL], -80.0, 10.0)
 end
