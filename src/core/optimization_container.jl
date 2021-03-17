@@ -413,12 +413,16 @@ function add_cons_container!(
     axs...;
     sparse = false,
 )
-    if sparse
-        container = sparse_container_spec(optimization_container.JuMPmodel, axs...)
+    if !haskey(optimization_container.constraints, cons_name)
+        if sparse
+            container = sparse_container_spec(optimization_container.JuMPmodel, axs...)
+        else
+            container = JuMPConstraintArray(undef, axs...)
+        end
+        assign_constraint!(optimization_container, cons_name, container)
     else
-        container = JuMPConstraintArray(undef, axs...)
+        container = optimization_container.constraints[cons_name]
     end
-    assign_constraint!(optimization_container, cons_name, container)
     return container
 end
 
