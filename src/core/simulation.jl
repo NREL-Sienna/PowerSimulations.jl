@@ -840,7 +840,7 @@ function update_parameter!(
     horizon = length(model_time_steps(problem.internal.optimization_container))
     for d in components
         # RECORDER TODO: Parameter Update from forecast
-        TimerOutputs.@timeit RUN_SIMULATION_TIMER "ReadCachedTimeSeries" begin
+        TimerOutputs.@timeit RUN_SIMULATION_TIMER "GetTimeSeries" begin
             ts_vector = TimeSeries.values(
                 get_time_series_array!(
                     PSY.Deterministic,
@@ -848,6 +848,7 @@ function update_parameter!(
                     d,
                     get_data_label(param_reference),
                     initial_forecast_time,
+                    horizon,
                     ignore_scaling_factors = true,
                 ),
             )
@@ -875,7 +876,7 @@ function update_parameter!(
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, problem.sys, ix)
-        TimerOutputs.@timeit RUN_SIMULATION_TIMER "ReadCachedTimeSeries" begin
+        TimerOutputs.@timeit RUN_SIMULATION_TIMER "GetTimeSeries" begin
             ts_vector = TimeSeries.values(
                 get_time_series_array!(
                     PSY.Deterministic,
@@ -883,6 +884,7 @@ function update_parameter!(
                     service,
                     get_data_label(param_reference),
                     initial_forecast_time,
+                    horizon,
                     ignore_scaling_factors = true,
                 ),
             )

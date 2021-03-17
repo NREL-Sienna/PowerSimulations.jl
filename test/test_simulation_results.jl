@@ -52,13 +52,20 @@ function test_simulation_results(file_path::String, export_path)
         template_ed = get_template_hydro_st_ed()
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+        time_series_cache_size = 0  # This is only for test coverage.
         problems = SimulationProblems(
-            UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
+            UC = OperationsProblem(
+                template_uc,
+                c_sys5_hy_uc;
+                optimizer = GLPK_optimizer,
+                time_series_cache_size = time_series_cache_size,
+            ),
             ED = OperationsProblem(
                 template_ed,
                 c_sys5_hy_ed;
                 optimizer = GLPK_optimizer,
                 constraint_duals = [:CopperPlateBalance],
+                time_series_cache_size = time_series_cache_size,
             ),
         )
 

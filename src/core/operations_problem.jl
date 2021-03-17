@@ -100,9 +100,10 @@ OpModel = OperationsProblem(MockOperationProblem, template, system)
 - `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool`: If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Default is false.
 - `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 - `balance_slack_variables::Bool`: True will add slacks to the system balance constraints
 - `services_slack_variables::Bool`: True will add slacks to the services requirement constraints
@@ -140,6 +141,7 @@ function OperationsProblem{M}(
     optimizer_log_print = false,
     use_parameters = false,
     use_forecast_data = true,
+    time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
     initial_time = UNSET_INI_TIME,
 ) where {M <: AbstractOperationsProblem}
     settings = Settings(
@@ -148,6 +150,7 @@ function OperationsProblem{M}(
         initial_time = initial_time,
         optimizer = optimizer,
         use_parameters = use_parameters,
+        time_series_cache_size = time_series_cache_size,
         warm_start = warm_start,
         balance_slack_variables = balance_slack_variables,
         services_slack_variables = services_slack_variables,
@@ -285,23 +288,36 @@ get_time_series_cache(problem::OperationsProblem) = problem.internal.time_series
 empty_time_series_cache!(x::OperationsProblem) = empty!(get_time_series_cache(x))
 
 function get_time_series_array!(
-    ts_type::Type{<:IS.TimeSeriesData},
+    time_series_type::Type{<:IS.TimeSeriesData},
     problem::OperationsProblem,
     component,
     name,
-    initial_time;
+    initial_time,
+    horizon;
     ignore_scaling_factors = true,
 )
+    if !use_time_series_cache(get_settings(problem))
+        return IS.get_time_series_values(
+            time_series_type,
+            component,
+            name,
+            start_time = initial_time,
+            len = horizon,
+            ignore_scaling_factors = true,
+        )
+    end
+
     cache = get_time_series_cache(problem)
-    key = TimeSeriesCacheKey(IS.get_uuid(component), ts_type, name)
+    key = TimeSeriesCacheKey(IS.get_uuid(component), time_series_type, name)
     if haskey(cache, key)
         ts_cache = cache[key]
     else
         ts_cache = make_time_series_cache(
-            ts_type,
+            time_series_type,
             component,
             name,
             initial_time,
+            horizon,
             ignore_scaling_factors = true,
         )
         cache[key] = ts_cache
@@ -316,7 +332,8 @@ function make_time_series_cache(
     time_series_type::Type{T},
     component,
     name,
-    initial_time;
+    initial_time,
+    horizon;
     ignore_scaling_factors = true,
 ) where {T <: IS.TimeSeriesData}
     key = TimeSeriesCacheKey(IS.get_uuid(component), T, name)
@@ -334,6 +351,7 @@ function make_time_series_cache(
             component,
             name,
             start_time = initial_time,
+            horizon = horizon,
             ignore_scaling_factors = ignore_scaling_factors,
         )
     elseif T <: IS.Probabilistic
@@ -342,6 +360,7 @@ function make_time_series_cache(
             component,
             name,
             start_time = initial_time,
+            horizon = horizon,
             ignore_scaling_factors = ignore_scaling_factors,
         )
     else
@@ -444,6 +463,7 @@ function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serial
             serialize && serialize_problem(problem)
             serialize && serialize_optimization_model(problem)
             set_status!(problem, BuildStatus.BUILT)
+            log_values(get_settings(problem))
             !built_for_simulation(problem) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
         catch e
             set_status!(problem, BuildStatus.FAILED)
