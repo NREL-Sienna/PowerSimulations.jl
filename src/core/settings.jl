@@ -36,6 +36,12 @@ function Settings(
     allow_fails = false,
     ext = Dict{String, Any}(),
 )
+    if time_series_cache_size > 0 &&
+       sys.data.time_series_storage isa IS.InMemoryTimeSeriesStorage
+        @info "Overriding time_series_cache_size because time series is stored in memory"
+        time_series_cache_size = 0
+    end
+
     return Settings(
         Ref(horizon),
         use_forecast_data,
