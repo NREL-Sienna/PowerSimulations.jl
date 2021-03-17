@@ -138,6 +138,26 @@ function construct_device!(
         HydroDispatchReservoirBudget(),
     )
 
+    # Constraints
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+
     # Energy Budget Constraint
     energy_budget_constraints!(
         optimization_container,
@@ -177,6 +197,17 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         HydroDispatchReservoirBudget(),
+    )
+
+    # Constraints
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
     )
 
     # Energy Budget Constraint
@@ -247,6 +278,35 @@ function construct_device!(
         EnergySurplusVariable,
         devices,
         HydroDispatchReservoirStorage(),
+    )
+
+    # Constraints
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        EnergyShortageVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
     )
 
     # Initial Conditions
@@ -328,6 +388,25 @@ function construct_device!(
         devices,
         HydroDispatchReservoirStorage(),
     )
+    # Constraints
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        EnergyShortageVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
 
     # Initial Conditions
     storage_energy_initial_condition!(
@@ -390,7 +469,6 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    # Constraints
     add_constraints!(
         optimization_container,
         RangeConstraint,
@@ -646,6 +724,15 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        EnergyShortageVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
 
     # Initial Conditions
     storage_energy_initial_condition!(
@@ -736,6 +823,15 @@ function construct_device!(
         optimization_container,
         RangeConstraint,
         ActivePowerVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        optimization_container,
+        RangeConstraint,
+        EnergyShortageVariable,
         devices,
         model,
         S,

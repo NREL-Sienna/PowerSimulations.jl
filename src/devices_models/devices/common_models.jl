@@ -1,3 +1,30 @@
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{EnergyShortageVariable},
+    ::Type{T},
+    ::Type{<:AbstractDeviceFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.Component}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                EnergyShortageVariable,
+                T,
+            ),
+            variable_name = make_variable_name(EnergyShortageVariable, T),
+            limits_func = x -> (min = 0.0, 
+                max = PSY.get_energy_shortage_cost(PSY.get_operation_cost(x))*M_VALUE
+            ),
+            constraint_func = device_range!,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
+    )
+end
+
 """
 This function defines the constraints for the water level (or state of charge)
 for the Hydro Reservoir.
