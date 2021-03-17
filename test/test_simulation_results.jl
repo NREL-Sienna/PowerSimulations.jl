@@ -50,8 +50,8 @@ function test_simulation_results(file_path::String, export_path)
     @testset "Test simulation results" begin
         template_uc = get_template_hydro_st_uc()
         template_ed = get_template_hydro_st_ed()
-        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
-        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
+        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
         problems = SimulationProblems(
             UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
             ED = OperationsProblem(
