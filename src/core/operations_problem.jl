@@ -287,7 +287,7 @@ set_run_status!(problem::OperationsProblem, status) = problem.internal.run_statu
 get_time_series_cache(problem::OperationsProblem) = problem.internal.time_series_cache
 empty_time_series_cache!(x::OperationsProblem) = empty!(get_time_series_cache(x))
 
-function get_time_series_array!(
+function get_time_series_values!(
     time_series_type::Type{<:IS.TimeSeriesData},
     problem::OperationsProblem,
     component,
@@ -325,7 +325,7 @@ function get_time_series_array!(
 
     ts = IS.get_next_time_series_array!(ts_cache)
     @assert_op IS.get_initial_timestamp(ts) == initial_time
-    return ts
+    return TimeSeries.values(ts)
 end
 
 function make_time_series_cache(

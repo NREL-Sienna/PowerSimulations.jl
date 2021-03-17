@@ -841,16 +841,14 @@ function update_parameter!(
     for d in components
         # RECORDER TODO: Parameter Update from forecast
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "GetTimeSeries" begin
-            ts_vector = TimeSeries.values(
-                get_time_series_array!(
-                    PSY.Deterministic,
-                    problem,
-                    d,
-                    get_data_label(param_reference),
-                    initial_forecast_time,
-                    horizon,
-                    ignore_scaling_factors = true,
-                ),
+            ts_vector = get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                d,
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
             )
         end
         component_name = PSY.get_name(d)
@@ -877,16 +875,14 @@ function update_parameter!(
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, problem.sys, ix)
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "GetTimeSeries" begin
-            ts_vector = TimeSeries.values(
-                get_time_series_array!(
-                    PSY.Deterministic,
-                    problem,
-                    service,
-                    get_data_label(param_reference),
-                    initial_forecast_time,
-                    horizon,
-                    ignore_scaling_factors = true,
-                ),
+            get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                service,
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
             )
         end
         for (jx, value) in enumerate(ts_vector)
