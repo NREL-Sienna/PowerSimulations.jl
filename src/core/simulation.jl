@@ -840,21 +840,18 @@ function update_parameter!(
     horizon = length(model_time_steps(problem.internal.optimization_container))
     for d in components
         # RECORDER TODO: Parameter Update from forecast
-        # TODO: Improve file read performance
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            d,
-            get_data_label(param_reference);
-            start_time = initial_forecast_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            d,
-            forecast,
-            initial_forecast_time;
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
+        TimerOutputs.@timeit RUN_SIMULATION_TIMER "ReadCachedTimeSeries" begin
+            ts_vector = TimeSeries.values(
+                get_time_series_array!(
+                    PSY.Deterministic,
+                    problem,
+                    d,
+                    get_data_label(param_reference),
+                    initial_forecast_time,
+                    ignore_scaling_factors = true,
+                ),
+            )
+        end
         component_name = PSY.get_name(d)
         for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
             value = ts_vector[ix]
@@ -878,20 +875,18 @@ function update_parameter!(
     param_array = get_parameter_array(container)
     for ix in axes(param_array)[1]
         service = PSY.get_component(T, problem.sys, ix)
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            service,
-            get_data_label(param_reference);
-            start_time = initial_forecast_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            service,
-            forecast,
-            initial_forecast_time;
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
+        TimerOutputs.@timeit RUN_SIMULATION_TIMER "ReadCachedTimeSeries" begin
+            ts_vector = TimeSeries.values(
+                get_time_series_array!(
+                    PSY.Deterministic,
+                    problem,
+                    service,
+                    get_data_label(param_reference),
+                    initial_forecast_time,
+                    ignore_scaling_factors = true,
+                ),
+            )
+        end
         for (jx, value) in enumerate(ts_vector)
             JuMP.set_value(get_parameter_array(container)[ix, jx], value)
         end
@@ -1017,6 +1012,7 @@ function execute!(sim::Simulation; kwargs...)
         set_simulation_status!(sim, RunStatus.FAILED)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
+        _empty_problem_caches!(sim)
         unregister_recorders!(sim.internal)
         close(logger)
     end
@@ -1285,6 +1281,14 @@ struct SimulationSerializationWrapper
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
     name::String
+end
+
+function _empty_problem_caches!(sim::Simulation)
+    problems = get_problems(sim)
+    for problem_name in get_problem_names(problems)
+        problem = problems[problem_name]
+        empty_time_series_cache!(problem)
+    end
 end
 
 """
