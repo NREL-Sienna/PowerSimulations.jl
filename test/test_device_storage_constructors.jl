@@ -83,11 +83,11 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 44.0, 10.0)
 end
-
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1c-2c" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
@@ -103,7 +103,8 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -63.0, 10.0)
 end
@@ -122,11 +123,11 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 28, 0, 20, 16, 12, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -176.0, 10.0)
 end
-
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1e-2e" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
@@ -141,7 +142,8 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 47.0, 10.0)
 end
@@ -160,7 +162,8 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -80.0, 10.0)
 end

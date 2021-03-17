@@ -16,8 +16,9 @@ function DeviceRangeConstraintSpec(
                 T,
             ),
             variable_name = make_variable_name(EnergyShortageVariable, T),
-            limits_func = x -> (min = 0.0, 
-                max = PSY.get_energy_shortage_cost(PSY.get_operation_cost(x))*M_VALUE
+            limits_func = x -> (
+                min = 0.0,
+                max = PSY.get_energy_shortage_cost(PSY.get_operation_cost(x)) * M_VALUE,
             ),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,

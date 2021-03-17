@@ -741,7 +741,10 @@ end
 end
 
 @testset "Solving ED Hydro System using Dispatch with Reservoir" begin
-    systems = [PSB.build_system(PSITestSystems, "c_sys5_hyd"), PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")]
+    systems = [
+        PSB.build_system(PSITestSystems, "c_sys5_hyd"),
+        PSB.build_system(PSITestSystems, "c_sys5_hyd_ems"),
+    ]
     parameters_value = [true, false]
     networks = [ACPPowerModel, DCPPowerModel]
     models = [HydroDispatchReservoirBudget, HydroDispatchReservoirStorage]
@@ -753,7 +756,7 @@ end
     )
     parameters_value = [true, false]
 
-    for net in networks, (mod,sys) in zip(models, systems), p in parameters_value
+    for net in networks, (mod, sys) in zip(models, systems), p in parameters_value
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
             template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroEnergyReservoir, mod)
@@ -778,7 +781,10 @@ end
 end
 
 @testset "Solving ED Hydro System using Commitment with Reservoir" begin
-    systems = [PSB.build_system(PSITestSystems, "c_sys5_hyd"), PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")]
+    systems = [
+        PSB.build_system(PSITestSystems, "c_sys5_hyd"),
+        PSB.build_system(PSITestSystems, "c_sys5_hyd_ems"),
+    ]
     parameters_value = [true, false]
     net = DCPPowerModel
     models = [HydroCommitmentReservoirBudget, HydroCommitmentReservoirStorage]
@@ -787,7 +793,7 @@ end
         HydroCommitmentReservoirStorage => 215228.0,
     )
 
-    for (mod,sys) in zip(models, systems), p in parameters_value
+    for (mod, sys) in zip(models, systems), p in parameters_value
         @testset "$(mod) ED model on $(net) and use_parameters = $(p)" begin
             template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroEnergyReservoir, mod)
@@ -811,7 +817,6 @@ end
     end
 end
 
-
 @testset "HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations (energy target - cases 1b-2b)" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
@@ -825,7 +830,8 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 77.0, 10.0)
 end
@@ -843,7 +849,8 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 21.0)
 end
@@ -861,7 +868,8 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -33.5)
 end
@@ -879,7 +887,8 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 21.0)
 end
@@ -897,7 +906,8 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -151.0)
 end
