@@ -7,7 +7,7 @@ const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
 const FieldResultsByTime = Dict{Symbol, ResultsByTime}
 
 """Holds the results of a simulation problem for plotting or exporting"""
-mutable struct ProblemResults <: PSIResults
+mutable struct SimulationProblemResults <: PSIResults
     problem::String
     base_power::Float64
     execution_path::String
@@ -24,7 +24,7 @@ mutable struct ProblemResults <: PSIResults
     parameter_values::FieldResultsByTime
 end
 
-function ProblemResults(
+function SimulationProblemResults(
     store::SimulationStore,
     problem_name::AbstractString,
     problem_params::SimulationStoreProblemParams,
@@ -46,7 +46,7 @@ function ProblemResults(
     parameters = list_fields(store, name, STORE_CONTAINER_PARAMETERS)
     duals = list_fields(store, name, STORE_CONTAINER_DUALS)
 
-    return ProblemResults(
+    return SimulationProblemResults(
         problem_name,
         problem_params.base_power,
         path,
@@ -64,41 +64,41 @@ function ProblemResults(
     )
 end
 
-function Base.empty!(res::ProblemResults)
+function Base.empty!(res::SimulationProblemResults)
     foreach(empty!, _get_dicts(res))
     empty!(res.results_timestamps)
     return
 end
 
-Base.isempty(res::ProblemResults) = all(isempty, _get_dicts(res))
+Base.isempty(res::SimulationProblemResults) = all(isempty, _get_dicts(res))
 
 # This returns the number of timestamps stored in all containers.
-Base.length(res::ProblemResults) = mapreduce(length, +, _get_dicts(res))
+Base.length(res::SimulationProblemResults) = mapreduce(length, +, _get_dicts(res))
 
-get_problem_name(res::ProblemResults) = res.problem
-get_system(res::ProblemResults) = res.system
-get_resolution(res::ProblemResults) = res.resolution
-get_forecast_horizon(res::ProblemResults) = res.forecast_horizon
-get_end_of_interval_step(res::ProblemResults) = res.end_of_interval_step
-get_execution_path(res::ProblemResults) = res.execution_path
-get_existing_variables(res::ProblemResults) = collect(keys(res.variable_values))
-get_existing_duals(res::ProblemResults) = collect(keys(res.dual_values))
-get_existing_parameters(res::ProblemResults) = collect(keys(res.parameter_values))
-get_existing_timestamps(res::ProblemResults) = res.existing_timestamps
-get_model_base_power(res::ProblemResults) = res.base_power
-IS.get_timestamp(result::ProblemResults) = result.results_timestamps
+get_problem_name(res::SimulationProblemResults) = res.problem
+get_system(res::SimulationProblemResults) = res.system
+get_resolution(res::SimulationProblemResults) = res.resolution
+get_forecast_horizon(res::SimulationProblemResults) = res.forecast_horizon
+get_end_of_interval_step(res::SimulationProblemResults) = res.end_of_interval_step
+get_execution_path(res::SimulationProblemResults) = res.execution_path
+get_existing_variables(res::SimulationProblemResults) = collect(keys(res.variable_values))
+get_existing_duals(res::SimulationProblemResults) = collect(keys(res.dual_values))
+get_existing_parameters(res::SimulationProblemResults) = collect(keys(res.parameter_values))
+get_existing_timestamps(res::SimulationProblemResults) = res.existing_timestamps
+get_model_base_power(res::SimulationProblemResults) = res.base_power
+IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 
-get_interval(res::ProblemResults) = res.existing_timestamps.step
-IS.get_variables(result::ProblemResults) = result.variable_values
-get_duals(result::ProblemResults) = result.dual_values
-IS.get_parameters(result::ProblemResults) = result.parameter_values
-IS.get_base_power(result::ProblemResults) = result.base_power
+get_interval(res::SimulationProblemResults) = res.existing_timestamps.step
+IS.get_variables(result::SimulationProblemResults) = result.variable_values
+get_duals(result::SimulationProblemResults) = result.dual_values
+IS.get_parameters(result::SimulationProblemResults) = result.parameter_values
+IS.get_base_power(result::SimulationProblemResults) = result.base_power
 
 """
 Return the system used for the problem. If the system hasn't already been deserialized or
 set with [`set_system!`](@ref) then deserialize and store it.
 """
-function get_system!(results::ProblemResults)
+function get_system!(results::SimulationProblemResults)
     file = joinpath(
         results.execution_path,
         "problems",
@@ -113,7 +113,7 @@ Set the system in the results instance.
 
 Throws InvalidValue if the system UUID is incorrect.
 """
-function set_system!(results::ProblemResults, system::PSY.System)
+function set_system!(results::SimulationProblemResults, system::PSY.System)
     sys_uuid = IS.get_uuid(system)
     if sys_uuid != results.system_uuid
         throw(
@@ -126,11 +126,13 @@ function set_system!(results::ProblemResults, system::PSY.System)
     results.system = system
 end
 
-_get_containers(x::ProblemResults) = (x.variable_values, x.parameter_values, x.dual_values)
-_get_dicts(res::ProblemResults) = (y for x in _get_containers(res) for y in values(x))
+_get_containers(x::SimulationProblemResults) =
+    (x.variable_values, x.parameter_values, x.dual_values)
+_get_dicts(res::SimulationProblemResults) =
+    (y for x in _get_containers(res) for y in values(x))
 
 function _get_store_value(
-    res::ProblemResults,
+    res::SimulationProblemResults,
     field::Symbol,
     names::Vector{Symbol},
     timestamps,
@@ -143,7 +145,7 @@ function _get_store_value(
 end
 
 function _get_store_value(
-    res::ProblemResults,
+    res::SimulationProblemResults,
     field::Symbol,
     names::Vector{Symbol},
     timestamps,
@@ -179,7 +181,7 @@ function _validate_names(existing_names::Vector{Symbol}, names::Vector{Symbol})
 end
 
 function _process_timestamps(
-    res::Union{ProblemResults, OperationsProblemResults},
+    res::SimulationProblemResults,
     initial_time::Union{Nothing, Dates.DateTime},
     count::Union{Int, Nothing},
 )
@@ -206,7 +208,12 @@ function _process_timestamps(
     return requested_range
 end
 
-function _read_variables(res::ProblemResults, names::Vector{Symbol}, timestamps, store)
+function _read_variables(
+    res::SimulationProblemResults,
+    names::Vector{Symbol},
+    timestamps,
+    store,
+)
     isempty(names) && return FieldResultsByTime()
     existing_names = get_existing_variables(res)
     _validate_names(existing_names, names)
@@ -235,7 +242,7 @@ end
     - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_variables(
-    res::ProblemResults;
+    res::SimulationProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -247,7 +254,12 @@ function read_variables(
     return values
 end
 
-function _read_duals(res::ProblemResults, names::Vector{Symbol}, timestamps, store)
+function _read_duals(
+    res::SimulationProblemResults,
+    names::Vector{Symbol},
+    timestamps,
+    store,
+)
     isempty(names) && return FieldResultsByTime()
     existing_names = get_existing_duals(res)
     _validate_names(existing_names, names)
@@ -275,7 +287,7 @@ end
     - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_duals(
-    res::ProblemResults;
+    res::SimulationProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -287,7 +299,12 @@ function read_duals(
     return values
 end
 
-function _read_parameters(res::ProblemResults, names::Vector{Symbol}, timestamps, store)
+function _read_parameters(
+    res::SimulationProblemResults,
+    names::Vector{Symbol},
+    timestamps,
+    store,
+)
     isempty(names) && return FieldResultsByTime()
     existing_names = get_existing_parameters(res)
     _validate_names(existing_names, names)
@@ -314,7 +331,7 @@ end
     - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_parameters(
-    res::ProblemResults;
+    res::SimulationProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -334,11 +351,7 @@ end
     - `count::Int`: Number of results
     - `store::SimulationStore`: a store that has been opened for reading
 """
-function read_variable(
-    res::Union{OperationsProblemResults, ProblemResults},
-    name::Symbol;
-    kwargs...,
-)
+function read_variable(res::SimulationProblemResults, name::Symbol; kwargs...)
     return read_variables(res; names = [name], kwargs...)[name]
 end
 
@@ -349,11 +362,7 @@ end
     - `count::Int`: Number of results
     - `store::SimulationStore`: a store that has been opened for reading
 """
-function read_dual(
-    res::Union{OperationsProblemResults, ProblemResults},
-    name::Symbol;
-    kwargs...,
-)
+function read_dual(res::SimulationProblemResults, name::Symbol; kwargs...)
     return read_duals(res; names = [name], kwargs...)[name]
 end
 
@@ -363,11 +372,7 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function read_parameter(
-    res::Union{OperationsProblemResults, ProblemResults},
-    name::Symbol;
-    kwargs...,
-)
+function read_parameter(res::SimulationProblemResults, name::Symbol; kwargs...)
     return read_parameters(res; names = [name], kwargs...)[name]
 end
 
@@ -377,17 +382,17 @@ Returns the optimizer stats for the problem as a DataFrame.
 # Accepted keywords
 - `store::SimulationStore`: a store that has been opened for reading
 """
-function read_optimizer_stats(res::ProblemResults; store = nothing)
+function read_optimizer_stats(res::SimulationProblemResults; store = nothing)
     return _read_optimizer_stats(res, store)
 end
 
-function _read_optimizer_stats(res::ProblemResults, ::Nothing)
+function _read_optimizer_stats(res::SimulationProblemResults, ::Nothing)
     h5_store_open(joinpath(get_execution_path(res), "data_store"), "r") do store
         _read_optimizer_stats(res, store)
     end
 end
 
-function _read_optimizer_stats(res::ProblemResults, store::SimulationStore)
+function _read_optimizer_stats(res::SimulationProblemResults, store::SimulationStore)
     return read_problem_optimizer_stats(store, Symbol(res.problem))
 end
 
@@ -402,7 +407,7 @@ struct RealizedMeta
 end
 
 function RealizedMeta(
-    res::ProblemResults;
+    res::SimulationProblemResults;
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
@@ -442,7 +447,7 @@ function RealizedMeta(
 end
 
 function get_realized_timestamps(
-    res::ProblemResults;
+    res::SimulationProblemResults;
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
@@ -514,7 +519,7 @@ end
     - `len::Int`: length of results
 """
 function read_realized_variables(
-    res::ProblemResults;
+    res::SimulationProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
@@ -542,7 +547,7 @@ end
     - `len::Int`: length of results
 """
 function read_realized_parameters(
-    res::ProblemResults;
+    res::SimulationProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
@@ -570,7 +575,7 @@ end
     - `len::Int`: length of results
 """
 function read_realized_duals( # TODO: Should this be get_realized_duals_values?
-    res::ProblemResults;
+    res::SimulationProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
@@ -597,7 +602,7 @@ end
     - `parameters::Vector{Symbol}`: Parameter names to load into results
 """
 function load_results!(
-    res::ProblemResults,
+    res::SimulationProblemResults,
     count::Int;
     initial_time::Union{Dates.DateTime, Nothing} = nothing,
     variables::Vector{Symbol} = Symbol[],
@@ -626,8 +631,8 @@ function load_results!(
 end
 
 #= NEEDS RE-IMPLEMENTATION
-""" Exports the results in the ProblemResults object to  CSV files"""
-function write_to_CSV(res::ProblemResults; kwargs...)
+""" Exports the results in the SimulationProblemResults object to  CSV files"""
+function write_to_CSV(res::SimulationProblemResults; kwargs...)
     folder_path = res.results_output_folder
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))

@@ -1,4 +1,4 @@
-struct OperationsProblemResults <: PSIResults
+struct ProblemResults <: PSIResults
     base_power::Float64
     timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     system::Union{Nothing, PSY.System}
@@ -9,22 +9,21 @@ struct OperationsProblemResults <: PSIResults
     output_dir::String
 end
 
-get_existing_variables(res::OperationsProblemResults) = keys(get_variables(res))
-get_existing_parameters(res::OperationsProblemResults) = keys(IS.get_parameters(res))
-get_existing_duals(res::OperationsProblemResults) = keys(get_duals(res))
-get_timestamps(res::OperationsProblemResults) = res.timestamps
-get_model_base_power(res::OperationsProblemResults) = res.base_power
-get_objective_value(res::OperationsProblemResults) = res.optimizer_stats.objective_value
-IS.get_variables(res::OperationsProblemResults) = res.variable_values
-IS.get_total_cost(res::OperationsProblemResults) = res.total_cost
-IS.get_optimizer_stats(res::OperationsProblemResults) = res.optimizer_stats
-get_duals(res::OperationsProblemResults) = res.dual_values
-IS.get_parameters(res::OperationsProblemResults) = res.parameter_values
-get_resolution(res::OperationsProblemResults) = res.timestamps.step
-get_horizon(res::OperationsProblemResults) = length(res.timestamps)
-get_system(res::OperationsProblemResults) = res.system
+get_existing_variables(res::ProblemResults) = keys(get_variables(res))
+get_existing_parameters(res::ProblemResults) = keys(IS.get_parameters(res))
+get_existing_duals(res::ProblemResults) = keys(get_duals(res))
+get_timestamps(res::ProblemResults) = res.timestamps
+get_model_base_power(res::ProblemResults) = res.base_power
+get_objective_value(res::ProblemResults) = res.optimizer_stats.objective_value
+IS.get_variables(res::ProblemResults) = res.variable_values
+IS.get_total_cost(res::ProblemResults) = get_objective_value(res)
+IS.get_optimizer_stats(res::ProblemResults) = res.optimizer_stats
+get_duals(res::ProblemResults) = res.dual_values
+IS.get_parameters(res::ProblemResults) = res.parameter_values
+IS.get_resolution(res::ProblemResults) = res.timestamps.step
+get_system(res::ProblemResults) = res.system
 
-function OperationsProblemResults(problem::OperationsProblem)
+function ProblemResults(problem::OperationsProblem)
     status = get_run_status(problem)
     status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
 
@@ -39,7 +38,7 @@ function OperationsProblemResults(problem::OperationsProblem)
         DataFrames.insertcols!(df, 1, :DateTime => timestamps)
     end
 
-    return OperationsProblemResults(
+    return ProblemResults(
         get_problem_base_power(problem),
         timestamps,
         problem.sys,
@@ -54,7 +53,7 @@ end
 """
 Exports all results from the operations problem.
 """
-function export_results(results::OperationsProblemResults; kwargs...)
+function export_results(results::ProblemResults; kwargs...)
     all_fields = Set(["all"])
     exports = ProblemResultsExport(
         "OperationsProblem",
@@ -66,7 +65,7 @@ function export_results(results::OperationsProblemResults; kwargs...)
 end
 
 function export_results(
-    results::OperationsProblemResults,
+    results::ProblemResults,
     exports::ProblemResultsExport;
     file_type = CSV.File,
 )
@@ -97,14 +96,14 @@ function export_results(
         export_result(file_type, joinpath(results.output_dir, "optimizer_stats.csv"), df)
     end
 
-    @info "Exported OperationsProblemResults to $(results.output_dir)"
+    @info "Exported ProblemResults to $(results.output_dir)"
 end
 
 # TODO:
 # - Handle PER-UNIT conversion of variables according to type
 # - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
 
-function get_variable_value(res::OperationsProblemResults, key::Symbol)
+function get_variable_value(res::ProblemResults, key::Symbol)
     var_result = get(res.variable_values, key, nothing)
     if var_result === nothing
         throw(IS.ConflictingInputsError("No variable with key $(key) has been found."))
@@ -132,7 +131,7 @@ function _find_params(variables::Array)
     return params
 end
 
-function write_to_CSV(res::OperationsProblemResults, save_path::String)
+function write_to_CSV(res::ProblemResults, save_path::String)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid."))
     end
@@ -161,11 +160,11 @@ function write_to_CSV(res::OperationsProblemResults, save_path::String)
     return
 end
 
-function write_optimizer_stats(res::OperationsProblemResults, directory::AbstractString)
+function write_optimizer_stats(res::ProblemResults, directory::AbstractString)
     data = to_dict(res.optimizer_stats)
     JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(data))
 end
-
+#=
 function _read_realized_results(
     result_values::Dict{Symbol, DataFrames.DataFrame},
     names::Union{Nothing, Vector{Symbol}},
@@ -190,7 +189,7 @@ function _read_results(
 end
 
 function read_realized_variables(
-    res::OperationsProblemResults;
+    res::ProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
 )
     variable_values = get_variables(res)
@@ -198,7 +197,7 @@ function read_realized_variables(
 end
 
 function read_realized_parameters(
-    res::OperationsProblemResults;
+    res::ProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
 )
     parameter_values = IS.get_parameters(res)
@@ -206,7 +205,7 @@ function read_realized_parameters(
 end
 
 function read_realized_duals(
-    res::OperationsProblemResults;
+    res::ProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
 )
     dual_values = get_duals(res)
@@ -214,7 +213,7 @@ function read_realized_duals(
 end
 
 function read_variables(
-    res::OperationsProblemResults;
+    res::ProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
 )
     result_values = get_variables(res)
@@ -222,7 +221,7 @@ function read_variables(
 end
 
 function read_parameters(
-    res::OperationsProblemResults;
+    res::ProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
 )
     result_values = IS.get_parameters(res)
@@ -230,15 +229,16 @@ function read_parameters(
 end
 
 function read_duals(
-    res::OperationsProblemResults;
+    res::ProblemResults;
     names::Union{Vector{Symbol}, Nothing} = nothing,
 )
     result_values = get_duals(res)
     return _read_results(result_values, names, first(get_timestamps(res)))
 end
 
-function read_optimizer_stats(res::OperationsProblemResults)
+function read_optimizer_stats(res::ProblemResults)
     data = get_optimizer_stats(res)
     stats = [to_namedtuple(data)]
     return DataFrames.DataFrame(stats)
 end
+=#
