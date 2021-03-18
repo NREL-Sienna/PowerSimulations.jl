@@ -549,7 +549,7 @@ function write_problem_results!(
     ::SimulationStore,
     _,
 ) where {T <: AbstractOperationsProblem}
-    @info "Write results to Store not implemented for problems T"
+    @info "Write results to Store not implemented for problems $T"
     return
 end
 
