@@ -76,7 +76,7 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
                 name,
                 problem_params,
                 sim_params,
-                execution_path;,
+                execution_path,
             )
             problem_results[name] = problem_result
         end
