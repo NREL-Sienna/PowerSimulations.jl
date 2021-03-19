@@ -31,6 +31,7 @@ function _initialize!(store, sim, variables, stage_defs, cache_rules)
             horizon,
             stage_defs[stage]["interval"],
             stage_defs[stage]["resolution"],
+            stage_defs[stage]["end_of_interval_step"],
             stage_defs[stage]["base_power"],
             stage_defs[stage]["system_uuid"],
         )
@@ -156,6 +157,7 @@ end
             "variables" => Dict(x => ones(12, 5) for x in keys(variables)),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(1),
+            "end_of_interval_step" => 1,
             "base_power" => 100.0,
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
@@ -166,6 +168,7 @@ end
             "variables" => Dict(x => ones(24, 3) for x in keys(variables)),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(24),
+            "end_of_interval_step" => 12,
             "base_power" => 100.0,
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),

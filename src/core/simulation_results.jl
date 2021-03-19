@@ -17,7 +17,7 @@ end
 struct SimulationResults <: PSIResults
     path::String
     params::SimulationStoreParams
-    problem_results::Dict{String, ProblemResults}
+    problem_results::Dict{String, SimulationProblemResults}
 end
 
 """
@@ -67,12 +67,17 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
     check_file_integrity(simulation_store_path)
 
     return h5_store_open(simulation_store_path, "r") do store
-        problem_results = Dict{String, ProblemResults}()
+        problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
         for (name, problem_params) in sim_params.problems
             name = string(name)
-            problem_result =
-                ProblemResults(store, name, problem_params, sim_params, execution_path;)
+            problem_result = SimulationProblemResults(
+                store,
+                name,
+                problem_params,
+                sim_params,
+                execution_path,
+            )
             problem_results[name] = problem_result
         end
 
