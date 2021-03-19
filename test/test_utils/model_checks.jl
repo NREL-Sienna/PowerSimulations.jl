@@ -80,7 +80,7 @@ function psi_checksolve_test(
     @test isapprox(obj_value, expected_result, atol = tol)
 end
 
-function psi_ptdf_lmps(res::OperationsProblemResults, ptdf)
+function psi_ptdf_lmps(res::ProblemResults, ptdf)
     duals = get_duals(res)
     λ = convert(Array, duals[:CopperPlateBalance][:, :var])
 
