@@ -411,10 +411,7 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
         ),
     )
     pm_var_map[PSY.DCBranch] = Dict(
-        :p_dc => (
-            from_to = FlowActivePowerVariable,#FlowActivePowerFromToVariable,
-            to_from = nothing,#FlowActivePowerToFromVariable,
-        ),
+        :p_dc => (from_to = FlowActivePowerVariable, to_from = nothing),
         :q_dc => (
             from_to = FlowReactivePowerFromToVariable,
             to_from = FlowReactivePowerToFromVariable,

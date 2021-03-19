@@ -177,15 +177,14 @@ end
 
         # These tests require results to be working
         if network == StandardPTDFModel
-            # TODO PENDING TESTS: what is ps_model?
-            #push!(LMPs, abs.(psi_ptdf_lmps(ps_model, ptdf)))
+            push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
         else
-            # TODO PENDING TESTS: this now includes a DateTime column. should this run on all other
-            # columns?
-            #duals = abs.(res.dual_values[:nodal_balance_active__Bus])
-            #push!(LMPs, duals[!, sort(propertynames(duals))])
+            duals = res.dual_values[:nodal_balance_active__Bus]
+            duals = abs.(duals[:, propertynames(duals) .!== :DateTime])
+            push!(LMPs, duals[!, sort(propertynames(duals))])
         end
     end
+    # TODO: the above calculation executes, but the following test does not pass
     #@test isapprox(convert(Array, LMPs[1]), convert(Array, LMPs[2]), atol = 100.0)
 end
 
