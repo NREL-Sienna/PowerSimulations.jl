@@ -89,7 +89,7 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
         hcat([duals[k][:, propertynames(duals[k]) .!== :DateTime] for k in nf_duals]...)
     μ = Matrix(flow_duals[:, ptdf.axes[1]])
 
-    buses = get_components(Bus, sys)
+    buses = get_components(Bus, get_system(res))
     lmps = OrderedDict()
     for bus in buses
         lmps[get_name(bus)] = μ * ptdf[:, get_number(bus)]
