@@ -270,6 +270,9 @@ get_system(problem::OperationsProblem) = problem.sys
 get_template(problem::OperationsProblem) = problem.template
 get_output_dir(problem::OperationsProblem) = problem.internal.output_dir
 get_variables(problem::OperationsProblem) = get_optimization_container(problem).variables
+get_parameters(problem::OperationsProblem) = get_optimization_container(problem).parameters
+get_duals(problem::OperationsProblem) = get_optimization_container(problem).duals
+
 get_run_status(problem::OperationsProblem) = problem.internal.run_status
 set_run_status!(problem::OperationsProblem, status) = problem.internal.run_status = status
 

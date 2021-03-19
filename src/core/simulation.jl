@@ -1174,6 +1174,7 @@ function _initialize_problem_storage!(
 
         interval = intervals[problem_name][1]
         resolution = get_resolution(problem)
+        end_of_interval_step = get_end_of_interval_step(problem)
         system = get_system(problem)
         base_power = PSY.get_base_power(system)
         sys_uuid = IS.get_uuid(system)
@@ -1182,6 +1183,7 @@ function _initialize_problem_storage!(
             horizon,
             interval,
             resolution,
+            end_of_interval_step,
             base_power,
             sys_uuid,
         )

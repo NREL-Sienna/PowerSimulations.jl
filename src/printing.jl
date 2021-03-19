@@ -82,7 +82,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::SimulationResults)
     end
 end
 
-function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)
+function Base.show(io::IO, ::MIME"text/plain", results::SimulationProblemResults)
     title = results.problem * " Results"
     println(io, "\n$title")
     bars = join(("=" for _ in 1:length(title)))
@@ -176,8 +176,8 @@ function Base.show(io::IO, stage::OperationsProblem)
     println(io, "OperationsProblem()")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", results::OperationsProblemResults)
-    println(io, "OperationsProblemResults:")
+function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)
+    println(io, "ProblemResults:")
     println(io, "  Base power: $(results.base_power)")
     vars = join(keys(results.variable_values), " ")
     println(io, "  Variables: $vars")

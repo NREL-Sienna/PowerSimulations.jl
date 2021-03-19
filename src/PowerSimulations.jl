@@ -7,7 +7,7 @@ module PowerSimulations
 # Base Models
 export Simulation
 export OperationsProblem
-export OperationsProblemResults
+export ProblemResults
 export OperationsProblemTemplate
 export InitialCondition
 export SimulationProblems
@@ -249,19 +249,24 @@ import InfrastructureSystems
 # so that users have access to IS.Results interfaces
 import InfrastructureSystems:
     get_variables,
+    get_parameters,
     get_total_cost,
     get_optimizer_stats,
     write_results,
     get_timestamp,
+    get_resolution,
     get_name,
     @assert_op
 export get_name
 export get_model_base_power
 export get_variables
 export get_duals
+export get_parameters
 export get_total_cost
 export get_optimizer_stats
 export get_timestamp
+export get_timestamps
+export get_resolution
 export write_results
 import PowerModels
 import TimerOutputs
