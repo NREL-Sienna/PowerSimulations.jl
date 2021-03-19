@@ -94,7 +94,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names =
-        [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow]
+        [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow__Line]
     parameters = [true, false]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
@@ -158,7 +158,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names =
-        [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow]
+        [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow__Line]
     parameters = [true, false]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 168],

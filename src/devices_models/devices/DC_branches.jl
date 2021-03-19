@@ -21,59 +21,16 @@ get_variable_sign(
     ::AbstractDCLineFormulation,
 ) = 1.0
 
-get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCLossless) =
-    max(PSY.get_active_power_limits_from(d).min, PSY.get_active_power_limits_to(d).min)
-get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCLossless) =
-    min(PSY.get_active_power_limits_from(d).max, PSY.get_active_power_limits_to(d).max)
-
 get_variable_lower_bound(
-    ::FlowActivePowerFromToVariable,
+    ::FlowActivePowerVariable,
     d::PSY.DCBranch,
-    ::AbstractThermalFormulation,
-) = PSY.get_active_power_limits_from(d).min
+    ::AbstractDCLineFormulation,
+) = max(PSY.get_active_power_limits_from(d).min, PSY.get_active_power_limits_to(d).min)
 get_variable_upper_bound(
-    ::FlowActivePowerFromToVariable,
+    ::FlowActivePowerVariable,
     d::PSY.DCBranch,
-    ::AbstractThermalFormulation,
-) = PSY.get_active_power_limits_from(d).max
-
-get_variable_lower_bound(
-    ::FlowActivePowerToFromVariable,
-    d::PSY.DCBranch,
-    ::AbstractThermalFormulation,
-) = PSY.get_active_power_limits_to(d).min
-get_variable_upper_bound(
-    ::FlowActivePowerToFromVariable,
-    d::PSY.DCBranch,
-    ::AbstractThermalFormulation,
-) = PSY.get_active_power_limits_to(d).max
-
-get_variable_lower_bound(
-    ::FlowActivePowerFromToVariable,
-    d::PSY.DCBranch,
-    ::HVDCUnbounded,
-) = nothing
-get_variable_upper_bound(
-    ::FlowActivePowerFromToVariable,
-    d::PSY.DCBranch,
-    ::HVDCUnbounded,
-) = nothing
-
-get_variable_lower_bound(
-    ::FlowActivePowerToFromVariable,
-    d::PSY.DCBranch,
-    ::HVDCUnbounded,
-) = nothing
-get_variable_upper_bound(
-    ::FlowActivePowerToFromVariable,
-    d::PSY.DCBranch,
-    ::HVDCUnbounded,
-) = nothing
-
-get_variable_expression_name(::FlowActivePowerToFromVariable, ::Type{<:PSY.DCBranch}) =
-    :nodal_balance_active
-get_variable_expression_name(::FlowActivePowerFromToVariable, ::Type{<:PSY.DCBranch}) =
-    :nodal_balance_active
+    ::AbstractDCLineFormulation,
+) = min(PSY.get_active_power_limits_from(d).max, PSY.get_active_power_limits_to(d).max)
 #! format: on
 
 #################################### Flow Variable Bounds ##################################################
@@ -155,10 +112,8 @@ function branch_rate_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(optimization_container)
-    for (var_type, cons_type) in zip(
-        (FLOW_ACTIVE_POWER_FROM_TO, FLOW_ACTIVE_POWER_TO_FROM),
-        (RATE_LIMIT_FT, RATE_LIMIT_TF),
-    )
+    for (var_type, cons_type) in
+        zip((FLOW_ACTIVE_POWER, FLOW_ACTIVE_POWER), (RATE_LIMIT_FT, RATE_LIMIT_TF))
         var = get_variable(optimization_container, var_type, B)
         constraint_val =
             JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
