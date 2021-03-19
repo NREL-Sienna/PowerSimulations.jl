@@ -1072,19 +1072,19 @@ function _execute!(
                     "start",
                 )
                 problem_name = get_problem_names(problems)[problem_number]
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution problem $(problem_name)" begin
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(problem_name)" begin
                     problem = problems[problem_name]
                     if !is_built(problem)
-                        error("problem $(problem_name) status is not BuildStatus.BUILT")
+                        error("$(problem_name) status is not BuildStatus.BUILT")
                     end
                     problem_interval = get_interval(sequence, problem_name)
                     set_current_time!(sim, sim.internal.date_ref[problem_number])
                     sequence.current_execution_index = ix
                     # Is first run of first problem? Yes -> don't update problem
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update problem $(problem_name)" begin
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update $(problem_name)" begin
                         !(step == 1 && ix == 1) && update_problem!(problem, sim)
                     end
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run problem $(problem_name)" begin
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run $(problem_name)" begin
                         settings = get_settings(problem)
                         status = solve!(
                             step,
@@ -1114,9 +1114,7 @@ function _execute!(
                         _update_caches!(sim, problem)
                     end
                     if warm_start_enabled(problem)
-                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(problem_number)" begin
-                            _apply_warm_start!(problem)
-                        end
+                        _apply_warm_start!(problem)
                     end
                     IS.@record :simulation_status ProblemExecutionEvent(
                         get_current_time(sim),
