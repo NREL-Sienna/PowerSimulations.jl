@@ -210,8 +210,7 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, FlowActivePowerFromToVariable, devices, U())
-    add_variables!(optimization_container, FlowActivePowerToFromVariable, devices, U())
+    add_variables!(optimization_container, FlowActivePowerVariable, devices, U())
 
     branch_rate_constraints!(
         optimization_container,

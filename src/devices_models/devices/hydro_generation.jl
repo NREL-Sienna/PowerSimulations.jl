@@ -380,11 +380,7 @@ function commit_hydro_active_power_ub!(
     if use_parameters || use_forecasts
         spec = DeviceRangeConstraintSpec(;
             timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-                constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariable,
-                    V,
-                ),
+                constraint_name = make_constraint_name(COMMITMENT, V),
                 variable_name = make_variable_name(ActivePowerVariable, V),
                 parameter_name = use_parameters ? ACTIVE_POWER : nothing,
                 forecast_label = "max_active_power",

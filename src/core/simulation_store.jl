@@ -32,6 +32,7 @@ struct SimulationStoreProblemParams
     horizon::Int
     interval::Dates.Period
     resolution::Dates.Period
+    end_of_interval_step::Int
     base_power::Float64
     system_uuid::Base.UUID
 
@@ -40,6 +41,7 @@ struct SimulationStoreProblemParams
         horizon,
         interval,
         resolution,
+        end_of_interval_step,
         base_power,
         system_uuid,
     )
@@ -48,6 +50,7 @@ struct SimulationStoreProblemParams
             horizon,
             Dates.Millisecond(interval),
             Dates.Millisecond(resolution),
+            end_of_interval_step,
             base_power,
             system_uuid,
         )
@@ -58,6 +61,7 @@ get_num_executions(params::SimulationStoreProblemParams) = params.num_executions
 get_horizon(params::SimulationStoreProblemParams) = params.horizon
 get_interval(params::SimulationStoreProblemParams) = params.interval
 get_resolution(params::SimulationStoreProblemParams) = params.resolution
+get_end_of_interval_step(params::SimulationStoreProblemParams) = params.end_of_interval_step
 get_base_power(params::SimulationStoreProblemParams) = params.base_power
 get_system_uuid(params::SimulationStoreProblemParams) = params.system_uuid
 
