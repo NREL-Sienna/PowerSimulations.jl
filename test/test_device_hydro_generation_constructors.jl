@@ -562,13 +562,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 120, 0, 48, 48, 48, false)
+    moi_tests(op_problem, true, 120, 0, 24, 24, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 120, 0, 48, 48, 48, false)
+    moi_tests(op_problem, false, 120, 0, 24, 24, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -579,7 +579,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 5, 0, 2, 2, 2, false)
+    moi_tests(op_problem, false, 5, 0, 1, 1, 2, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -595,13 +595,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 144, 0, 72, 72, 48, false)
+    moi_tests(op_problem, true, 144, 0, 48, 48, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 144, 0, 72, 72, 48, false)
+    moi_tests(op_problem, false, 144, 0, 48, 48, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -612,7 +612,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 6, 0, 3, 3, 2, false)
+    moi_tests(op_problem, false, 6, 0, 2, 2, 2, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -632,13 +632,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 144, 0, 48, 48, 48, true)
+    moi_tests(op_problem, true, 144, 0, 24, 24, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 144, 0, 48, 48, 48, true)
+    moi_tests(op_problem, false, 144, 0, 24, 24, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -649,7 +649,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 6, 0, 2, 2, 2, true)
+    moi_tests(op_problem, false, 6, 0, 1, 1, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -665,13 +665,13 @@ end
         use_parameters = true,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, true, 168, 0, 72, 72, 48, true)
+    moi_tests(op_problem, true, 168, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 168, 0, 72, 72, 48, true)
+    moi_tests(op_problem, false, 168, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -682,7 +682,7 @@ end
         use_forecast_data = false,
     )
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 7, 0, 3, 3, 2, true)
+    moi_tests(op_problem, false, 7, 0, 2, 2, 2, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -851,7 +851,7 @@ end
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
+    moi_tests(op_problem, true, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 21.0)
 end
 
@@ -889,7 +889,7 @@ end
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
+    moi_tests(op_problem, true, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 21.0, 10.0)
 end
 
@@ -908,6 +908,6 @@ end
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    moi_tests(op_problem, true, 15, 0, 6, 6, 9, false)
+    moi_tests(op_problem, true, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -17179.0)
 end

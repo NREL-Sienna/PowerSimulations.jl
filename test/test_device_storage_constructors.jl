@@ -57,7 +57,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 144, 0, 96, 96, 48, true)
+    moi_tests(op_problem, false, 144, 0, 72, 72, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -66,7 +66,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(op_problem, model)
-    moi_tests(op_problem, false, 168, 0, 120, 120, 48, true)
+    moi_tests(op_problem, false, 168, 0, 96, 96, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -85,7 +85,7 @@ end
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
+    moi_tests(op_problem, true, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 5811.0, 10.0)
 end
 
@@ -105,7 +105,7 @@ end
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
+    moi_tests(op_problem, true, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -63.0, 10.0)
 end
 
@@ -144,7 +144,7 @@ end
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
+    moi_tests(op_problem, true, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 5547.0, 10.0)
 end
 
@@ -164,6 +164,6 @@ end
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    moi_tests(op_problem, true, 21, 0, 15, 12, 9, true)
+    moi_tests(op_problem, true, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -1825.0, 10.0)
 end

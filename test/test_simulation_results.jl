@@ -330,7 +330,7 @@ function test_simulation_results(file_path::String, export_path)
 
     @testset "Test receding horizon simulation results" begin
         template_uc = get_template_hydro_st_uc()
-        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
         problems = SimulationProblems(
             UC = OperationsProblem(
                 template_uc,
