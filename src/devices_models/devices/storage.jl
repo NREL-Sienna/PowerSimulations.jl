@@ -292,11 +292,8 @@ function energy_target_constraint!(
         for (ix, d) in enumerate(devices)
             ts_vector_target =
                 get_time_series(optimization_container, d, target_forecast_label)
-            constraint_info_target = DeviceTimeSeriesConstraintInfo(
-                d,
-                x -> PSY.get_rating(x),
-                ts_vector_target,
-            )
+            constraint_info_target =
+                DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector_target)
             constraint_infos_target[ix] = constraint_info_target
         end
     else
@@ -304,11 +301,8 @@ function energy_target_constraint!(
             ts_vector_target =
                 length(time_steps) == 1 ? [PSY.get_storage_target(d)] :
                 vcat(zeros(time_steps[end - 1]), PSY.get_storage_target(d))
-            constraint_info_target = DeviceTimeSeriesConstraintInfo(
-                d,
-                x -> PSY.get_rating(x),
-                ts_vector_target,
-            )
+            constraint_info_target =
+                DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector_target)
             constraint_infos_target[ix] = constraint_info_target
         end
     end
@@ -346,7 +340,9 @@ function energy_target_constraint!(
             limits = (min = 0.0, max = 0.0)
             constraint_info = DeviceRangeConstraintInfo(dev_name, limits)
             push!(constraint_infos, constraint_info)
-            @warn("Device $dev_name has energy shortage cost set to 0.0, as a result the model will turnoff the EnergyShortageVariable to avoid infeasible/unbounded problem.")
+            @warn(
+                "Device $dev_name has energy shortage cost set to 0.0, as a result the model will turnoff the EnergyShortageVariable to avoid infeasible/unbounded problem."
+            )
         end
     end
     if !isempty(constraint_infos)
@@ -354,21 +350,15 @@ function energy_target_constraint!(
             optimization_container,
             RangeConstraintSpecInternal(
                 constraint_infos,
-                make_constraint_name(
-                    RangeConstraint,
-                    EnergyShortageVariable,
-                    T,
-                ),
+                make_constraint_name(RangeConstraint, EnergyShortageVariable, T),
                 make_variable_name(EnergyShortageVariable, T),
                 Vector{Symbol}(),
-            )
+            ),
         )
     end
 
     return
 end
-
-
 
 function AddCostSpec(
     ::Type{PSY.BatteryEMS},
