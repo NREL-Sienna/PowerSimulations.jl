@@ -403,15 +403,6 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        EnergyShortageVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
     energy_capacity_constraints!(
         optimization_container,
         devices,
@@ -511,15 +502,6 @@ function construct_device!(
         optimization_container,
         RangeConstraint,
         ActivePowerInVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        EnergyShortageVariable,
         devices,
         model,
         S,
