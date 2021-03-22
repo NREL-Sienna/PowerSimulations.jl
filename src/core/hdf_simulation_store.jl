@@ -158,9 +158,10 @@ function write_optimizer_stats!(store::HdfSimulationStore, problem, stats::Optim
     problem_name = Symbol(problem)
     dataset = _get_dataset(OptimizerStats, store, problem_name)
 
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
+    # Uncomment for performance measures of HDF Store
+    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
         dataset[:, store.optimizer_stats_write_index[problem_name]] = to_array(stats)
-    end
+    #end
 
     store.optimizer_stats_write_index[problem_name] += 1
     return
