@@ -4,7 +4,7 @@ abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
-struct EndOfPeriodEnergyTarget <: AbstractEnergyManagement end
+struct EnergyTarget <: AbstractEnergyManagement end
 
 get_variable_sign(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
 ########################### ActivePowerInVariable, Storage #################################
@@ -278,7 +278,7 @@ end
 function energy_target_constraint!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, EndOfPeriodEnergyTarget},
+    model::DeviceModel{T, EnergyTarget},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage}
@@ -362,7 +362,7 @@ end
 
 function AddCostSpec(
     ::Type{PSY.BatteryEMS},
-    ::Type{EndOfPeriodEnergyTarget},
+    ::Type{EnergyTarget},
     optimization_container::OptimizationContainer,
 )
     return AddCostSpec(;

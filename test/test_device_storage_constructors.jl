@@ -52,8 +52,8 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-@testset "BatteryEMS with EndOfPeriodEnergyTarget with DC - PF" begin
-    model = DeviceModel(BatteryEMS, EndOfPeriodEnergyTarget)
+@testset "BatteryEMS with EnergyTarget with DC - PF" begin
+    model = DeviceModel(BatteryEMS, EnergyTarget)
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(op_problem, model)
@@ -61,8 +61,8 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-@testset "BatteryEMS with EndOfPeriodEnergyTarget With AC - PF" begin
-    model = DeviceModel(BatteryEMS, EndOfPeriodEnergyTarget)
+@testset "BatteryEMS with EnergyTarget With AC - PF" begin
+    model = DeviceModel(BatteryEMS, EnergyTarget)
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(op_problem, model)
@@ -72,7 +72,7 @@ end
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1b-2b" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
-    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_b_sys")
@@ -91,7 +91,7 @@ end
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1c-2c" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
-    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_c_sys")
@@ -111,7 +111,7 @@ end
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1d-2d" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
-    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_d_sys")
@@ -131,7 +131,7 @@ end
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1e-2e" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
-    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_e_sys")
@@ -150,7 +150,7 @@ end
 
 @testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1f-2f" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
-    set_device_model!(template, BatteryEMS, EndOfPeriodEnergyTarget)
+    set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     c_sys5 = PSB.build_system(PSITestSystems, "batt_test_case_f_sys")
