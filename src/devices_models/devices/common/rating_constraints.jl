@@ -31,7 +31,7 @@ function rating_constraint!(
     add_cons_container!(
         optimization_container,
         cons_name,
-        (r[1] for r in rating_data),
+        [r[1] for r in rating_data],
         time_steps,
     )
     constraint = get_constraint(optimization_container, cons_name)

@@ -112,6 +112,7 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ProblemInternal}
+    ext::Dict{String, Any}
 
     function OperationsProblem{M}(
         template::OperationsProblemTemplate,
@@ -120,7 +121,7 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
         internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
-        new{M}(template, sys, internal)
+        new{M}(template, sys, internal, Dict{String, Any}())
     end
 end
 
@@ -282,6 +283,9 @@ get_system(problem::OperationsProblem) = problem.sys
 get_template(problem::OperationsProblem) = problem.template
 get_output_dir(problem::OperationsProblem) = problem.internal.output_dir
 get_variables(problem::OperationsProblem) = get_optimization_container(problem).variables
+get_parameters(problem::OperationsProblem) = get_optimization_container(problem).parameters
+get_duals(problem::OperationsProblem) = get_optimization_container(problem).duals
+
 get_run_status(problem::OperationsProblem) = problem.internal.run_status
 set_run_status!(problem::OperationsProblem, status) = problem.internal.run_status = status
 get_time_series_cache(problem::OperationsProblem) = problem.internal.time_series_cache
@@ -456,7 +460,7 @@ function initialize_simulation_info!(problem::OperationsProblem, ::RecedingHoriz
 end
 
 function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serialize::Bool)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(problem))" begin
         try
             build_pre_step!(problem)
             problem_build!(problem)
@@ -629,6 +633,30 @@ function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem};
     return status
 end
 
+function write_problem_results!(
+    step::Int,
+    problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    start_time::Dates.DateTime,
+    store::SimulationStore,
+    exports,
+)
+    stats = OptimizerStats(problem, step)
+    write_optimizer_stats!(store, get_name(problem), stats)
+    write_model_results!(store, problem, start_time; exports = exports)
+    return
+end
+
+function write_problem_results!(
+    ::Int,
+    ::OperationsProblem{T},
+    ::Dates.DateTime,
+    ::SimulationStore,
+    _,
+) where {T <: AbstractOperationsProblem}
+    @info "Write results to Store not implemented for problems $T"
+    return
+end
+
 """
 Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
 
@@ -643,16 +671,14 @@ Default solve method for an operational model used inside of a Simulation. Solve
 """
 function solve!(
     step::Int,
-    problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    problem::OperationsProblem{<:AbstractOperationsProblem},
     start_time::Dates.DateTime,
     store::SimulationStore;
     exports = nothing,
 )
     solve_status = solve!(problem)
     if solve_status == RunStatus.SUCCESSFUL
-        stats = OptimizerStats(problem, step)
-        write_optimizer_stats!(store, get_name(problem), stats)
-        write_model_results!(store, problem, start_time; exports = exports)
+        write_problem_results!(step, problem, start_time, store, exports)
         advance_execution_count!(problem)
     end
 

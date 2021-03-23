@@ -435,6 +435,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
+            HDF5.read(HDF5.attributes(problem_group)["end_of_interval_step"]),
             HDF5.read(HDF5.attributes(problem_group)["base_power"]),
             Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
         )
@@ -476,6 +477,8 @@ function _serialize_attributes(store::HdfSimulationStore, problems_group, proble
         HDF5.attributes(problem_group)["horizon"] = params.problems[problem].horizon
         HDF5.attributes(problem_group)["resolution_ms"] =
             Dates.Millisecond(params.problems[problem].resolution).value
+        HDF5.attributes(problem_group)["end_of_interval_step"] =
+            params.problems[problem].end_of_interval_step
         HDF5.attributes(problem_group)["interval_ms"] =
             Dates.Millisecond(params.problems[problem].interval).value
         HDF5.attributes(problem_group)["base_power"] = params.problems[problem].base_power

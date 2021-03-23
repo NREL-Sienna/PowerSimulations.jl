@@ -52,6 +52,7 @@ const MUST_RUN = "must_run"
 const MUST_RUN_LB = "must_run_lb"
 const NODAL_BALANCE_ACTIVE = "nodal_balance_active"
 const NODAL_BALANCE_REACTIVE = "nodal_balance_reactive"
+const NETWORK_FLOW = "network_flow"
 
 abstract type ConstraintType end
 

@@ -80,18 +80,22 @@ function psi_checksolve_test(
     @test isapprox(obj_value, expected_result, atol = tol)
 end
 
-function psi_ptdf_lmps(op_problem::OperationsProblem, ptdf)
-    res = solve!(op_problem)
-    λ = convert(Array, res.dual_values[:CopperPlateBalance])
-    μ = convert(Array, res.dual_values[:network_flow])
-    buses = get_components(Bus, op_problem.sys)
+function psi_ptdf_lmps(res::ProblemResults, ptdf)
+    duals = get_duals(res)
+    λ = convert(Array, duals[:CopperPlateBalance][:, :var])
+
+    nf_duals = collect(keys(duals))[occursin.(PSI.NETWORK_FLOW, string.(keys(duals)))]
+    flow_duals =
+        hcat([duals[k][:, propertynames(duals[k]) .!== :DateTime] for k in nf_duals]...)
+    μ = Matrix(flow_duals[:, ptdf.axes[1]])
+
+    buses = get_components(Bus, get_system(res))
     lmps = OrderedDict()
     for bus in buses
         lmps[get_name(bus)] = μ * ptdf[:, get_number(bus)]
     end
-    lmps = DataFrame(lmps)
-    lmps = λ .- lmps
-    return lmps[!, sort(propertynames(lmps))]
+    lmp = λ .- DataFrames.DataFrame(lmps)
+    return lmp[!, sort(propertynames(lmp))]
 end
 
 function check_variable_unbounded(op_problem::OperationsProblem, var_name)

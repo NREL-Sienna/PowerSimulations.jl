@@ -179,11 +179,10 @@ function test_simulation_results(file_path::String, export_path)
         ren_dispatch_params =
             read_parameter(results_ed, :P__max_active_power__RenewableDispatch)
         @test length(keys(ren_dispatch_params)) == 48
-        for v in values(p_thermal_standard_ed)
-            @test size(v) == (12, 6)
+        for v in values(ren_dispatch_params)
+            @test size(v) == (12, 4)
         end
 
-        # TODO: duals are not being stored any longer. Is that expected?
         network_duals = read_dual(results_ed, :CopperPlateBalance)
         @test length(keys(network_duals)) == 48
         for v in values(network_duals)
@@ -333,6 +332,164 @@ function test_simulation_results(file_path::String, export_path)
             match_mode = :any,
             (:warn, r"Results may not be valid"),
             SimulationResults(sim, ignore_status = true),
+        )
+    end
+
+    @testset "Test receding horizon simulation results" begin
+        template_uc = get_template_hydro_st_uc()
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+        problems = SimulationProblems(
+            UC = OperationsProblem(
+                template_uc,
+                c_sys5_hy_uc;
+                optimizer = GLPK_optimizer,
+                constraint_duals = [:CopperPlateBalance],
+            ),
+        )
+
+        sequence_rh = SimulationSequence(
+            problems = problems,
+            intervals = Dict("UC" => (Hour(24), RecedingHorizon())),
+            ini_cond_chronology = InterProblemChronology(),
+        )
+        sim = Simulation(
+            name = "RH",
+            steps = 2,
+            problems = problems,
+            sequence = sequence_rh,
+            simulation_folder = file_path,
+        )
+        build_out = build!(sim)
+        @test build_out == PSI.BuildStatus.BUILT
+
+        execute_out = execute!(sim)
+        @test execute_out == PSI.RunStatus.SUCCESSFUL
+
+        results = SimulationResults(sim)
+        @test list_problems(results) == ["UC"]
+        results_rh = get_problem_results(results, "UC")
+
+        @test get_system(results_rh) === nothing
+        @test length(read_realized_variables(results_rh)) == 10 #verifies this works without system
+        set_system!(results_rh, c_sys5_hy_uc)
+        @test IS.get_uuid(get_system!(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
+
+        uc_expected_vars = [
+            :Sp__HydroEnergyReservoir
+            :P__ThermalStandard
+            :P__RenewableDispatch
+            :start__ThermalStandard
+            :stop__ThermalStandard
+            :E__HydroEnergyReservoir
+            :P__HydroEnergyReservoir
+            :On__ThermalStandard
+        ]
+        @test isempty(setdiff(uc_expected_vars, get_existing_variables(results_rh)))
+
+        p_thermal_standard_rh = read_variable(results_rh, :P__ThermalStandard)
+        @test length(keys(p_thermal_standard_rh)) == 2
+        for v in values(p_thermal_standard_rh)
+            @test size(v) == (24, 6)
+        end
+
+        ren_dispatch_params =
+            read_parameter(results_rh, :P__max_active_power__RenewableDispatch)
+        @test length(keys(ren_dispatch_params)) == 2
+        for v in values(ren_dispatch_params)
+            @test size(v) == (24, 4)
+        end
+
+        network_duals = read_dual(results_rh, :CopperPlateBalance)
+        @test length(keys(network_duals)) == 2
+        for v in values(network_duals)
+            @test size(v) == (24, 2)
+        end
+
+        realized_var_rh = read_realized_variables(results_rh)
+        @test length(keys(realized_var_rh)) == 10
+        for var in values(realized_var_rh)
+            @test size(var)[1] == 48
+            existing_timetsamps = get_existing_timestamps(results_rh)
+            for ts in existing_timetsamps
+                val_cols = setdiff(propertynames(var), [:DateTime])
+                first_row = Matrix(var[var.DateTime .== ts, val_cols])
+                all_rows = Matrix(
+                    var[
+                        (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
+                        val_cols,
+                    ],
+                )
+                @test all(first_row .== all_rows)
+            end
+        end
+
+        realized_param_rh = read_realized_parameters(results_rh)
+        @test length(keys(realized_param_rh)) == 4
+        for var in values(realized_param_rh)
+            @test size(var)[1] == 48
+            existing_timetsamps = get_existing_timestamps(results_rh)
+            for ts in existing_timetsamps
+                val_cols = setdiff(propertynames(var), [:DateTime])
+                first_row = Matrix(var[var.DateTime .== ts, val_cols])
+                all_rows = Matrix(
+                    var[
+                        (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
+                        val_cols,
+                    ],
+                )
+                @test all(first_row .== all_rows)
+            end
+        end
+
+        realized_duals_rh = read_realized_duals(results_rh)
+        @test length(keys(realized_duals_rh)) == 1
+        for var in values(realized_duals_rh)
+            @test size(var)[1] == 48
+            existing_timetsamps = get_existing_timestamps(results_rh)
+            for ts in existing_timetsamps
+                val_cols = setdiff(propertynames(var), [:DateTime])
+                first_row = Matrix(var[var.DateTime .== ts, val_cols])
+                all_rows = Matrix(
+                    var[
+                        (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
+                        val_cols,
+                    ],
+                )
+                @test all(first_row .== all_rows)
+            end
+        end
+
+        # request non sync data
+        @test_logs(
+            (:error, r"Requested time does not match available results"),
+            match_mode = :any,
+            @test_throws IS.InvalidValue read_realized_variables(
+                results_rh,
+                names = [:P__ThermalStandard],
+                initial_time = DateTime("2024-01-01T02:12:00"),
+                len = 3,
+            )
+        )
+
+        # request good window
+        @test size(
+            read_realized_variables(
+                results_rh,
+                names = [:P__ThermalStandard],
+                initial_time = DateTime("2024-01-01T23:00:00"),
+                len = 10,
+            )[:P__ThermalStandard],
+        )[1] == 10
+
+        # request bad window
+        @test_logs(
+            (:error, r"Requested time does not match available results"),
+            (@test_throws IS.InvalidValue read_realized_variables(
+                results_rh,
+                names = [:P__ThermalStandard],
+                initial_time = DateTime("2024-01-01T23:00:00"),
+                len = 26,
+            ))
         )
     end
 end
