@@ -835,12 +835,12 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Component}
-    components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-    horizon = length(model_time_steps(problem.internal.optimization_container))
-    for d in components
-        # RECORDER TODO: Parameter Update from forecast
-        TimerOutputs.@timeit RUN_SIMULATION_TIMER "GetTimeSeries" begin
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        for d in components
+            # RECORDER TODO: Parameter Update from forecast
             ts_vector = get_time_series_values!(
                 PSY.Deterministic,
                 problem,
@@ -850,11 +850,11 @@ function update_parameter!(
                 horizon,
                 ignore_scaling_factors = true,
             )
-        end
-        component_name = PSY.get_name(d)
-        for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
-            value = ts_vector[ix]
-            JuMP.set_value(val, value)
+            component_name = PSY.get_name(d)
+            for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
+                value = ts_vector[ix]
+                JuMP.set_value(val, value)
+            end
         end
     end
 
@@ -868,14 +868,14 @@ function update_parameter!(
     sim::Simulation,
 ) where {T <: PSY.Service}
     # RECORDER TODO: Parameter Update from forecast
-    components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-    horizon = length(model_time_steps(problem.internal.optimization_container))
-    param_array = get_parameter_array(container)
-    for ix in axes(param_array)[1]
-        service = PSY.get_component(T, problem.sys, ix)
-        TimerOutputs.@timeit RUN_SIMULATION_TIMER "GetTimeSeries" begin
-            get_time_series_values!(
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        param_array = get_parameter_array(container)
+        for ix in axes(param_array)[1]
+            service = PSY.get_component(T, problem.sys, ix)
+            ts_vector = get_time_series_values!(
                 PSY.Deterministic,
                 problem,
                 service,
@@ -884,9 +884,9 @@ function update_parameter!(
                 horizon,
                 ignore_scaling_factors = true,
             )
-        end
-        for (jx, value) in enumerate(ts_vector)
-            JuMP.set_value(get_parameter_array(container)[ix, jx], value)
+            for (jx, value) in enumerate(ts_vector)
+                JuMP.set_value(get_parameter_array(container)[ix, jx], value)
+            end
         end
     end
 

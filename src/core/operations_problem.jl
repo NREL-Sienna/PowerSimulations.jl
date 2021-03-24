@@ -327,8 +327,7 @@ function get_time_series_values!(
         cache[key] = ts_cache
     end
 
-    ts = IS.get_next_time_series_array!(ts_cache)
-    @assert_op IS.get_initial_timestamp(ts) == initial_time
+    ts = IS.get_time_series_array!(ts_cache, initial_time)
     return TimeSeries.values(ts)
 end
 
