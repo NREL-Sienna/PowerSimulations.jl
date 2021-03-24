@@ -835,30 +835,25 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Component}
-    components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-    horizon = length(model_time_steps(problem.internal.optimization_container))
-    for d in components
-        # RECORDER TODO: Parameter Update from forecast
-        # TODO: Improve file read performance
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            d,
-            get_data_label(param_reference);
-            start_time = initial_forecast_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            d,
-            forecast,
-            initial_forecast_time;
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
-        component_name = PSY.get_name(d)
-        for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
-            value = ts_vector[ix]
-            JuMP.set_value(val, value)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        for d in components
+            ts_vector = get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                d,
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
+            )
+            component_name = PSY.get_name(d)
+            for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
+                value = ts_vector[ix]
+                JuMP.set_value(val, value)
+            end
         end
     end
 
@@ -871,29 +866,25 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Service}
-    # RECORDER TODO: Parameter Update from forecast
-    components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-    horizon = length(model_time_steps(problem.internal.optimization_container))
-    param_array = get_parameter_array(container)
-    for ix in axes(param_array)[1]
-        service = PSY.get_component(T, problem.sys, ix)
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            service,
-            get_data_label(param_reference);
-            start_time = initial_forecast_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            service,
-            forecast,
-            initial_forecast_time;
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
-        for (jx, value) in enumerate(ts_vector)
-            JuMP.set_value(get_parameter_array(container)[ix, jx], value)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        param_array = get_parameter_array(container)
+        for ix in axes(param_array)[1]
+            service = PSY.get_component(T, problem.sys, ix)
+            ts_vector = get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                service,
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
+            )
+            for (jx, value) in enumerate(ts_vector)
+                JuMP.set_value(get_parameter_array(container)[ix, jx], value)
+            end
         end
     end
 
@@ -1017,6 +1008,7 @@ function execute!(sim::Simulation; kwargs...)
         set_simulation_status!(sim, RunStatus.FAILED)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
+        _empty_problem_caches!(sim)
         unregister_recorders!(sim.internal)
         close(logger)
     end
@@ -1285,6 +1277,14 @@ struct SimulationSerializationWrapper
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
     name::String
+end
+
+function _empty_problem_caches!(sim::Simulation)
+    problems = get_problems(sim)
+    for problem_name in get_problem_names(problems)
+        problem = problems[problem_name]
+        empty_time_series_cache!(problem)
+    end
 end
 
 """

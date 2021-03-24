@@ -30,7 +30,7 @@ get_cache_hit_percentage(x::ParamResultCache) = get_cache_hit_percentage(x.stats
 get_size(x::ParamResultCache) = length(x) * x.size_per_entry
 has_clean(x::ParamResultCache) = !isempty(x.data) && !is_dirty(x, first(keys(x.data)))
 has_dirty(x::ParamResultCache) = !isempty(x.dirty_timestamps)
-is_dirty(x::ParamResultCache, t) = t >= first(keys(x.dirty_timestamps))
+is_dirty(x::ParamResultCache, t) = t >= first(x.dirty_timestamps)
 should_keep_in_cache(x::ParamResultCache) = x.flush_rule.keep_in_cache
 
 function Base.empty!(cache::ParamResultCache)
