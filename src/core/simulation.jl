@@ -835,12 +835,11 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Component}
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "update_parameter!" begin
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
         components = get_available_components(T, problem.sys)
         initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
         horizon = length(model_time_steps(problem.internal.optimization_container))
         for d in components
-            # RECORDER TODO: Parameter Update from forecast
             ts_vector = get_time_series_values!(
                 PSY.Deterministic,
                 problem,
@@ -867,8 +866,7 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Service}
-    # RECORDER TODO: Parameter Update from forecast
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "update_parameter!" begin
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
         components = get_available_components(T, problem.sys)
         initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
         horizon = length(model_time_steps(problem.internal.optimization_container))
