@@ -81,8 +81,8 @@ function get_data_to_flush!(cache::ParamResultCache, flush_size)
     timestamps = [popfirst!(cache.dirty_timestamps) for i in 1:num_chunks]
     # Uncomment for performance testing of CacheFlush
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Concatenate arrays for flush" begin
-        arrays = (cache.data[x] for x in timestamps)
-        arrays = cat(arrays..., dims = ndims(first(arrays)) + 1)
+    arrays = (cache.data[x] for x in timestamps)
+    arrays = cat(arrays..., dims = ndims(first(arrays)) + 1)
     #end
 
     return timestamps, arrays

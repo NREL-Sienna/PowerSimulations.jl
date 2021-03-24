@@ -163,9 +163,7 @@ function branch_flow_values!(
         name = PSY.get_name(br)
         branch_flow[name, t] = JuMP.@constraint(
             jump_model,
-            sum(
-                ptdf[name, i] * nodal_balance_expressions[i, t] for i in ptdf.axes[2]
-            ) == flow_variables[name, t]
+            sum(ptdf[name, i] * nodal_balance_expressions[i, t] for i in ptdf.axes[2]) == flow_variables[name, t]
         )
     end
 end
