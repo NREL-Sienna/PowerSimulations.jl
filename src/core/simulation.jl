@@ -945,7 +945,7 @@ function _apply_warm_start!(problem::OperationsProblem)
     optimization_container = get_optimization_container(problem)
     jump_model = get_jump_model(optimization_container)
     all_vars = JuMP.all_variables(jump_model)
-    JuMP.set_start_value.(all_vars, value.(all_vars))
+    JuMP.set_start_value.(all_vars, JuMP.value.(all_vars))
     return
 end
 
