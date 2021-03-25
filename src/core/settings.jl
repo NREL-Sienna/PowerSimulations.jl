@@ -72,7 +72,7 @@ function log_values(settings::Settings)
         push!(text, "$name = $val")
     end
 
-    @info "Settings: $(join(text, ", "))"
+    @debug "Settings: $(join(text, ", "))"
 end
 
 function copy_for_serialization(settings::Settings)
