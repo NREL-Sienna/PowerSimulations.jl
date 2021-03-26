@@ -4,11 +4,11 @@ Stores arrays chronologically by simulation timestamp.
 """
 mutable struct ParamResultCache
     key::ParamCacheKey
-    "contains both clean and dirty entries"
+    "Contains both clean and dirty entries. Any key in data that is earlier than the first
+    dirty timestamp must be clean."
     data::OrderedDict{Dates.DateTime, Array}
     "Oldest entry is first"
     dirty_timestamps::Deque{Dates.DateTime}
-    "Any key in data that is earlier than the first dirty timestamp must be clean."
     stats::CacheStats
     size_per_entry::Int
     flush_rule::CacheFlushRule
@@ -30,8 +30,12 @@ get_cache_hit_percentage(x::ParamResultCache) = get_cache_hit_percentage(x.stats
 get_size(x::ParamResultCache) = length(x) * x.size_per_entry
 has_clean(x::ParamResultCache) = !isempty(x.data) && !is_dirty(x, first(keys(x.data)))
 has_dirty(x::ParamResultCache) = !isempty(x.dirty_timestamps)
-is_dirty(x::ParamResultCache, t) = t >= first(x.dirty_timestamps)
 should_keep_in_cache(x::ParamResultCache) = x.flush_rule.keep_in_cache
+
+function is_dirty(cache::ParamResultCache, timestamp)
+    isempty(cache.dirty_timestamps) && return false
+    return timestamp >= first(x.dirty_timestamps)
+end
 
 function Base.empty!(cache::ParamResultCache)
     empty!(cache.data)
