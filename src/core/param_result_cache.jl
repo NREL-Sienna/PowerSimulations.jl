@@ -32,6 +32,10 @@ has_clean(x::ParamResultCache) = !isempty(x.data) && !is_dirty(x, first(keys(x.d
 has_dirty(x::ParamResultCache) = !isempty(x.dirty_timestamps)
 should_keep_in_cache(x::ParamResultCache) = x.flush_rule.keep_in_cache
 
+function get_dirty_size(cache::ParamResultCache)
+    return length(cache.dirty_timestamps) * cache.size_per_entry
+end
+
 function is_dirty(cache::ParamResultCache, timestamp)
     isempty(cache.dirty_timestamps) && return false
     return timestamp >= first(cache.dirty_timestamps)
@@ -57,7 +61,7 @@ function add_result!(cache::ParamResultCache, timestamp, array, system_cache_is_
 
     if system_cache_is_full && has_clean(cache)
         popfirst!(cache.data)
-        @debug "replaced cache entry" key
+        @debug "replaced cache entry" cache.key
     end
 
     _add_result!(cache, timestamp, array)

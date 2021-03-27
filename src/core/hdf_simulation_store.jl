@@ -352,7 +352,7 @@ function write_result!(
     cur_size = get_size(store.cache)
     add_result!(param_cache, timestamp, array, is_full(store.cache, cur_size))
 
-    if get_size(param_cache) >= get_min_flush_size(store.cache)
+    if get_dirty_size(param_cache) >= get_min_flush_size(store.cache)
         discard = !should_keep_in_cache(param_cache)
 
         # PERF: A potentially significant performance improvement would be to queue several
