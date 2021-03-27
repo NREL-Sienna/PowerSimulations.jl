@@ -40,7 +40,7 @@ end
 function Base.empty!(cache::ParamResultCache)
     empty!(cache.data)
     empty!(cache.dirty_timestamps)
-    data.size_per_entry = 0
+    cache.size_per_entry = 0
 end
 
 """

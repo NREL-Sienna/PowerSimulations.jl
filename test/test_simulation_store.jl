@@ -182,6 +182,39 @@ end
     _verify_read_results(path, sim, variables, stage_defs, seed)
 end
 
+@testset "Test ParamResultCache" begin
+    key = PSI.ParamCacheKey((:ED, :variables, :var))
+    cache = PSI.ParamResultCache(key, PSI.CacheFlushRule())
+    @test !PSI.has_clean(cache)
+    @test !PSI.is_dirty(cache, Dates.now())
+
+    timestamp1 = Dates.DateTime("2020-01-01T00:00:00")
+    timestamp2 = Dates.DateTime("2020-01-01T01:00:00")
+    timestamp3 = Dates.DateTime("2020-01-01T02:00:00")
+    PSI.add_result!(cache, timestamp1, ones(2), false)
+    @test PSI.is_dirty(cache, timestamp1)
+    PSI.add_result!(cache, timestamp2, ones(2), false)
+    @test PSI.is_dirty(cache, timestamp2)
+
+    @test length(cache.data) == 2
+    @test length(cache.dirty_timestamps) == 2
+
+    popfirst!(cache.dirty_timestamps)
+    @test !PSI.is_dirty(cache, timestamp1)
+    @test PSI.has_clean(cache)
+    PSI.add_result!(cache, timestamp3, ones(2), true)
+    @test length(cache.data) == 2
+
+    empty!(cache)
+    @test isempty(cache.data)
+    @test isempty(cache.dirty_timestamps)
+
+    PSI.add_result!(cache, timestamp1, ones(2), false)
+    PSI.add_result!(cache, timestamp2, ones(2), false)
+    PSI.discard_results!(cache, [timestamp1, timestamp2])
+    @test isempty(cache.data)
+end
+
 # TODO: test optimizer stats
 # TODO: unit tests of individual functions, size checks
 # TODO: 3-d arrays
