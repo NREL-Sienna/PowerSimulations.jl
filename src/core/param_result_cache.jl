@@ -34,7 +34,7 @@ should_keep_in_cache(x::ParamResultCache) = x.flush_rule.keep_in_cache
 
 function is_dirty(cache::ParamResultCache, timestamp)
     isempty(cache.dirty_timestamps) && return false
-    return timestamp >= first(x.dirty_timestamps)
+    return timestamp >= first(cache.dirty_timestamps)
 end
 
 function Base.empty!(cache::ParamResultCache)
@@ -56,7 +56,7 @@ function add_result!(cache::ParamResultCache, timestamp, array, system_cache_is_
     @assert !haskey(cache.data, timestamp) "$(cache.key) $timestamp"
 
     if system_cache_is_full && has_clean(cache)
-        _pop_first!(cache)
+        popfirst!(cache.data)
         @debug "replaced cache entry" key
     end
 
@@ -102,5 +102,3 @@ function has_timestamp(cache::ParamResultCache, timestamp)
 
     return present
 end
-
-_pop_first!(cache::ParamResultCache) = pop!(first(keys(cache.data)))
