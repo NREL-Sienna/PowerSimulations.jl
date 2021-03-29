@@ -65,7 +65,7 @@ function device_linear_rateofchange!(
             JuMP.add_to_expression!(
                 expression_lb,
                 get_variable(optimization_container, val)[name, 1],
-                1.0,
+                -1.0,
             )
         end
         con_down[name, 1] = JuMP.@constraint(
@@ -92,7 +92,7 @@ function device_linear_rateofchange!(
             JuMP.add_to_expression!(
                 expression_lb,
                 get_variable(optimization_container, val)[name, t],
-                1.0,
+                -1.0,
             )
         end
         con_down[name, t] = JuMP.@constraint(
@@ -179,7 +179,7 @@ function device_mixedinteger_rateofchange!(
             JuMP.add_to_expression!(
                 expression_lb,
                 get_variable(optimization_container, val)[name, 1],
-                1.0,
+                -1.0,
             )
         end
         con_down[name, 1] = JuMP.@constraint(
@@ -208,7 +208,7 @@ function device_mixedinteger_rateofchange!(
             JuMP.add_to_expression!(
                 expression_lb,
                 get_variable(optimization_container, val)[name, t],
-                1.0,
+                -1.0,
             )
         end
         con_down[name, t] = JuMP.@constraint(
