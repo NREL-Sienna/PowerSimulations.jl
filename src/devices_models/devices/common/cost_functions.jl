@@ -515,8 +515,8 @@ function add_to_cost!(
     if spec.uses_compact_power
         variable_cost_data = spec.variable_cost(cost_data)
     else
+        base_power = get_base_power(optimization_container)
         min_gen_cost = PSY.get_no_load(cost_data)
-        base_power = PSY.get_base_power(component)
         min_gen = PSY.get_active_power_limits(component).min
         variable_cost_data_ = PSY.get_cost(spec.variable_cost(cost_data))
         variable_cost_data_ = [
