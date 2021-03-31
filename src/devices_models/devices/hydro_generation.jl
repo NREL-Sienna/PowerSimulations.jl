@@ -89,6 +89,21 @@ get_variable_lower_bound(::SpillageVariable, d::PSY.HydroGen, ::AbstractHydroFor
 
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = true
 get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroPumpedStorage}, ::AbstractHydroFormulation) = true
+############## EnergyShortageVariable, HydroGen ####################
+
+get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
+get_variable_lower_bound(::EnergyShortageVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
+
+############## EnergySlackDown, HydroGen ####################
+
+get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
+get_variable_upper_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
+
+get_target_multiplier(v::PSY.HydroEnergyReservoir) = PSY.get_storage_capacity(v)
+
+get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HydroGen = (in = 1.0, out = 1.0)
+get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelUP}) = (in = PSY.get_pump_efficiency(v), out = 1.0)
+get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelDOWN}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
 
 get_target_multiplier(v::PSY.HydroEnergyReservoir) = PSY.get_storage_capacity(v)
 
@@ -370,11 +385,7 @@ function commit_hydro_active_power_ub!(
     if use_parameters || use_forecasts
         spec = DeviceRangeConstraintSpec(;
             timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-                constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariable,
-                    V,
-                ),
+                constraint_name = make_constraint_name(COMMITMENT, V),
                 variable_name = make_variable_name(ActivePowerVariable, V),
                 parameter_name = use_parameters ? ACTIVE_POWER : nothing,
                 forecast_label = "max_active_power",
@@ -422,7 +433,6 @@ end
 This function defines the constraints for the water level (or state of charge)
 for the HydroPumpedStorage.
 """
-
 function DeviceEnergyBalanceConstraintSpec(
     ::Type{<:EnergyBalanceConstraint},
     ::Type{EnergyVariableUp},
@@ -715,7 +725,7 @@ function device_energy_budget_param_ub(
         name = get_component_name(constraint_info)
         for t in time_steps
             multiplier[name, t] = constraint_info.multiplier * inv_dt
-            param[name, t] = PJ.add_parameter(
+            param[name, t] = add_parameter(
                 optimization_container.JuMPmodel,
                 constraint_info.timeseries[t],
             )
@@ -764,12 +774,14 @@ function AddCostSpec(
     ::Type{T},
     ::Type{U},
     ::OptimizationContainer,
-) where {T <: PSY.HydroDispatch, U <: AbstractHydroFormulation}
+) where {T <: PSY.HydroGen, U <: AbstractHydroFormulation}
     # Hydro Generators currently have no OperationalCost
+    cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
         variable_type = ActivePowerVariable,
         component_type = T,
-        fixed_cost = x -> 1.0,
+        fixed_cost = PSY.get_fixed,
+        variable_cost = cost_function,
         multiplier = OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
@@ -779,11 +791,11 @@ function AddCostSpec(
     ::Type{T},
     ::Type{U},
     ::OptimizationContainer,
-) where {T <: PSY.HydroGen, U <: AbstractHydroFormulation}
+) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroFormulation}
     # Hydro Generators currently have no OperationalCost
     cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
-        variable_type = ActivePowerVariable,
+        variable_type = ActivePowerOutVariable,
         component_type = T,
         fixed_cost = PSY.get_fixed,
         variable_cost = cost_function,

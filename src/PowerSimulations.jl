@@ -7,7 +7,7 @@ module PowerSimulations
 # Base Models
 export Simulation
 export OperationsProblem
-export OperationsProblemResults
+export ProblemResults
 export OperationsProblemTemplate
 export InitialCondition
 export SimulationProblems
@@ -147,6 +147,8 @@ export get_existing_variables
 export get_problem_name
 export get_problem_results
 export get_system
+export get_system!
+export set_system!
 export list_problems
 export list_supported_formats
 export load_results!
@@ -249,24 +251,30 @@ export optimizer_with_attributes
 import MathOptInterface
 import ParameterJuMP
 import LinearAlgebra
+import JSON3
 import PowerSystems
 import InfrastructureSystems
 # so that users have access to IS.Results interfaces
 import InfrastructureSystems:
     get_variables,
+    get_parameters,
     get_total_cost,
     get_optimizer_stats,
     write_results,
     get_timestamp,
+    get_resolution,
     get_name,
     @assert_op
 export get_name
 export get_model_base_power
 export get_variables
 export get_duals
+export get_parameters
 export get_total_cost
 export get_optimizer_stats
 export get_timestamp
+export get_timestamps
+export get_resolution
 export write_results
 import PowerModels
 import TimerOutputs
@@ -334,6 +342,7 @@ include("core/parameters.jl")
 include("core/variables.jl")
 include("core/constraints.jl")
 include("core/cache.jl")
+include("core/feedforward_chronologies.jl")
 include("core/optimizer_stats.jl")
 include("core/initial_condition_types.jl")
 include("core/initial_condition.jl")
@@ -372,6 +381,7 @@ include("devices_models/devices/common/get_time_series.jl")
 include("devices_models/devices/common/hybrid_constraints.jl")
 
 include("core/feedforward.jl")
+include("core/problem_results.jl")
 include("core/simulation_results.jl")
 include("core/recorder_events.jl")
 

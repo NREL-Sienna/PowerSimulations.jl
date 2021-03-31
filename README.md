@@ -1,6 +1,6 @@
 # PowerSimulations.jl
 
-![Master - CI](https://github.com/NREL-SIIP/PowerSimulations.jl/workflows/Master%20-%20CI/badge.svg?branch=master)
+[![Master - CI](https://github.com/NREL-SIIP/PowerSimulations.jl/actions/workflows/master-tests.yml/badge.svg)](https://github.com/NREL-SIIP/PowerSimulations.jl/actions/workflows/master-tests.yml)
 [![codecov](https://codecov.io/gh/NREL-SIIP/PowerSimulations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL-SIIP/PowerSimulations.jl)
 [![Documentation](https://github.com/NREL-SIIP/PowerSimulations.jl/workflows/Documentation/badge.svg)](https://nrel-siip.github.io/PowerSimulations.jl/latest)
 [![DOI](https://zenodo.org/badge/109443246.svg)](https://zenodo.org/badge/latestdoi/109443246)

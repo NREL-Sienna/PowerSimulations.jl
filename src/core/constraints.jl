@@ -55,6 +55,7 @@ const NODAL_BALANCE_REACTIVE = "nodal_balance_reactive"
 const POWER_BALANCE_INFLOW = "power_balance_inflow"
 const POWER_BALANCE_OUTFLOW = "power_balance_outflow"
 const INVERTOR_LIMIT = "invertor_limit"
+const NETWORK_FLOW = "network_flow"
 
 abstract type ConstraintType end
 

@@ -89,11 +89,11 @@ function _make_jump_model!(optimization_container::OptimizationContainer)
         optimization_container.JuMPmodel = JuMPmodel
     end
     if get_optimizer_log_print(settings)
-        @debug "optimizer set to silent"
-        JuMP.set_silent(optimization_container.JuMPmodel)
-    else
         JuMP.unset_silent(optimization_container.JuMPmodel)
         @debug "optimizer unset to silent"
+    else
+        JuMP.set_silent(optimization_container.JuMPmodel)
+        @debug "optimizer set to silent"
     end
     return
 end
@@ -413,12 +413,16 @@ function add_cons_container!(
     axs...;
     sparse = false,
 )
-    if sparse
-        container = sparse_container_spec(optimization_container.JuMPmodel, axs...)
+    if !haskey(optimization_container.constraints, cons_name)
+        if sparse
+            container = sparse_container_spec(optimization_container.JuMPmodel, axs...)
+        else
+            container = JuMPConstraintArray(undef, axs...)
+        end
+        assign_constraint!(optimization_container, cons_name, container)
     else
-        container = JuMPConstraintArray(undef, axs...)
+        Throw(error("constraint container already exists: $cons_name"))
     end
-    assign_constraint!(optimization_container, cons_name, container)
     return container
 end
 
@@ -653,7 +657,7 @@ function build_impl!(
 )
     transmission = template.transmission
     # Order is required
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Services" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
         construct_services!(
             optimization_container,
             sys,
@@ -663,13 +667,13 @@ function build_impl!(
     end
     for device_model in values(template.devices)
         @debug "Building $(device_model.component_type) with $(device_model.formulation) formulation"
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(device_model.component_type)" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(device_model.component_type)" begin
             construct_device!(optimization_container, sys, device_model, transmission)
             @debug get_problem_size(optimization_container)
         end
     end
 
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(transmission)" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
         @debug "Building $(transmission) network formulation"
         construct_network!(optimization_container, sys, transmission, template)
         @debug get_problem_size(optimization_container)
@@ -677,13 +681,13 @@ function build_impl!(
 
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct $(branch_model.component_type)" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(branch_model.component_type)" begin
             construct_device!(optimization_container, sys, branch_model, transmission)
             @debug get_problem_size(optimization_container)
         end
     end
 
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Construct Objective" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Objective" begin
         @debug "Building Objective"
         JuMP.@objective(
             optimization_container.JuMPmodel,

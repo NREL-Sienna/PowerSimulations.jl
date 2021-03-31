@@ -2,6 +2,7 @@ struct Settings
     horizon::Base.RefValue{Int}
     use_forecast_data::Bool
     use_parameters::Base.RefValue{Bool}
+    time_series_cache_size::Int
     warm_start::Base.RefValue{Bool}
     balance_slack_variables::Bool
     services_slack_variables::Bool
@@ -21,6 +22,7 @@ function Settings(
     initial_time::Dates.DateTime = UNSET_INI_TIME,
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
+    time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
     warm_start::Bool = true,
     balance_slack_variables::Bool = false,
     services_slack_variables::Bool = false,
@@ -34,10 +36,17 @@ function Settings(
     allow_fails = false,
     ext = Dict{String, Any}(),
 )
+    if time_series_cache_size > 0 &&
+       sys.data.time_series_storage isa IS.InMemoryTimeSeriesStorage
+        @info "Overriding time_series_cache_size because time series is stored in memory"
+        time_series_cache_size = 0
+    end
+
     return Settings(
         Ref(horizon),
         use_forecast_data,
         Ref(use_parameters),
+        time_series_cache_size,
         Ref(warm_start),
         balance_slack_variables,
         services_slack_variables,
@@ -51,6 +60,19 @@ function Settings(
         allow_fails,
         ext,
     )
+end
+
+function log_values(settings::Settings)
+    text = Vector{String}()
+    for (name, type) in zip(fieldnames(Settings), fieldtypes(Settings))
+        val = getfield(settings, name)
+        if type <: Base.RefValue
+            val = val[]
+        end
+        push!(text, "$name = $val")
+    end
+
+    @debug "Settings: $(join(text, ", "))"
 end
 
 function copy_for_serialization(settings::Settings)
@@ -103,6 +125,7 @@ get_system_to_file(settings::Settings) = settings.system_to_file
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails
 get_optimizer_log_print(settings::Settings) = settings.optimizer_log_print
+use_time_series_cache(settings::Settings) = settings.time_series_cache_size > 0
 
 function set_horizon!(settings::Settings, horizon::Int)
     settings.horizon[] = horizon

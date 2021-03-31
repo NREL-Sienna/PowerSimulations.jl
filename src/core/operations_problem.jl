@@ -11,6 +11,12 @@ mutable struct SimulationInfo
     sequence_uuid::Base.UUID
 end
 
+struct TimeSeriesCacheKey
+    component_uuid::Base.UUID
+    time_series_type::Type{<:IS.TimeSeriesData}
+    name::String
+end
+
 mutable struct ProblemInternal
     optimization_container::OptimizationContainer
     status::BuildStatus
@@ -18,6 +24,7 @@ mutable struct ProblemInternal
     base_conversion::Bool
     output_dir::Union{Nothing, String}
     simulation_info::Union{Nothing, SimulationInfo}
+    time_series_cache::Dict{TimeSeriesCacheKey, <:IS.TimeSeriesCache}
     ext::Dict{String, Any}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
@@ -34,6 +41,7 @@ function ProblemInternal(
         true,
         nothing,
         nothing,
+        Dict{TimeSeriesCacheKey, IS.TimeSeriesCache}(),
         ext,
         Logging.Warn,
         Logging.Info,
@@ -92,9 +100,10 @@ OpModel = OperationsProblem(MockOperationProblem, template, system)
 - `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool`: If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Default is false.
 - `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 - `balance_slack_variables::Bool`: True will add slacks to the system balance constraints
 - `services_slack_variables::Bool`: True will add slacks to the services requirement constraints
@@ -103,6 +112,7 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ProblemInternal}
+    ext::Dict{String, Any}
 
     function OperationsProblem{M}(
         template::OperationsProblemTemplate,
@@ -111,7 +121,7 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
         internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
-        new{M}(template, sys, internal)
+        new{M}(template, sys, internal, Dict{String, Any}())
     end
 end
 
@@ -132,6 +142,7 @@ function OperationsProblem{M}(
     optimizer_log_print = false,
     use_parameters = false,
     use_forecast_data = true,
+    time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
     initial_time = UNSET_INI_TIME,
 ) where {M <: AbstractOperationsProblem}
     settings = Settings(
@@ -140,6 +151,7 @@ function OperationsProblem{M}(
         initial_time = initial_time,
         optimizer = optimizer,
         use_parameters = use_parameters,
+        time_series_cache_size = time_series_cache_size,
         warm_start = warm_start,
         balance_slack_variables = balance_slack_variables,
         services_slack_variables = services_slack_variables,
@@ -271,8 +283,96 @@ get_system(problem::OperationsProblem) = problem.sys
 get_template(problem::OperationsProblem) = problem.template
 get_output_dir(problem::OperationsProblem) = problem.internal.output_dir
 get_variables(problem::OperationsProblem) = get_optimization_container(problem).variables
+get_parameters(problem::OperationsProblem) = get_optimization_container(problem).parameters
+get_duals(problem::OperationsProblem) = get_optimization_container(problem).duals
+
 get_run_status(problem::OperationsProblem) = problem.internal.run_status
 set_run_status!(problem::OperationsProblem, status) = problem.internal.run_status = status
+get_time_series_cache(problem::OperationsProblem) = problem.internal.time_series_cache
+empty_time_series_cache!(x::OperationsProblem) = empty!(get_time_series_cache(x))
+
+function get_time_series_values!(
+    time_series_type::Type{<:IS.TimeSeriesData},
+    problem::OperationsProblem,
+    component,
+    name,
+    initial_time,
+    horizon;
+    ignore_scaling_factors = true,
+)
+    if !use_time_series_cache(get_settings(problem))
+        return IS.get_time_series_values(
+            time_series_type,
+            component,
+            name,
+            start_time = initial_time,
+            len = horizon,
+            ignore_scaling_factors = true,
+        )
+    end
+
+    cache = get_time_series_cache(problem)
+    key = TimeSeriesCacheKey(IS.get_uuid(component), time_series_type, name)
+    if haskey(cache, key)
+        ts_cache = cache[key]
+    else
+        ts_cache = make_time_series_cache(
+            time_series_type,
+            component,
+            name,
+            initial_time,
+            horizon,
+            ignore_scaling_factors = true,
+        )
+        cache[key] = ts_cache
+    end
+
+    ts = IS.get_time_series_array!(ts_cache, initial_time)
+    return TimeSeries.values(ts)
+end
+
+function make_time_series_cache(
+    time_series_type::Type{T},
+    component,
+    name,
+    initial_time,
+    horizon;
+    ignore_scaling_factors = true,
+) where {T <: IS.TimeSeriesData}
+    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name)
+    if T <: IS.SingleTimeSeries
+        cache = IS.StaticTimeSeriesCache(
+            PSY.SingleTimeSeries,
+            component,
+            name,
+            start_time = initial_time,
+            ignore_scaling_factors = ignore_scaling_factors,
+        )
+    elseif T <: IS.Deterministic
+        cache = IS.ForecastCache(
+            IS.AbstractDeterministic,
+            component,
+            name,
+            start_time = initial_time,
+            horizon = horizon,
+            ignore_scaling_factors = ignore_scaling_factors,
+        )
+    elseif T <: IS.Probabilistic
+        cache = IS.ForecastCache(
+            IS.Probabilistic,
+            component,
+            name,
+            start_time = initial_time,
+            horizon = horizon,
+            ignore_scaling_factors = ignore_scaling_factors,
+        )
+    else
+        error("not supported yet: $T")
+    end
+
+    @debug "Made time series cache for $(summary(component))" name initial_time
+    return cache
+end
 
 function get_initial_conditions(
     problem::OperationsProblem,
@@ -307,6 +407,7 @@ function reset!(problem::OperationsProblem{T}) where {T <: AbstractOperationsPro
     end
     container = OptimizationContainer(get_system(problem), get_settings(problem), nothing)
     problem.internal.optimization_container = container
+    empty_time_series_cache!(problem)
     set_status!(problem, BuildStatus.EMPTY)
     return
 end
@@ -331,12 +432,6 @@ function build_pre_step!(problem::OperationsProblem)
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
         system = get_system(problem)
-        if built_for_simulation(problem)
-            resolution = get_resolution(problem)
-            interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
-            end_of_interval_step = Int(interval / resolution)
-            get_simulation_info(problem).end_of_interval_step = end_of_interval_step
-        end
         @info "Initializing Optimization Container"
         template = get_template(problem)
         optimization_container_init!(
@@ -349,14 +444,29 @@ function build_pre_step!(problem::OperationsProblem)
     return
 end
 
+function initialize_simulation_info!(problem::OperationsProblem, ::FeedForwardChronology)
+    @assert built_for_simulation(problem)
+    system = get_system(problem)
+    resolution = get_resolution(problem)
+    interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
+    end_of_interval_step = Int(interval / resolution)
+    get_simulation_info(problem).end_of_interval_step = end_of_interval_step
+end
+
+function initialize_simulation_info!(problem::OperationsProblem, ::RecedingHorizon)
+    @assert built_for_simulation(problem)
+    get_simulation_info(problem).end_of_interval_step = 1
+end
+
 function _build!(problem::OperationsProblem{<:AbstractOperationsProblem}, serialize::Bool)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problem $(get_name(problem))" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(problem))" begin
         try
             build_pre_step!(problem)
             problem_build!(problem)
             serialize && serialize_problem(problem)
             serialize && serialize_optimization_model(problem)
             set_status!(problem, BuildStatus.BUILT)
+            log_values(get_settings(problem))
             !built_for_simulation(problem) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
         catch e
             set_status!(problem, BuildStatus.FAILED)
@@ -522,6 +632,30 @@ function solve!(problem::OperationsProblem{<:PowerSimulationsOperationsProblem};
     return status
 end
 
+function write_problem_results!(
+    step::Int,
+    problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    start_time::Dates.DateTime,
+    store::SimulationStore,
+    exports,
+)
+    stats = OptimizerStats(problem, step)
+    write_optimizer_stats!(store, get_name(problem), stats)
+    write_model_results!(store, problem, start_time; exports = exports)
+    return
+end
+
+function write_problem_results!(
+    ::Int,
+    ::OperationsProblem{T},
+    ::Dates.DateTime,
+    ::SimulationStore,
+    _,
+) where {T <: AbstractOperationsProblem}
+    @info "Write results to Store not implemented for problems $T"
+    return
+end
+
 """
 Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of OperationsProblem{<: PowerSimulationsOperationsProblem}
 
@@ -536,16 +670,14 @@ Default solve method for an operational model used inside of a Simulation. Solve
 """
 function solve!(
     step::Int,
-    problem::OperationsProblem{<:PowerSimulationsOperationsProblem},
+    problem::OperationsProblem{<:AbstractOperationsProblem},
     start_time::Dates.DateTime,
     store::SimulationStore;
     exports = nothing,
 )
     solve_status = solve!(problem)
     if solve_status == RunStatus.SUCCESSFUL
-        stats = OptimizerStats(problem, step)
-        write_optimizer_stats!(store, get_name(problem), stats)
-        write_model_results!(store, problem, start_time; exports = exports)
+        write_problem_results!(step, problem, start_time, store, exports)
         advance_execution_count!(problem)
     end
 

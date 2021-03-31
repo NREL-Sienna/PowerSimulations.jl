@@ -63,7 +63,7 @@ end
     output_dir = mktempdir(cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
-    res = OperationsProblemResults(UC)
+    res = ProblemResults(UC)
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
     @test :P__ThermalStandard in keys(vars)
@@ -157,7 +157,8 @@ end
     parameters = [true, false]
     ptdf = PTDF(sys)
     # These are the duals of interest for the test
-    dual_constraint = [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow]]
+    dual_constraint =
+        [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow__Line]]
     LMPs = []
     for (ix, network) in enumerate(networks), p in parameters
         template = get_template_dispatch_with_network(network)
@@ -172,23 +173,22 @@ end
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         @test solve!(op_problem) == RunStatus.SUCCESSFUL
-        res = OperationsProblemResults(op_problem)
+        res = ProblemResults(op_problem)
 
         # These tests require results to be working
         if network == StandardPTDFModel
-            # TODO PENDING TESTS: what is ps_model?
-            #push!(LMPs, abs.(psi_ptdf_lmps(ps_model, ptdf)))
+            push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
         else
-            # TODO PENDING TESTS: this now includes a DateTime column. should this run on all other
-            # columns?
-            #duals = abs.(res.dual_values[:nodal_balance_active__Bus])
-            #push!(LMPs, duals[!, sort(propertynames(duals))])
+            duals = res.dual_values[:nodal_balance_active__Bus]
+            duals = abs.(duals[:, propertynames(duals) .!== :DateTime])
+            push!(LMPs, duals[!, sort(propertynames(duals))])
         end
     end
+    # TODO: the above calculation executes, but the following test does not pass
     #@test isapprox(convert(Array, LMPs[1]), convert(Array, LMPs[2]), atol = 100.0)
 end
 
-@testset "Test duals and parameters getter functions" begin
+@testset "Test ProblemResults interfaces" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(CopperPlatePowerModel)
     op_problem = OperationsProblem(
@@ -220,6 +220,21 @@ end
         @test all([-1 * x == get_max_active_power(load) for x in param_mult[!, name]])
         @test all(vals .== param_vals[!, name])
     end
+
+    res = ProblemResults(op_problem)
+    @test length(get_existing_variables(res)) == 1
+    @test length(get_existing_parameters(res)) == 1
+    @test length(get_existing_duals(res)) == 1
+    @test get_model_base_power(res) == 100.0
+    @test isa(get_objective_value(res), Float64)
+    @test isa(get_variables(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(get_total_cost(res), Float64)
+    @test isa(get_optimizer_stats(res), PSI.OptimizerStats)
+    @test isa(get_duals(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(get_parameters(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(get_resolution(res), Dates.TimePeriod)
+    @test isa(get_system(res), PSY.System)
+    @test length(get_timestamps(res)) == 24
 end
 
 @testset "Test Serialization, deserialization and write optimizer problem" begin

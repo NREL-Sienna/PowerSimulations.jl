@@ -2,6 +2,8 @@
 const _PROGRESS_METER_ENABLED =
     !(isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true"))
 
+const RESULTS_DIR = "results"
+
 mutable struct SimulationInternal
     sim_files_dir::String
     store_dir::String
@@ -53,7 +55,7 @@ function SimulationInternal(
     logs_dir = joinpath(simulation_dir, "logs")
     models_dir = joinpath(simulation_dir, "problems")
     recorder_dir = joinpath(simulation_dir, "recorder")
-    results_dir = joinpath(simulation_dir, "results")
+    results_dir = joinpath(simulation_dir, RESULTS_DIR)
 
     for path in (
         simulation_dir,
@@ -536,11 +538,13 @@ end
 function _build_problems!(sim::Simulation, serialize)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
         @info("Building problem $(problem_number)-$(problem_name)")
-        problem_interval = get_interval(get_sequence(sim), problem_name)
+        problem_chronology =
+            get_problem_interval_chronology(get_sequence(sim), problem_name)
         initial_time = get_initial_time(sim)
         set_initial_time!(problem, initial_time)
         output_dir = joinpath(get_problems_dir(sim))
         set_output_dir!(problem, output_dir)
+        initialize_simulation_info!(problem, problem_chronology)
         problem_build_status = _build!(problem, serialize)
         if problem_build_status != BuildStatus.BUILT
             error("Problem $(problem_name) failed to build succesfully")
@@ -628,7 +632,6 @@ function build!(
             )
         end
         file_mode = "w"
-        # TODO: need a different log file for build vs execute
         logger = configure_logging(sim.internal, file_mode)
         register_recorders!(sim.internal, file_mode)
         try
@@ -832,30 +835,25 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Component}
-    components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-    horizon = length(model_time_steps(problem.internal.optimization_container))
-    for d in components
-        # RECORDER TODO: Parameter Update from forecast
-        # TODO: Improve file read performance
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            d,
-            get_data_label(param_reference);
-            start_time = initial_forecast_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            d,
-            forecast,
-            initial_forecast_time;
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
-        component_name = PSY.get_name(d)
-        for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
-            value = ts_vector[ix]
-            JuMP.set_value(val, value)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        for d in components
+            ts_vector = get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                d,
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
+            )
+            component_name = PSY.get_name(d)
+            for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
+                value = ts_vector[ix]
+                JuMP.set_value(val, value)
+            end
         end
     end
 
@@ -868,29 +866,25 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Service}
-    # RECORDER TODO: Parameter Update from forecast
-    components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-    horizon = length(model_time_steps(problem.internal.optimization_container))
-    param_array = get_parameter_array(container)
-    for ix in axes(param_array)[1]
-        service = PSY.get_component(T, problem.sys, ix)
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            service,
-            get_data_label(param_reference);
-            start_time = initial_forecast_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            service,
-            forecast,
-            initial_forecast_time;
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
-        for (jx, value) in enumerate(ts_vector)
-            JuMP.set_value(get_parameter_array(container)[ix, jx], value)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        param_array = get_parameter_array(container)
+        for ix in axes(param_array)[1]
+            service = PSY.get_component(T, problem.sys, ix)
+            ts_vector = get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                service,
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
+            )
+            for (jx, value) in enumerate(ts_vector)
+                JuMP.set_value(get_parameter_array(container)[ix, jx], value)
+            end
         end
     end
 
@@ -940,13 +934,9 @@ end
 
 function _apply_warm_start!(problem::OperationsProblem)
     optimization_container = get_optimization_container(problem)
-    variable_container = get_variables(optimization_container)
-    for variable in values(variable_container)
-        for e in variable
-            current_solution = JuMP.value(e)
-            JuMP.set_start_value(e, current_solution)
-        end
-    end
+    jump_model = get_jump_model(optimization_container)
+    all_vars = JuMP.all_variables(jump_model)
+    JuMP.set_start_value.(all_vars, JuMP.value.(all_vars))
     return
 end
 
@@ -1014,10 +1004,12 @@ function execute!(sim::Simulation; kwargs...)
         set_simulation_status!(sim, RunStatus.FAILED)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
+        _empty_problem_caches!(sim)
         unregister_recorders!(sim.internal)
         close(logger)
     end
     compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+    serialize_status(sim)
     return get_simulation_status(sim)
 end
 
@@ -1068,19 +1060,19 @@ function _execute!(
                     "start",
                 )
                 problem_name = get_problem_names(problems)[problem_number]
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution problem $(problem_name)" begin
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(problem_name)" begin
                     problem = problems[problem_name]
                     if !is_built(problem)
-                        error("problem $(problem_name) status is not BuildStatus.BUILT")
+                        error("$(problem_name) status is not BuildStatus.BUILT")
                     end
                     problem_interval = get_interval(sequence, problem_name)
                     set_current_time!(sim, sim.internal.date_ref[problem_number])
                     sequence.current_execution_index = ix
                     # Is first run of first problem? Yes -> don't update problem
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update problem $(problem_name)" begin
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update $(problem_name)" begin
                         !(step == 1 && ix == 1) && update_problem!(problem, sim)
                     end
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run problem $(problem_name)" begin
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run $(problem_name)" begin
                         settings = get_settings(problem)
                         status = solve!(
                             step,
@@ -1110,9 +1102,7 @@ function _execute!(
                         _update_caches!(sim, problem)
                     end
                     if warm_start_enabled(problem)
-                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(problem_number)" begin
-                            _apply_warm_start!(problem)
-                        end
+                        _apply_warm_start!(problem)
                     end
                     IS.@record :simulation_status ProblemExecutionEvent(
                         get_current_time(sim),
@@ -1170,6 +1160,7 @@ function _initialize_problem_storage!(
 
         interval = intervals[problem_name][1]
         resolution = get_resolution(problem)
+        end_of_interval_step = get_end_of_interval_step(problem)
         system = get_system(problem)
         base_power = PSY.get_base_power(system)
         sys_uuid = IS.get_uuid(system)
@@ -1178,6 +1169,7 @@ function _initialize_problem_storage!(
             horizon,
             interval,
             resolution,
+            end_of_interval_step,
             base_power,
             sys_uuid,
         )
@@ -1283,6 +1275,14 @@ struct SimulationSerializationWrapper
     name::String
 end
 
+function _empty_problem_caches!(sim::Simulation)
+    problems = get_problems(sim)
+    for problem_name in get_problem_names(problems)
+        problem = problems[problem_name]
+        empty_time_series_cache!(problem)
+    end
+end
+
 """
     serialize_simulation(sim::Simulation, path = ".")
 
@@ -1325,7 +1325,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
         get_name(sim),
     )
     Serialization.serialize(filename, obj)
-    @info "Serialized simulation" get_name(sim) directory
+    @info "Serialized simulation name = $(get_name(sim))" directory
     return directory
 end
 
@@ -1380,4 +1380,31 @@ function deserialize_model(
     finally
         cd(orig)
     end
+end
+
+function serialize_status(sim::Simulation)
+    data = Dict("run_status" => string(get_simulation_status(sim)))
+    filename = joinpath(get_results_dir(sim), "status.json")
+    open(filename, "w") do io
+        JSON3.write(io, data)
+    end
+
+    return
+end
+
+function deserialize_status(sim::Simulation)
+    return deserialize_status(get_results_dir(sim))
+end
+
+function deserialize_status(results_path::AbstractString)
+    filename = joinpath(results_path, "status.json")
+    if !isfile(filename)
+        error("run status file $filename does not exist")
+    end
+
+    data = open(filename, "r") do io
+        JSON3.read(io, Dict)
+    end
+
+    return get_enum_value(RunStatus, data["run_status"])
 end

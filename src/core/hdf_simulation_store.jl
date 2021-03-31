@@ -158,9 +158,10 @@ function write_optimizer_stats!(store::HdfSimulationStore, problem, stats::Optim
     problem_name = Symbol(problem)
     dataset = _get_dataset(OptimizerStats, store, problem_name)
 
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
-        dataset[:, store.optimizer_stats_write_index[problem_name]] = to_array(stats)
-    end
+    # Uncomment for performance measures of HDF Store
+    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
+    dataset[:, store.optimizer_stats_write_index[problem_name]] = to_array(stats)
+    #end
 
     store.optimizer_stats_write_index[problem_name] += 1
     return
@@ -351,7 +352,7 @@ function write_result!(
     cur_size = get_size(store.cache)
     add_result!(param_cache, timestamp, array, is_full(store.cache, cur_size))
 
-    if get_size(param_cache) >= get_min_flush_size(store.cache)
+    if get_dirty_size(param_cache) >= get_min_flush_size(store.cache)
         discard = !should_keep_in_cache(param_cache)
 
         # PERF: A potentially significant performance improvement would be to queue several
@@ -435,6 +436,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
+            HDF5.read(HDF5.attributes(problem_group)["end_of_interval_step"]),
             HDF5.read(HDF5.attributes(problem_group)["base_power"]),
             Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
         )
@@ -476,6 +478,8 @@ function _serialize_attributes(store::HdfSimulationStore, problems_group, proble
         HDF5.attributes(problem_group)["horizon"] = params.problems[problem].horizon
         HDF5.attributes(problem_group)["resolution_ms"] =
             Dates.Millisecond(params.problems[problem].resolution).value
+        HDF5.attributes(problem_group)["end_of_interval_step"] =
+            params.problems[problem].end_of_interval_step
         HDF5.attributes(problem_group)["interval_ms"] =
             Dates.Millisecond(params.problems[problem].interval).value
         HDF5.attributes(problem_group)["base_power"] = params.problems[problem].base_power

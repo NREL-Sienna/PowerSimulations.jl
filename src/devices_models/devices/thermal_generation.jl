@@ -594,6 +594,9 @@ function ramp_constraints!(
     data = _get_data_for_rocc(optimization_container, T)
     if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
+        for r in data
+            add_device_services!(r, r.ic_power.device, model)
+        end
         device_mixedinteger_rateofchange!(
             optimization_container,
             data,
@@ -624,6 +627,9 @@ function ramp_constraints!(
     time_steps = model_time_steps(optimization_container)
     data = _get_data_for_rocc(optimization_container, T)
     if !isempty(data)
+        for r in data
+            add_device_services!(r, r.ic_power.device, model)
+        end
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange!(
             optimization_container,
