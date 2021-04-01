@@ -44,7 +44,7 @@ end
 """
 function set_device_model!(
     template::OperationsProblemTemplate,
-    component_type::Type{<:PSY.Device},
+    component_type::Type{<:PSY.StaticInjection},
     formulation::Type{<:AbstractDeviceFormulation},
 )
     set_device_model!(template, DeviceModel(component_type, formulation))

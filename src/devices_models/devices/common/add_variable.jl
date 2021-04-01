@@ -254,14 +254,16 @@ function add_variables!(
     optimization_container::OptimizationContainer,
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    formulation::AbstractDeviceFormulation,
 ) where {T <: SubComponentVariableType, U <: PSY.Component}
-    add_subcomponent_variables!(optimization_container, T(), devices)
+    add_subcomponent_variables!(optimization_container, T(), devices, formulation)
 end
 
 function add_subcomponent_variables!(
     optimization_container::OptimizationContainer,
     variable_type::T,
     devices::U,
+    formulation::AbstractDeviceFormulation
 ) where {
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     T <: SubComponentVariableType,
@@ -269,9 +271,9 @@ function add_subcomponent_variables!(
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
     var_name = make_variable_name(typeof(variable_type), eltype(devices))
-    binary = get_variable_binary(variable_type, eltype(devices))
+    binary = get_variable_binary(variable_type, D, formulation)
     expression_name = get_variable_expression_name(variable_type, eltype(devices))
-    sign = get_variable_sign(variable_type, eltype(devices))
+    sign = get_variable_sign(variable_type, D, formulation)
     subcomp_types = get_subcomponent_var_types(variable_type)
     variable = add_var_container!(
         optimization_container,
@@ -311,7 +313,7 @@ function add_subcomponent_variables!(
                 bus_number,
                 t,
                 variable[name, subcomp, t],
-                get_variable_sign(variable_type, eltype(devices)),
+                get_variable_sign(variable_type, eltype(devices), formulation),
             )
         end
     end

@@ -335,8 +335,17 @@ function remove_chars(s::String, char::String)
     return replace_chars(s::String, char::String, "")
 end
 
+function is_hybrid_sub_component(x::T) where {T <: PSY.Component}
+    ext = PSY.get_ext(x)
+    if haskey(ext, "is_hybrid_subcomponent") && ext["is_hybrid_subcomponent"]
+        return true
+    else
+        return false
+    end
+end
+
 function get_available_components(::Type{T}, sys::PSY.System) where {T <: PSY.Component}
-    return PSY.get_components(T, sys, x -> PSY.get_available(x))
+    return PSY.get_components(T, sys, x -> PSY.get_available(x) & !is_hybrid_sub_component(x))
 end
 
 function get_available_components(

@@ -140,6 +140,9 @@ function device_range_constraints!(
 
     if !(spec.devices_filter_func === nothing)
         devices = filter!(spec.devices_filter_func, collect(devices))
+        if isempty(devices)
+            return
+        end
     end
 
     if feedforward === nothing
@@ -257,3 +260,49 @@ function _apply_timeseries_range_constraint_spec!(
     spec.constraint_func(optimization_container, ts_inputs)
     return
 end
+
+function _apply_timeseries_range_constraint_spec!(
+    optimization_container,
+    spec,
+    devices::D,
+    model,
+    ff_affected_variables,
+) where {D <: Union{Vector{T}, IS.FlattenIteratorWrapper{T}}} where {T <: PSY.HybridSystem}
+    variable_name = spec.variable_name
+    if variable_name in ff_affected_variables
+        @debug "Skip adding $variable_name because it is handled by feedforward"
+        return
+    end
+    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    for (i, dev) in enumerate(devices)
+        ts_vector = get_subcompnent_time_series(optimization_container, dev, spec.subcomponent_type , spec.forecast_label)
+        constraint_info =
+            DeviceTimeSeriesConstraintInfo(dev, spec.multiplier_func, ts_vector)
+        add_device_services!(constraint_info.range, dev, model)
+        constraint_infos[i] = constraint_info
+    end
+    sub_component_type =
+        !isnothing(spec.subcomponent_type) ? spec.subcomponent_type : nothing
+    ts_inputs = TimeSeriesConstraintSpecInternal(
+        constraint_infos,
+        spec.constraint_name,
+        variable_name,
+        spec.bin_variable_name,
+        spec.parameter_name === nothing ? nothing :
+        UpdateRef{T}(spec.parameter_name, spec.forecast_label),
+        sub_component_type,
+    )
+    spec.constraint_func(optimization_container, ts_inputs)
+    return
+end
+
+
+function get_subcompnent_time_series(optimization_container, dev, subcomponent_type , forecast_label)
+    subcomp = get_subcomponent(dev, subcomponent_type)
+    return get_time_series(optimization_container, subcomp, forecast_label)
+end
+
+get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.ElectricLoad}) =  PSY.get_electric_load(d)
+get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.ThermalGen}) =  PSY.get_thermal_unit(d)
+get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.Storage,}) =  PSY.get_storage(d)
+get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.RenewableGen}) =  PSY.get_renewable_unit(d)

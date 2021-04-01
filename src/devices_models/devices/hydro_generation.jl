@@ -105,12 +105,6 @@ get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HydroGen 
 get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelUP}) = (in = PSY.get_pump_efficiency(v), out = 1.0)
 get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelDOWN}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
 
-get_target_multiplier(v::PSY.HydroEnergyReservoir) = PSY.get_storage_capacity(v)
-
-get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HydroGen = (in = 1.0, out = 1.0)
-get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelUP}) = (in = PSY.get_pump_efficiency(v), out = 1.0)
-get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelDOWN}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
-
 #! format: on
 
 """

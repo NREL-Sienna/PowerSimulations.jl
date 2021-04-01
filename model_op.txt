@@ -1,0 +1,75 @@
+Min 4500 Pout__HybridSystem_{all_hybrid, 1} + 4500 Pout__HybridSystem_{RE+battery, 1} + 4500 Pout__HybridSystem_{load+battery, 1} + 4500 Pout__HybridSystem_{thermal+battery, 1}
+Subject to
+ -0.8 Pin_SubComponent__HybridSystem_{all_hybrid, Storage, 1} + 1.1111111111111112 Pout_SubComponent__HybridSystem_{all_hybrid, Storage, 1} + E_SubComponent__HybridSystem_{all_hybrid, Storage, 1} = 0.0
+ -0.8 Pin_SubComponent__HybridSystem_{RE+battery, Storage, 1} + 1.1111111111111112 Pout_SubComponent__HybridSystem_{RE+battery, Storage, 1} + E_SubComponent__HybridSystem_{RE+battery, Storage, 1} = 0.0
+ -0.8 Pin_SubComponent__HybridSystem_{load+battery, Storage, 1} + 1.1111111111111112 Pout_SubComponent__HybridSystem_{load+battery, Storage, 1} + E_SubComponent__HybridSystem_{load+battery, Storage, 1} = 0.0
+ -0.8 Pin_SubComponent__HybridSystem_{thermal+battery, Storage, 1} + 1.1111111111111112 Pout_SubComponent__HybridSystem_{thermal+battery, Storage, 1} + E_SubComponent__HybridSystem_{thermal+battery, Storage, 1} = 0.0
+ Pin__HybridSystem_{all_hybrid, 1} - Pin_SubComponent__HybridSystem_{all_hybrid, Storage, 1} - P_SubComponent__HybridSystem_{all_hybrid, ElectricLoad, 1} = 0.0
+ Pin__HybridSystem_{RE+battery, 1} - Pin_SubComponent__HybridSystem_{RE+battery, Storage, 1} = 0.0
+ Pin__HybridSystem_{load+battery, 1} - Pin_SubComponent__HybridSystem_{load+battery, Storage, 1} - P_SubComponent__HybridSystem_{load+battery, ElectricLoad, 1} = 0.0
+ Pin__HybridSystem_{thermal+battery, 1} - Pin_SubComponent__HybridSystem_{thermal+battery, Storage, 1} = 0.0
+ Pout__HybridSystem_{all_hybrid, 1} - Pout_SubComponent__HybridSystem_{all_hybrid, Storage, 1} - P_SubComponent__HybridSystem_{all_hybrid, ThermalGen, 1} - P_SubComponent__HybridSystem_{all_hybrid, RenewableGen, 1} = 0.0
+ Pout__HybridSystem_{RE+battery, 1} - Pout_SubComponent__HybridSystem_{RE+battery, Storage, 1} - P_SubComponent__HybridSystem_{RE+battery, RenewableGen, 1} = 0.0
+ Pout__HybridSystem_{load+battery, 1} - Pout_SubComponent__HybridSystem_{load+battery, Storage, 1} = 0.0
+ Pout__HybridSystem_{thermal+battery, 1} - Pout_SubComponent__HybridSystem_{thermal+battery, Storage, 1} - P_SubComponent__HybridSystem_{thermal+battery, ThermalGen, 1} = 0.0
+ P_SubComponent__HybridSystem_{all_hybrid, ThermalGen, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{thermal+battery, ThermalGen, 1} ≥ 0.0
+ Pin_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≥ 0.0
+ Pin_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≥ 0.0
+ Pin_SubComponent__HybridSystem_{load+battery, Storage, 1} ≥ 0.0
+ Pin_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≥ 0.0
+ Pout_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≥ 0.0
+ Pout_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≥ 0.0
+ Pout_SubComponent__HybridSystem_{load+battery, Storage, 1} ≥ 0.0
+ Pout_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{all_hybrid, RenewableGen, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{RE+battery, RenewableGen, 1} ≥ 0.0
+ E_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≥ 0.1
+ E_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≥ 0.1
+ E_SubComponent__HybridSystem_{load+battery, Storage, 1} ≥ 0.1
+ E_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≥ 0.1
+ P_SubComponent__HybridSystem_{all_hybrid, ThermalGen, 1} ≤ 2.0
+ P_SubComponent__HybridSystem_{thermal+battery, ThermalGen, 1} ≤ 5.2
+ P_SubComponent__HybridSystem_{all_hybrid, ElectricLoad, 1} ≤ 0.0
+ P_SubComponent__HybridSystem_{load+battery, ElectricLoad, 1} ≤ 0.0
+ Pin_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≤ 2.0
+ Pin_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≤ 2.0
+ Pin_SubComponent__HybridSystem_{load+battery, Storage, 1} ≤ 2.0
+ Pin_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≤ 2.0
+ Pout_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≤ 2.0
+ Pout_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≤ 2.0
+ Pout_SubComponent__HybridSystem_{load+battery, Storage, 1} ≤ 2.0
+ Pout_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≤ 2.0
+ P_SubComponent__HybridSystem_{all_hybrid, RenewableGen, 1} ≤ 1.2
+ P_SubComponent__HybridSystem_{RE+battery, RenewableGen, 1} ≤ 1.2
+ E_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≤ 7.0
+ E_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≤ 7.0
+ E_SubComponent__HybridSystem_{load+battery, Storage, 1} ≤ 7.0
+ E_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≤ 7.0
+ Pin__HybridSystem_{all_hybrid, 1} ≥ 0.0
+ Pin__HybridSystem_{RE+battery, 1} ≥ 0.0
+ Pin__HybridSystem_{load+battery, 1} ≥ 0.0
+ Pin__HybridSystem_{thermal+battery, 1} ≥ 0.0
+ Pout__HybridSystem_{all_hybrid, 1} ≥ 0.0
+ Pout__HybridSystem_{RE+battery, 1} ≥ 0.0
+ Pout__HybridSystem_{load+battery, 1} ≥ 0.0
+ Pout__HybridSystem_{thermal+battery, 1} ≥ 0.0
+ Pin_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≥ 0.0
+ Pin_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≥ 0.0
+ Pin_SubComponent__HybridSystem_{load+battery, Storage, 1} ≥ 0.0
+ Pin_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≥ 0.0
+ Pout_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≥ 0.0
+ Pout_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≥ 0.0
+ Pout_SubComponent__HybridSystem_{load+battery, Storage, 1} ≥ 0.0
+ Pout_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{all_hybrid, ThermalGen, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{all_hybrid, RenewableGen, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{all_hybrid, ElectricLoad, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{RE+battery, RenewableGen, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{load+battery, ElectricLoad, 1} ≥ 0.0
+ P_SubComponent__HybridSystem_{thermal+battery, ThermalGen, 1} ≥ 0.0
+ E_SubComponent__HybridSystem_{all_hybrid, Storage, 1} ≥ 0.0
+ E_SubComponent__HybridSystem_{RE+battery, Storage, 1} ≥ 0.0
+ E_SubComponent__HybridSystem_{load+battery, Storage, 1} ≥ 0.0
+ E_SubComponent__HybridSystem_{thermal+battery, Storage, 1} ≥ 0.0
+
