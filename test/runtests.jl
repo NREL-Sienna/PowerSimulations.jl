@@ -33,7 +33,7 @@ using SCS
 import Aqua
 Aqua.test_unbound_args(PowerSimulations)
 Aqua.test_undefined_exports(PowerSimulations)
-Aqua.test_ambiguities(PowerSimulations)
+# Aqua.test_ambiguities(PowerSimulations)
 
 const PM = PowerModels
 const PSY = PowerSystems
