@@ -575,12 +575,13 @@ function get_problem_variable(
     chron::RecedingHorizon,
     problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::AbstractString,
-    var_ref::UpdateRef,
+    var_ref::UpdateRef;
+    kwargs...,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
-    step = axes(variable)[2][chron.periods]
-    var = variable[device_name, step]
+    idx = get_index(device_name, chron.periods, get(kwargs, :sub_component, nothing))
+    var = variable[idx]
     if JuMP.is_binary(var)
         return round(JuMP.value(var))
     else
@@ -592,12 +593,17 @@ function get_problem_variable(
     ::Consecutive,
     problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
-    var_ref::UpdateRef,
+    var_ref::UpdateRef;
+    kwargs...,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
-    step = axes(variable)[2][get_end_of_interval_step(problems.first)]
-    var = variable[device_name, step]
+    idx = get_index(
+        device_name,
+        get_end_of_interval_step(problems.first),
+        get(kwargs, :sub_component, nothing),
+    )
+    var = variable[idx]
     if JuMP.is_binary(var)
         return round(JuMP.value(var))
     else
@@ -609,15 +615,16 @@ function get_problem_variable(
     chron::Synchronize,
     problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
-    var_ref::UpdateRef,
+    var_ref::UpdateRef;
+    kwargs...,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     e_count = get_execution_count(problems.second)
     wait_count = get_execution_wait_count(get_trigger(chron))
     index = (floor(e_count / wait_count) + 1)
-    step = axes(variable)[2][Int(index)]
-    var = variable[device_name, step]
+    idx = get_index(device_name, Int(index), get(kwargs, :sub_component, nothing))
+    var = variable[idx]
     if JuMP.is_binary(var)
         return round(JuMP.value(var))
     else
@@ -629,7 +636,8 @@ function get_problem_variable(
     ::FullHorizon,
     problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
-    var_ref::UpdateRef,
+    var_ref::UpdateRef;
+    kwargs...,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
@@ -645,7 +653,8 @@ function get_problem_variable(
     chron::Range,
     problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
     device_name::String,
-    var_ref::UpdateRef,
+    var_ref::UpdateRef;
+    kwargs...,
 ) where {T, U <: AbstractOperationsProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)

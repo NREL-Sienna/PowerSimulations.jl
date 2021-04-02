@@ -170,6 +170,18 @@ function _create_cache(
     return
 end
 
+function _create_cache(
+    ic_key::ICKey{EnergyLevel, T},
+    caches::Vector{<:AbstractCache},
+) where {T <: PSY.HybridSystem}
+    cache_keys = CacheKey.(caches)
+    if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
+        cache = StoredEnergy(T, SUBCOMPONENT_ENERGY)
+        push!(caches, cache)
+    end
+    return
+end
+
 function _set_internal_caches(
     internal::SimulationInternal,
     problem::OperationsProblem,
@@ -659,6 +671,13 @@ end
 # These are the functions that the user will have to implement to update a custom IC Chron #
 # or custom InitialConditionType #
 
+get_subcomponent_type(::ICKey{DevicePower, PSY.HybridSystem}) = PSY.ThermalGen
+get_subcomponent_type(::ICKey{TimeDurationON, PSY.HybridSystem}) = PSY.ThermalGen
+get_subcomponent_type(::ICKey{TimeDurationOFF, PSY.HybridSystem}) = PSY.ThermalGen
+get_subcomponent_type(::ICKey{EnergyLevel, PSY.HybridSystem}) = PSY.Storage
+
+get_subcomponent_type(::ICKey) where {T <: PSY.Component} = nothing
+
 """ Updates the initial conditions of the problem"""
 function initial_condition_update!(
     problem::OperationsProblem,
@@ -677,7 +696,8 @@ function initial_condition_update!(
             interval_chronology,
             (problem => problem),
             name,
-            ic.update_ref,
+            ic.update_ref;
+            sub_component = get_subcomponent_type(ini_cond_key),
         )
         # We pass the simulation cache instead of the whole simulation to avoid definition dependencies.
         # All the inputs to calculate_ic_quantity are defined before the simulation object
@@ -734,7 +754,8 @@ function initial_condition_update!(
             interval_chronology,
             (source_problem => problem),
             name,
-            ic.update_ref,
+            ic.update_ref;
+            sub_component = get_subcomponent_type(ini_cond_key),
         )
         quantity =
             calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
@@ -820,6 +841,24 @@ function update_cache!(
     t = get_end_of_interval_step(problem)
     for name in variable.axes[1]
         device_energy = JuMP.value(variable[name, t])
+        @debug name, device_energy
+        c.value[name] = device_energy
+        @debug("Cache value StoredEnergy for device $name set to $(c.value[name])")
+    end
+
+    return
+end
+
+function update_cache!(
+    sim::Simulation,
+    ::CacheKey{StoredEnergy, D},
+    problem::OperationsProblem,
+) where {D <: PSY.HybridSystem}
+    c = get_cache(sim, StoredEnergy, D)
+    variable = get_variable(problem.internal.optimization_container, c.ref)
+    t = get_end_of_interval_step(problem)
+    for name in c.value.axes[1]
+        device_energy = JuMP.value(variable[name, PSY.Storage, t])
         @debug name, device_energy
         c.value[name] = device_energy
         @debug("Cache value StoredEnergy for device $name set to $(c.value[name])")
@@ -1261,8 +1300,15 @@ function _calc_dimensions(array::JuMP.Containers.DenseAxisArray, name, num_rows,
 end
 
 function _calc_dimensions(array::JuMP.Containers.SparseAxisArray, name, num_rows, horizon)
-    columns = unique([(k[1], k[3]) for k in keys(array.data)])
-    dims = (horizon, length(columns), num_rows)
+    columns = unique([(k[1], k[2]) for k in keys(array.data)])
+    final_column_names = Vector{Symbol}()
+    for (ix, col) in enumerate(columns)
+        res = values(filter(v -> (first(v)[[1, 2]] == col) && (last(v) != 0), array.data))
+        if !isempty(res)
+            push!(final_column_names, Symbol(col...))
+        end
+    end
+    dims = (horizon, length(final_column_names), num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end
 

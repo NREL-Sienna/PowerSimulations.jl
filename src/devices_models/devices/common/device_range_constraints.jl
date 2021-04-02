@@ -275,7 +275,12 @@ function _apply_timeseries_range_constraint_spec!(
     end
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (i, dev) in enumerate(devices)
-        ts_vector = get_subcompnent_time_series(optimization_container, dev, spec.subcomponent_type , spec.forecast_label)
+        ts_vector = get_subcompnent_time_series(
+            optimization_container,
+            dev,
+            spec.subcomponent_type,
+            spec.forecast_label,
+        )
         constraint_info =
             DeviceTimeSeriesConstraintInfo(dev, spec.multiplier_func, ts_vector)
         add_device_services!(constraint_info.range, dev, model)
@@ -296,13 +301,18 @@ function _apply_timeseries_range_constraint_spec!(
     return
 end
 
-
-function get_subcompnent_time_series(optimization_container, dev, subcomponent_type , forecast_label)
+function get_subcompnent_time_series(
+    optimization_container,
+    dev,
+    subcomponent_type,
+    forecast_label,
+)
     subcomp = get_subcomponent(dev, subcomponent_type)
     return get_time_series(optimization_container, subcomp, forecast_label)
 end
 
-get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.ElectricLoad}) =  PSY.get_electric_load(d)
-get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.ThermalGen}) =  PSY.get_thermal_unit(d)
-get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.Storage,}) =  PSY.get_storage(d)
-get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.RenewableGen}) =  PSY.get_renewable_unit(d)
+get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.ElectricLoad}) = PSY.get_electric_load(d)
+get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.ThermalGen}) = PSY.get_thermal_unit(d)
+get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.Storage}) = PSY.get_storage(d)
+get_subcomponent(d::PSY.HybridSystem, ::Type{<:PSY.RenewableGen}) =
+    PSY.get_renewable_unit(d)

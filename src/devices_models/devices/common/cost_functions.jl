@@ -258,7 +258,7 @@ function pwl_gencost_sos!(
         )
         if export_pwl_vars
             container = _get_pwl_vars_container(optimization_container)
-            container[(component_name, time_period, i)] = pwlvars[i]
+            container[(component_name, i, time_period)] = pwlvars[i]
         end
         JuMP.add_to_expression!(gen_cost, cost_data[i][1] * pwlvars[i])
     end
@@ -331,7 +331,7 @@ function pwl_gencost_linear!(
         )
         if export_pwl_vars
             container = _get_pwl_vars_container(optimization_container)
-            container[(component_name, time_period, i)] = pwlvar
+            container[(component_name, i, time_period)] = pwlvar
         end
         JuMP.add_to_expression!(
             gen_cost,

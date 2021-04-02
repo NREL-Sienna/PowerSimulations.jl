@@ -328,6 +328,15 @@ function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PS
            UpdateRef{T}(ENERGY, "initial_energy")
 end
 
+function _get_ref_energy(
+    ::Type{T},
+    container::InitialConditions,
+) where {T <: PSY.HybridSystem}
+    return get_use_parameters(container) ?
+           UpdateRef{JuMP.VariableRef}(T, SUBCOMPONENT_ENERGY) :
+           UpdateRef{T}(SUBCOMPONENT_ENERGY, "initial_energy")
+end
+
 function _get_ref_reservoir_energy(
     ::Type{T},
     container::InitialConditions,

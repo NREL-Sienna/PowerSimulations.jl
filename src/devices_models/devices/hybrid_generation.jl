@@ -21,7 +21,9 @@ get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HybridSystem, _) = 0.0
 get_variable_binary(::ActivePowerOutVariable, ::Type{PSY.HybridSystem}, _) = false
 get_variable_expression_name(::ActivePowerOutVariable, ::Type{PSY.HybridSystem}) = :nodal_balance_active
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, _) = 0.0
+get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, _) = PSY.get_output_active_power_limits(d).max
 get_variable_sign(::ActivePowerOutVariable, ::Type{PSY.HybridSystem}, _) = 1.0
+
 ############## SubComponentActivePowerVariable, HybridSystem ####################
 
 get_variable_binary(::SubComponentActivePowerVariable, ::Type{PSY.HybridSystem}, _) = false
@@ -44,7 +46,7 @@ get_variable_sign(::SubComponentActivePowerOutVariable, ::Type{PSY.HybridSystem}
 get_variable_binary(::SubComponentEnergyVariable, ::Type{PSY.HybridSystem}, _) = false
 get_variable_lower_bound(::SubComponentEnergyVariable, d::PSY.HybridSystem, _) = 0.0
 get_variable_sign(::SubComponentEnergyVariable, ::Type{PSY.HybridSystem}, _) = 1.0
-
+get_variable_initial_value(::SubComponentEnergyVariable, d::PSY.HybridSystem, _) = PSY.get_initial_energy(PSY.get_storage(d))
 ############## EnergyVariable, HybridSystem-Storage ####################
 
 get_variable_binary(::EnergyVariable, ::Type{PSY.HybridSystem}, _) = false
@@ -74,7 +76,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.HybridSystem}
@@ -95,7 +97,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.HybridSystem}
@@ -116,7 +118,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.HybridSystem}
@@ -139,7 +141,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.HybridSystem}
@@ -180,7 +182,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.HybridSystem}
@@ -203,7 +205,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.HybridSystem}
@@ -226,7 +228,7 @@ function DeviceRangeConstraintSpec(
     ::Type{T},
     ::Type{<:AbstractHybridFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.HybridSystem}
@@ -642,7 +644,7 @@ function storage_energy_initial_condition!(
         optimization_container,
         devices,
         D(),
-        EnergyVariable(),
+        SubComponentEnergyVariable(),
         key,
         _make_initial_condition_energy,
         _get_variable_initial_value,

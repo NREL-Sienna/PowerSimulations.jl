@@ -263,7 +263,7 @@ function add_subcomponent_variables!(
     optimization_container::OptimizationContainer,
     variable_type::T,
     devices::U,
-    formulation::AbstractDeviceFormulation
+    formulation::AbstractDeviceFormulation,
 ) where {
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     T <: SubComponentVariableType,
