@@ -593,7 +593,7 @@ function read_duals(op::OptimizationContainer, cons::Vector{Symbol})
     isempty(cons) && return results_dict
     for c in cons
         v = get_constraint(op, c)
-        results_dict[c] = axis_array_to_dataframe(v)
+        results_dict[c] = axis_array_to_dataframe(v, [c])
     end
     return results_dict
 end
