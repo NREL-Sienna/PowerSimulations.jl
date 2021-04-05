@@ -1232,7 +1232,7 @@ function _initialize_problem_storage!(
                 problem_sym,
                 STORE_CONTAINER_VARIABLES,
                 name,
-                true,
+                false,
                 CachePriority.HIGH,
             )
         end
