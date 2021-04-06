@@ -74,19 +74,6 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec()
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{<:VariableType},
-    ::Type{T},
-    ::Type{<:ThermalDispatchNoMin},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec()
-end
-
 """
 This function adds the active power limits of generators when there are no CommitmentVariables
 """
@@ -342,19 +329,6 @@ function DeviceRangeConstraintSpec(
     ::Type{ReactivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractThermalDispatchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec()
-end
-
-function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::SemiContinuousFF,
     use_parameters::Bool,
