@@ -337,6 +337,32 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractThermalDispatchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:ThermalDispatchNoMin},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
+end
+
 """
 This function adds the reactive power limits of generators when there CommitmentVariables
 """
@@ -364,6 +390,19 @@ function DeviceRangeConstraintSpec(
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractThermalUnitCommitment},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
 end
 
 ### Constraints for Thermal Generation without commitment variables ####
