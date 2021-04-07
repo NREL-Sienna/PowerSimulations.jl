@@ -486,6 +486,38 @@ function integral_limit_ff(
     end
 end
 
+function integral_limit_hybrid_ff(
+    optimization_container::OptimizationContainer,
+    cons_name::Symbol,
+    param_reference::UpdateRef,
+    var_name::Symbol,
+)
+    time_steps = model_time_steps(optimization_container)
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
+    variable = get_variable(optimization_container, var_name)
+
+    axes = JuMP.axes(variable)
+    set_name = axes[1]
+
+    @assert axes[2] == time_steps
+    container_ub = add_param_container!(optimization_container, param_reference, set_name)
+    param_ub = get_parameter_array(container_ub)
+    multiplier_ub = get_multiplier_array(container_ub)
+    con_ub = add_cons_container!(optimization_container, ub_name, set_name)
+
+    for name in axes[1]
+        value = JuMP.upper_bound(variable[name, 1])
+        param_ub[name] = add_parameter(optimization_container.JuMPmodel, value)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
+        con_ub[name] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            sum(variable[name, t] for t in time_steps) / length(time_steps) >=
+            param_ub[name] * multiplier_ub[name]
+        )
+    end
+end
+
 ########################## FeedForward Constraints #########################################
 function feedforward!(
     optimization_container::OptimizationContainer,
@@ -561,6 +593,24 @@ function feedforward!(
         var_name = make_variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         integral_limit_ff(
+            optimization_container,
+            make_constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
+            parameter_ref,
+            var_name,
+        )
+    end
+end
+
+function feedforward!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:AbstractDeviceFormulation},
+    ff_model::IntegralLimitFF,
+) where {T <: PSY.HybridSystem}
+    for prefix in get_affected_variables(ff_model)
+        var_name = make_variable_name(prefix, T)
+        parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
+        integral_limit_hybrid_ff(
             optimization_container,
             make_constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
             parameter_ref,

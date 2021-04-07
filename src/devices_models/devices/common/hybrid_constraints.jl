@@ -62,6 +62,53 @@ function power_inflow(
     return
 end
 
+function power_inflow(
+    psi_container::OptimizationContainer,
+    constraint_infos::Vector{
+        Tuple{HybridPowerInflowConstraintInfo, HybridPowerOutflowConstraintInfo},
+    },
+    cons_name::Tuple{Symbol, Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
+)
+    time_steps = model_time_steps(psi_container)
+    name_index = [d.component_name for d in constraint_infos]
+    varin = get_variable(psi_container, var_names[1])
+    varin_subcomp = get_variable(psi_container, var_names[2])
+    varin_storage = get_variable(psi_container, var_names[3])
+
+    constraint_in = add_cons_container!(psi_container, cons_name[1], name_index, time_steps)
+    constraint_batt =
+        add_cons_container!(psi_container, cons_name[2], name_index, time_steps)
+
+    for (inflow, outflow) in enumerate(constraint_infos), t in time_steps
+        name = inflow.component_name
+        expr = JuMP.AffExpr(0.0)
+        if inflow.has_load
+            idx = get_index(name, t, PSY.ElectricLoad)
+            JuMP.add_to_expression!(expr, varin[idx])
+        end
+        constraint_in[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, varin[name, t] == expr)
+
+        expr_batt = JuMP.AffExpr(0.0)
+        if inflow.has_storage
+            idx = get_index(name, t, PSY.Storage)
+            JuMP.add_to_expression!(expr_batt, varin_storage[idx])
+        end
+        if outflow.has_thermal
+            idx = get_index(name, t, PSY.ThermalGen)
+            JuMP.add_to_expression!(expr_batt, -varin[idx])
+        end
+        if outflow.has_renewable
+            idx = get_index(name, t, PSY.RenewableGen)
+            JuMP.add_to_expression!(expr_batt, -varin[idx])
+        end
+        constraint_batt[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, expr_batt == 0.0)
+    end
+    return
+end
+
 function power_outflow(
     psi_container::OptimizationContainer,
     constraint_infos::Vector{HybridPowerOutflowConstraintInfo},

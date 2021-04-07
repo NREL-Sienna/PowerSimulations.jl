@@ -1309,7 +1309,7 @@ function _calc_dimensions(array::JuMP.Containers.SparseAxisArray, name, num_rows
         end
     end
     dims = (horizon, length(final_column_names), num_rows)
-    return Dict("columns" => columns, "dims" => dims)
+    return Dict("columns" => final_column_names, "dims" => dims)
 end
 
 struct SimulationSerializationWrapper

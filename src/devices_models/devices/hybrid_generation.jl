@@ -5,6 +5,7 @@ abstract type AbstractHybridDisaptchFormulation <: AbstractDeviceFormulation end
 struct PhysicalCoupling <: AbstractHybridFormulation end
 struct FinancialCoupling <: AbstractHybridFormulation end
 struct StandardHybridFormulation <: AbstractHybridFormulation end
+struct TightCoupling <: AbstractHybridFormulation end
 
 struct FinancialCouplingDisaptch <: AbstractHybridDisaptchFormulation end
 struct StandardHybridFormulationDisaptch <: AbstractHybridDisaptchFormulation end
@@ -521,6 +522,43 @@ function power_inflow_constraints!(
         psi_container,
         constraint_infos,
         make_constraint_name(POWER_BALANCE_INFLOW, H),
+        (
+            make_variable_name(ACTIVE_POWER_IN, H),
+            make_variable_name(SUBCOMPONENT_ACTIVE_POWER, H),
+            make_variable_name(SUBCOMPONENT_ACTIVE_POWER_IN, H),
+        ),
+    )
+    return
+end
+
+function power_inflow_constraints!(
+    psi_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{H},
+    ::DeviceModel{H, D},
+    ::Type{S},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {H <: PSY.HybridSystem, D <: TightCoupling, S <: PM.AbstractPowerModel}
+
+    constraint_infos = Vector{Tuple{HybridPowerInflowConstraintInfo, HybridPowerOutflowConstraintInfo}}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        name = PSY.get_name(d)
+        has_load = !isnothing(PSY.get_electric_load(d))
+        has_storage = !isnothing(PSY.get_storage(d))
+        has_thermal = !isnothing(PSY.get_thermal_unit(d))
+        has_renewable = !isnothing(PSY.get_renewable_unit(d))
+        constraint_info = (HybridPowerInflowConstraintInfo(name, has_load, has_storage),
+            HybridPowerOutflowConstraintInfo(name, has_thermal, has_storage, has_renewable)
+        )
+        constraint_infos[ix] = constraint_info
+    end
+
+    power_inflow(
+        psi_container,
+        constraint_infos,
+        (
+            make_constraint_name(POWER_BALANCE_INFLOW, H),
+            make_constraint_name(BATTERY_COUPLING, H),
+        ),
         (
             make_variable_name(ACTIVE_POWER_IN, H),
             make_variable_name(SUBCOMPONENT_ACTIVE_POWER, H),
