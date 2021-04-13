@@ -268,10 +268,10 @@ function device_duration_parameters!(
             for i in (t - duration_data[ix].up + 1):t
                 if t <= duration_data[ix].up
                     if in(i, time_steps)
-                        JuMP.add_to_expression!(lhs_on, varon[name, i])
+                        JuMP.add_to_expression!(lhs_on, varon[name, Int(i)])
                     end
                 else
-                    JuMP.add_to_expression!(lhs_on, varstart[name, i])
+                    JuMP.add_to_expression!(lhs_on, varstart[name, Int(i)])
                 end
             end
             if t <= duration_data[ix].up
@@ -297,10 +297,10 @@ function device_duration_parameters!(
             for i in (t - duration_data[ix].down + 1):t
                 if t <= duration_data[ix].down
                     if in(i, time_steps)
-                        JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
+                        JuMP.add_to_expression!(lhs_off, (1 - varon[name, Int(i)]))
                     end
                 else
-                    JuMP.add_to_expression!(lhs_off, varstop[name, i])
+                    JuMP.add_to_expression!(lhs_off, varstop[name, Int(i)])
                 end
             end
             if t <= duration_data[ix].down
