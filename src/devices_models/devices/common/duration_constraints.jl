@@ -265,7 +265,7 @@ function device_duration_parameters!(
             @assert typeof(ic.value) == PJ.ParameterRef
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
-            for i in (t - duration_data[ix].up + 1):t
+            for i in UnitRange{Int}(t - duration_data[ix].up + 1, t)
                 if t <= duration_data[ix].up
                     if in(i, time_steps)
                         JuMP.add_to_expression!(lhs_on, varon[name, Int(i)])
