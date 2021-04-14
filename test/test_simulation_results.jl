@@ -417,9 +417,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         end
 
         if !in_memory
-            # TODO DT: this test doesn't cause any duals to get written. It passes
-            # for HDF5 because the datasets get initialized.
-            # Fails for InMemory because they only get assigned on a write.
+            # this creates a container for duals but doesn't write anything because
+            # it's a MIP and the duals are unavailable.
             network_duals = read_dual(results_rh, :CopperPlateBalance)
             @test length(keys(network_duals)) == 2
             for v in values(network_duals)
