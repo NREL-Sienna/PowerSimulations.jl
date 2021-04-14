@@ -82,7 +82,7 @@ end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
     duals = get_duals(res)
-    λ = convert(Array, duals[:CopperPlateBalance][:, :var])
+    λ = convert(Array, duals[:CopperPlateBalance][:, :CopperPlateBalance])
 
     nf_duals = collect(keys(duals))[occursin.(PSI.NETWORK_FLOW, string.(keys(duals)))]
     flow_duals =

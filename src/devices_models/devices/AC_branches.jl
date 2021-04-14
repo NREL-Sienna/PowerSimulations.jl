@@ -159,16 +159,12 @@ function branch_flow_values!(
     nodal_balance_expressions = optimization_container.expressions[:nodal_balance_active]
     flow_variables = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
     jump_model = get_jump_model(optimization_container)
-    for t in time_steps
-        for br in devices
-            name = PSY.get_name(br)
-            branch_flow[name, t] = JuMP.@constraint(
-                jump_model,
-                sum(
-                    ptdf[name, i] * nodal_balance_expressions[i, t] for i in ptdf.axes[2]
-                ) == flow_variables[name, t]
-            )
-        end
+    for t in time_steps, br in devices
+        name = PSY.get_name(br)
+        branch_flow[name, t] = JuMP.@constraint(
+            jump_model,
+            sum(ptdf[name, i] * nodal_balance_expressions[i, t] for i in ptdf.axes[2]) == flow_variables[name, t]
+        )
     end
 end
 

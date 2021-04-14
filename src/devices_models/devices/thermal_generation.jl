@@ -74,19 +74,6 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec()
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{<:VariableType},
-    ::Type{T},
-    ::Type{<:ThermalDispatchNoMin},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec()
-end
-
 """
 This function adds the active power limits of generators when there are no CommitmentVariables
 """
@@ -337,6 +324,19 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractThermalDispatchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
+end
+
 """
 This function adds the reactive power limits of generators when there CommitmentVariables
 """
@@ -364,6 +364,19 @@ function DeviceRangeConstraintSpec(
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractThermalUnitCommitment},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
 end
 
 ### Constraints for Thermal Generation without commitment variables ####
@@ -594,6 +607,9 @@ function ramp_constraints!(
     data = _get_data_for_rocc(optimization_container, T)
     if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
+        for r in data
+            add_device_services!(r, r.ic_power.device, model)
+        end
         device_mixedinteger_rateofchange!(
             optimization_container,
             data,
@@ -624,6 +640,9 @@ function ramp_constraints!(
     time_steps = model_time_steps(optimization_container)
     data = _get_data_for_rocc(optimization_container, T)
     if !isempty(data)
+        for r in data
+            add_device_services!(r, r.ic_power.device, model)
+        end
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange!(
             optimization_container,

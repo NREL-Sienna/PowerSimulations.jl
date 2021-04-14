@@ -17,6 +17,7 @@ mutable struct SimulationInternal
     status::Union{Nothing, RunStatus}
     build_status::BuildStatus
     simulation_cache::Dict{<:CacheKey, AbstractCache}
+    store::Union{Nothing, SimulationStore}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
@@ -86,6 +87,7 @@ function SimulationInternal(
         nothing,
         BuildStatus.EMPTY,
         Dict{CacheKey, AbstractCache}(),
+        nothing,
         collect(unique_recorders),
         console_level,
         file_level,
@@ -279,16 +281,25 @@ get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
 get_current_time(sim::Simulation) = sim.internal.current_time
 get_problems(sim::Simulation) = sim.problems
+
 function get_problem(sim::Simulation, ix::Int)
     problems = get_problems(sim)
     names = get_problem_names(problems)
     return problems[names[ix]]
 end
+
+function get_problem(sim::Simulation, name::Symbol)
+    problems = get_problems(sim)
+    return problems[name]
+end
+
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
 get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
 get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
+set_simulation_store!(sim::Simulation, store) = sim.internal.store = store
+get_simulation_store(sim::Simulation) = sim.internal.store
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 get_problems_dir(sim::Simulation) = sim.internal.models_dir
 
@@ -835,30 +846,25 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Component}
-    components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-    horizon = length(model_time_steps(problem.internal.optimization_container))
-    for d in components
-        # RECORDER TODO: Parameter Update from forecast
-        # TODO: Improve file read performance
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            d,
-            get_data_label(param_reference);
-            start_time = initial_forecast_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            d,
-            forecast,
-            initial_forecast_time;
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
-        component_name = PSY.get_name(d)
-        for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
-            value = ts_vector[ix]
-            JuMP.set_value(val, value)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        for d in components
+            ts_vector = get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                d,
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
+            )
+            component_name = PSY.get_name(d)
+            for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
+                value = ts_vector[ix]
+                JuMP.set_value(val, value)
+            end
         end
     end
 
@@ -871,29 +877,25 @@ function update_parameter!(
     problem::OperationsProblem,
     sim::Simulation,
 ) where {T <: PSY.Service}
-    # RECORDER TODO: Parameter Update from forecast
-    components = get_available_components(T, problem.sys)
-    initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-    horizon = length(model_time_steps(problem.internal.optimization_container))
-    param_array = get_parameter_array(container)
-    for ix in axes(param_array)[1]
-        service = PSY.get_component(T, problem.sys, ix)
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            service,
-            get_data_label(param_reference);
-            start_time = initial_forecast_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            service,
-            forecast,
-            initial_forecast_time;
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
-        for (jx, value) in enumerate(ts_vector)
-            JuMP.set_value(get_parameter_array(container)[ix, jx], value)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        param_array = get_parameter_array(container)
+        for ix in axes(param_array)[1]
+            service = PSY.get_component(T, problem.sys, ix)
+            ts_vector = get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                service,
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
+            )
+            for (jx, value) in enumerate(ts_vector)
+                JuMP.set_value(get_parameter_array(container)[ix, jx], value)
+            end
         end
     end
 
@@ -943,13 +945,9 @@ end
 
 function _apply_warm_start!(problem::OperationsProblem)
     optimization_container = get_optimization_container(problem)
-    variable_container = get_variables(optimization_container)
-    for variable in values(variable_container)
-        for e in variable
-            current_solution = JuMP.value(e)
-            JuMP.set_start_value(e, current_solution)
-        end
-    end
+    jump_model = get_jump_model(optimization_container)
+    all_vars = JuMP.all_variables(jump_model)
+    JuMP.set_start_value.(all_vars, JuMP.value.(all_vars))
     return
 end
 
@@ -970,8 +968,6 @@ function update_problem!(
     _update_problem!(problem, sim)
     return
 end
-
-get_simulation_store_open_func(sim::Simulation) = h5_store_open
 
 """
     execute!(sim::Simulation; kwargs...)
@@ -994,18 +990,23 @@ function execute!(sim::Simulation; kwargs...)
     file_mode = "a"
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
-    open_func = get_simulation_store_open_func(sim)
+
+    # Undocumented option for test & dev only.
+    in_memory = get(kwargs, :in_memory, false)
+    store_type = in_memory ? InMemorySimulationStore : HdfSimulationStore
+
     if (get_simulation_build_status(sim) != BuildStatus.BUILT) ||
        (get_simulation_status(sim) != RunStatus.READY)
         error("Simulation status is invalid, you need to rebuild the simulation")
     end
     try
-        open_func(get_store_dir(sim), "w") do store
+        open_store(store_type, get_store_dir(sim), "w") do store
+            set_simulation_store!(sim, store)
             # TODO: return file name for hash calculation instead of hard code
             Logging.with_logger(logger) do
                 TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-                    _execute!(sim, store; kwargs...)
+                    _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
                 end
                 @info ("\n$(RUN_SIMULATION_TIMER)\n")
                 set_simulation_status!(sim, RunStatus.SUCCESSFUL)
@@ -1017,17 +1018,21 @@ function execute!(sim::Simulation; kwargs...)
         set_simulation_status!(sim, RunStatus.FAILED)
         @error "simulation failed" exception = (e, catch_backtrace())
     finally
+        _empty_problem_caches!(sim)
         unregister_recorders!(sim.internal)
         close(logger)
     end
-    compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+
+    if !in_memory
+        compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+    end
+
     serialize_status(sim)
     return get_simulation_status(sim)
 end
 
 function _execute!(
-    sim::Simulation,
-    store;
+    sim::Simulation;
     cache_size_mib = 1024,
     min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
     exports = nothing,
@@ -1041,7 +1046,7 @@ function _execute!(
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
     store_params =
-        _initialize_problem_storage!(sim, store, cache_size_mib, min_cache_flush_size_mib)
+        _initialize_problem_storage!(sim, cache_size_mib, min_cache_flush_size_mib)
     status = RunStatus.RUNNING
     if exports !== nothing
         if !(exports isa SimulationResultsExport)
@@ -1057,6 +1062,7 @@ function _execute!(
 
     prog_bar = ProgressMeter.Progress(num_executions; enabled = enable_progress_bar)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_SIMULATION_TIMER)
+    store = get_simulation_store(sim)
     for step in 1:steps
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
@@ -1145,7 +1151,6 @@ end
 
 function _initialize_problem_storage!(
     sim::Simulation,
-    store,
     cache_size_mib,
     min_cache_flush_size_mib,
 )
@@ -1227,7 +1232,7 @@ function _initialize_problem_storage!(
                 problem_sym,
                 STORE_CONTAINER_VARIABLES,
                 name,
-                true,
+                false,
                 CachePriority.HIGH,
             )
         end
@@ -1246,6 +1251,7 @@ function _initialize_problem_storage!(
         problems,
     )
     @debug "initialized problem requirements" store_params
+    store = get_simulation_store(sim)
     initialize_problem_storage!(store, store_params, problem_reqs, rules)
     return store_params
 end
@@ -1285,6 +1291,14 @@ struct SimulationSerializationWrapper
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
     name::String
+end
+
+function _empty_problem_caches!(sim::Simulation)
+    problems = get_problems(sim)
+    for problem_name in get_problem_names(problems)
+        problem = problems[problem_name]
+        empty_time_series_cache!(problem)
+    end
 end
 
 """
