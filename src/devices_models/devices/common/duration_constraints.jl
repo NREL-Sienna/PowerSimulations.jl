@@ -373,7 +373,10 @@ function device_duration_compact_retrospective!(
             name = device_name(ic)
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
-            if t in UnitRange{Int}(Int(min(duration_data[ix].up, total_time_steps)), total_time_steps)
+            if t in UnitRange{Int}(
+                Int(min(duration_data[ix].up, total_time_steps)),
+                total_time_steps,
+            )
                 for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
                     if i in time_steps
                         JuMP.add_to_expression!(lhs_on, varstart[name, i])
@@ -395,7 +398,10 @@ function device_duration_compact_retrospective!(
             # Minimum Down-time Constraint
             lhs_off =
                 JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
-            if t in UnitRange{Int}(Int(min(duration_data[ix].down, total_time_steps)), total_time_steps)
+            if t in UnitRange{Int}(
+                Int(min(duration_data[ix].down, total_time_steps)),
+                total_time_steps,
+            )
                 for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                     if i in time_steps
                         JuMP.add_to_expression!(lhs_off, varstop[name, i])
