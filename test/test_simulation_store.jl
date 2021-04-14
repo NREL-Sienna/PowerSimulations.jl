@@ -1,5 +1,6 @@
 import PowerSimulations:
-    h5_store_open,
+    open_store,
+    HdfSimulationStore,
     HDF_FILENAME,
     SimulationStoreParams,
     SimulationStoreProblemParams,
@@ -71,7 +72,7 @@ end
 function _run_sim_test(path, sim, variables, stage_defs, cache_rules, seed)
     rng = MersenneTwister(seed)
     type = STORE_CONTAINER_VARIABLES
-    h5_store_open(path, "w") do store
+    open_store(HdfSimulationStore, path, "w") do store
         sim_time = sim["initial_time"]
         _initialize!(store, sim, variables, stage_defs, cache_rules)
         for step in 1:sim["num_steps"]
@@ -104,7 +105,7 @@ end
 function _verify_read_results(path, sim, variables, stage_defs, seed)
     rng = MersenneTwister(seed)
     type = STORE_CONTAINER_VARIABLES
-    h5_store_open(path, "r") do store
+    open_store(HdfSimulationStore, path, "r") do store
         sim_time = sim["initial_time"]
         for step in 1:sim["num_steps"]
             for stage in keys(stage_defs)

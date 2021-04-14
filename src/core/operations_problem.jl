@@ -640,7 +640,7 @@ function write_problem_results!(
     exports,
 )
     stats = OptimizerStats(problem, step)
-    write_optimizer_stats!(store, get_name(problem), stats)
+    write_optimizer_stats!(store, get_name(problem), stats, start_time)
     write_model_results!(store, problem, start_time; exports = exports)
     return
 end
@@ -750,7 +750,8 @@ function _write_model_dual_results!(
             STORE_CONTAINER_DUALS,
             name,
             timestamp,
-            to_array(constraint),
+            constraint,
+            [name],
         )
 
         if exports !== nothing &&
@@ -758,11 +759,7 @@ function _write_model_dual_results!(
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
-            df = axis_array_to_dataframe(constraint)
-            if names(df) == ["var"]
-                # Workaround for limitation in axis_array_to_dataframe.
-                DataFrames.rename!(df, [name])
-            end
+            df = axis_array_to_dataframe(constraint, [name])
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, name, timestamp, df)
@@ -808,6 +805,7 @@ function _write_model_parameter_results!(
             name,
             timestamp,
             data,
+            param_array.axes[1],
         )
 
         if exports !== nothing &&
@@ -843,7 +841,7 @@ function _write_model_variable_results!(
             STORE_CONTAINER_VARIABLES,
             name,
             timestamp,
-            to_array(variable),
+            variable,
         )
 
         if exports !== nothing &&

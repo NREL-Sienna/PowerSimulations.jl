@@ -18,6 +18,7 @@ struct SimulationResults <: PSIResults
     path::String
     params::SimulationStoreParams
     problem_results::Dict{String, SimulationProblemResults}
+    store::Union{Nothing, SimulationStore}
 end
 
 """
@@ -48,15 +49,7 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
     end
 
     status = deserialize_status(joinpath(execution_path, RESULTS_DIR))
-    if status != RunStatus.SUCCESSFUL
-        if ignore_status
-            @warn "Simulation was not successful: $status. Results may not be valid."
-        else
-            error(
-                "Simulation was not successful: status = $status. Set ignore_status = true to override.",
-            )
-        end
-    end
+    _check_status(status, ignore_status)
 
     if !check_folder_integrity(execution_path)
         @warn "The results folder $(execution_path) is not consistent with the default folder structure. " *
@@ -66,7 +59,7 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
     simulation_store_path = joinpath(execution_path, "data_store")
     check_file_integrity(simulation_store_path)
 
-    return h5_store_open(simulation_store_path, "r") do store
+    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
         problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
         for (name, problem_params) in sim_params.problems
@@ -81,15 +74,43 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
             problem_results[name] = problem_result
         end
 
-        return SimulationResults(execution_path, sim_params, problem_results)
+        return SimulationResults(execution_path, sim_params, problem_results, nothing)
     end
 end
 
 """
 Construct SimulationResults from a simulation.
 """
-SimulationResults(sim::Simulation; kwargs...) =
-    SimulationResults(get_simulation_dir(sim); kwargs...)
+function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
+    if get_simulation_store(sim) isa InMemorySimulationStore
+        _check_status(get_simulation_status(sim), ignore_status)
+        store = get_simulation_store(sim)
+        execution_path = get_simulation_dir(sim)
+        problem_results = Dict{String, SimulationProblemResults}()
+        sim_params = get_params(store)
+        for (name, problem_params) in sim_params.problems
+            problem = get_problem(sim, name)
+            name = string(name)
+            problem_result = SimulationProblemResults(
+                store,
+                name,
+                problem_params,
+                sim_params,
+                execution_path,
+                system = get_system(problem),
+            )
+            problem_results[name] = problem_result
+        end
+
+        return SimulationResults(execution_path, sim_params, problem_results, store)
+    else
+        return SimulationResults(
+            get_simulation_dir(sim);
+            ignore_status = ignore_status,
+            kwargs...,
+        )
+    end
+end
 
 Base.empty!(res::SimulationResults) = foreach(empty!, values(res.problem_results))
 Base.isempty(res::SimulationResults) = all(isempty, values(res.problem_results))
@@ -154,9 +175,13 @@ An example JSON file demonstrating possible options is below. Note that `start_t
 ```
 """
 function export_results(results::SimulationResults, exports)
-    simulation_store_path = joinpath(results.path, "data_store")
-    h5_store_open(simulation_store_path, "r") do store
-        export_results(results, exports, store)
+    if results.store isa InMemorySimulationStore
+        export_results(results, exports, results.store)
+    else
+        simulation_store_path = joinpath(results.path, "data_store")
+        open_store(HdfSimulationStore, simulation_store_path, "r") do store
+            export_results(results, exports, store)
+        end
     end
 end
 
@@ -257,4 +282,16 @@ function export_result(::Type{CSV.File}, filename, df::DataFrames.DataFrame)
     end
 
     @debug "Exported $filename"
+end
+
+function _check_status(status::RunStatus, ignore_status)
+    status == RunStatus.SUCCESSFUL && return
+
+    if ignore_status
+        @warn "Simulation was not successful: $status. Results may not be valid."
+    else
+        error(
+            "Simulation was not successful: status = $status. Set ignore_status = true to override.",
+        )
+    end
 end

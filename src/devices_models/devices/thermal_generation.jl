@@ -74,19 +74,6 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec()
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{<:VariableType},
-    ::Type{T},
-    ::Type{<:ThermalDispatchNoMin},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec()
-end
-
 """
 This function adds the active power limits of generators when there are no CommitmentVariables
 """
@@ -337,6 +324,19 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractThermalDispatchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
+end
+
 """
 This function adds the reactive power limits of generators when there CommitmentVariables
 """
@@ -364,6 +364,19 @@ function DeviceRangeConstraintSpec(
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractThermalUnitCommitment},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
 end
 
 ### Constraints for Thermal Generation without commitment variables ####
@@ -741,8 +754,10 @@ function turbine_temperature(
                 con[ix][name, t] = JuMP.@constraint(
                     optimization_container.JuMPmodel,
                     start_vars[ix][name, t] <= sum(
-                        varstop[name, t - i] for
-                        i in st.time_limits[ix]:(st.time_limits[ix + 1] - 1)
+                        varstop[name, t - i] for i in UnitRange{Int}(
+                            Int(st.time_limits[ix]),
+                            Int(st.time_limits[ix + 1] - 1),
+                        )
                     )
                 )
             end
