@@ -491,7 +491,7 @@ function _check_steps(
         total_problem_executions =
             length(findall(x -> x == problem_number, execution_order))
         total_problem_transitions = length(findall(x -> x == problem_number, transitions))
-        #@assert_op total_problem_executions / total_problem_transitions == execution_counts
+        @assert_op total_problem_executions / total_problem_transitions == execution_counts
         forecast_count = length(problem_initial_times[problem_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(
