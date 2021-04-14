@@ -485,7 +485,6 @@ function _check_steps(
     sequence = get_sequence(sim)
     execution_order = get_execution_order(sequence)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        problem_name
         execution_counts = get_executions(problem)
         transitions = execution_order[vcat(1, diff(execution_order)) .== 1]
         # Checks the consistency between two methods of calculating the number of executions
@@ -580,7 +579,6 @@ function _build!(sim::Simulation, serialize::Bool)
                 set_executions!(problem, 1)
             else
                 step_resolution = get_step_resolution(sequence)
-                get_interval(sequence, problem_name)
                 set_executions!(problem, Int(step_resolution / problem_interval))
             end
             _attach_feedforward!(sim, problem_name)
