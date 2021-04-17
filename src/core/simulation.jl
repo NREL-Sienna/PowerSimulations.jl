@@ -814,9 +814,8 @@ function get_increment(sim::Simulation, problem::OperationsProblem, cache::TimeS
     problem_name = get_name(problem)
     sequence = get_sequence(sim)
     problem_interval = get_interval(sequence, problem_name)
-    horizon = get_horizon(problem)
-    problem_resolution = problem_interval / (horizon * units)
-    return float(problem_resolution * horizon)
+    problem_resolution = problem_interval / units
+    return problem_resolution
 end
 
 function update_cache!(
