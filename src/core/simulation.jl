@@ -778,7 +778,7 @@ function update_cache!(
 ) where {D <: PSY.Device}
     # TODO: Remove debug statements and use recorder here
     c = get_cache(sim, TimeStatusChange, D)
-    @show increment = get_increment(sim, problem, c)
+    increment = get_increment(sim, problem, c)
     variable = get_variable(problem.internal.optimization_container, c.ref)
     t_range = 1:get_end_of_interval_step(problem)
     for name in variable.axes[1]
