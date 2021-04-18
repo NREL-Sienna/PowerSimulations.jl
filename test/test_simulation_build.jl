@@ -152,6 +152,64 @@ end
     )
 end
 
+@testset "multi-stage simulation build" begin
+    sys_md = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_wk_sys")
+
+    sys_uc = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_uc_sys")
+    transform_single_time_series!(sys_uc, 48, Hour(24))
+
+    sys_ed = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_ed_sys")
+
+    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
+
+    problems = SimulationProblems(
+        MD = OperationsProblem(template, sys_md, system_to_file = false),
+        UC = OperationsProblem(template, sys_uc, system_to_file = false),
+        ED = OperationsProblem(template, sys_ed, system_to_file = false),
+    )
+
+    feedforward_chronologies = Dict(
+        ("MD" => "UC") => Synchronize(periods = 2),
+        ("UC" => "ED") => Synchronize(periods = 24),
+    )
+    ini_cond_chronology = InterProblemChronology()
+    intervals = Dict(
+        "MD" => (Hour(48), Consecutive()),
+        "UC" => (Hour(24), Consecutive()),
+        "ED" => (Hour(1), Consecutive()),
+    )
+    feedforward = Dict(
+        ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+            variable_source_problem = PSI.ACTIVE_POWER,
+            affected_variables = [PSI.ACTIVE_POWER],
+        ),
+        ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+            variable_source_problem = PSI.ACTIVE_POWER,
+            affected_variables = [PSI.ACTIVE_POWER],
+        ),
+    )
+    test_sequence = SimulationSequence(
+        problems = problems,
+        feedforward_chronologies = feedforward_chronologies,
+        intervals = intervals,
+        ini_cond_chronology = ini_cond_chronology,
+        feedforward = feedforward
+    )
+
+    sim = Simulation(
+        name = "test_md",
+        steps = 2,
+        problems = problems,
+        sequence = test_sequence,
+        simulation_folder = mktempdir(cleanup = true),
+    )
+    build_status  = build!(sim, serialize = false)
+    @test build_status == PSI.BuildStatus.BUILT
+end
+
 # Pending tests to update
 
 # @testset "Test Creation of Simulations with Cache" begin
