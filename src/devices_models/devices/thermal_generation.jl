@@ -754,8 +754,10 @@ function turbine_temperature(
                 con[ix][name, t] = JuMP.@constraint(
                     optimization_container.JuMPmodel,
                     start_vars[ix][name, t] <= sum(
-                        varstop[name, t - i] for
-                        i in st.time_limits[ix]:(st.time_limits[ix + 1] - 1)
+                        varstop[name, t - i] for i in UnitRange{Int}(
+                            Int(st.time_limits[ix]),
+                            Int(st.time_limits[ix + 1] - 1),
+                        )
                     )
                 )
             end

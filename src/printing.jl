@@ -273,6 +273,7 @@ function _print_inter_stages(io::IO, stages::Dict{Int, Int})
         total = length(list)
         if total > 5
             println(io, "Too many stages to print.")
+            break
         else
             if length("$num") == 1
                 num = " (x0$num)"
@@ -323,6 +324,7 @@ function _print_intra_stages(io::IO, stages::Dict{Int, Int})
         total = length(list)
         if total > 5
             println(io, "Too many stages to print.")
+            break
         else
             if length("$num") == 1
                 num = " (x0$num)"

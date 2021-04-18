@@ -6,6 +6,7 @@
         AGC = OperationsProblem(MockOperationProblem; horizon = 6),
     )
 
+    # Test RH sequences
     feedforward_chronologies = Dict(
         ("UC" => "HAUC") => Synchronize(periods = 24),
         ("HAUC" => "ED") => RecedingHorizon(),
@@ -34,6 +35,7 @@
         @test problems[name].internal.simulation_info.sequence_uuid == test_sequence.uuid
     end
 
+    # Test single stage sequence
     test_sequence = SimulationSequence(
         problems = SimulationProblems(
             DAUC = OperationsProblem(MockOperationProblem; horizon = 48),
@@ -44,6 +46,46 @@
 
     @test isa(test_sequence.ini_cond_chronology, IntraProblemChronology)
     @test test_sequence.execution_order == [1]
+
+    # Test synchronized sequence
+    problems = SimulationProblems(
+        MD = OperationsProblem(MockOperationProblem; horizon = 3),
+        DAUC = OperationsProblem(MockOperationProblem; horizon = 48),
+        HAUC = OperationsProblem(MockOperationProblem; horizon = 24),
+        ED = OperationsProblem(MockOperationProblem; horizon = 12),
+        AGC = OperationsProblem(MockOperationProblem; horizon = 6),
+    )
+
+    feedforward_chronologies = Dict(
+        ("MD" => "UC") => Synchronize(periods = 2),
+        ("UC" => "HAUC") => Synchronize(periods = 24),
+        ("HAUC" => "ED") => Synchronize(periods = 1),
+        ("ED" => "AGC") => Synchronize(periods = 1),
+    )
+    ini_cond_chronology = InterProblemChronology()
+    intervals = Dict(
+        "MD" => (Hour(48), Consecutive()),
+        "DAUC" => (Hour(24), Consecutive()),
+        "HAUC" => (Hour(4), Consecutive()),
+        "ED" => (Minute(5), Consecutive()),
+        "AGC" => (Minute(1), Consecutive()),
+    )
+    test_sequence = SimulationSequence(
+        problems = problems,
+        feedforward_chronologies = feedforward_chronologies,
+        intervals = intervals,
+        ini_cond_chronology = ini_cond_chronology,
+    )
+
+    @test length(findall(x -> x == 5, test_sequence.execution_order)) == 24 * 2 * 60
+    @test length(findall(x -> x == 4, test_sequence.execution_order)) == 24 * 2 * 12
+    @test length(findall(x -> x == 3, test_sequence.execution_order)) == 24 * 2 / 4
+    @test length(findall(x -> x == 2, test_sequence.execution_order)) == 2
+    @test length(findall(x -> x == 1, test_sequence.execution_order)) == 1
+
+    for name in PSI.get_problem_names(problems)
+        @test problems[name].internal.simulation_info.sequence_uuid == test_sequence.uuid
+    end
 end
 
 @testset "Simulation Sequence invalid sequences" begin
