@@ -486,6 +486,11 @@ function _check_steps(
     execution_order = get_execution_order(sequence)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
         execution_counts = get_executions(problem)
+        # Checks the consistency between two methods of calculating the number of executions
+        total_problem_executions =
+            length(findall(x -> x == problem_number, execution_order))
+        @assert_op total_problem_executions == execution_counts
+
         forecast_count = length(problem_initial_times[problem_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(
