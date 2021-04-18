@@ -196,7 +196,7 @@ end
         feedforward_chronologies = feedforward_chronologies,
         intervals = intervals,
         ini_cond_chronology = ini_cond_chronology,
-        feedforward = feedforward
+        feedforward = feedforward,
     )
 
     sim = Simulation(
@@ -206,7 +206,7 @@ end
         sequence = test_sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
-    build_status  = build!(sim, serialize = false)
+    build_status = build!(sim, serialize = false)
     @test build_status == PSI.BuildStatus.BUILT
 end
 
