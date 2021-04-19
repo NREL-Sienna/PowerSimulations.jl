@@ -781,6 +781,85 @@ function add_service_bid_cost!(
     return
 end
 
+function add_to_cost!(
+    optimization_container::OptimizationContainer,
+    spec::AddCostSpec,
+    cost_data::PSY.StorageManagementCost,
+    component::PSY.Component,
+)
+    component_name = PSY.get_name(component)
+    @debug "Energy Target Cost" component_name
+    resolution = model_resolution(optimization_container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    time_steps = model_time_steps(optimization_container)
+    initial_time = model_initial_time(optimization_container)
+    variable_cost = PSY.get_variable(cost_data)
+    time_steps = model_time_steps(optimization_container)
+    for t in time_steps
+        variable_cost!(optimization_container, spec, component_name, variable_cost, t)
+    end
+
+    if !(spec.fixed_cost === nothing) && spec.has_status_variable
+        @debug "Fixed cost" component_name
+        for t in time_steps
+            linear_gen_cost!(
+                optimization_container,
+                make_variable_name(OnVariable, spec.component_type),
+                component_name,
+                spec.fixed_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
+    end
+
+    if !(spec.start_up_cost === nothing)
+        @debug "Start up cost" component_name
+        for t in time_steps
+            linear_gen_cost!(
+                optimization_container,
+                make_variable_name(StartVariable, spec.component_type),
+                component_name,
+                cost_data.spec.start_up_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
+    end
+
+    if !(spec.shut_down_cost === nothing)
+        @debug "Shut down cost" component_name
+        for t in time_steps
+            linear_gen_cost!(
+                optimization_container,
+                make_variable_name(StopVariable, spec.component_type),
+                component_name,
+                spec.shut_down_cost(cost_data) * spec.multiplier,
+                t,
+            )
+        end
+    end
+
+    @debug "Energy Surplus/Shortage cost" component_name
+    base_power = get_base_power(optimization_container)
+    for t in time_steps
+        linear_gen_cost!(
+            optimization_container,
+            make_variable_name(EnergySurplusVariable, spec.component_type),
+            component_name,
+            cost_data.energy_surplus_cost * OBJECTIVE_FUNCTION_NEGATIVE * base_power,
+            t,
+        )
+        linear_gen_cost!(
+            optimization_container,
+            make_variable_name(EnergyShortageVariable, spec.component_type),
+            component_name,
+            cost_data.energy_shortage_cost * spec.multiplier * base_power,
+            t,
+        )
+    end
+
+    return
+end
+
 @doc raw"""
 Adds to the cost function cost terms for sum of variables with common factor to be used for cost expression for optimization_container model.
 
