@@ -549,7 +549,7 @@ function power_commitment_ff(
         multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            sum(variable[name, t] for t in time_steps) / length(affected_time_periods) +
+            sum(variable[name, t] for t in 1:affected_time_periods) / length(affected_time_periods) +
             varslack[name] >= param_ub[name] * multiplier_ub[name]
         )
         add_to_cost_expression!(
