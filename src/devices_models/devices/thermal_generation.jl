@@ -690,7 +690,7 @@ function _convert_hours_to_timesteps(
     resolution::Dates.TimePeriod,
 )
     _start_times_ts = (
-        round((hr * 60) / Dates.value(Dates.Minute(resolution)), RoundUp) for
+        round((hr * MINUTES_IN_HOUR) / Dates.value(Dates.Minute(resolution)), RoundUp) for
         hr in start_times_hr
     )
     start_times_ts = StartUpStages(_start_times_ts)
@@ -931,19 +931,19 @@ function startup_time_constraints!(
     time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
     lenght_devices = length(devices)
-    starttime_params = Vector{DeviceStartUpConstraintInfo}(undef, lenght_devices)
+    start_time_params = Vector{DeviceStartUpConstraintInfo}(undef, lenght_devices)
     for (ix, g) in enumerate(devices)
         start_times_hr = PSY.get_start_time_limits(g)
         start_types = PSY.get_start_types(g)
         name = PSY.get_name(g)
         start_times_ts = _convert_hours_to_timesteps(start_times_hr, resolution)
-        starttime_params[ix] =
+        start_time_params[ix] =
             DeviceStartUpConstraintInfo(name, start_times_ts, start_types)
     end
 
     turbine_temperature(
         optimization_container,
-        starttime_params,
+        start_time_params,
         make_constraint_name(STARTUP_TIMELIMIT, PSY.ThermalMultiStart),
         make_variable_name(StopVariable, PSY.ThermalMultiStart),
         (
