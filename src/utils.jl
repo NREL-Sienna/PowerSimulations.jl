@@ -258,7 +258,10 @@ function axis_array_to_dataframe(
     end
 end
 
-function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray,     columns = nothing,)
+function axis_array_to_dataframe(
+    input_array::JuMP.Containers.SparseAxisArray,
+    columns = nothing,
+)
     column_names = unique([(k[1], k[2]) for k in keys(input_array.data)])
     array_values = Vector{Vector{Float64}}()
     final_column_names = Vector{Symbol}()

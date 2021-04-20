@@ -170,12 +170,26 @@ struct PowerCommitmentFF <: AbstractAffectFeedForward
         affected_time_periods::Int,
         cache::Union{Nothing, Type{<:AbstractCache}},
     )
-        new(Symbol(variable_source_problem), Symbol.(affected_variables), affected_time_periods, cache)
+        new(
+            Symbol(variable_source_problem),
+            Symbol.(affected_variables),
+            affected_time_periods,
+            cache,
+        )
     end
 end
 
-function PowerCommitmentFF(; variable_source_problem, affected_variables, affected_time_periods)
-    return PowerCommitmentFF(variable_source_problem, affected_variables, affected_time_periods, nothing)
+function PowerCommitmentFF(;
+    variable_source_problem,
+    affected_variables,
+    affected_time_periods,
+)
+    return PowerCommitmentFF(
+        variable_source_problem,
+        affected_variables,
+        affected_time_periods,
+        nothing,
+    )
 end
 
 get_variable_source_problem(p::PowerCommitmentFF) = p.variable_source_problem
@@ -535,10 +549,13 @@ function power_commitment_ff(
         multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            sum(variable[name, t] for t in time_steps) / length(affected_time_periods) + varslack[name] >=
-            param_ub[name] * multiplier_ub[name]
+            sum(variable[name, t] for t in time_steps) / length(affected_time_periods) +
+            varslack[name] >= param_ub[name] * multiplier_ub[name]
         )
-        add_to_cost_expression!(optimization_container, varslack[name] * FEEDFORWARD_SLACK_COST)
+        add_to_cost_expression!(
+            optimization_container,
+            varslack[name] * FEEDFORWARD_SLACK_COST,
+        )
     end
 end
 
@@ -630,7 +647,7 @@ function feedforward!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, D},
     ff_model::PowerCommitmentFF,
-) where {T <: PSY.HybridSystem, D <:AbstractDeviceFormulation}
+) where {T <: PSY.HybridSystem, D <: AbstractDeviceFormulation}
     # PSI.add_variables!(optimization_container, ActivePowerShortageVariable, devices, D())
     var_name = make_variable_name(typeof(ActivePowerShortageVariable), D)
     slack_variable = add_var_container!(
