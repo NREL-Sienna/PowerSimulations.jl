@@ -159,6 +159,27 @@ end
 
 get_variable_source_problem(p::IntegralLimitFF) = p.variable_source_problem
 
+struct PowerCommitmentFF <: AbstractAffectFeedForward
+    variable_source_problem::Symbol
+    affected_variables::Vector{Symbol}
+    affected_time_periods::Int
+    cache::Union{Nothing, Type{<:AbstractCache}}
+    function PowerCommitmentFF(
+        variable_source_problem::AbstractString,
+        affected_variables::Vector{<:AbstractString},
+        affected_time_periods::Int,
+        cache::Union{Nothing, Type{<:AbstractCache}},
+    )
+        new(Symbol(variable_source_problem), Symbol.(affected_variables), affected_time_periods, cache)
+    end
+end
+
+function PowerCommitmentFF(; variable_source_problem, affected_variables, affected_time_periods)
+    return PowerCommitmentFF(variable_source_problem, affected_variables, affected_time_periods, nothing)
+end
+
+get_variable_source_problem(p::PowerCommitmentFF) = p.variable_source_problem
+
 struct ParameterFF <: AbstractAffectFeedForward
     variable_source_problem::Symbol
     affected_parameters::Any
@@ -486,15 +507,17 @@ function integral_limit_ff(
     end
 end
 
-function integral_limit_hybrid_ff(
+function power_commitment_ff(
     optimization_container::OptimizationContainer,
     cons_name::Symbol,
     param_reference::UpdateRef,
-    var_name::Symbol,
+    var_names::Tuple{Symbol, Symbol},
+    affected_time_periods::Int,
 )
     time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_names[1])
+    varslack = get_variable(optimization_container, var_names[2])
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -512,9 +535,10 @@ function integral_limit_hybrid_ff(
         multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            sum(variable[name, t] for t in time_steps) / length(time_steps) >=
+            sum(variable[name, t] for t in time_steps) / length(affected_time_periods) + varslack[name] >=
             param_ub[name] * multiplier_ub[name]
         )
+        add_to_cost_expression!(optimization_container, varslack[name] * FEEDFORWARD_SLACK_COST)
     end
 end
 
@@ -547,7 +571,7 @@ function feedforward!(
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         ub_ff(
             optimization_container,
-            constraint_name(FEEDFORWARD_UB, T),
+            make_constraint_name(FEEDFORWARD_UB, T),
             constraint_infos,
             parameter_ref,
             var_name,
@@ -604,17 +628,33 @@ end
 function feedforward!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, <:AbstractDeviceFormulation},
-    ff_model::IntegralLimitFF,
-) where {T <: PSY.HybridSystem}
+    ::DeviceModel{T, D},
+    ff_model::PowerCommitmentFF,
+) where {T <: PSY.HybridSystem, D <:AbstractDeviceFormulation}
+    # PSI.add_variables!(optimization_container, ActivePowerShortageVariable, devices, D())
+    var_name = make_variable_name(typeof(ActivePowerShortageVariable), D)
+    slack_variable = add_var_container!(
+        optimization_container,
+        var_name,
+        [PSY.get_name(d) for d in devices],
+    )
+    for d in devices
+        name = PSY.get_name(d)
+        slack_variable[name] = JuMP.@variable(
+            optimization_container.JuMPmodel,
+            base_name = "$(var_name)_{$(name)}",
+        )
+        JuMP.set_lower_bound(slack_variable[name], 0.0)
+    end
     for prefix in get_affected_variables(ff_model)
         var_name = make_variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        integral_limit_hybrid_ff(
+        power_commitment_ff(
             optimization_container,
-            make_constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
+            make_constraint_name(FEEDFORWARD_POWER_COMMITMENT, T),
             parameter_ref,
-            var_name,
+            (var_name, ACTIVE_POWER_SHORTAGE),
+            ff_model.affected_time_periods,
         )
     end
 end

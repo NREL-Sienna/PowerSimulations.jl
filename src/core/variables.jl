@@ -5,6 +5,8 @@ const SUBCOMPONENT_ACTIVE_POWER = "P_SubComponent"
 const ACTIVE_POWER_IN = "Pin"
 const SUBCOMPONENT_ACTIVE_POWER_IN = "Pin_SubComponent"
 const ACTIVE_POWER_OUT = "Pout"
+const ACTIVE_POWER_SHORTAGE = "P_shortage"
+const ACTIVE_POWER_SURPLUS = "P_surplus"
 const SUBCOMPONENT_ACTIVE_POWER_OUT = "Pout_SubComponent"
 const COLD_START = "start_cold"
 const ENERGY = "E"
@@ -60,6 +62,10 @@ struct ActivePowerInVariable <: VariableType end
 
 """Struct to dispatch the creation of Active Power Output Variables for 2-directional devices. for instance storage or pump-hydro"""
 struct ActivePowerOutVariable <: VariableType end
+
+struct ActivePowerShortageVariable <: VariableType end
+
+struct ActivePowerSurplusVariable <: VariableType end
 
 struct HotStartVariable <: VariableType end
 
@@ -162,6 +168,10 @@ make_variable_name(::Type{ActivePowerVariable}, ::Type{T}) where {T <: PSY.Compo
 make_variable_name(::Type{ActivePowerInVariable}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "Pin")
 
 make_variable_name(::Type{ActivePowerOutVariable}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "Pout")
+
+make_variable_name(::Type{ActivePowerSurplusVariable}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "P_surplus")
+
+make_variable_name(::Type{ActivePowerShortageVariable}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "P_shortage")
 
 make_variable_name(::Type{HotStartVariable}, ::Type{T}) where {T <: PSY.Device} = encode_symbol(T, "start_hot")
 
