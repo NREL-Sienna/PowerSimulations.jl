@@ -92,6 +92,7 @@ export SemiContinuousFF
 export RangeFF
 export IntegralLimitFF
 export ParameterFF
+export PowerCommitmentFF
 
 # InitialConditions chrons
 export InterProblemChronology
