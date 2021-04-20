@@ -17,6 +17,7 @@ mutable struct SimulationInternal
     status::Union{Nothing, RunStatus}
     build_status::BuildStatus
     simulation_cache::Dict{<:CacheKey, AbstractCache}
+    store::Union{Nothing, SimulationStore}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
@@ -86,6 +87,7 @@ function SimulationInternal(
         nothing,
         BuildStatus.EMPTY,
         Dict{CacheKey, AbstractCache}(),
+        nothing,
         collect(unique_recorders),
         console_level,
         file_level,
@@ -291,16 +293,25 @@ get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
 get_current_time(sim::Simulation) = sim.internal.current_time
 get_problems(sim::Simulation) = sim.problems
+
 function get_problem(sim::Simulation, ix::Int)
     problems = get_problems(sim)
     names = get_problem_names(problems)
     return problems[names[ix]]
 end
+
+function get_problem(sim::Simulation, name::Symbol)
+    problems = get_problems(sim)
+    return problems[name]
+end
+
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
 get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
 get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
+set_simulation_store!(sim::Simulation, store) = sim.internal.store = store
+get_simulation_store(sim::Simulation) = sim.internal.store
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 get_problems_dir(sim::Simulation) = sim.internal.models_dir
 
@@ -486,14 +497,12 @@ function _check_steps(
     sequence = get_sequence(sim)
     execution_order = get_execution_order(sequence)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        problem_name
         execution_counts = get_executions(problem)
-        transitions = execution_order[vcat(1, diff(execution_order)) .== 1]
         # Checks the consistency between two methods of calculating the number of executions
         total_problem_executions =
             length(findall(x -> x == problem_number, execution_order))
-        total_problem_transitions = length(findall(x -> x == problem_number, transitions))
-        @assert_op total_problem_executions / total_problem_transitions == execution_counts
+        @assert_op total_problem_executions == execution_counts
+
         forecast_count = length(problem_initial_times[problem_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(
@@ -581,7 +590,6 @@ function _build!(sim::Simulation, serialize::Bool)
                 set_executions!(problem, 1)
             else
                 step_resolution = get_step_resolution(sequence)
-                get_interval(sequence, problem_name)
                 set_executions!(problem, Int(step_resolution / problem_interval))
             end
             _attach_feedforward!(sim, problem_name)
@@ -826,9 +834,8 @@ function get_increment(sim::Simulation, problem::OperationsProblem, cache::TimeS
     problem_name = get_name(problem)
     sequence = get_sequence(sim)
     problem_interval = get_interval(sequence, problem_name)
-    horizon = get_horizon(problem)
-    problem_resolution = problem_interval / horizon
-    return float(problem_resolution / units)
+    problem_resolution = problem_interval / units
+    return problem_resolution
 end
 
 function update_cache!(
@@ -997,8 +1004,6 @@ function update_problem!(
     return
 end
 
-get_simulation_store_open_func(sim::Simulation) = h5_store_open
-
 """
     execute!(sim::Simulation; kwargs...)
 
@@ -1020,18 +1025,23 @@ function execute!(sim::Simulation; kwargs...)
     file_mode = "a"
     logger = configure_logging(sim.internal, file_mode)
     register_recorders!(sim.internal, file_mode)
-    open_func = get_simulation_store_open_func(sim)
+
+    # Undocumented option for test & dev only.
+    in_memory = get(kwargs, :in_memory, false)
+    store_type = in_memory ? InMemorySimulationStore : HdfSimulationStore
+
     if (get_simulation_build_status(sim) != BuildStatus.BUILT) ||
        (get_simulation_status(sim) != RunStatus.READY)
         error("Simulation status is invalid, you need to rebuild the simulation")
     end
     try
-        open_func(get_store_dir(sim), "w") do store
+        open_store(store_type, get_store_dir(sim), "w") do store
+            set_simulation_store!(sim, store)
             # TODO: return file name for hash calculation instead of hard code
             Logging.with_logger(logger) do
                 TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-                    _execute!(sim, store; kwargs...)
+                    _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
                 end
                 @info ("\n$(RUN_SIMULATION_TIMER)\n")
                 set_simulation_status!(sim, RunStatus.SUCCESSFUL)
@@ -1047,14 +1057,17 @@ function execute!(sim::Simulation; kwargs...)
         unregister_recorders!(sim.internal)
         close(logger)
     end
-    compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+
+    if !in_memory
+        compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+    end
+
     serialize_status(sim)
     return get_simulation_status(sim)
 end
 
 function _execute!(
-    sim::Simulation,
-    store;
+    sim::Simulation;
     cache_size_mib = 1024,
     min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
     exports = nothing,
@@ -1068,7 +1081,7 @@ function _execute!(
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
     store_params =
-        _initialize_problem_storage!(sim, store, cache_size_mib, min_cache_flush_size_mib)
+        _initialize_problem_storage!(sim, cache_size_mib, min_cache_flush_size_mib)
     status = RunStatus.RUNNING
     if exports !== nothing
         if !(exports isa SimulationResultsExport)
@@ -1084,6 +1097,7 @@ function _execute!(
 
     prog_bar = ProgressMeter.Progress(num_executions; enabled = enable_progress_bar)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_SIMULATION_TIMER)
+    store = get_simulation_store(sim)
     for step in 1:steps
         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
             IS.@record :simulation_status SimulationStepEvent(
@@ -1172,7 +1186,6 @@ end
 
 function _initialize_problem_storage!(
     sim::Simulation,
-    store,
     cache_size_mib,
     min_cache_flush_size_mib,
 )
@@ -1254,7 +1267,7 @@ function _initialize_problem_storage!(
                 problem_sym,
                 STORE_CONTAINER_VARIABLES,
                 name,
-                true,
+                false,
                 CachePriority.HIGH,
             )
         end
@@ -1273,6 +1286,7 @@ function _initialize_problem_storage!(
         problems,
     )
     @debug "initialized problem requirements" store_params
+    store = get_simulation_store(sim)
     initialize_problem_storage!(store, store_params, problem_reqs, rules)
     return store_params
 end

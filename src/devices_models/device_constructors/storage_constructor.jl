@@ -320,7 +320,7 @@ end
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{St, EndOfPeriodEnergyTarget},
+    model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
@@ -330,52 +330,16 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices)
-    add_variables!(optimization_container, ActivePowerOutVariable, devices)
-    add_variables!(optimization_container, ReactivePowerVariable, devices)
-    add_variables!(optimization_container, EnergyVariable, devices)
-    add_variables!(optimization_container, EnergyShortageVariable, devices)
-    add_variables!(optimization_container, EnergySurplusVariable, devices)
-    add_variables!(optimization_container, ReserveVariable, devices)
-    add_variables!(
-        optimization_container,
-        ActivePowerInVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        ActivePowerOutVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        ReactivePowerVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyShortageVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergySurplusVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
 
+    add_variables!(optimization_container, ActivePowerInVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, ActivePowerOutVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, ReactivePowerVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, EnergyVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, EnergyShortageVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, EnergySurplusVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, ReserveVariable, devices, EnergyTarget())
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, EndOfPeriodEnergyTarget())
+    initial_conditions!(optimization_container, devices, EnergyTarget())
 
     # Constraints
     add_constraints!(
@@ -441,7 +405,7 @@ end
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{St, EndOfPeriodEnergyTarget},
+    model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
@@ -451,44 +415,14 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerInVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        ActivePowerOutVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyShortageVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergySurplusVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
-    add_variables!(
-        optimization_container,
-        ReserveVariable,
-        devices,
-        EndOfPeriodEnergyTarget(),
-    )
+    add_variables!(optimization_container, ActivePowerInVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, ActivePowerOutVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, EnergyVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, EnergyShortageVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, EnergySurplusVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, ReserveVariable, devices, EnergyTarget())
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, EndOfPeriodEnergyTarget())
+    initial_conditions!(optimization_container, devices, EnergyTarget())
 
     # Constraints
     add_constraints!(

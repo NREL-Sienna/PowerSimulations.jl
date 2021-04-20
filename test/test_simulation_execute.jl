@@ -80,7 +80,6 @@ end
 end
 
 @testset "Simulation Single Stage with Cache" begin
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     template = get_template_hydro_st_ed()
     problems = SimulationProblems(
@@ -111,8 +110,8 @@ end
 @testset "Simulation with 2-Stages and Cache" begin
     template_uc = get_template_hydro_st_uc()
     template_ed = get_template_hydro_st_ed()
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
     problems = SimulationProblems(
         UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
         ED = OperationsProblem(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),

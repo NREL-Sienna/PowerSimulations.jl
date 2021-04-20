@@ -59,9 +59,13 @@ function add_result!(cache::ParamResultCache, timestamp, array, system_cache_is_
     @debug "add_result!" cache.key timestamp get_size(cache)
     @assert !haskey(cache.data, timestamp) "$(cache.key) $timestamp"
 
-    if system_cache_is_full && has_clean(cache)
-        popfirst!(cache.data)
-        @debug "replaced cache entry" cache.key
+    if system_cache_is_full
+        if has_clean(cache)
+            popfirst!(cache.data)
+            @debug "replaced cache entry" cache.key
+        else
+            @error "sys cache is full but there are no clean entries to pop: $(cache.key)"
+        end
     end
 
     _add_result!(cache, timestamp, array)

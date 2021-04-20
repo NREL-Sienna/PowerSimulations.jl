@@ -135,7 +135,18 @@ function _jump_value(input::JuMP.ConstraintRef)
     return JuMP.dual(input)
 end
 
-function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{Float64})
+"""
+Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
+
+# Arguments
+- `input_array`: JuMP DenseAxisArray or SparseAxisArray to convert
+- `columns::Vector{Symbol}`: Required when there is only one axis which is data. Ignored if
+  `input_array` includes an axis for device names.
+"""
+function axis_array_to_dataframe(
+    input_array::JuMP.Containers.DenseAxisArray{Float64},
+    columns = nothing,
+)
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
 
@@ -143,7 +154,8 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{Flo
             result[t] = input_array[t]
         end
 
-        return DataFrames.DataFrame(var = result)
+        @assert columns !== nothing
+        return DataFrames.DataFrame(columns[1] => result)
 
     elseif length(axes(input_array)) == 2
         result = Array{Float64, length(input_array.axes)}(
@@ -189,14 +201,18 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{Flo
     end
 end
 
-function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
+function axis_array_to_dataframe(
+    input_array::JuMP.Containers.DenseAxisArray{},
+    columns = nothing,
+)
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
         for t in input_array.axes[1]
             result[t] = _jump_value(input_array[t])
         end
 
-        return DataFrames.DataFrame(var = result)
+        @assert columns !== nothing
+        return DataFrames.DataFrame(columns[1] => result)
     elseif length(axes(input_array)) == 2
         result = Array{Float64, length(input_array.axes)}(
             undef,
@@ -242,7 +258,7 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
     end
 end
 
-function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray)
+function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray,     columns = nothing,)
     column_names = unique([(k[1], k[2]) for k in keys(input_array.data)])
     array_values = Vector{Vector{Float64}}()
     final_column_names = Vector{Symbol}()
@@ -256,6 +272,10 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray)
         end
     end
     return DataFrames.DataFrame(array_values, (final_column_names))
+end
+
+function axis_array_to_dataframe(input_array::Matrix{Float64}, columns)
+    return DataFrames.DataFrame(input_array, columns)
 end
 
 function to_array(array::JuMP.Containers.DenseAxisArray)
@@ -313,6 +333,8 @@ function to_array(array::JuMP.Containers.SparseAxisArray)
 
     return data
 end
+
+to_array(array::Array) = array
 
 # this ensures that the time_stamp is not double shortened
 function find_var_length(es::Dict, e_list::Array)

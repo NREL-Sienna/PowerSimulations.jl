@@ -74,19 +74,6 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec()
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{<:VariableType},
-    ::Type{T},
-    ::Type{<:ThermalDispatchNoMin},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec()
-end
-
 """
 This function adds the active power limits of generators when there are no CommitmentVariables
 """
@@ -337,6 +324,19 @@ function DeviceRangeConstraintSpec(
     )
 end
 
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractThermalDispatchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
+end
+
 """
 This function adds the reactive power limits of generators when there CommitmentVariables
 """
@@ -364,6 +364,19 @@ function DeviceRangeConstraintSpec(
             constraint_struct = DeviceRangeConstraintInfo,
         ),
     )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::Type{<:AbstractThermalUnitCommitment},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec()
 end
 
 ### Constraints for Thermal Generation without commitment variables ####
@@ -672,6 +685,18 @@ end
 
 ########################### start up trajectory constraints ######################################
 
+function _convert_hours_to_timesteps(
+    start_times_hr::StartUpStages,
+    resolution::Dates.TimePeriod,
+)
+    _start_times_ts = (
+        round((hr * MINUTES_IN_HOUR) / Dates.value(Dates.Minute(resolution)), RoundUp) for
+        hr in start_times_hr
+    )
+    start_times_ts = StartUpStages(_start_times_ts)
+    return start_times_ts
+end
+
 @doc raw"""
     turbine_temperature(optimization_container::OptimizationContainer,
                             startup_data::Vector{DeviceStartUpConstraintInfo},
@@ -733,7 +758,6 @@ function turbine_temperature(
         ),
     ]
 
-    # constraint (15)
     for t in time_steps, st in startup_data
         for ix in 1:(st.startup_types - 1)
             if t >= st.time_limits[ix + 1]
@@ -741,8 +765,10 @@ function turbine_temperature(
                 con[ix][name, t] = JuMP.@constraint(
                     optimization_container.JuMPmodel,
                     start_vars[ix][name, t] <= sum(
-                        varstop[name, t - i] for
-                        i in st.time_limits[ix]:(st.time_limits[ix + 1] - 1)
+                        varstop[name, t - i] for i in UnitRange{Int}(
+                            Int(st.time_limits[ix]),
+                            Int(st.time_limits[ix + 1] - 1),
+                        )
                     )
                 )
             end
@@ -794,7 +820,6 @@ function device_start_type_constraint(
     con = add_cons_container!(optimization_container, cons_name, set_name, time_steps)
 
     for t in time_steps, d in data
-        # constraint (16)
         name = get_component_name(d)
         con[name, t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
@@ -904,18 +929,21 @@ function startup_time_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
-    constraint_data = Vector{DeviceStartUpConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        starttime = PSY.get_start_time_limits(d)
-        name = PSY.get_name(d)
-        start_types = PSY.get_start_types(d)
-        range_data = DeviceStartUpConstraintInfo(name, starttime, start_types)
-        constraint_data[ix] = range_data
+    resolution = model_resolution(optimization_container)
+    lenght_devices = length(devices)
+    start_time_params = Vector{DeviceStartUpConstraintInfo}(undef, lenght_devices)
+    for (ix, g) in enumerate(devices)
+        start_times_hr = PSY.get_start_time_limits(g)
+        start_types = PSY.get_start_types(g)
+        name = PSY.get_name(g)
+        start_times_ts = _convert_hours_to_timesteps(start_times_hr, resolution)
+        start_time_params[ix] =
+            DeviceStartUpConstraintInfo(name, start_times_ts, start_types)
     end
 
     turbine_temperature(
         optimization_container,
-        constraint_data,
+        start_time_params,
         make_constraint_name(STARTUP_TIMELIMIT, PSY.ThermalMultiStart),
         make_variable_name(StopVariable, PSY.ThermalMultiStart),
         (
@@ -962,20 +990,22 @@ end
 """
 This function gets the data for startup initial condition
 """
-function _get_data_startup_ic(initial_conditions::Vector{InitialCondition})
+function _get_data_startup_ic(
+    initial_conditions::Vector{InitialCondition},
+    resolution::Dates.TimePeriod,
+)
     lenght_devices = length(initial_conditions)
     data = Vector{DeviceStartUpConstraintInfo}(undef, lenght_devices)
     idx = 0
     for ic in initial_conditions
         g = ic.device
-        if PSY.get_start_types(g) > 1
+        start_types = PSY.get_start_types(g)
+        start_times_hr = PSY.get_start_time_limits(g)
+        if start_types > 1
             idx = +1
             name = PSY.get_name(g)
-            data[idx] = DeviceStartUpConstraintInfo(
-                name,
-                PSY.get_start_time_limits(g),
-                PSY.get_start_types(g),
-            )
+            start_times_ts = _convert_hours_to_timesteps(start_times_hr, resolution)
+            data[idx] = DeviceStartUpConstraintInfo(name, start_times_ts, start_types)
         end
     end
     if idx < lenght_devices
@@ -999,7 +1029,7 @@ function startup_initial_condition_constraints!(
     resolution = model_resolution(optimization_container)
     key_off = ICKey(TimeDurationOFF, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(optimization_container, key_off)
-    constraint_data = _get_data_startup_ic(initial_conditions_offtime)
+    constraint_data = _get_data_startup_ic(initial_conditions_offtime, resolution)
 
     device_startup_initial_condition(
         optimization_container,

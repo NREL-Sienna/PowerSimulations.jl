@@ -97,16 +97,22 @@ path = "./rts"
 problem = :ED
 var_name = :P__ThermalStandard
 timestamp = DateTime("2020-01-01T05:00:00")
-store = h5_store_open(path)
+store = open_store(HdfSimulationStore, path)
 df = PowerSimulations.read_result(DataFrame, store, problem, :variables, var_name, timestamp)
 ```
 """
-function h5_store_open(directory::AbstractString, mode = "r", filename = HDF_FILENAME)
+function open_store(
+    ::Type{HdfSimulationStore},
+    directory::AbstractString,
+    mode = "r",
+    filename = HDF_FILENAME,
+)
     return HdfSimulationStore(joinpath(directory, filename), mode)
 end
 
-function h5_store_open(
+function open_store(
     func::Function,
+    ::Type{HdfSimulationStore},
     directory::AbstractString,
     mode = "r",
     filename = HDF_FILENAME,
@@ -154,7 +160,12 @@ function list_fields(store::HdfSimulationStore, problem::Symbol, container_type:
     return keys(container)
 end
 
-function write_optimizer_stats!(store::HdfSimulationStore, problem, stats::OptimizerStats)
+function write_optimizer_stats!(
+    store::HdfSimulationStore,
+    problem,
+    stats::OptimizerStats,
+    timestamp,  # Unused here. Matches the interface for InMemorySimulationStore.
+)
     problem_name = Symbol(problem)
     dataset = _get_dataset(OptimizerStats, store, problem_name)
 
@@ -344,13 +355,14 @@ function write_result!(
     container_type,
     name,
     timestamp,
-    array,
+    data,
+    columns = nothing,  # Unused here. Matches the interface for InMemorySimulationStore.
 )
     key = make_cache_key(problem_name, container_type, name)
     param_cache = get_param_cache(store.cache, key)
 
     cur_size = get_size(store.cache)
-    add_result!(param_cache, timestamp, array, is_full(store.cache, cur_size))
+    add_result!(param_cache, timestamp, to_array(data), is_full(store.cache, cur_size))
 
     if get_dirty_size(param_cache) >= get_min_flush_size(store.cache)
         discard = !should_keep_in_cache(param_cache)

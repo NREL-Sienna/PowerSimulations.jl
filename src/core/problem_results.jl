@@ -22,6 +22,7 @@ mutable struct SimulationProblemResults <: PSIResults
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
+    store::Union{Nothing, SimulationStore}
 end
 
 function SimulationProblemResults(
@@ -31,6 +32,7 @@ function SimulationProblemResults(
     sim_params::SimulationStoreParams,
     path;
     results_output_path = nothing,
+    system = nothing,
 )
     if results_output_path === nothing
         results_output_path = joinpath(path, "results")
@@ -53,7 +55,7 @@ function SimulationProblemResults(
         results_output_path,
         time_steps,
         Vector{Dates.DateTime}(),
-        nothing,
+        system,
         problem_params.system_uuid,
         get_resolution(problem_params),
         get_horizon(problem_params),
@@ -61,6 +63,7 @@ function SimulationProblemResults(
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
         _fill_result_value_container(parameters),
+        store isa HdfSimulationStore ? nothing : store,
     )
 end
 
@@ -139,7 +142,7 @@ function _get_store_value(
     ::Nothing,
 )
     simulation_store_path = joinpath(get_execution_path(res), "data_store")
-    return h5_store_open(simulation_store_path, "r") do store
+    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
         _get_store_value(res, field, names, timestamps, store)
     end
 end
@@ -248,6 +251,10 @@ function read_variables(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
     names = isnothing(names) ? collect(keys(res.variable_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
     values = _read_variables(res, names, timestamps, store)
@@ -293,6 +300,10 @@ function read_duals(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
     names = isnothing(names) ? collect(keys(res.dual_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
     values = _read_duals(res, names, timestamps, store)
@@ -337,6 +348,10 @@ function read_parameters(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
     names = isnothing(names) ? collect(keys(res.parameter_values)) : names
     timestamps = _process_timestamps(res, initial_time, count)
     values = _read_parameters(res, names, timestamps, store)
@@ -387,7 +402,11 @@ function read_optimizer_stats(res::SimulationProblemResults; store = nothing)
 end
 
 function _read_optimizer_stats(res::SimulationProblemResults, ::Nothing)
-    h5_store_open(joinpath(get_execution_path(res), "data_store"), "r") do store
+    open_store(
+        HdfSimulationStore,
+        joinpath(get_execution_path(res), "data_store"),
+        "r",
+    ) do store
         _read_optimizer_stats(res, store)
     end
 end
@@ -614,8 +633,7 @@ function load_results!(
 
     res.results_timestamps = _process_timestamps(res, initial_time, count)
 
-    simulation_store_path = joinpath(res.execution_path, "data_store")
-    h5_store_open(simulation_store_path, "r") do store
+    function merge_results(store)
         merge!(
             res.variable_values,
             _read_variables(res, variables, res.results_timestamps, store),
@@ -625,6 +643,15 @@ function load_results!(
             res.parameter_values,
             _read_parameters(res, parameters, res.results_timestamps, store),
         )
+    end
+
+    if res.store isa InMemorySimulationStore
+        merge_results(res.store)
+    else
+        simulation_store_path = joinpath(res.execution_path, "data_store")
+        open_store(HdfSimulationStore, simulation_store_path, "r") do store
+            merge_results(store)
+        end
     end
 
     return nothing

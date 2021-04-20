@@ -46,12 +46,12 @@ function make_export_all(problems)
     ]
 end
 
-function test_simulation_results(file_path::String, export_path)
+function test_simulation_results(file_path::String, export_path; in_memory = false)
     @testset "Test simulation results" begin
         template_uc = get_template_hydro_st_uc()
         template_ed = get_template_hydro_st_ed()
-        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
-        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
+        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
         time_series_cache_size = 0  # This is only for test coverage.
         problems = SimulationProblems(
             UC = OperationsProblem(
@@ -120,27 +120,13 @@ function test_simulation_results(file_path::String, export_path)
             "path" => export_path,
             "optimizer_stats" => true,
         )
-        execute_out = execute!(sim, exports = exports)
+        execute_out = execute!(sim, exports = exports, in_memory = in_memory)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         results = SimulationResults(sim)
         @test list_problems(results) == ["ED", "UC"]
         results_uc = get_problem_results(results, "UC")
         results_ed = get_problem_results(results, "ED")
-
-        @test get_system(results_uc) === nothing
-        @test length(read_realized_variables(results_uc)) == 10 #verifies this works without system
-        @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
-        set_system!(results_uc, c_sys5_hy_uc)
-        @test IS.get_uuid(get_system!(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
-
-        @test get_system(results_ed) === nothing
-        @test IS.get_uuid(get_system!(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
-
-        results_from_file = SimulationResults(joinpath(file_path, "cache"))
-        @test list_problems(results) == ["ED", "UC"]
-        results_uc_from_file = get_problem_results(results_from_file, "UC")
-        results_ed_from_file = get_problem_results(results_from_file, "ED")
 
         ed_expected_vars = [
             :Sp__HydroEnergyReservoir
@@ -161,15 +147,33 @@ function test_simulation_results(file_path::String, export_path)
             :P__HydroEnergyReservoir
             :On__ThermalStandard
         ]
+        if in_memory
+            @test IS.get_uuid(get_system(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
+            @test IS.get_uuid(get_system(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
+        else
+            @test get_system(results_uc) === nothing
+            @test length(read_realized_variables(results_uc)) == 10 #verifies this works without system
+            @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
+            set_system!(results_uc, c_sys5_hy_uc)
+            @test IS.get_uuid(get_system!(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
+            @test get_system(results_ed) === nothing
+            @test IS.get_uuid(get_system!(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
+
+            results_from_file = SimulationResults(joinpath(file_path, "cache"))
+            @test list_problems(results) == ["ED", "UC"]
+            results_uc_from_file = get_problem_results(results_from_file, "UC")
+            results_ed_from_file = get_problem_results(results_from_file, "ED")
+
+            @test isempty(
+                setdiff(uc_expected_vars, get_existing_variables(results_uc_from_file)),
+            )
+            @test isempty(
+                setdiff(ed_expected_vars, get_existing_variables(results_ed_from_file)),
+            )
+        end
+
         @test isempty(setdiff(uc_expected_vars, get_existing_variables(results_uc)))
         @test isempty(setdiff(ed_expected_vars, get_existing_variables(results_ed)))
-        @test isempty(
-            setdiff(uc_expected_vars, get_existing_variables(results_uc_from_file)),
-        )
-        @test isempty(
-            setdiff(ed_expected_vars, get_existing_variables(results_ed_from_file)),
-        )
-
         p_thermal_standard_ed = read_variable(results_ed, :P__ThermalStandard)
         @test length(keys(p_thermal_standard_ed)) == 48
         for v in values(p_thermal_standard_ed)
@@ -333,11 +337,20 @@ function test_simulation_results(file_path::String, export_path)
             (:warn, r"Results may not be valid"),
             SimulationResults(sim, ignore_status = true),
         )
+
+        if in_memory
+            container = sim.internal.store.data[:ED].variables[:P__ThermalStandard]
+            @test !isempty(container)
+            @test !isempty(sim.internal.store.optimizer_stats)
+            empty!(sim.internal.store)
+            @test isempty(container)
+            @test isempty(sim.internal.store.optimizer_stats)
+        end
     end
 
     @testset "Test receding horizon simulation results" begin
         template_uc = get_template_hydro_st_uc()
-        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
         problems = SimulationProblems(
             UC = OperationsProblem(
                 template_uc,
@@ -362,17 +375,21 @@ function test_simulation_results(file_path::String, export_path)
         build_out = build!(sim)
         @test build_out == PSI.BuildStatus.BUILT
 
-        execute_out = execute!(sim)
+        execute_out = execute!(sim, in_memory = in_memory)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         results = SimulationResults(sim)
         @test list_problems(results) == ["UC"]
         results_rh = get_problem_results(results, "UC")
 
-        @test get_system(results_rh) === nothing
-        @test length(read_realized_variables(results_rh)) == 10 #verifies this works without system
-        set_system!(results_rh, c_sys5_hy_uc)
-        @test IS.get_uuid(get_system!(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
+        if in_memory
+            @test IS.get_uuid(get_system(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
+        else
+            @test get_system(results_rh) === nothing
+            @test length(read_realized_variables(results_rh)) == 10 #verifies this works without system
+            set_system!(results_rh, c_sys5_hy_uc)
+            @test IS.get_uuid(get_system!(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
+        end
 
         uc_expected_vars = [
             :Sp__HydroEnergyReservoir
@@ -399,10 +416,14 @@ function test_simulation_results(file_path::String, export_path)
             @test size(v) == (24, 4)
         end
 
-        network_duals = read_dual(results_rh, :CopperPlateBalance)
-        @test length(keys(network_duals)) == 2
-        for v in values(network_duals)
-            @test size(v) == (24, 2)
+        if !in_memory
+            # this creates a container for duals but doesn't write anything because
+            # it's a MIP and the duals are unavailable.
+            network_duals = read_dual(results_rh, :CopperPlateBalance)
+            @test length(keys(network_duals)) == 2
+            for v in values(network_duals)
+                @test size(v) == (24, 2)
+            end
         end
 
         realized_var_rh = read_realized_variables(results_rh)
@@ -441,21 +462,23 @@ function test_simulation_results(file_path::String, export_path)
             end
         end
 
-        realized_duals_rh = read_realized_duals(results_rh)
-        @test length(keys(realized_duals_rh)) == 1
-        for var in values(realized_duals_rh)
-            @test size(var)[1] == 48
-            existing_timetsamps = get_existing_timestamps(results_rh)
-            for ts in existing_timetsamps
-                val_cols = setdiff(propertynames(var), [:DateTime])
-                first_row = Matrix(var[var.DateTime .== ts, val_cols])
-                all_rows = Matrix(
-                    var[
-                        (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
-                        val_cols,
-                    ],
-                )
-                @test all(first_row .== all_rows)
+        if !in_memory
+            realized_duals_rh = read_realized_duals(results_rh)
+            @test length(keys(realized_duals_rh)) == 1
+            for var in values(realized_duals_rh)
+                @test size(var)[1] == 48
+                existing_timetsamps = get_existing_timestamps(results_rh)
+                for ts in existing_timetsamps
+                    val_cols = setdiff(propertynames(var), [:DateTime])
+                    first_row = Matrix(var[var.DateTime .== ts, val_cols])
+                    all_rows = Matrix(
+                        var[
+                            (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
+                            val_cols,
+                        ],
+                    )
+                    @test all(first_row .== all_rows)
+                end
             end
         end
 
@@ -495,12 +518,14 @@ function test_simulation_results(file_path::String, export_path)
 end
 
 @testset "Test simulation results" begin
-    file_path = mkpath(joinpath(pwd(), "test_simulation_results"))
-    export_path = mkpath(joinpath(pwd(), "test_export_path"))
-    try
-        test_simulation_results(file_path, export_path)
-    finally
-        rm(file_path, force = true, recursive = true)
-        rm(export_path, force = true, recursive = true)
+    for in_memory in (false, true)
+        file_path = mkpath(joinpath(pwd(), "test_simulation_results"))
+        export_path = mkpath(joinpath(pwd(), "test_export_path"))
+        try
+            test_simulation_results(file_path, export_path, in_memory = in_memory)
+        finally
+            rm(file_path, force = true, recursive = true)
+            rm(export_path, force = true, recursive = true)
+        end
     end
 end

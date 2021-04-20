@@ -56,7 +56,7 @@ export HydroDispatchPumpedStoragewReservation
 ######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
-export EndOfPeriodEnergyTarget
+export EnergyTarget
 
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
@@ -354,6 +354,7 @@ include("core/param_result_cache.jl")
 include("core/result_cache.jl")
 include("core/simulation_store.jl")
 include("core/hdf_simulation_store.jl")
+include("core/in_memory_simulation_store.jl")
 include("core/problem_results_export.jl")
 include("core/simulation_results_export.jl")
 include("core/optimization_container.jl")
@@ -398,7 +399,6 @@ include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
 include("devices_models/devices/hybrid_generation.jl")
-include("devices_models/devices/common_models.jl")
 
 # Services Models
 include("services_models/agc.jl")
