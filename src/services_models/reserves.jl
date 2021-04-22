@@ -1,6 +1,8 @@
 #! format: off
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
+struct RampReserve <: AbstractReservesFormulation end
+
 ############################### Reserve Variables #########################################
 
 get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
@@ -144,6 +146,109 @@ function service_requirement_constraint!(
     return
 end
 
+_get_ramp_limits(::PSY.Component) = nothing
+_get_ramp_limits(d::PSY.ThermalGen) = PSY.get_ramp_limits(d)
+_get_ramp_limits(d::PSY.HydroGen) = PSY.get_ramp_limits(d)
+
+function _get_data_for_ramp_limit(
+    optimization_container::OptimizationContainer,
+    service::SR,
+    contributing_devices::U,
+) where {
+    SR <: PSY.Reserve,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    time_frame = PSY.get_time_frame(service)
+    resolution = model_resolution(optimization_container)
+    if resolution > Dates.Minute(1)
+        minutes_per_period = Dates.value(Dates.Minute(resolution))
+    else
+        @warn("Not all formulations support under 1-minute resolutions. Exercise caution.")
+        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
+    end
+    lenght_contributing_devices = length(contributing_devices)
+    idx = 0
+    data = Vector{ServiceRampConstraintInfo}(undef, lenght_contributing_devices)
+
+    for d in contributing_devices
+        name = PSY.get_name(d)
+        non_binding_up = false
+        non_binding_down = false
+        ramp_limits = _get_ramp_limits(d)
+        if !(ramp_limits === nothing)
+            p_lims = PSY.get_active_power_limits(d)
+            max_rate = abs(p_lims.min - p_lims.max) / time_frame
+            if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
+                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
+                continue
+            else
+                idx += 1
+            end
+            ramp = (up = ramp_limits.up * time_frame, down = ramp_limits.down * time_frame)
+            data[idx] = ServiceRampConstraintInfo(name, ramp)
+        end
+    end
+    if idx < lenght_contributing_devices
+        deleteat!(data, (idx + 1):lenght_contributing_devices)
+    end
+    return data
+end
+
+function ramp_constraints!(
+    optimization_container::OptimizationContainer,
+    service::SR,
+    contributing_devices::U,
+    ::ServiceModel{SR, T},
+) where {
+    SR <: PSY.Reserve{PSY.ReserveUp},
+    T <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    initial_time = model_initial_time(optimization_container)
+    data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
+    service_name = PSY.get_name(service)
+    if !isempty(data)
+        service_upward_rateofchange!(
+            optimization_container,
+            data,
+            make_constraint_name(RAMP, SR),
+            make_variable_name(service_name, SR),
+            service_name,
+        )
+    else
+        @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
+    end
+    return
+end
+
+function ramp_constraints!(
+    optimization_container::OptimizationContainer,
+    service::SR,
+    contributing_devices::U,
+    ::ServiceModel{SR, T},
+) where {
+    SR <: PSY.Reserve{PSY.ReserveDown},
+    T <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    initial_time = model_initial_time(optimization_container)
+    data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
+    service_name = PSY.get_name(service)
+    if !isempty(data)
+        service_downward_rateofchange!(
+            optimization_container,
+            data,
+            make_constraint_name(RAMP, SR),
+            make_variable_name(service_name, SR),
+            service_name,
+        )
+    else
+        @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
+    end
+    return
+end
+
+
 function AddCostSpec(
     ::Type{T},
     ::Type{StepwiseCostReserve},
@@ -248,6 +353,14 @@ function include_service!(
             make_constraint_name(PSY.get_name(service), SR),
         )
     end
+    return
+end
+
+function include_service!(
+    constraint_info::T,
+    services,
+    ::ServiceModel{SR, ResponseReserve},
+) where {T <: AbstractRampConstraintInfo, SR <: PSY.Reserve}
     return
 end
 
