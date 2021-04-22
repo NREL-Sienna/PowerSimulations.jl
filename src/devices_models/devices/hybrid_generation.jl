@@ -25,6 +25,20 @@ get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, _) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, _) = PSY.get_output_active_power_limits(d).max
 get_variable_sign(::ActivePowerOutVariable, ::Type{PSY.HybridSystem}, _) = 1.0
 
+########################### ActivePowerShortageVariable, HybridSystem #################################
+
+get_variable_binary(::ActivePowerShortageVariable, ::Type{PSY.HybridSystem}, _) = false
+get_variable_lower_bound(::ActivePowerShortageVariable, d::PSY.HybridSystem, _) = 0.0
+get_variable_upper_bound(::ActivePowerShortageVariable, d::PSY.HybridSystem, _) = PSY.get_output_active_power_limits(d).max
+get_variable_sign(::ActivePowerShortageVariable, ::Type{PSY.HybridSystem}, _) = 1.0
+
+########################### ActivePowerSurplusVariable, HybridSystem #################################
+
+get_variable_binary(::ActivePowerSurplusVariable, ::Type{PSY.HybridSystem}, _) = false
+get_variable_lower_bound(::ActivePowerSurplusVariable, d::PSY.HybridSystem, _) = 0.0
+get_variable_upper_bound(::ActivePowerSurplusVariable, d::PSY.HybridSystem, _) = PSY.get_output_active_power_limits(d).max
+get_variable_sign(::ActivePowerSurplusVariable, ::Type{PSY.HybridSystem}, _) = 1.0
+
 ############## SubComponentActivePowerVariable, HybridSystem ####################
 
 get_variable_binary(::SubComponentActivePowerVariable, ::Type{PSY.HybridSystem}, _) = false

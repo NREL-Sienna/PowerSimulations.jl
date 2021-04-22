@@ -550,11 +550,11 @@ function power_commitment_ff(
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
             sum(variable[name, t] for t in 1:affected_time_periods) / length(affected_time_periods) +
-            varslack[name] >= param_ub[name] * multiplier_ub[name]
+            varslack[name, 1] >= param_ub[name] * multiplier_ub[name]
         )
         add_to_cost_expression!(
             optimization_container,
-            varslack[name] * FEEDFORWARD_SLACK_COST,
+            varslack[name, 1] * FEEDFORWARD_SLACK_COST,
         )
     end
 end
@@ -648,29 +648,30 @@ function feedforward!(
     ::DeviceModel{T, D},
     ff_model::PowerCommitmentFF,
 ) where {T <: PSY.HybridSystem, D <: AbstractDeviceFormulation}
-    # PSI.add_variables!(optimization_container, ActivePowerShortageVariable, devices, D())
-    var_name = make_variable_name(typeof(ActivePowerShortageVariable), D)
-    slack_variable = add_var_container!(
-        optimization_container,
-        var_name,
-        [PSY.get_name(d) for d in devices],
-    )
-    for d in devices
-        name = PSY.get_name(d)
-        slack_variable[name] = JuMP.@variable(
-            optimization_container.JuMPmodel,
-            base_name = "$(var_name)_{$(name)}",
-        )
-        JuMP.set_lower_bound(slack_variable[name], 0.0)
-    end
+    PSI.add_variables!(optimization_container, PSI.ActivePowerShortageVariable, devices, D())
+    # slack_var_name = make_variable_name(ActivePowerShortageVariable, T)
+    # slack_variable = add_var_container!(
+    #     optimization_container,
+    #     slack_var_name,
+    #     [PSY.get_name(d) for d in devices],
+    # )
+    # for d in devices
+    #     name = PSY.get_name(d)
+    #     slack_variable[name] = JuMP.@variable(
+    #         optimization_container.JuMPmodel,
+    #         base_name = "$(slack_var_name)_{$(name)}",
+    #     )
+    #     JuMP.set_lower_bound(slack_variable[name], 0.0)
+    # end
     for prefix in get_affected_variables(ff_model)
         var_name = make_variable_name(prefix, T)
+        varslack_name = PSI.make_variable_name(PSI.ACTIVE_POWER_SHORTAGE, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         power_commitment_ff(
             optimization_container,
             make_constraint_name(FEEDFORWARD_POWER_COMMITMENT, T),
             parameter_ref,
-            (var_name, ACTIVE_POWER_SHORTAGE),
+            (var_name, varslack_name),
             ff_model.affected_time_periods,
         )
     end
