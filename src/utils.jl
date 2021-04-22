@@ -190,7 +190,7 @@ function axis_array_to_dataframe(
 
                 result[t, ix] = input_array[name, i, t]
             end
-            res = DataFrames.DataFrame(hcat(third_dim, result))
+            res = DataFrames.DataFrame(hcat(third_dim, result), :auto)
             result_df = vcat(result_df, res)
         end
 
