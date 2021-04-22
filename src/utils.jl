@@ -246,7 +246,7 @@ function axis_array_to_dataframe(
 
                 result[t, ix] = _jump_value(input_array[name, i, t])
             end
-            res = DataFrames.DataFrame(hcat(third_dim, result))
+            res = DataFrames.DataFrame(hcat(third_dim, result), :auto)
             result_df = vcat(result_df, res)
         end
         return DataFrames.rename!(result_df, names)
