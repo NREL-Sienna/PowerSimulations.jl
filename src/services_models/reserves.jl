@@ -235,6 +235,7 @@ function ramp_constraints!(
     data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
     service_name = PSY.get_name(service)
     if !isempty(data)
+        # TODO: `make_constraint_name` to build unique constraint name using  service_name
         service_downward_rateofchange!(
             optimization_container,
             data,
@@ -247,7 +248,6 @@ function ramp_constraints!(
     end
     return
 end
-
 
 function AddCostSpec(
     ::Type{T},
@@ -359,8 +359,8 @@ end
 function include_service!(
     constraint_info::T,
     services,
-    ::ServiceModel{SR, ResponseReserve},
-) where {T <: AbstractRampConstraintInfo, SR <: PSY.Reserve}
+    ::ServiceModel{SR, RampReserve},
+) where {T <: AbstractRampConstraintInfo, SR <: PSY.Reserve{PSY.ReserveDown}}
     return
 end
 
