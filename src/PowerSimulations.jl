@@ -26,6 +26,7 @@ export FixedOutput
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
+export RampReserve
 export StepwiseCostReserve
 export PIDSmoothACE
 export GroupReserve

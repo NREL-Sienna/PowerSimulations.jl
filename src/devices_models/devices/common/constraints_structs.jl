@@ -179,3 +179,8 @@ function EnergyBalanceConstraintInfo(; component_name, efficiency_data, ic_energ
         nothing,
     )
 end
+
+struct ServiceRampConstraintInfo <: AbstractRampConstraintInfo
+    component_name::String
+    ramp_limits::UpDown
+end

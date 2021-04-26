@@ -28,6 +28,31 @@
     end
 end
 
+@testset "Test Ramp Reserves from Thermal Dispatch" begin
+    template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
+    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RampReserve))
+    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RampReserve))
+
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    for p in [true, false]
+        op_problem = OperationsProblem(template, c_sys5_uc; use_parameters = p)
+        @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        moi_tests(op_problem, p, 384, 0, 336, 192, 24, false)
+        symbols = [
+            :Reserve1__VariableReserve_ReserveUp,
+            :Reserve11__VariableReserve_ReserveUp,
+            :Reserve2__VariableReserve_ReserveDown,
+        ]
+        for sym in symbols
+            for v in op_problem.internal.optimization_container.variables[sym]
+                @test JuMP.has_lower_bound(v)
+                @test JuMP.lower_bound(v) == 0.0
+            end
+        end
+    end
+end
+
 @testset "Test Reserves from Thermal Standard UC" begin
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
