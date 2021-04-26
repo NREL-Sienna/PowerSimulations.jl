@@ -53,7 +53,6 @@ end
     end
 end
 
-
 @testset "Test Reserves from Thermal Standard UC" begin
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
