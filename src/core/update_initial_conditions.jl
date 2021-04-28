@@ -2,7 +2,7 @@
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
 function calculate_ic_quantity(
-    ::ICKey{TimeDurationON, T},
+    ::ICKey{InitialTimeDurationON, T},
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
@@ -22,7 +22,7 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    ::ICKey{TimeDurationOFF, T},
+    ::ICKey{InitialTimeDurationOFF, T},
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
@@ -137,7 +137,7 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    ::ICKey{EnergyLevel, T},
+    ::ICKey{InitialEnergyLevel, T},
     ic::InitialCondition,
     var_value::Float64,
     simulation_cache::Dict{<:CacheKey, AbstractCache},
@@ -291,10 +291,10 @@ function _get_ace_error(device, key)
 end
 
 function _get_duration_value(dev, key)
-    if key.ic_type == TimeDurationON
+    if key.ic_type == InitialTimeDurationON
         value = PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     else
-        @assert key.ic_type == TimeDurationOFF
+        @assert key.ic_type == InitialTimeDurationOFF
         value = !PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     end
 

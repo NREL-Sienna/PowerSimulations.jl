@@ -503,7 +503,7 @@ function duration_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+    for key in (ICKey(InitialTimeDurationON, T), ICKey(InitialTimeDurationOFF, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
@@ -524,7 +524,7 @@ function duration_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+    for key in (ICKey(InitialTimeDurationON, T), ICKey(InitialTimeDurationOFF, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
@@ -1027,7 +1027,7 @@ function startup_initial_condition_constraints!(
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
-    key_off = ICKey(TimeDurationOFF, PSY.ThermalMultiStart)
+    key_off = ICKey(InitialTimeDurationOFF, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(optimization_container, key_off)
     constraint_data = _get_data_startup_ic(initial_conditions_offtime, resolution)
 
@@ -1136,9 +1136,9 @@ function time_constraints!(
     parameters = model_has_parameters(optimization_container)
     resolution = model_resolution(optimization_container)
     initial_conditions_on =
-        get_initial_conditions(optimization_container, ICKey(TimeDurationON, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationON, T))
     initial_conditions_off =
-        get_initial_conditions(optimization_container, ICKey(TimeDurationOFF, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOFF, T))
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))
@@ -1183,9 +1183,9 @@ function time_constraints!(
     parameters = model_has_parameters(optimization_container)
     resolution = model_resolution(optimization_container)
     initial_conditions_on =
-        get_initial_conditions(optimization_container, ICKey(TimeDurationON, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationON, T))
     initial_conditions_off =
-        get_initial_conditions(optimization_container, ICKey(TimeDurationOFF, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOFF, T))
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))

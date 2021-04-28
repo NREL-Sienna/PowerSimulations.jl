@@ -93,9 +93,9 @@ export IntraProblemChronology
 # Initial Conditions Quantities
 export DevicePower
 export DeviceStatus
-export TimeDurationON
-export TimeDurationOFF
-export EnergyLevel
+export InitialTimeDurationON
+export InitialTimeDurationOFF
+export InitialEnergyLevel
 
 # cache_models
 export TimeStatusChange
@@ -333,6 +333,7 @@ include("core/device_models.jl")
 
 include("core/parameters.jl")
 include("core/variables.jl")
+include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
 include("core/cache.jl")
 include("core/feedforward_chronologies.jl")

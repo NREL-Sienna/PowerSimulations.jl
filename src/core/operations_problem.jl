@@ -867,13 +867,13 @@ end
 function get_initial_cache(cache::TimeStatusChange, problem::OperationsProblem)
     ini_cond_on = get_initial_conditions(
         get_optimization_container(problem),
-        TimeDurationON,
+        InitialTimeDurationON,
         cache.device_type,
     )
 
     ini_cond_off = get_initial_conditions(
         get_optimization_container(problem),
-        TimeDurationOFF,
+        InitialTimeDurationOFF,
         cache.device_type,
     )
 
@@ -908,7 +908,7 @@ end
 function get_initial_cache(cache::StoredEnergy, problem::OperationsProblem)
     ini_cond_level = get_initial_conditions(
         get_optimization_container(problem),
-        EnergyLevel,
+        InitialEnergyLevel,
         cache.device_type,
     )
 
