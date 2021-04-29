@@ -359,3 +359,95 @@ function device_multistart_range_ic!(
     end
     return
 end
+
+
+function reserve_power_ub!(
+    optimization_container::OptimizationContainer,
+    charging_range_data::Vector{DeviceRangeConstraintInfo},
+    discharging_range_data::Vector{DeviceRangeConstraintInfo},
+    cons_name::Symbol,
+    var_names::Tuple{Symbol, Symbol},
+)
+    time_steps = model_time_steps(optimization_container)
+    var_in = get_variable(optimization_container, var_names[1])
+    var_out = get_variable(optimization_container, var_names[2])
+    rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
+    rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    names = [get_component_name(x) for x in charging_range_data]
+    con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
+    con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
+
+    for (up_info, dn_info) in zip(charging_range_data, discharging_range_data), t in time_steps
+        name = get_component_name(up_info)
+        expression_up = JuMP.AffExpr(0.0)
+        for val in up_info.additional_terms_ub
+            JuMP.add_to_expression!(
+                expression_up,
+                get_variable(optimization_container, val)[name, t],
+                1.0,
+            )
+        end
+        expression_dn = JuMP.AffExpr(0.0)
+        for val in dn_info.additional_terms_lb
+            JuMP.add_to_expression!(
+                expression_dn,
+                get_variable(optimization_container, val)[name, t],
+                1.0,
+            )
+        end
+        con_up[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            expression_up <= var_in[name, t] + (up_info.limits.max - var_out[name, t])
+        )
+        con_dn[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            expression_dn <= var_out[name, t] + (dn_info.limits.max - var_in[name, t])
+        )
+    end
+    return
+end
+
+function reserve_energy_ub!(
+    optimization_container::OptimizationContainer,
+    constraint_infos::Vector{ReserveRangeConstraintInfo},
+    cons_name::Symbol,
+    var_name::Symbol,
+)
+    time_steps = model_time_steps(optimization_container)
+    var_e = get_variable(optimization_container, var_name)
+    resolution = model_resolution(optimization_container)
+    rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
+    rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    names = [get_component_name(x) for x in constraint_infos]
+    con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
+    con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
+
+    for const_info in constraint_infos, t in time_steps
+        name = get_component_name(const_info)
+        expression_up = JuMP.AffExpr(0.0)
+        for val in const_info.additional_terms_up
+            JuMP.add_to_expression!(
+                expression_up,
+                get_variable(optimization_container, val)[name, t],
+                get_time_frame(const_info, val)/MINUTES_IN_HOUR,
+            )
+        end
+        expression_dn = JuMP.AffExpr(0.0)
+        for val in const_info.additional_terms_dn
+            JuMP.add_to_expression!(
+                expression_dn,
+                get_variable(optimization_container, val)[name, t],
+                get_time_frame(const_info, val)/MINUTES_IN_HOUR,
+            )
+        end
+        con_up[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            expression_up  <=  (var_e[name, t] - const_info.limits.min) * const_info.efficiency.out
+        )
+        con_dn[name, t] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            expression_dn  <= (const_info.limits.max -  var_e[name, t]) / const_info.efficiency.in
+        )
+    end
+    return
+end
