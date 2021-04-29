@@ -475,7 +475,6 @@ function construct_device!(
     return
 end
 
-
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
@@ -489,9 +488,24 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices, BatteryDispatch())
-    add_variables!(optimization_container, ActivePowerOutVariable, devices, BatteryDispatch())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, BatteryDispatch())
+    add_variables!(
+        optimization_container,
+        ActivePowerInVariable,
+        devices,
+        BatteryDispatch(),
+    )
+    add_variables!(
+        optimization_container,
+        ActivePowerOutVariable,
+        devices,
+        BatteryDispatch(),
+    )
+    add_variables!(
+        optimization_container,
+        ReactivePowerVariable,
+        devices,
+        BatteryDispatch(),
+    )
     add_variables!(optimization_container, EnergyVariable, devices, BatteryDispatch())
     add_variables!(optimization_container, ReserveVariable, devices, BatteryDispatch())
     # Initial Conditions
@@ -568,8 +582,18 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices, BatteryDispatch())
-    add_variables!(optimization_container, ActivePowerOutVariable, devices, BatteryDispatch())
+    add_variables!(
+        optimization_container,
+        ActivePowerInVariable,
+        devices,
+        BatteryDispatch(),
+    )
+    add_variables!(
+        optimization_container,
+        ActivePowerOutVariable,
+        devices,
+        BatteryDispatch(),
+    )
     add_variables!(optimization_container, EnergyVariable, devices, BatteryDispatch())
     add_variables!(optimization_container, ReserveVariable, devices, BatteryDispatch())
     # Initial Conditions

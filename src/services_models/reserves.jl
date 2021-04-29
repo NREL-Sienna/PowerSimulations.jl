@@ -364,21 +364,15 @@ function include_service!(
     return
 end
 
-
 function include_service!(
     constraint_info::ReserveRangeConstraintInfo,
     services,
     ::ServiceModel{SR, RampReserve},
-) where {
-    SR <: PSY.Reserve{PSY.ReserveUp},
-}
+) where {SR <: PSY.Reserve{PSY.ReserveUp}}
     for (ix, service) in enumerate(services)
         # Should this be make_variable_name ?
         name = make_constraint_name(PSY.get_name(service), SR)
-        push!(
-            constraint_info.additional_terms_up,
-            name,
-        )
+        push!(constraint_info.additional_terms_up, name)
         set_time_frame!(constraint_info, (name => get_time_frame(service)))
     end
     return
@@ -388,16 +382,11 @@ function include_service!(
     constraint_info::ReserveRangeConstraintInfo,
     services,
     ::ServiceModel{SR, RampReserve},
-) where {
-    SR <: PSY.Reserve{PSY.ReserveDown},
-}
+) where {SR <: PSY.Reserve{PSY.ReserveDown}}
     for (ix, service) in enumerate(services)
         # Should this be make_variable_name ?
         name = make_constraint_name(PSY.get_name(service), SR)
-        push!(
-            constraint_info.additional_terms_dn,
-            name,
-        )
+        push!(constraint_info.additional_terms_dn, name)
         set_time_frame!(constraint_info, (name => get_time_frame(service)))
     end
     return
@@ -428,7 +417,7 @@ function add_device_services!(
     device::D,
     model::DeviceModel{D, BatteryDispatch},
 ) where {
-    T <:Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     D <: PSY.Storage,
 }
     return
@@ -438,9 +427,7 @@ function add_device_services!(
     constraint_info::ReserveRangeConstraintInfo,
     device::D,
     model::DeviceModel{D, BatteryDispatch},
-) where {
-    D <: PSY.Storage,
-}
+) where {D <: PSY.Storage}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.component_type)
             services = (

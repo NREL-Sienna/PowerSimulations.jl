@@ -360,7 +360,6 @@ function device_multistart_range_ic!(
     return
 end
 
-
 function reserve_power_ub!(
     optimization_container::OptimizationContainer,
     charging_range_data::Vector{DeviceRangeConstraintInfo},
@@ -377,7 +376,9 @@ function reserve_power_ub!(
     con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
     con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
 
-    for (up_info, dn_info) in zip(charging_range_data, discharging_range_data), t in time_steps
+    for (up_info, dn_info) in zip(charging_range_data, discharging_range_data),
+        t in time_steps
+
         name = get_component_name(up_info)
         expression_up = JuMP.AffExpr(0.0)
         for val in up_info.additional_terms_ub
@@ -429,7 +430,7 @@ function reserve_energy_ub!(
             JuMP.add_to_expression!(
                 expression_up,
                 get_variable(optimization_container, val)[name, t],
-                get_time_frame(const_info, val)/MINUTES_IN_HOUR,
+                get_time_frame(const_info, val) / MINUTES_IN_HOUR,
             )
         end
         expression_dn = JuMP.AffExpr(0.0)
@@ -437,16 +438,18 @@ function reserve_energy_ub!(
             JuMP.add_to_expression!(
                 expression_dn,
                 get_variable(optimization_container, val)[name, t],
-                get_time_frame(const_info, val)/MINUTES_IN_HOUR,
+                get_time_frame(const_info, val) / MINUTES_IN_HOUR,
             )
         end
         con_up[name, t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            expression_up  <=  (var_e[name, t] - const_info.limits.min) * const_info.efficiency.out
+            expression_up <=
+            (var_e[name, t] - const_info.limits.min) * const_info.efficiency.out
         )
         con_dn[name, t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            expression_dn  <= (const_info.limits.max -  var_e[name, t]) / const_info.efficiency.in
+            expression_dn <=
+            (const_info.limits.max - var_e[name, t]) / const_info.efficiency.in
         )
     end
     return
