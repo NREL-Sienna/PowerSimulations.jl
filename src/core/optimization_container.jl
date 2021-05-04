@@ -5,6 +5,7 @@ mutable struct OptimizationContainer
     settings::Settings
     settings_copy::Settings
     variables::Dict{Symbol, AbstractArray}
+    aux_variables::Dict{Symbol, AbstractArray}
     constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
@@ -27,6 +28,7 @@ mutable struct OptimizationContainer
             resolution,
             settings,
             copy_for_serialization(settings),
+            Dict{Symbol, AbstractArray}(),
             Dict{Symbol, AbstractArray}(),
             Dict{Symbol, AbstractArray}(),
             zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
@@ -235,6 +237,8 @@ model_initial_time(optimization_container::OptimizationContainer) =
 # Internal Variables, Constraints and Parameters accessors
 get_variables(optimization_container::OptimizationContainer) =
     optimization_container.variables
+get_aux_variables(optimization_container::OptimizationContainer) =
+    optimization_container.variables
 get_constraints(optimization_container::OptimizationContainer) =
     optimization_container.constraints
 get_parameters(optimization_container::OptimizationContainer) =
@@ -312,24 +316,42 @@ function assign_variable!(
     return
 end
 
+function _assign_container!(container::Dict, name::Symbol, value)
+    if haskey(container, name)
+        @error "variable $name is already stored" sort!(
+            collect(keys!(container)),
+        )
+        throw(IS.InvalidValue(" $name is already stored"))
+    end
+    container[name] = value
+end
+
 function assign_variable!(
     optimization_container::OptimizationContainer,
     name::Symbol,
     value,
 )
     @debug "assign_variable" name
-
-    if haskey(optimization_container.variables, name)
-        @error "variable $name is already stored" sort!(
-            get_variable_names(optimization_container),
-        )
-        throw(IS.InvalidValue("variable $name is already stored"))
-    end
-
-    optimization_container.variables[name] = value
+    _assign_container!(optimization_container.variables, name, value)
     return
 end
 
+function add_aux_var_container!(
+    optimization_container::OptimizationContainer,
+    var_name::Symbol,
+    axs...;
+    sparse = false,
+)
+    if sparse
+        container = sparse_container_spec(Float64, axs...)
+    else
+        container = container_spec(Float64, axs...)
+    end
+    _assign_container!(optimization_container, var_name, container)
+    return container
+end
+
+# TODO: Use this type of interface for regular vars later
 function add_var_container!(
     optimization_container::OptimizationContainer,
     var_name::Symbol,
@@ -337,9 +359,9 @@ function add_var_container!(
     sparse = false,
 )
     if sparse
-        container = sparse_container_spec(optimization_container.JuMPmodel, axs...)
+        container = sparse_container_spec(JuMP.VariableRef, axs...)
     else
-        container = container_spec(optimization_container.JuMPmodel, axs...)
+        container = container_spec(JuMP.VariableRef, axs...)
     end
     assign_variable!(optimization_container, var_name, container)
     return container
@@ -415,9 +437,9 @@ function add_cons_container!(
 )
     if !haskey(optimization_container.constraints, cons_name)
         if sparse
-            container = sparse_container_spec(optimization_container.JuMPmodel, axs...)
+            container = sparse_container_spec(JuMP.ConstraintRef, axs...)
         else
-            container = JuMPConstraintArray(undef, axs...)
+            container = container_spec(JuMP.ConstraintRef, axs...)
         end
         assign_constraint!(optimization_container, cons_name, container)
     else
