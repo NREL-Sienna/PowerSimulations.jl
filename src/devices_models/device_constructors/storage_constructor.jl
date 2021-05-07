@@ -506,8 +506,18 @@ function construct_device!(
         devices,
         BatteryAncialliryServices(),
     )
-    add_variables!(optimization_container, EnergyVariable, devices, BatteryAncialliryServices())
-    add_variables!(optimization_container, ReserveVariable, devices, BatteryAncialliryServices())
+    add_variables!(
+        optimization_container,
+        EnergyVariable,
+        devices,
+        BatteryAncialliryServices(),
+    )
+    add_variables!(
+        optimization_container,
+        ReserveVariable,
+        devices,
+        BatteryAncialliryServices(),
+    )
     # Initial Conditions
     initial_conditions!(optimization_container, devices, BatteryAncialliryServices())
 
@@ -594,8 +604,18 @@ function construct_device!(
         devices,
         BatteryAncialliryServices(),
     )
-    add_variables!(optimization_container, EnergyVariable, devices, BatteryAncialliryServices())
-    add_variables!(optimization_container, ReserveVariable, devices, BatteryAncialliryServices())
+    add_variables!(
+        optimization_container,
+        EnergyVariable,
+        devices,
+        BatteryAncialliryServices(),
+    )
+    add_variables!(
+        optimization_container,
+        ReserveVariable,
+        devices,
+        BatteryAncialliryServices(),
+    )
     # Initial Conditions
     initial_conditions!(optimization_container, devices, BatteryAncialliryServices())
 
