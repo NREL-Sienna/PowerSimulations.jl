@@ -540,6 +540,55 @@ function duration_initial_condition!(
     return
 end
 
+########################### Auxiliary Variables Addition ################################
+function add_variable!(
+    optimization_container::OptimizationContainer,
+    ::T,
+    devices::U,
+    formulation,
+) where {T <: TimeDurationON, U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.ThermalGen}
+    @assert !isempty(devices)
+    time_steps = model_time_steps(optimization_container)
+    variable = add_aux_var_container!(
+        optimization_container,
+        AuxVarKey(T, D),
+        [PSY.get_name(d) for d in devices],
+        time_steps,
+    )
+
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        status = PSY.get_status(d)
+        variable[name, t] = status ? PSY.get_time_at_status(d) : 0.0
+    end
+
+    return
+end
+
+function add_variable!(
+    optimization_container::OptimizationContainer,
+    ::T,
+    devices::U,
+    formulation,
+) where {T <: TimeDurationOFF, U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.ThermalGen}
+    @assert !isempty(devices)
+    time_steps = model_time_steps(optimization_container)
+    variable = add_aux_var_container!(
+        optimization_container,
+        AuxVarKey(T, D),
+        [PSY.get_name(d) for d in devices],
+        time_steps,
+    )
+
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        status = !PSY.get_status(d)
+        variable[name, t] = status ? PSY.get_time_at_status(d) : 0.0
+    end
+
+    return
+end
+
 ########################### Ramp/Rate of Change Constraints ################################
 """
 This function gets the data for the generators for ramping constraints of thermal generators
