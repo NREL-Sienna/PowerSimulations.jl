@@ -364,6 +364,34 @@ function include_service!(
     return
 end
 
+function include_service!(
+    constraint_info::ReserveRangeConstraintInfo,
+    services,
+    ::ServiceModel{SR, RampReserve},
+) where {SR <: PSY.Reserve{PSY.ReserveUp}}
+    for (ix, service) in enumerate(services)
+        # Should this be make_variable_name ?
+        name = make_constraint_name(PSY.get_name(service), SR)
+        push!(constraint_info.additional_terms_up, name)
+        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+    end
+    return
+end
+
+function include_service!(
+    constraint_info::ReserveRangeConstraintInfo,
+    services,
+    ::ServiceModel{SR, RampReserve},
+) where {SR <: PSY.Reserve{PSY.ReserveDown}}
+    for (ix, service) in enumerate(services)
+        # Should this be make_variable_name ?
+        name = make_constraint_name(PSY.get_name(service), SR)
+        push!(constraint_info.additional_terms_dn, name)
+        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+    end
+    return
+end
+
 function add_device_services!(
     constraint_info::T,
     device::D,
@@ -372,6 +400,34 @@ function add_device_services!(
     T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     D <: PSY.Device,
 }
+    for service_model in get_services(model)
+        if PSY.has_service(device, service_model.component_type)
+            services = (
+                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
+            )
+            @assert !isempty(services)
+            include_service!(constraint_info, services, service_model)
+        end
+    end
+    return
+end
+
+function add_device_services!(
+    constraint_info::T,
+    device::D,
+    model::DeviceModel{D, BatteryAncialliryServices},
+) where {
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    D <: PSY.Storage,
+}
+    return
+end
+
+function add_device_services!(
+    constraint_info::ReserveRangeConstraintInfo,
+    device::D,
+    model::DeviceModel{D, BatteryAncialliryServices},
+) where {D <: PSY.Storage}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.component_type)
             services = (

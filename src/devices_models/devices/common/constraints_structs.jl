@@ -184,3 +184,29 @@ struct ServiceRampConstraintInfo <: AbstractRampConstraintInfo
     component_name::String
     ramp_limits::UpDown
 end
+
+struct ReserveRangeConstraintInfo
+    component_name::String
+    limits::MinMax
+    efficiency::InOut
+    time_frames::Dict{Symbol, Float64}
+    additional_terms_up::Vector{Symbol}
+    additional_terms_dn::Vector{Symbol}
+end
+
+function ReserveRangeConstraintInfo(name::String, limits::MinMax, efficiency::InOut)
+    return ReserveRangeConstraintInfo(
+        name,
+        limits,
+        efficiency,
+        Dict{Symbol, Float64}(),
+        Vector{Symbol}(),
+        Vector{Symbol}(),
+    )
+end
+
+get_component_name(d::ReserveRangeConstraintInfo) = d.component_name
+get_time_frames(v::ReserveRangeConstraintInfo) = v.time_frames
+get_time_frame(v::ReserveRangeConstraintInfo, name::Symbol) = v.time_frames[name]
+set_time_frame!(v::ReserveRangeConstraintInfo, value::Pair{Symbol, Float64}) =
+    push!(v.time_frames, value)
