@@ -685,7 +685,7 @@ function add_to_cost!(
                 optimization_container,
                 var_name,
                 component_name,
-                start_cost_data.cold * spec.multiplier,
+                start_cost_data.hot * spec.multiplier,
                 t,
             )
         end
