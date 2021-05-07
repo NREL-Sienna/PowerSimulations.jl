@@ -415,7 +415,7 @@ end
 function add_device_services!(
     constraint_info::T,
     device::D,
-    model::DeviceModel{D, BatteryDispatch},
+    model::DeviceModel{D, BatteryAncialliryServices},
 ) where {
     T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     D <: PSY.Storage,
@@ -426,7 +426,7 @@ end
 function add_device_services!(
     constraint_info::ReserveRangeConstraintInfo,
     device::D,
-    model::DeviceModel{D, BatteryDispatch},
+    model::DeviceModel{D, BatteryAncialliryServices},
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.component_type)

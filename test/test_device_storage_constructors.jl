@@ -53,7 +53,7 @@ end
 end
 
 @testset "Storage with Reservation DC - PF" begin
-    model = DeviceModel(GenericBattery, BatteryDispatch)
+    model = DeviceModel(GenericBattery, BatteryAncialliryServices)
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(op_problem, model)
@@ -62,7 +62,7 @@ end
 end
 
 @testset "Storage with Reservation With AC - PF" begin
-    model = DeviceModel(GenericBattery, BatteryDispatch)
+    model = DeviceModel(GenericBattery, BatteryAncialliryServices)
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(op_problem, model)

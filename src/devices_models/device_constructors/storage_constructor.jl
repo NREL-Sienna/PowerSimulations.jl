@@ -478,7 +478,7 @@ end
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{St, BatteryDispatch},
+    model::DeviceModel{St, BatteryAncialliryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
@@ -492,24 +492,24 @@ function construct_device!(
         optimization_container,
         ActivePowerInVariable,
         devices,
-        BatteryDispatch(),
+        BatteryAncialliryServices(),
     )
     add_variables!(
         optimization_container,
         ActivePowerOutVariable,
         devices,
-        BatteryDispatch(),
+        BatteryAncialliryServices(),
     )
     add_variables!(
         optimization_container,
         ReactivePowerVariable,
         devices,
-        BatteryDispatch(),
+        BatteryAncialliryServices(),
     )
-    add_variables!(optimization_container, EnergyVariable, devices, BatteryDispatch())
-    add_variables!(optimization_container, ReserveVariable, devices, BatteryDispatch())
+    add_variables!(optimization_container, EnergyVariable, devices, BatteryAncialliryServices())
+    add_variables!(optimization_container, ReserveVariable, devices, BatteryAncialliryServices())
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, BatteryDispatch())
+    initial_conditions!(optimization_container, devices, BatteryAncialliryServices())
 
     # Constraints
     add_constraints!(
@@ -572,7 +572,7 @@ end
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{St, BatteryDispatch},
+    model::DeviceModel{St, BatteryAncialliryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
@@ -586,18 +586,18 @@ function construct_device!(
         optimization_container,
         ActivePowerInVariable,
         devices,
-        BatteryDispatch(),
+        BatteryAncialliryServices(),
     )
     add_variables!(
         optimization_container,
         ActivePowerOutVariable,
         devices,
-        BatteryDispatch(),
+        BatteryAncialliryServices(),
     )
-    add_variables!(optimization_container, EnergyVariable, devices, BatteryDispatch())
-    add_variables!(optimization_container, ReserveVariable, devices, BatteryDispatch())
+    add_variables!(optimization_container, EnergyVariable, devices, BatteryAncialliryServices())
+    add_variables!(optimization_container, ReserveVariable, devices, BatteryAncialliryServices())
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, BatteryDispatch())
+    initial_conditions!(optimization_container, devices, BatteryAncialliryServices())
 
     # Constraints
     add_constraints!(

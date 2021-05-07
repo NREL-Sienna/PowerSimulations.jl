@@ -4,7 +4,7 @@ abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
-struct BatteryDispatch <: AbstractStorageFormulation end
+struct BatteryAncialliryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
 
 get_variable_sign(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
