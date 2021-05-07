@@ -1,4 +1,4 @@
-struct ICKey{IC <: InitialConditionType, D <: PSY.Component}
+struct ICKey{IC <: InitialConditionType, D <: PSY.Component} <: OptimizationContainerKey
     ic_type::Type{IC}
     device_type::Type{D}
 end

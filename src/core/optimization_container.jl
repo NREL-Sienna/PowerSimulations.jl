@@ -5,7 +5,7 @@ mutable struct OptimizationContainer
     settings::Settings
     settings_copy::Settings
     variables::Dict{Symbol, AbstractArray}
-    aux_variables::Dict{Symbol, AbstractArray}
+    aux_variables::Dict{AuxVarKey, AbstractArray}
     constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
@@ -316,14 +316,14 @@ function assign_variable!(
     return
 end
 
-function _assign_container!(container::Dict, name::Symbol, value)
-    if haskey(container, name)
-        @error "variable $name is already stored" sort!(
+function _assign_container!(container::Dict, key, value)
+    if haskey(container, key)
+        @error "variable $key is already stored" sort!(
             collect(keys!(container)),
         )
-        throw(IS.InvalidValue(" $name is already stored"))
+        throw(IS.InvalidValue("$key is already stored"))
     end
-    container[name] = value
+    container[key] = value
 end
 
 function assign_variable!(
@@ -338,7 +338,7 @@ end
 
 function add_aux_var_container!(
     optimization_container::OptimizationContainer,
-    var_name::Symbol,
+    var_key::AuxVarKey{<:AuxVariableType, <:PSY.Component},
     axs...;
     sparse = false,
 )
@@ -347,7 +347,7 @@ function add_aux_var_container!(
     else
         container = container_spec(Float64, axs...)
     end
-    _assign_container!(optimization_container, var_name, container)
+    _assign_container!(optimization_container.aux_variables, var_key, container)
     return container
 end
 

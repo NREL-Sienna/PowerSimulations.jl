@@ -584,6 +584,15 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
     return obj.op_problem_type(obj.template, sys, kwargs[:jump_model]; settings...)
 end
 
+function calculate_aux_variables!(problem::OperationsProblem)
+    optimization_container = get_optimization_container(problem)
+    aux_vars = get_aux_variables(optimization_container)
+    for (k, v) in aux_vars
+
+    end
+    return
+end
+
 function solve_impl(problem::OperationsProblem; optimizer = nothing)
     if !is_built(problem)
         error(
@@ -607,6 +616,7 @@ function solve_impl(problem::OperationsProblem; optimizer = nothing)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         return RunStatus.FAILED
     else
+        calculate_aux_variables!(problem::OperationsProblem)
         status = RunStatus.SUCCESSFUL
     end
     return status
