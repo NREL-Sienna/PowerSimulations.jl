@@ -10,7 +10,6 @@ function add_variables!(
     add_variable!(optimization_container, T(), devices, formulation)
 end
 
-
 @doc raw"""
 Default implementation of adding auxiliary variable to the model.
 """
@@ -19,7 +18,10 @@ function add_variable!(
     ::T,
     devices::U,
     formulation,
-) where {T <: AuxVariableType, U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
+) where {
+    T <: AuxVariableType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
     variable = add_aux_var_container!(

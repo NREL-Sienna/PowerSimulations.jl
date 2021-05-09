@@ -35,6 +35,18 @@ function psi_constraint_test(
     return
 end
 
+function psi_aux_var_test(
+    op_problem::OperationsProblem,
+    constraint_keys::Vector{<:PSI.AuxVarKey},
+)
+    op_container = PSI.get_optimization_container(op_problem)
+    vars = PSI.get_aux_variables(op_container)
+    for key in constraint_keys
+        @test !isnothing(get(vars, key, nothing))
+    end
+    return
+end
+
 function psi_checkbinvar_test(
     op_problem::OperationsProblem,
     bin_variable_names::Vector{Symbol},

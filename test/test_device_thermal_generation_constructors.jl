@@ -18,11 +18,17 @@ end
         PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
+
     uc_constraint_names = [
         PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
         PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
         PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
         PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+    ]
+
+    aux_vars_keys = [
+        PSI.AuxVarKey(PSI.TimeDurationOFF, ThermalStandard),
+        PSI.AuxVarKey(PSI.TimeDurationON, ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -33,6 +39,7 @@ end
     psi_constraint_test(op_problem, uc_constraint_names)
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
+    psi_aux_var_test(op_problem, aux_vars_keys)
 
     op_problem = OperationsProblem(
         MockOperationProblem,
@@ -73,6 +80,12 @@ end
         PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
         PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
     ]
+
+    aux_vars_keys = [
+        PSI.AuxVarKey(PSI.TimeDurationOFF, ThermalStandard),
+        PSI.AuxVarKey(PSI.TimeDurationON, ThermalStandard),
+    ]
+
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
@@ -82,6 +95,7 @@ end
     psi_constraint_test(op_problem, uc_constraint_names)
     psi_checkbinvar_test(op_problem, bin_variable_names)
     psi_checkobjfun_test(op_problem, GAEVF)
+    psi_aux_var_test(op_problem, aux_vars_keys)
 
     op_problem = OperationsProblem(
         MockOperationProblem,

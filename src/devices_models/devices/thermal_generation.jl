@@ -385,7 +385,7 @@ This function adds the Commitment Status constraint when there are CommitmentVar
 """
 function commitment_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    ::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
@@ -540,13 +540,16 @@ function duration_initial_condition!(
     return
 end
 
-########################### Auxiliary Variables Addition ################################
+############################# Auxiliary Variables Addition #################################
 function add_variable!(
     optimization_container::OptimizationContainer,
     ::T,
     devices::U,
     formulation,
-) where {T <: TimeDurationON, U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.ThermalGen}
+) where {
+    T <: TimeDurationON,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.ThermalGen}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
     variable = add_aux_var_container!(
@@ -570,7 +573,10 @@ function add_variable!(
     ::T,
     devices::U,
     formulation,
-) where {T <: TimeDurationOFF, U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.ThermalGen}
+) where {
+    T <: TimeDurationOFF,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.ThermalGen}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
     variable = add_aux_var_container!(

@@ -238,7 +238,7 @@ model_initial_time(optimization_container::OptimizationContainer) =
 get_variables(optimization_container::OptimizationContainer) =
     optimization_container.variables
 get_aux_variables(optimization_container::OptimizationContainer) =
-    optimization_container.variables
+    optimization_container.aux_variables
 get_constraints(optimization_container::OptimizationContainer) =
     optimization_container.constraints
 get_parameters(optimization_container::OptimizationContainer) =
@@ -318,9 +318,7 @@ end
 
 function _assign_container!(container::Dict, key, value)
     if haskey(container, key)
-        @error "variable $key is already stored" sort!(
-            collect(keys!(container)),
-        )
+        @error "variable $key is already stored" sort!(collect(keys!(container)))
         throw(IS.InvalidValue("$key is already stored"))
     end
     container[key] = value

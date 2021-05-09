@@ -222,6 +222,33 @@ function storage_energy_initial_condition!(
     return
 end
 
+############################# Auxiliary Variables Addition #################################
+function add_variable!(
+    optimization_container::OptimizationContainer,
+    ::T,
+    devices::U,
+    formulation,
+) where {
+    T <: EnergyLevel,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Storage}
+    @assert !isempty(devices)
+    time_steps = model_time_steps(optimization_container)
+    variable = add_aux_var_container!(
+        optimization_container,
+        AuxVarKey(T, D),
+        [PSY.get_name(d) for d in devices],
+        time_steps,
+    )
+
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        variable[name, t] = PSY.get_initial_energy(d)
+    end
+
+    return
+end
+
 ############################ Energy Capacity Constraints####################################
 
 function energy_capacity_constraints!(
