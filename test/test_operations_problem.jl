@@ -184,8 +184,8 @@ end
             push!(LMPs, duals[!, sort(propertynames(duals))])
         end
     end
-    # TODO: the above calculation executes, but the following test does not pass
-    #@test isapprox(convert(Array, LMPs[1]), convert(Array, LMPs[2]), atol = 100.0)
+
+    @test isapprox(LMPs[1], LMPs[3], atol = 100.0)
 end
 
 @testset "Test ProblemResults interfaces" begin

@@ -94,7 +94,7 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
     for bus in buses
         lmps[get_name(bus)] = μ * ptdf[:, get_number(bus)]
     end
-    lmp = λ .- DataFrames.DataFrame(lmps)
+    lmp = λ .+ DataFrames.DataFrame(lmps)
     return lmp[!, sort(propertynames(lmp))]
 end
 
