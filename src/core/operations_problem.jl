@@ -586,8 +586,10 @@ end
 
 function calculate_aux_variables!(problem::OperationsProblem)
     optimization_container = get_optimization_container(problem)
+    system = get_system(problem)
     aux_vars = get_aux_variables(optimization_container)
-    for (k, v) in aux_vars
+    for key in keys(aux_vars)
+        calculate_aux_variable_value!(optimization_container, key, system)
     end
     return
 end

@@ -540,61 +540,36 @@ function duration_initial_condition!(
     return
 end
 
-############################# Auxiliary Variables Addition #################################
-function add_variable!(
-    optimization_container::OptimizationContainer,
-    ::T,
-    devices::U,
-    formulation,
-) where {
-    T <: TimeDurationON,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-} where {D <: PSY.ThermalGen}
-    @assert !isempty(devices)
-    time_steps = model_time_steps(optimization_container)
-    variable = add_aux_var_container!(
-        optimization_container,
-        AuxVarKey(T, D),
-        [PSY.get_name(d) for d in devices],
-        time_steps,
-    )
+############################ Auxiliary Variables Calculation ################################
+function calculate_aux_variable_value!(optimization_container::OptimizationContainer,
+                                       key::AuxVarKey{TimeDurationON, T},
+                                       ::PSY.System) where {T <: PSY.ThermalGen}
+    on_var_results = get_variable(optimization_container, OnVariable, T)
+    aux_var_container = get_aux_variables(optimization_container)[key]
 
-    for t in time_steps, d in devices
-        name = PSY.get_name(d)
-        status = PSY.get_status(d)
-        variable[name, t] = status ? PSY.get_time_at_status(d) : 0.0
+    time_steps = model_time_steps(optimization_container)
+    resolution = model_resolution(optimization_container)
+    minutes_per_period = Dates.value(Dates.Minute(resolution))
+
+    for ix in eachindex(JuMP.axes(aux_var_container)[1])
+        @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
+        on_var = JuMP.value.(on_var_results.data[ix, :])
+        if sum(on_var) == time_steps[end]
+
+        end
     end
 
     return
 end
 
-function add_variable!(
-    optimization_container::OptimizationContainer,
-    ::T,
-    devices::U,
-    formulation,
-) where {
-    T <: TimeDurationOFF,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-} where {D <: PSY.ThermalGen}
-    @assert !isempty(devices)
-    time_steps = model_time_steps(optimization_container)
-    variable = add_aux_var_container!(
-        optimization_container,
-        AuxVarKey(T, D),
-        [PSY.get_name(d) for d in devices],
-        time_steps,
-    )
-
-    for t in time_steps, d in devices
-        name = PSY.get_name(d)
-        status = !PSY.get_status(d)
-        variable[name, t] = status ? PSY.get_time_at_status(d) : 0.0
-    end
+function calculate_aux_variable_value!(optimization_container::OptimizationContainer,
+                                       key::AuxVarKey{TimeDurationOFF, T},
+                                       ::PSY.System) where {T <: PSY.ThermalGen}
+    on_var_results = get_variable(optimization_container, OnVariable, T)
+    aux_var_container = get_aux_variables(optimization_container)[key]
 
     return
 end
-
 ########################### Ramp/Rate of Change Constraints ################################
 """
 This function gets the data for the generators for ramping constraints of thermal generators
@@ -649,7 +624,7 @@ This function adds the ramping limits of generators when there are CommitmentVar
 """
 function ramp_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    ::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},

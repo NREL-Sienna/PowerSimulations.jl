@@ -30,11 +30,5 @@ function add_variable!(
         [PSY.get_name(d) for d in devices],
         time_steps,
     )
-
-    for t in time_steps, d in devices
-        name = PSY.get_name(d)
-        variable[name, t] = 0.0
-    end
-
     return
 end
