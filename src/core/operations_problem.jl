@@ -894,7 +894,7 @@ function _write_model_aux_variable_results!(
         write_result!(
             store,
             problem_name,
-            STORE_CONTAINER_VARIABLES,
+            STORE_CONTAINER_AUX_VARIABLES,
             name,
             timestamp,
             variable,
