@@ -736,6 +736,13 @@ function write_model_results!(store, problem, timestamp; exports = nothing)
         timestamp,
         export_params,
     )
+    _write_model_aux_variable_results!(
+        store,
+        optimization_container,
+        problem,
+        timestamp,
+        export_params,
+    )
     return
 end
 
@@ -857,6 +864,44 @@ function _write_model_variable_results!(
 
         if exports !== nothing &&
            should_export_variable(exports[:exports], timestamp, problem_name_str, name)
+            horizon = exports[:horizon]
+            resolution = exports[:resolution]
+            file_type = exports[:file_type]
+            df = axis_array_to_dataframe(variable)
+            time_col = range(timestamp, length = horizon, step = resolution)
+            DataFrames.insertcols!(df, 1, :DateTime => time_col)
+            export_result(file_type, exports_path, name, timestamp, df)
+        end
+    end
+end
+
+function _write_model_aux_variable_results!(
+    store,
+    optimization_container,
+    problem,
+    timestamp,
+    exports,
+)
+    problem_name_str = get_name(problem)
+    problem_name = Symbol(problem_name_str)
+    if exports !== nothing
+        exports_path = joinpath(exports[:exports_path], "aux_variables")
+        mkpath(exports_path)
+    end
+
+    for (key, variable) in get_aux_variables(optimization_container)
+        name = encode_key(key)
+        write_result!(
+            store,
+            problem_name,
+            STORE_CONTAINER_VARIABLES,
+            name,
+            timestamp,
+            variable,
+        )
+
+        if exports !== nothing &&
+            should_export_variable(exports[:exports], timestamp, problem_name_str, name)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]

@@ -10,5 +10,4 @@ end
 struct TimeDurationON <: AuxVariableType end
 struct TimeDurationOFF <: AuxVariableType end
 
-make_variable_name(::Type{TimeDurationON}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "TimeON")
-make_variable_name(::Type{TimeDurationOFF}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "TimeOFF")
+encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = "$T_$U"
