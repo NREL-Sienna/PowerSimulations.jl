@@ -639,11 +639,9 @@ function _get_data_for_rocc(
     lenght_devices_power = length(initial_conditions_power)
     data = Vector{DeviceRampConstraintInfo}(undef, lenght_devices_power)
     idx = 0
-    for (ix, ic) in enumerate(initial_conditions_power)
+    for ic in initial_conditions_power
         g = ic.device
         name = PSY.get_name(g)
-        non_binding_up = false
-        non_binding_down = false
         ramp_limits = PSY.get_ramp_limits(g)
         if !(ramp_limits === nothing)
             p_lims = PSY.get_active_power_limits(g)
