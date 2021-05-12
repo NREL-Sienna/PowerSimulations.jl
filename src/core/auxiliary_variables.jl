@@ -10,4 +10,4 @@ end
 struct TimeDurationON <: AuxVariableType end
 struct TimeDurationOFF <: AuxVariableType end
 
-encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = "$T_$U"
+encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = "$(T)_$(U)"
