@@ -560,9 +560,10 @@ function calculate_aux_variable_value!(
         on_var = JuMP.value.(on_var_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_var_container.data[ix, :] .= ini_cond_value
-        if sum(on_var) == time_steps[end] # Unit was always on
+        sum_on_var = sum(on_var)
+        if sum_on_var == time_steps[end] # Unit was always on
             aux_var_container.data[ix, :] += time_steps * minutes_per_period
-        elseif sum(on_var) == 0.0 # Unit was always off
+        elseif sum_on_var == 0.0 # Unit was always off
             aux_var_container.data[ix, :] .= 0.0
         else
             previous_condition = ini_cond_value
