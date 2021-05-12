@@ -885,7 +885,8 @@ function _write_model_aux_variable_results!(
     problem_name_str = get_name(problem)
     problem_name = Symbol(problem_name_str)
     if exports !== nothing
-        exports_path = joinpath(exports[:exports_path], "aux_variables")
+        # TODO: Should the export go to a folder aux_variables
+        exports_path = joinpath(exports[:exports_path], "variables")
         mkpath(exports_path)
     end
 
