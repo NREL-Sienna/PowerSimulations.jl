@@ -8,7 +8,6 @@ function verify_export_results(results, export_path)
     for problem_results in values(results.problem_results)
         problem = problem_results.problem
         rpath = problem_results.results_output_folder
-        base_path = results.path
         for timestamp in get_existing_timestamps(problem_results)
             for name in get_existing_duals(problem_results)
                 compare_results(rpath, export_path, problem, "duals", name, timestamp)
@@ -152,7 +151,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test IS.get_uuid(get_system(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
         else
             @test get_system(results_uc) === nothing
-            @test length(read_realized_variables(results_uc)) == 10 #verifies this works without system
+            @test length(read_realized_variables(results_uc)) == 12 #verifies this works without system
             @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
             set_system!(results_uc, c_sys5_hy_uc)
             @test IS.get_uuid(get_system!(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
@@ -203,7 +202,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         end
 
         realized_var_uc = read_realized_variables(results_uc)
-        @test length(keys(realized_var_uc)) == 10
+        @test length(keys(realized_var_uc)) == 12
         for var in values(realized_var_uc)
             @test size(var)[1] == 48
         end
@@ -386,7 +385,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test IS.get_uuid(get_system(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
         else
             @test get_system(results_rh) === nothing
-            @test length(read_realized_variables(results_rh)) == 10 #verifies this works without system
+            @test length(read_realized_variables(results_rh)) == 12 #verifies this works without system
             set_system!(results_rh, c_sys5_hy_uc)
             @test IS.get_uuid(get_system!(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
         end
@@ -427,7 +426,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         end
 
         realized_var_rh = read_realized_variables(results_rh)
-        @test length(keys(realized_var_rh)) == 10
+        @test length(keys(realized_var_rh)) == 12
         for var in values(realized_var_rh)
             @test size(var)[1] == 48
             existing_timetsamps = get_existing_timestamps(results_rh)

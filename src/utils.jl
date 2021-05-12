@@ -308,7 +308,7 @@ end
 
 function to_array(array::JuMP.Containers.DenseAxisArray{<:Number})
     length(axes(array)) > 2 && error("array axes not supported: $(axes(array))")
-    return array.data
+    return permutedims(array.data)
 end
 
 function to_array(array::JuMP.Containers.SparseAxisArray)
