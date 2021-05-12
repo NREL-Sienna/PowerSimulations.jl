@@ -678,7 +678,7 @@ function initial_condition_update!(
     # TODO: Replace this convoluted way to get information with access to data store
     simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
-        name = device_name(ic)
+        name = get_device_name(ic)
         interval_chronology =
             get_problem_interval_chronology(sim.sequence, get_name(problem))
         var_value = get_problem_variable(
@@ -725,7 +725,7 @@ function initial_condition_update!(
     sequence = get_sequence(sim)
     interval = get_interval(sequence, problem_name)
     for ic in initial_conditions
-        name = device_name(ic)
+        name = get_device_name(ic)
         current_ix = get_current_execution_index(sim)
         source_problem_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
         source_problem = get_problem(sim, execution_index[source_problem_ix])

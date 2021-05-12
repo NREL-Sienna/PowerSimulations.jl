@@ -24,7 +24,7 @@ function add_variable!(
 } where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
-    variable = add_aux_var_container!(
+    add_aux_var_container!(
         optimization_container,
         AuxVarKey(T, D),
         [PSY.get_name(d) for d in devices],

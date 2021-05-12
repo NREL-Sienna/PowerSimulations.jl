@@ -9,7 +9,7 @@ function calculate_ic_quantity(
     elapsed_period::Dates.Period,
 ) where {T <: PSY.Component}
     cache = get_cache(simulation_cache, ic.cache_type, T)
-    name = device_name(ic)
+    name = get_device_name(ic)
     time_cache = cache_value(cache, name)
 
     current_counter = time_cache[:count]
@@ -29,7 +29,7 @@ function calculate_ic_quantity(
     elapsed_period::Dates.Period,
 ) where {T <: PSY.Component}
     cache = get_cache(simulation_cache, ic.cache_type, T)
-    name = device_name(ic)
+    name = get_device_name(ic)
     time_cache = cache_value(cache, name)
 
     current_counter = time_cache[:count]
@@ -80,7 +80,7 @@ function calculate_ic_quantity(
             get_condition(ic) >= min_power && var_value >= ABSOLUTE_TOLERANCE
     else
         # If the min is 0.0 this calculation doesn't matter
-        name = device_name(ic)
+        name = get_device_name(ic)
         time_cache = cache_value(cache, name)
         series = time_cache[:series]
         elapsed_time = time_cache[:elapsed]
@@ -144,7 +144,7 @@ function calculate_ic_quantity(
     elapsed_period::Dates.Period,
 ) where {T <: PSY.Device}
     cache = get_cache(simulation_cache, ic.cache_type, T)
-    name = device_name(ic)
+    name = get_device_name(ic)
     energy_cache = cache_value(cache, name)
     if energy_cache != var_value
         return var_value
