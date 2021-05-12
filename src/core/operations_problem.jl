@@ -923,13 +923,13 @@ end
 function get_initial_cache(cache::TimeStatusChange, problem::OperationsProblem)
     ini_cond_on = get_initial_conditions(
         get_optimization_container(problem),
-        InitialTimeDurationON,
+        InitialTimeDurationOn,
         cache.device_type,
     )
 
     ini_cond_off = get_initial_conditions(
         get_optimization_container(problem),
-        InitialTimeDurationOFF,
+        InitialTimeDurationOff,
         cache.device_type,
     )
 

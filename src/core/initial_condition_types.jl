@@ -19,9 +19,9 @@ struct IntraProblemChronology <: InitialConditionChronology end
 ######################### Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
 struct DeviceStatus <: InitialConditionType end
-struct InitialTimeDurationON <: InitialConditionType end
-struct InitialTimeDurationOFF <: InitialConditionType end
+struct InitialTimeDurationOn <: InitialConditionType end
+struct InitialTimeDurationOff <: InitialConditionType end
 struct InitialEnergyLevel <: InitialConditionType end
 struct InitialEnergyLevelUP <: InitialConditionType end
-struct InitialEnergyLevelDOWN <: InitialConditionType end
+struct InitialEnergyLevelDown <: InitialConditionType end
 struct AreaControlError <: InitialConditionType end

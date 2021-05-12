@@ -137,7 +137,7 @@ function _create_cache(ic_key::ICKey, caches::Union{Nothing, Vector{<:AbstractCa
 end
 
 function _create_cache(
-    ic_key::ICKey{InitialTimeDurationON, T},
+    ic_key::ICKey{InitialTimeDurationOn, T},
     caches::Union{Nothing, Vector{<:AbstractCache}},
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
@@ -149,7 +149,7 @@ function _create_cache(
 end
 
 function _create_cache(
-    ic_key::ICKey{InitialTimeDurationOFF, T},
+    ic_key::ICKey{InitialTimeDurationOff, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)

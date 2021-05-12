@@ -9,8 +9,8 @@ end
 
 encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = Symbol("$(T)_$(U)")
 
-struct TimeDurationON <: AuxVariableType end
-struct TimeDurationOFF <: AuxVariableType end
+struct TimeDurationOn <: AuxVariableType end
+struct TimeDurationOff <: AuxVariableType end
 
 """ Auxiliary Variable for Thermal Generation Models that solve for power above min"""
 struct PowerOutput <: AuxVariableType end

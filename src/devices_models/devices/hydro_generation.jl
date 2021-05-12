@@ -103,7 +103,7 @@ get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHyd
 
 get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HydroGen = (in = 1.0, out = 1.0)
 get_efficiency(v::PSY.HydroPumpedStorage, var::Type{InitialEnergyLevelUP}) = (in = PSY.get_pump_efficiency(v), out = 1.0)
-get_efficiency(v::PSY.HydroPumpedStorage, var::Type{InitialEnergyLevelDOWN}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
+get_efficiency(v::PSY.HydroPumpedStorage, var::Type{InitialEnergyLevelDown}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
 
 #! format: on
 
@@ -466,7 +466,7 @@ function DeviceEnergyBalanceConstraintSpec(
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_CAPACITY_DOWN, H),
         energy_variable = make_variable_name(ENERGY_DOWN, H),
-        initial_condition = InitialEnergyLevelDOWN,
+        initial_condition = InitialEnergyLevelDown,
         pout_variable_names = [make_variable_name(ACTIVE_POWER_IN, H)],
         pin_variable_names = [
             make_variable_name(ACTIVE_POWER_OUT, H),
@@ -635,7 +635,7 @@ function duration_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.HydroGen, D <: AbstractHydroUnitCommitment}
-    for key in (ICKey(InitialTimeDurationON, T), ICKey(InitialTimeDurationOFF, T))
+    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
@@ -688,7 +688,7 @@ function storage_energy_initial_condition!(
         StoredEnergy,
     )
 
-    key_down = ICKey(InitialEnergyLevelDOWN, T)
+    key_down = ICKey(InitialEnergyLevelDown, T)
     _make_initial_conditions!(
         optimization_container,
         devices,

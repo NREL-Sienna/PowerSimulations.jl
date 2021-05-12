@@ -94,8 +94,8 @@ export IntraProblemChronology
 # Initial Conditions Quantities
 export DevicePower
 export DeviceStatus
-export InitialTimeDurationON
-export InitialTimeDurationOFF
+export InitialTimeDurationOn
+export InitialTimeDurationOff
 export InitialEnergyLevel
 
 # cache_models

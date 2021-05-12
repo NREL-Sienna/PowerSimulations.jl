@@ -27,8 +27,8 @@ end
     ]
 
     aux_vars_keys = [
-        PSI.AuxVarKey(PSI.TimeDurationOFF, ThermalStandard),
-        PSI.AuxVarKey(PSI.TimeDurationON, ThermalStandard),
+        PSI.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
+        PSI.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -82,8 +82,8 @@ end
     ]
 
     aux_vars_keys = [
-        PSI.AuxVarKey(PSI.TimeDurationOFF, ThermalStandard),
-        PSI.AuxVarKey(PSI.TimeDurationON, ThermalStandard),
+        PSI.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
+        PSI.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
     ]
 
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)

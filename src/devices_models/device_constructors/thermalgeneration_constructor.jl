@@ -42,8 +42,8 @@ function construct_device!(
     add_variables!(optimization_container, StopVariable, devices, D())
 
     # Aux Variables
-    add_variables!(optimization_container, TimeDurationON, devices, D())
-    add_variables!(optimization_container, TimeDurationOFF, devices, D())
+    add_variables!(optimization_container, TimeDurationOn, devices, D())
+    add_variables!(optimization_container, TimeDurationOff, devices, D())
 
     # Initial Conditions
     initial_conditions!(optimization_container, devices, D())
@@ -110,8 +110,8 @@ function construct_device!(
     add_variables!(optimization_container, StopVariable, devices, D())
 
     # Aux Variables
-    add_variables!(optimization_container, TimeDurationON, devices, D())
-    add_variables!(optimization_container, TimeDurationOFF, devices, D())
+    add_variables!(optimization_container, TimeDurationOn, devices, D())
+    add_variables!(optimization_container, TimeDurationOff, devices, D())
 
     # Initial Conditions
     initial_conditions!(optimization_container, devices, D())
@@ -557,13 +557,13 @@ function construct_device!(
     # Aux Variables
     add_variables!(
         optimization_container,
-        TimeDurationON,
+        TimeDurationOn,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
     add_variables!(
         optimization_container,
-        TimeDurationOFF,
+        TimeDurationOff,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
@@ -694,13 +694,13 @@ function construct_device!(
     # Aux Variables
     add_variables!(
         optimization_container,
-        TimeDurationON,
+        TimeDurationOn,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
     add_variables!(
         optimization_container,
-        TimeDurationOFF,
+        TimeDurationOff,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
@@ -810,13 +810,13 @@ function construct_device!(
     # Aux Variables
     add_variables!(
         optimization_container,
-        TimeDurationON,
+        TimeDurationOn,
         devices,
         ThermalCompactUnitCommitment(),
     )
     add_variables!(
         optimization_container,
-        TimeDurationOFF,
+        TimeDurationOff,
         devices,
         ThermalCompactUnitCommitment(),
     )
@@ -901,13 +901,13 @@ function construct_device!(
     # Aux Variables
     add_variables!(
         optimization_container,
-        TimeDurationON,
+        TimeDurationOn,
         devices,
         ThermalCompactUnitCommitment(),
     )
     add_variables!(
         optimization_container,
-        TimeDurationOFF,
+        TimeDurationOff,
         devices,
         ThermalCompactUnitCommitment(),
     )

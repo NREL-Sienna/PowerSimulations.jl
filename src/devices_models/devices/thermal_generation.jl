@@ -503,7 +503,7 @@ function duration_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
-    for key in (ICKey(InitialTimeDurationON, T), ICKey(InitialTimeDurationOFF, T))
+    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
@@ -524,7 +524,7 @@ function duration_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
-    for key in (ICKey(InitialTimeDurationON, T), ICKey(InitialTimeDurationOFF, T))
+    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
@@ -543,12 +543,12 @@ end
 ############################ Auxiliary Variables Calculation ################################
 function calculate_aux_variable_value!(
     optimization_container::OptimizationContainer,
-    key::AuxVarKey{TimeDurationON, T},
+    key::AuxVarKey{TimeDurationOn, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(optimization_container, OnVariable, T)
     aux_var_container = get_aux_variables(optimization_container)[key]
-    ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationON, T)
+    ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOn, T)
 
     time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
@@ -583,12 +583,12 @@ end
 
 function calculate_aux_variable_value!(
     optimization_container::OptimizationContainer,
-    key::AuxVarKey{TimeDurationOFF, T},
+    key::AuxVarKey{TimeDurationOff, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(optimization_container, OnVariable, T)
     aux_var_container = get_aux_variables(optimization_container)[key]
-    ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOFF, T)
+    ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOff, T)
 
     time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
@@ -1103,7 +1103,7 @@ function startup_initial_condition_constraints!(
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
-    key_off = ICKey(InitialTimeDurationOFF, PSY.ThermalMultiStart)
+    key_off = ICKey(InitialTimeDurationOff, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(optimization_container, key_off)
     constraint_data = _get_data_startup_ic(initial_conditions_offtime, resolution)
 
@@ -1212,9 +1212,9 @@ function time_constraints!(
     parameters = model_has_parameters(optimization_container)
     resolution = model_resolution(optimization_container)
     initial_conditions_on =
-        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationON, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOn, T))
     initial_conditions_off =
-        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOFF, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOff, T))
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))
@@ -1259,9 +1259,9 @@ function time_constraints!(
     parameters = model_has_parameters(optimization_container)
     resolution = model_resolution(optimization_container)
     initial_conditions_on =
-        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationON, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOn, T))
     initial_conditions_off =
-        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOFF, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOff, T))
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))
