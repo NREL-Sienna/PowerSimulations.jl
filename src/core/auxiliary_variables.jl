@@ -7,7 +7,9 @@ struct AuxVarKey{T <: AuxVariableType, U <: PSY.Component} <: OptimizationContai
     device_type::Type{U}
 end
 
-encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = Symbol("$(T)_$(U)")
+function encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component}
+    return Symbol("$(IS.strip_module_name(string(T)))_$(IS.strip_module_name(string(U)))")
+end
 
 struct TimeDurationOn <: AuxVariableType end
 struct TimeDurationOff <: AuxVariableType end
