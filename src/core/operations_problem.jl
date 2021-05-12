@@ -901,7 +901,7 @@ function _write_model_aux_variable_results!(
         )
 
         if exports !== nothing &&
-            should_export_variable(exports[:exports], timestamp, problem_name_str, name)
+           should_export_variable(exports[:exports], timestamp, problem_name_str, name)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
