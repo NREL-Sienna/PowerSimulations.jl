@@ -1151,7 +1151,6 @@ function _initialize_problem_storage!(
     min_cache_flush_size_mib,
 )
     sequence = get_sequence(sim)
-    execution_order = get_execution_order(sequence)
     executions_by_problem = sequence.executions_by_problem
     intervals = sequence.intervals
 
@@ -1169,6 +1168,7 @@ function _initialize_problem_storage!(
         duals = get_constraint_duals(get_settings(optimization_container))
         parameters = get_parameters(optimization_container)
         variables = get_variables(optimization_container)
+        aux_variables = get_aux_variables(optimization_container)
         num_rows = num_executions * get_steps(sim)
 
         interval = intervals[problem_name][1]
@@ -1227,6 +1227,19 @@ function _initialize_problem_storage!(
                 rules,
                 problem_sym,
                 STORE_CONTAINER_VARIABLES,
+                name,
+                false,
+                CachePriority.HIGH,
+            )
+        end
+
+        for (key, array) in aux_variables
+            name = encode_key(key)
+            reqs.variables[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
+            add_rule!(
+                rules,
+                problem_sym,
+                STORE_CONTAINER_AUX_VARIABLES,
                 name,
                 false,
                 CachePriority.HIGH,

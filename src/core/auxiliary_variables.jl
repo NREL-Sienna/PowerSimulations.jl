@@ -7,7 +7,7 @@ struct AuxVarKey{T <: AuxVariableType, U <: PSY.Component} <: OptimizationContai
     device_type::Type{U}
 end
 
-encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = "$(T)_$(U)"
+encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = Symbol("$(T)_$(U)")
 
 struct TimeDurationON <: AuxVariableType end
 struct TimeDurationOFF <: AuxVariableType end
