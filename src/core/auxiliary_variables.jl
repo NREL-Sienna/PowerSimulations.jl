@@ -7,7 +7,10 @@ struct AuxVarKey{T <: AuxVariableType, U <: PSY.Component} <: OptimizationContai
     device_type::Type{U}
 end
 
+encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = "$(T)_$(U)"
+
 struct TimeDurationON <: AuxVariableType end
 struct TimeDurationOFF <: AuxVariableType end
 
-encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = "$(T)_$(U)"
+""" Auxiliary Variable for Thermal Generation Models that solve for power above min"""
+struct PowerOutput <: AuxVariableType end

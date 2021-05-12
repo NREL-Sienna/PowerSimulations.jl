@@ -29,10 +29,12 @@ struct SimulationStoreProblemRequirements
     duals::Dict{Symbol, Dict{String, Any}}
     parameters::Dict{Symbol, Dict{String, Any}}
     variables::Dict{Symbol, Dict{String, Any}}
+    aux_variables::Dict{Symbol, Dict{String, Any}}
 end
 
 function SimulationStoreProblemRequirements()
     return SimulationStoreProblemRequirements(
+        Dict{Symbol, Dict{String, Any}}(),
         Dict{Symbol, Dict{String, Any}}(),
         Dict{Symbol, Dict{String, Any}}(),
         Dict{Symbol, Dict{String, Any}}(),
