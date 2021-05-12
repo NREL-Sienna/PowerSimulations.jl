@@ -546,6 +546,7 @@ function calculate_aux_variable_value!(optimization_container::OptimizationConta
                                        ::PSY.System) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(optimization_container, OnVariable, T)
     aux_var_container = get_aux_variables(optimization_container)[key]
+    ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationON, T)
 
     time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
@@ -553,9 +554,24 @@ function calculate_aux_variable_value!(optimization_container::OptimizationConta
 
     for ix in eachindex(JuMP.axes(aux_var_container)[1])
         @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
+        @assert JuMP.axes(aux_var_container)[1][ix] == get_device_name(ini_cond[ix])
         on_var = JuMP.value.(on_var_results.data[ix, :])
-        if sum(on_var) == time_steps[end]
-
+        ini_cond_value = get_condition(ini_cond[ix])
+        aux_var_container.data[ix, :] .= ini_cond_value
+        if sum(on_var) == time_steps[end] # Unit was always on
+            aux_var_container.data[ix, :] += time_steps*minutes_per_period
+        elseif sum(on_var) == 0.0 # Unit was always off
+            aux_var_container.data[ix, :] .= 0.0
+        else
+            previous_condition = ini_cond_value
+            for (t, v) in enumerate(on_var)
+                if v < 0.99 # Unit turn off
+                    aux_var_container.data[ix, t] = 0.0
+                elseif isapprox(v, 1.0) # Unit is on
+                    aux_var_container.data[ix, t] = previous_condition + 1.0
+                end
+                previous_condition = aux_var_container.data[ix, t]
+            end
         end
     end
 
@@ -567,6 +583,34 @@ function calculate_aux_variable_value!(optimization_container::OptimizationConta
                                        ::PSY.System) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(optimization_container, OnVariable, T)
     aux_var_container = get_aux_variables(optimization_container)[key]
+    ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOFF, T)
+
+    time_steps = model_time_steps(optimization_container)
+    resolution = model_resolution(optimization_container)
+    minutes_per_period = Dates.value(Dates.Minute(resolution))
+
+    for ix in eachindex(JuMP.axes(aux_var_container)[1])
+        @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
+        @assert JuMP.axes(aux_var_container)[1][ix] == get_device_name(ini_cond[ix])
+        on_var = JuMP.value.(on_var_results.data[ix, :])
+        ini_cond_value = get_condition(ini_cond[ix])
+        aux_var_container.data[ix, :] .= ini_cond_value
+        if sum(on_var) == time_steps[end] # Unit was always on
+            aux_var_container.data[ix, :] .= 0.0
+        elseif sum(on_var) == 0.0 # Unit was always off
+            aux_var_container.data[ix, :] += time_steps*minutes_per_period
+        else
+            previous_condition = ini_cond_value
+            for (t, v) in enumerate(on_var)
+                if v < 0.99 # Unit turn off
+                    aux_var_container.data[ix, t] = previous_condition + 1.0
+                elseif isapprox(v, 1.0) # Unit is on
+                    aux_var_container.data[ix, t] = 0.0
+                end
+                previous_condition = aux_var_container.data[ix, t]
+            end
+        end
+    end
 
     return
 end
@@ -633,7 +677,6 @@ function ramp_constraints!(
     D <: AbstractThermalUnitCommitment,
     S <: PM.AbstractPowerModel,
 }
-    time_steps = model_time_steps(optimization_container)
     data = _get_data_for_rocc(optimization_container, T)
     if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
@@ -899,7 +942,7 @@ function device_startup_initial_condition(
     time_steps = model_time_steps(optimization_container)
     T = length(time_steps)
 
-    set_name = [device_name(ic) for ic in initial_conditions]
+    set_name = [get_device_name(ic) for ic in initial_conditions]
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     varbin = get_variable(optimization_container, bin_name)
