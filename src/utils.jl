@@ -306,6 +306,11 @@ function to_array(array::JuMP.Containers.DenseAxisArray)
     return data
 end
 
+function to_array(array::JuMP.Containers.DenseAxisArray{<:Number})
+    length(axes(array)) > 2 && error("array axes not supported: $(axes(array))")
+    return array.data
+end
+
 function to_array(array::JuMP.Containers.SparseAxisArray)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     # PERF: can we determine the 2-d array size?

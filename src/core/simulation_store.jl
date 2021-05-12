@@ -1,12 +1,10 @@
 const STORE_CONTAINER_DUALS = :duals
 const STORE_CONTAINER_PARAMETERS = :parameters
 const STORE_CONTAINER_VARIABLES = :variables
-const STORE_CONTAINER_AUX_VARIABLES = :aux_variables
 const STORE_CONTAINERS = Set((
     STORE_CONTAINER_DUALS,
     STORE_CONTAINER_PARAMETERS,
     STORE_CONTAINER_VARIABLES,
-    STORE_CONTAINER_AUX_VARIABLES,
 ))
 
 """
@@ -33,12 +31,10 @@ struct SimulationStoreProblemRequirements
     duals::Dict{Symbol, Dict{String, Any}}
     parameters::Dict{Symbol, Dict{String, Any}}
     variables::Dict{Symbol, Dict{String, Any}}
-    aux_variables::Dict{Symbol, Dict{String, Any}}
 end
 
 function SimulationStoreProblemRequirements()
     return SimulationStoreProblemRequirements(
-        Dict{Symbol, Dict{String, Any}}(),
         Dict{Symbol, Dict{String, Any}}(),
         Dict{Symbol, Dict{String, Any}}(),
         Dict{Symbol, Dict{String, Any}}(),

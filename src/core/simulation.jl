@@ -1239,7 +1239,7 @@ function _initialize_problem_storage!(
             add_rule!(
                 rules,
                 problem_sym,
-                STORE_CONTAINER_AUX_VARIABLES,
+                STORE_CONTAINER_VARIABLES,
                 name,
                 false,
                 CachePriority.HIGH,
