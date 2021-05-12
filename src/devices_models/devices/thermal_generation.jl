@@ -541,9 +541,11 @@ function duration_initial_condition!(
 end
 
 ############################ Auxiliary Variables Calculation ################################
-function calculate_aux_variable_value!(optimization_container::OptimizationContainer,
-                                       key::AuxVarKey{TimeDurationON, T},
-                                       ::PSY.System) where {T <: PSY.ThermalGen}
+function calculate_aux_variable_value!(
+    optimization_container::OptimizationContainer,
+    key::AuxVarKey{TimeDurationON, T},
+    ::PSY.System,
+) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(optimization_container, OnVariable, T)
     aux_var_container = get_aux_variables(optimization_container)[key]
     ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationON, T)
@@ -559,7 +561,7 @@ function calculate_aux_variable_value!(optimization_container::OptimizationConta
         ini_cond_value = get_condition(ini_cond[ix])
         aux_var_container.data[ix, :] .= ini_cond_value
         if sum(on_var) == time_steps[end] # Unit was always on
-            aux_var_container.data[ix, :] += time_steps*minutes_per_period
+            aux_var_container.data[ix, :] += time_steps * minutes_per_period
         elseif sum(on_var) == 0.0 # Unit was always off
             aux_var_container.data[ix, :] .= 0.0
         else
@@ -578,9 +580,11 @@ function calculate_aux_variable_value!(optimization_container::OptimizationConta
     return
 end
 
-function calculate_aux_variable_value!(optimization_container::OptimizationContainer,
-                                       key::AuxVarKey{TimeDurationOFF, T},
-                                       ::PSY.System) where {T <: PSY.ThermalGen}
+function calculate_aux_variable_value!(
+    optimization_container::OptimizationContainer,
+    key::AuxVarKey{TimeDurationOFF, T},
+    ::PSY.System,
+) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(optimization_container, OnVariable, T)
     aux_var_container = get_aux_variables(optimization_container)[key]
     ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOFF, T)
@@ -598,7 +602,7 @@ function calculate_aux_variable_value!(optimization_container::OptimizationConta
         if sum(on_var) == time_steps[end] # Unit was always on
             aux_var_container.data[ix, :] .= 0.0
         elseif sum(on_var) == 0.0 # Unit was always off
-            aux_var_container.data[ix, :] += time_steps*minutes_per_period
+            aux_var_container.data[ix, :] += time_steps * minutes_per_period
         else
             previous_condition = ini_cond_value
             for (t, v) in enumerate(on_var)

@@ -480,9 +480,10 @@ function get_realized_timestamps(
         initial_time + (len - 1) * resolution
 
     requested_range = initial_time:resolution:end_time
-    available_range = first(existing_timestamps):resolution:(last(
-        existing_timestamps,
-    ) + (horizon - 1) * resolution)
+    available_range =
+        first(existing_timestamps):resolution:(last(
+            existing_timestamps,
+        ) + (horizon - 1) * resolution)
     invalid_timestamps = setdiff(requested_range, available_range)
 
     if !isempty(invalid_timestamps)

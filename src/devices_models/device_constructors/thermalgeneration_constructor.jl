@@ -692,8 +692,18 @@ function construct_device!(
     )
 
     # Aux Variables
-    add_variables!(optimization_container, TimeDurationON, devices, ThermalMultiStartUnitCommitment())
-    add_variables!(optimization_container, TimeDurationOFF, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(
+        optimization_container,
+        TimeDurationON,
+        devices,
+        ThermalMultiStartUnitCommitment(),
+    )
+    add_variables!(
+        optimization_container,
+        TimeDurationOFF,
+        devices,
+        ThermalMultiStartUnitCommitment(),
+    )
 
     # Initial Conditions
     initial_conditions!(optimization_container, devices, ThermalMultiStartUnitCommitment())
@@ -798,8 +808,18 @@ function construct_device!(
     )
 
     # Aux Variables
-    add_variables!(optimization_container, TimeDurationON, devices, ThermalCompactUnitCommitment())
-    add_variables!(optimization_container, TimeDurationOFF, devices, ThermalCompactUnitCommitment())
+    add_variables!(
+        optimization_container,
+        TimeDurationON,
+        devices,
+        ThermalCompactUnitCommitment(),
+    )
+    add_variables!(
+        optimization_container,
+        TimeDurationOFF,
+        devices,
+        ThermalCompactUnitCommitment(),
+    )
 
     # Initial Conditions
     initial_conditions!(optimization_container, devices, ThermalCompactUnitCommitment())
@@ -879,8 +899,18 @@ function construct_device!(
     )
 
     # Aux Variables
-    add_variables!(optimization_container, TimeDurationON, devices, ThermalCompactUnitCommitment())
-    add_variables!(optimization_container, TimeDurationOFF, devices, ThermalCompactUnitCommitment())
+    add_variables!(
+        optimization_container,
+        TimeDurationON,
+        devices,
+        ThermalCompactUnitCommitment(),
+    )
+    add_variables!(
+        optimization_container,
+        TimeDurationOFF,
+        devices,
+        ThermalCompactUnitCommitment(),
+    )
 
     # Initial Conditions
     initial_conditions!(optimization_container, devices, ThermalCompactUnitCommitment())
