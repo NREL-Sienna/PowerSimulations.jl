@@ -263,8 +263,6 @@ function initial_range_constraints!(
     D <: AbstractCompactUnitCommitment,
     S <: PM.AbstractPowerModel,
 }
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
     key_power = ICKey(DevicePower, T)
     key_status = ICKey(DeviceStatus, T)
     initial_conditions_power = get_initial_conditions(optimization_container, key_power)
@@ -716,7 +714,6 @@ function ramp_constraints!(
     D <: AbstractThermalDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    time_steps = model_time_steps(optimization_container)
     data = _get_data_for_rocc(optimization_container, T)
     if !isempty(data)
         for r in data
@@ -946,7 +943,6 @@ function device_startup_initial_condition(
     bin_name::Symbol,
 )
     time_steps = model_time_steps(optimization_container)
-    T = length(time_steps)
 
     set_name = [get_device_name(ic) for ic in initial_conditions]
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
@@ -1007,7 +1003,6 @@ function startup_time_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
     lenght_devices = length(devices)
     start_time_params = Vector{DeviceStartUpConstraintInfo}(undef, lenght_devices)
@@ -1043,7 +1038,6 @@ function startup_type_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
     constraint_data = Vector{DeviceStartTypesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
@@ -1104,7 +1098,6 @@ function startup_initial_condition_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
     key_off = ICKey(InitialTimeDurationOff, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(optimization_container, key_off)
@@ -1135,7 +1128,6 @@ function must_run_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
-    forecast_label = "must_run"
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = ones(time_steps[end])
@@ -1176,8 +1168,6 @@ function _get_data_for_tdc(
     for (ix, ic) in enumerate(initial_conditions_on)
         g = ic.device
         @assert g == initial_conditions_off[ix].device
-        non_binding_up = false
-        non_binding_down = false
         time_limits = PSY.get_time_limits(g)
         name = PSY.get_name(g)
         if !(time_limits === nothing)
@@ -1431,7 +1421,7 @@ function AddCostSpec(
 end
 
 function PSY.get_no_load(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
-    var_cost, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    _, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
     return no_load_cost
 end
 
@@ -1440,7 +1430,7 @@ function _get_compact_varcost(cost)
 end
 
 function _get_compact_varcost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
-    var_cost, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    var_cost, _ = _convert_variable_cost(PSY.get_variable(cost))
     return var_cost
 end
 
@@ -1499,7 +1489,6 @@ function cost_function!(
                 cost_function_data = deepcopy(cost_component.cost)
                 intercept_point = (0.0, first_pair[2] - COST_EPSILON)
                 cost_function_data = vcat(intercept_point, cost_function_data)
-                corrected_slopes = PSY.get_slopes(cost_function_data)
                 @assert slope_convexity_check(slopes)
             else
                 cost_function_data = cost_component.cost
