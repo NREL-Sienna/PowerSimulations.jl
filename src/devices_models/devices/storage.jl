@@ -207,7 +207,7 @@ function storage_energy_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
-    key = ICKey(EnergyLevel, T)
+    key = ICKey(InitialEnergyLevel, T)
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -223,7 +223,6 @@ function storage_energy_initial_condition!(
 end
 
 ############################ Energy Capacity Constraints####################################
-
 function energy_capacity_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
@@ -266,7 +265,7 @@ function DeviceEnergyBalanceConstraintSpec(
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_LIMIT, St),
         energy_variable = make_variable_name(ENERGY, St),
-        initial_condition = EnergyLevel,
+        initial_condition = InitialEnergyLevel,
         pin_variable_names = [make_variable_name(ACTIVE_POWER_IN, St)],
         pout_variable_names = [make_variable_name(ACTIVE_POWER_OUT, St)],
         constraint_func = energy_balance!,
@@ -328,7 +327,7 @@ function energy_target_constraint!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage}
-    key = ICKey(EnergyLevel, T)
+    key = ICKey(InitialEnergyLevel, T)
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
     time_steps = model_time_steps(optimization_container)

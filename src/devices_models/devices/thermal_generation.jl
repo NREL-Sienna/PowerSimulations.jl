@@ -263,8 +263,6 @@ function initial_range_constraints!(
     D <: AbstractCompactUnitCommitment,
     S <: PM.AbstractPowerModel,
 }
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
     key_power = ICKey(DevicePower, T)
     key_status = ICKey(DeviceStatus, T)
     initial_conditions_power = get_initial_conditions(optimization_container, key_power)
@@ -385,7 +383,7 @@ This function adds the Commitment Status constraint when there are CommitmentVar
 """
 function commitment_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    ::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
@@ -503,7 +501,7 @@ function duration_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
@@ -524,7 +522,7 @@ function duration_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
@@ -540,6 +538,88 @@ function duration_initial_condition!(
     return
 end
 
+############################ Auxiliary Variables Calculation ################################
+function calculate_aux_variable_value!(
+    optimization_container::OptimizationContainer,
+    key::AuxVarKey{TimeDurationOn, T},
+    ::PSY.System,
+) where {T <: PSY.ThermalGen}
+    on_var_results = get_variable(optimization_container, OnVariable, T)
+    aux_var_container = get_aux_variables(optimization_container)[key]
+    ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOn, T)
+
+    time_steps = model_time_steps(optimization_container)
+    resolution = model_resolution(optimization_container)
+    minutes_per_period = Dates.value(Dates.Minute(resolution))
+
+    for ix in eachindex(JuMP.axes(aux_var_container)[1])
+        @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
+        @assert JuMP.axes(aux_var_container)[1][ix] == get_device_name(ini_cond[ix])
+        on_var = JuMP.value.(on_var_results.data[ix, :])
+        ini_cond_value = get_condition(ini_cond[ix])
+        aux_var_container.data[ix, :] .= ini_cond_value
+        sum_on_var = sum(on_var)
+        if sum_on_var == time_steps[end] # Unit was always on
+            aux_var_container.data[ix, :] += time_steps * minutes_per_period
+        elseif sum_on_var == 0.0 # Unit was always off
+            aux_var_container.data[ix, :] .= 0.0
+        else
+            previous_condition = ini_cond_value
+            for (t, v) in enumerate(on_var)
+                if v < 0.99 # Unit turn off
+                    time_value = 0.0
+                elseif isapprox(v, 1.0) # Unit is on
+                    time_value = previous_condition + 1.0
+                else
+                    @assert false
+                end
+                previous_condition = aux_var_container.data[ix, t] = time_value
+            end
+        end
+    end
+
+    return
+end
+
+function calculate_aux_variable_value!(
+    optimization_container::OptimizationContainer,
+    key::AuxVarKey{TimeDurationOff, T},
+    ::PSY.System,
+) where {T <: PSY.ThermalGen}
+    on_var_results = get_variable(optimization_container, OnVariable, T)
+    aux_var_container = get_aux_variables(optimization_container)[key]
+    ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOff, T)
+
+    time_steps = model_time_steps(optimization_container)
+    resolution = model_resolution(optimization_container)
+    minutes_per_period = Dates.value(Dates.Minute(resolution))
+
+    for ix in eachindex(JuMP.axes(aux_var_container)[1])
+        @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
+        @assert JuMP.axes(aux_var_container)[1][ix] == get_device_name(ini_cond[ix])
+        on_var = JuMP.value.(on_var_results.data[ix, :])
+        ini_cond_value = get_condition(ini_cond[ix])
+        aux_var_container.data[ix, :] .= ini_cond_value
+        sum_on_var = sum(on_var)
+        if sum_on_var == time_steps[end] # Unit was always on
+            aux_var_container.data[ix, :] .= 0.0
+        elseif sum_on_var == 0.0 # Unit was always off
+            aux_var_container.data[ix, :] += time_steps * minutes_per_period
+        else
+            previous_condition = ini_cond_value
+            for (t, v) in enumerate(on_var)
+                if v < 0.99 # Unit turn off
+                    time_value = previous_condition + 1.0
+                elseif isapprox(v, 1.0) # Unit is on
+                    time_value = 0.0
+                end
+                previous_condition = aux_var_container.data[ix, t] = time_value
+            end
+        end
+    end
+
+    return
+end
 ########################### Ramp/Rate of Change Constraints ################################
 """
 This function gets the data for the generators for ramping constraints of thermal generators
@@ -561,11 +641,9 @@ function _get_data_for_rocc(
     lenght_devices_power = length(initial_conditions_power)
     data = Vector{DeviceRampConstraintInfo}(undef, lenght_devices_power)
     idx = 0
-    for (ix, ic) in enumerate(initial_conditions_power)
+    for ic in initial_conditions_power
         g = ic.device
         name = PSY.get_name(g)
-        non_binding_up = false
-        non_binding_down = false
         ramp_limits = PSY.get_ramp_limits(g)
         if !(ramp_limits === nothing)
             p_lims = PSY.get_active_power_limits(g)
@@ -594,7 +672,7 @@ This function adds the ramping limits of generators when there are CommitmentVar
 """
 function ramp_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    ::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
@@ -603,7 +681,6 @@ function ramp_constraints!(
     D <: AbstractThermalUnitCommitment,
     S <: PM.AbstractPowerModel,
 }
-    time_steps = model_time_steps(optimization_container)
     data = _get_data_for_rocc(optimization_container, T)
     if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
@@ -637,7 +714,6 @@ function ramp_constraints!(
     D <: AbstractThermalDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    time_steps = model_time_steps(optimization_container)
     data = _get_data_for_rocc(optimization_container, T)
     if !isempty(data)
         for r in data
@@ -867,9 +943,8 @@ function device_startup_initial_condition(
     bin_name::Symbol,
 )
     time_steps = model_time_steps(optimization_container)
-    T = length(time_steps)
 
-    set_name = [device_name(ic) for ic in initial_conditions]
+    set_name = [get_device_name(ic) for ic in initial_conditions]
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     varbin = get_variable(optimization_container, bin_name)
@@ -928,7 +1003,6 @@ function startup_time_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
     lenght_devices = length(devices)
     start_time_params = Vector{DeviceStartUpConstraintInfo}(undef, lenght_devices)
@@ -964,7 +1038,6 @@ function startup_type_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
     constraint_data = Vector{DeviceStartTypesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
@@ -1025,9 +1098,8 @@ function startup_initial_condition_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
-    key_off = ICKey(TimeDurationOFF, PSY.ThermalMultiStart)
+    key_off = ICKey(InitialTimeDurationOff, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(optimization_container, key_off)
     constraint_data = _get_data_startup_ic(initial_conditions_offtime, resolution)
 
@@ -1056,7 +1128,6 @@ function must_run_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
-    forecast_label = "must_run"
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = ones(time_steps[end])
@@ -1097,8 +1168,6 @@ function _get_data_for_tdc(
     for (ix, ic) in enumerate(initial_conditions_on)
         g = ic.device
         @assert g == initial_conditions_off[ix].device
-        non_binding_up = false
-        non_binding_down = false
         time_limits = PSY.get_time_limits(g)
         name = PSY.get_name(g)
         if !(time_limits === nothing)
@@ -1136,9 +1205,9 @@ function time_constraints!(
     parameters = model_has_parameters(optimization_container)
     resolution = model_resolution(optimization_container)
     initial_conditions_on =
-        get_initial_conditions(optimization_container, ICKey(TimeDurationON, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOn, T))
     initial_conditions_off =
-        get_initial_conditions(optimization_container, ICKey(TimeDurationOFF, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOff, T))
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))
@@ -1183,9 +1252,9 @@ function time_constraints!(
     parameters = model_has_parameters(optimization_container)
     resolution = model_resolution(optimization_container)
     initial_conditions_on =
-        get_initial_conditions(optimization_container, ICKey(TimeDurationON, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOn, T))
     initial_conditions_off =
-        get_initial_conditions(optimization_container, ICKey(TimeDurationOFF, T))
+        get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOff, T))
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))
@@ -1352,7 +1421,7 @@ function AddCostSpec(
 end
 
 function PSY.get_no_load(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
-    var_cost, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    _, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
     return no_load_cost
 end
 
@@ -1361,7 +1430,7 @@ function _get_compact_varcost(cost)
 end
 
 function _get_compact_varcost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
-    var_cost, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    var_cost, _ = _convert_variable_cost(PSY.get_variable(cost))
     return var_cost
 end
 
@@ -1420,7 +1489,6 @@ function cost_function!(
                 cost_function_data = deepcopy(cost_component.cost)
                 intercept_point = (0.0, first_pair[2] - COST_EPSILON)
                 cost_function_data = vcat(intercept_point, cost_function_data)
-                corrected_slopes = PSY.get_slopes(cost_function_data)
                 @assert slope_convexity_check(slopes)
             else
                 cost_function_data = cost_component.cost

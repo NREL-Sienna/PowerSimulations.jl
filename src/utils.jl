@@ -306,6 +306,11 @@ function to_array(array::JuMP.Containers.DenseAxisArray)
     return data
 end
 
+function to_array(array::JuMP.Containers.DenseAxisArray{<:Number})
+    length(axes(array)) > 2 && error("array axes not supported: $(axes(array))")
+    return permutedims(array.data)
+end
+
 function to_array(array::JuMP.Containers.SparseAxisArray)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     # PERF: can we determine the 2-d array size?
@@ -331,12 +336,12 @@ function find_var_length(es::Dict, e_list::Array)
 end
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
-function container_spec(m::M, axs...) where {M <: JuMP.AbstractModel}
-    return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, axs...)
+function container_spec(::Type{T}, axs...) where {T <: Any}
+    return JuMP.Containers.DenseAxisArray{T}(undef, axs...)
 end
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
-function sparse_container_spec(m::M, axs...) where {M <: JuMP.AbstractModel}
+function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> 0)
     return JuMP.Containers.SparseAxisArray(contents)

@@ -54,13 +54,13 @@ function device_duration_retrospective!(
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    set_names = [device_name(ic) for ic in initial_duration[:, 1]]
+    set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
     con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
-            name = device_name(ic)
+            name = get_device_name(ic)
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
@@ -78,7 +78,7 @@ function device_duration_retrospective!(
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
-            name = device_name(ic)
+            name = get_device_name(ic)
             # Minimum Down-time Constraint
             lhs_off =
                 JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
@@ -153,13 +153,13 @@ function device_duration_look_ahead!(
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    set_names = [device_name(ic) for ic in initial_duration[:, 1]]
+    set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
     con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
-            name = device_name(ic)
+            name = get_device_name(ic)
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
@@ -177,7 +177,7 @@ function device_duration_look_ahead!(
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
-            name = device_name(ic)
+            name = get_device_name(ic)
             # Minimum Down-time Constraint
             lhs_off =
                 JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
@@ -255,13 +255,13 @@ function device_duration_parameters!(
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    set_names = [device_name(ic) for ic in initial_duration[:, 1]]
+    set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
     con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
-            name = device_name(ic)
+            name = get_device_name(ic)
             @assert typeof(ic.value) == PJ.ParameterRef
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
@@ -290,7 +290,7 @@ function device_duration_parameters!(
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
             @assert typeof(ic.value) == PJ.ParameterRef
-            name = device_name(ic)
+            name = get_device_name(ic)
             # Minimum Down-time Constraint
             lhs_off =
                 JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
@@ -364,13 +364,13 @@ function device_duration_compact_retrospective!(
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    set_names = [device_name(ic) for ic in initial_duration[:, 1]]
+    set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
     con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
     total_time_steps = length(time_steps)
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
-            name = device_name(ic)
+            name = get_device_name(ic)
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
             if t in UnitRange{Int}(
@@ -394,7 +394,7 @@ function device_duration_compact_retrospective!(
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
-            name = device_name(ic)
+            name = get_device_name(ic)
             # Minimum Down-time Constraint
             lhs_off =
                 JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)

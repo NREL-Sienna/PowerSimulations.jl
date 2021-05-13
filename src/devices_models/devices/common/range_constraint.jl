@@ -340,14 +340,13 @@ function device_multistart_range_ic!(
     cons_name::Symbol,
     var_name::Symbol,
 )
-    time_steps = model_time_steps(optimization_container)
     varstop = get_variable(optimization_container, var_name)
 
-    set_name = [device_name(ic) for ic in initial_conditions[:, 1]]
+    set_name = [get_device_name(ic) for ic in initial_conditions[:, 1]]
     con = add_cons_container!(optimization_container, cons_name, set_name)
 
     for (ix, ic) in enumerate(initial_conditions[:, 1])
-        name = device_name(ic)
+        name = get_device_name(ic)
         data = range_data[ix]
         val = max(data.limits.max - data.lag_ramp_limits.shutdown, 0)
         con[name] = JuMP.@constraint(
