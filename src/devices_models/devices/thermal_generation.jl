@@ -569,11 +569,13 @@ function calculate_aux_variable_value!(
             previous_condition = ini_cond_value
             for (t, v) in enumerate(on_var)
                 if v < 0.99 # Unit turn off
-                    aux_var_container.data[ix, t] = 0.0
+                    time_value = 0.0
                 elseif isapprox(v, 1.0) # Unit is on
-                    aux_var_container.data[ix, t] = previous_condition + 1.0
+                    time_value = previous_condition + 1.0
+                else
+                    @assert false
                 end
-                previous_condition = aux_var_container.data[ix, t]
+                previous_condition = aux_var_container.data[ix, t] = time_value
             end
         end
     end
@@ -600,19 +602,20 @@ function calculate_aux_variable_value!(
         on_var = JuMP.value.(on_var_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_var_container.data[ix, :] .= ini_cond_value
-        if sum(on_var) == time_steps[end] # Unit was always on
+        sum_on_var = sum(on_var)
+        if sum_on_var == time_steps[end] # Unit was always on
             aux_var_container.data[ix, :] .= 0.0
-        elseif sum(on_var) == 0.0 # Unit was always off
+        elseif sum_on_var == 0.0 # Unit was always off
             aux_var_container.data[ix, :] += time_steps * minutes_per_period
         else
             previous_condition = ini_cond_value
             for (t, v) in enumerate(on_var)
                 if v < 0.99 # Unit turn off
-                    aux_var_container.data[ix, t] = previous_condition + 1.0
+                    time_value = previous_condition + 1.0
                 elseif isapprox(v, 1.0) # Unit is on
-                    aux_var_container.data[ix, t] = 0.0
+                    time_value = 0.0
                 end
-                previous_condition = aux_var_container.data[ix, t]
+                previous_condition = aux_var_container.data[ix, t] = time_value
             end
         end
     end
