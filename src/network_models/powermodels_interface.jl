@@ -486,7 +486,7 @@ function add_pm_var_refs!(
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_types
             container = PSI.container_spec(
-                optimization_container.JuMPmodel,
+                JuMP.VariableRef,
                 [PSY.get_name(b) for b in values(bus_dict)],
                 time_steps,
             )
@@ -535,7 +535,7 @@ function add_pm_var_refs!(
                     var_type = getfield(ps_v, dir)
                     var_type === nothing && continue
                     container = PSI.container_spec(
-                        optimization_container.JuMPmodel,
+                        JuMP.VariableRef,
                         [PSY.get_name(d[2]) for d in devices],
                         time_steps,
                     )

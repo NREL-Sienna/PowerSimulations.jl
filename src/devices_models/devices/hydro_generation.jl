@@ -102,8 +102,8 @@ get_variable_upper_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHyd
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = - PSY.get_storage_capacity(d)
 
 get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HydroGen = (in = 1.0, out = 1.0)
-get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelUP}) = (in = PSY.get_pump_efficiency(v), out = 1.0)
-get_efficiency(v::PSY.HydroPumpedStorage, var::Type{EnergyLevelDOWN}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
+get_efficiency(v::PSY.HydroPumpedStorage, var::Type{InitialEnergyLevelUp}) = (in = PSY.get_pump_efficiency(v), out = 1.0)
+get_efficiency(v::PSY.HydroPumpedStorage, var::Type{InitialEnergyLevelDown}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
 
 #! format: on
 
@@ -411,7 +411,7 @@ function DeviceEnergyBalanceConstraintSpec(
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_CAPACITY, H),
         energy_variable = make_variable_name(ENERGY, H),
-        initial_condition = EnergyLevel,
+        initial_condition = InitialEnergyLevel,
         pout_variable_names = [
             make_variable_name(ACTIVE_POWER, H),
             make_variable_name(SPILLAGE, H),
@@ -440,7 +440,7 @@ function DeviceEnergyBalanceConstraintSpec(
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_CAPACITY_UP, H),
         energy_variable = make_variable_name(ENERGY_UP, H),
-        initial_condition = EnergyLevelUP,
+        initial_condition = InitialEnergyLevelUp,
         pin_variable_names = [make_variable_name(ACTIVE_POWER_IN, H)],
         pout_variable_names = [
             make_variable_name(ACTIVE_POWER_OUT, H),
@@ -466,7 +466,7 @@ function DeviceEnergyBalanceConstraintSpec(
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_CAPACITY_DOWN, H),
         energy_variable = make_variable_name(ENERGY_DOWN, H),
-        initial_condition = EnergyLevelDOWN,
+        initial_condition = InitialEnergyLevelDown,
         pout_variable_names = [make_variable_name(ACTIVE_POWER_IN, H)],
         pin_variable_names = [
             make_variable_name(ACTIVE_POWER_OUT, H),
@@ -486,7 +486,7 @@ function energy_target_constraint!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.HydroGen, S <: AbstractHydroFormulation}
-    key = ICKey(EnergyLevel, T)
+    key = ICKey(InitialEnergyLevel, T)
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
     time_steps = model_time_steps(optimization_container)
@@ -635,7 +635,7 @@ function duration_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.HydroGen, D <: AbstractHydroUnitCommitment}
-    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
         _make_initial_conditions!(
             optimization_container,
             devices,
@@ -656,7 +656,7 @@ function storage_energy_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.HydroGen, D <: AbstractHydroFormulation}
-    key = ICKey(EnergyLevel, T)
+    key = ICKey(InitialEnergyLevel, T)
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -676,7 +676,7 @@ function storage_energy_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.HydroPumpedStorage, D <: AbstractHydroFormulation}
-    key_up = ICKey(EnergyLevelUP, T)
+    key_up = ICKey(InitialEnergyLevelUp, T)
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -688,7 +688,7 @@ function storage_energy_initial_condition!(
         StoredEnergy,
     )
 
-    key_down = ICKey(EnergyLevelDOWN, T)
+    key_down = ICKey(InitialEnergyLevelDown, T)
     _make_initial_conditions!(
         optimization_container,
         devices,

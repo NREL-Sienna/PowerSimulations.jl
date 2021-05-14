@@ -35,6 +35,18 @@ function psi_constraint_test(
     return
 end
 
+function psi_aux_var_test(
+    op_problem::OperationsProblem,
+    constraint_keys::Vector{<:PSI.AuxVarKey},
+)
+    op_container = PSI.get_optimization_container(op_problem)
+    vars = PSI.get_aux_variables(op_container)
+    for key in constraint_keys
+        @test !isnothing(get(vars, key, nothing))
+    end
+    return
+end
+
 function psi_checkbinvar_test(
     op_problem::OperationsProblem,
     bin_variable_names::Vector{Symbol},
@@ -94,7 +106,7 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
     for bus in buses
         lmps[get_name(bus)] = μ * ptdf[:, get_number(bus)]
     end
-    lmp = λ .- DataFrames.DataFrame(lmps)
+    lmp = λ .+ DataFrames.DataFrame(lmps)
     return lmp[!, sort(propertynames(lmp))]
 end
 

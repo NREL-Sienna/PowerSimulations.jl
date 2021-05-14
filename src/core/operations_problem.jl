@@ -584,6 +584,16 @@ function deserialize_problem(::Type{OperationsProblem}, filename::AbstractString
     return obj.op_problem_type(obj.template, sys, kwargs[:jump_model]; settings...)
 end
 
+function calculate_aux_variables!(problem::OperationsProblem)
+    optimization_container = get_optimization_container(problem)
+    system = get_system(problem)
+    aux_vars = get_aux_variables(optimization_container)
+    for key in keys(aux_vars)
+        calculate_aux_variable_value!(optimization_container, key, system)
+    end
+    return
+end
+
 function solve_impl(problem::OperationsProblem; optimizer = nothing)
     if !is_built(problem)
         error(
@@ -607,6 +617,7 @@ function solve_impl(problem::OperationsProblem; optimizer = nothing)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         return RunStatus.FAILED
     else
+        calculate_aux_variables!(problem::OperationsProblem)
         status = RunStatus.SUCCESSFUL
     end
     return status
@@ -719,6 +730,13 @@ function write_model_results!(store, problem, timestamp; exports = nothing)
         export_params,
     )
     _write_model_variable_results!(
+        store,
+        optimization_container,
+        problem,
+        timestamp,
+        export_params,
+    )
+    _write_model_aux_variable_results!(
         store,
         optimization_container,
         problem,
@@ -857,6 +875,45 @@ function _write_model_variable_results!(
     end
 end
 
+function _write_model_aux_variable_results!(
+    store,
+    optimization_container,
+    problem,
+    timestamp,
+    exports,
+)
+    problem_name_str = get_name(problem)
+    problem_name = Symbol(problem_name_str)
+    if exports !== nothing
+        # TODO: Should the export go to a folder aux_variables
+        exports_path = joinpath(exports[:exports_path], "variables")
+        mkpath(exports_path)
+    end
+
+    for (key, variable) in get_aux_variables(optimization_container)
+        name = encode_key(key)
+        write_result!(
+            store,
+            problem_name,
+            STORE_CONTAINER_VARIABLES,
+            name,
+            timestamp,
+            variable,
+        )
+
+        if exports !== nothing &&
+           should_export_variable(exports[:exports], timestamp, problem_name_str, name)
+            horizon = exports[:horizon]
+            resolution = exports[:resolution]
+            file_type = exports[:file_type]
+            df = axis_array_to_dataframe(variable)
+            time_col = range(timestamp, length = horizon, step = resolution)
+            DataFrames.insertcols!(df, 1, :DateTime => time_col)
+            export_result(file_type, exports_path, name, timestamp, df)
+        end
+    end
+end
+
 # Here because requires the problem to be defined
 # This is a method a user defining a custom cache will have to define. This is the definition
 # in PSI for the building the TimeStatusChange
@@ -867,13 +924,13 @@ end
 function get_initial_cache(cache::TimeStatusChange, problem::OperationsProblem)
     ini_cond_on = get_initial_conditions(
         get_optimization_container(problem),
-        TimeDurationON,
+        InitialTimeDurationOn,
         cache.device_type,
     )
 
     ini_cond_off = get_initial_conditions(
         get_optimization_container(problem),
-        TimeDurationOFF,
+        InitialTimeDurationOff,
         cache.device_type,
     )
 
@@ -908,7 +965,7 @@ end
 function get_initial_cache(cache::StoredEnergy, problem::OperationsProblem)
     ini_cond_level = get_initial_conditions(
         get_optimization_container(problem),
-        EnergyLevel,
+        InitialEnergyLevel,
         cache.device_type,
     )
 

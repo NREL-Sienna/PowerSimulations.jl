@@ -1,6 +1,8 @@
 #! format: off
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
+struct RampReserve <: AbstractReservesFormulation end
+
 ############################### Reserve Variables #########################################
 
 get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
@@ -144,6 +146,109 @@ function service_requirement_constraint!(
     return
 end
 
+_get_ramp_limits(::PSY.Component) = nothing
+_get_ramp_limits(d::PSY.ThermalGen) = PSY.get_ramp_limits(d)
+_get_ramp_limits(d::PSY.HydroGen) = PSY.get_ramp_limits(d)
+
+function _get_data_for_ramp_limit(
+    optimization_container::OptimizationContainer,
+    service::SR,
+    contributing_devices::U,
+) where {
+    SR <: PSY.Reserve,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    time_frame = PSY.get_time_frame(service)
+    resolution = model_resolution(optimization_container)
+    if resolution > Dates.Minute(1)
+        minutes_per_period = Dates.value(Dates.Minute(resolution))
+    else
+        @warn("Not all formulations support under 1-minute resolutions. Exercise caution.")
+        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
+    end
+    lenght_contributing_devices = length(contributing_devices)
+    idx = 0
+    data = Vector{ServiceRampConstraintInfo}(undef, lenght_contributing_devices)
+
+    for d in contributing_devices
+        name = PSY.get_name(d)
+        non_binding_up = false
+        non_binding_down = false
+        ramp_limits = _get_ramp_limits(d)
+        if !(ramp_limits === nothing)
+            p_lims = PSY.get_active_power_limits(d)
+            max_rate = abs(p_lims.min - p_lims.max) / time_frame
+            if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
+                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
+                continue
+            else
+                idx += 1
+            end
+            ramp = (up = ramp_limits.up * time_frame, down = ramp_limits.down * time_frame)
+            data[idx] = ServiceRampConstraintInfo(name, ramp)
+        end
+    end
+    if idx < lenght_contributing_devices
+        deleteat!(data, (idx + 1):lenght_contributing_devices)
+    end
+    return data
+end
+
+function ramp_constraints!(
+    optimization_container::OptimizationContainer,
+    service::SR,
+    contributing_devices::U,
+    ::ServiceModel{SR, T},
+) where {
+    SR <: PSY.Reserve{PSY.ReserveUp},
+    T <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    initial_time = model_initial_time(optimization_container)
+    data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
+    service_name = PSY.get_name(service)
+    if !isempty(data)
+        service_upward_rateofchange!(
+            optimization_container,
+            data,
+            make_constraint_name(RAMP, SR),
+            make_variable_name(service_name, SR),
+            service_name,
+        )
+    else
+        @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
+    end
+    return
+end
+
+function ramp_constraints!(
+    optimization_container::OptimizationContainer,
+    service::SR,
+    contributing_devices::U,
+    ::ServiceModel{SR, T},
+) where {
+    SR <: PSY.Reserve{PSY.ReserveDown},
+    T <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    initial_time = model_initial_time(optimization_container)
+    data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
+    service_name = PSY.get_name(service)
+    if !isempty(data)
+        # TODO: `make_constraint_name` to build unique constraint name using  service_name
+        service_downward_rateofchange!(
+            optimization_container,
+            data,
+            make_constraint_name(RAMP, SR),
+            make_variable_name(service_name, SR),
+            service_name,
+        )
+    else
+        @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
+    end
+    return
+end
+
 function AddCostSpec(
     ::Type{T},
     ::Type{StepwiseCostReserve},
@@ -251,6 +356,42 @@ function include_service!(
     return
 end
 
+function include_service!(
+    constraint_info::T,
+    services,
+    ::ServiceModel{SR, RampReserve},
+) where {T <: AbstractRampConstraintInfo, SR <: PSY.Reserve{PSY.ReserveDown}}
+    return
+end
+
+function include_service!(
+    constraint_info::ReserveRangeConstraintInfo,
+    services,
+    ::ServiceModel{SR, RampReserve},
+) where {SR <: PSY.Reserve{PSY.ReserveUp}}
+    for (ix, service) in enumerate(services)
+        # Should this be make_variable_name ?
+        name = make_constraint_name(PSY.get_name(service), SR)
+        push!(constraint_info.additional_terms_up, name)
+        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+    end
+    return
+end
+
+function include_service!(
+    constraint_info::ReserveRangeConstraintInfo,
+    services,
+    ::ServiceModel{SR, RampReserve},
+) where {SR <: PSY.Reserve{PSY.ReserveDown}}
+    for (ix, service) in enumerate(services)
+        # Should this be make_variable_name ?
+        name = make_constraint_name(PSY.get_name(service), SR)
+        push!(constraint_info.additional_terms_dn, name)
+        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+    end
+    return
+end
+
 function add_device_services!(
     constraint_info::T,
     device::D,
@@ -259,6 +400,34 @@ function add_device_services!(
     T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     D <: PSY.Device,
 }
+    for service_model in get_services(model)
+        if PSY.has_service(device, service_model.component_type)
+            services = (
+                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
+            )
+            @assert !isempty(services)
+            include_service!(constraint_info, services, service_model)
+        end
+    end
+    return
+end
+
+function add_device_services!(
+    constraint_info::T,
+    device::D,
+    model::DeviceModel{D, BatteryAncialliryServices},
+) where {
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    D <: PSY.Storage,
+}
+    return
+end
+
+function add_device_services!(
+    constraint_info::ReserveRangeConstraintInfo,
+    device::D,
+    model::DeviceModel{D, BatteryAncialliryServices},
+) where {D <: PSY.Storage}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.component_type)
             services = (

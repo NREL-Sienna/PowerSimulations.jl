@@ -70,7 +70,7 @@ function InitialConditionUpdateEvent(
         simulation_time,
         string(key.ic_type),
         string(key.device_type),
-        device_name(ic),
+        get_device_name(ic),
         val,
         previous_value,
         problem_number,

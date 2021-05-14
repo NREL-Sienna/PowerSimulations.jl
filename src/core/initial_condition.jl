@@ -23,4 +23,4 @@ end
 
 get_device(ic::InitialCondition) = ic.device
 get_value(ic::InitialCondition) = ic.value
-device_name(ic::InitialCondition) = PSY.get_name(ic.device)
+get_device_name(ic::InitialCondition) = PSY.get_name(ic.device)

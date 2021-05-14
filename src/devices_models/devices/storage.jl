@@ -4,6 +4,7 @@ abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
+struct BatteryAncialliryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
 
 get_variable_sign(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
@@ -207,7 +208,7 @@ function storage_energy_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
-    key = ICKey(EnergyLevel, T)
+    key = ICKey(InitialEnergyLevel, T)
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -223,7 +224,6 @@ function storage_energy_initial_condition!(
 end
 
 ############################ Energy Capacity Constraints####################################
-
 function energy_capacity_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
@@ -266,11 +266,57 @@ function DeviceEnergyBalanceConstraintSpec(
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_LIMIT, St),
         energy_variable = make_variable_name(ENERGY, St),
-        initial_condition = EnergyLevel,
+        initial_condition = InitialEnergyLevel,
         pin_variable_names = [make_variable_name(ACTIVE_POWER_IN, St)],
         pout_variable_names = [make_variable_name(ACTIVE_POWER_OUT, St)],
         constraint_func = energy_balance!,
     )
+end
+
+############################ reserve constraints ######################################
+
+function reserve_contribution_constraint!(
+    optimization_container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, D},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
+    constraint_infos_up = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
+    constraint_infos_dn = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
+    constraint_infos_energy = Vector{ReserveRangeConstraintInfo}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        name = PSY.get_name(d)
+        up_info = DeviceRangeConstraintInfo(name, PSY.get_output_active_power_limits(d))
+        down_info = DeviceRangeConstraintInfo(name, PSY.get_input_active_power_limits(d))
+        energy_info = ReserveRangeConstraintInfo(
+            name,
+            PSY.get_state_of_charge_limits(d),
+            PSY.get_efficiency(d),
+        )
+        add_device_services!(up_info, down_info, d, model)
+        add_device_services!(energy_info, d, model)
+        constraint_infos_energy[ix] = energy_info
+        constraint_infos_up[ix] = up_info
+        constraint_infos_dn[ix] = down_info
+    end
+
+    reserve_power_ub!(
+        optimization_container,
+        constraint_infos_up,
+        constraint_infos_dn,
+        make_constraint_name(RESERVE_POWER, T),
+        (make_variable_name(ACTIVE_POWER_IN, T), make_variable_name(ACTIVE_POWER_OUT, T)),
+    )
+
+    reserve_energy_ub!(
+        optimization_container,
+        constraint_infos_energy,
+        make_constraint_name(RESERVE_ENERGY, T),
+        make_variable_name(ENERGY, T),
+    )
+
+    return
 end
 
 ############################ Energy Management constraints ######################################
@@ -282,7 +328,7 @@ function energy_target_constraint!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage}
-    key = ICKey(EnergyLevel, T)
+    key = ICKey(InitialEnergyLevel, T)
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
     time_steps = model_time_steps(optimization_container)

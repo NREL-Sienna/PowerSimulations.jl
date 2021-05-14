@@ -137,7 +137,7 @@ function _create_cache(ic_key::ICKey, caches::Union{Nothing, Vector{<:AbstractCa
 end
 
 function _create_cache(
-    ic_key::ICKey{TimeDurationON, T},
+    ic_key::ICKey{InitialTimeDurationOn, T},
     caches::Union{Nothing, Vector{<:AbstractCache}},
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
@@ -149,7 +149,7 @@ function _create_cache(
 end
 
 function _create_cache(
-    ic_key::ICKey{TimeDurationOFF, T},
+    ic_key::ICKey{InitialTimeDurationOff, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
@@ -161,7 +161,7 @@ function _create_cache(
 end
 
 function _create_cache(
-    ic_key::ICKey{EnergyLevel, T},
+    ic_key::ICKey{InitialEnergyLevel, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
@@ -697,7 +697,7 @@ function initial_condition_update!(
     # TODO: Replace this convoluted way to get information with access to data store
     simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
-        name = device_name(ic)
+        name = get_device_name(ic)
         interval_chronology =
             get_problem_interval_chronology(sim.sequence, get_name(problem))
         var_value = get_problem_variable(
@@ -745,7 +745,7 @@ function initial_condition_update!(
     sequence = get_sequence(sim)
     interval = get_interval(sequence, problem_name)
     for ic in initial_conditions
-        name = device_name(ic)
+        name = get_device_name(ic)
         current_ix = get_current_execution_index(sim)
         source_problem_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
         source_problem = get_problem(sim, execution_index[source_problem_ix])
@@ -1190,7 +1190,6 @@ function _initialize_problem_storage!(
     min_cache_flush_size_mib,
 )
     sequence = get_sequence(sim)
-    execution_order = get_execution_order(sequence)
     executions_by_problem = sequence.executions_by_problem
     intervals = sequence.intervals
 
@@ -1208,6 +1207,7 @@ function _initialize_problem_storage!(
         duals = get_constraint_duals(get_settings(optimization_container))
         parameters = get_parameters(optimization_container)
         variables = get_variables(optimization_container)
+        aux_variables = get_aux_variables(optimization_container)
         num_rows = num_executions * get_steps(sim)
 
         interval = intervals[problem_name][1]
@@ -1261,6 +1261,19 @@ function _initialize_problem_storage!(
         end
 
         for (name, array) in variables
+            reqs.variables[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
+            add_rule!(
+                rules,
+                problem_sym,
+                STORE_CONTAINER_VARIABLES,
+                name,
+                false,
+                CachePriority.HIGH,
+            )
+        end
+
+        for (key, array) in aux_variables
+            name = encode_key(key)
             reqs.variables[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
             add_rule!(
                 rules,

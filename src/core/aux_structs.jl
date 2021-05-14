@@ -1,3 +1,5 @@
+abstract type OptimizationContainerKey end
+
 """Reference for parameters update when present"""
 struct UpdateRef{T}
     access_ref::Symbol
