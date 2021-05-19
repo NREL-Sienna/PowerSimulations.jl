@@ -398,7 +398,6 @@ function energy_target_constraint!(
                 constraint_infos,
                 make_constraint_name(RangeConstraint, EnergyShortageVariable, T),
                 make_variable_name(EnergyShortageVariable, T),
-                Vector{Symbol}(),
             ),
         )
     end

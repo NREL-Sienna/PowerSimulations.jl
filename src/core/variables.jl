@@ -115,28 +115,14 @@ struct AdditionalDeltaActivePowerDownVariable <: VariableType end
 
 struct SmoothACE <: VariableType end
 
-struct ActivePowerVariableThermal <: VariableType end
-
-struct ActivePowerVariableLoad <: VariableType end
-
-struct ActivePowerInVariableStorage <: VariableType end
-
-struct ActivePowerOutVariableStorage <: VariableType end
-
-struct ActivePowerVariableRenewable <: VariableType end
-
-struct ReactivePowerVariableThermal <: VariableType end
-
-struct ReactivePowerVariableLoad <: VariableType end
-
-struct ReactivePowerVariableStorage <: VariableType end
-
-struct ReactivePowerVariableRenewable <: VariableType end
-
 struct SubComponentActivePowerVariable <: SubComponentVariableType end
+
 struct SubComponentReactivePowerVariable <: SubComponentVariableType end
+
 struct SubComponentActivePowerInVariable <: SubComponentVariableType end
+
 struct SubComponentActivePowerOutVariable <: SubComponentVariableType end
+
 struct SubComponentEnergyVariable <: SubComponentVariableType end
 
 """Struct to dispatch the creation of Flow Active Power Variables"""
@@ -231,14 +217,16 @@ make_variable_name(::Type{SmoothACE}, ::Type{T}) where {T <: PSY.AggregationTopo
 
 make_variable_name(::Type{FlowActivePowerVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Fp")
 
-make_variable_name(::Type{ActivePowerVariableThermal}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "P_thermal")
-
 make_variable_name(::Type{SubComponentActivePowerVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "P_SubComponent")
+
 make_variable_name(::Type{SubComponentActivePowerInVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Pin_SubComponent")
+
 make_variable_name(::Type{SubComponentActivePowerOutVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Pout_SubComponent")
+
 make_variable_name(::Type{SubComponentEnergyVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "E_SubComponent")
 
 make_variable_name(::Type{SubComponentReactivePowerVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Q_SubComponent")
+
 make_variable_name(::Type{FlowReactivePowerVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Fq")
 
 make_variable_name(::Type{FlowActivePowerFromToVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "FpFT")

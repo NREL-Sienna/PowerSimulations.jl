@@ -826,6 +826,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 optimization_container,
+                spec,
                 make_variable_name(OnVariable, spec.component_type),
                 component_name,
                 spec.fixed_cost(cost_data) * spec.multiplier,
@@ -839,6 +840,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 optimization_container,
+                spec,
                 make_variable_name(StartVariable, spec.component_type),
                 component_name,
                 cost_data.spec.start_up_cost(cost_data) * spec.multiplier,
@@ -852,6 +854,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 optimization_container,
+                spec,
                 make_variable_name(StopVariable, spec.component_type),
                 component_name,
                 spec.shut_down_cost(cost_data) * spec.multiplier,
@@ -865,6 +868,7 @@ function add_to_cost!(
     for t in time_steps
         linear_gen_cost!(
             optimization_container,
+            spec,
             make_variable_name(EnergySurplusVariable, spec.component_type),
             component_name,
             cost_data.energy_surplus_cost * OBJECTIVE_FUNCTION_NEGATIVE * base_power,
@@ -872,6 +876,7 @@ function add_to_cost!(
         )
         linear_gen_cost!(
             optimization_container,
+            spec,
             make_variable_name(EnergyShortageVariable, spec.component_type),
             component_name,
             cost_data.energy_shortage_cost * spec.multiplier * base_power,

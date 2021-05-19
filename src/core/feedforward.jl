@@ -549,8 +549,9 @@ function power_commitment_ff(
         multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            sum(variable[name, t] for t in 1:affected_time_periods) / length(affected_time_periods) +
-            varslack[name, 1] >= param_ub[name] * multiplier_ub[name]
+            sum(variable[name, t] for t in 1:affected_time_periods) /
+            length(affected_time_periods) + varslack[name, 1] >=
+            param_ub[name] * multiplier_ub[name]
         )
         add_to_cost_expression!(
             optimization_container,
@@ -648,7 +649,12 @@ function feedforward!(
     ::DeviceModel{T, D},
     ff_model::PowerCommitmentFF,
 ) where {T <: PSY.HybridSystem, D <: AbstractDeviceFormulation}
-    PSI.add_variables!(optimization_container, PSI.ActivePowerShortageVariable, devices, D())
+    PSI.add_variables!(
+        optimization_container,
+        PSI.ActivePowerShortageVariable,
+        devices,
+        D(),
+    )
     # slack_var_name = make_variable_name(ActivePowerShortageVariable, T)
     # slack_variable = add_var_container!(
     #     optimization_container,

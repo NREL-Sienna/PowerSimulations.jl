@@ -504,7 +504,7 @@ function DeviceEnergyBalanceConstraintSpec(
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_LIMIT, H),
         energy_variable = make_variable_name(SUBCOMPONENT_ENERGY, H),
-        initial_condition = EnergyLevel,
+        initial_condition = InitialEnergyLevel,
         pin_variable_names = [make_variable_name(SUBCOMPONENT_ACTIVE_POWER_IN, H)],
         pout_variable_names = [make_variable_name(SUBCOMPONENT_ACTIVE_POWER_OUT, H)],
         constraint_func = energy_balance!,
@@ -691,7 +691,7 @@ function storage_energy_initial_condition!(
     devices::IS.FlattenIteratorWrapper{T},
     ::D,
 ) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation}
-    key = ICKey(EnergyLevel, T)
+    key = ICKey(InitialEnergyLevel, T)
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -742,12 +742,12 @@ end
 function AddCostSpec(
     ::Type{T},
     ::Type{PhysicalCoupling},
-    ::Type{PSY.ControllableLoad},
+    ::Type{<:PSY.ControllableLoad},
     ::OptimizationContainer,
 ) where {T <: PSY.HybridSystem}
     cost_function = x -> (x == nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
-        variable_type = ActivePowerVariableLoad,
+        variable_type = SubComponentActivePowerVariable,
         component_type = T,
         variable_cost = cost_function,
         multiplier = OBJECTIVE_FUNCTION_NEGATIVE,

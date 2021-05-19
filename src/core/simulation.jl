@@ -173,7 +173,7 @@ function _create_cache(
 end
 
 function _create_cache(
-    ic_key::ICKey{EnergyLevel, T},
+    ic_key::ICKey{InitialEnergyLevel, T},
     caches::Vector{<:AbstractCache},
 ) where {T <: PSY.HybridSystem}
     cache_keys = CacheKey.(caches)
@@ -680,11 +680,11 @@ end
 # or custom InitialConditionType #
 
 get_subcomponent_type(::ICKey{DevicePower, PSY.HybridSystem}) = PSY.ThermalGen
-get_subcomponent_type(::ICKey{TimeDurationON, PSY.HybridSystem}) = PSY.ThermalGen
-get_subcomponent_type(::ICKey{TimeDurationOFF, PSY.HybridSystem}) = PSY.ThermalGen
-get_subcomponent_type(::ICKey{EnergyLevel, PSY.HybridSystem}) = PSY.Storage
+get_subcomponent_type(::ICKey{InitialTimeDurationOn, PSY.HybridSystem}) = PSY.ThermalGen
+get_subcomponent_type(::ICKey{InitialTimeDurationOff, PSY.HybridSystem}) = PSY.ThermalGen
+get_subcomponent_type(::ICKey{InitialEnergyLevel, PSY.HybridSystem}) = PSY.Storage
 
-get_subcomponent_type(::ICKey) where {T <: PSY.Component} = nothing
+get_subcomponent_type(::ICKey) = nothing
 
 """ Updates the initial conditions of the problem"""
 function initial_condition_update!(
