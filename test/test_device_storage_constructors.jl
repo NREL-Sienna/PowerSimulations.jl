@@ -88,7 +88,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1b-2b" begin
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1b-2b)" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
@@ -107,7 +107,7 @@ end
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 5811.0, 10.0)
 end
 
-@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1c-2c" begin
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1c-2c)" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
@@ -127,7 +127,7 @@ end
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -63.0, 10.0)
 end
 
-@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1d-2d" begin
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1d-2d)" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
@@ -147,7 +147,7 @@ end
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], -11118.0, 10.0)
 end
 
-@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1e-2e" begin
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1e-2e)" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
@@ -166,7 +166,7 @@ end
     psi_checksolve_test(op_problem, [MOI.OPTIMAL], 5547.0, 10.0)
 end
 
-@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1f-2f" begin
+@testset "BatteryEMS with EnergyTarget Formulations (energy target - cases 1f-2f)" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, BatteryEMS, EnergyTarget)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)

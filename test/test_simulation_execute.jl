@@ -80,7 +80,7 @@ end
 end
 
 @testset "Simulation Single Stage with Cache" begin
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
     template = get_template_hydro_st_ed()
     problems = SimulationProblems(
         ED = OperationsProblem(template, c_sys5_hy_ed; optimizer = ipopt_optimizer),
