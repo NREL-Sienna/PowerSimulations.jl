@@ -265,48 +265,55 @@ function device_multistart_range!(
     varon = get_variable(optimization_container, inputs.bin_variable_names[2])
     varoff = get_variable(optimization_container, inputs.bin_variable_names[3])
 
-    on_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    off_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
+    on_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "on")
+    off_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "off")
+    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+
     names = [get_component_name(x) for x in inputs.constraint_infos]
     con_on = add_cons_container!(optimization_container, on_name, names, time_steps)
     con_off = add_cons_container!(optimization_container, off_name, names, time_steps)
+    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos, t in time_steps
-        if JuMP.has_lower_bound(varp[get_component_name(constraint_info), t])
-            JuMP.set_lower_bound(varp[get_component_name(constraint_info), t], 0.0)
+        name = get_component_name(constraint_info)
+        limits = constraint_info.limits
+        lag_ramp_limits = constraint_info.lag_ramp_limits
+        if JuMP.has_lower_bound(varp[name, t])
+            JuMP.set_lower_bound(varp[name, t], 0.0)
         end
-        expression_products =
-            JuMP.AffExpr(0.0, varp[get_component_name(constraint_info), t] => 1.0)
+        expression_products = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
         for val in constraint_info.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_products,
-                get_variable(optimization_container, val)[
-                    get_component_name(constraint_info),
-                    t,
-                ],
+                get_variable(optimization_container, val)[name, t],
             )
         end
-        con_on[get_component_name(constraint_info), t] = JuMP.@constraint(
+        con_on[name, t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
             expression_products <=
-            (constraint_info.limits.max - constraint_info.limits.min) *
-            varstatus[get_component_name(constraint_info), t] -
-            max(constraint_info.limits.max - constraint_info.lag_ramp_limits.startup, 0) * varon[get_component_name(constraint_info), t]
+            (limits.max - limits.min) * varstatus[name, t] -
+            max(limits.max - lag_ramp_limits.startup, 0) * varon[name, t]
         )
         if t == length(time_steps)
             continue
         else
-            con_off[get_component_name(constraint_info), t] = JuMP.@constraint(
+            con_off[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
                 expression_products <=
-                (constraint_info.limits.max - constraint_info.limits.min) *
-                varstatus[get_component_name(constraint_info), t] -
-                max(
-                    constraint_info.limits.max - constraint_info.lag_ramp_limits.shutdown,
-                    0,
-                ) * varoff[get_component_name(constraint_info), t + 1]
+                (limits.max - limits.min) * varstatus[name, t] -
+                max(limits.max - lag_ramp_limits.shutdown, 0) * varoff[name, t + 1]
             )
         end
+
+        exp_lb = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
+        for val in constraint_info.additional_terms_lb
+            JuMP.add_to_expression!(
+                expression_products,
+                get_variable(optimization_container, val)[name, t],
+                -1.0,
+            )
+        end
+        con_lb[name, t] = JuMP.@constraint(optimization_container.JuMPmodel, exp_lb >= 0)
     end
 
     return
