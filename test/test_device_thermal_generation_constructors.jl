@@ -639,7 +639,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 528, 0, no_less_than[p], 60, 144, true)
+        moi_tests(op_problem, p, 528, 0, no_less_than[p], 106, 144, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -666,7 +666,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 576, 0, no_less_than[p], 108, 144, true)
+        moi_tests(op_problem, p, 576, 0, no_less_than[p], 154, 144, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -684,7 +684,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 480, 0, 595, 0, 120, true)
+        moi_tests(op_problem, p, 480, 0, 595, 115, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -700,7 +700,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 384, 0, 286, 0, 96, true)
+        moi_tests(op_problem, p, 384, 0, 286, 46, 96, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -716,7 +716,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 600, 0, 715, 120, 120, true)
+        moi_tests(op_problem, p, 600, 0, 715, 235, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -732,7 +732,7 @@ end
             use_parameters = p,
         )
         mock_construct_device!(op_problem, model)
-        moi_tests(op_problem, p, 432, 0, 334, 48, 96, true)
+        moi_tests(op_problem, p, 432, 0, 334, 94, 96, true)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -880,7 +880,7 @@ end
         use_parameters = true,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(UC, true, 38, 0, 18, 8, 13, true)
+    moi_tests(UC, true, 38, 0, 18, 9, 13, true)
 end
 
 @testset "Operation ModelThermalDispatchNoMin - and PWL Non Convex" begin
