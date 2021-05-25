@@ -307,7 +307,6 @@ function pwl_gencost_linear!(
     base_power = get_base_power(optimization_container)
     var_name = make_variable_name(spec.variable_type, spec.component_type)
     variable = get_variable(optimization_container, var_name)[component_name, time_period]
-    settings_ext = get_ext(get_settings(optimization_container))
     export_pwl_vars = get_export_pwl_vars(optimization_container.settings)
     @debug export_pwl_vars
     total_gen_cost = JuMP.AffExpr(0.0)
@@ -318,7 +317,6 @@ function pwl_gencost_linear!(
         pwlvar = JuMP.@variable(
             optimization_container.JuMPmodel,
             base_name = "{$(variable)}_{pwl_$(i)}",
-            start = 0.0,
             lower_bound = 0.0,
             upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i] / base_power
         )
