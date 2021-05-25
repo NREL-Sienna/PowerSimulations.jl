@@ -97,16 +97,23 @@ OpModel = OperationsProblem(MockOperationProblem, template, system)
 
 # Accepted Key Words
 
-- `horizon::Int`: Manually specify the length of the forecast Horizon
-- `initial_time::Dates.DateTime`: Initial Time for the model solve
-- `use_forecast_data::Bool`: If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
-- `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
+- `optimizer`: The optimizer that will be used in the optimization model.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
-- `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Default is false.
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 - `balance_slack_variables::Bool`: True will add slacks to the system balance constraints
 - `services_slack_variables::Bool`: True will add slacks to the services requirement constraints
+- `constraint_duals::Vector{Symbol}`: Vector with the duals to query from the optimization model
+- `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
+- `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default to false.
+- `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
+- `optimizer_log_print::Bool`: True to print the optimizer solve log. Default to false.
+- `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default to false.
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Default is false.
+- `use_forecast_data::Bool`: If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
+
 """
 mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
@@ -129,7 +136,7 @@ function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
-    optimizer::Union{MOI.OptimizerWithAttributes, Nothing} = nothing,
+    optimizer = nothing,
     PTDF = nothing,
     horizon = UNSET_HORIZON,
     warm_start = true,
@@ -140,10 +147,11 @@ function OperationsProblem{M}(
     export_pwl_vars = false,
     allow_fails = false,
     optimizer_log_print = false,
+    direct_mode_optimizer = false,
     use_parameters = false,
     use_forecast_data = true,
-    time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
     initial_time = UNSET_INI_TIME,
+    time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
 ) where {M <: AbstractOperationsProblem}
     settings = Settings(
         sys;
@@ -161,6 +169,7 @@ function OperationsProblem{M}(
         allow_fails = allow_fails,
         PTDF = PTDF,
         optimizer_log_print = optimizer_log_print,
+        direct_mode_optimizer = direct_mode_optimizer,
         use_forecast_data = use_forecast_data,
     )
     return OperationsProblem{M}(template, sys, settings, jump_model)
@@ -170,7 +179,7 @@ end
     OperationsProblem(::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    optimizer::JuMP.MOI.OptimizerWithAttributes,
+    optimizer::MOI.OptimizerWithAttributes,
     jump_model::Union{Nothing, JuMP.Model}=nothing;
     kwargs...) where {M<:AbstractOperationsProblem}
 This builds the optimization problem of type M with the specific system and template
@@ -226,13 +235,13 @@ Construct an OperationsProblem from a serialized file.
 - `filename::AbstractString`: path to serialized file
 - `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
    serialized. Callers should pass whatever they passed to the original problem.
-- `optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes}` = nothing: The optimizer does
+- `optimizer::Union{Nothing,MOI.OptimizerWithAttributes}` = nothing: The optimizer does
    not get serialized. Callers should pass whatever they passed to the original problem.
 """
 function OperationsProblem(
     filename::AbstractString;
     jump_model::Union{Nothing, JuMP.Model} = nothing,
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    optimizer::Union{Nothing, MOI.OptimizerWithAttributes} = nothing,
     kwargs...,
 )
     return deserialize_problem(
