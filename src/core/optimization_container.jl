@@ -168,12 +168,15 @@ function optimization_container_init!(
     use_parameters = get_use_parameters(settings)
     use_forecasts = get_use_forecast_data(settings)
 
-    if use_parameters && !use_forecasts
-        throw(
-            IS.ConflictingInputsError(
-                "enabling parameters without forecasts is not supported",
-            ),
-        )
+    if use_parameters
+        if !use_forecasts
+            throw(
+                IS.ConflictingInputsError(
+                    "enabling parameters without forecasts is not supported",
+                ),
+            )
+        end
+        set_use_parameters!(get_initial_conditions(optimization_container), use_parameters)
     end
 
     if get_initial_time(settings) == UNSET_INI_TIME
@@ -199,6 +202,8 @@ function optimization_container_init!(
     else
         set_horizon!(settings, 1)
     end
+
+
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
     _make_expressions_dict!(optimization_container, bus_numbers, T)

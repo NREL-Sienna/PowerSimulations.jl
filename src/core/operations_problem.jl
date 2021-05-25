@@ -438,6 +438,7 @@ function build_pre_step!(problem::OperationsProblem)
             reset!(problem)
         end
         settings = get_settings(problem)
+        set_use_parameters!(settings, built_for_simulation(problem))
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
         system = get_system(problem)
