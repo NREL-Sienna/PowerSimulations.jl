@@ -438,16 +438,17 @@ function build_pre_step!(problem::OperationsProblem)
             reset!(problem)
         end
         settings = get_settings(problem)
-        set_use_parameters!(settings, built_for_simulation(problem))
+        if !get_use_parameters(settings)
+            set_use_parameters!(settings, built_for_simulation(problem))
+            @debug "Set use_parameters = true for use in simulation"
+        end
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
-        system = get_system(problem)
         @info "Initializing Optimization Container"
-        template = get_template(problem)
         optimization_container_init!(
             get_optimization_container(problem),
-            get_transmission_model(template),
-            system,
+            get_transmission_model(get_template(problem)),
+            get_system(problem),
         )
         set_status!(problem, BuildStatus.IN_PROGRESS)
     end
