@@ -57,7 +57,7 @@ export HydroDispatchPumpedStoragewReservation
 ######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
-export BatteryAncialliryServices
+export BatteryAncillaryServices
 export EnergyTarget
 
 ######## Thermal Formulations ########
