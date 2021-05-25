@@ -308,15 +308,12 @@ function regulation_cost!(
     ::DeviceModel{PSY.RegulationDevice{T}, <:AbstractRegulationFormulation},
 ) where {T <: PSY.StaticInjection}
     time_steps = model_time_steps(optimization_container)
-    R_up = get_variable(optimization_container, DeltaActivePowerUpVariable, T)
-    R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable, T)
     R_up_emergency =
         get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
     R_dn_emergency =
         get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
 
     for d in devices
-        cost = PSY.get_cost(d)
         p_factor = PSY.get_participation_factor(d)
         up_cost =
             isapprox(p_factor.up, 0.0; atol = 1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.up

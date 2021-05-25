@@ -26,7 +26,6 @@ function service_requirement_constraint!(
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     parameters = model_has_parameters(optimization_container)
-    use_forecast_data = model_uses_forecasts(optimization_container)
     initial_time = model_initial_time(optimization_container)
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
@@ -78,7 +77,6 @@ function service_requirement_constraint!(
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.StaticReserve, T <: AbstractReservesFormulation}
-    parameters = model_has_parameters(optimization_container)
     initial_time = model_initial_time(optimization_container)
     @debug initial_time
     time_steps = model_time_steps(optimization_container)

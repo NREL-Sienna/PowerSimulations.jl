@@ -67,7 +67,7 @@ function construct_service!(
     names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(optimization_container)
-        container = add_param_container!(
+        add_param_container!(
             optimization_container,
             UpdateRef{SR}("service_requirement", "requirement"),
             names,
@@ -171,9 +171,9 @@ function construct_service!(
     ::Vector{<:DataType},
 ) where {T <: AbstractAGCFormulation}
     # Order is important in the addition of these variables
-    for device_model in devices_template
-        # TODO: make a check for the devices' models
-    end
+    # for device_model in devices_template
+    # TODO: make a check for the devices' models
+    #end
     agc_areas = [PSY.get_area(agc) for agc in services]
     areas = PSY.get_components(PSY.Area, sys)
     for area in areas
@@ -214,7 +214,7 @@ function construct_service!(
     names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(optimization_container)
-        container = add_param_container!(
+        add_param_container!(
             optimization_container,
             UpdateRef{SR}("service_requirement", "requirement"),
             names,
@@ -258,7 +258,7 @@ function construct_service!(
     names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(optimization_container)
-        container = add_param_container!(
+        add_param_container!(
             optimization_container,
             UpdateRef{SR}("service_requirement", "requirement"),
             names,

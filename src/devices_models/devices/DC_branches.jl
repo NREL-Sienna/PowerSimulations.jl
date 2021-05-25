@@ -43,9 +43,7 @@ function add_variable_to_expression!(
     time_steps = model_time_steps(optimization_container)
     var = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
 
-    for (ix, d) in enumerate(devices)
-        bus_fr = PSY.get_number(PSY.get_arc(d).from)
-        bus_to = PSY.get_number(PSY.get_arc(d).to)
+    for d in devices
         for t in time_steps
             flow_variable = var[PSY.get_name(d), t]
             add_to_expression!(
