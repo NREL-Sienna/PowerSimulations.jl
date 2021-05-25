@@ -69,7 +69,7 @@ struct GenericOpProblem <: PowerSimulationsOperationsProblem end
     OperationsProblem(::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
+    jump_model::Union{Nothing, JuMP.Model}=nothing;
     kwargs...) where {M<:AbstractOperationsProblem,
                       T<:PM.AbstractPowerFormulation}
 
@@ -81,7 +81,7 @@ This builds the optimization problem of type M with the specific system and temp
 - `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
-- `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
+- `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
 
 # Output
 
@@ -118,7 +118,7 @@ mutable struct OperationsProblem{M <: AbstractOperationsProblem}
         template::OperationsProblemTemplate,
         sys::PSY.System,
         settings::Settings,
-        jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
+        jump_model::Union{Nothing, JuMP.Model} = nothing,
     ) where {M <: AbstractOperationsProblem}
         internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
         new{M}(template, sys, internal, Dict{String, Any}())
@@ -128,7 +128,7 @@ end
 function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
     optimizer::Union{MOI.OptimizerWithAttributes, Nothing} = nothing,
     PTDF = nothing,
     horizon = UNSET_HORIZON,
@@ -171,7 +171,7 @@ end
     template::OperationsProblemTemplate,
     sys::PSY.System,
     optimizer::JuMP.MOI.OptimizerWithAttributes,
-    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
+    jump_model::Union{Nothing, JuMP.Model}=nothing;
     kwargs...) where {M<:AbstractOperationsProblem}
 This builds the optimization problem of type M with the specific system and template
 # Arguments
@@ -179,7 +179,7 @@ This builds the optimization problem of type M with the specific system and temp
 - `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
-- `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
+- `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
 # Output
 - `Stage::OperationsProblem`: The operation model containing the model type, unbuilt JuMP model, Power
 Systems system.
@@ -202,7 +202,7 @@ function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
     return OperationsProblem{M}(template, sys, jump_model; kwargs...)
@@ -211,7 +211,7 @@ end
 function OperationsProblem(
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
 )
     return OperationsProblem{GenericOpProblem}(template, sys, jump_model; kwargs...)
@@ -224,14 +224,14 @@ Construct an OperationsProblem from a serialized file.
 
 # Arguments
 - `filename::AbstractString`: path to serialized file
-- `jump_model::Union{Nothing, JuMP.AbstractModel}` = nothing: The JuMP model does not get
+- `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
    serialized. Callers should pass whatever they passed to the original problem.
 - `optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes}` = nothing: The optimizer does
    not get serialized. Callers should pass whatever they passed to the original problem.
 """
 function OperationsProblem(
     filename::AbstractString;
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
+    jump_model::Union{Nothing, JuMP.Model} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     kwargs...,
 )

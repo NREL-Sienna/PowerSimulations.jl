@@ -1,7 +1,7 @@
 abstract type AbstractModelContainer end
 
 mutable struct OptimizationContainer <: AbstractModelContainer
-    JuMPmodel::Union{Nothing, JuMP.AbstractModel}
+    JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     settings::Settings
@@ -11,8 +11,8 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing, ParametersContainer}
-    initial_conditions::Union{Nothing, InitialConditions}
+    parameters::ParametersContainer
+    initial_conditions::InitialConditions
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
@@ -20,7 +20,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     function OptimizationContainer(
         sys::PSY.System,
         settings::Settings,
-        jump_model::Union{Nothing, JuMP.AbstractModel},
+        jump_model::Union{Nothing, JuMP.Model},
     )
         resolution = PSY.get_time_series_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
@@ -35,8 +35,8 @@ mutable struct OptimizationContainer <: AbstractModelContainer
             Dict{Symbol, AbstractArray}(),
             zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
-            nothing,
-            nothing,
+            ParametersContainer(),
+            InitialConditions(),
             nothing,
             PSY.get_base_power(sys),
             Dict{Symbol, Any}(),
@@ -45,7 +45,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
 end
 
 function _validate_warm_start_support(
-    JuMPmodel::JuMP.AbstractModel,
+    JuMPmodel::JuMP.Model,
     warm_start_enabled::Bool,
 )
     !warm_start_enabled && return warm_start_enabled
