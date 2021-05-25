@@ -8,7 +8,8 @@ struct Settings
     services_slack_variables::Bool
     initial_time::Base.RefValue{Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
+    optimizer::Union{Nothing, MOI.OptimizerWithAttributes}
+    direct_mode_optimizer::Bool
     optimizer_log_print::Bool
     constraint_duals::Vector{Symbol}
     system_to_file::Bool
@@ -28,7 +29,8 @@ function Settings(
     services_slack_variables::Bool = false,
     horizon::Int = UNSET_HORIZON,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    optimizer = nothing,
+    direct_mode_optimizer::Bool = false,
     optimizer_log_print::Bool = false,
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
     system_to_file = true,
@@ -42,6 +44,14 @@ function Settings(
         time_series_cache_size = 0
     end
 
+    if isa(optimizer, MOI.OptimizerWithAttributes) || optimizer === nothing
+        optimizer_ = optimizer
+    elseif isa(optimizer, DataType)
+        optimizer_ = MOI.OptimizerWithAttributes(optimizer)
+    else
+       error("The provided input for optimizer is invalid. Provide a JuMP.OptimizerWithAttributes object or a valid Optimizer constructor (e.g. GLPK.Optimizer).")
+    end
+
     return Settings(
         Ref(horizon),
         use_forecast_data,
@@ -52,7 +62,8 @@ function Settings(
         services_slack_variables,
         Ref(initial_time),
         PTDF,
-        optimizer,
+        optimizer_,
+        direct_mode_optimizer,
         optimizer_log_print,
         constraint_duals,
         system_to_file,
@@ -93,7 +104,7 @@ end
 
 function restore_from_copy(
     settings::Settings;
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
+    optimizer::Union{Nothing, MOI.OptimizerWithAttributes},
 )
     vals = Dict{Symbol, Any}()
     for name in fieldnames(Settings)
@@ -125,6 +136,7 @@ get_system_to_file(settings::Settings) = settings.system_to_file
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails
 get_optimizer_log_print(settings::Settings) = settings.optimizer_log_print
+get_direct_mode_optimizer(settings::Settings) = settings.direct_mode_optimizer
 use_time_series_cache(settings::Settings) = settings.time_series_cache_size > 0
 
 function set_horizon!(settings::Settings, horizon::Int)
