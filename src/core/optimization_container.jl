@@ -99,10 +99,7 @@ function _make_jump_model(settings::Settings)
     parameters = get_use_parameters(settings)
     optimizer = get_optimizer(settings)
     if get_direct_mode_optimizer(settings)
-        JuMPmodel = JuMP.direct_model(MOI.instantiate(optimizer.optimizer_constructor))
-        for (k, v) in optimizer.params
-            set_optimizer_attribute(JuMPmodel, k, v)
-        end
+        JuMPmodel = JuMP.direct_model(MOI.instantiate(optimizer))
     elseif optimizer === nothing
         JuMPmodel = JuMP.Model()
         @debug "The optimization model has no optimizer attached"
