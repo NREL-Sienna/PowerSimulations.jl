@@ -22,13 +22,13 @@ mutable struct OptimizationContainer <: AbstractModelContainer
         settings::Settings,
         jump_model::Union{Nothing, JuMP.Model},
     )
-
         resolution = PSY.get_time_series_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
         use_parameters = get_use_parameters(settings)
 
         new(
-            jump_model === nothing ? _make_jump_model(settings) : _prepare_external_jump_model!(jump_model, settings),
+            jump_model === nothing ? _make_jump_model(settings) :
+            _prepare_external_jump_model!(jump_model, settings),
             1:1,
             resolution,
             settings,
@@ -47,10 +47,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     end
 end
 
-function _validate_warm_start_support(
-    JuMPmodel::JuMP.Model,
-    warm_start_enabled::Bool,
-)
+function _validate_warm_start_support(JuMPmodel::JuMP.Model, warm_start_enabled::Bool)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =
         MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -63,8 +60,7 @@ end
 
 function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     warm_start_enabled = get_warm_start(settings)
-    solver_supports_warm_start =
-        _validate_warm_start_support(JuMPmodel, warm_start_enabled)
+    solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
 
     if get_optimizer_log_print(settings)
@@ -80,7 +76,11 @@ function _prepare_external_jump_model!(JuMPmodel::JuMP.Model, settings::Settings
     parameters = get_use_parameters(settings)
     optimizer = get_optimizer(settings)
     if get_direct_mode_optimizer(settings)
-        throw(IS.ConflictingInputsError("Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model"))
+        throw(
+            IS.ConflictingInputsError(
+                "Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model",
+            ),
+        )
     end
 
     if parameters
@@ -202,8 +202,6 @@ function optimization_container_init!(
     else
         set_horizon!(settings, 1)
     end
-
-
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
     _make_expressions_dict!(optimization_container, bus_numbers, T)

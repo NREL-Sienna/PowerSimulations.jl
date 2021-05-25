@@ -49,7 +49,9 @@ function Settings(
     elseif isa(optimizer, DataType)
         optimizer_ = MOI.OptimizerWithAttributes(optimizer)
     else
-       error("The provided input for optimizer is invalid. Provide a JuMP.OptimizerWithAttributes object or a valid Optimizer constructor (e.g. GLPK.Optimizer).")
+        error(
+            "The provided input for optimizer is invalid. Provide a JuMP.OptimizerWithAttributes object or a valid Optimizer constructor (e.g. GLPK.Optimizer).",
+        )
     end
 
     return Settings(
