@@ -1,4 +1,6 @@
-mutable struct OptimizationContainer
+abstract type AbstractModelContainer end
+
+mutable struct OptimizationContainer <: AbstractModelContainer
     JuMPmodel::Union{Nothing, JuMP.AbstractModel}
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
