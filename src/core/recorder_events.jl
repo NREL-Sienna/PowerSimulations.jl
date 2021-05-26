@@ -68,8 +68,8 @@ function InitialConditionUpdateEvent(
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
         simulation_time,
-        string(key.ic_type),
-        string(key.device_type),
+        string(key.entry_type),
+        string(key.component_type),
         get_device_name(ic),
         val,
         previous_value,

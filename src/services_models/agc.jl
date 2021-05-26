@@ -10,7 +10,7 @@ function add_variables!(optimization_container::OptimizationContainer, ::Type{T}
     time_steps = model_time_steps(optimization_container)
     variable = add_var_container!(optimization_container, T(), PSY.Component, time_steps)
     for t in time_steps
-        variable[t] = JuMP.@variable(optimization_container.JuMPmodel, base_name = "ΔF_{$(t)}")
+        variable[t] = JuMP.@variable(optimization_container.JuMPmodel, # base_name ="ΔF_{$(t)}")
     end
 end
 
@@ -127,13 +127,13 @@ function balancing_auxiliary_variables!(optimization_container, sys)
     for t in time_steps, a in area_names
         R_up_emergency[a, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "Re_up_{$(a),$(t)}",
+            # base_name ="Re_up_{$(a),$(t)}",
             lower_bound = 0.0
         )
         emergency_up[a, t] = R_up_emergency[a, t] + 0.0
         R_dn_emergency[a, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "Re_dn_{$(a),$(t)}",
+            # base_name ="Re_dn_{$(a),$(t)}",
             lower_bound = 0.0
         )
         emergency_dn[a, t] = R_dn_emergency[a, t] + 0.0
@@ -236,7 +236,9 @@ function smooth_ace_pid!(optimization_container::OptimizationContainer, services
             # Todo: Add initial Frequency Deviation
             RAW_ACE[a, t] = -10 * B * Δf[t] + 0.0
             SACE[a, t] =
-                JuMP.@variable(optimization_container.JuMPmodel, base_name = "SACE_{$(a),$(t)}")
+                JuMP.@variable(optimization_container.JuMPmodel,
+                # base_name ="SACE_{$(a),$(t)}"
+                )
             if t == 1
                 SACE_ini =
                     get_initial_conditions(optimization_container, ICKey(AreaControlError, PSY.AGC))[ix]

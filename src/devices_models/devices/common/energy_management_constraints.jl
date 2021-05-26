@@ -8,7 +8,7 @@ Constructs constraint energy target data, and variable
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * time_series_data::Vector{DeviceTimeSeriesConstraintInfo} : Target reservoir storage forecast information
 * cons_name::Symbol : energy target constraint name
-* var_name::Symbol : the name of the Energy  variable
+* var_key::VariableKey : the name of the Energy  variable
 """
 function energy_target!(
     optimization_container::OptimizationContainer,

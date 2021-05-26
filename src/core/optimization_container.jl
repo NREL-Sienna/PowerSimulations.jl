@@ -286,7 +286,7 @@ end
 
 function _assign_container!(container::Dict, key, value)
     if haskey(container, key)
-        @error "variable $key is already stored" sort!(collect(keys!(container)))
+        @error "variable $key is already stored" sort!(encode_key.(keys(container)))
         throw(IS.InvalidValue("$key is already stored"))
     end
     container[key] = value

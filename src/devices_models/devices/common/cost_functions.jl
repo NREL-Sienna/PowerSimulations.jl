@@ -10,7 +10,7 @@ struct AddCostSpec
     shut_down_cost::Union{Nothing, Function}
     fixed_cost::Union{Nothing, Function}
     has_multistart_variables::Bool
-    addtional_linear_terms::Dict{String, Symbol}
+    addtional_linear_terms::Dict{String, <:VariableKey}
     uses_compact_power::Bool
 end
 
@@ -26,7 +26,7 @@ function AddCostSpec(;
     shut_down_cost = nothing,
     fixed_cost = nothing,
     has_multistart_variables = false,
-    addtional_linear_terms = Dict{String, Symbol}(),
+    addtional_linear_terms = Dict{String, VariableKey}(),
     uses_compact_power = false,
 )
     return AddCostSpec(
@@ -171,14 +171,14 @@ end
 
 function linear_gen_cost!(
     optimization_container::OptimizationContainer,
-    var_name::Symbol,
+    var_key::VariableKey,
     component_name::String,
     linear_term::Float64,
     time_period::Int,
 )
     resolution = model_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    variable = get_variable(optimization_container, var_name)[component_name, time_period]
+    variable = get_variable(optimization_container, var_key)[component_name, time_period]
     gen_cost = sum(variable) * linear_term
     add_to_cost_expression!(optimization_container, gen_cost * dt)
     return
@@ -216,7 +216,7 @@ function pwl_gencost_sos!(
 )
     base_power = get_base_power(optimization_container)
     var_name = VariableKey(spec.variable_type, spec.component_type)
-    variable = get_variable(optimization_container, var_name)[component_name, time_period]
+    variable = get_variable(optimization_container, var_key)[component_name, time_period]
     settings_ext = get_ext(get_settings(optimization_container))
     export_pwl_vars = get_export_pwl_vars(optimization_container.settings)
     @debug export_pwl_vars
@@ -245,7 +245,7 @@ function pwl_gencost_sos!(
     for i in 1:length(cost_data)
         pwlvars[i] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "{$(variable)}_{sos}",
+            # base_name ="{$(variable)}_{sos}",
             start = 0.0,
             lower_bound = 0.0,
             upper_bound = 1.0
@@ -305,8 +305,8 @@ function pwl_gencost_linear!(
     time_period::Int,
 )
     base_power = get_base_power(optimization_container)
-    var_name = VariableKey(spec.variable_type, spec.component_type)
-    variable = get_variable(optimization_container, var_name)[component_name, time_period]
+    var_key = VariableKey(spec.variable_type, spec.component_type)
+    variable = get_variable(optimization_container, var_key)[component_name, time_period]
     export_pwl_vars = get_export_pwl_vars(optimization_container.settings)
     @debug export_pwl_vars
     total_gen_cost = JuMP.AffExpr(0.0)
@@ -316,7 +316,7 @@ function pwl_gencost_linear!(
     for i in 1:length(cost_data)
         pwlvar = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "{$(variable)}_{pwl_$(i)}",
+            # base_name ="{$(variable)}_{pwl_$(i)}",
             lower_bound = 0.0,
             upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i] / base_power
         )
@@ -462,7 +462,7 @@ function check_single_start(
 )
     for (st, var_type) in enumerate(START_VARIABLES)
         var_name = VariableKey(var_type, spec.component_type)
-        if !haskey(optimization_container.variables, var_name)
+        if !haskey(optimization_container.variables, var_key)
             return true
         end
     end
@@ -877,7 +877,7 @@ Adds to the cost function cost terms for sum of variables with common factor to 
     # Arguments
 
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* var_name::Symbol: The variable name
+* var_key::VariableKey: The variable name
 * component_name::String: The component_name of the variable container
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 """
@@ -898,7 +898,7 @@ Adds to the cost function cost terms for sum of variables with common factor to 
     # Arguments
 
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* var_name::Symbol: The variable name
+* var_key::VariableKey: The variable name
 * component_name::String: The component_name of the variable container
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 """
@@ -940,7 +940,7 @@ linear cost term `sum(variable)*cost_data[2]`
 # Arguments
 
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* var_name::Symbol: The variable name
+* var_key::VariableKey: The variable name
 * component_name::String: The component_name of the variable container
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
@@ -959,7 +959,7 @@ function variable_cost!(
         resolution = model_resolution(optimization_container)
         dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
         variable =
-            get_variable(optimization_container, var_name)[component_name, time_period]
+            get_variable(optimization_container, var_key)[component_name, time_period]
         gen_cost =
             sum((variable .* base_power) .^ 2) * cost_data[1] +
             sum(variable .* base_power) * cost_data[2]
@@ -997,7 +997,7 @@ where ``c_v`` is given by
 # Arguments
 
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* var_name::Symbol: The variable name
+* var_key::VariableKey: The variable name
 * component_name::String: The component_name of the variable container
 * cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
 """

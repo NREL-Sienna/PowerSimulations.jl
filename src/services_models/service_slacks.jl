@@ -8,7 +8,7 @@ function reserve_slacks(
     for jx in time_steps
         variable[jx] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(var_name)_{$(jx)}",
+            # base_name ="$slacks_{$(jx)}",
             lower_bound = 0.0
         )
         JuMP.add_to_expression!(

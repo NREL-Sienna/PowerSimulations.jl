@@ -45,7 +45,7 @@ If binary = true:
 # Arguments
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * devices : Vector or Iterator with the devices
-* var_name::Symbol : Base Name for the variable
+* var_key::VariableKey : Base Name for the variable
 * binary::Bool : Select if the variable is binary
 * expression_name::Symbol : Expression_name name stored in optimization_container.expressions to add the variable
 * sign::Float64 : sign of the addition of the variable to the expression_name. Default Value is 1.0
@@ -81,7 +81,7 @@ function add_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(VariableKey(T, D))_{$(name), $(t)}",
+            # base_name ="$(encode_symbol(D, T))_{$(name), $(t)}",
             binary = binary
         )
 
@@ -142,7 +142,7 @@ function add_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(var_name)_{$(name), $(t)}",
+            # base_name ="$(var_key)_{$(name), $(t)}",
             binary = binary
         )
 
