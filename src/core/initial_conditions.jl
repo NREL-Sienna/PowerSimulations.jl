@@ -1,6 +1,11 @@
-struct ICKey{IC <: InitialConditionType, D <: PSY.Component} <: OptimizationContainerKey
-    ic_type::Type{IC}
-    device_type::Type{D}
+struct ICKey{T <: InitialConditionType, U <: PSY.Component} <: OptimizationContainerKey
+    entry_type::Type{T}
+    component_type::Type{U}
+    meta::String
+end
+
+function ICKey(::Type{T}, ::Type{U}) where {T <: InitialConditionType, U <: PSY.Component}
+    return ICKey(T, U, CONTAINER_KEY_EMPTY_META)
 end
 
 mutable struct InitialConditions
