@@ -14,7 +14,7 @@ end
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(OnVariable, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
@@ -70,7 +70,7 @@ end
 
 @testset "Thermal UC With AC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(OnVariable, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
@@ -126,7 +126,7 @@ end
 
 @testset "Thermal MultiStart UC With DC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
+        PSI.make_variable_name(OnVariable, PSY.ThermalMultiStart),
         PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
     ]
@@ -156,7 +156,7 @@ end
 
 @testset "Thermal MultiStart UC With AC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
+        PSI.make_variable_name(OnVariable, PSY.ThermalMultiStart),
         PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
     ]
@@ -187,7 +187,7 @@ end
 ################################### Basic Unit Commitment tests ############################
 @testset "Thermal Basic UC With DC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(OnVariable, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
@@ -228,7 +228,7 @@ end
 
 @testset "Thermal Basic UC With AC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(OnVariable, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
@@ -269,7 +269,7 @@ end
 
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
+        PSI.make_variable_name(OnVariable, PSY.ThermalMultiStart),
         PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
     ]
@@ -292,7 +292,7 @@ end
 
 @testset "Thermal MultiStart Basic UC With AC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
+        PSI.make_variable_name(OnVariable, PSY.ThermalMultiStart),
         PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
         PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
     ]

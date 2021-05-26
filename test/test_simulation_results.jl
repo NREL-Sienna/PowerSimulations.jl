@@ -77,7 +77,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             ),
             feedforward = Dict(
                 ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                    binary_source_problem = PSI.ON,
+                    binary_source_problem = OnVariable,
                     affected_variables = [ActivePowerVariable],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
@@ -86,7 +86,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                 ),
             ),
             cache = Dict(
-                ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
+                ("UC",) => TimeStatusChange(PSY.ThermalStandard, OnVariable),
                 ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
             ),
             ini_cond_chronology = InterProblemChronology(),
