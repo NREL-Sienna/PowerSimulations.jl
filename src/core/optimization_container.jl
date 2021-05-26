@@ -10,7 +10,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     aux_variables::Dict{AuxVarKey, AbstractArray}
     constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    expressions::DenseAxisArrayContainer
     parameters::ParametersContainer
     initial_conditions::InitialConditions
     pm::Union{Nothing, PM.AbstractPowerModel}
