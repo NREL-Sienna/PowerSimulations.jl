@@ -78,11 +78,11 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             feedforward = Dict(
                 ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
                     binary_source_problem = PSI.ON,
-                    affected_variables = [PSI.ACTIVE_POWER],
+                    affected_variables = [ActivePowerVariable],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_source_problem = PSI.ACTIVE_POWER,
-                    affected_variables = [PSI.ACTIVE_POWER],
+                    variable_source_problem = ActivePowerVariable,
+                    affected_variables = [ActivePowerVariable],
                 ),
             ),
             cache = Dict(
