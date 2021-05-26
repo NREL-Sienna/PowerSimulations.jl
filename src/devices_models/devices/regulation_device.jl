@@ -61,7 +61,7 @@ function add_constraints!(
     if parameters
         base_points_param = get_parameter_container(
             optimization_container,
-            make_variable_name(ACTIVE_POWER, T),
+            make_variable_name(ActivePowerVariable, T),
         )
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
@@ -116,7 +116,7 @@ function add_constraints!(
     if parameters
         base_points_param = get_parameter_container(
             optimization_container,
-            make_variable_name(ACTIVE_POWER, T),
+            make_variable_name(ActivePowerVariable, T),
         )
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)

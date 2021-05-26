@@ -80,8 +80,7 @@ function device_duration_retrospective!(
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = get_device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off =
-                JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, varstop[name, i])
@@ -179,8 +178,7 @@ function device_duration_look_ahead!(
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = get_device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off =
-                JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
@@ -292,8 +290,7 @@ function device_duration_parameters!(
             @assert typeof(ic.value) == PJ.ParameterRef
             name = get_device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off =
-                JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if t <= duration_data[ix].down
                     if in(i, time_steps)
@@ -396,8 +393,7 @@ function device_duration_compact_retrospective!(
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = get_device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off =
-                JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             if t in UnitRange{Int}(
                 Int(min(duration_data[ix].down, total_time_steps)),
                 total_time_steps,

@@ -6,10 +6,9 @@ struct PIDSmoothACE <: AbstractAGCFormulation end
 """
 Steady State deviation of the frequency
 """
-function add_variables!(optimization_container::OptimizationContainer, ::Type{SteadyStateFrequencyDeviation})
-    variable_name = make_variable_name(SteadyStateFrequencyDeviation)
+function add_variables!(optimization_container::OptimizationContainer, ::Type{T}) where {T <: SteadyStateFrequencyDeviation}
     time_steps = model_time_steps(optimization_container)
-    variable = add_var_container!(optimization_container, variable_name, time_steps)
+    variable = add_var_container!(optimization_container, T(), PSY.Component, time_steps)
     for t in time_steps
         variable[t] = JuMP.@variable(optimization_container.JuMPmodel, base_name = "ΔF_{$(t)}")
     end
@@ -118,18 +117,9 @@ end
 function balancing_auxiliary_variables!(optimization_container, sys)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
     time_steps = model_time_steps(optimization_container)
-    R_up_emergency = JuMPVariableArray(undef, area_names, time_steps)
-    R_dn_emergency = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(
-        optimization_container,
-        make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area),
-        R_up_emergency,
-    )
-    assign_variable!(
-        optimization_container,
-        make_variable_name(AdditionalDeltaActivePowerDownVariable, PSY.Area),
-        R_dn_emergency,
-    )
+    R_up_emergency = add_var_container!(optimization_container, AdditionalDeltaActivePowerUpVariable(),  PSY.Area, area_names, time_steps)
+    R_dn_emergency = add_var_container!(optimization_container, AdditionalDeltaActivePowerDownVariable(),  PSY.Area, area_names, time_steps)
+
     emergency_up =
         add_expression_container!(optimization_container, :emergency_up, area_names, time_steps)
     emergency_dn =

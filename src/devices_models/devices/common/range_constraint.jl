@@ -2,7 +2,7 @@ struct RangeConstraintSpecInternal
     constraint_infos::Vector{<:AbstractRangeConstraintInfo}
     constraint_name::Symbol
     variable_name::Symbol
-    bin_variable_names::Vector{Symbol}
+    bin_variable_names::Vector{VarKey}
 end
 
 function RangeConstraintSpecInternal(
@@ -14,7 +14,7 @@ function RangeConstraintSpecInternal(
         constraint_infos,
         constraint_name,
         variable_name,
-        Vector{Symbol}(),
+        Vector{VarKey}(),
     )
 end
 

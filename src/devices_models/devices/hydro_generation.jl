@@ -80,10 +80,10 @@ get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.HydroGen}, ::AbstractH
 get_variable_binary(::OnVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = true
 get_variable_initial_value(::OnVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d) > 0 ? 1.0 : 0.0
 
-############## SpillageVariable, HydroGen ####################
+############## WaterSpillageVariable, HydroGen ####################
 
-get_variable_binary(::SpillageVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_lower_bound(::SpillageVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
+get_variable_binary(::WaterSpillageVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
+get_variable_lower_bound(::WaterSpillageVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 
 ############## ReserveVariable, HydroGen ####################
 
@@ -410,11 +410,11 @@ function DeviceEnergyBalanceConstraintSpec(
 ) where {H <: PSY.HydroEnergyReservoir}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_CAPACITY, H),
-        energy_variable = make_variable_name(ENERGY, H),
+        energy_variable = make_variable_name(EnergyVariable, H),
         initial_condition = InitialEnergyLevel,
         pout_variable_names = [
-            make_variable_name(ACTIVE_POWER, H),
-            make_variable_name(SPILLAGE, H),
+            make_variable_name(ActivePowerVariable, H),
+            make_variable_name(WaterSpillageVariable, H),
         ],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         parameter_name = INFLOW,
@@ -441,10 +441,10 @@ function DeviceEnergyBalanceConstraintSpec(
         constraint_name = make_constraint_name(ENERGY_CAPACITY_UP, H),
         energy_variable = make_variable_name(ENERGY_UP, H),
         initial_condition = InitialEnergyLevelUp,
-        pin_variable_names = [make_variable_name(ACTIVE_POWER_IN, H)],
+        pin_variable_names = [make_variable_name(ActivePowerInVariable, H)],
         pout_variable_names = [
-            make_variable_name(ACTIVE_POWER_OUT, H),
-            make_variable_name(SPILLAGE, H),
+            make_variable_name(ActivePowerOutVariable, H),
+            make_variable_name(WaterSpillageVariable, H),
         ],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         parameter_name = INFLOW,
@@ -467,10 +467,10 @@ function DeviceEnergyBalanceConstraintSpec(
         constraint_name = make_constraint_name(ENERGY_CAPACITY_DOWN, H),
         energy_variable = make_variable_name(ENERGY_DOWN, H),
         initial_condition = InitialEnergyLevelDown,
-        pout_variable_names = [make_variable_name(ACTIVE_POWER_IN, H)],
+        pout_variable_names = [make_variable_name(ActivePowerInVariable, H)],
         pin_variable_names = [
-            make_variable_name(ACTIVE_POWER_OUT, H),
-            make_variable_name(SPILLAGE, H),
+            make_variable_name(ActivePowerOutVariable, H),
+            make_variable_name(WaterSpillageVariable, H),
         ],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         parameter_name = OUTFLOW,
@@ -523,9 +523,9 @@ function energy_target_constraint!(
             constraint_infos_target,
             make_constraint_name(ENERGY_TARGET, T),
             (
-                make_variable_name(ENERGY, T),
-                make_variable_name(ENERGY_SHORTAGE, T),
-                make_variable_name(ENERGY_SURPLUS, T),
+                make_variable_name(EnergyVariable, T),
+                make_variable_name(EnergyShortageVariable, T),
+                make_variable_name(EnergySurplusVariable, T),
             ),
             UpdateRef{T}(TARGET, target_forecast_label),
         )
@@ -535,9 +535,9 @@ function energy_target_constraint!(
             constraint_infos_target,
             make_constraint_name(ENERGY_TARGET, T),
             (
-                make_variable_name(ENERGY, T),
-                make_variable_name(ENERGY_SHORTAGE, T),
-                make_variable_name(ENERGY_SURPLUS, T),
+                make_variable_name(EnergyVariable, T),
+                make_variable_name(EnergyShortageVariable, T),
+                make_variable_name(EnergySurplusVariable, T),
             ),
         )
     end
@@ -771,14 +771,14 @@ function energy_budget_constraints!(
             constraint_data,
             make_constraint_name(ENERGY_BUDGET, H),
             UpdateRef{H}(ENERGY_BUDGET, forecast_label),
-            make_variable_name(ACTIVE_POWER, H),
+            make_variable_name(ActivePowerVariable, H),
         )
     else
         device_energy_budget_ub(
             optimization_container,
             constraint_data,
             make_constraint_name(ENERGY_BUDGET),
-            make_variable_name(ACTIVE_POWER, H),
+            make_variable_name(ActivePowerVariable, H),
         )
     end
 end

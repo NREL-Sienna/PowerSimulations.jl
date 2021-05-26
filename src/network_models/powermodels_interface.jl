@@ -397,7 +397,7 @@ end
 function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => THETA, :vm => VM)
+    pm_var_map[PSY.Bus] = Dict(:va => VoltageAngle, :vm => VoltageMagnitude)
     pm_var_map[PSY.ACBranch] = Dict(
         :p => (
             from_to = FlowActivePowerFromToVariable,
@@ -480,15 +480,16 @@ function add_pm_var_refs!(
     pm_var_types = keys(PM.var(optimization_container.pm, 1))
 
     pm_var_map = PMvarmap(system_formulation)
-
+    bus_names = [PSY.get_name(b) for b in values(bus_dict)]
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_types
-            container = PSI.container_spec(
-                JuMP.VariableRef,
-                [PSY.get_name(b) for b in values(bus_dict)],
+            container = add_var_container!(
+                optimization_container,
+                ps_v(),
+                PSY.Bus,
+                bus_names,
                 time_steps,
             )
-            assign_variable!(optimization_container, ps_v, PSY.Bus, container)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
                 container[name, t] = PM.var(optimization_container.pm, t, pm_v)[pm_bus] # pm_vars[pm_v][pm_bus]

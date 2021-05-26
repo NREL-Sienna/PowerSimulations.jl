@@ -82,13 +82,13 @@ function branch_rate_bounds!(
     set_variable_bounds!(
         optimization_container,
         constraint_infos,
-        FLOW_ACTIVE_POWER_FROM_TO,
+        FlowActivePowerFromToVariable,
         B,
     )
     set_variable_bounds!(
         optimization_container,
         constraint_infos,
-        FLOW_ACTIVE_POWER_TO_FROM,
+        FlowActivePowerToFromVariable,
         B,
     )
     return
@@ -108,7 +108,8 @@ function branch_rate_constraints!(
         RangeConstraintSpecInternal(
             constraint_infos,
             make_constraint_name(RATE_LIMIT, B),
-            make_variable_name(FLOW_ACTIVE_POWER, B),
+            FlowActivePowerVariable(),
+            B,
         ),
     )
     return
@@ -127,8 +128,8 @@ function branch_rate_constraints!(
         range_data,
         make_constraint_name(RATE_LIMIT_FT, B),
         (
-            make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
-            make_variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
+            make_variable_name(FlowActivePowerFromToVariable, B),
+            make_variable_name(FlowReactivePowerFromToVariable, B),
         ),
     )
 
@@ -137,8 +138,8 @@ function branch_rate_constraints!(
         range_data,
         make_constraint_name(RATE_LIMIT_TF, B),
         (
-            make_variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
-            make_variable_name(FLOW_REACTIVE_POWER_TO_FROM, B),
+            make_variable_name(FlowActivePowerToFromVariable, B),
+            make_variable_name(FlowReactivePowerToFromVariable, B),
         ),
     )
     return
@@ -255,7 +256,7 @@ function branch_flow_constraints!(
         RangeConstraintSpecInternal(
             to,
             make_constraint_name(FLOW_LIMIT_FROM_TO, PSY.MonitoredLine),
-            make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLine),
+            make_variable_name(FlowActivePowerFromToVariable, PSY.MonitoredLine),
         ),
     )
     device_range!(
@@ -263,7 +264,7 @@ function branch_flow_constraints!(
         RangeConstraintSpecInternal(
             from,
             make_constraint_name(FLOW_LIMIT_TO_FROM, PSY.MonitoredLine),
-            make_variable_name(FLOW_ACTIVE_POWER_TO_FROM, PSY.MonitoredLine),
+            make_variable_name(FlowActivePowerToFromVariable, PSY.MonitoredLine),
         ),
     )
     return
