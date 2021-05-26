@@ -133,25 +133,25 @@ If t > 1:
                                                                      (3) gives min/max for 'variable'
 * initial_conditions::Vector{InitialCondition} : for time zero 'variable'
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
-- : var_names[1] : 'variable'
-- : var_names[2] : 'varstart'
-- : var_names[3] : 'varstop'
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey} : the names of the variables
+- : var_keys[1] : 'variable'
+- : var_keys[2] : 'varstart'
+- : var_keys[3] : 'varstop'
 """
 function device_mixedinteger_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 )
     parameters = model_has_parameters(optimization_container)
     time_steps = model_time_steps(optimization_container)
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    variable = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    variable = get_variable(optimization_container, var_keys[1])
+    varstart = get_variable(optimization_container, var_keys[2])
+    varstop = get_variable(optimization_container, var_keys[3])
 
     set_name = [get_component_name(r) for r in rate_data]
     con_up = add_cons_container!(optimization_container, up_name, set_name, time_steps)
@@ -250,7 +250,7 @@ If t > 1:
                                                                      (3) gives min/max for 'variable'
 * initial_conditions::Vector{InitialCondition} : for time zero 'variable'
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey} : the names of the variables
 - : var_name : 'variable'
 """
 function device_multistart_rateofchange!(

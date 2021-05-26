@@ -1,20 +1,20 @@
 struct RangeConstraintSpecInternal
     constraint_infos::Vector{<:AbstractRangeConstraintInfo}
     constraint_name::Symbol
-    variable_name::Symbol
-    bin_variable_names::Vector{VarKey}
+    variable_name::VariableKey
+    bin_variable_names::Vector{VariableKey}
 end
 
 function RangeConstraintSpecInternal(
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     constraint_name::Symbol,
-    variable_name::Symbol,
+    variable_name::VariableKey,
 )
     return RangeConstraintSpecInternal(
         constraint_infos,
         constraint_name,
         variable_name,
-        Vector{VarKey}(),
+        Vector{VariableKey}(),
     )
 end
 
@@ -374,8 +374,8 @@ function reserve_power_ub!(
     var_names::Tuple{Symbol, Symbol},
 )
     time_steps = model_time_steps(optimization_container)
-    var_in = get_variable(optimization_container, var_names[1])
-    var_out = get_variable(optimization_container, var_names[2])
+    var_in = get_variable(optimization_container, var_keys[1])
+    var_out = get_variable(optimization_container, var_keys[2])
     rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
     names = [get_component_name(x) for x in charging_range_data]

@@ -14,9 +14,9 @@ end
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(OnVariable, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(PSI.START, PSY.ThermalStandard),
+        PSI.VariableKey(PSI.STOP, PSY.ThermalStandard),
     ]
 
     uc_constraint_names = [
@@ -70,9 +70,9 @@ end
 
 @testset "Thermal UC With AC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(OnVariable, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(PSI.START, PSY.ThermalStandard),
+        PSI.VariableKey(PSI.STOP, PSY.ThermalStandard),
     ]
     uc_constraint_names = [
         PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
@@ -126,9 +126,9 @@ end
 
 @testset "Thermal MultiStart UC With DC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+        PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(PSI.START, PSY.ThermalMultiStart),
+        PSI.VariableKey(PSI.STOP, PSY.ThermalMultiStart),
     ]
     uc_constraint_names = [
         PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
@@ -156,9 +156,9 @@ end
 
 @testset "Thermal MultiStart UC With AC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+        PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(PSI.START, PSY.ThermalMultiStart),
+        PSI.VariableKey(PSI.STOP, PSY.ThermalMultiStart),
     ]
     uc_constraint_names = [
         PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
@@ -187,9 +187,9 @@ end
 ################################### Basic Unit Commitment tests ############################
 @testset "Thermal Basic UC With DC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(OnVariable, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(PSI.START, PSY.ThermalStandard),
+        PSI.VariableKey(PSI.STOP, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -228,9 +228,9 @@ end
 
 @testset "Thermal Basic UC With AC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(OnVariable, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(PSI.START, PSY.ThermalStandard),
+        PSI.VariableKey(PSI.STOP, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -269,9 +269,9 @@ end
 
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+        PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(PSI.START, PSY.ThermalMultiStart),
+        PSI.VariableKey(PSI.STOP, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
 
@@ -292,9 +292,9 @@ end
 
 @testset "Thermal MultiStart Basic UC With AC - PF" begin
     bin_variable_names = [
-        PSI.make_variable_name(OnVariable, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+        PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(PSI.START, PSY.ThermalMultiStart),
+        PSI.VariableKey(PSI.STOP, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
 

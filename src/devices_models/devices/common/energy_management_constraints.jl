@@ -14,13 +14,13 @@ function energy_target!(
     optimization_container::OptimizationContainer,
     target_data::Vector{T},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 ) where {T <: DeviceTimeSeriesConstraintInfo}
     time_steps = model_time_steps(optimization_container)
     name_index = [get_component_name(d) for d in target_data]
-    varenergy = get_variable(optimization_container, var_names[1])
-    varslack_up = get_variable(optimization_container, var_names[2])
-    varslack_dn = get_variable(optimization_container, var_names[3])
+    varenergy = get_variable(optimization_container, var_keys[1])
+    varslack_up = get_variable(optimization_container, var_keys[2])
+    varslack_dn = get_variable(optimization_container, var_keys[3])
 
     target_constraint =
         add_cons_container!(optimization_container, cons_name, name_index, time_steps)
@@ -54,14 +54,14 @@ function energy_target_param!(
     optimization_container::OptimizationContainer,
     target_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
     param_reference::UpdateRef,
 )
     time_steps = model_time_steps(optimization_container)
     name_index = [get_component_name(d) for d in target_data]
-    varenergy = get_variable(optimization_container, var_names[1])
-    varslack_up = get_variable(optimization_container, var_names[2])
-    varslack_dn = get_variable(optimization_container, var_names[3])
+    varenergy = get_variable(optimization_container, var_keys[1])
+    varslack_up = get_variable(optimization_container, var_keys[2])
+    varslack_dn = get_variable(optimization_container, var_keys[3])
 
     container_target = add_param_container!(
         optimization_container,

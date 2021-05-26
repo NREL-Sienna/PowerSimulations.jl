@@ -45,7 +45,7 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractA
 #     optimization_container::OptimizationContainer,
 # ) where {U <: PSY.Area}
 #     return AddVariableSpec(;
-#         variable_name = make_variable_name(AdditionalDeltaActivePowerUpVariable, U),
+#          variable_name = VariableKey(AdditionalDeltaActivePowerUpVariable, U),
 #         binary = false,
 #         lb_value_func = x -> 0.0,
 #         expression_name = :emergency_up,
@@ -61,7 +61,7 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractA
 #     optimization_container::OptimizationContainer,
 # ) where {U <: PSY.Area}
 #     return AddVariableSpec(;
-#         variable_name = make_variable_name(AdditionalDeltaActivePowerDownVariable, U),
+#          variable_name = VariableKey(AdditionalDeltaActivePowerDownVariable, U),
 #         binary = false,
 #         lb_value_func = x -> 0.0,
 #         expression_name = :emergency_dn,
@@ -70,12 +70,12 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractA
 
 ########################## AreaMismatchVariable, Area ###########################
 
-make_variable_name(::Type{AreaMismatchVariable}, _) = make_variable_name(AreaMismatchVariable)
+VariableKey(::Type{AreaMismatchVariable}, _) = VariableKey(AreaMismatchVariable)
 get_variable_binary(::AreaMismatchVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
 
 ########################## LiftVariable, Area ###########################
 
-make_variable_name(::Type{LiftVariable}, _) = make_variable_name(LiftVariable)
+VariableKey(::Type{LiftVariable}, _) = VariableKey(LiftVariable)
 get_variable_binary(::LiftVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
 get_variable_lower_bound(::LiftVariable, ::PSY.Area, ::AbstractAGCFormulation) = 0.0
 
@@ -223,7 +223,7 @@ function smooth_ace_pid!(optimization_container::OptimizationContainer, services
     SACE_pid = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(optimization_container, "SACE_pid", SACE_pid)
 
-    Δf = get_variable(optimization_container, make_variable_name("Δf"))
+    Δf = get_variable(optimization_container, VariableKey(SteadyStateFrequencyDeviation ))
 
     for (ix, service) in enumerate(services)
         kp = PSY.get_K_p(service)

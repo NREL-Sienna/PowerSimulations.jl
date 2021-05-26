@@ -90,7 +90,7 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
+             variable_name = VariableKey(ActivePowerVariable, T),
             limits_func = x -> PSY.get_active_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -114,8 +114,8 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
-            bin_variable_names = [make_variable_name(OnVariable, T)],
+             variable_name = VariableKey(ActivePowerVariable, T),
+            bin_variable_names = [VariableKey(OnVariable, T)],
             limits_func = x -> PSY.get_active_power_limits(x),
             constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -139,7 +139,7 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
+             variable_name = VariableKey(ActivePowerVariable, T),
             limits_func = x -> (min = 0.0, max = PSY.get_active_power_limits(x).max),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -153,7 +153,7 @@ function custom_active_power_constraints!(
     ::IS.FlattenIteratorWrapper{T},
     ::Type{<:ThermalDispatchNoMin},
 ) where {T <: PSY.ThermalGen}
-    var_key = make_variable_name(ActivePowerVariable, T)
+    var_key = VariableKey(ActivePowerVariable, T)
     variable = get_variable(optimization_container, var_key)
     # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
     for v in variable
@@ -179,16 +179,16 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
+             variable_name = VariableKey(ActivePowerVariable, T),
             limits_func = x -> (
                 min = 0.0,
                 max = PSY.get_active_power_limits(x).max -
                       PSY.get_active_power_limits(x).min,
             ),
             bin_variable_names = [
-                make_variable_name(OnVariable, T),
-                make_variable_name(StartVariable, T),
-                make_variable_name(StopVariable, T),
+                VariableKey(OnVariable, T),
+                VariableKey(StartVariable, T),
+                VariableKey(StopVariable, T),
             ],
             constraint_func = device_multistart_range!,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
@@ -210,15 +210,15 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
+             variable_name = VariableKey(ActivePowerVariable, T),
             limits_func = x -> (
                 min = PSY.get_active_power_limits(x).min,
                 max = PSY.get_active_power_limits(x).max,
             ),
             bin_variable_names = [
-                make_variable_name(OnVariable, T),
-                make_variable_name(StartVariable, T),
-                make_variable_name(StopVariable, T),
+                VariableKey(OnVariable, T),
+                VariableKey(StartVariable, T),
+                VariableKey(StopVariable, T),
             ],
             constraint_func = device_multistart_range!,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
@@ -286,7 +286,7 @@ function initial_range_constraints!(
             constraint_data,
             ini_conds,
             make_constraint_name(ACTIVE_RANGE_IC, T),
-            make_variable_name(StopVariable, T),
+            VariableKey(StopVariable, T),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -314,7 +314,7 @@ function DeviceRangeConstraintSpec(
                 ReactivePowerVariable,
                 T,
             ),
-            variable_name = make_variable_name(ReactivePowerVariable, T),
+             variable_name = VariableKey(ReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -355,8 +355,8 @@ function DeviceRangeConstraintSpec(
                 ReactivePowerVariable,
                 T,
             ),
-            variable_name = make_variable_name(ReactivePowerVariable, T),
-            bin_variable_names = [make_variable_name(OnVariable, T)],
+             variable_name = VariableKey(ReactivePowerVariable, T),
+            bin_variable_names = [VariableKey(OnVariable, T)],
             limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -397,9 +397,9 @@ function commitment_constraints!(
         get_initial_conditions(optimization_container, ICKey(DeviceStatus, T)),
         make_constraint_name(COMMITMENT, T),
         (
-            make_variable_name(StartVariable, T),
-            make_variable_name(StopVariable, T),
-            make_variable_name(OnVariable, T),
+            VariableKey(StartVariable, T),
+            VariableKey(StopVariable, T),
+            VariableKey(OnVariable, T),
         ),
     )
     return
@@ -692,9 +692,9 @@ function ramp_constraints!(
             data,
             make_constraint_name(RAMP, T),
             (
-                make_variable_name(ActivePowerVariable, T),
-                make_variable_name(StartVariable, T),
-                make_variable_name(StopVariable, T),
+                VariableKey(ActivePowerVariable, T),
+                VariableKey(StartVariable, T),
+                VariableKey(StopVariable, T),
             ),
         )
     else
@@ -724,7 +724,7 @@ function ramp_constraints!(
             optimization_container,
             data,
             make_constraint_name(RAMP, T),
-            make_variable_name(ActivePowerVariable, T),
+            VariableKey(ActivePowerVariable, T),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -750,7 +750,7 @@ function ramp_constraints!(
             optimization_container,
             data,
             make_constraint_name(RAMP, PSY.ThermalMultiStart),
-            make_variable_name(ActivePowerVariable, PSY.ThermalMultiStart),
+            VariableKey(ActivePowerVariable, PSY.ThermalMultiStart),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -857,7 +857,7 @@ end
                             data::Vector{DeviceStartTypesConstraintInfo},
                             cons_name::Symbol,
                             var_start::Symbol,
-                            var_names::Tuple{Symbol, Symbol, Symbol},)
+                            var_keys::Tuple{VariableKey, VariableKey, VariableKey},)
 
 Constructs contraints that restricts devices to one type of start at a time
 
@@ -881,14 +881,14 @@ function device_start_type_constraint(
     data::Vector{DeviceStartTypesConstraintInfo},
     cons_name::Symbol,
     var_start::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
     varstart = get_variable(optimization_container, var_start)
     start_vars = [
-        get_variable(optimization_container, var_names[1]),
-        get_variable(optimization_container, var_names[2]),
-        get_variable(optimization_container, var_names[3]),
+        get_variable(optimization_container, var_keys[1]),
+        get_variable(optimization_container, var_keys[2]),
+        get_variable(optimization_container, var_keys[3]),
     ]
 
     set_name = [get_component_name(d) for d in data]
@@ -948,8 +948,8 @@ function device_startup_initial_condition(
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     varbin = get_variable(optimization_container, bin_name)
     varstarts = [
-        get_variable(optimization_container, var_names[1]),
-        get_variable(optimization_container, var_names[2]),
+        get_variable(optimization_container, var_keys[1]),
+        get_variable(optimization_container, var_keys[2]),
     ]
 
     con_ub = add_cons_container!(
@@ -1018,10 +1018,10 @@ function startup_time_constraints!(
         optimization_container,
         start_time_params,
         make_constraint_name(STARTUP_TIMELIMIT, PSY.ThermalMultiStart),
-        make_variable_name(StopVariable, PSY.ThermalMultiStart),
+        VariableKey(StopVariable, PSY.ThermalMultiStart),
         (
-            make_variable_name(HotStartVariable, PSY.ThermalMultiStart),
-            make_variable_name(WarmStartVariable, PSY.ThermalMultiStart),
+            VariableKey(HotStartVariable, PSY.ThermalMultiStart),
+            VariableKey(WarmStartVariable, PSY.ThermalMultiStart),
         ),
     )
     return
@@ -1049,11 +1049,11 @@ function startup_type_constraints!(
         optimization_container,
         constraint_data,
         make_constraint_name(START_TYPE, PSY.ThermalMultiStart),
-        make_variable_name(START, PSY.ThermalMultiStart),
+        VariableKey(START, PSY.ThermalMultiStart),
         (
-            make_variable_name(HotStartVariable, PSY.ThermalMultiStart),
-            make_variable_name(WarmStartVariable, PSY.ThermalMultiStart),
-            make_variable_name(ColdStartVariable, PSY.ThermalMultiStart),
+            VariableKey(HotStartVariable, PSY.ThermalMultiStart),
+            VariableKey(WarmStartVariable, PSY.ThermalMultiStart),
+            VariableKey(ColdStartVariable, PSY.ThermalMultiStart),
         ),
     )
     return
@@ -1108,10 +1108,10 @@ function startup_initial_condition_constraints!(
         initial_conditions_offtime,
         make_constraint_name(STARTUP_INITIAL_CONDITION, PSY.ThermalMultiStart),
         (
-            make_variable_name(HotStartVariable, PSY.ThermalMultiStart),
-            make_variable_name(WarmStartVariable, PSY.ThermalMultiStart),
+            VariableKey(HotStartVariable, PSY.ThermalMultiStart),
+            VariableKey(WarmStartVariable, PSY.ThermalMultiStart),
         ),
-        make_variable_name(OnVariable, PSY.ThermalMultiStart),
+        VariableKey(OnVariable, PSY.ThermalMultiStart),
     )
     return
 end
@@ -1137,7 +1137,7 @@ function must_run_constraints!(
     ts_inputs = TimeSeriesConstraintSpecInternal(
         constraint_infos,
         make_constraint_name(MUST_RUN, PSY.ThermalMultiStart),
-        make_variable_name(OnVariable, PSY.ThermalMultiStart),
+        VariableKey(OnVariable, PSY.ThermalMultiStart),
         nothing,
         nothing,
     )
@@ -1217,9 +1217,9 @@ function time_constraints!(
                 ini_conds,
                 make_constraint_name(DURATION, T),
                 (
-                    make_variable_name(OnVariable, T),
-                    make_variable_name(StartVariable, T),
-                    make_variable_name(StopVariable, T),
+                    VariableKey(OnVariable, T),
+                    VariableKey(StartVariable, T),
+                    VariableKey(StopVariable, T),
                 ),
             )
         else
@@ -1229,9 +1229,9 @@ function time_constraints!(
                 ini_conds,
                 make_constraint_name(DURATION, T),
                 (
-                    make_variable_name(OnVariable, T),
-                    make_variable_name(StartVariable, T),
-                    make_variable_name(StopVariable, T),
+                    VariableKey(OnVariable, T),
+                    VariableKey(StartVariable, T),
+                    VariableKey(StopVariable, T),
                 ),
             )
         end
@@ -1264,9 +1264,9 @@ function time_constraints!(
                 ini_conds,
                 make_constraint_name(DURATION, T),
                 (
-                    make_variable_name(OnVariable, T),
-                    make_variable_name(StartVariable, T),
-                    make_variable_name(StopVariable, T),
+                    VariableKey(OnVariable, T),
+                    VariableKey(StartVariable, T),
+                    VariableKey(StopVariable, T),
                 ),
             )
         else
@@ -1276,9 +1276,9 @@ function time_constraints!(
                 ini_conds,
                 make_constraint_name(DURATION, T),
                 (
-                    make_variable_name(OnVariable, T),
-                    make_variable_name(StartVariable, T),
-                    make_variable_name(StopVariable, T),
+                    VariableKey(OnVariable, T),
+                    VariableKey(StartVariable, T),
+                    VariableKey(StopVariable, T),
                 ),
             )
         end
@@ -1528,7 +1528,7 @@ function NodalExpressionSpec(
 ) where {T <: PSY.ThermalGen}
     return NodalExpressionSpec(
         "max_active_power",
-        ACTIVE_POWER,
+        "P",
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,
         T,

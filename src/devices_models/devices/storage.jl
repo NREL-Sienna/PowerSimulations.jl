@@ -75,7 +75,7 @@ function DeviceRangeConstraintSpec(
                 ActivePowerOutVariable,
                 T,
             ),
-            variable_name = make_variable_name(ActivePowerOutVariable, T),
+             variable_name = VariableKey(ActivePowerOutVariable, T),
             limits_func = x -> PSY.get_output_active_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -100,7 +100,7 @@ function DeviceRangeConstraintSpec(
                 ActivePowerInVariable,
                 T,
             ),
-            variable_name = make_variable_name(ActivePowerInVariable, T),
+             variable_name = VariableKey(ActivePowerInVariable, T),
             limits_func = x -> PSY.get_input_active_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -125,8 +125,8 @@ function DeviceRangeConstraintSpec(
                 ActivePowerOutVariable,
                 T,
             ),
-            variable_name = make_variable_name(ActivePowerOutVariable, T),
-            bin_variable_names = [make_variable_name(ReserveVariable, T)],
+             variable_name = VariableKey(ActivePowerOutVariable, T),
+            bin_variable_names = [VariableKey(ReserveVariable, T)],
             limits_func = x -> PSY.get_output_active_power_limits(x),
             constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -151,8 +151,8 @@ function DeviceRangeConstraintSpec(
                 ActivePowerInVariable,
                 T,
             ),
-            variable_name = make_variable_name(ActivePowerInVariable, T),
-            bin_variable_names = [make_variable_name(ReserveVariable, T)],
+             variable_name = VariableKey(ActivePowerInVariable, T),
+            bin_variable_names = [VariableKey(ReserveVariable, T)],
             limits_func = x -> PSY.get_input_active_power_limits(x),
             constraint_func = reserve_device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -184,7 +184,7 @@ function add_constraints!(
         RangeConstraintSpecInternal(
             constraint_infos,
             make_constraint_name(RangeConstraint, ReactivePowerVariable, St),
-            make_variable_name(ReactivePowerVariable, St),
+            VariableKey(ReactivePowerVariable, St),
         ),
     )
     return
@@ -244,7 +244,7 @@ function energy_capacity_constraints!(
         RangeConstraintSpecInternal(
             constraint_infos,
             make_constraint_name(ENERGY_CAPACITY, St),
-            make_variable_name(EnergyVariable, St),
+            VariableKey(EnergyVariable, St),
         ),
     )
     return
@@ -264,10 +264,10 @@ function DeviceEnergyBalanceConstraintSpec(
 ) where {St <: PSY.Storage}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_LIMIT, St),
-        energy_variable = make_variable_name(EnergyVariable, St),
+        energy_variable = VariableKey(EnergyVariable, St),
         initial_condition = InitialEnergyLevel,
-        pin_variable_names = [make_variable_name(ActivePowerInVariable, St)],
-        pout_variable_names = [make_variable_name(ActivePowerOutVariable, St)],
+        pin_variable_names = [VariableKey(ActivePowerInVariable, St)],
+        pout_variable_names = [VariableKey(ActivePowerOutVariable, St)],
         constraint_func = energy_balance!,
     )
 end
@@ -305,14 +305,14 @@ function reserve_contribution_constraint!(
         constraint_infos_up,
         constraint_infos_dn,
         make_constraint_name(RESERVE_POWER, T),
-        (make_variable_name(ActivePowerInVariable, T), make_variable_name(ActivePowerOutVariable, T)),
+        (VariableKey(ActivePowerInVariable, T), VariableKey(ActivePowerOutVariable, T)),
     )
 
     reserve_energy_ub!(
         optimization_container,
         constraint_infos_energy,
         make_constraint_name(RESERVE_ENERGY, T),
-        make_variable_name(EnergyVariable, T),
+        VariableKey(EnergyVariable, T),
     )
 
     return
@@ -356,9 +356,9 @@ function energy_target_constraint!(
             constraint_infos_target,
             make_constraint_name(ENERGY_TARGET, T),
             (
-                make_variable_name(EnergyVariable, T),
-                make_variable_name(EnergyShortageVariable, T),
-                make_variable_name(EnergySurplusVariable, T),
+                VariableKey(EnergyVariable, T),
+                VariableKey(EnergyShortageVariable, T),
+                VariableKey(EnergySurplusVariable, T),
             ),
             UpdateRef{T}(TARGET, target_forecast_label),
         )
@@ -368,9 +368,9 @@ function energy_target_constraint!(
             constraint_infos_target,
             make_constraint_name(ENERGY_TARGET, T),
             (
-                make_variable_name(EnergyVariable, T),
-                make_variable_name(EnergyShortageVariable, T),
-                make_variable_name(EnergySurplusVariable, T),
+                VariableKey(EnergyVariable, T),
+                VariableKey(EnergyShortageVariable, T),
+                VariableKey(EnergySurplusVariable, T),
             ),
         )
     end
@@ -394,7 +394,7 @@ function energy_target_constraint!(
             RangeConstraintSpecInternal(
                 constraint_infos,
                 make_constraint_name(RangeConstraint, EnergyShortageVariable, T),
-                make_variable_name(EnergyShortageVariable, T),
+                VariableKey(EnergyShortageVariable, T),
                 Vector{Symbol}(),
             ),
         )

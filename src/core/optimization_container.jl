@@ -265,17 +265,19 @@ get_jump_model(optimization_container::OptimizationContainer) =
 get_base_power(optimization_container::OptimizationContainer) =
     optimization_container.base_power
 
-
-function get_variable(optimization_container::OptimizationContainer, ::T,
-    ::Type{U}) where {T <: VariableType, U <: PSY.Component}
-    var = get(optimization_container.variables, VariableKey(T, U), nothing)
+function get_variable(optimization_container::OptimizationContainer, key::VariableKey)
+    var = get(optimization_container.variables, key, nothing)
     if var === nothing
-        name = make_variable_name(T, U)
+        name = encode_key(key)
         @error "$name is not stored" sort!(get_variable_names(optimization_container))
         throw(IS.InvalidValue("variable $name is not stored"))
     end
-
     return var
+end
+
+function get_variable(optimization_container::OptimizationContainer, ::T,
+    ::Type{U}, meta::String = CONTAINER_KEY_EMPTY_META) where {T <: VariableType, U <: PSY.Component}
+    return get_variable(optimization_container, VariableKey(T, U, meta))
 end
 
 function get_variable_names(optimization_container::OptimizationContainer)

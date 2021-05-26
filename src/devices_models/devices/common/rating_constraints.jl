@@ -16,8 +16,8 @@ where r in rating data and t in time steps.
 * rating_data::Vector{Tuple{String, Float64}} : rating data name (1) and value (2)
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol} : the names of the variables
-- : var_names[1] : var1
-- : var_names[2] : var2
+- : var_keys[1] : var1
+- : var_keys[2] : var2
 """
 function rating_constraint!(
     optimization_container::OptimizationContainer,
@@ -26,8 +26,8 @@ function rating_constraint!(
     var_names::Tuple{Symbol, Symbol},
 )
     time_steps = model_time_steps(optimization_container)
-    var1 = get_variable(optimization_container, var_names[1])
-    var2 = get_variable(optimization_container, var_names[2])
+    var1 = get_variable(optimization_container, var_keys[1])
+    var2 = get_variable(optimization_container, var_keys[2])
     add_cons_container!(
         optimization_container,
         cons_name,

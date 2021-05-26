@@ -1,19 +1,20 @@
-abstract type VariableType end
-
 struct VariableKey{T <: VariableType, U <: PSY.Component} <: OptimizationContainerKey
-    aux_var_type::Type{T}
-    device_type::Type{U}
+    entry_type::Type{T}
+    component_type::Type{U}
+    meta::String
 end
 
-function encode_key(::VariableKey{T, U}) where {T <: VariableType, U <: PSY.Component}
-    return encode_symbol(U, T)
+function VariableKey(::Type{T}, ::Type{U}) where {T <: VariableType, U <: PSY.Component}
+    return VariableKey(T, U, CONTAINER_KEY_EMPTY_META)
 end
 
-function encode_symbol(::Type{U}, ::Type{T}) where {T <: VariableType, U <: PSY.Component}
-    return Symbol("$(IS.strip_module_name(string(T)))_$(IS.strip_module_name(string(U)))")
+function VariableKey(::Type{T}) where {T <: VariableType}
+    return VariableKey(T, PSY.Component, CONTAINER_KEY_EMPTY_META)
 end
 
-make_variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
+function VariableKey(::Type{T}, meta::String) where {T <: VariableType}
+    return VariableKey(T, PSY.Component, meta)
+end
 
 """Struct to dispatch the creation of Active Power Variables"""
 struct ActivePowerVariable <: VariableType end
@@ -246,7 +247,7 @@ make_variable_name(
     ::Type{PSY.RegulationDevice{T}},
 ) where {T <: PSY.Device} = encode_symbol(T, "ΔPe_dn")
 
-make_variable_name(::Type{SmoothACE}, ::Type{T}) where {T <: PSY.AggregationTopology} =
+VariableKey(::Type{SmoothACE}, ::Type{T}) where {T <: PSY.AggregationTopology} =
     encode_symbol(T, "SACE")
 
 make_variable_name(::Type{FlowActivePowerVariable}, ::Type{T}) where {T <: PSY.Component} =

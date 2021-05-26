@@ -540,7 +540,7 @@ function add_pm_var_refs!(
                     )
                     assign_variable!(
                         optimization_container,
-                        make_variable_name(var_type, d_type),
+                        VariableKey(var_type, d_type),
                         container,
                     )
                     for t in time_steps, (pm_d, d) in devices
@@ -648,7 +648,7 @@ function add_pm_expr_refs!(
                     )
                     psi_var_container = get_variable(
                         optimization_container,
-                        make_variable_name(var_type, d_type),
+                        VariableKey(var_type, d_type),
                     )
 
                     con_name = make_constraint_name(pm_expr_map[d_class].psi_con, d_type)

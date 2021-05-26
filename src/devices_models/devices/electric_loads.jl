@@ -65,8 +65,8 @@ function custom_reactive_power_constraints!(
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
-        reactive = get_variable(optimization_container, REACTIVE_POWER, T)[name, t]
-        real = get_variable(optimization_container, ACTIVE_POWER, T)[name, t] * pf
+        reactive = get_variable(optimization_container, ActivePowerVariable(), T)[name, t]
+        real = get_variable(optimization_container, ActivePowerVariable(), T)[name, t] * pf
         constraint[name, t] =
             JuMP.@constraint(optimization_container.JuMPmodel, reactive == real)
     end
@@ -90,7 +90,7 @@ function DeviceRangeConstraintSpec(
                     ActivePowerVariable,
                     T,
                 ),
-                variable_name = make_variable_name(ActivePowerVariable, T),
+                 variable_name = VariableKey(ActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
@@ -101,8 +101,8 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
-            parameter_name = use_parameters ? ACTIVE_POWER : nothing,
+             variable_name = VariableKey(ActivePowerVariable, T),
+            parameter_name = use_parameters ? "P" : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
@@ -129,8 +129,8 @@ function DeviceRangeConstraintSpec(
                     ActivePowerVariable,
                     T,
                 ),
-                variable_name = make_variable_name(ActivePowerVariable, T),
-                bin_variable_names = [make_variable_name(OnVariable, T)],
+                 variable_name = VariableKey(ActivePowerVariable, T),
+                bin_variable_names = [VariableKey(OnVariable, T)],
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_semicontinuousrange!,
                 constraint_struct = DeviceRangeConstraintInfo,
@@ -141,8 +141,8 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
-            bin_variable_name = make_variable_name(OnVariable, T),
+             variable_name = VariableKey(ActivePowerVariable, T),
+            bin_variable_name = VariableKey(OnVariable, T),
             parameter_name = use_parameters ? ON : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
@@ -161,7 +161,7 @@ function NodalExpressionSpec(
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
         "max_active_power",
-        REACTIVE_POWER,
+        "Q",
         use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
         -1.0,
         T,
@@ -175,7 +175,7 @@ function NodalExpressionSpec(
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
         "max_active_power",
-        ACTIVE_POWER,
+        "P",
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         -1.0,
         T,

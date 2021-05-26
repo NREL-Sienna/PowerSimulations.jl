@@ -51,6 +51,7 @@ const PSI_NAME_DELIMITER = "__"
 const M_VALUE = 1e6
 
 const NO_SERVICE_NAME_PROVIDED = ""
+const CONTAINER_KEY_EMPTY_META = ""
 
 # File Names definitions
 const PROBLEM_SERIALIZATION_FILENAME = "operations_problem.bin"

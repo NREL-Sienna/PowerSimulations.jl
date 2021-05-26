@@ -37,7 +37,7 @@ function add_constraints!(
     ::Nothing,
 ) where {T <: PSY.StaticInjection}
     parameters = model_has_parameters(optimization_container)
-    var_name_up = make_variable_name(DeltaActivePowerUpVariable, T)
+    var_name_up = VariableKey(DeltaActivePowerUpVariable, T)
     var_up = get_variable(optimization_container, var_name_up)
 
     names = [PSY.get_name(g) for g in devices]
@@ -61,7 +61,7 @@ function add_constraints!(
     if parameters
         base_points_param = get_parameter_container(
             optimization_container,
-            make_variable_name(ActivePowerVariable, T),
+            VariableKey(ActivePowerVariable, T),
         )
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
@@ -92,7 +92,7 @@ function add_constraints!(
     ::Nothing,
 ) where {T <: PSY.StaticInjection}
     parameters = model_has_parameters(optimization_container)
-    var_name_dn = make_variable_name(DeltaActivePowerDownVariable, T)
+    var_name_dn = VariableKey(DeltaActivePowerDownVariable, T)
     var_dn = get_variable(optimization_container, var_name_dn)
 
     names = [PSY.get_name(g) for g in devices]
@@ -116,7 +116,7 @@ function add_constraints!(
     if parameters
         base_points_param = get_parameter_container(
             optimization_container,
-            make_variable_name(ActivePowerVariable, T),
+            VariableKey(ActivePowerVariable, T),
         )
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
@@ -146,7 +146,7 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.StaticInjection}
-    var_name_up = make_variable_name(DeltaActivePowerUpVariable, T)
+    var_name_up = VariableKey(DeltaActivePowerUpVariable, T)
     var_up = get_variable(optimization_container, var_name_up)
 
     names = [PSY.get_name(g) for g in devices]
@@ -177,7 +177,7 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.StaticInjection}
-    var_name_dn = make_variable_name(DeltaActivePowerDownVariable, T)
+    var_name_dn = VariableKey(DeltaActivePowerDownVariable, T)
     var_dn = get_variable(optimization_container, var_name_dn)
 
     names = [PSY.get_name(g) for g in devices]
@@ -342,7 +342,7 @@ function NodalExpressionSpec(
 ) where {T <: PSY.StaticInjection}
     return NodalExpressionSpec(
         "max_active_power",
-        make_variable_name(ActivePowerVariable, T),
+        VariableKey(ActivePowerVariable, T),
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,
         JuMP.VariableRef,

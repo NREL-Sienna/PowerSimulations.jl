@@ -210,7 +210,7 @@ function ramp_constraints!(
             optimization_container,
             data,
             make_constraint_name(RAMP, SR),
-            make_variable_name(service_name, SR),
+            VariableKey(ReserveVariable, SR, service_name),
             service_name,
         )
     else
@@ -238,7 +238,7 @@ function ramp_constraints!(
             optimization_container,
             data,
             make_constraint_name(RAMP, SR),
-            make_variable_name(service_name, SR),
+            VariableKey(ReserveVariable, SR, service_name),
             service_name,
         )
     else
@@ -385,7 +385,7 @@ function include_service!(
         # Should this be make_variable_name ?
         name = make_constraint_name(PSY.get_name(service), SR)
         push!(constraint_info.additional_terms_dn, name)
-        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+        set_time_frame!(constraint_info, (name => PSY.get_time_frame(service)))
     end
     return
 end
