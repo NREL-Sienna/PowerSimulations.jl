@@ -10,7 +10,9 @@ function add_variables!(optimization_container::OptimizationContainer, ::Type{T}
     time_steps = model_time_steps(optimization_container)
     variable = add_var_container!(optimization_container, T(), PSY.Component, time_steps)
     for t in time_steps
-        variable[t] = JuMP.@variable(optimization_container.JuMPmodel, # base_name ="ΔF_{$(t)}")
+        variable[t] = JuMP.@variable(optimization_container.JuMPmodel,
+        # base_name ="ΔF_{$(t)}"
+        )
     end
 end
 
