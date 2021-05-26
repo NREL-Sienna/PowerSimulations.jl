@@ -6,6 +6,10 @@ struct VariableKey{T <: VariableType, U <: PSY.Component} <: OptimizationContain
 end
 
 function encode_key(::VariableKey{T, U}) where {T <: VariableType, U <: PSY.Component}
+    return encode_symbol(U, T)
+end
+
+function encode_symbol(::Type{U}, ::Type{T}) where {T <: VariableType, U <: PSY.Component}
     return Symbol("$(IS.strip_module_name(string(T)))_$(IS.strip_module_name(string(U)))")
 end
 
