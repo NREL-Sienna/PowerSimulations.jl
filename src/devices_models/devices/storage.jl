@@ -278,8 +278,8 @@ function reserve_contribution_constraint!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    ::Type{<:PM.AbstractPowerModel},
+    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
     constraint_infos_up = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     constraint_infos_dn = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
@@ -319,15 +319,13 @@ function reserve_contribution_constraint!(
 end
 
 ############################ Energy Management constraints ######################################
-
 function energy_target_constraint!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, EnergyTarget},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    ::DeviceModel{T, EnergyTarget},
+    ::Type{<:PM.AbstractPowerModel},
+    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage}
-    key = ICKey(InitialEnergyLevel, T)
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
     time_steps = model_time_steps(optimization_container)
@@ -378,7 +376,7 @@ function energy_target_constraint!(
     end
 
     constraint_infos = Vector{DeviceRangeConstraintInfo}()
-    for (ix, d) in enumerate(devices)
+    for d in devices
         op_cost = PSY.get_operation_cost(d)
         if PSY.get_energy_shortage_cost(op_cost) == 0.0
             dev_name = PSY.get_name(d)

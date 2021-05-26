@@ -126,7 +126,6 @@ function DeviceRangeConstraintSpec(
 end
 
 ########################## Addition to the nodal balances ##################################
-
 function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
