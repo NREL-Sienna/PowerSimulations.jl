@@ -6,7 +6,7 @@ abstract type VariableType end
 abstract type AuxVariableType end
 
 function encode_key(key::OptimizationContainerKey)
-    return encode_symbol(key.entry_type, key.component_type, key.meta)
+    return encode_symbol(key.component_type, key.entry_type, key.meta)
 end
 
 function encode_symbol(::Type{U}, ::Type{T}, meta::String = CONTAINER_KEY_EMPTY_META) where {T, U <: PSY.Component}

@@ -31,14 +31,14 @@ function device_linear_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
     cons_name::Symbol,
-    var_name::Symbol,
+    var_key::VariableKey,
 )
     parameters = model_has_parameters(optimization_container)
     time_steps = model_time_steps(optimization_container)
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_key)
 
     set_name = [get_component_name(r) for r in rate_data]
     con_up = add_cons_container!(optimization_container, up_name, set_name, time_steps)
@@ -257,13 +257,13 @@ function device_multistart_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
     cons_name::Symbol,
-    var_name::Symbol,
+    var_key::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_key)
 
     set_name = [get_component_name(r) for r in rate_data]
     con_up = add_cons_container!(optimization_container, up_name, set_name, time_steps)
@@ -331,13 +331,13 @@ function service_upward_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{ServiceRampConstraintInfo},
     cons_name::Symbol,
-    var_name::Symbol,
+    var_key::VariableKey,
     service_name::AbstractString,
 )
     time_steps = model_time_steps(optimization_container)
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up" * service_name)
 
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_key)
 
     set_name = [get_component_name(r) for r in rate_data]
     con_up = add_cons_container!(optimization_container, up_name, set_name, time_steps)
@@ -357,13 +357,13 @@ function service_downward_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{ServiceRampConstraintInfo},
     cons_name::Symbol,
-    var_name::Symbol,
+    var_key::VariableKey,
     service_name::AbstractString,
 )
     time_steps = model_time_steps(optimization_container)
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn" * service_name)
 
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_key)
 
     set_name = [get_component_name(r) for r in rate_data]
     con_down = add_cons_container!(optimization_container, down_name, set_name, time_steps)

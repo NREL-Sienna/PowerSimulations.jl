@@ -75,7 +75,7 @@ struct SmoothACE <: VariableType end
 
 struct SystemBalanceSlackUp <: VariableType end
 
-struct SystemBalanceSlackDn <: VariableType end
+struct SystemBalanceSlackDown <: VariableType end
 
 struct ReserveRequirementSlack <: VariableType end
 

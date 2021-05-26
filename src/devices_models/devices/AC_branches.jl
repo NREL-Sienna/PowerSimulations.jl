@@ -172,7 +172,7 @@ function branch_flow_values!(
     branch_flow =
         add_cons_container!(optimization_container, constraint_name, branches, time_steps)
     nodal_balance_expressions = optimization_container.expressions[:nodal_balance_active]
-    flow_variables = get_variable(optimization_container, ActivePowerF, B)
+    flow_variables = get_variable(optimization_container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(optimization_container)
     for br in devices
         name = PSY.get_name(br)

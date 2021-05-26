@@ -178,7 +178,7 @@ end
               cons_name::Symbol,
               constraint_infos::Vector{DeviceRangeConstraintInfo},
               param_reference::UpdateRef,
-              var_name::Symbol)
+              var_key::VariableKey)
 
 Constructs a parametrized upper bound constraint to implement feedforward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
@@ -194,18 +194,18 @@ The Parameters are initialized using the uppper boundary values of the provided 
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 """
 function ub_ff(
     optimization_container::OptimizationContainer,
     cons_name::Symbol,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::UpdateRef,
-    var_name::Symbol,
+    var_key::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_key)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -239,7 +239,7 @@ end
         range_ff(optimization_container::OptimizationContainer,
                         cons_name::Symbol,
                         param_reference::NTuple{2, UpdateRef},
-                        var_name::Symbol)
+                        var_key::VariableKey)
 
 Constructs min/max range parametrized constraint from device variable to include feedforward.
 
@@ -259,20 +259,20 @@ where r in range_data.
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * param_reference::NTuple{2, UpdateRef} : Tuple with the lower bound and upper bound parameter reference
 * cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 """
 function range_ff(
     optimization_container::OptimizationContainer,
     cons_name::Symbol,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::NTuple{2, UpdateRef},
-    var_name::Symbol,
+    var_key::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
 
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_key)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -330,7 +330,7 @@ end
 @doc raw"""
             semicontinuousrange_ff(optimization_container::OptimizationContainer,
                                     cons_name::Symbol,
-                                    var_name::Symbol,
+                                    var_key::VariableKey,
                                     param_reference::UpdateRef)
 
 Constructs min/max range constraint from device variable with parameter setting.
@@ -357,7 +357,7 @@ where r in range_data.
 # Arguments
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 * param_reference::UpdateRef : UpdateRef of the parameter
 """
 function semicontinuousrange_ff(
@@ -365,12 +365,12 @@ function semicontinuousrange_ff(
     cons_name::Symbol,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::UpdateRef,
-    var_name::Symbol,
+    var_key::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_key)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = [get_component_name(ci) for ci in constraint_infos]
@@ -433,7 +433,7 @@ end
         integral_limit_ff(optimization_container::OptimizationContainer,
                         cons_name::Symbol,
                         param_reference::UpdateRef,
-                        var_name::Symbol)
+                        var_key::VariableKey)
 
 Constructs a parametrized integral limit constraint to implement feedforward from other models.
 The Parameters are initialized using the upper boundary values of the provided variables.
@@ -452,17 +452,17 @@ The Parameters are initialized using the upper boundary values of the provided v
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 """
 function integral_limit_ff(
     optimization_container::OptimizationContainer,
     cons_name::Symbol,
     param_reference::UpdateRef,
-    var_name::Symbol,
+    var_key::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_key)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -512,7 +512,7 @@ function feedforward!(
     end
     for prefix in get_affected_variables(ff_model)
         var_name = VariableKey(prefix, T)
-        parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
+        parameter_ref = UpdateRef{JuMP.VariableRef}(var_key)
         ub_ff(
             optimization_container,
             constraint_name(FEEDFORWARD_UB, T),
@@ -559,7 +559,7 @@ function feedforward!(
 ) where {T <: PSY.StaticInjection}
     for prefix in get_affected_variables(ff_model)
         var_name = VariableKey(prefix, T)
-        parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
+        parameter_ref = UpdateRef{JuMP.VariableRef}(var_key)
         integral_limit_ff(
             optimization_container,
             make_constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),

@@ -251,7 +251,7 @@ where limits and lag_ramp_limits is in range_data.
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 * binvar_names::Symbol : the names of the binary variables
 """
 function device_multistart_range!(
@@ -338,16 +338,16 @@ where limits in range_data.
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
 * initial_conditions::Matrix{InitialCondition} :
 * cons_name::Symbol : name of the constraint
-* var_name::Symbol : name of the shutdown variable
+* var_key::VariableKey : name of the shutdown variable
 """
 function device_multistart_range_ic!(
     optimization_container::OptimizationContainer,
     range_data::Vector{DeviceMultiStartRangeConstraintsInfo},
     initial_conditions::Matrix{InitialCondition},## 1 is initial power, 2 is initial status
     cons_name::Symbol,
-    var_name::Symbol,
+    var_key::VariableKey,
 )
-    varstop = get_variable(optimization_container, var_name)
+    varstop = get_variable(optimization_container, var_key)
 
     set_name = [get_device_name(ic) for ic in initial_conditions[:, 1]]
     con = add_cons_container!(optimization_container, cons_name, set_name)
@@ -418,10 +418,10 @@ function reserve_energy_ub!(
     optimization_container::OptimizationContainer,
     constraint_infos::Vector{ReserveRangeConstraintInfo},
     cons_name::Symbol,
-    var_name::Symbol,
+    var_key::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
-    var_e = get_variable(optimization_container, var_name)
+    var_e = get_variable(optimization_container, var_key)
     resolution = model_resolution(optimization_container)
     rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")

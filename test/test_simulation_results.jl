@@ -196,7 +196,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             read_variables(results_uc, names = [:P__RenewableDispatch, :P__ThermalStandard])
         @test length(keys(p_variables_uc)) == 2
         for var_name in values(p_variables_uc)
-            for v_ in values(var_name)
+            for v_ in values(var_key)
                 @test size(v_)[1] == 24
             end
         end

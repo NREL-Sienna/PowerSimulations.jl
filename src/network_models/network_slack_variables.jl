@@ -16,7 +16,7 @@ function _add_system_balance_slacks!(
     )
     variable_dn = add_var_container!(
         optimization_container,
-        SystemBalanceSlackUp(),
+        SystemBalanceSlackDown(),
         PSY.StaticInjection,
         first_index,
         time_steps,
@@ -24,12 +24,12 @@ function _add_system_balance_slacks!(
     for ix in first_index, jx in time_steps
         variable_up[ix, jx] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(var_name_up)_{$(ix), $(jx)}",
+            # # base_name ="$(var_name_up)_{$(ix), $(jx)}",
             lower_bound = 0.0
         )
         variable_dn[ix, jx] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(var_name_dn)_{$(ix), $(jx)}",
+            # # base_name ="$(var_name_dn)_{$(ix), $(jx)}",
             lower_bound = 0.0
         )
         add_to_expression!(expression_array, ix, jx, variable_up[ix, jx], 1.0)
