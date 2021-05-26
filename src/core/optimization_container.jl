@@ -233,7 +233,6 @@ function set_initial_conditions!(
     set_initial_conditions!(optimization_container.initial_conditions, key, value)
 end
 
-_variable_type(cm::OptimizationContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(optimization_container::OptimizationContainer) =
     optimization_container.time_steps
 model_resolution(optimization_container::OptimizationContainer) =
