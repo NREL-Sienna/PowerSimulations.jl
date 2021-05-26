@@ -4,7 +4,7 @@ Construct model for HydroGen with FixedOutput Formulation
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{H, FixedOutput},
+    ::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
@@ -263,7 +263,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
@@ -363,7 +363,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
@@ -671,7 +671,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
@@ -775,7 +775,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
@@ -876,7 +876,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroDispatchPumpedStorage(),
     )
@@ -978,7 +978,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )

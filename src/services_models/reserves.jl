@@ -37,7 +37,7 @@ function service_requirement_constraint!(
 
     ts_vector = get_time_series(optimization_container, service, "requirement")
 
-    use_slacks && (slack_vars = reserve_slacks(optimization_container, name))
+    use_slacks && (slack_vars = reserve_slacks(optimization_container, T))
 
     requirement = PSY.get_requirement(service)
     if parameters
@@ -86,7 +86,7 @@ function service_requirement_constraint!(
     reserve_variable = get_variable(optimization_container, name, SR)
     use_slacks = get_services_slack_variables(optimization_container.settings)
 
-    use_slacks && (slack_vars = reserve_slacks(optimization_container, name))
+    use_slacks && (slack_vars = reserve_slacks(optimization_container, T))
 
     requirement = PSY.get_requirement(service)
     for t in time_steps

@@ -175,26 +175,6 @@ export write_to_CSV
 export BuildStatus
 export RunStatus
 
-# Variables / Parameters
-export ACTIVE_POWER
-export ENERGY
-export ENERGY_BUDGET
-export FLOW_ACTIVE_POWER
-export ON
-export REACTIVE_POWER
-export ACTIVE_POWER_IN
-export ACTIVE_POWER_OUT
-export RESERVE
-export SERVICE_REQUIREMENT
-export START
-export STOP
-export THETA
-export VM
-export INFLOW
-export SPILLAGE
-export SLACK_UP
-export SLACK_DN
-
 # Constraints
 export ACTIVE
 export ACTIVE_RANGE

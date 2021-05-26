@@ -1,7 +1,9 @@
-function reserve_slacks(optimization_container::OptimizationContainer, reserve_name::String)
-    time_steps = model_time_steps(optimization_container)
-    var_name = make_variable_name(reserve_name, SLACK_UP)
-    variable = add_var_container!(optimization_container, var_name, time_steps)
+function reserve_slacks(
+    optimization_container::OptimizationContainer,
+    ::Type{T},
+) where {T <: PSY.Reserve}
+    variable =
+        add_var_container!(optimization_container, ReserveRequirementSlack, T, time_steps)
 
     for jx in time_steps
         variable[jx] = JuMP.@variable(

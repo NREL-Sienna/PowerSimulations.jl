@@ -244,7 +244,7 @@ function energy_capacity_constraints!(
         RangeConstraintSpecInternal(
             constraint_infos,
             make_constraint_name(ENERGY_CAPACITY, St),
-            make_variable_name(ENERGY, St),
+            make_variable_name(EnergyVariable, St),
         ),
     )
     return
@@ -264,10 +264,10 @@ function DeviceEnergyBalanceConstraintSpec(
 ) where {St <: PSY.Storage}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_LIMIT, St),
-        energy_variable = make_variable_name(ENERGY, St),
+        energy_variable = make_variable_name(EnergyVariable, St),
         initial_condition = InitialEnergyLevel,
-        pin_variable_names = [make_variable_name(ACTIVE_POWER_IN, St)],
-        pout_variable_names = [make_variable_name(ACTIVE_POWER_OUT, St)],
+        pin_variable_names = [make_variable_name(ActivePowerInVariable, St)],
+        pout_variable_names = [make_variable_name(ActivePowerOutVariable, St)],
         constraint_func = energy_balance!,
     )
 end
@@ -305,14 +305,14 @@ function reserve_contribution_constraint!(
         constraint_infos_up,
         constraint_infos_dn,
         make_constraint_name(RESERVE_POWER, T),
-        (make_variable_name(ACTIVE_POWER_IN, T), make_variable_name(ACTIVE_POWER_OUT, T)),
+        (make_variable_name(ActivePowerInVariable, T), make_variable_name(ActivePowerOutVariable, T)),
     )
 
     reserve_energy_ub!(
         optimization_container,
         constraint_infos_energy,
         make_constraint_name(RESERVE_ENERGY, T),
-        make_variable_name(ENERGY, T),
+        make_variable_name(EnergyVariable, T),
     )
 
     return
@@ -356,9 +356,9 @@ function energy_target_constraint!(
             constraint_infos_target,
             make_constraint_name(ENERGY_TARGET, T),
             (
-                make_variable_name(ENERGY, T),
-                make_variable_name(ENERGY_SHORTAGE, T),
-                make_variable_name(ENERGY_SURPLUS, T),
+                make_variable_name(EnergyVariable, T),
+                make_variable_name(EnergyShortageVariable, T),
+                make_variable_name(EnergySurplusVariable, T),
             ),
             UpdateRef{T}(TARGET, target_forecast_label),
         )
@@ -368,9 +368,9 @@ function energy_target_constraint!(
             constraint_infos_target,
             make_constraint_name(ENERGY_TARGET, T),
             (
-                make_variable_name(ENERGY, T),
-                make_variable_name(ENERGY_SHORTAGE, T),
-                make_variable_name(ENERGY_SURPLUS, T),
+                make_variable_name(EnergyVariable, T),
+                make_variable_name(EnergyShortageVariable, T),
+                make_variable_name(EnergySurplusVariable, T),
             ),
         )
     end

@@ -58,21 +58,21 @@ If binary = true:
 """
 function add_variable!(
     optimization_container::OptimizationContainer,
-    variable_type::VariableType,
+    variable_type::T,
     devices::U,
     formulation,
-) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
+) where {T <: VariableType, U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
     settings = get_settings(optimization_container)
-    var_name = make_variable_name(typeof(variable_type), D)
     binary = get_variable_binary(variable_type, D, formulation)
     expression_name = get_variable_expression_name(variable_type, D)
     sign = get_variable_sign(variable_type, D, formulation)
 
     variable = add_var_container!(
         optimization_container,
-        var_name,
+        variable_type,
+        D,
         [PSY.get_name(d) for d in devices],
         time_steps,
     )
@@ -81,7 +81,7 @@ function add_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(var_name)_{$(name), $(t)}",
+            base_name = "$(make_variable_name(T, D))_{$(name), $(t)}",
             binary = binary
         )
 
@@ -132,7 +132,8 @@ function add_variable!(
 
     variable = add_var_container!(
         optimization_container,
-        var_name,
+        variable_type,
+        U,
         [PSY.get_name(d) for d in devices],
         time_steps,
     )

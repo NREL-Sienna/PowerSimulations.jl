@@ -135,7 +135,7 @@ function _get_pwl_vars_container(optimization_container::OptimizationContainer)
         time_steps = model_time_steps(optimization_container)
         contents = Dict{Tuple{String, Int, Int}, Any}()
         container = JuMP.Containers.SparseAxisArray(contents)
-        assign_variable!(optimization_container, :PWL_cost_vars, container)
+        # assign_variable!(optimization_container, :PWL_cost_vars, container)
     else
         container = get_variable(optimization_container, :PWL_cost_vars)
     end
