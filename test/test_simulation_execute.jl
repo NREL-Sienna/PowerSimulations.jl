@@ -55,7 +55,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
+                binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
@@ -126,7 +126,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
+                binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
@@ -135,7 +135,7 @@ end
             ),
         ),
         cache = Dict(
-            ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
+            ("UC",) => TimeStatusChange(PSY.ThermalStandard, OnVariable),
             ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -178,7 +178,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
+                binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
         ),
@@ -230,7 +230,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
+                binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(

@@ -9,7 +9,7 @@
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
+                binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
         ),
@@ -49,7 +49,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
+                binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
         ),
@@ -83,7 +83,7 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
+                binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
         ),
@@ -227,7 +227,7 @@ end
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
+#                 binary_source_stage = OnVariable,
 #                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
@@ -256,11 +256,11 @@ end
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
+#                 binary_source_stage = OnVariable,
 #                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
-#         cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
+#         cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, OnVariable)),
 #         ini_cond_chronology = InterProblemChronology(),
 #     )
 #     sim = Simulation(
@@ -288,11 +288,11 @@ end
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
+#                 binary_source_stage = OnVariable,
 #                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
-#         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
+#         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, OnVariable)),
 #         ini_cond_chronology = IntraProblemChronology(),
 #     )
 #
