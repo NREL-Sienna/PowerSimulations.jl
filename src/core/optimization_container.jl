@@ -6,7 +6,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     resolution::Dates.TimePeriod
     settings::Settings
     settings_copy::Settings
-    variables::Dict{Symbol, AbstractArray}
+    variables::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
     constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
@@ -265,36 +265,12 @@ get_jump_model(optimization_container::OptimizationContainer) =
 get_base_power(optimization_container::OptimizationContainer) =
     optimization_container.base_power
 
-function get_variable(
-    optimization_container::OptimizationContainer,
-    var_type::AbstractString,
-    ::Type{T},
-) where {T <: PSY.Component}
-    return get_variable(optimization_container, make_variable_name(var_type, T))
-end
 
-function get_variable(
-    optimization_container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-) where {T <: VariableType, U <: PSY.Component}
-    return get_variable(optimization_container, make_variable_name(T, U))
-end
-
-function get_variable(
-    optimization_container::OptimizationContainer,
-    var_type::AbstractString,
-)
-    return get_variable(optimization_container, make_variable_name(var_type))
-end
-
-function get_variable(optimization_container::OptimizationContainer, update_ref::UpdateRef)
-    return get_variable(optimization_container, update_ref.access_ref)
-end
-
-function get_variable(optimization_container::OptimizationContainer, name::Symbol)
-    var = get(optimization_container.variables, name, nothing)
+function get_variable(optimization_container::OptimizationContainer, ::T,
+    ::Type{U}) where {T <: VariableType, U <: PSY.Component}
+    var = get(optimization_container.variables, VariableKey(T, U), nothing)
     if var === nothing
+        name = make_variable_name(T, U)
         @error "$name is not stored" sort!(get_variable_names(optimization_container))
         throw(IS.InvalidValue("variable $name is not stored"))
     end
@@ -306,25 +282,6 @@ function get_variable_names(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.variables))
 end
 
-function assign_variable!(
-    optimization_container::OptimizationContainer,
-    variable_type::AbstractString,
-    ::Type{T},
-    value,
-) where {T <: PSY.Component}
-    assign_variable!(optimization_container, make_variable_name(variable_type, T), value)
-    return
-end
-
-function assign_variable!(
-    optimization_container::OptimizationContainer,
-    variable_type::AbstractString,
-    value,
-)
-    assign_variable!(optimization_container, make_variable_name(variable_type), value)
-    return
-end
-
 function _assign_container!(container::Dict, key, value)
     if haskey(container, key)
         @error "variable $key is already stored" sort!(collect(keys!(container)))
@@ -333,22 +290,14 @@ function _assign_container!(container::Dict, key, value)
     container[key] = value
 end
 
-function assign_variable!(
-    optimization_container::OptimizationContainer,
-    name::Symbol,
-    value,
-)
-    @debug "assign_variable" name
-    _assign_container!(optimization_container.variables, name, value)
-    return
-end
-
 function add_aux_var_container!(
     optimization_container::OptimizationContainer,
-    var_key::AuxVarKey{<:AuxVariableType, <:PSY.Component},
+    ::T,
+    ::Type{U},
     axs...;
     sparse = false,
-)
+) where {T <: AuxVariableType, U <: PSY.Component}
+    var_key = AuxVarKey(T, U)
     if sparse
         container = sparse_container_spec(Float64, axs...)
     else
@@ -358,19 +307,20 @@ function add_aux_var_container!(
     return container
 end
 
-# TODO: Use this type of interface for regular vars later
 function add_var_container!(
     optimization_container::OptimizationContainer,
-    var_name::Symbol,
+    ::T,
+    ::Type{U},
     axs...;
     sparse = false,
-)
+) where {T <: VariableType, U <: PSY.Component}
+    var_key = VariableKey(T, U)
     if sparse
         container = sparse_container_spec(JuMP.VariableRef, axs...)
     else
         container = container_spec(JuMP.VariableRef, axs...)
     end
-    assign_variable!(optimization_container, var_name, container)
+    _assign_container!(optimization_container.variables, var_key, container)
     return container
 end
 
