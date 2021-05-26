@@ -62,7 +62,7 @@ function device_duration_retrospective!(
         for (ix, ic) in enumerate(initial_duration[:, 1])
             name = get_device_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_on, varstart[name, i])
@@ -81,7 +81,7 @@ function device_duration_retrospective!(
             name = get_device_name(ic)
             # Minimum Down-time Constraint
             lhs_off =
-                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+                JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, varstop[name, i])
@@ -161,7 +161,7 @@ function device_duration_look_ahead!(
         for (ix, ic) in enumerate(initial_duration[:, 1])
             name = get_device_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_on, varon[name, i])
@@ -180,7 +180,7 @@ function device_duration_look_ahead!(
             name = get_device_name(ic)
             # Minimum Down-time Constraint
             lhs_off =
-                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+                JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
@@ -264,7 +264,7 @@ function device_duration_parameters!(
             name = get_device_name(ic)
             @assert typeof(ic.value) == PJ.ParameterRef
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
                 if t <= duration_data[ix].up
                     if in(i, time_steps)
@@ -293,7 +293,7 @@ function device_duration_parameters!(
             name = get_device_name(ic)
             # Minimum Down-time Constraint
             lhs_off =
-                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+                JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if t <= duration_data[ix].down
                     if in(i, time_steps)
@@ -372,7 +372,7 @@ function device_duration_compact_retrospective!(
         for (ix, ic) in enumerate(initial_duration[:, 1])
             name = get_device_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             if t in UnitRange{Int}(
                 Int(min(duration_data[ix].up, total_time_steps)),
                 total_time_steps,
@@ -397,7 +397,7 @@ function device_duration_compact_retrospective!(
             name = get_device_name(ic)
             # Minimum Down-time Constraint
             lhs_off =
-                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+                JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             if t in UnitRange{Int}(
                 Int(min(duration_data[ix].down, total_time_steps)),
                 total_time_steps,
