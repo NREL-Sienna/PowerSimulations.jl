@@ -41,7 +41,7 @@ function DeviceRangeConstraintSpec(
                 ReactivePowerVariable,
                 T,
             ),
-             variable_name = VariableKey(ReactivePowerVariable, T),
+             variable_key = VariableKey(ReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -73,13 +73,13 @@ function custom_reactive_power_constraints!(
     time_steps = model_time_steps(optimization_container)
     p_var = get_variable(optimization_container, ActivePowerVariable(), T)
     q_var = get_variable(optimization_container, ReactivePowerVariable(), T)
-    constraint_val = JuMPConstraintArray(undef, names, time_steps)
-    assign_constraint!(optimization_container, REACTIVE_RANGE, T, constraint_val)
+    jump_model = get_jump_model(optimization_container)
+    constraint = add_cons_container(optimization_container, REACTIVE_RANGE, ReactivePowerVariable(), T, names, time_steps)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_power_factor(d)))
-        constraint_val[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+        constraint[name, t] = JuMP.@constraint(
+            jump_model,
             q_var[name, t] == p_var[name, t] * pf
         )
     end
@@ -104,7 +104,7 @@ function DeviceRangeConstraintSpec(
                     ActivePowerVariable,
                     T,
                 ),
-                 variable_name = VariableKey(ActivePowerVariable, T),
+                 variable_key = VariableKey(ActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
@@ -115,7 +115,7 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_name = VariableKey(ActivePowerVariable, T),
+             variable_key = VariableKey(ActivePowerVariable, T),
             parameter_name = use_parameters ? "P" : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),

@@ -47,7 +47,7 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractA
 #     optimization_container::OptimizationContainer,
 # ) where {U <: PSY.Area}
 #     return AddVariableSpec(;
-#          variable_name = VariableKey(AdditionalDeltaActivePowerUpVariable, U),
+#          variable_key = VariableKey(AdditionalDeltaActivePowerUpVariable, U),
 #         binary = false,
 #         lb_value_func = x -> 0.0,
 #         expression_name = :emergency_up,
@@ -63,7 +63,7 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractA
 #     optimization_container::OptimizationContainer,
 # ) where {U <: PSY.Area}
 #     return AddVariableSpec(;
-#          variable_name = VariableKey(AdditionalDeltaActivePowerDownVariable, U),
+#          variable_key = VariableKey(AdditionalDeltaActivePowerDownVariable, U),
 #         binary = false,
 #         lb_value_func = x -> 0.0,
 #         expression_name = :emergency_dn,

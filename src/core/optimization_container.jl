@@ -269,7 +269,7 @@ function get_variable(optimization_container::OptimizationContainer, key::Variab
     var = get(optimization_container.variables, key, nothing)
     if var === nothing
         name = encode_key(key)
-        @error "$name is not stored" sort!(get_variable_names(optimization_container))
+        @error "$name is not stored" sort!(get_variable_keys(optimization_container))
         throw(IS.InvalidValue("variable $name is not stored"))
     end
     return var
@@ -280,13 +280,13 @@ function get_variable(optimization_container::OptimizationContainer, ::T,
     return get_variable(optimization_container, VariableKey(T, U, meta))
 end
 
-function get_variable_names(optimization_container::OptimizationContainer)
+function get_variable_keys(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.variables))
 end
 
 function _assign_container!(container::Dict, key, value)
     if haskey(container, key)
-        @error "variable $key is already stored" sort!(encode_key.(keys(container)))
+        @error "variable $(encode_key(key)) is already stored" sort!(encode_key.(keys(container)))
         throw(IS.InvalidValue("$key is already stored"))
     end
     container[key] = value
@@ -355,55 +355,31 @@ function get_constraint_names(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.constraints))
 end
 
-function assign_constraint!(
+function add_cons_container!(
     optimization_container::OptimizationContainer,
-    constraint_type::AbstractString,
-    ::Type{T},
-    value,
-) where {T <: PSY.Component}
-    assign_constraint!(
-        optimization_container,
-        make_constraint_name(constraint_type, T),
-        value,
-    )
-    return
-end
-
-function assign_constraint!(
-    optimization_container::OptimizationContainer,
-    constraint_type::AbstractString,
-    value,
+    cons_type::Union{Symbol, ConstraintType},
+    var_key::VariableKey,
+    axs...;
+    sparse = false,
 )
-    assign_constraint!(optimization_container, make_constraint_name(constraint_type), value)
-    return
-end
-
-function assign_constraint!(
-    optimization_container::OptimizationContainer,
-    name::Symbol,
-    value,
-)
-    @debug "set_constraint" name
-    optimization_container.constraints[name] = value
-    return
+    return add_cons_container!(optimization_container, cons_type, var_key.entry_type, var_key.component_type, axs...; sparse = sparse)
 end
 
 function add_cons_container!(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    cons_type::Union{Symbol, ConstraintType},
+    ::T,
+    ::U,
     axs...;
     sparse = false,
-)
-    if !haskey(optimization_container.constraints, cons_name)
-        if sparse
-            container = sparse_container_spec(JuMP.ConstraintRef, axs...)
-        else
-            container = container_spec(JuMP.ConstraintRef, axs...)
-        end
-        assign_constraint!(optimization_container, cons_name, container)
+) where {T <: VariableType, U <: PSY.Component}
+    cons_key =  make_constraint_name(cons_type, T, U)
+    if sparse
+        container = sparse_container_spec(JuMP.ConstraintRef, axs...)
     else
-        Throw(error("constraint container already exists: $cons_name"))
+        container = container_spec(JuMP.ConstraintRef, axs...)
     end
+    _assign_container!(optimization_container.constraints, cons_key, container)
     return container
 end
 

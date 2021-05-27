@@ -90,7 +90,7 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_name = VariableKey(ActivePowerVariable, T),
+             variable_key = VariableKey(ActivePowerVariable, T),
             limits_func = x -> PSY.get_active_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -114,8 +114,8 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_name = VariableKey(ActivePowerVariable, T),
-            bin_variable_names = [VariableKey(OnVariable, T)],
+            variable_key = VariableKey(ActivePowerVariable, T),
+            bin_variable_keys = [VariableKey(OnVariable, T)],
             limits_func = x -> PSY.get_active_power_limits(x),
             constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -139,7 +139,7 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_name = VariableKey(ActivePowerVariable, T),
+            variable_key = VariableKey(ActivePowerVariable, T),
             limits_func = x -> (min = 0.0, max = PSY.get_active_power_limits(x).max),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -179,13 +179,13 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_name = VariableKey(ActivePowerVariable, T),
+             variable_key = VariableKey(ActivePowerVariable, T),
             limits_func = x -> (
                 min = 0.0,
                 max = PSY.get_active_power_limits(x).max -
                       PSY.get_active_power_limits(x).min,
             ),
-            bin_variable_names = [
+            bin_variable_keys = [
                 VariableKey(OnVariable, T),
                 VariableKey(StartVariable, T),
                 VariableKey(StopVariable, T),
@@ -210,12 +210,12 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_name = VariableKey(ActivePowerVariable, T),
+             variable_key = VariableKey(ActivePowerVariable, T),
             limits_func = x -> (
                 min = PSY.get_active_power_limits(x).min,
                 max = PSY.get_active_power_limits(x).max,
             ),
-            bin_variable_names = [
+            bin_variable_keys = [
                 VariableKey(OnVariable, T),
                 VariableKey(StartVariable, T),
                 VariableKey(StopVariable, T),
@@ -314,7 +314,7 @@ function DeviceRangeConstraintSpec(
                 ReactivePowerVariable,
                 T,
             ),
-             variable_name = VariableKey(ReactivePowerVariable, T),
+             variable_key = VariableKey(ReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -355,8 +355,8 @@ function DeviceRangeConstraintSpec(
                 ReactivePowerVariable,
                 T,
             ),
-             variable_name = VariableKey(ReactivePowerVariable, T),
-            bin_variable_names = [VariableKey(OnVariable, T)],
+             variable_key = VariableKey(ReactivePowerVariable, T),
+            bin_variable_keys = [VariableKey(OnVariable, T)],
             limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,

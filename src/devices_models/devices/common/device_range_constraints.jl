@@ -1,7 +1,7 @@
 struct RangeConstraintSpec
     constraint_name::Symbol
-    variable_name::VariableKey
-    bin_variable_names::Vector{VariableKey}
+    variable_key::VariableKey
+    bin_variable_keys::Vector{VariableKey}
     limits_func::Function
     constraint_func::Function
     constraint_struct::Type{<:AbstractRangeConstraintInfo}
@@ -10,8 +10,8 @@ end
 
 function RangeConstraintSpec(;
     constraint_name,
-    variable_name,
-    bin_variable_names = Vector{VariableKey}(),
+    variable_key,
+    bin_variable_keys = Vector{VariableKey}(),
     limits_func,
     constraint_func,
     constraint_struct,
@@ -19,8 +19,8 @@ function RangeConstraintSpec(;
 )
     return RangeConstraintSpec(
         constraint_name,
-        variable_name,
-        bin_variable_names,
+        variable_key,
+        bin_variable_keys,
         limits_func,
         constraint_func,
         constraint_struct,
@@ -30,8 +30,8 @@ end
 
 struct TimeSeriesConstraintSpec
     constraint_name::Symbol
-    variable_name::VariableKey
-    bin_variable_name::Union{Nothing, VariableKey}
+    variable_key::VariableKey
+    bin_variable_key::Union{Nothing, VariableKey}
     parameter_name::Union{Nothing, String}
     forecast_label::Union{Nothing, String}
     multiplier_func::Union{Nothing, Function}
@@ -40,8 +40,8 @@ end
 
 function TimeSeriesConstraintSpec(;
     constraint_name,
-    variable_name,
-    bin_variable_name = nothing,
+    variable_key,
+    bin_variable_key = nothing,
     parameter_name,
     forecast_label,
     multiplier_func,
@@ -49,8 +49,8 @@ function TimeSeriesConstraintSpec(;
 )
     return TimeSeriesConstraintSpec(
         constraint_name,
-        variable_name,
-        bin_variable_name,
+        variable_key,
+        bin_variable_key,
         parameter_name,
         forecast_label,
         multiplier_func,
@@ -177,12 +177,12 @@ function _apply_range_constraint_spec!(
     constraint_struct = spec.constraint_struct
     constraint_infos = Vector{constraint_struct}(undef, length(devices))
     constraint_name = spec.constraint_name
-    variable_name = spec.variable_name
-    if variable_name in ff_affected_variables
-        @debug "Skip adding $variable_name because it is handled by feedforward"
+    variable_key = spec.variable_key
+    if variable_key in ff_affected_variables
+        @debug "Skip adding $variable_key because it is handled by feedforward"
         return
     end
-    bin_var_name = spec.bin_variable_names
+    bin_var_name = spec.bin_variable_keys
     for (i, dev) in enumerate(devices)
         dev_name = PSY.get_name(dev)
         limits = spec.limits_func(dev)
@@ -208,7 +208,7 @@ function _apply_range_constraint_spec!(
         RangeConstraintSpecInternal(
             constraint_infos,
             constraint_name,
-            variable_name,
+            variable_key,
             bin_var_name,
         ),
     )
@@ -222,9 +222,9 @@ function _apply_timeseries_range_constraint_spec!(
     model,
     ff_affected_variables,
 ) where {T <: PSY.Device}
-    variable_name = spec.variable_name
-    if variable_name in ff_affected_variables
-        @debug "Skip adding $variable_name because it is handled by feedforward"
+    variable_key = spec.variable_key
+    if variable_key in ff_affected_variables
+        @debug "Skip adding $variable_key because it is handled by feedforward"
         return
     end
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
@@ -239,8 +239,8 @@ function _apply_timeseries_range_constraint_spec!(
     ts_inputs = TimeSeriesConstraintSpecInternal(
         constraint_infos,
         spec.constraint_name,
-        variable_name,
-        spec.bin_variable_name,
+        variable_key,
+        spec.bin_variable_key,
         spec.parameter_name === nothing ? nothing :
         UpdateRef{T}(spec.parameter_name, spec.forecast_label),
     )

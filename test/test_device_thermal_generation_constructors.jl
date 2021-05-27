@@ -14,7 +14,7 @@ end
 
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
-    bin_variable_names = [
+    bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
         PSI.VariableKey(StartVariable, PSY.ThermalStandard),
         PSI.VariableKey(StopVariable, PSY.ThermalStandard),
@@ -38,7 +38,7 @@ end
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
     psi_aux_var_test(op_problem, aux_vars_keys)
 
@@ -51,7 +51,7 @@ end
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -64,13 +64,13 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
 @testset "Thermal UC With AC - PF" begin
-    bin_variable_names = [
+    bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
         PSI.VariableKey(StartVariable, PSY.ThermalStandard),
         PSI.VariableKey(StopVariable, PSY.ThermalStandard),
@@ -94,7 +94,7 @@ end
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 600, 0, 600, 240, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
     psi_aux_var_test(op_problem, aux_vars_keys)
 
@@ -107,7 +107,7 @@ end
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 600, 0, 600, 240, 120, true)
     psi_constraint_test(op_problem, uc_constraint_names)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -120,13 +120,13 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
 @testset "Thermal MultiStart UC With DC - PF" begin
-    bin_variable_names = [
+    bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
         PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
         PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
@@ -150,13 +150,13 @@ end
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 384, 0, 240, 48, 96, true)
         psi_constraint_test(op_problem, uc_constraint_names)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 @testset "Thermal MultiStart UC With AC - PF" begin
-    bin_variable_names = [
+    bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
         PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
         PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
@@ -180,14 +180,14 @@ end
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 432, 0, 288, 96, 96, true)
         psi_constraint_test(op_problem, uc_constraint_names)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 ################################### Basic Unit Commitment tests ############################
 @testset "Thermal Basic UC With DC - PF" begin
-    bin_variable_names = [
+    bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
         PSI.VariableKey(StartVariable, PSY.ThermalStandard),
         PSI.VariableKey(StopVariable, PSY.ThermalStandard),
@@ -198,7 +198,7 @@ end
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 480, 0, 240, 120, 120, true)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     op_problem = OperationsProblem(
@@ -209,7 +209,7 @@ end
     )
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 480, 0, 240, 120, 120, true)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -222,13 +222,13 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
 @testset "Thermal Basic UC With AC - PF" begin
-    bin_variable_names = [
+    bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
         PSI.VariableKey(StartVariable, PSY.ThermalStandard),
         PSI.VariableKey(StopVariable, PSY.ThermalStandard),
@@ -239,7 +239,7 @@ end
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 600, 0, 360, 240, 120, true)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     op_problem = OperationsProblem(
@@ -250,7 +250,7 @@ end
     )
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 600, 0, 360, 240, 120, true)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -263,13 +263,13 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
-    bin_variable_names = [
+    bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
         PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
         PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
@@ -286,13 +286,13 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 384, 0, 96, 48, 96, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 @testset "Thermal MultiStart Basic UC With AC - PF" begin
-    bin_variable_names = [
+    bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
         PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
         PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
@@ -309,7 +309,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 432, 0, 144, 96, 96, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end

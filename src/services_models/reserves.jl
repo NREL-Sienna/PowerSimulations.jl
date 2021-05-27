@@ -368,7 +368,7 @@ function include_service!(
     ::ServiceModel{SR, RampReserve},
 ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
     for (ix, service) in enumerate(services)
-        # Should this be make_variable_name ?
+        # Should this be make_variable_key ?
         name = make_constraint_name(PSY.get_name(service), SR)
         push!(constraint_info.additional_terms_up, name)
         set_time_frame!(constraint_info, (name => get_time_frame(service)))
@@ -382,7 +382,7 @@ function include_service!(
     ::ServiceModel{SR, RampReserve},
 ) where {SR <: PSY.Reserve{PSY.ReserveDown}}
     for (ix, service) in enumerate(services)
-        # Should this be make_variable_name ?
+        # Should this be make_variable_key ?
         name = make_constraint_name(PSY.get_name(service), SR)
         push!(constraint_info.additional_terms_dn, name)
         set_time_frame!(constraint_info, (name => PSY.get_time_frame(service)))
