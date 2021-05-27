@@ -71,13 +71,9 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractA
 # end
 
 ########################## AreaMismatchVariable, Area ###########################
-
-VariableKey(::Type{AreaMismatchVariable}, _) = VariableKey(AreaMismatchVariable)
 get_variable_binary(::AreaMismatchVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
 
 ########################## LiftVariable, Area ###########################
-
-VariableKey(::Type{LiftVariable}, _) = VariableKey(LiftVariable)
 get_variable_binary(::LiftVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
 get_variable_lower_bound(::LiftVariable, ::PSY.Area, ::AbstractAGCFormulation) = 0.0
 
