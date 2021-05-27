@@ -792,12 +792,12 @@ function device_energy_budget_param_ub(
     energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
     param_reference::UpdateRef,
-    var_names::Symbol,
+    var_key::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
     resolution = model_resolution(optimization_container)
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
-    variable_out = get_variable(optimization_container, var_names)
+    variable_out = get_variable(optimization_container, var_key)
     set_name = [get_component_name(r) for r in energy_budget_data]
     constraint = add_cons_container!(optimization_container, cons_name, set_name)
     container =

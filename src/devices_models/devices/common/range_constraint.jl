@@ -8,12 +8,13 @@ end
 function RangeConstraintSpecInternal(
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     constraint_name::Symbol,
-    variable_name::VariableKey,
-)
+    ::T,
+    ::Type{U}
+) where {T <: VariableType, U <: PSY.Component}
     return RangeConstraintSpecInternal(
         constraint_infos,
         constraint_name,
-        variable_name,
+        VariableKey(T, U),
         Vector{VariableKey}(),
     )
 end

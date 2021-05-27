@@ -358,26 +358,26 @@ end
 #### PM accessor functions ########
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => THETA)
+    pm_var_map[PSY.Bus] = Dict(:va => VoltageAngle())
     pm_var_map[PSY.ACBranch] =
-        Dict(:p => (from_to = FlowActivePowerVariable, to_from = nothing))
+        Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing))
     pm_var_map[PSY.DCBranch] =
-        Dict(:p_dc => (from_to = FlowActivePowerVariable, to_from = nothing))
+        Dict(:p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing))
 
     return pm_var_map
 end
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => THETA)
-    pm_var_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable)
+    pm_var_map[PSY.Bus] = Dict(:va => VoltageAngle())
+    pm_var_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable())
     pm_var_map[PSY.DCBranch] = Dict(
         :p_dc => (
-            from_to = FlowActivePowerFromToVariable,
-            to_from = FlowActivePowerToFromVariable,
+            from_to = FlowActivePowerFromToVariable(),
+            to_from = FlowActivePowerToFromVariable(),
         ),
     )
 
@@ -395,24 +395,24 @@ function PMvarmap(::Type{PTDFPowerModel})
 end
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => VoltageAngle, :vm => VoltageMagnitude)
+    pm_var_map[PSY.Bus] = Dict(:va => VoltageAngle(), :vm => VoltageMagnitude())
     pm_var_map[PSY.ACBranch] = Dict(
         :p => (
-            from_to = FlowActivePowerFromToVariable,
-            to_from = FlowActivePowerToFromVariable,
+            from_to = FlowActivePowerFromToVariable(),
+            to_from = FlowActivePowerToFromVariable(),
         ),
         :q => (
-            from_to = FlowReactivePowerFromToVariable,
-            to_from = FlowReactivePowerToFromVariable,
+            from_to = FlowReactivePowerFromToVariable(),
+            to_from = FlowReactivePowerToFromVariable(),
         ),
     )
     pm_var_map[PSY.DCBranch] = Dict(
-        :p_dc => (from_to = FlowActivePowerVariable, to_from = nothing),
+        :p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing),
         :q_dc => (
-            from_to = FlowReactivePowerFromToVariable,
-            to_from = FlowReactivePowerToFromVariable,
+            from_to = FlowReactivePowerFromToVariable(),
+            to_from = FlowReactivePowerToFromVariable(),
         ),
     )
 
@@ -441,7 +441,7 @@ function PMexprmap(::Type{S}) where {S <: PM.AbstractPowerModel}
         Type,
         NamedTuple{
             (:pm_expr, :psi_con),
-            Tuple{Dict{Symbol, Union{String, NamedTuple}}, Symbol},
+            Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, Symbol},
         },
     }()
 
@@ -453,12 +453,12 @@ function PMexprmap(::Type{PTDFPowerModel})
         Type,
         NamedTuple{
             (:pm_expr, :psi_con),
-            Tuple{Dict{Symbol, Union{String, NamedTuple}}, Symbol},
+            Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, Symbol},
         },
     }()
 
     pm_expr_map[PSY.ACBranch] = (
-        pm_expr = Dict(:p => (from_to = FlowActivePowerVariable, to_from = nothing)),
+        pm_expr = Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing)),
         psi_con = Symbol(NETWORK_FLOW),
     )
 
@@ -485,7 +485,7 @@ function add_pm_var_refs!(
         if pm_v in pm_var_types
             container = add_var_container!(
                 optimization_container,
-                ps_v(),
+                ps_v,
                 PSY.Bus,
                 bus_names,
                 time_steps,
@@ -533,15 +533,12 @@ function add_pm_var_refs!(
                 for dir in fieldnames(typeof(ps_v))
                     var_type = getfield(ps_v, dir)
                     var_type === nothing && continue
-                    container = PSI.container_spec(
-                        JuMP.VariableRef,
+                    container = add_var_container!(
+                        optimization_container,
+                        var_type,
+                        d_type,
                         [PSY.get_name(d[2]) for d in devices],
                         time_steps,
-                    )
-                    assign_variable!(
-                        optimization_container,
-                        VariableKey(var_type, d_type),
-                        container,
                     )
                     for t in time_steps, (pm_d, d) in devices
                         var =
