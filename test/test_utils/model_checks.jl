@@ -134,7 +134,7 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    var_key::VariableKey,
+    var_key::PSI.VariableKey,
     device_name::String,
     limit::Float64,
 )
@@ -150,7 +150,7 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    var_key::VariableKey,
+    var_key::PSI.VariableKey,
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
@@ -168,8 +168,8 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    pvar_key::VariableKey,
-    qvar_key::VariableKey,
+    pvar_key::PSI.VariableKey,
+    qvar_key::PSI.VariableKey,
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
@@ -191,8 +191,8 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    pvar_key::VariableKey,
-    qvar_key::VariableKey,
+    pvar_key::PSI.VariableKey,
+    qvar_key::PSI.VariableKey,
     device_name::String,
     limit::Float64,
 )
