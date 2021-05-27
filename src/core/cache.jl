@@ -27,9 +27,9 @@ mutable struct TimeStatusChange <: AbstractCache
     end
 end
 
-function TimeStatusChange(::Type{T}, name::AbstractString) where {T <: PSY.Device}
+function TimeStatusChange(::Type{T}, var::U = OnVariable()) where {T <: PSY.Device, U <: VariableType}
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}}(undef, 1)
-    return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
+    return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, var))
 end
 
 mutable struct StoredEnergy <: AbstractCache
@@ -38,9 +38,9 @@ mutable struct StoredEnergy <: AbstractCache
     ref::UpdateRef
 end
 
-function StoredEnergy(::Type{T}, name::AbstractString) where {T <: PSY.Device}
+function StoredEnergy(::Type{T}, var::U = EnergyVariable()) where {T <: PSY.Device, U <: VariableType}
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, 1)
-    return StoredEnergy(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
+    return StoredEnergy(T, value_array, UpdateRef{JuMP.VariableRef}(T, U))
 end
 
 cache_value(cache::AbstractCache, key) = cache.value[key]

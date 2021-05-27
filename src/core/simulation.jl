@@ -142,7 +142,7 @@ function _create_cache(
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
-        cache = TimeStatusChange(T, ON)
+        cache = TimeStatusChange(T, OnVariable())
         push!(caches, cache)
     end
     return
@@ -154,7 +154,7 @@ function _create_cache(
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
-        cache = TimeStatusChange(T, ON)
+        cache = TimeStatusChange(T, OnVariable())
         push!(caches, cache)
     end
     return
@@ -166,7 +166,7 @@ function _create_cache(
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
-        cache = StoredEnergy(T, ENERGY)
+        cache = StoredEnergy(T, EnergyVariable())
         push!(caches, cache)
     end
     return
@@ -510,7 +510,7 @@ function _check_required_ini_cond_caches(sim::Simulation)
         for (k, v) in iterate_initial_conditions(optimization_container)
             # No cache needed for the initial condition -> continue
             v[1].cache_type === nothing && continue
-            c = get_cache(sim, v[1].cache_type, k.device_type)
+            c = get_cache(sim, v[1].cache_type, k.component_type)
             if c === nothing
                 throw(
                     ArgumentError(
