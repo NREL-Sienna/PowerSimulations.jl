@@ -59,16 +59,14 @@ function custom_reactive_power_constraints!(
     ::Type{<:AbstractControllablePowerLoadFormulation},
 ) where {T <: PSY.ElectricLoad}
     time_steps = model_time_steps(optimization_container)
-    constraint = JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
-    assign_constraint!(optimization_container, REACTIVE, T, constraint)
-
+    constraint = add_cons_container!(optimization_container, :Equality, ReactivePowerVariable(), T, [PSY.get_name(d) for d in devices], time_steps)
+    jump_model = get_jump_model(optimization_container)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
         reactive = get_variable(optimization_container, ActivePowerVariable(), T)[name, t]
         real = get_variable(optimization_container, ActivePowerVariable(), T)[name, t] * pf
-        constraint[name, t] =
-            JuMP.@constraint(optimization_container.JuMPmodel, reactive == real)
+        constraint[name, t] = JuMP.@constraint(jump_model, reactive == real)
     end
 end
 
