@@ -49,10 +49,10 @@ end
 
 function psi_checkbinvar_test(
     op_problem::OperationsProblem,
-    bin_variable_names::Vector{<:PSI.VariableKey},
+    bin_variable_keys::Vector{<:PSI.VariableKey},
 )
     container = PSI.get_optimization_container(op_problem)
-    for variable in bin_variable_names
+    for variable in bin_variable_keys
         for v in PSI.get_variable(container, variable)
             @test JuMP.is_binary(v)
         end

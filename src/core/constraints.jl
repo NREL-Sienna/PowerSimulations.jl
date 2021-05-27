@@ -69,5 +69,21 @@ function make_constraint_name(
     return encode_symbol(T, encode_symbol(V, U))
 end
 
+function make_constraint_name(
+    input::Symbol,
+    ::Type{U},
+    ::Type{V},
+) where {U <: VariableType, V <: PSY.Device}
+    return encode_symbol(input, encode_symbol(V, U))
+end
+
+function make_constraint_name(
+    ::T,
+    ::Type{U},
+    ::Type{V},
+) where {T <: ConstraintType, U <: VariableType, V <: PSY.Device}
+    return encode_symbol(T, encode_symbol(V, U))
+end
+
 make_constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
 make_constraint_name(cons_type) = encode_symbol(cons_type)

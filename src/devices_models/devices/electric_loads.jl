@@ -90,7 +90,7 @@ function DeviceRangeConstraintSpec(
                     ActivePowerVariable,
                     T,
                 ),
-                 variable_name = VariableKey(ActivePowerVariable, T),
+                 variable_key = VariableKey(ActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
@@ -101,7 +101,7 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_name = VariableKey(ActivePowerVariable, T),
+             variable_key = VariableKey(ActivePowerVariable, T),
             parameter_name = use_parameters ? "P" : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
@@ -129,8 +129,8 @@ function DeviceRangeConstraintSpec(
                     ActivePowerVariable,
                     T,
                 ),
-                 variable_name = VariableKey(ActivePowerVariable, T),
-                bin_variable_names = [VariableKey(OnVariable, T)],
+                 variable_key = VariableKey(ActivePowerVariable, T),
+                bin_variable_keys = [VariableKey(OnVariable, T)],
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_semicontinuousrange!,
                 constraint_struct = DeviceRangeConstraintInfo,
@@ -141,8 +141,8 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_name = VariableKey(ActivePowerVariable, T),
-            bin_variable_name = VariableKey(OnVariable, T),
+             variable_key = VariableKey(ActivePowerVariable, T),
+            bin_variable_key = VariableKey(OnVariable, T),
             parameter_name = use_parameters ? ON : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),

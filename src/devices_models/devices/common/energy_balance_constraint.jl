@@ -2,8 +2,8 @@ struct DeviceEnergyBalanceConstraintSpec
     constraint_name::Symbol
     energy_variable::Symbol
     initial_condition::Type{<:InitialConditionType}
-    pin_variable_names::Vector{Symbol}
-    pout_variable_names::Vector{Symbol}
+    pin_variable_keys::Vector{Symbol}
+    pout_variable_keys::Vector{Symbol}
     parameter_name::Union{Nothing, String}
     forecast_label::Union{Nothing, String}
     multiplier_func::Union{Nothing, Function}
@@ -15,8 +15,8 @@ function DeviceEnergyBalanceConstraintSpec(;
     energy_variable::Symbol,
     initial_condition::Type{<:InitialConditionType},
     constraint_func::Function,
-    pin_variable_names::Vector{Symbol} = Vector{Symbol}(),
-    pout_variable_names::Vector{Symbol} = Vector{Symbol}(),
+    pin_variable_keys::Vector{Symbol} = Vector{Symbol}(),
+    pout_variable_keys::Vector{Symbol} = Vector{Symbol}(),
     parameter_name::Union{Nothing, String} = nothing,
     forecast_label::Union{Nothing, String} = nothing,
     multiplier_func::Union{Nothing, Function} = nothing,
@@ -25,8 +25,8 @@ function DeviceEnergyBalanceConstraintSpec(;
         constraint_name,
         energy_variable,
         initial_condition,
-        pin_variable_names,
-        pout_variable_names,
+        pin_variable_keys,
+        pout_variable_keys,
         parameter_name,
         forecast_label,
         multiplier_func,
@@ -88,8 +88,8 @@ struct DeviceEnergyBalanceConstraintSpecInternal
     constraint_infos::Vector{<:EnergyBalanceConstraintInfo}
     constraint_name::Symbol
     energy_variable::Symbol
-    pin_variable_names::Vector{Symbol}
-    pout_variable_names::Vector{Symbol}
+    pin_variable_keys::Vector{Symbol}
+    pout_variable_keys::Vector{Symbol}
     param_reference::Union{Nothing, UpdateRef}
 end
 
@@ -131,8 +131,8 @@ function _apply_energy_balance_constraint_spec!(
             constraint_infos,
             spec.constraint_name,
             spec.energy_variable,
-            spec.pin_variable_names,
-            spec.pout_variable_names,
+            spec.pin_variable_keys,
+            spec.pout_variable_keys,
             spec.parameter_name === nothing ? nothing :
             UpdateRef{T}(spec.parameter_name, spec.forecast_label),
         ),
@@ -152,7 +152,7 @@ If t > 1:
 `` x^{energy}_t == x^{energy}_{t-1} + frhr \eta^{in} x^{in}_t - \frac{frhr}{\eta^{out}} x^{out}_t, \forall t \geq 2 ``
 # Arguments
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* inputs::Vector{DeviceEnergyBalanceConstraintSpecInternal} : stores constraint information 
+* inputs::Vector{DeviceEnergyBalanceConstraintSpecInternal} : stores constraint information
 """
 function energy_balance!(
     optimization_container::OptimizationContainer,
@@ -164,9 +164,9 @@ function energy_balance!(
     names = [get_component_name(x) for x in inputs.constraint_infos]
 
     varenergy = get_variable(optimization_container, inputs.energy_variable)
-    varin = [get_variable(optimization_container, var) for var in inputs.pin_variable_names]
+    varin = [get_variable(optimization_container, var) for var in inputs.pin_variable_keys]
     varout =
-        [get_variable(optimization_container, var) for var in inputs.pout_variable_names]
+        [get_variable(optimization_container, var) for var in inputs.pout_variable_keys]
 
     constraint = add_cons_container!(
         optimization_container,
@@ -229,7 +229,7 @@ If t > 1:
 `` x^{energy}_t == x^{energy}_{t-1} + frhr \eta^{in} x^{in}_t - \frac{frhr}{\eta^{out}} x^{out}_t, \forall t \geq 2 ``
 # Arguments
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* inputs::Vector{DeviceEnergyBalanceConstraintSpecInternal} : stores constraint information 
+* inputs::Vector{DeviceEnergyBalanceConstraintSpecInternal} : stores constraint information
 """
 function energy_balance_param!(
     optimization_container::OptimizationContainer,
@@ -242,9 +242,9 @@ function energy_balance_param!(
     has_parameter_data = !isnothing(inputs.param_reference)
 
     varenergy = get_variable(optimization_container, inputs.energy_variable)
-    varin = [get_variable(optimization_container, var) for var in inputs.pin_variable_names]
+    varin = [get_variable(optimization_container, var) for var in inputs.pin_variable_keys]
     varout =
-        [get_variable(optimization_container, var) for var in inputs.pout_variable_names]
+        [get_variable(optimization_container, var) for var in inputs.pout_variable_keys]
 
     if has_parameter_data
         container = add_param_container!(
