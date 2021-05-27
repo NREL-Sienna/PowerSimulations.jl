@@ -146,8 +146,8 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.StaticInjection}
-    var_name_up = VariableKey(DeltaActivePowerUpVariable, T)
-    var_up = get_variable(optimization_container, var_name_up)
+    var_key_up = VariableKey(DeltaActivePowerUpVariable, T)
+    var_up = get_variable(optimization_container, var_key_up)
 
     names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(optimization_container)

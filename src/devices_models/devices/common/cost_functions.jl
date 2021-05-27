@@ -215,9 +215,8 @@ function pwl_gencost_sos!(
     time_period::Int,
 )
     base_power = get_base_power(optimization_container)
-    var_name = VariableKey(spec.variable_type, spec.component_type)
+    var_key = VariableKey(spec.variable_type, spec.component_type)
     variable = get_variable(optimization_container, var_key)[component_name, time_period]
-    settings_ext = get_ext(get_settings(optimization_container))
     export_pwl_vars = get_export_pwl_vars(optimization_container.settings)
     @debug export_pwl_vars
     total_gen_cost = JuMP.AffExpr(0.0)
@@ -228,7 +227,7 @@ function pwl_gencost_sos!(
             "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)"
         )
     elseif spec.sos_status == SOSStatusVariable.PARAMETER
-        param_key = encode_symbol(OnVariable, string(spec.component_type))
+        param_key = encode_symbol("ON", string(spec.component_type))
         bin =
             get_parameter_container(optimization_container, param_key).parameter_array[component_name]
         @debug("Using Piecewise Linear cost function with parameter $(param_key)")
@@ -952,7 +951,7 @@ function variable_cost!(
     time_period::Int,
 )
     base_power = get_base_power(optimization_container)
-    var_name = VariableKey(spec.variable_type, spec.component_type)
+    var_key = VariableKey(spec.variable_type, spec.component_type)
     cost_data = PSY.get_cost(cost_component)
     if cost_data[1] >= eps()
         @debug "Quadratic Variable Cost" component_name
@@ -968,7 +967,7 @@ function variable_cost!(
         @debug "Quadratic Variable Cost with only linear term" component_name
         linear_gen_cost!(
             optimization_container,
-            var_name,
+            var_key,
             component_name,
             cost_data[2] * spec.multiplier * base_power,
             time_period,

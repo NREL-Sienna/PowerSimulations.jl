@@ -50,6 +50,7 @@ function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProb
         MOI.MIN_SENSE,
         PSI.get_optimization_container(problem).cost_function
     )
+    return
 end
 
 function mock_construct_network!(
@@ -63,6 +64,7 @@ function mock_construct_network!(
         model,
         problem.template.branches,
     )
+    return
 end
 
 function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)

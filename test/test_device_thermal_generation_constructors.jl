@@ -1,4 +1,5 @@
 test_path = mktempdir()
+const RANGE_LB_CONSTRAINT = :ActivePowerVariable_ThermalStandard_lb__RangeConstraint
 @testset "ThermalGen data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
@@ -15,8 +16,8 @@ end
 @testset "Thermal UC With DC - PF" begin
     bin_variable_names = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
-        PSI.VariableKey(PSI.START, PSY.ThermalStandard),
-        PSI.VariableKey(PSI.STOP, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
     ]
 
     uc_constraint_names = [
@@ -71,8 +72,8 @@ end
 @testset "Thermal UC With AC - PF" begin
     bin_variable_names = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
-        PSI.VariableKey(PSI.START, PSY.ThermalStandard),
-        PSI.VariableKey(PSI.STOP, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
     ]
     uc_constraint_names = [
         PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
@@ -127,8 +128,8 @@ end
 @testset "Thermal MultiStart UC With DC - PF" begin
     bin_variable_names = [
         PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
-        PSI.VariableKey(PSI.START, PSY.ThermalMultiStart),
-        PSI.VariableKey(PSI.STOP, PSY.ThermalMultiStart),
+        PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
     ]
     uc_constraint_names = [
         PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
@@ -157,8 +158,8 @@ end
 @testset "Thermal MultiStart UC With AC - PF" begin
     bin_variable_names = [
         PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
-        PSI.VariableKey(PSI.START, PSY.ThermalMultiStart),
-        PSI.VariableKey(PSI.STOP, PSY.ThermalMultiStart),
+        PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
     ]
     uc_constraint_names = [
         PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
@@ -188,8 +189,8 @@ end
 @testset "Thermal Basic UC With DC - PF" begin
     bin_variable_names = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
-        PSI.VariableKey(PSI.START, PSY.ThermalStandard),
-        PSI.VariableKey(PSI.STOP, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -229,8 +230,8 @@ end
 @testset "Thermal Basic UC With AC - PF" begin
     bin_variable_names = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
-        PSI.VariableKey(PSI.START, PSY.ThermalStandard),
-        PSI.VariableKey(PSI.STOP, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -270,8 +271,8 @@ end
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
     bin_variable_names = [
         PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
-        PSI.VariableKey(PSI.START, PSY.ThermalMultiStart),
-        PSI.VariableKey(PSI.STOP, PSY.ThermalMultiStart),
+        PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
 
@@ -293,8 +294,8 @@ end
 @testset "Thermal MultiStart Basic UC With AC - PF" begin
     bin_variable_names = [
         PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
-        PSI.VariableKey(PSI.START, PSY.ThermalMultiStart),
-        PSI.VariableKey(PSI.STOP, PSY.ThermalMultiStart),
+        PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
 
@@ -418,7 +419,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
+        moi_lbvalue_test(op_problem, RANGE_LB_CONSTRAINT, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -432,7 +433,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
+        moi_lbvalue_test(op_problem, RANGE_LB_CONSTRAINT, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -449,7 +450,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
+        moi_lbvalue_test(op_problem, RANGE_LB_CONSTRAINT, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -463,7 +464,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
+        moi_lbvalue_test(op_problem, RANGE_LB_CONSTRAINT, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end

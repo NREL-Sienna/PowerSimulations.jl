@@ -544,7 +544,7 @@ function calculate_aux_variable_value!(
     key::AuxVarKey{TimeDurationOn, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
-    on_var_results = get_variable(optimization_container, OnVariable, T)
+    on_var_results = get_variable(optimization_container, OnVariable(), T)
     aux_var_container = get_aux_variables(optimization_container)[key]
     ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOn, T)
 
@@ -586,7 +586,7 @@ function calculate_aux_variable_value!(
     key::AuxVarKey{TimeDurationOff, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
-    on_var_results = get_variable(optimization_container, OnVariable, T)
+    on_var_results = get_variable(optimization_container, OnVariable(), T)
     aux_var_container = get_aux_variables(optimization_container)[key]
     ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOff, T)
 
@@ -796,15 +796,15 @@ for t in time_limits[s+1]:T
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * rate_data::Vector{DeviceStartUpConstraintInfo},
 * cons_name::Symbol : name of the constraint
-* var_stop::Symbol : name of the stop variable
-* var_starts::Tuple{Symbol, Symbol} : the names of the different start variables
+* var_stop::VariableKey : name of the stop variable
+* var_starts::Tuple{VariableKey, VariableKey} : the names of the different start variables
 """
 function turbine_temperature(
     optimization_container::OptimizationContainer,
     startup_data::Vector{DeviceStartUpConstraintInfo},
     cons_name::Symbol,
-    var_stop::Symbol,
-    var_starts::Tuple{Symbol, Symbol},
+    var_stop::VariableKey,
+    var_starts::Tuple{VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
     start_vars = [
@@ -882,7 +882,7 @@ function device_start_type_constraint(
     optimization_container::OptimizationContainer,
     data::Vector{DeviceStartTypesConstraintInfo},
     cons_name::Symbol,
-    var_start::Symbol,
+    var_start::VariableKey,
     var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
@@ -932,16 +932,16 @@ lb:
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * data::Vector{DeviceStartTypesConstraintInfo},
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol} : the names of the different start variables
-* bin_name::Symbol : name of the status variable
+* var_names::Tuple{VariableKey, VariableKey} : the names of the different start variables
+* bin_name::VariableKey : name of the status variable
 """
 function device_startup_initial_condition(
     optimization_container::OptimizationContainer,
     data::Vector{DeviceStartUpConstraintInfo},
     initial_conditions::Vector{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol},
-    bin_name::Symbol,
+    var_keys::Tuple{VariableKey, VariableKey},
+    bin_name::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
 
@@ -1051,7 +1051,7 @@ function startup_type_constraints!(
         optimization_container,
         constraint_data,
         make_constraint_name(START_TYPE, PSY.ThermalMultiStart),
-        VariableKey(START, PSY.ThermalMultiStart),
+        VariableKey(StartVariable, PSY.ThermalMultiStart),
         (
             VariableKey(HotStartVariable, PSY.ThermalMultiStart),
             VariableKey(WarmStartVariable, PSY.ThermalMultiStart),
