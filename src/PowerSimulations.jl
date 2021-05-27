@@ -175,6 +175,51 @@ export write_to_CSV
 export BuildStatus
 export RunStatus
 
+# Variables
+export ActivePowerVariable
+export ActivePowerInVariable
+export ActivePowerOutVariable
+export HotStartVariable
+export WarmStartVariable
+export ColdStartVariable
+export EnergyVariable
+export EnergyVariableUp
+export EnergyVariableDown
+export EnergyShortageVariable
+export EnergySurplusVariable
+export LiftVariable
+export OnVariable
+export ReactivePowerVariable
+export ReserveVariable
+export ActiveServiceVariable
+export ServiceRequirementVariable
+export WaterSpillageVariable
+export StartVariable
+export StopVariable
+export SteadyStateFrequencyDeviation
+export AreaMismatchVariable
+export DeltaActivePowerUpVariable
+export DeltaActivePowerDownVariable
+export AdditionalDeltaActivePowerUpVariable
+export AdditionalDeltaActivePowerDownVariable
+export SmoothACE
+export SystemBalanceSlackUp
+export SystemBalanceSlackDown
+export ReserveRequirementSlack
+export VoltageMagnitude
+export VoltageAngle
+export FlowActivePowerVariable
+export FlowReactivePowerVariable
+export FlowActivePowerFromToVariable
+export FlowActivePowerToFromVariable
+export FlowReactivePowerFromToVariable
+export FlowReactivePowerToFromVariable
+
+# Auxiliary variables
+export TimeDurationOn
+export TimeDurationOff
+export PowerOutput
+
 # Constraints
 export ACTIVE
 export ACTIVE_RANGE
