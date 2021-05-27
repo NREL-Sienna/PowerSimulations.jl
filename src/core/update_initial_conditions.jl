@@ -306,7 +306,7 @@ function _get_ref_active_power(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     if get_use_parameters(container)
-        return UpdateRef{JuMP.VariableRef}(T, "P")
+        return UpdateRef{JuMP.VariableRef}(T, ActivePowerVariable())
     else
         return UpdateRef{T}("P", "active_power")
     end
@@ -317,14 +317,14 @@ function _get_ref_on_status(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     if get_use_parameters(container)
-        return UpdateRef{JuMP.VariableRef}(T, "On")
+        return UpdateRef{JuMP.VariableRef}(T, OnVariable())
     else
         return UpdateRef{T}("On", "On")
     end
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "E") :
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, EnergyVariable()) :
            UpdateRef{T}("E", "initial_energy")
 end
 
@@ -332,7 +332,7 @@ function _get_ref_reservoir_energy(
     ::Type{T},
     container::InitialConditions,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "E") :
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, EnergyVariable()) :
            UpdateRef{T}("E", "hydro_budget")
 end
 
@@ -340,7 +340,7 @@ function _get_ref_reservoir_energy_up(
     ::Type{T},
     container::InitialConditions,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "Eup") :
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, EnergyVariableUp()) :
            UpdateRef{T}("Eup", "get_hydro_budget")
 end
 
@@ -348,12 +348,12 @@ function _get_ref_reservoir_energy_down(
     ::Type{T},
     container::InitialConditions,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "Edown") :
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, EnergyVariableDown()) :
            UpdateRef{T}("Edown", "get_hydro_budget")
 end
 
 function _get_ref_ace_error(::Type{PSY.AGC}, container::InitialConditions)
     T = PSY.AGC
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "ACE") :
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, AreaControlError()) :
            UpdateRef{T}("ACE", "initial_ace")
 end
