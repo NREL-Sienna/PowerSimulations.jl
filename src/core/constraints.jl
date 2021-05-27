@@ -58,8 +58,11 @@ const NETWORK_FLOW = "network_flow"
 
 abstract type ConstraintType end
 
-abstract type RangeConstraint <: ConstraintType end
-abstract type EnergyBalanceConstraint <: ConstraintType end
+struct RangeConstraint <: ConstraintType end
+struct EnergyBalanceConstraint <: ConstraintType end
+struct FlowRateConstraint <: ConstraintType end
+struct FlowRateConstraintTF <: ConstraintType end
+struct FlowRateConstraintFT <: ConstraintType end
 
 function make_constraint_name(
     ::Type{T},

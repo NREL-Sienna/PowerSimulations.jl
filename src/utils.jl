@@ -448,6 +448,10 @@ function encode_symbol(::Type{T}, name::Symbol) where {T}
     return encode_symbol(T, string(name))
 end
 
+function encode_symbol(name1::Symbol, name2::Symbol)
+    return encode_symbol(string(name1), string(name2))
+end
+
 function encode_symbol(name::AbstractString)
     return Symbol(name)
 end

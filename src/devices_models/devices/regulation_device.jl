@@ -248,26 +248,27 @@ function participation_assignment!(
     R_up = get_variable(optimization_container, DeltaActivePowerUpVariable, T)
     R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable, T)
     R_up_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
+        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), T)
     R_dn_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable, T)
+        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), T)
     area_reserve_up =
-        get_variable(optimization_container, DeltaActivePowerUpVariable, PSY.Area)
+        get_variable(optimization_container, DeltaActivePowerUpVariable(), PSY.Area)
     area_reserve_dn =
-        get_variable(optimization_container, DeltaActivePowerDownVariable, PSY.Area)
+        get_variable(optimization_container, DeltaActivePowerDownVariable(), PSY.Area)
 
     component_names = [PSY.get_name(d) for d in devices]
-    participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
-    participation_assignment_dn = JuMPConstraintArray(undef, component_names, time_steps)
-    assign_constraint!(
-        optimization_container,
-        "participation_assignment_up",
-        participation_assignment_up,
+
+    participation_assignment_up = add_cons_container!(optimization_container,
+        :participation_assignment_up,
+        AdditionalDeltaActivePowerUpVariable(),
+        T,
+        component_names, time_steps
     )
-    assign_constraint!(
-        optimization_container,
-        "participation_assignment_dn",
-        participation_assignment_dn,
+    participation_assignment_dn = add_cons_container!(optimization_container,
+        :participation_assignment_dn,
+        AdditionalDeltaActivePowerUpVariable(),
+        T,
+        component_names, time_steps
     )
 
     expr_up = get_expression(optimization_container, :emergency_up)

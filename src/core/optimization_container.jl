@@ -355,25 +355,36 @@ function get_constraint_names(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.constraints))
 end
 
+# This is a temporary method while refactoring variable container
 function add_cons_container!(
     optimization_container::OptimizationContainer,
-    cons_type::Union{Symbol, ConstraintType},
+    cons_type::ConstraintType,
     var_key::VariableKey,
     axs...;
     sparse = false,
 )
-    return add_cons_container!(optimization_container, cons_type, var_key.entry_type, var_key.component_type, axs...; sparse = sparse)
+    return add_cons_container!(optimization_container, cons_type, var_key.entry_type(), var_key.component_type, axs...; sparse = sparse)
 end
 
+# This is a temporary method while refactoring variable container
 function add_cons_container!(
     optimization_container::OptimizationContainer,
-    cons_type::Union{Symbol, ConstraintType},
+    cons_type::ConstraintType,
     ::T,
-    ::U,
+    ::Type{U},
     axs...;
     sparse = false,
 ) where {T <: VariableType, U <: PSY.Component}
     cons_key =  make_constraint_name(cons_type, T, U)
+    return add_cons_container!(optimization_container, cons_key, axs...; sparse = sparse)
+end
+
+function add_cons_container!(
+    optimization_container::OptimizationContainer,
+    cons_key::Symbol,
+    axs...;
+    sparse = false,
+)
     if sparse
         container = sparse_container_spec(JuMP.ConstraintRef, axs...)
     else

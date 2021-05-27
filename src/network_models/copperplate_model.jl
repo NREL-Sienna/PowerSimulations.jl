@@ -6,12 +6,9 @@ function copper_plate(
     time_steps = model_time_steps(optimization_container)
     expressions = get_expression(optimization_container, expression)
     remove_undef!(optimization_container.expressions[expression])
-
-    constraint_val = JuMPConstraintArray(undef, time_steps)
-    assign_constraint!(optimization_container, "CopperPlateBalance", constraint_val)
-
+    constraint = add_cons_container!(optimization_container, :CopperPlateBalance, time_steps)
     for t in time_steps
-        constraint_val[t] = JuMP.@constraint(
+        constraint[t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
             sum(expressions.data[i, t] for i in 1:bus_count) == 0
         )
