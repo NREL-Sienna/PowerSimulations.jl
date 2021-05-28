@@ -74,7 +74,7 @@ function custom_reactive_power_constraints!(
     p_var = get_variable(optimization_container, ActivePowerVariable(), T)
     q_var = get_variable(optimization_container, ReactivePowerVariable(), T)
     jump_model = get_jump_model(optimization_container)
-    constraint = add_cons_container(optimization_container, REACTIVE_RANGE, ReactivePowerVariable(), T, names, time_steps)
+    constraint = add_cons_container!(optimization_container, EqualityConstraint(), ReactivePowerVariable(), T, names, time_steps)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_power_factor(d)))

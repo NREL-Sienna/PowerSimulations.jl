@@ -10,20 +10,20 @@ abstract type AbstractStartConstraintInfo <: AbstractConstraintInfo end
 struct DeviceRangeConstraintInfo <: AbstractRangeConstraintInfo
     component_name::String
     limits::MinMax
-    additional_terms_ub::Vector{Symbol}
-    additional_terms_lb::Vector{Symbol}
+    additional_terms_ub::Vector{VariableKey}
+    additional_terms_lb::Vector{VariableKey}
 end
 
 function DeviceRangeConstraintInfo(name::String, limits::MinMax)
-    return DeviceRangeConstraintInfo(name, limits, Vector{Symbol}(), Vector{Symbol}())
+    return DeviceRangeConstraintInfo(name, limits, Vector{VariableKey}(), Vector{VariableKey}())
 end
 
 function DeviceRangeConstraintInfo(name::String)
     return DeviceRangeConstraintInfo(
         name,
         (min = -Inf, max = Inf),
-        Vector{Symbol}(),
-        Vector{Symbol}(),
+        Vector{VariableKey}(),
+        Vector{VariableKey}(),
     )
 end
 
@@ -77,8 +77,8 @@ struct DeviceMultiStartRangeConstraintsInfo <: AbstractRangeConstraintInfo
     component_name::String
     limits::PSY.Min_Max
     lag_ramp_limits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}
-    additional_terms_ub::Vector{Symbol}# [:R1, :R2]
-    additional_terms_lb::Vector{Symbol}
+    additional_terms_ub::Vector{VariableKey}# [:R1, :R2]
+    additional_terms_lb::Vector{VariableKey}
 end
 
 function DeviceMultiStartRangeConstraintsInfo(
@@ -90,8 +90,8 @@ function DeviceMultiStartRangeConstraintsInfo(
         component_name,
         limits,
         lag_ramp_limits,
-        Vector{Symbol}(),
-        Vector{Symbol}(),
+        Vector{VariableKey}(),
+        Vector{VariableKey}(),
     )
 end
 
@@ -100,8 +100,8 @@ function DeviceMultiStartRangeConstraintsInfo(component_name::String)
         component_name,
         (min = -Inf, max = Inf),
         (startup = Inf, shutdown = Inf),
-        Vector{Symbol}(),
-        Vector{Symbol}(),
+        Vector{VariableKey}(),
+        Vector{VariableKey}(),
     )
 end
 
@@ -110,8 +110,8 @@ struct DeviceRampConstraintInfo <: AbstractRampConstraintInfo
     limits::PSI.MinMax
     ic_power::InitialCondition
     ramp_limits::PSI.UpDown
-    additional_terms_ub::Vector{Symbol}
-    additional_terms_lb::Vector{Symbol}
+    additional_terms_ub::Vector{VariableKey}
+    additional_terms_lb::Vector{VariableKey}
 end
 
 function DeviceRampConstraintInfo(
@@ -125,8 +125,8 @@ function DeviceRampConstraintInfo(
         limits,
         ic_power,
         ramp_limits,
-        Vector{Symbol}(),
-        Vector{Symbol}(),
+        Vector{VariableKey}(),
+        Vector{VariableKey}(),
     )
 end
 
@@ -190,8 +190,8 @@ struct ReserveRangeConstraintInfo
     limits::MinMax
     efficiency::InOut
     time_frames::Dict{Symbol, Float64}
-    additional_terms_up::Vector{Symbol}
-    additional_terms_dn::Vector{Symbol}
+    additional_terms_up::Vector{VariableKey}
+    additional_terms_dn::Vector{VariableKey}
 end
 
 function ReserveRangeConstraintInfo(name::String, limits::MinMax, efficiency::InOut)
@@ -200,8 +200,8 @@ function ReserveRangeConstraintInfo(name::String, limits::MinMax, efficiency::In
         limits,
         efficiency,
         Dict{Symbol, Float64}(),
-        Vector{Symbol}(),
-        Vector{Symbol}(),
+        Vector{VariableKey}(),
+        Vector{VariableKey}(),
     )
 end
 

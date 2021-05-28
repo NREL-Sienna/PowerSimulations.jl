@@ -1,9 +1,9 @@
 struct DeviceEnergyBalanceConstraintSpec
     constraint_name::Symbol
-    energy_variable::Symbol
+    energy_variable::VariableKey
     initial_condition::Type{<:InitialConditionType}
-    pin_variable_keys::Vector{Symbol}
-    pout_variable_keys::Vector{Symbol}
+    pin_variable_keys::Vector{<:VariableKey}
+    pout_variable_keys::Vector{<:VariableKey}
     parameter_name::Union{Nothing, String}
     forecast_label::Union{Nothing, String}
     multiplier_func::Union{Nothing, Function}
@@ -12,11 +12,11 @@ end
 
 function DeviceEnergyBalanceConstraintSpec(;
     constraint_name::Symbol,
-    energy_variable::Symbol,
+    energy_variable::VariableKey,
     initial_condition::Type{<:InitialConditionType},
     constraint_func::Function,
-    pin_variable_keys::Vector{Symbol} = Vector{Symbol}(),
-    pout_variable_keys::Vector{Symbol} = Vector{Symbol}(),
+    pin_variable_keys::Vector{<:VariableKey} = Vector{VariableKey}(),
+    pout_variable_keys::Vector{<:VariableKey} = Vector{VariableKey}(),
     parameter_name::Union{Nothing, String} = nothing,
     forecast_label::Union{Nothing, String} = nothing,
     multiplier_func::Union{Nothing, Function} = nothing,
@@ -87,9 +87,9 @@ end
 struct DeviceEnergyBalanceConstraintSpecInternal
     constraint_infos::Vector{<:EnergyBalanceConstraintInfo}
     constraint_name::Symbol
-    energy_variable::Symbol
-    pin_variable_keys::Vector{Symbol}
-    pout_variable_keys::Vector{Symbol}
+    energy_variable::VariableKey
+    pin_variable_keys::Vector{<:VariableKey}
+    pout_variable_keys::Vector{<:VariableKey}
     param_reference::Union{Nothing, UpdateRef}
 end
 

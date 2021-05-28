@@ -3,7 +3,7 @@ struct TimeSeriesConstraintSpecInternal
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo}
     constraint_name::Symbol
     variable_key::VariableKey
-    bin_variable_key::Union{Nothing, Symbol}
+    bin_variable_key::Union{Nothing, VariableKey}
     param_reference::Union{Nothing, UpdateRef}
 end
 

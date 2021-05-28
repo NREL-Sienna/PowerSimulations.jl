@@ -23,7 +23,7 @@ function rating_constraint!(
     optimization_container::OptimizationContainer,
     rating_data::Vector{Tuple{String, Float64}},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
     var1 = get_variable(optimization_container, var_keys[1])
