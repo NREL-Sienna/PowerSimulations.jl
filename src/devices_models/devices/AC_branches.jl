@@ -50,13 +50,13 @@ function _get_constraint_data(
     for (ix, d) in enumerate(devices)
         limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
         name = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
+        services_ub = Vector{VariableKey}()
         for service in PSY.get_services(d)
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
         constraint_infos[ix] =
-            DeviceRangeConstraintInfo(name, limit_values, services_ub, Vector{Symbol}())
+            DeviceRangeConstraintInfo(name, limit_values, services_ub, Vector{VariableKey}())
     end
     return constraint_infos
 end
@@ -82,13 +82,13 @@ function branch_rate_bounds!(
     set_variable_bounds!(
         optimization_container,
         constraint_infos,
-        FlowActivePowerFromToVariable,
+        FlowActivePowerFromToVariable(),
         B,
     )
     set_variable_bounds!(
         optimization_container,
         constraint_infos,
-        FlowActivePowerToFromVariable,
+        FlowActivePowerToFromVariable(),
         B,
     )
     return

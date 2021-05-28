@@ -204,7 +204,7 @@ Adds a bounds to a variable in the optimization model.
 function set_variable_bounds!(
     optimization_container::OptimizationContainer,
     bounds::Vector{DeviceRangeConstraintInfo},
-    var_type::AbstractString,
+    var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
     var = get_variable(optimization_container, var_type, T)

@@ -63,6 +63,7 @@ struct EnergyBalanceConstraint <: ConstraintType end
 struct FlowRateConstraint <: ConstraintType end
 struct FlowRateConstraintTF <: ConstraintType end
 struct FlowRateConstraintFT <: ConstraintType end
+struct EqualityConstraint <: ConstraintType end
 
 function make_constraint_name(
     ::Type{T},

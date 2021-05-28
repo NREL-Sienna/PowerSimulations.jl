@@ -417,7 +417,7 @@ function DeviceEnergyBalanceConstraintSpec(
             VariableKey(WaterSpillageVariable, H),
         ],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
-        parameter_name = INFLOW,
+        parameter_name = "inflow",
         forecast_label = "inflow",
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
@@ -439,7 +439,7 @@ function DeviceEnergyBalanceConstraintSpec(
 ) where {H <: PSY.HydroPumpedStorage}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_CAPACITY_UP, H),
-        energy_variable = VariableKey(ENERGY_UP, H),
+        energy_variable = VariableKey(EnergyVariableUp, H),
         initial_condition = InitialEnergyLevelUp,
         pin_variable_keys = [VariableKey(ActivePowerInVariable, H)],
         pout_variable_keys = [
@@ -447,7 +447,7 @@ function DeviceEnergyBalanceConstraintSpec(
             VariableKey(WaterSpillageVariable, H),
         ],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
-        parameter_name = INFLOW,
+        parameter_name = "inflow",
         forecast_label = "inflow",
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
@@ -465,7 +465,7 @@ function DeviceEnergyBalanceConstraintSpec(
 ) where {H <: PSY.HydroPumpedStorage}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_name = make_constraint_name(ENERGY_CAPACITY_DOWN, H),
-        energy_variable = VariableKey(ENERGY_DOWN, H),
+        energy_variable = VariableKey(EnergyVariableDown, H),
         initial_condition = InitialEnergyLevelDown,
         pout_variable_keys = [VariableKey(ActivePowerInVariable, H)],
         pin_variable_keys = [
@@ -473,7 +473,7 @@ function DeviceEnergyBalanceConstraintSpec(
             VariableKey(WaterSpillageVariable, H),
         ],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
-        parameter_name = OUTFLOW,
+        parameter_name = "outflow",
         forecast_label = "outflow",
         multiplier_func = x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
     )
@@ -527,7 +527,7 @@ function energy_target_constraint!(
                 VariableKey(EnergyShortageVariable, T),
                 VariableKey(EnergySurplusVariable, T),
             ),
-            UpdateRef{T}(TARGET, target_forecast_label),
+            UpdateRef{T}("target", target_forecast_label),
         )
     else
         energy_target!(
@@ -562,7 +562,7 @@ function energy_target_constraint!(
                 constraint_infos,
                 make_constraint_name(RangeConstraint, EnergyShortageVariable, T),
                 VariableKey(EnergyShortageVariable, T),
-                Vector{Symbol}(),
+                Vector{VariableKey}(),
             ),
         )
     end
@@ -769,15 +769,15 @@ function energy_budget_constraints!(
         device_energy_budget_param_ub(
             optimization_container,
             constraint_data,
-            make_constraint_name(ENERGY_BUDGET, H),
-            UpdateRef{H}(ENERGY_BUDGET, forecast_label),
+            make_constraint_name("energy_budget", H),
+            UpdateRef{H}("energy_budget", forecast_label),
             VariableKey(ActivePowerVariable, H),
         )
     else
         device_energy_budget_ub(
             optimization_container,
             constraint_data,
-            make_constraint_name(ENERGY_BUDGET),
+            make_constraint_name("energy_budget"),
             VariableKey(ActivePowerVariable, H),
         )
     end
@@ -830,10 +830,10 @@ function device_energy_budget_ub(
     optimization_container::OptimizationContainer,
     energy_budget_constraints::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
-    var_names::Symbol,
+    var_key::VariableKey,
 )
     time_steps = model_time_steps(optimization_container)
-    variable_out = get_variable(optimization_container, var_names)
+    variable_out = get_variable(optimization_container, var_key)
     names = [get_component_name(x) for x in energy_budget_constraints]
     constraint = add_cons_container!(optimization_container, cons_name, names)
 

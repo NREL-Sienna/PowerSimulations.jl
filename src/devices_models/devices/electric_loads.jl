@@ -59,7 +59,7 @@ function custom_reactive_power_constraints!(
     ::Type{<:AbstractControllablePowerLoadFormulation},
 ) where {T <: PSY.ElectricLoad}
     time_steps = model_time_steps(optimization_container)
-    constraint = add_cons_container!(optimization_container, :Equality, ReactivePowerVariable(), T, [PSY.get_name(d) for d in devices], time_steps)
+    constraint = add_cons_container!(optimization_container, EqualityConstraint(), ReactivePowerVariable(), T, [PSY.get_name(d) for d in devices], time_steps)
     jump_model = get_jump_model(optimization_container)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
@@ -139,9 +139,9 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-             variable_key = VariableKey(ActivePowerVariable, T),
+            variable_key = VariableKey(ActivePowerVariable, T),
             bin_variable_key = VariableKey(OnVariable, T),
-            parameter_name = use_parameters ? ON : nothing,
+            parameter_name = use_parameters ? "ON" : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_ub_bigM! :
