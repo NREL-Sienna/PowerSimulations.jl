@@ -12,13 +12,14 @@
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
-        @test check_variable_bounded(op_problem_m, :Fp__MonitoredLine)
-        @test check_variable_unbounded(op_problem_m, :Fp__Line)
+        @test check_variable_bounded(op_problem_m, FlowActivePowerVariable, MonitoredLine)
+        @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, Line)
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
         @test check_flow_variable_values(
             op_problem_m,
-            :Fp__MonitoredLine,
+            FlowActivePowerVariable,
+            MonitoredLine,
             "1",
             limits.from_to,
         )
@@ -41,12 +42,18 @@ end
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
-        @test check_variable_unbounded(op_problem_m, :Fp__MonitoredLine)
+        @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, MonitoredLine)
         # Broken
-        # @test check_variable_bounded(op_problem_m, :Fp__Line)
+        # @test check_variable_bounded(op_problem_m, FlowActivePowerVariable, Line)
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
-        @test check_flow_variable_values(op_problem_m, :Fp__Line, "2", 1.5)
+        @test check_flow_variable_values(
+            op_problem_m,
+            FlowActivePowerVariable,
+            Line,
+            "2",
+            1.5,
+        )
     end
 end
 
@@ -58,14 +65,19 @@ end
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
-    @test check_variable_bounded(op_problem_m, :FpFT__MonitoredLine)
-    @test check_variable_unbounded(op_problem_m, :FqFT__MonitoredLine)
+    @test check_variable_bounded(op_problem_m, FlowActivePowerFromToVariable, MonitoredLine)
+    @test check_variable_unbounded(
+        op_problem_m,
+        FlowReactivePowerFromToVariable,
+        MonitoredLine,
+    )
 
     @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
     @test check_flow_variable_values(
         op_problem_m,
-        :FpFT__MonitoredLine,
-        :FqFT__MonitoredLine,
+        FlowActivePowerFromToVariable,
+        FlowReactivePowerFromToVariable,
+        MonitoredLine,
         "1",
         0.0,
         limits.from_to,
@@ -107,9 +119,13 @@ end
         @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
-        @test check_variable_bounded(op_problem_m, :Fp__HVDCLine)
-        @test check_variable_unbounded(op_problem_m, :Fp__TapTransformer)
-        @test check_variable_unbounded(op_problem_m, :Fp__Transformer2W)
+        @test check_variable_bounded(op_problem_m, FlowActivePowerVariable, HVDCLine)
+        @test check_variable_unbounded(
+            op_problem_m,
+            FlowActivePowerVariable,
+            TapTransformer,
+        )
+        @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, Transformer2W)
 
         psi_constraint_test(op_problem_m, ratelimit_constraint_names)
 
@@ -117,21 +133,24 @@ end
 
         @test check_flow_variable_values(
             op_problem_m,
-            :Fp__HVDCLine,
+            FlowActivePowerVariable,
+            HVDCLine,
             "DCLine3",
             limits_min,
             limits_max,
         )
         @test check_flow_variable_values(
             op_problem_m,
-            :Fp__TapTransformer,
+            FlowActivePowerVariable,
+            TapTransformer,
             "Trans3",
             -rate_limit,
             rate_limit,
         )
         @test check_flow_variable_values(
             op_problem_m,
-            :Fp__Transformer2W,
+            FlowActivePowerVariable,
+            Transformer2W,
             "Trans4",
             -rate_limit2w,
             rate_limit2w,
@@ -169,31 +188,42 @@ end
 
         if model == DCPPowerModel
             # TODO: Currently Broken, remove variable bounds in HVDCUnbounded
-            # @test check_variable_unbounded(op_problem_m, :Fp__HVDCLine)
+            # @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, HVDCLine)
 
-            @test check_variable_bounded(op_problem_m, :Fp__TapTransformer)
-            @test check_variable_bounded(op_problem_m, :Fp__TapTransformer)
+            @test check_variable_bounded(
+                op_problem_m,
+                FlowActivePowerVariable,
+                TapTransformer,
+            )
+            @test check_variable_bounded(
+                op_problem_m,
+                FlowActivePowerVariable,
+                TapTransformer,
+            )
         end
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 
         @test check_flow_variable_values(
             op_problem_m,
-            :Fp__HVDCLine,
+            FlowActivePowerVariable,
+            HVDCLine,
             "DCLine3",
             limits_min,
             limits_max,
         )
         @test check_flow_variable_values(
             op_problem_m,
-            :Fp__TapTransformer,
+            FlowActivePowerVariable,
+            TapTransformer,
             "Trans3",
             -rate_limit,
             rate_limit,
         )
         @test check_flow_variable_values(
             op_problem_m,
-            :Fp__Transformer2W,
+            FlowActivePowerVariable,
+            Transformer2W,
             "Trans4",
             -rate_limit2w,
             rate_limit2w,
@@ -207,8 +237,8 @@ end
         :RateLimitTF__Transformer2W,
         :RateLimitFT__TapTransformer,
         :RateLimitTF__TapTransformer,
-        :RateLimitFT__HVDCLine,
-        :RateLimitTF__HVDCLine,
+        :FlowActivePowerVariable_HVDCLine__FlowRateConstraintFT,
+        :FlowActivePowerVariable_HVDCLine__FlowRateConstraintTF,
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -231,12 +261,24 @@ end
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
-    check_variable_bounded(op_problem_m, :FqTF__HVDCLine)
-    check_variable_bounded(op_problem_m, :Fp__HVDCLine)
-    @test check_variable_bounded(op_problem_m, :FpFT__TapTransformer)
-    @test check_variable_unbounded(op_problem_m, :FqFT__TapTransformer)
-    @test check_variable_bounded(op_problem_m, :FpTF__Transformer2W)
-    @test check_variable_unbounded(op_problem_m, :FqTF__Transformer2W)
+    check_variable_bounded(op_problem_m, FlowReactivePowerToFromVariable, HVDCLine)
+    check_variable_bounded(op_problem_m, FlowActivePowerVariable, HVDCLine)
+    @test check_variable_bounded(
+        op_problem_m,
+        FlowActivePowerFromToVariable,
+        TapTransformer,
+    )
+    @test check_variable_unbounded(
+        op_problem_m,
+        FlowReactivePowerFromToVariable,
+        TapTransformer,
+    )
+    @test check_variable_bounded(op_problem_m, FlowActivePowerToFromVariable, Transformer2W)
+    @test check_variable_unbounded(
+        op_problem_m,
+        FlowReactivePowerToFromVariable,
+        Transformer2W,
+    )
 
     psi_constraint_test(op_problem_m, ratelimit_constraint_names)
 
@@ -244,22 +286,25 @@ end
 
     @test check_flow_variable_values(
         op_problem_m,
-        :Fp__HVDCLine,
-        :FqTF__HVDCLine,
+        FlowActivePowerVariable,
+        FlowReactivePowerToFromVariable,
+        HVDCLine,
         "DCLine3",
         limits_max,
     )
     @test check_flow_variable_values(
         op_problem_m,
-        :FpFT__TapTransformer,
-        :FqFT__TapTransformer,
+        FlowActivePowerFromToVariable,
+        FlowReactivePowerFromToVariable,
+        TapTransformer,
         "Trans3",
         rate_limit,
     )
     @test check_flow_variable_values(
         op_problem_m,
-        :FpTF__Transformer2W,
-        :FqTF__Transformer2W,
+        FlowActivePowerToFromVariable,
+        FlowReactivePowerToFromVariable,
+        Transformer2W,
         "Trans4",
         rate_limit2w,
     )
@@ -296,12 +341,12 @@ end
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
-    check_variable_bounded(op_problem_m, :FqTF__HVDCLine)
-    check_variable_bounded(op_problem_m, :FpTF__HVDCLine)
-    @test check_variable_bounded(op_problem_m, :FpFT__TapTransformer)
-    @test check_variable_unbounded(op_problem_m, :FqFT__TapTransformer)
-    @test check_variable_bounded(op_problem_m, :FpTF__Transformer2W)
-    @test check_variable_unbounded(op_problem_m, :FqTF__Transformer2W)
+    check_variable_bounded(op_problem_m, FlowReactivePowerToFromVariable,HVDCLine)
+    check_variable_bounded(op_problem_m, FlowActivePowerToFromVariable,HVDCLine)
+    @test check_variable_bounded(op_problem_m, FlowActivePowerFromToVariable,TapTransformer)
+    @test check_variable_unbounded(op_problem_m, FlowReactivePowerFromToVariable,TapTransformer)
+    @test check_variable_bounded(op_problem_m, FlowActivePowerToFromVariable,Transformer2W)
+    @test check_variable_unbounded(op_problem_m, FlowReactivePowerToFromVariable,Transformer2W)
 
     psi_constraint_test(op_problem_m, ratelimit_constraint_names)
 
@@ -309,22 +354,22 @@ end
 
     @test check_flow_variable_values(
         op_problem_m,
-        :FpTF__HVDCLine,
-        :FqTF__HVDCLine,
+        FlowActivePowerToFromVariable,HVDCLine,
+        FlowReactivePowerToFromVariable,HVDCLine,
         "DCLine3",
         limits_max,
     )
     @test check_flow_variable_values(
         op_problem_m,
-        :FpFT__TapTransformer,
-        :FqFT__TapTransformer,
+        FlowActivePowerFromToVariable,TapTransformer,
+        FlowReactivePowerFromToVariable,TapTransformer,
         "Trans3",
         rate_limit,
     )
     @test check_flow_variable_values(
         op_problem_m,
-        :FpTF__Transformer2W,
-        :FqTF__Transformer2W,
+        FlowActivePowerToFromVariable,Transformer2W,
+        FlowReactivePowerToFromVariable,Transformer2W,
         "Trans4",
         rate_limit2w,
     )
