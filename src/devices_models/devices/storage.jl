@@ -184,7 +184,8 @@ function add_constraints!(
         RangeConstraintSpecInternal(
             constraint_infos,
             make_constraint_name(RangeConstraint, ReactivePowerVariable, St),
-            VariableKey(ReactivePowerVariable, St),
+            ReactivePowerVariable(),
+            St,
         ),
     )
     return
@@ -244,7 +245,8 @@ function energy_capacity_constraints!(
         RangeConstraintSpecInternal(
             constraint_infos,
             make_constraint_name(ENERGY_CAPACITY, St),
-            VariableKey(EnergyVariable, St),
+            EnergyVariable(),
+            St,
         ),
     )
     return
