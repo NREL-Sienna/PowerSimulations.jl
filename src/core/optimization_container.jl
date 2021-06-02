@@ -275,8 +275,12 @@ function get_variable(optimization_container::OptimizationContainer, key::Variab
     return var
 end
 
-function get_variable(optimization_container::OptimizationContainer, ::T,
-    ::Type{U}, meta::String = CONTAINER_KEY_EMPTY_META) where {T <: VariableType, U <: PSY.Component}
+function get_variable(
+    optimization_container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta::String = CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableType, U <: PSY.Component}
     return get_variable(optimization_container, VariableKey(T, U, meta))
 end
 
@@ -286,7 +290,9 @@ end
 
 function _assign_container!(container::Dict, key, value)
     if haskey(container, key)
-        @error "variable $(encode_key(key)) is already stored" sort!(encode_key.(keys(container)))
+        @error "variable $(encode_key(key)) is already stored" sort!(
+            encode_key.(keys(container)),
+        )
         throw(IS.InvalidValue("$key is already stored"))
     end
     container[key] = value
@@ -363,7 +369,14 @@ function add_cons_container!(
     axs...;
     sparse = false,
 )
-    return add_cons_container!(optimization_container, cons_type, var_key.entry_type(), var_key.component_type, axs...; sparse = sparse)
+    return add_cons_container!(
+        optimization_container,
+        cons_type,
+        var_key.entry_type(),
+        var_key.component_type,
+        axs...;
+        sparse = sparse,
+    )
 end
 
 # This is a temporary method while refactoring variable container
@@ -375,7 +388,7 @@ function add_cons_container!(
     axs...;
     sparse = false,
 ) where {T <: VariableType, U <: PSY.Component}
-    cons_key =  make_constraint_name(cons_type, T, U)
+    cons_key = make_constraint_name(cons_type, T, U)
     return add_cons_container!(optimization_container, cons_key, axs...; sparse = sparse)
 end
 

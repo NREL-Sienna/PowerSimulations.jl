@@ -258,17 +258,21 @@ function participation_assignment!(
 
     component_names = [PSY.get_name(d) for d in devices]
 
-    participation_assignment_up = add_cons_container!(optimization_container,
+    participation_assignment_up = add_cons_container!(
+        optimization_container,
         :participation_assignment_up,
         AdditionalDeltaActivePowerUpVariable(),
         T,
-        component_names, time_steps
+        component_names,
+        time_steps,
     )
-    participation_assignment_dn = add_cons_container!(optimization_container,
+    participation_assignment_dn = add_cons_container!(
+        optimization_container,
         :participation_assignment_dn,
         AdditionalDeltaActivePowerUpVariable(),
         T,
-        component_names, time_steps
+        component_names,
+        time_steps,
     )
 
     expr_up = get_expression(optimization_container, :emergency_up)

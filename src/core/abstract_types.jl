@@ -9,9 +9,15 @@ function encode_key(key::OptimizationContainerKey)
     return encode_symbol(key.component_type, key.entry_type, key.meta)
 end
 
-function encode_symbol(::Type{U}, ::Type{T}, meta::String = CONTAINER_KEY_EMPTY_META) where {T, U <: PSY.Component}
-    meta_ = isempty(meta) ? meta : "_"*meta
-    return Symbol("$(IS.strip_module_name(string(T)))_$(IS.strip_module_name(string(U)))"*meta_)
+function encode_symbol(
+    ::Type{U},
+    ::Type{T},
+    meta::String = CONTAINER_KEY_EMPTY_META,
+) where {T, U <: PSY.Component}
+    meta_ = isempty(meta) ? meta : "_" * meta
+    return Symbol(
+        "$(IS.strip_module_name(string(T)))_$(IS.strip_module_name(string(U)))" * meta_,
+    )
 end
 
 abstract type AbstractAffectFeedForward end

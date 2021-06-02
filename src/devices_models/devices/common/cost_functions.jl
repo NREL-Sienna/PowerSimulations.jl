@@ -60,7 +60,11 @@ set_addtional_linear_terms!(spec::AddCostSpec, key, value) =
 function add_service_variables!(spec::AddCostSpec, services)
     for service in services
         name = PSY.get_name(service)
-        set_addtional_linear_terms!(spec, name, VariableKey(ReserveVariable, typeof(service), name))
+        set_addtional_linear_terms!(
+            spec,
+            name,
+            VariableKey(ReserveVariable, typeof(service), name),
+        )
     end
     return
 end
@@ -106,11 +110,8 @@ function has_on_variable(
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
     return !(
-        get(
-            optimization_container.variables,
-            VariableKey(variable_type, T),
-            nothing,
-        ) === nothing
+        get(optimization_container.variables, VariableKey(variable_type, T), nothing) ===
+        nothing
     )
 end
 
