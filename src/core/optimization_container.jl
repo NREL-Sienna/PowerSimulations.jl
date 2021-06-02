@@ -562,7 +562,8 @@ end
 
 function read_variables(optimization_container::OptimizationContainer)
     return Dict(
-        k => axis_array_to_dataframe(v) for (k, v) in get_variables(optimization_container)
+        encode_key(k) => axis_array_to_dataframe(v) for
+        (k, v) in get_variables(optimization_container)
     )
 end
 

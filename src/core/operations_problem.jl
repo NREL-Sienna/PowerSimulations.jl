@@ -1025,7 +1025,12 @@ end
 
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(problem::OperationsProblem)
-    var_index = Vector{Tuple{Symbol, Int, Int}}()
+    var_keys = get_all_var_keys(problem)
+    return [(encode_key(v[1]), v[2], v[3]) for v in var_keys]
+end
+
+function get_all_var_keys(problem::OperationsProblem)
+    var_index = Vector{Tuple{VariableKey, Int, Int}}()
     optimization_container = get_optimization_container(problem)
     for (key, value) in get_variables(optimization_container)
         for (idx, variable) in enumerate(value)
@@ -1051,7 +1056,7 @@ end
 function get_var_index(problem::OperationsProblem, index::Int)
     optimization_container = get_optimization_container(problem)
     variables = get_variables(optimization_container)
-    for i in get_all_var_index(problem::OperationsProblem)
+    for i in get_all_var_keys(problem)
         if i[3] == index
             return variables[i[1]].data[i[2]]
         end

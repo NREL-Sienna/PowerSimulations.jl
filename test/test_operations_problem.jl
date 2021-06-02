@@ -66,12 +66,12 @@ end
     res = ProblemResults(UC)
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
-    @test :P__ThermalStandard in keys(vars)
+    @test :ActivePowerVariable_ThermalStandard in keys(vars)
     export_results(res)
     results_dir = joinpath(output_dir, "results")
     @test isfile(joinpath(results_dir, "optimizer_stats.csv"))
     variables_dir = joinpath(results_dir, "variables")
-    @test isfile(joinpath(variables_dir, "P__ThermalStandard.csv"))
+    @test isfile(joinpath(variables_dir, "ActivePowerVariable_ThermalStandard.csv"))
 end
 
 @testset "Test optimization debugging functions" begin
@@ -91,8 +91,13 @@ end
     end
     @test isnothing(get_con_index(op_problem, length(constraint_indices) + 1))
 
-    var_indices = get_all_var_index(op_problem)
-    for (key, index, moi_index) in var_indices
+    var_keys = PSI.get_all_var_keys(op_problem)
+    var_index = get_all_var_index(op_problem)
+    for (ix, (key, index, moi_index)) in enumerate(var_indices)
+        index_tuple = var_index[ix]
+        @test index_tuple[1] == PSI.encode_key(key)
+        @test index_tuple[2] == index
+        @test index_tuple[3] == moi_index
         val1 = get_var_index(op_problem, moi_index)
         val2 = optimization_container.variables[key].data[index]
         @test val1 == val2
