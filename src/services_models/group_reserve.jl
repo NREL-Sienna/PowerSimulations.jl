@@ -5,10 +5,15 @@ This function checks if the variables for reserves were created
 """
 function check_activeservice_variables(
     optimization_container::OptimizationContainer,
-    contributing_services::Vector{<:PSY.Service},
-)
+    contributing_services::Vector{T},
+) where {T <: PSY.Service}
     for service in contributing_services
-        get_variable(optimization_container, PSY.get_name(service), typeof(service))
+        get_variable(
+            optimization_container,
+            ActivePowerReserveVariable(),
+            typeof(service),
+            PSY.get_name(service),
+        )
     end
     return
 end
@@ -23,7 +28,6 @@ function service_requirement_constraint!(
     ::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
 ) where {SR <: PSY.StaticReserveGroup}
-    parameters = model_has_parameters(optimization_container)
     initial_time = model_initial_time(optimization_container)
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
@@ -32,8 +36,12 @@ function service_requirement_constraint!(
         get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
     use_slacks = get_services_slack_variables(optimization_container.settings)
     reserve_variables = [
-        get_variable(optimization_container, PSY.get_name(r), typeof(r)) for
-        r in contributing_services
+        get_variable(
+            optimization_container,
+            ActivePowerReserveVariable(),
+            typeof(r),
+            PSY.get_name(r),
+        ) for r in contributing_services
     ]
 
     requirement = PSY.get_requirement(service)

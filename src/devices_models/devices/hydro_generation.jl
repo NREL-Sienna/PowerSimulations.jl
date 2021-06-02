@@ -85,10 +85,10 @@ get_variable_initial_value(::OnVariable, d::PSY.HydroGen, ::AbstractHydroFormula
 get_variable_binary(::WaterSpillageVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 get_variable_lower_bound(::WaterSpillageVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 
-############## ReserveVariable, HydroGen ####################
+############## ReservationVariable, HydroGen ####################
 
-get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = true
-get_variable_binary(::ReserveVariable, ::Type{<:PSY.HydroPumpedStorage}, ::AbstractHydroFormulation) = true
+get_variable_binary(::ReservationVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = true
+get_variable_binary(::ReservationVariable, ::Type{<:PSY.HydroPumpedStorage}, ::AbstractHydroFormulation) = true
 ############## EnergyShortageVariable, HydroGen ####################
 
 get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
@@ -328,7 +328,7 @@ function DeviceRangeConstraintSpec(
                 T,
             ),
             variable_key = VariableKey(ActivePowerOutVariable, T),
-            bin_variable_keys = [VariableKey(ReserveVariable, T)],
+            bin_variable_keys = [VariableKey(ReservationVariable, T)],
             limits_func = x -> PSY.get_active_power_limits(x),
             constraint_func = reserve_device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -354,7 +354,7 @@ function DeviceRangeConstraintSpec(
                 T,
             ),
             variable_key = VariableKey(ActivePowerInVariable, T),
-            bin_variable_keys = [VariableKey(ReserveVariable, T)],
+            bin_variable_keys = [VariableKey(ReservationVariable, T)],
             limits_func = x -> PSY.get_active_power_limits_pump(x),
             constraint_func = reserve_device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,

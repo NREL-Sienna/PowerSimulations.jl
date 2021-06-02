@@ -94,7 +94,7 @@ function construct_service!(
         # Variables
         add_variables!(
             optimization_container,
-            ActiveServiceVariable,
+            ActivePowerReserveVariable,
             service,
             contributing_devices,
             RangeReserve(),
@@ -147,7 +147,7 @@ function construct_service!(
         # Variables
         add_variables!(
             optimization_container,
-            ActiveServiceVariable,
+            ActivePowerReserveVariable,
             service,
             contributing_devices,
             StepwiseCostReserve(),
@@ -286,7 +286,7 @@ function construct_service!(
         # Variables
         add_variables!(
             optimization_container,
-            ActiveServiceVariable,
+            ActivePowerReserveVariable,
             service,
             contributing_devices,
             RampReserve(),

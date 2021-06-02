@@ -47,9 +47,9 @@ struct OnVariable <: VariableType end
 
 struct ReactivePowerVariable <: VariableType end
 
-struct ReserveVariable <: VariableType end
+struct ReservationVariable <: VariableType end
 
-struct ActiveServiceVariable <: VariableType end
+struct ActivePowerReserveVariable <: VariableType end
 
 struct ServiceRequirementVariable <: VariableType end
 

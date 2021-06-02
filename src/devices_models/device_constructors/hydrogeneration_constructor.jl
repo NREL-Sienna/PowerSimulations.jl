@@ -984,7 +984,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        ReserveVariable,
+        ReservationVariable,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )

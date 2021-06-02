@@ -15,9 +15,8 @@ function encode_symbol(
     meta::String = CONTAINER_KEY_EMPTY_META,
 ) where {T, U <: PSY.Component}
     meta_ = isempty(meta) ? meta : "_" * meta
-    return Symbol(
-        "$(IS.strip_module_name(string(T)))_$(IS.strip_module_name(string(U)))" * meta_,
-    )
+    U_ = replace(replace(IS.strip_module_name(U), "{" => "_"), "}" => "")
+    return Symbol("$(IS.strip_module_name(string(T)))_$(U_)" * meta_)
 end
 
 abstract type AbstractAffectFeedForward end

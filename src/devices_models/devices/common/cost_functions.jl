@@ -63,7 +63,7 @@ function add_service_variables!(spec::AddCostSpec, services)
         set_addtional_linear_terms!(
             spec,
             name,
-            VariableKey(ReserveVariable, typeof(service), name),
+            VariableKey(ActivePowerReserveVariable, typeof(service), name),
         )
     end
     return

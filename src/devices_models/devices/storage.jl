@@ -37,9 +37,9 @@ get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFo
 get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_initial_value(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
 
-############## ReserveVariable, Storage ####################
+############## ReservationVariable, Storage ####################
 
-get_variable_binary(::ReserveVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = true
+get_variable_binary(::ReservationVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = true
 
 get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage = PSY.get_efficiency(v)
 
@@ -126,7 +126,7 @@ function DeviceRangeConstraintSpec(
                 T,
             ),
             variable_key = VariableKey(ActivePowerOutVariable, T),
-            bin_variable_keys = [VariableKey(ReserveVariable, T)],
+            bin_variable_keys = [VariableKey(ReservationVariable, T)],
             limits_func = x -> PSY.get_output_active_power_limits(x),
             constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
@@ -152,7 +152,7 @@ function DeviceRangeConstraintSpec(
                 T,
             ),
             variable_key = VariableKey(ActivePowerInVariable, T),
-            bin_variable_keys = [VariableKey(ReserveVariable, T)],
+            bin_variable_keys = [VariableKey(ReservationVariable, T)],
             limits_func = x -> PSY.get_input_active_power_limits(x),
             constraint_func = reserve_device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
