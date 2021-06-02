@@ -372,7 +372,7 @@ function reserve_power_ub!(
     charging_range_data::Vector{DeviceRangeConstraintInfo},
     discharging_range_data::Vector{DeviceRangeConstraintInfo},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
     var_in = get_variable(optimization_container, var_keys[1])
