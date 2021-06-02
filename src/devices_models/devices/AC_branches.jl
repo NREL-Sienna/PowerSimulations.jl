@@ -55,8 +55,12 @@ function _get_constraint_data(
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
-        constraint_infos[ix] =
-            DeviceRangeConstraintInfo(name, limit_values, services_ub, Vector{VariableKey}())
+        constraint_infos[ix] = DeviceRangeConstraintInfo(
+            name,
+            limit_values,
+            services_ub,
+            Vector{VariableKey}(),
+        )
     end
     return constraint_infos
 end
@@ -68,7 +72,12 @@ function branch_rate_bounds!(
     ::Type{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
     constraint_infos = _get_constraint_data(devices)
-    set_variable_bounds!(optimization_container, constraint_infos, FlowActivePowerVariable() , B)
+    set_variable_bounds!(
+        optimization_container,
+        constraint_infos,
+        FlowActivePowerVariable(),
+        B,
+    )
     return
 end
 

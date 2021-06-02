@@ -7,7 +7,12 @@ function area_balance(
     time_steps = model_time_steps(optimization_container)
     remove_undef!(optimization_container.expressions[expression])
     nodal_net_balance = optimization_container.expressions[expression]
-    constraint = add_cons_container!(optimization_container, :area_dispatch_balance, keys(area_mapping), time_steps)
+    constraint = add_cons_container!(
+        optimization_container,
+        :area_dispatch_balance,
+        keys(area_mapping),
+        time_steps,
+    )
     area_balance = get_variable(optimization_container, ActivePowerVariable(), PSY.Area)
     for (k, buses_in_area) in area_mapping
         for t in time_steps
@@ -27,13 +32,17 @@ function area_balance(
     expr_up = get_expression(optimization_container, :emergency_up)
     expr_dn = get_expression(optimization_container, :emergency_dn)
 
-    participation_assignment_up = add_cons_container!(optimization_container,
+    participation_assignment_up = add_cons_container!(
+        optimization_container,
         :area_participation_assignment_up,
-        keys(area_mapping), time_steps
+        keys(area_mapping),
+        time_steps,
     )
-    participation_assignment_dn = add_cons_container!(optimization_container,
+    participation_assignment_dn = add_cons_container!(
+        optimization_container,
         :area_participation_assignment_dn,
-        keys(area_mapping), time_steps
+        keys(area_mapping),
+        time_steps,
     )
 
     for area in keys(area_mapping), t in time_steps

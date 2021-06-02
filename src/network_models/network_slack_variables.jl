@@ -46,11 +46,7 @@ function add_slacks!(
     optimization_container::OptimizationContainer,
     ::Type{CopperPlatePowerModel},
 )
-    _add_system_balance_slacks!(
-        optimization_container,
-        :nodal_balance_active,
-        true,
-    )
+    _add_system_balance_slacks!(optimization_container, :nodal_balance_active, true)
     return
 end
 
@@ -58,7 +54,7 @@ function add_slacks!(
     optimization_container::OptimizationContainer,
     ::Type{T},
 ) where {T <: PM.AbstractActivePowerModel}
-    _add_system_balance_slacks!(optimization_container,  :nodal_balance_active)
+    _add_system_balance_slacks!(optimization_container, :nodal_balance_active)
     return
 end
 

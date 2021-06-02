@@ -2,14 +2,14 @@ struct RangeConstraintSpecInternal
     constraint_infos::Vector{<:AbstractRangeConstraintInfo}
     constraint_name::Symbol
     variable_key::VariableKey
-    bin_variable_keys::Vector{VariableKey}
+    bin_variable_keys::Vector{<:VariableKey}
 end
 
 function RangeConstraintSpecInternal(
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     constraint_name::Symbol,
     ::T,
-    ::Type{U}
+    ::Type{U},
 ) where {T <: VariableType, U <: PSY.Component}
     return RangeConstraintSpecInternal(
         constraint_infos,
@@ -193,8 +193,8 @@ function reserve_device_semicontinuousrange!(
     names = [get_component_name(x) for x in inputs.constraint_infos]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
-    con_ub = add_cons_container!(optimization_container, ub_name,  names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name,  names, time_steps)
+    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
+    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
 
     for constraint_info in inputs.constraint_infos, t in time_steps
         ci_name = get_component_name(constraint_info)
@@ -351,7 +351,7 @@ function device_multistart_range_ic!(
     varstop = get_variable(optimization_container, var_key)
 
     set_name = [get_device_name(ic) for ic in initial_conditions[:, 1]]
-    con = add_cons_container!(optimization_container, cons_name,  set_name)
+    con = add_cons_container!(optimization_container, cons_name, set_name)
 
     for (ix, ic) in enumerate(initial_conditions[:, 1])
         name = get_device_name(ic)
@@ -380,8 +380,8 @@ function reserve_power_ub!(
     rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
     names = [get_component_name(x) for x in charging_range_data]
-    con_up = add_cons_container!(optimization_container, rev_up_name,  names, time_steps)
-    con_dn = add_cons_container!(optimization_container, rev_dn_name,  names, time_steps)
+    con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
+    con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
 
     for (up_info, dn_info) in zip(charging_range_data, discharging_range_data),
         t in time_steps
@@ -426,8 +426,8 @@ function reserve_energy_ub!(
     rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
     names = [get_component_name(x) for x in constraint_infos]
-    con_up = add_cons_container!(optimization_container, rev_up_name,  names, time_steps)
-    con_dn = add_cons_container!(optimization_container, rev_dn_name,  names, time_steps)
+    con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
+    con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
 
     for const_info in constraint_infos, t in time_steps
         name = get_component_name(const_info)

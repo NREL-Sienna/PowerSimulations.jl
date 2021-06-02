@@ -643,10 +643,8 @@ function add_pm_expr_refs!(
                         mapped_ps_devices,
                         StaticBranchUnbounded(),
                     )
-                    psi_var_container = get_variable(
-                        optimization_container,
-                        VariableKey(var_type, d_type),
-                    )
+                    psi_var_container =
+                        get_variable(optimization_container, VariableKey(var_type, d_type))
 
                     con_name = make_constraint_name(pm_expr_map[d_class].psi_con, d_type)
                     psi_con_container = add_cons_container!(

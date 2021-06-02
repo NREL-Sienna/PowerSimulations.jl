@@ -15,7 +15,12 @@ struct DeviceRangeConstraintInfo <: AbstractRangeConstraintInfo
 end
 
 function DeviceRangeConstraintInfo(name::String, limits::MinMax)
-    return DeviceRangeConstraintInfo(name, limits, Vector{VariableKey}(), Vector{VariableKey}())
+    return DeviceRangeConstraintInfo(
+        name,
+        limits,
+        Vector{VariableKey}(),
+        Vector{VariableKey}(),
+    )
 end
 
 function DeviceRangeConstraintInfo(name::String)

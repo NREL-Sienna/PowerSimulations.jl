@@ -6,7 +6,8 @@ function copper_plate(
     time_steps = model_time_steps(optimization_container)
     expressions = get_expression(optimization_container, expression)
     remove_undef!(optimization_container.expressions[expression])
-    constraint = add_cons_container!(optimization_container, :CopperPlateBalance, time_steps)
+    constraint =
+        add_cons_container!(optimization_container, :CopperPlateBalance, time_steps)
     for t in time_steps
         constraint[t] = JuMP.@constraint(
             optimization_container.JuMPmodel,

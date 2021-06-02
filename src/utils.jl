@@ -467,8 +467,6 @@ function decode_symbol(name::Symbol)
     return split(String(name), PSI_NAME_DELIMITER)
 end
 
-
-
 ###############################
 #=
 const ACTIVE_POWER = "P"

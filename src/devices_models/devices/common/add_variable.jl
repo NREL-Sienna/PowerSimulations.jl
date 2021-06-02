@@ -61,7 +61,10 @@ function add_variable!(
     variable_type::T,
     devices::U,
     formulation,
-) where {T <: VariableType, U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
+) where {
+    T <: VariableType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
     settings = get_settings(optimization_container)

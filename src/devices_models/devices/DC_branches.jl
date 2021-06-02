@@ -75,7 +75,14 @@ function branch_rate_constraints!(
     var = get_variable(optimization_container, FlowActivePowerVariable(), B)
     time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(d) for d in devices]
-    constraint = add_cons_container!(optimization_container, FlowRateConstraint(), FlowActivePowerVariable(), B, names, time_steps)
+    constraint = add_cons_container!(
+        optimization_container,
+        FlowRateConstraint(),
+        FlowActivePowerVariable(),
+        B,
+        names,
+        time_steps,
+    )
     for t in time_steps, d in devices
         min_rate = max(
             PSY.get_active_power_limits_from(d).min,
@@ -110,10 +117,19 @@ function branch_rate_constraints!(
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(d) for d in devices]
-    for (var_type, cons_type) in
-        zip((FlowActivePowerVariable(), FlowActivePowerVariable()), (FlowRateConstraintFT(),FlowRateConstraintTF()))
+    for (var_type, cons_type) in zip(
+        (FlowActivePowerVariable(), FlowActivePowerVariable()),
+        (FlowRateConstraintFT(), FlowRateConstraintTF()),
+    )
         var = get_variable(optimization_container, var_type, B)
-        constraint = add_cons_container!(optimization_container, cons_type, var_type, B, names, time_steps)
+        constraint = add_cons_container!(
+            optimization_container,
+            cons_type,
+            var_type,
+            B,
+            names,
+            time_steps,
+        )
         for t in time_steps, d in devices
             min_rate = max(
                 PSY.get_active_power_limits_from(d).min,
