@@ -110,7 +110,15 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
     return lmp[!, sort(propertynames(lmp))]
 end
 
-function check_variable_unbounded(op_problem::OperationsProblem, var_key)
+function check_variable_unbounded(
+    op_problem::OperationsProblem,
+    ::Type{T},
+    ::Type{U},
+) where {T <: PSI.VariableType, U <: PSY.Component}
+    return check_variable_unbounded(op_problem::OperationsProblem, PSI.VariableKey(T, U))
+end
+
+function check_variable_unbounded(op_problem::OperationsProblem, var_key::PSI.VariableKey)
     psi_cont = PSI.get_optimization_container(op_problem)
     variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
@@ -121,7 +129,15 @@ function check_variable_unbounded(op_problem::OperationsProblem, var_key)
     return true
 end
 
-function check_variable_bounded(op_problem::OperationsProblem, var_key)
+function check_variable_bounded(
+    op_problem::OperationsProblem,
+    ::Type{T},
+    ::Type{U},
+) where {T <: PSI.VariableType, U <: PSY.Component}
+    return check_variable_bounded(op_problem::OperationsProblem, PSI.VariableKey(T, U))
+end
+
+function check_variable_bounded(op_problem::OperationsProblem, var_key::PSI.VariableKey)
     psi_cont = PSI.get_optimization_container(op_problem)
     variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
@@ -134,12 +150,13 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    var_key::PSI.VariableKey,
+    ::Type{T},
+    ::Type{U},
     device_name::String,
     limit::Float64,
-)
+) where {T <: PSI.VariableType, U <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_key)
+    variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
         if !(JuMP.value(var) <= (limit + 1e-2))
             return false
@@ -150,13 +167,14 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    var_key::PSI.VariableKey,
+    ::Type{T},
+    ::Type{U},
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
-)
+) where {T <: PSI.VariableType, U <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_key)
+    variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
         if !(JuMP.value(var) <= (limit_max + 1e-2)) ||
            !(JuMP.value(var) >= (limit_min - 1e-2))
@@ -168,16 +186,17 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    pvar_key::PSI.VariableKey,
-    qvar_key::PSI.VariableKey,
+    ::Type{T},
+    ::Type{U},
+    ::Type{V},
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
-)
+) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
     time_steps = PSI.model_time_steps(psi_cont)
-    pvariable = PSI.get_variable(psi_cont, pvar_key)
-    qvariable = PSI.get_variable(psi_cont, qvar_key)
+    pvariable = PSI.get_variable(psi_cont, T(), V)
+    qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
         fp = JuMP.value(pvariable[device_name, t])
         fq = JuMP.value(qvariable[device_name, t])
@@ -191,15 +210,16 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    pvar_key::PSI.VariableKey,
-    qvar_key::PSI.VariableKey,
+    ::Type{T},
+    ::Type{U},
+    ::Type{V},
     device_name::String,
     limit::Float64,
-)
+) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
     time_steps = PSI.model_time_steps(psi_cont)
-    pvariable = PSI.get_variable(psi_cont, pvar_key)
-    qvariable = PSI.get_variable(psi_cont, qvar_key)
+    pvariable = PSI.get_variable(psi_cont, T(), V)
+    qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
         fp = JuMP.value(pvariable[device_name, t])
         fq = JuMP.value(qvariable[device_name, t])
