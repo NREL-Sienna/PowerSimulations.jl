@@ -83,7 +83,6 @@ export Range
 # feedforward models
 export UpperBoundFF
 export SemiContinuousFF
-export RangeFF
 export IntegralLimitFF
 export ParameterFF
 
@@ -401,6 +400,7 @@ include("devices_models/devices/common/energy_balance_constraint.jl")
 include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
+include("core/feedforward_structs.jl")
 include("core/feedforward.jl")
 include("core/problem_results.jl")
 include("core/simulation_results.jl")
