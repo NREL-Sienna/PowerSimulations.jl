@@ -93,7 +93,7 @@ end
 
     var_keys = PSI.get_all_var_keys(op_problem)
     var_index = get_all_var_index(op_problem)
-    for (ix, (key, index, moi_index)) in enumerate(var_indices)
+    for (ix, (key, index, moi_index)) in enumerate(var_keys)
         index_tuple = var_index[ix]
         @test index_tuple[1] == PSI.encode_key(key)
         @test index_tuple[2] == index
@@ -102,7 +102,7 @@ end
         val2 = optimization_container.variables[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_var_index(op_problem, length(var_indices) + 1))
+    @test isnothing(get_var_index(op_problem, length(var_index) + 1))
 end
 
 # @testset "Test print methods" begin
