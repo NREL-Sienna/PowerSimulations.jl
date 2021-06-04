@@ -743,8 +743,8 @@ function add_service_bid_cost!(
         start_time = initial_time,
         len = length(time_steps),
     )
-    forecast_data_values = TimeSeries.values(forecast_data) .* base_power
-    if eltype(forecast_data_values) == PSY.VariableCost{Float64}
+    forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
+    if eltype(forecast_data_values) == Float64
         for t in time_steps
             linear_gen_cost!(
                 optimization_container,
