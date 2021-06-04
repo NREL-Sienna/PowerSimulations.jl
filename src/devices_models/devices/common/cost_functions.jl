@@ -750,7 +750,7 @@ function add_service_bid_cost!(
                 optimization_container,
                 spec.addtional_linear_terms[PSY.get_name(service)],
                 PSY.get_name(component),
-                forecast_data_values,
+                forecast_data_values[t],
                 t,
             )
         end
