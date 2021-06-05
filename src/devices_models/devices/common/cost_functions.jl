@@ -26,7 +26,7 @@ function AddCostSpec(;
     shut_down_cost = nothing,
     fixed_cost = nothing,
     has_multistart_variables = false,
-    addtional_linear_terms = Dict{String, VariableKey}(),
+    addtional_linear_terms = Dict{String, <:VariableKey}(),
     uses_compact_power = false,
 )
     return AddCostSpec(
@@ -109,10 +109,7 @@ function has_on_variable(
     variable_type = OnVariable,
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
-    return !(
-        get(optimization_container.variables, VariableKey(variable_type, T), nothing) ===
-        nothing
-    )
+    return !haskey(optimization_container.variables, VariableKey(variable_type, T))
 end
 
 function has_on_parameter(
