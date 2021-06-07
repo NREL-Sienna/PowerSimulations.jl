@@ -39,6 +39,6 @@ end
     ff = ParameterFF(
         device_type = HydroDispatch,
         variable_source_problem = ActivePowerVariable,
-        affected_parameters = []
+        affected_parameters = [],
     )
 end

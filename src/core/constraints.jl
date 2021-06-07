@@ -65,7 +65,6 @@ struct FlowRateConstraintTF <: ConstraintType end
 struct FlowRateConstraintFT <: ConstraintType end
 struct EqualityConstraint <: ConstraintType end
 
-
 # TODO: These functions need to dissapear
 function make_constraint_name(
     ::Type{T},

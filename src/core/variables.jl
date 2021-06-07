@@ -2,7 +2,11 @@ struct VariableKey{T <: VariableType, U <: PSY.Component} <: OptimizationContain
     meta::String
 end
 
-function VariableKey(::Type{T}, ::Type{U}, meta = CONTAINER_KEY_EMPTY_META) where {T <: VariableType, U <: PSY.Component}
+function VariableKey(
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableType, U <: PSY.Component}
     return VariableKey{T, U}(meta)
 end
 
