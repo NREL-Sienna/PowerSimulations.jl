@@ -391,8 +391,8 @@ function add_cons_container!(
     return add_cons_container!(
         optimization_container,
         cons_type,
-        var_key.entry_type(),
-        var_key.component_type,
+        variable_type(var_key)(),
+        component(var_key),
         axs...;
         sparse = sparse,
     )

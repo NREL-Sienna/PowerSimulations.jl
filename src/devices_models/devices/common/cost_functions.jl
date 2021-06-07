@@ -10,7 +10,7 @@ struct AddCostSpec
     shut_down_cost::Union{Nothing, Function}
     fixed_cost::Union{Nothing, Function}
     has_multistart_variables::Bool
-    addtional_linear_terms::Dict{String, <:VariableKey}
+    addtional_linear_terms::Dict{String, VariableKey}
     uses_compact_power::Bool
 end
 
@@ -26,7 +26,7 @@ function AddCostSpec(;
     shut_down_cost = nothing,
     fixed_cost = nothing,
     has_multistart_variables = false,
-    addtional_linear_terms = Dict{String, <:VariableKey}(),
+    addtional_linear_terms = Dict{String, VariableKey}(),
     uses_compact_power = false,
 )
     return AddCostSpec(
@@ -437,6 +437,8 @@ function add_to_cost!(
         end
     end
 
+    @show spec.fixed_cost
+    @show spec.has_status_variable
     if !(spec.fixed_cost === nothing) && spec.has_status_variable
         @debug "Fixed cost" component_name
         for t in time_steps

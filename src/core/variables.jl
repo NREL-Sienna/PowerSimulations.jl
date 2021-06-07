@@ -1,11 +1,9 @@
 struct VariableKey{T <: VariableType, U <: PSY.Component} <: OptimizationContainerKey
-    entry_type::Type{T}
-    component_type::Type{U}
     meta::String
 end
 
-function VariableKey(::Type{T}, ::Type{U}) where {T <: VariableType, U <: PSY.Component}
-    return VariableKey(T, U, CONTAINER_KEY_EMPTY_META)
+function VariableKey(::Type{T}, ::Type{U}, meta = CONTAINER_KEY_EMPTY_META) where {T <: VariableType, U <: PSY.Component}
+    return VariableKey{T, U}(meta)
 end
 
 function VariableKey(::Type{T}) where {T <: VariableType}
@@ -15,6 +13,9 @@ end
 function VariableKey(::Type{T}, meta::String) where {T <: VariableType}
     return VariableKey(T, PSY.Component, meta)
 end
+
+get_entry_type(::VariableKey{T, U}) where {T <: VariableType, U <: PSY.Component} = T
+get_component_type(::VariableKey{T, U}) where {T <: VariableType, U <: PSY.Component} = U
 
 """Struct to dispatch the creation of Active Power Variables"""
 struct ActivePowerVariable <: VariableType end
