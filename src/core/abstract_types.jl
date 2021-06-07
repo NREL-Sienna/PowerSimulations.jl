@@ -1,4 +1,3 @@
-# All subtypes of AbstractAffectFeedForward must define the field affected_variables.
 # TODO: make a unit test that checks for this.
 
 abstract type OptimizationContainerKey end
@@ -6,17 +5,17 @@ abstract type VariableType end
 abstract type AuxVariableType end
 
 function encode_key(key::OptimizationContainerKey)
-    return encode_symbol(key.component_type, key.entry_type, key.meta)
+    return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
 end
 
 function encode_symbol(
-    ::Type{U},
     ::Type{T},
+    ::Type{U},
     meta::String = CONTAINER_KEY_EMPTY_META,
-) where {T, U <: PSY.Component}
+) where {T <: PSY.Component, U}
     meta_ = isempty(meta) ? meta : "_" * meta
-    U_ = replace(replace(IS.strip_module_name(U), "{" => "_"), "}" => "")
-    return Symbol("$(IS.strip_module_name(string(T)))_$(U_)" * meta_)
+    T_ = replace(replace(IS.strip_module_name(T), "{" => "_"), "}" => "")
+    return Symbol("$(IS.strip_module_name(string(U)))_$(T_)" * meta_)
 end
 
 abstract type AbstractAffectFeedForward end

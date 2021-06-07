@@ -365,8 +365,6 @@ function Base.show(io::IO, sequence::SimulationSequence)
         to = String.(v.affected_variables)
         if isa(v, SemiContinuousFF)
             from = String.(v.binary_source_problem)
-        elseif isa(v, RangeFF)
-            from = String.([v.variable_source_problem_ub, v.variable_source_problem_lb])
         else
             from = String.(v.variable_source_problem)
         end

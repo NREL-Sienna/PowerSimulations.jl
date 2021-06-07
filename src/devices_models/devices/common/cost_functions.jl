@@ -12,40 +12,39 @@ struct AddCostSpec
     has_multistart_variables::Bool
     addtional_linear_terms::Dict{String, <:VariableKey}
     uses_compact_power::Bool
-end
 
-function AddCostSpec(;
-    variable_type,
-    component_type,
-    has_status_variable = false,
-    has_status_parameter = false,
-    sos_status = SOSStatusVariable.NO_VARIABLE,
-    multiplier = OBJECTIVE_FUNCTION_POSITIVE,
-    variable_cost = nothing,
-    start_up_cost = nothing,
-    shut_down_cost = nothing,
-    fixed_cost = nothing,
-    has_multistart_variables = false,
-    addtional_linear_terms = Dict{String, VariableKey}(),
-    uses_compact_power = false,
-)
-    return AddCostSpec(
+    function AddCostSpec(;
         variable_type,
         component_type,
-        has_status_variable,
-        has_status_parameter,
-        sos_status,
-        multiplier,
-        variable_cost,
-        start_up_cost,
-        shut_down_cost,
-        fixed_cost,
-        has_multistart_variables,
-        addtional_linear_terms,
-        uses_compact_power,
+        has_status_variable = false,
+        has_status_parameter = false,
+        sos_status = SOSStatusVariable.NO_VARIABLE,
+        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+        variable_cost = nothing,
+        start_up_cost = nothing,
+        shut_down_cost = nothing,
+        fixed_cost = nothing,
+        has_multistart_variables = false,
+        addtional_linear_terms = Dict{String, VariableKey}(),
+        uses_compact_power = false,
     )
+        new(
+            variable_type,
+            component_type,
+            has_status_variable,
+            has_status_parameter,
+            sos_status,
+            multiplier,
+            variable_cost,
+            start_up_cost,
+            shut_down_cost,
+            fixed_cost,
+            has_multistart_variables,
+            addtional_linear_terms,
+            uses_compact_power,
+        )
+    end
 end
-
 function AddCostSpec(
     ::Type{<:T},
     ::Type{<:U},
@@ -122,18 +121,12 @@ function has_on_parameter(
     if !model_has_parameters(optimization_container)
         return false
     end
-    return !(
-        get(
-            optimization_container.parameters,
-            encode_symbol(OnVariable, string(T)),
-            nothing,
-        ) === nothing
-    )
+    return haskey(optimization_container.parameters, encode_symbol(OnVariable, string(T)))
 end
 
+# TODO: Function is broken
 function _get_pwl_vars_container(optimization_container::OptimizationContainer)
     if !haskey(optimization_container.variables, :PWL_cost_vars)
-        time_steps = model_time_steps(optimization_container)
         contents = Dict{Tuple{String, Int, Int}, Any}()
         container = JuMP.Containers.SparseAxisArray(contents)
         # assign_variable!(optimization_container, :PWL_cost_vars, container)
@@ -161,10 +154,10 @@ Returns ```flag```
 
 # Arguments
 
-* cost_ : container for quadratic and linear factors
+* cost_ : container for linear factors
 """
-function pwlparamcheck(cost_)
-    slopes = PSY.get_slopes(cost_)
+function pwlparamcheck(cost)
+    slopes = PSY.get_slopes(cost)
     # First element of the return is the average cost at P_min.
     # Shouldn't be passed for convexity check
     return slope_convexity_check(slopes[2:end])
