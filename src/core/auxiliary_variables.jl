@@ -2,7 +2,11 @@ struct AuxVarKey{T <: AuxVariableType, U <: PSY.Component} <: OptimizationContai
     meta::String
 end
 
-function AuxVarKey(::Type{T}, ::Type{U}, meta = CONTAINER_KEY_EMPTY_META) where {T <: AuxVariableType, U <: PSY.Component}
+function AuxVarKey(
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: AuxVariableType, U <: PSY.Component}
     return AuxVarKey{T, U}(meta)
 end
 
