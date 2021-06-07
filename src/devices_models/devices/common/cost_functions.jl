@@ -10,9 +10,8 @@ struct AddCostSpec
     shut_down_cost::Union{Nothing, Function}
     fixed_cost::Union{Nothing, Function}
     has_multistart_variables::Bool
-    addtional_linear_terms::Dict{String, VariableKey}
+    addtional_linear_terms::Dict{String, <:VariableKey}
     uses_compact_power::Bool
-end
 
 function AddCostSpec(;
     variable_type,
@@ -29,7 +28,7 @@ function AddCostSpec(;
     addtional_linear_terms = Dict{String, VariableKey}(),
     uses_compact_power = false,
 )
-    return AddCostSpec(
+    new(
         variable_type,
         component_type,
         has_status_variable,
@@ -46,6 +45,7 @@ function AddCostSpec(;
     )
 end
 
+end
 function AddCostSpec(
     ::Type{<:T},
     ::Type{<:U},
@@ -109,7 +109,10 @@ function has_on_variable(
     variable_type = OnVariable,
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
-    return !haskey(optimization_container.variables, VariableKey(variable_type, T))
+    return !(
+        get(optimization_container.variables, VariableKey(variable_type, T), nothing) ===
+        nothing
+    )
 end
 
 function has_on_parameter(
@@ -119,13 +122,7 @@ function has_on_parameter(
     if !model_has_parameters(optimization_container)
         return false
     end
-    return !(
-        get(
-            optimization_container.parameters,
-            encode_symbol(OnVariable, string(T)),
-            nothing,
-        ) === nothing
-    )
+    return haskey(optimization_container.parameters, encode_symbol(OnVariable, string(T)))
 end
 
 function _get_pwl_vars_container(optimization_container::OptimizationContainer)
@@ -437,8 +434,6 @@ function add_to_cost!(
         end
     end
 
-    @show spec.fixed_cost
-    @show spec.has_status_variable
     if !(spec.fixed_cost === nothing) && spec.has_status_variable
         @debug "Fixed cost" component_name
         for t in time_steps
