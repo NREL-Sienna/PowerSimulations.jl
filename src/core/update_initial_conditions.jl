@@ -167,7 +167,7 @@ function _make_initial_conditions!(
     parameters = model_has_parameters(optimization_container)
     ic_container = get_initial_conditions(optimization_container)
     if !has_initial_conditions(ic_container, key)
-        @debug "Setting $(key.entry_type) initial conditions for all devices $(T) based on system data"
+        @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data"
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(ic_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
@@ -182,7 +182,7 @@ function _make_initial_conditions!(
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
-            @debug "Setting $(key.entry_type) initial conditions device $(PSY.get_name(dev)) based on system data"
+            @debug "Setting $(get_entry_type(key)) initial conditions device $(PSY.get_name(dev)) based on system data"
             val_ = get_val_func(dev, key, device_formulation, variable_type)
             val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
@@ -291,10 +291,10 @@ function _get_ace_error(device, key)
 end
 
 function _get_duration_value(dev, key)
-    if key.entry_type == InitialTimeDurationOn
+    if get_entry_type(key) == InitialTimeDurationOn
         value = PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     else
-        @assert key.entry_type == InitialTimeDurationOff
+        @assert get_entry_type(key) == InitialTimeDurationOff
         value = !PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     end
 
