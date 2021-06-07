@@ -2,7 +2,7 @@ struct ProblemResults <: PSIResults
     base_power::Float64
     timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     system::Union{Nothing, PSY.System}
-    variable_values::Dict{Symbol, DataFrames.DataFrame}
+    variable_values::Dict{String, DataFrames.DataFrame}
     dual_values::Dict{Symbol, DataFrames.DataFrame}
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
     optimizer_stats::OptimizerStats
