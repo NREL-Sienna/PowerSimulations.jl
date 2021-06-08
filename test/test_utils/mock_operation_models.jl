@@ -87,11 +87,11 @@ function create_simulation_build_test_problems(
         )
 end
 
-struct FakeStagesStruct
+struct MockStagesStruct
     stages::Dict{Int, Int}
 end
 
-function Base.show(io::IO, struct_stages::FakeStagesStruct)
+function Base.show(io::IO, struct_stages::MockStagesStruct)
     PSI._print_inter_stages(io, struct_stages.stages)
     println(io, "\n\n")
     PSI._print_intra_stages(io, struct_stages.stages)
