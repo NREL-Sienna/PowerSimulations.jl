@@ -10,7 +10,7 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
+        println(io, "\tType: $(get_component_type(ix))\n \tFormulation: $(get_formulation(ix))\n")
         if ix.use_service_name
             println(io, "\tName specific Model\n")
         end
@@ -29,7 +29,7 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
+        println(io, "\tType: $(get_component_type(ix))\n \tFormulation: $(get_formulation(ix))\n")
     end
 end
 
