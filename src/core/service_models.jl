@@ -57,8 +57,12 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     end
 end
 
-get_component_type(::ServiceModel{D, B}) where {D <: PSY.Service, B <: AbstractServiceFormulation} = D
-get_formulation(::ServiceModel{D, B}) where {D <: PSY.Service, B <: AbstractServiceFormulation} = B
+get_component_type(
+    ::ServiceModel{D, B},
+) where {D <: PSY.Service, B <: AbstractServiceFormulation} = D
+get_formulation(
+    ::ServiceModel{D, B},
+) where {D <: PSY.Service, B <: AbstractServiceFormulation} = B
 get_feedforward(m::ServiceModel) = m.feedforward
 
 function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)
