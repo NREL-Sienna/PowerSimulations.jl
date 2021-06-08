@@ -56,8 +56,12 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     end
 end
 
-get_component_type(::DeviceModel{D, B}) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = D
-get_formulation(::DeviceModel{D, B}) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = B
+get_component_type(
+    ::DeviceModel{D, B},
+) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = D
+get_formulation(
+    ::DeviceModel{D, B},
+) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = B
 get_feedforward(m::DeviceModel) = m.feedforward
 get_services(m::DeviceModel) = m.services
 get_services(::Nothing) = nothing

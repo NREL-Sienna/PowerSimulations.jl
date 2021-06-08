@@ -17,13 +17,15 @@ end
         template,
         DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
     )
-    @test PSI.get_formulation(template.devices[:ThermalStandard]) == ThermalBasicUnitCommitment
+    @test PSI.get_formulation(template.devices[:ThermalStandard]) ==
+          ThermalBasicUnitCommitment
 end
 
 @testset "Provided Templates Tests" begin
     uc_template = template_unit_commitment()
     @test !isempty(uc_template.devices)
-    @test PSI.get_formulation(uc_template.devices[:ThermalStandard]) == ThermalBasicUnitCommitment
+    @test PSI.get_formulation(uc_template.devices[:ThermalStandard]) ==
+          ThermalBasicUnitCommitment
     uc_template = template_unit_commitment(network = DCPPowerModel)
     @test get_transmission_model(uc_template) == DCPPowerModel
     @test !isempty(uc_template.branches)

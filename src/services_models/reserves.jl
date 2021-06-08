@@ -405,9 +405,7 @@ function add_device_services!(
     for service_model in get_services(model)
         service_type = get_component_type(service_model)
         if PSY.has_service(device, service_type)
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_type)
-            )
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
             include_service!(constraint_info, services, service_model)
         end
@@ -434,9 +432,7 @@ function add_device_services!(
     for service_model in get_services(model)
         service_type = get_component_type(service_model)
         if PSY.has_service(device, service_type)
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_type)
-            )
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
             include_service!(constraint_info, services, service_model)
         end
@@ -452,29 +448,21 @@ function add_device_services!(
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
         service_type = get_component_type(service_model)
-        if PSY.has_service(device, )
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_type)
-            )
+        if PSY.has_service(device)
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
             if service_type <: PSY.Reserve{PSY.ReserveDown}
                 for service in services
                     push!(
                         constraint_data_in.additional_terms_ub,
-                        make_constraint_name(
-                            PSY.get_name(service),
-                            service_type,
-                        ),
+                        make_constraint_name(PSY.get_name(service), service_type),
                     )
                 end
             elseif service_type <: PSY.Reserve{PSY.ReserveUp}
                 for service in services
                     push!(
                         constraint_data_out.additional_terms_ub,
-                        make_constraint_name(
-                            PSY.get_name(service),
-                            service_type,
-                        ),
+                        make_constraint_name(PSY.get_name(service), service_type),
                     )
                 end
             end
