@@ -565,12 +565,12 @@ desired amount of simulation steps ($(sim.steps*get_execution_count(problem)))."
 end
 
 function _check_required_ini_cond_caches(sim::Simulation)
-    for (ix, (problem_name, problem)) in enumerate(get_problems(sim))
+    for (problem_name, problem) in get_problems(sim)
         optimization_container = get_optimization_container(problem)
         for (k, v) in iterate_initial_conditions(optimization_container)
             # No cache needed for the initial condition -> continue
             v[1].cache_type === nothing && continue
-            c = get_cache(sim, v[1].cache_type, k.component_type)
+            c = get_cache(sim, v[1].cache_type, get_component_type(k))
             if c === nothing
                 throw(
                     ArgumentError(

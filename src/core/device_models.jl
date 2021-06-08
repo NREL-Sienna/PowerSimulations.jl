@@ -42,8 +42,6 @@ thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
 ```
 """
 mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
-    component_type::Type{D}
-    formulation::Type{B}
     feedforward::Union{Nothing, AbstractAffectFeedForward}
     services::Vector{ServiceModel}
 
@@ -54,15 +52,15 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)
-        new{D, B}(D, B, feedforward, Vector{ServiceModel}())
+        new{D, B}(feedforward, Vector{ServiceModel}())
     end
 end
 
-get_component_type(m::DeviceModel) = m.component_type
-get_formulation(m::DeviceModel) = m.formulation
+get_component_type(::DeviceModel{D, B}) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = D
+get_formulation(::DeviceModel{D, B}) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = B
 get_feedforward(m::DeviceModel) = m.feedforward
 get_services(m::DeviceModel) = m.services
-get_services(m::Nothing) = nothing
+get_services(::Nothing) = nothing
 
 DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
 

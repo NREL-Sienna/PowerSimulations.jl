@@ -274,12 +274,12 @@ function get_branches_to_pm(
     }()
 
     for (d, device_model) in branch_template
-        !(device_model.component_type <: branch_type) && continue
+        !(get_component_type(device_model) <: branch_type) && continue
         start_idx += length(PM_branches)
         for (i, branch) in
-            enumerate(get_available_components(device_model.component_type, sys))
+            enumerate(get_available_components(get_component_type(device_model), sys))
             ix = i + start_idx
-            PM_branches["$(ix)"] = get_branch_to_pm(ix, branch, device_model.formulation)
+            PM_branches["$(ix)"] = get_branch_to_pm(ix, branch, get_formulation(device_model))
             if PM_branches["$(ix)"]["br_status"] == true
                 f = PM_branches["$(ix)"]["f_bus"]
                 t = PM_branches["$(ix)"]["t_bus"]

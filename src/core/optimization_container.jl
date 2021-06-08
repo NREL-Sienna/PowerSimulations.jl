@@ -669,8 +669,8 @@ function build_impl!(
         )
     end
     for device_model in values(template.devices)
-        @debug "Building $(device_model.component_type) with $(device_model.formulation) formulation"
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(device_model.component_type)" begin
+        @debug "Building $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             construct_device!(optimization_container, sys, device_model, transmission)
             @debug get_problem_size(optimization_container)
         end
@@ -683,8 +683,8 @@ function build_impl!(
     end
 
     for branch_model in values(template.branches)
-        @debug "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(branch_model.component_type)" begin
+        @debug "Building $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
             construct_device!(optimization_container, sys, branch_model, transmission)
             @debug get_problem_size(optimization_container)
         end
