@@ -55,7 +55,6 @@ const LOG_FILE = "power-simulations-test.log"
 const DISABLED_TEST_FILES = [
     "test_simulation_build.jl",
     "test_simulation_execute.jl",
-    "test_simulation_sequence.jl",
     "test_simulation_store.jl",
     "test_simulation_results.jl",
     "test_simulation_results_export.jl",
