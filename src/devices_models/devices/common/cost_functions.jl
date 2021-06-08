@@ -998,7 +998,6 @@ function variable_cost!(
         return JuMP.AffExpr(0.0)
     end
 
-    var_name = VariableKey(spec.variable_type, spec.component_type)
     if !pwlparamcheck(cost_component)
         @warn(
             "The cost function provided for $(component_name) is not compatible with a linear PWL cost function.

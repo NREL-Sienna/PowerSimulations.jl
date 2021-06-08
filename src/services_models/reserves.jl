@@ -179,8 +179,6 @@ function _get_data_for_ramp_limit(
 
     for d in contributing_devices
         name = PSY.get_name(d)
-        non_binding_up = false
-        non_binding_down = false
         ramp_limits = _get_ramp_limits(d)
         if !(ramp_limits === nothing)
             p_lims = PSY.get_active_power_limits(d)
@@ -211,7 +209,6 @@ function ramp_constraints!(
     T <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    initial_time = model_initial_time(optimization_container)
     data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
     service_name = PSY.get_name(service)
     if !isempty(data)
@@ -238,7 +235,6 @@ function ramp_constraints!(
     T <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    initial_time = model_initial_time(optimization_container)
     data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
     service_name = PSY.get_name(service)
     if !isempty(data)
@@ -305,7 +301,7 @@ function cost_function!(
     service::SR,
     model::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
-    spec = AddCostSpec(SR, model.formulation, optimization_container)
+    spec = AddCostSpec(SR, get_formulation(model), optimization_container)
     @debug SR, spec
     add_to_cost!(optimization_container, spec, service, PSY.get_name(service))
     return
@@ -318,7 +314,7 @@ function modify_device_model!(
 )
     device_types = unique(typeof.(contributing_devices))
     for dt in device_types
-        for (device_model_name, device_model) in devices_template
+        for device_model in values(devices_template)
             # add message here when it exists
             get_component_type(device_model) != dt && continue
             service_model in device_model.services && continue
@@ -364,7 +360,7 @@ function include_service!(
 end
 
 function include_service!(
-    constraint_info::T,
+    ::T,
     services,
     ::ServiceModel{SR, RampReserve},
 ) where {T <: AbstractRampConstraintInfo, SR <: PSY.Reserve{PSY.ReserveDown}}
@@ -407,10 +403,9 @@ function add_device_services!(
     D <: PSY.Device,
 }
     for service_model in get_services(model)
-        if PSY.has_service(device, service_model.component_type)
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
-            )
+        service_type = get_component_type(service_model)
+        if PSY.has_service(device, service_type)
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
             include_service!(constraint_info, services, service_model)
         end
@@ -435,10 +430,9 @@ function add_device_services!(
     model::DeviceModel{D, BatteryAncillaryServices},
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
-        if PSY.has_service(device, service_model.component_type)
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
-            )
+        service_type = get_component_type(service_model)
+        if PSY.has_service(device, service_type)
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
             include_service!(constraint_info, services, service_model)
         end
@@ -453,29 +447,22 @@ function add_device_services!(
     model::DeviceModel{D, <:AbstractStorageFormulation},
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
-        if PSY.has_service(device, service_model.component_type)
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
-            )
+        service_type = get_component_type(service_model)
+        if PSY.has_service(device)
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
-            if service_model.component_type <: PSY.Reserve{PSY.ReserveDown}
+            if service_type <: PSY.Reserve{PSY.ReserveDown}
                 for service in services
                     push!(
                         constraint_data_in.additional_terms_ub,
-                        make_constraint_name(
-                            PSY.get_name(service),
-                            service_model.component_type,
-                        ),
+                        make_constraint_name(PSY.get_name(service), service_type),
                     )
                 end
-            elseif service_model.component_type <: PSY.Reserve{PSY.ReserveUp}
+            elseif service_type <: PSY.Reserve{PSY.ReserveUp}
                 for service in services
                     push!(
                         constraint_data_out.additional_terms_ub,
-                        make_constraint_name(
-                            PSY.get_name(service),
-                            service_model.component_type,
-                        ),
+                        make_constraint_name(PSY.get_name(service), service_type),
                     )
                 end
             end
