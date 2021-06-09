@@ -594,14 +594,27 @@ function add_to_cost!(
 
     if !(spec.start_up_cost === nothing)
         start_cost_data = spec.start_up_cost(cost_data)
-        for (st, var_type) in enumerate(START_VARIABLES)
-            var_name = make_variable_name(var_type, spec.component_type)
+        if spec.has_multistart_variables
+            for (st, var_type) in enumerate(START_VARIABLES)
+                var_name = make_variable_name(var_type, spec.component_type)
+                for t in time_steps
+                    linear_gen_cost!(
+                        optimization_container,
+                        var_name,
+                        component_name,
+                        start_cost_data[st] * spec.multiplier,
+                        t,
+                    )
+                end
+            end
+        else
+            start_var = make_variable_name(StartVariable, spec.component_type)
             for t in time_steps
                 linear_gen_cost!(
                     optimization_container,
-                    var_name,
+                    start_var,
                     component_name,
-                    start_cost_data[st] * spec.multiplier,
+                    start_cost_data[1] * spec.multiplier,
                     t,
                 )
             end
