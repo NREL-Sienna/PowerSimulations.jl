@@ -15,7 +15,8 @@ function calculate_ic_quantity(
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
-    @debug last_status, var_status, abs(last_status - var_status)
+    @debug last_status, var_status, abs(last_status - var_status) _group =
+        LOG_GROUP_INITIAL_CONDITIONS
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? current_counter : 0.0
@@ -35,7 +36,8 @@ function calculate_ic_quantity(
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
-    @debug last_status, var_status, abs(last_status - var_status)
+    @debug last_status, var_status, abs(last_status - var_status) _group =
+        LOG_GROUP_INITIAL_CONDITIONS
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? 0.0 : current_counter
@@ -167,7 +169,8 @@ function _make_initial_conditions!(
     parameters = model_has_parameters(optimization_container)
     ic_container = get_initial_conditions(optimization_container)
     if !has_initial_conditions(ic_container, key)
-        @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data"
+        @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data" _group =
+            LOG_GROUP_INITIAL_CONDITIONS
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(ic_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
@@ -175,19 +178,20 @@ function _make_initial_conditions!(
             val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             ini_conds[ix] = ic
-            @debug "set initial condition" key ic val_
+            @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_
         end
     else
         ini_conds = get_initial_conditions(ic_container, key)
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
-            @debug "Setting $(get_entry_type(key)) initial conditions device $(PSY.get_name(dev)) based on system data"
+            @debug "Setting $(get_entry_type(key)) initial conditions device $(PSY.get_name(dev)) based on system data" _group =
+                LOG_GROUP_INITIAL_CONDITIONS
             val_ = get_val_func(dev, key, device_formulation, variable_type)
             val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             push!(ini_conds, ic)
-            @debug "set initial condition" key ic val_
+            @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_
         end
     end
 

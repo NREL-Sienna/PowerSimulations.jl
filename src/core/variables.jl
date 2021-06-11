@@ -101,6 +101,8 @@ struct FlowReactivePowerFromToVariable <: VariableType end
 
 struct FlowReactivePowerToFromVariable <: VariableType end
 
+struct VariableNotDefined <: VariableType end
+
 ###############################
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)

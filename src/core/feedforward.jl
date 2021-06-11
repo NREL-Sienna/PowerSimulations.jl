@@ -25,14 +25,14 @@ The Parameters are initialized using the uppper boundary values of the provided 
 """
 function ub_ff(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    cons_type::ConstraintType,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::UpdateRef,
-    var_key::VariableKey,
-)
+    var_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    variable = get_variable(optimization_container, var_key)
+    variable = get_variable(optimization_container, var_type, T)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -40,7 +40,7 @@ function ub_ff(
     container = add_param_container!(optimization_container, param_reference, set_name)
     param_ub = get_parameter_array(container)
     multiplier_ub = get_multiplier_array(container)
-    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
+    con_ub = add_cons_container!(optimization_container, cons_type, T, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
@@ -90,16 +90,15 @@ where r in range_data.
 """
 function range_ff(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    cons_type_lb::ConstraintType,
+    cons_type_ub::ConstraintType,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::NTuple{2, UpdateRef},
-    var_key::VariableKey,
-)
+    var_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-
-    variable = get_variable(optimization_container, var_key)
+    variable = get_variable(optimization_container, var_type)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -115,8 +114,10 @@ function range_ff(
     param_ub = get_parameter_array(container_ub)
     multiplier_ub = get_multiplier_array(container_ub)
     # Create containers for the parameters
-    con_lb = add_cons_container!(optimization_container, lb_name, set_name, time_steps)
-    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
+    con_lb =
+        add_cons_container!(optimization_container, cons_type_lb, T, set_name, time_steps)
+    con_ub =
+        add_cons_container!(optimization_container, cons_type_ub, T, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
@@ -189,15 +190,14 @@ where r in range_data.
 """
 function semicontinuousrange_ff(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    constraint_type::ConstraintType,
+    ::Type{T},
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::UpdateRef,
-    var_key::VariableKey,
-)
+    variable_type::VariableType,
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    variable = get_variable(optimization_container, var_key)
+    variable = get_variable(optimization_container, variable_type, T)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = [get_component_name(ci) for ci in constraint_infos]
@@ -205,8 +205,22 @@ function semicontinuousrange_ff(
     container = add_param_container!(optimization_container, param_reference, set_name)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
-    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, set_name, time_steps)
+    con_ub = add_cons_container!(
+        optimization_container,
+        constraint_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "up",
+    )
+    con_lb = add_cons_container!(
+        optimization_container,
+        constraint_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "lb",
+    )
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
@@ -283,13 +297,13 @@ The Parameters are initialized using the upper boundary values of the provided v
 """
 function integral_limit_ff(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    constraint_type::ConstraintType,
+    ::Type{T},
     param_reference::UpdateRef,
-    var_key::VariableKey,
-)
+    variable_type::VariableType,
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
-    variable = get_variable(optimization_container, var_key)
+    variable = get_variable(optimization_container, variable_type, T)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -298,7 +312,7 @@ function integral_limit_ff(
     container_ub = add_param_container!(optimization_container, param_reference, set_name)
     param_ub = get_parameter_array(container_ub)
     multiplier_ub = get_multiplier_array(container_ub)
-    con_ub = add_cons_container!(optimization_container, ub_name, set_name)
+    con_ub = add_cons_container!(optimization_container, constraint_type, T, set_name)
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
@@ -337,15 +351,16 @@ function feedforward!(
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info
     end
-    for prefix in get_affected_variables(ff_model)
-        var_name = VariableKey(prefix, T)
+    for var_key in get_affected_variables(ff_model)
+        var_type = get_entry_type(var_key)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_key)
         ub_ff(
             optimization_container,
-            constraint_name(FEEDFORWARD_UB, T),
+            FeedforwardUBConstraint(),
             constraint_infos,
             parameter_ref,
-            var_name,
+            var_type,
+            T,
         )
     end
 end
@@ -366,14 +381,14 @@ function feedforward!(
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info
     end
-    for prefix in get_affected_variables(ff_model)
-        var_name = VariableKey(prefix, T)
+    for var_key in get_affected_variables(ff_model)
         semicontinuousrange_ff(
             optimization_container,
-            make_constraint_name(FEEDFORWARD_BIN, T),
+            FeedforwardBinConstraint,
+            T,
             constraint_infos,
             parameter_ref,
-            var_name,
+            get_entry_type(var_key),  # TODO DT: Jose, the old code was creating a new key; not sure why
         )
     end
 end
@@ -384,14 +399,14 @@ function feedforward!(
     ::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::IntegralLimitFF,
 ) where {T <: PSY.StaticInjection}
-    for prefix in get_affected_variables(ff_model)
-        var_name = VariableKey(prefix, T)
+    for var_key in get_affected_variables(ff_model)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_key)
         integral_limit_ff(
             optimization_container,
-            make_constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
+            FeedforwardIntegralLimitConstraint,
+            T,
             parameter_ref,
-            var_name,
+            get_entry_type(var_key),  # TODO DT: Jose, the old code was creating a new key; not sure why
         )
     end
 end

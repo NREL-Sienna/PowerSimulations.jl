@@ -1,36 +1,39 @@
 struct DeviceEnergyBalanceConstraintSpec
-    constraint_name::Symbol
-    energy_variable::VariableKey
+    constraint_type::ConstraintType
+    energy_variable::VariableType
     initial_condition::Type{<:InitialConditionType}
-    pin_variable_keys::Vector{<:VariableKey}
-    pout_variable_keys::Vector{<:VariableKey}
+    pin_variable_types::Vector{<:VariableType}
+    pout_variable_types::Vector{<:VariableType}
     parameter_name::Union{Nothing, String}
     forecast_label::Union{Nothing, String}
     multiplier_func::Union{Nothing, Function}
     constraint_func::Function
+    component_type::Type{<:PSY.Component}
 end
 
 function DeviceEnergyBalanceConstraintSpec(;
-    constraint_name::Symbol,
-    energy_variable::VariableKey,
+    constraint_type::ConstraintType,
+    energy_variable::VariableType,
     initial_condition::Type{<:InitialConditionType},
     constraint_func::Function,
-    pin_variable_keys::Vector{<:VariableKey} = Vector{VariableKey}(),
-    pout_variable_keys::Vector{<:VariableKey} = Vector{VariableKey}(),
+    component_type::Type{<:PSY.Component},
+    pin_variable_types::Vector{<:VariableType} = Vector{VariableType}(),
+    pout_variable_types::Vector{<:VariableType} = Vector{VariableType}(),
     parameter_name::Union{Nothing, String} = nothing,
     forecast_label::Union{Nothing, String} = nothing,
     multiplier_func::Union{Nothing, Function} = nothing,
 )
     return DeviceEnergyBalanceConstraintSpec(
-        constraint_name,
+        constraint_type,
         energy_variable,
         initial_condition,
-        pin_variable_keys,
-        pout_variable_keys,
+        pin_variable_types,
+        pout_variable_types,
         parameter_name,
         forecast_label,
         multiplier_func,
         constraint_func,
+        component_type,
     )
 end
 
@@ -86,11 +89,12 @@ end
 
 struct DeviceEnergyBalanceConstraintSpecInternal
     constraint_infos::Vector{<:EnergyBalanceConstraintInfo}
-    constraint_name::Symbol
-    energy_variable::VariableKey
-    pin_variable_keys::Vector{<:VariableKey}
-    pout_variable_keys::Vector{<:VariableKey}
+    constraint_type::ConstraintType
+    energy_variable::VariableType
+    pin_variable_types::Vector{<:VariableType}
+    pout_variable_types::Vector{<:VariableType}
     param_reference::Union{Nothing, UpdateRef}
+    component_type::Type{<:PSY.Component}
 end
 
 function _apply_energy_balance_constraint_spec!(
@@ -129,12 +133,13 @@ function _apply_energy_balance_constraint_spec!(
         optimization_container,
         DeviceEnergyBalanceConstraintSpecInternal(
             constraint_infos,
-            spec.constraint_name,
+            spec.constraint_type,
             spec.energy_variable,
-            spec.pin_variable_keys,
-            spec.pout_variable_keys,
+            spec.pin_variable_types,
+            spec.pout_variable_types,
             spec.parameter_name === nothing ? nothing :
             UpdateRef{T}(spec.parameter_name, spec.forecast_label),
+            T,
         ),
     )
     return
@@ -163,14 +168,21 @@ function energy_balance!(
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [get_component_name(x) for x in inputs.constraint_infos]
 
-    varenergy = get_variable(optimization_container, inputs.energy_variable)
-    varin = [get_variable(optimization_container, var) for var in inputs.pin_variable_keys]
-    varout =
-        [get_variable(optimization_container, var) for var in inputs.pout_variable_keys]
+    varenergy =
+        get_variable(optimization_container, inputs.energy_variable, inputs.component_type)
+    varin = [
+        get_variable(optimization_container, var, inputs.component_type) for
+        var in inputs.pin_variable_types
+    ]
+    varout = [
+        get_variable(optimization_container, var, inputs.component_type) for
+        var in inputs.pout_variable_types
+    ]
 
     constraint = add_cons_container!(
         optimization_container,
-        inputs.constraint_name,
+        inputs.constraint_type,
+        inputs.component_type,
         names,
         time_steps,
     )
@@ -241,10 +253,16 @@ function energy_balance_param!(
     names = [get_component_name(x) for x in inputs.constraint_infos]
     has_parameter_data = !isnothing(inputs.param_reference)
 
-    varenergy = get_variable(optimization_container, inputs.energy_variable)
-    varin = [get_variable(optimization_container, var) for var in inputs.pin_variable_keys]
-    varout =
-        [get_variable(optimization_container, var) for var in inputs.pout_variable_keys]
+    varenergy =
+        get_variable(optimization_container, inputs.energy_variable, inputs.component_type)
+    varin = [
+        get_variable(optimization_container, var, inputs.component_type) for
+        var in inputs.pin_variable_types
+    ]
+    varout = [
+        get_variable(optimization_container, var, inputs.component_type) for
+        var in inputs.pout_variable_types
+    ]
 
     if has_parameter_data
         container = add_param_container!(
@@ -259,7 +277,8 @@ function energy_balance_param!(
 
     constraint = add_cons_container!(
         optimization_container,
-        inputs.constraint_name,
+        inputs.constraint_type,
+        inputs.component_type,
         names,
         time_steps,
     )

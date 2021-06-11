@@ -36,22 +36,29 @@ If t > 1:
 function device_commitment!(
     optimization_container::OptimizationContainer,
     initial_conditions::Vector{InitialCondition},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
-)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    varstart = get_variable(optimization_container, var_keys[1])
-    varstop = get_variable(optimization_container, var_keys[2])
-    varon = get_variable(optimization_container, var_keys[3])
+    varstart = get_variable(optimization_container, var_types[1], T)
+    varstop = get_variable(optimization_container, var_types[2], T)
+    varon = get_variable(optimization_container, var_types[3], T)
     varstart_names = axes(varstart, 1)
-    constraint =
-        add_cons_container!(optimization_container, cons_name, varstart_names, time_steps)
-    aux_cons_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "aux")
-    aux_constraint = add_cons_container!(
+    constraint = add_cons_container!(
         optimization_container,
-        aux_cons_name,
+        cons_type,
+        T,
         varstart_names,
         time_steps,
+    )
+    aux_constraint = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        varstart_names,
+        time_steps,
+        meta = "aux",
     )
 
     for ic in initial_conditions

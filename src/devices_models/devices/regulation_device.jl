@@ -29,7 +29,7 @@ get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.Regulat
 
 function add_constraints!(
     optimization_container::OptimizationContainer,
-    ::Type{RangeConstraint},
+    ::Type{DeltaActivePowerUpVariableLimitsConstraint},
     ::Type{DeltaActivePowerUpVariable},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, DeviceLimitedRegulation},
@@ -42,8 +42,14 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(optimization_container)
 
-    up = Symbol("regulation_limits_up_$(U)")
-    container_up = add_cons_container!(optimization_container, up, names, time_steps)
+    # TODO DT: should "up" be specified in meta instead of the constraint type?
+    container_up = add_cons_container!(
+        optimization_container,
+        RegulationLimitsUpConstraint(),
+        U,
+        names,
+        time_steps,
+    )
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -83,7 +89,7 @@ end
 
 function add_constraints!(
     optimization_container::OptimizationContainer,
-    ::Type{RangeConstraint},
+    ::Type{DeltaActivePowerDownVariableLimitsConstraint},
     ::Type{DeltaActivePowerDownVariable},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, DeviceLimitedRegulation},
@@ -96,8 +102,13 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(optimization_container)
 
-    dn = Symbol("regulation_limits_dn_$(U)")
-    container_dn = add_cons_container!(optimization_container, dn, names, time_steps)
+    container_dn = add_cons_container!(
+        optimization_container,
+        RegulationLimitsDownConstraint(),
+        U,
+        names,
+        time_steps,
+    )
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -137,7 +148,7 @@ end
 
 function add_constraints!(
     optimization_container::OptimizationContainer,
-    ::Type{RangeConstraint},
+    ::Type{DeltaActivePowerUpVariableLimitsConstraint},
     ::Type{DeltaActivePowerUpVariable},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, ReserveLimitedRegulation},
@@ -149,8 +160,13 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(optimization_container)
 
-    up = Symbol("regulation_limits_up_$(U)")
-    container_up = add_cons_container!(optimization_container, up, names, time_steps)
+    container_up = add_cons_container!(
+        optimization_container,
+        RegulationLimitsUpConstraint(),
+        U,
+        names,
+        time_steps,
+    )
 
     for d in devices
         name = PSY.get_name(d)
@@ -167,7 +183,7 @@ end
 
 function add_constraints!(
     optimization_container::OptimizationContainer,
-    ::Type{RangeConstraint},
+    ::Type{DeltaActivePowerDownVariableLimitsConstraint},
     ::Type{DeltaActivePowerDownVariable},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, ReserveLimitedRegulation},
@@ -179,8 +195,13 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(optimization_container)
 
-    dn = Symbol("regulation_limits_dn_$(U)")
-    container_dn = add_cons_container!(optimization_container, dn, names, time_steps)
+    container_dn = add_cons_container!(
+        optimization_container,
+        RegulationLimitsDownConstraint(),
+        U,
+        names,
+        time_steps,
+    )
 
     for d in devices
         name = PSY.get_name(d)
@@ -209,10 +230,24 @@ function ramp_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = model_time_steps(optimization_container)
 
-    container_up =
-        add_cons_container!(optimization_container, :ramp_limits_up, names, time_steps)
-    container_dn =
-        add_cons_container!(optimization_container, :ramp_limits_dn, names, time_steps)
+    # TODO DT: appropriate use of meta?
+    # TODO DT: is component_type correct?
+    container_up = add_cons_container!(
+        optimization_container,
+        RampLimitConstraint(),
+        U,
+        names,
+        time_steps,
+        meta = "up",
+    )
+    container_dn = add_cons_container!(
+        optimization_container,
+        RampLimitConstraint(),
+        U,
+        names,
+        time_steps,
+        meta = "dn",
+    )
 
     for d in devices
         ramp_limits = PSY.get_ramp_limits(d)
@@ -254,21 +289,22 @@ function participation_assignment!(
 
     component_names = [PSY.get_name(d) for d in devices]
 
+    # TODO DT: appropriate use of meta?
     participation_assignment_up = add_cons_container!(
         optimization_container,
-        :participation_assignment_up,
-        # AdditionalDeltaActivePowerUpVariable(),
-        # T,
+        ParticipationAssignmentConstraint(),
+        T,
         component_names,
         time_steps,
+        meta = "up",
     )
     participation_assignment_dn = add_cons_container!(
         optimization_container,
-        :participation_assignment_dn,
-        # AdditionalDeltaActivePowerDownVariable(),
-        # T,
+        ParticipationAssignmentConstraint(),
+        T,
         component_names,
         time_steps,
+        meta = "dn",
     )
 
     expr_up = get_expression(optimization_container, :emergency_up)
