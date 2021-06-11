@@ -208,7 +208,10 @@ end
     @test solve!(op_problem) == RunStatus.SUCCESSFUL
 
     optimization_container = PSI.get_optimization_container(op_problem)
-    constraints = PSI.get_constraints(optimization_container)[:CopperPlateBalance]
+    constraints = PSI.get_constraints(optimization_container)[PSI.ConstraintKey(
+        CopperPlateBalanceConstraint,
+        PSY.System,
+    )]
     dual_results = read_duals(optimization_container, [:CopperPlateBalance])
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])

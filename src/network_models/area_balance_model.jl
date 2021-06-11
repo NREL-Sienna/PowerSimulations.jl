@@ -9,7 +9,8 @@ function area_balance(
     nodal_net_balance = optimization_container.expressions[expression]
     constraint = add_cons_container!(
         optimization_container,
-        :area_dispatch_balance,
+        AreaDispatchBalanceConstraint(),
+        PSY.Area,  # TODO DT: is this correct?
         keys(area_mapping),
         time_steps,
     )
@@ -34,15 +35,19 @@ function area_balance(
 
     participation_assignment_up = add_cons_container!(
         optimization_container,
-        :area_participation_assignment_up,
+        AreaParticipationAssignmentConstraint(),
+        PSY.Area,  # # TODO DT: correct?
         keys(area_mapping),
         time_steps,
+        meta = "up",
     )
     participation_assignment_dn = add_cons_container!(
         optimization_container,
-        :area_participation_assignment_dn,
+        AreaParticipationAssignmentConstraint(),
+        PSY.Area,  # TODO DT: correct?
         keys(area_mapping),
         time_steps,
+        meta = "dn",
     )
 
     for area in keys(area_mapping), t in time_steps

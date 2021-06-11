@@ -39,7 +39,7 @@ get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadForm
 Reactive Power Constraints on Controllable Loads Assume Constant power_factor
 """
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ReactivePowerVariableLimitsConstraint},
     ::Type{ReactivePowerVariable},
     ::Type{<:PSY.ElectricLoad},
     ::Type{<:AbstractControllablePowerLoadFormulation},
@@ -62,7 +62,6 @@ function custom_reactive_power_constraints!(
     constraint = add_cons_container!(
         optimization_container,
         EqualityConstraint(),
-        ReactivePowerVariable(),
         T,
         [PSY.get_name(d) for d in devices],
         time_steps,
@@ -78,7 +77,7 @@ function custom_reactive_power_constraints!(
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
     ::Type{<:DispatchablePowerLoad},
@@ -90,34 +89,32 @@ function DeviceRangeConstraintSpec(
     if (!use_parameters && !use_forecasts)
         return DeviceRangeConstraintSpec(;
             range_constraint_spec = RangeConstraintSpec(;
-                constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariable,
-                    T,
-                ),
-                variable_key = VariableKey(ActivePowerVariable, T),
+                constraint_type = ActivePowerVariableLimitsConstraint(),
+                variable_type = ActivePowerVariable(),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
+                component_type = T,
             ),
         )
     end
 
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_key = VariableKey(ActivePowerVariable, T),
+            constraint_type = ActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerVariable(),
             parameter_name = use_parameters ? "P" : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
+            component_type = T,
         ),
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
     ::Type{<:InterruptiblePowerLoad},
@@ -129,30 +126,28 @@ function DeviceRangeConstraintSpec(
     if (!use_parameters && !use_forecasts)
         return DeviceRangeConstraintSpec(;
             range_constraint_spec = RangeConstraintSpec(;
-                constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariable,
-                    T,
-                ),
-                variable_key = VariableKey(ActivePowerVariable, T),
-                bin_variable_keys = [VariableKey(OnVariable, T)],
+                constraint_type = ActivePowerVariableLimitsConstraint(),
+                variable_type = ActivePowerVariable(),
+                bin_variable_types = [OnVariable()],
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_semicontinuousrange!,
                 constraint_struct = DeviceRangeConstraintInfo,
+                component_type = T,
             ),
         )
     end
 
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_key = VariableKey(ActivePowerVariable, T),
-            bin_variable_key = VariableKey(OnVariable, T),
+            constraint_type = ActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerVariable(),
+            bin_variable_type = OnVariable(),
             parameter_name = use_parameters ? "ON" : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_ub_bigM! :
                               device_timeseries_ub_bin!,
+            component_type = T,
         ),
     )
 end
