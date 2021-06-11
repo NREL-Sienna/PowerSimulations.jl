@@ -118,17 +118,33 @@ macro includetests(testarg...)
     end
 end
 
-function run_tests()
-    console_level = get_logging_level("SYS_CONSOLE_LOG_LEVEL", "Error")
-    console_logger = ConsoleLogger(stderr, console_level)
-    file_level = get_logging_level("SYS_LOG_LEVEL", "Info")
+function get_logging_level_from_env(env_name::String, default)
+    level = get(ENV, env_name, default)
+    return IS.get_logging_level(level)
+end
 
-    IS.open_file_logger(LOG_FILE, file_level) do file_logger
-        multi_logger = IS.MultiLogger(
-            [console_logger, file_logger],
-            IS.LogEventTracker((Logging.Info, Logging.Warn, Logging.Error)),
+function run_tests()
+    logging_config_filename = get(ENV, "SIIP_LOGGING_CONFIG", nothing)
+    if logging_config_filename !== nothing
+        config = IS.LoggingConfiguration(logging_config_filename)
+    else
+        config = IS.LoggingConfiguration(
+            filename = LOG_FILE,
+            file_level = Logging.Info,
+            console_level = Logging.Error,
         )
+    end
+    console_logger = ConsoleLogger(config.console_stream, config.console_level)
+
+    IS.open_file_logger(LOG_FILE, config.file_level) do file_logger
+        levels = (Logging.Info, Logging.Warn, Logging.Error)
+        multi_logger =
+            IS.MultiLogger([console_logger, file_logger], IS.LogEventTracker(levels))
         global_logger(multi_logger)
+
+        if !isempty(config.group_levels)
+            IS.set_group_levels!(multi_logger, config.group_levels)
+        end
 
         @time @testset "Begin PowerSimulations tests" begin
             @includetests ARGS
