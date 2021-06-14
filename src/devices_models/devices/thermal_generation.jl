@@ -1466,7 +1466,8 @@ function cost_function!(
         variable_cost = PSY.get_variable,
         fixed_cost = PSY.get_fixed,
     )
-
+    resolution = model_resolution(optimization_container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for g in devices
         component_name = PSY.get_name(g)
         op_cost = PSY.get_operation_cost(g)
@@ -1494,12 +1495,16 @@ function cost_function!(
             end
             time_steps = model_time_steps(optimization_container)
             for t in time_steps
-                pwl_gencost_linear!(
+                gen_cost = pwl_gencost_linear!(
                     optimization_container,
                     no_min_spec,
                     component_name,
                     cost_function_data,
                     t,
+                )
+                add_to_cost_expression!(
+                    optimization_container,
+                    no_min_spec.multiplier * gen_cost * dt,
                 )
             end
         else
