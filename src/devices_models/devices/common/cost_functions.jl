@@ -589,14 +589,27 @@ function add_to_cost!(
 
     if !(spec.start_up_cost === nothing)
         start_cost_data = spec.start_up_cost(cost_data)
-        for (st, var_type) in enumerate(START_VARIABLES)
-            var_name = VariableKey(var_type, spec.component_type)
+        if spec.has_multistart_variables
+            for (st, var_type) in enumerate(START_VARIABLES)
+                 var_name = VariableKey(var_type, spec.component_type)
+                for t in time_steps
+                    linear_gen_cost!(
+                        optimization_container,
+                        var_name,
+                        component_name,
+                        start_cost_data[st] * spec.multiplier,
+                        t,
+                    )
+                end
+            end
+        else
+            start_var = make_variable_name(StartVariable, spec.component_type)
             for t in time_steps
                 linear_gen_cost!(
                     optimization_container,
-                    var_name,
+                    start_var,
                     component_name,
-                    start_cost_data[st] * spec.multiplier,
+                    start_cost_data[1] * spec.multiplier,
                     t,
                 )
             end
@@ -743,14 +756,14 @@ function add_service_bid_cost!(
         start_time = initial_time,
         len = length(time_steps),
     )
-    forecast_data_values = TimeSeries.values(forecast_data) .* base_power
-    if eltype(forecast_data_values) == PSY.VariableCost{Float64}
+    forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
+    if eltype(forecast_data_values) == Float64
         for t in time_steps
             linear_gen_cost!(
                 optimization_container,
                 spec.addtional_linear_terms[PSY.get_name(service)],
                 PSY.get_name(component),
-                forecast_data_values,
+                forecast_data_values[t],
                 t,
             )
         end
