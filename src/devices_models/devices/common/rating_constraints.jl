@@ -22,19 +22,21 @@ where r in rating data and t in time steps.
 function rating_constraint!(
     optimization_container::OptimizationContainer,
     rating_data::Vector{Tuple{String, Float64}},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey},
-)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    var1 = get_variable(optimization_container, var_keys[1])
-    var2 = get_variable(optimization_container, var_keys[2])
+    var1 = get_variable(optimization_container, var_types[1], T)
+    var2 = get_variable(optimization_container, var_types[2], T)
     add_cons_container!(
         optimization_container,
-        cons_name,
+        cons_type,
+        T,
         [r[1] for r in rating_data],
         time_steps,
     )
-    constraint = get_constraint(optimization_container, cons_name)
+    constraint = get_constraint(optimization_container, cons_type, T)
 
     for r in rating_data
         for t in time_steps

@@ -49,9 +49,10 @@ function construct_device!(
     initial_conditions!(optimization_container, devices, D())
 
     # Constraints
+    # TODO DT: why aren't these passing variable and constraint instances?
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -60,7 +61,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -119,7 +120,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -198,7 +199,7 @@ function construct_device!(
     # TODO: refactor constraints such that ALL variables for all devices are added first, and then the constraint creation is trigged
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -207,7 +208,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -276,7 +277,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -333,7 +334,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -342,7 +343,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -387,7 +388,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -428,7 +429,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -437,7 +438,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -476,7 +477,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -574,7 +575,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -583,7 +584,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -711,7 +712,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -827,7 +828,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -836,7 +837,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -918,7 +919,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -973,7 +974,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -982,7 +983,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -1023,7 +1024,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,

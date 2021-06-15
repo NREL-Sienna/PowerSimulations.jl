@@ -59,7 +59,7 @@ get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractSto
 ################################## output power constraints#################################
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:OutputActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerOutVariable},
     ::Type{T},
     ::Type{<:BookKeeping},
@@ -70,21 +70,18 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.Storage}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(
-                RangeConstraint,
-                ActivePowerOutVariable,
-                T,
-            ),
-            variable_key = VariableKey(ActivePowerOutVariable, T),
+            constraint_type = OutputActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerOutVariable(),
             limits_func = x -> PSY.get_output_active_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            component_type = T,
         ),
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:InputActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerInVariable},
     ::Type{T},
     ::Type{<:BookKeeping},
@@ -95,21 +92,18 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.Storage}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(
-                RangeConstraint,
-                ActivePowerInVariable,
-                T,
-            ),
-            variable_key = VariableKey(ActivePowerInVariable, T),
+            constraint_type = InputActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerInVariable(),
             limits_func = x -> PSY.get_input_active_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            component_type = T,
         ),
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:OutputActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerOutVariable},
     ::Type{T},
     ::Type{<:AbstractStorageFormulation},
@@ -120,22 +114,19 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.Storage}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(
-                RangeConstraint,
-                ActivePowerOutVariable,
-                T,
-            ),
-            variable_key = VariableKey(ActivePowerOutVariable, T),
-            bin_variable_keys = [VariableKey(ReservationVariable, T)],
+            constraint_type = OutputActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerOutVariable(),
+            bin_variable_types = [ReservationVariable()],
             limits_func = x -> PSY.get_output_active_power_limits(x),
             constraint_func = device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
+            component_type = T,
         ),
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:InputActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerInVariable},
     ::Type{T},
     ::Type{<:AbstractStorageFormulation},
@@ -146,16 +137,13 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.Storage}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(
-                RangeConstraint,
-                ActivePowerInVariable,
-                T,
-            ),
-            variable_key = VariableKey(ActivePowerInVariable, T),
-            bin_variable_keys = [VariableKey(ReservationVariable, T)],
+            constraint_type = InputActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerInVariable(),
+            bin_variable_types = [ReservationVariable()],
             limits_func = x -> PSY.get_input_active_power_limits(x),
             constraint_func = reserve_device_semicontinuousrange!,
             constraint_struct = DeviceRangeConstraintInfo,
+            component_type = T,
         ),
     )
 end
@@ -165,7 +153,7 @@ This function adds the reactive  power limits of generators when there are Commi
 """
 function add_constraints!(
     optimization_container::OptimizationContainer,
-    ::Type{<:RangeConstraint},
+    ::Type{<:ReactivePowerVariableLimitsConstraint},
     ::Type{ReactivePowerVariable},
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St, D},
@@ -183,7 +171,7 @@ function add_constraints!(
         optimization_container,
         RangeConstraintSpecInternal(
             constraint_infos,
-            make_constraint_name(RangeConstraint, ReactivePowerVariable, St),
+            ReactivePowerVariableLimitsConstraint(),
             ReactivePowerVariable(),
             St,
         ),
@@ -244,7 +232,7 @@ function energy_capacity_constraints!(
         optimization_container,
         RangeConstraintSpecInternal(
             constraint_infos,
-            make_constraint_name(ENERGY_CAPACITY, St),
+            EnergyCapacityConstraint(),
             EnergyVariable(),
             St,
         ),
@@ -265,12 +253,13 @@ function DeviceEnergyBalanceConstraintSpec(
     use_forecasts::Bool,
 ) where {St <: PSY.Storage}
     return DeviceEnergyBalanceConstraintSpec(;
-        constraint_name = make_constraint_name(ENERGY_LIMIT, St),
-        energy_variable = VariableKey(EnergyVariable, St),
+        constraint_type = EnergyLimitConstraint(),
+        energy_variable = EnergyVariable(),
         initial_condition = InitialEnergyLevel,
-        pin_variable_keys = [VariableKey(ActivePowerInVariable, St)],
-        pout_variable_keys = [VariableKey(ActivePowerOutVariable, St)],
+        pin_variable_types = [ActivePowerInVariable()],
+        pout_variable_types = [ActivePowerOutVariable()],
         constraint_func = energy_balance!,
+        component_type = St,
     )
 end
 
@@ -294,6 +283,7 @@ function reserve_contribution_constraint!(
             name,
             PSY.get_state_of_charge_limits(d),
             PSY.get_efficiency(d),
+            T,
         )
         add_device_services!(up_info, down_info, d, model)
         add_device_services!(energy_info, d, model)
@@ -306,15 +296,17 @@ function reserve_contribution_constraint!(
         optimization_container,
         constraint_infos_up,
         constraint_infos_dn,
-        make_constraint_name(RESERVE_POWER, T),
-        (VariableKey(ActivePowerInVariable, T), VariableKey(ActivePowerOutVariable, T)),
+        RangeLimitConstraint(),
+        (ActivePowerInVariable(), ActivePowerOutVariable()),
+        T,
     )
 
     reserve_energy_ub!(
         optimization_container,
         constraint_infos_energy,
-        make_constraint_name(RESERVE_ENERGY, T),
-        VariableKey(EnergyVariable, T),
+        ReserveEnergyConstraint(),
+        EnergyVariable(),
+        T,
     )
 
     return
@@ -356,24 +348,18 @@ function energy_target_constraint!(
         energy_target_param!(
             optimization_container,
             constraint_infos_target,
-            make_constraint_name(ENERGY_TARGET, T),
-            (
-                VariableKey(EnergyVariable, T),
-                VariableKey(EnergyShortageVariable, T),
-                VariableKey(EnergySurplusVariable, T),
-            ),
+            EnergyTargetConstraint(),
+            (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
             UpdateRef{T}("target", target_forecast_label),
+            T,
         )
     else
         energy_target!(
             optimization_container,
             constraint_infos_target,
-            make_constraint_name(ENERGY_TARGET, T),
-            (
-                VariableKey(EnergyVariable, T),
-                VariableKey(EnergyShortageVariable, T),
-                VariableKey(EnergySurplusVariable, T),
-            ),
+            EnergyTargetConstraint(),
+            (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
+            T,
         )
     end
 
@@ -395,9 +381,10 @@ function energy_target_constraint!(
             optimization_container,
             RangeConstraintSpecInternal(
                 constraint_infos,
-                make_constraint_name(RangeConstraint, EnergyShortageVariable, T),
-                VariableKey(EnergyShortageVariable, T),
-                Vector{VariableKey}(),
+                EnergyShortageVariableLimitsConstraint(),
+                EnergyShortageVariable(),
+                Vector{VariableType}(),
+                T,
             ),
         )
     end

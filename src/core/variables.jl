@@ -7,6 +7,7 @@ function VariableKey(
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: PSY.Component}
+    check_meta_chars(meta)
     return VariableKey{T, U}(meta)
 end
 
@@ -100,6 +101,8 @@ struct FlowActivePowerToFromVariable <: VariableType end
 struct FlowReactivePowerFromToVariable <: VariableType end
 
 struct FlowReactivePowerToFromVariable <: VariableType end
+
+struct VariableNotDefined <: VariableType end
 
 ###############################
 

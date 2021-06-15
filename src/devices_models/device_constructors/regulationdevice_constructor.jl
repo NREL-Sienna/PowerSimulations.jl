@@ -47,7 +47,7 @@ function construct_device!(
     nodal_expression!(optimization_container, devices, S)
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        DeltaActivePowerUpVariableLimitsConstraint,
         DeltaActivePowerUpVariable,
         devices,
         model,
@@ -56,7 +56,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        DeltaActivePowerDownVariableLimitsConstraint,
         DeltaActivePowerDownVariable,
         devices,
         model,
@@ -118,7 +118,7 @@ function construct_device!(
     nodal_expression!(optimization_container, devices, S)
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        DeltaActivePowerUpVariableLimitsConstraint,
         DeltaActivePowerUpVariable,
         devices,
         model,
@@ -127,7 +127,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        DeltaActivePowerDownVariableLimitsConstraint,
         DeltaActivePowerDownVariable,
         devices,
         model,
