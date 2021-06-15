@@ -1,73 +1,98 @@
 # The constants below are strings instead of enums because there is a requirement that users
 # should be able to define their own without changing PowerSimulations.
 
-# Constraints
-const ACTIVE = "active"
-const ACTIVE_RANGE = "activerange"
-const ACTIVE_RANGE_LB = "activerange_lb"
-const ACTIVE_RANGE_UB = "activerange_ub"
-const COMMITMENT = "commitment"
-const DURATION = "duration"
-const DURATION_DOWN = "duration_dn"
-const DURATION_UP = "duration_up"
-const ENERGY_CAPACITY = "energy_capacity"
-const ENERGY_CAPACITY_UP = "energy_capacity_up"
-const ENERGY_CAPACITY_DOWN = "energy_capacity_down"
-const ENERGY_LIMIT = "energy_limit"
-const ENERGY_TARGET = "energy_target"
-const FEEDFORWARD = "FF"
-const FEEDFORWARD_UB = "FF_ub"
-const FEEDFORWARD_BIN = "FF_bin"
-const FEEDFORWARD_INTEGRAL_LIMIT = "FF_integral"
-const FLOW_LIMIT = "FlowLimit"
-const FLOW_LIMIT_FROM_TO = "FlowLimitFT"
-const FLOW_LIMIT_TO_FROM = "FlowLimitTF"
-const FLOW_REACTIVE_POWER_FROM_TO = "FqFT"
-const FLOW_REACTIVE_POWER_TO_FROM = "FqTF"
-const FLOW_ACTIVE_POWER_FROM_TO = "FpFT"
-const FLOW_ACTIVE_POWER_TO_FROM = "FpTF"
-const FLOW_ACTIVE_POWER = "Fp"
-const FLOW_REACTIVE_POWER = "Fq"
-const INPUT_POWER_RANGE = "inputpower_range"
-const OUTPUT_POWER_RANGE = "outputpower_range"
-const RAMP = "ramp"
-const RAMP_DOWN = "ramp_dn"
-const RAMP_UP = "ramp_up"
-const RATE_LIMIT = "RateLimit"
-const RATE_LIMIT_FT = "RateLimitFT"
-const RATE_LIMIT_TF = "RateLimitTF"
-const REACTIVE = "reactive"
-const REACTIVE_RANGE = "reactiverange"
-const REQUIREMENT = "requirement"
-const RESERVE_POWER = "reserve_power"
-const RESERVE_ENERGY = "reserve_energy"
-const INFLOW_RANGE = "inflowrange"
-const ACTIVE_RANGE_IC = "active_range_ic"
-const START_TYPE = "start_type"
-const STARTUP_TIMELIMIT = "startup_timelimit"
-const STARTUP_TIMELIMIT_WARM = "startup_timelimit_warm"
-const STARTUP_TIMELIMIT_HOT = "startup_timelimit_warm"
-const STARTUP_INITIAL_CONDITION = "startup_initial_condition"
-const STARTUP_INITIAL_CONDITION_UB = "startup_initial_condition_ub"
-const STARTUP_INITIAL_CONDITION_LB = "startup_initial_condition_lb"
-const MUST_RUN = "must_run"
-const MUST_RUN_LB = "must_run_lb"
-const NODAL_BALANCE_ACTIVE = "nodal_balance_active"
-const NODAL_BALANCE_REACTIVE = "nodal_balance_reactive"
-const NETWORK_FLOW = "network_flow"
-
 abstract type ConstraintType end
 
-abstract type RangeConstraint <: ConstraintType end
-abstract type EnergyBalanceConstraint <: ConstraintType end
+struct AbsoluteValueConstraint <: ConstraintType end
+struct ActiveConstraint <: ConstraintType end
+struct ActivePowerVariableLimitsConstraint <: ConstraintType end
+struct ActiveRangeConstraint <: ConstraintType end
+struct ActiveRangeICConstraint <: ConstraintType end
+struct AreaDispatchBalanceConstraint <: ConstraintType end
+struct AreaParticipationAssignmentConstraint <: ConstraintType end
+struct BalanceAuxConstraint <: ConstraintType end
+struct CommitmentConstraint <: ConstraintType end
+struct CopperPlateBalanceConstraint <: ConstraintType end
+struct DeltaActivePowerDownVariableLimitsConstraint <: ConstraintType end
+struct DeltaActivePowerUpVariableLimitsConstraint <: ConstraintType end
+struct DurationConstraint <: ConstraintType end
+struct EnergyBalanceConstraint <: ConstraintType end
+struct EnergyBudgetConstraint <: ConstraintType end
+struct EnergyCapacityConstraint <: ConstraintType end
+struct EnergyCapacityDownConstraint <: ConstraintType end
+struct EnergyCapacityUpConstraint <: ConstraintType end
+struct EnergyLimitConstraint <: ConstraintType end
+struct EnergyTargetConstraint <: ConstraintType end
+struct EnergyShortageVariableLimitsConstraint <: ConstraintType end
+struct EqualityConstraint <: ConstraintType end
+struct FeedforwardBinConstraint <: ConstraintType end
+struct FeedforwardConstraint <: ConstraintType end
+struct FeedforwardIntegralLimitConstraint <: ConstraintType end
+struct FeedforwardUBConstraint <: ConstraintType end
+struct FlowActivePowerConstraint <: ConstraintType end
+struct FlowActivePowerFromToConstraint <: ConstraintType end
+struct FlowActivePowerToFromConstraint <: ConstraintType end
+struct FlowLimitConstraint <: ConstraintType end
+struct FlowLimitFromToConstraint <: ConstraintType end
+struct FlowLimitToFromConstraint <: ConstraintType end
+struct FlowRateConstraint <: ConstraintType end
+struct FlowRateConstraintFT <: ConstraintType end
+struct FlowRateConstraintTF <: ConstraintType end
+struct FlowReactivePowerConstraint <: ConstraintType end
+struct FlowReactivePowerFromToConstraint <: ConstraintType end
+struct FlowReactivePowerToFromConstraint <: ConstraintType end
+struct FrequencyResponseConstraint <: ConstraintType end
+struct InflowRangeConstraint <: ConstraintType end
+struct InputActivePowerVariableLimitsConstraint <: ConstraintType end
+struct InputPowerRangeConstraint <: ConstraintType end
+struct MustRunConstraint <: ConstraintType end
+struct NetworkFlowConstraint <: ConstraintType end
+struct NodalBalanceActiveConstraint <: ConstraintType end
+struct NodalBalanceReactiveConstraint <: ConstraintType end
+struct OutputActivePowerVariableLimitsConstraint <: ConstraintType end
+struct OutputPowerRangeConstraint <: ConstraintType end
+struct ParticipationAssignmentConstraint <: ConstraintType end
+struct RampConstraint <: ConstraintType end
+struct RampLimitConstraint <: ConstraintType end
+struct RangeLimitConstraint <: ConstraintType end
+struct RateLimitConstraint <: ConstraintType end
+struct RateLimitFTConstraint <: ConstraintType end
+struct RateLimitTFConstraint <: ConstraintType end
+struct ReactiveConstraint <: ConstraintType end
+struct ReactivePowerVariableLimitsConstraint <: ConstraintType end
+struct ReactiveRangeConstraint <: ConstraintType end
+struct RegulationLimitsDownConstraint <: ConstraintType end
+struct RegulationLimitsUpConstraint <: ConstraintType end
+struct RequirementConstraint <: ConstraintType end
+struct ReserveEnergyConstraint <: ConstraintType end
+struct ReservePowerConstraint <: ConstraintType end
+struct SACEPidAreaConstraint <: ConstraintType end
+struct StartTypeConstraint <: ConstraintType end
+struct StartupInitialConditionConstraint <: ConstraintType end
+struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 
-function make_constraint_name(
-    ::Type{T},
-    ::Type{U},
-    ::Type{V},
-) where {T <: ConstraintType, U <: VariableType, V <: PSY.Device}
-    return encode_symbol(T, make_variable_name(U, V))
+struct ConstraintKey{T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} <:
+       OptimizationContainerKey
+    meta::String
 end
 
-make_constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
-make_constraint_name(cons_type) = encode_symbol(cons_type)
+function ConstraintKey(
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}  # TODO DT: IS.InfrastructureType instead?
+    check_meta_chars(meta)
+    return ConstraintKey{T, U}(meta)
+end
+
+get_entry_type(
+    ::ConstraintKey{T, U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = T
+# TODO DT: since this can be System, "get_component_type" isn't the best name
+get_component_type(
+    ::ConstraintKey{T, U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = U
+
+function encode_key(key::ConstraintKey)
+    return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
+end

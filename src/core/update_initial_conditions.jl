@@ -15,7 +15,8 @@ function calculate_ic_quantity(
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
-    @debug last_status, var_status, abs(last_status - var_status)
+    @debug last_status, var_status, abs(last_status - var_status) _group =
+        LOG_GROUP_INITIAL_CONDITIONS
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? current_counter : 0.0
@@ -35,7 +36,8 @@ function calculate_ic_quantity(
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
-    @debug last_status, var_status, abs(last_status - var_status)
+    @debug last_status, var_status, abs(last_status - var_status) _group =
+        LOG_GROUP_INITIAL_CONDITIONS
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? 0.0 : current_counter
@@ -167,7 +169,8 @@ function _make_initial_conditions!(
     parameters = model_has_parameters(optimization_container)
     ic_container = get_initial_conditions(optimization_container)
     if !has_initial_conditions(ic_container, key)
-        @debug "Setting $(key.ic_type) initial conditions for all devices $(T) based on system data"
+        @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data" _group =
+            LOG_GROUP_INITIAL_CONDITIONS
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(ic_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
@@ -175,19 +178,20 @@ function _make_initial_conditions!(
             val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             ini_conds[ix] = ic
-            @debug "set initial condition" key ic val_
+            @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_
         end
     else
         ini_conds = get_initial_conditions(ic_container, key)
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
-            @debug "Setting $(key.ic_type) initial conditions device $(PSY.get_name(dev)) based on system data"
+            @debug "Setting $(get_entry_type(key)) initial conditions device $(PSY.get_name(dev)) based on system data" _group =
+                LOG_GROUP_INITIAL_CONDITIONS
             val_ = get_val_func(dev, key, device_formulation, variable_type)
             val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             push!(ini_conds, ic)
-            @debug "set initial condition" key ic val_
+            @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_
         end
     end
 
@@ -291,10 +295,10 @@ function _get_ace_error(device, key)
 end
 
 function _get_duration_value(dev, key)
-    if key.ic_type == InitialTimeDurationOn
+    if get_entry_type(key) == InitialTimeDurationOn
         value = PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     else
-        @assert key.ic_type == InitialTimeDurationOff
+        @assert get_entry_type(key) == InitialTimeDurationOff
         value = !PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
     end
 
@@ -306,9 +310,9 @@ function _get_ref_active_power(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     if get_use_parameters(container)
-        return UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER)
+        return UpdateRef{JuMP.VariableRef}(T, ActivePowerVariable())
     else
-        return UpdateRef{T}(ACTIVE_POWER, "active_power")
+        return UpdateRef{T}("P", "active_power")
     end
 end
 
@@ -317,43 +321,48 @@ function _get_ref_on_status(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     if get_use_parameters(container)
-        return UpdateRef{JuMP.VariableRef}(T, ON)
+        return UpdateRef{JuMP.VariableRef}(T, OnVariable())
     else
-        return UpdateRef{T}(ON, "On")
+        return UpdateRef{T}("On", "On")
     end
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "initial_energy")
+    return get_use_parameters(container) ?
+           UpdateRef{JuMP.VariableRef}(T, EnergyVariable()) :
+           UpdateRef{T}("E", "initial_energy")
 end
 
 function _get_ref_reservoir_energy(
     ::Type{T},
     container::InitialConditions,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "hydro_budget")
+    return get_use_parameters(container) ?
+           UpdateRef{JuMP.VariableRef}(T, EnergyVariable()) :
+           UpdateRef{T}("E", "hydro_budget")
 end
 
 function _get_ref_reservoir_energy_up(
     ::Type{T},
     container::InitialConditions,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY_UP) :
-           UpdateRef{T}(ENERGY_UP, "get_hydro_budget")
+    return get_use_parameters(container) ?
+           UpdateRef{JuMP.VariableRef}(T, EnergyVariableUp()) :
+           UpdateRef{T}("Eup", "get_hydro_budget")
 end
 
 function _get_ref_reservoir_energy_down(
     ::Type{T},
     container::InitialConditions,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY_DOWN) :
-           UpdateRef{T}(ENERGY_DOWN, "get_hydro_budget")
+    return get_use_parameters(container) ?
+           UpdateRef{JuMP.VariableRef}(T, EnergyVariableDown()) :
+           UpdateRef{T}("Edown", "get_hydro_budget")
 end
 
 function _get_ref_ace_error(::Type{PSY.AGC}, container::InitialConditions)
     T = PSY.AGC
-    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "ACE") :
+    return get_use_parameters(container) ?
+           UpdateRef{JuMP.VariableRef}(T, AreaControlError()) :
            UpdateRef{T}("ACE", "initial_ace")
 end

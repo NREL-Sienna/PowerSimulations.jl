@@ -43,8 +43,6 @@ reserves = ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve)
 ```
 """
 mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
-    component_type::Type{D}
-    formulation::Type{B}
     feedforward::Union{Nothing, AbstractAffectFeedForward}
     use_service_name::Bool
     function ServiceModel(
@@ -55,12 +53,16 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)
-        new{D, B}(D, B, feedforward, use_service_name)
+        new{D, B}(feedforward, use_service_name)
     end
 end
 
-get_component_type(m::ServiceModel) = m.component_type
-get_formulation(m::ServiceModel) = m.formulation
+get_component_type(
+    ::ServiceModel{D, B},
+) where {D <: PSY.Service, B <: AbstractServiceFormulation} = D
+get_formulation(
+    ::ServiceModel{D, B},
+) where {D <: PSY.Service, B <: AbstractServiceFormulation} = B
 get_feedforward(m::ServiceModel) = m.feedforward
 
 function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)

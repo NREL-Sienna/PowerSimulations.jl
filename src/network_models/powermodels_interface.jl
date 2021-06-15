@@ -358,26 +358,26 @@ end
 #### PM accessor functions ########
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => THETA)
+    pm_var_map[PSY.Bus] = Dict(:va => VoltageAngle())
     pm_var_map[PSY.ACBranch] =
-        Dict(:p => (from_to = FlowActivePowerVariable, to_from = nothing))
+        Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing))
     pm_var_map[PSY.DCBranch] =
-        Dict(:p_dc => (from_to = FlowActivePowerVariable, to_from = nothing))
+        Dict(:p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing))
 
     return pm_var_map
 end
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => THETA)
-    pm_var_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable)
+    pm_var_map[PSY.Bus] = Dict(:va => VoltageAngle())
+    pm_var_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable())
     pm_var_map[PSY.DCBranch] = Dict(
         :p_dc => (
-            from_to = FlowActivePowerFromToVariable,
-            to_from = FlowActivePowerToFromVariable,
+            from_to = FlowActivePowerFromToVariable(),
+            to_from = FlowActivePowerToFromVariable(),
         ),
     )
 
@@ -395,24 +395,24 @@ function PMvarmap(::Type{PTDFPowerModel})
 end
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => THETA, :vm => VM)
+    pm_var_map[PSY.Bus] = Dict(:va => VoltageAngle(), :vm => VoltageMagnitude())
     pm_var_map[PSY.ACBranch] = Dict(
         :p => (
-            from_to = FlowActivePowerFromToVariable,
-            to_from = FlowActivePowerToFromVariable,
+            from_to = FlowActivePowerFromToVariable(),
+            to_from = FlowActivePowerToFromVariable(),
         ),
         :q => (
-            from_to = FlowReactivePowerFromToVariable,
-            to_from = FlowReactivePowerToFromVariable,
+            from_to = FlowReactivePowerFromToVariable(),
+            to_from = FlowReactivePowerToFromVariable(),
         ),
     )
     pm_var_map[PSY.DCBranch] = Dict(
-        :p_dc => (from_to = FlowActivePowerVariable, to_from = nothing),
+        :p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing),
         :q_dc => (
-            from_to = FlowReactivePowerFromToVariable,
-            to_from = FlowReactivePowerToFromVariable,
+            from_to = FlowReactivePowerFromToVariable(),
+            to_from = FlowReactivePowerToFromVariable(),
         ),
     )
 
@@ -420,18 +420,18 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
 end
 
 function PMconmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
-    pm_con_map = Dict{Type, Dict{Symbol, String}}()
+    pm_con_map = Dict{Type, Dict{Symbol, <:ConstraintType}}()
 
-    pm_con_map[PSY.Bus] = Dict(:power_balance_p => NODAL_BALANCE_ACTIVE)
+    pm_con_map[PSY.Bus] = Dict(:power_balance_p => NodalBalanceActiveConstraint())
     return pm_con_map
 end
 
 function PMconmap(::Type{S}) where {S <: PM.AbstractPowerModel}
-    pm_con_map = Dict{Type, Dict{Symbol, String}}()
+    pm_con_map = Dict{Type, Dict{Symbol, ConstraintType}}()
 
     pm_con_map[PSY.Bus] = Dict(
-        :power_balance_p => NODAL_BALANCE_ACTIVE,
-        :power_balance_q => NODAL_BALANCE_REACTIVE,
+        :power_balance_p => NodalBalanceActiveConstraint(),
+        :power_balance_q => NodalBalanceReactiveConstraint(),
     )
     return pm_con_map
 end
@@ -441,7 +441,7 @@ function PMexprmap(::Type{S}) where {S <: PM.AbstractPowerModel}
         Type,
         NamedTuple{
             (:pm_expr, :psi_con),
-            Tuple{Dict{Symbol, Union{String, NamedTuple}}, Symbol},
+            Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, Symbol},
         },
     }()
 
@@ -453,13 +453,13 @@ function PMexprmap(::Type{PTDFPowerModel})
         Type,
         NamedTuple{
             (:pm_expr, :psi_con),
-            Tuple{Dict{Symbol, Union{String, NamedTuple}}, Symbol},
+            Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, ConstraintType},
         },
     }()
 
     pm_expr_map[PSY.ACBranch] = (
-        pm_expr = Dict(:p => (from_to = FlowActivePowerVariable, to_from = nothing)),
-        psi_con = Symbol(NETWORK_FLOW),
+        pm_expr = Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing)),
+        psi_con = NetworkFlowConstraint(),
     )
 
     return pm_expr_map
@@ -480,15 +480,16 @@ function add_pm_var_refs!(
     pm_var_types = keys(PM.var(optimization_container.pm, 1))
 
     pm_var_map = PMvarmap(system_formulation)
-
+    bus_names = [PSY.get_name(b) for b in values(bus_dict)]
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_types
-            container = PSI.container_spec(
-                JuMP.VariableRef,
-                [PSY.get_name(b) for b in values(bus_dict)],
+            container = add_var_container!(
+                optimization_container,
+                ps_v,
+                PSY.Bus,
+                bus_names,
                 time_steps,
             )
-            assign_variable!(optimization_container, ps_v, PSY.Bus, container)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
                 container[name, t] = PM.var(optimization_container.pm, t, pm_v)[pm_bus] # pm_vars[pm_v][pm_bus]
@@ -532,15 +533,12 @@ function add_pm_var_refs!(
                 for dir in fieldnames(typeof(ps_v))
                     var_type = getfield(ps_v, dir)
                     var_type === nothing && continue
-                    container = PSI.container_spec(
-                        JuMP.VariableRef,
+                    container = add_var_container!(
+                        optimization_container,
+                        var_type,
+                        d_type,
                         [PSY.get_name(d[2]) for d in devices],
                         time_steps,
-                    )
-                    assign_variable!(
-                        optimization_container,
-                        make_variable_name(var_type, d_type),
-                        container,
                     )
                     for t in time_steps, (pm_d, d) in devices
                         var =
@@ -571,7 +569,8 @@ function add_pm_con_refs!(
         if pm_v in pm_con_names
             container = PSI.add_cons_container!(
                 optimization_container,
-                make_constraint_name(ps_v, PSY.Bus),
+                ps_v,
+                PSY.Bus,
                 [PSY.get_name(b) for b in values(bus_dict)],
                 time_steps,
             )
@@ -641,19 +640,18 @@ function add_pm_expr_refs!(
 
                     add_variable!(
                         optimization_container,
-                        var_type(),
+                        var_type,
                         mapped_ps_devices,
                         StaticBranchUnbounded(),
                     )
-                    psi_var_container = get_variable(
-                        optimization_container,
-                        make_variable_name(var_type, d_type),
-                    )
+                    psi_var_container =
+                        get_variable(optimization_container, var_type, d_type)
 
-                    con_name = make_constraint_name(pm_expr_map[d_class].psi_con, d_type)
+                    con_type = pm_expr_map[d_class].psi_con
                     psi_con_container = add_cons_container!(
                         optimization_container,
-                        con_name,
+                        con_type,
+                        d_type,
                         mapped_ps_device_names,
                         time_steps,
                     )

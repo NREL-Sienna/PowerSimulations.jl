@@ -6,9 +6,9 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     resolution::Dates.TimePeriod
     settings::Settings
     settings_copy::Settings
-    variables::Dict{Symbol, AbstractArray}
+    variables::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
-    constraints::Dict{Symbol, AbstractArray}
+    constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::DenseAxisArrayContainer
     parameters::ParametersContainer
@@ -233,7 +233,6 @@ function set_initial_conditions!(
     set_initial_conditions!(optimization_container.initial_conditions, key, value)
 end
 
-_variable_type(cm::OptimizationContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(optimization_container::OptimizationContainer) =
     optimization_container.time_steps
 model_resolution(optimization_container::OptimizationContainer) =
@@ -266,90 +265,50 @@ get_jump_model(optimization_container::OptimizationContainer) =
 get_base_power(optimization_container::OptimizationContainer) =
     optimization_container.base_power
 
-function get_variable(
-    optimization_container::OptimizationContainer,
-    var_type::AbstractString,
-    ::Type{T},
-) where {T <: PSY.Component}
-    return get_variable(optimization_container, make_variable_name(var_type, T))
-end
-
-function get_variable(
-    optimization_container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-) where {T <: VariableType, U <: PSY.Component}
-    return get_variable(optimization_container, make_variable_name(T, U))
-end
-
-function get_variable(
-    optimization_container::OptimizationContainer,
-    var_type::AbstractString,
-)
-    return get_variable(optimization_container, make_variable_name(var_type))
-end
-
-function get_variable(optimization_container::OptimizationContainer, update_ref::UpdateRef)
-    return get_variable(optimization_container, update_ref.access_ref)
-end
-
-function get_variable(optimization_container::OptimizationContainer, name::Symbol)
-    var = get(optimization_container.variables, name, nothing)
+function get_variable(optimization_container::OptimizationContainer, key::VariableKey)
+    var = get(optimization_container.variables, key, nothing)
     if var === nothing
-        @error "$name is not stored" sort!(get_variable_names(optimization_container))
+        name = encode_key(key)
+        keys = encode_key.(get_variable_keys(optimization_container))
+        @error "$name is not stored" sort!(keys)
         throw(IS.InvalidValue("variable $name is not stored"))
     end
-
     return var
 end
 
-function get_variable_names(optimization_container::OptimizationContainer)
+function get_variable(
+    optimization_container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta::String = CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableType, U <: PSY.Component}
+    return get_variable(optimization_container, VariableKey(T, U, meta))
+end
+
+function get_variable_keys(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.variables))
-end
-
-function assign_variable!(
-    optimization_container::OptimizationContainer,
-    variable_type::AbstractString,
-    ::Type{T},
-    value,
-) where {T <: PSY.Component}
-    assign_variable!(optimization_container, make_variable_name(variable_type, T), value)
-    return
-end
-
-function assign_variable!(
-    optimization_container::OptimizationContainer,
-    variable_type::AbstractString,
-    value,
-)
-    assign_variable!(optimization_container, make_variable_name(variable_type), value)
-    return
 end
 
 function _assign_container!(container::Dict, key, value)
     if haskey(container, key)
-        @error "variable $key is already stored" sort!(collect(keys!(container)))
+        @error "variable $(encode_key(key)) is already stored" sort!(
+            encode_key.(keys(container)),
+        )
         throw(IS.InvalidValue("$key is already stored"))
     end
     container[key] = value
-end
-
-function assign_variable!(
-    optimization_container::OptimizationContainer,
-    name::Symbol,
-    value,
-)
-    @debug "assign_variable" name
-    _assign_container!(optimization_container.variables, name, value)
-    return
+    @debug "Added container entry $(typeof(key)) $(encode_key(key))" _group =
+        LOG_GROUP_OPTIMZATION_CONTAINER
 end
 
 function add_aux_var_container!(
     optimization_container::OptimizationContainer,
-    var_key::AuxVarKey{<:AuxVariableType, <:PSY.Component},
+    ::T,
+    ::Type{U},
     axs...;
     sparse = false,
-)
+) where {T <: AuxVariableType, U <: PSY.Component}
+    var_key = AuxVarKey(T, U)
     if sparse
         container = sparse_container_spec(Float64, axs...)
     else
@@ -359,100 +318,96 @@ function add_aux_var_container!(
     return container
 end
 
-# TODO: Use this type of interface for regular vars later
 function add_var_container!(
     optimization_container::OptimizationContainer,
-    var_name::Symbol,
+    ::T,
+    ::Type{U},
     axs...;
     sparse = false,
-)
+) where {T <: VariableType, U <: PSY.Component}
+    var_key = VariableKey(T, U)
     if sparse
         container = sparse_container_spec(JuMP.VariableRef, axs...)
     else
         container = container_spec(JuMP.VariableRef, axs...)
     end
-    assign_variable!(optimization_container, var_name, container)
+    _assign_container!(optimization_container.variables, var_key, container)
+    return container
+end
+
+function add_var_container!(
+    optimization_container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta::String,
+    axs...;
+    sparse = false,
+) where {T <: VariableType, U <: PSY.Component}
+    var_key = VariableKey(T, U, meta)
+    if sparse
+        container = sparse_container_spec(JuMP.VariableRef, axs...)
+    else
+        container = container_spec(JuMP.VariableRef, axs...)
+    end
+    _assign_container!(optimization_container.variables, var_key, container)
     return container
 end
 
 function get_constraint(
     optimization_container::OptimizationContainer,
-    constraint_type::AbstractString,
-    ::Type{T},
-) where {T <: PSY.Component}
-    return get_constraint(optimization_container, make_constraint_name(constraint_type, T))
+    constraint_type::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: PSY.Component}
+    return get_constraint(optimization_container, ConstraintKey(T, U, meta))
 end
 
 function get_constraint(
     optimization_container::OptimizationContainer,
-    constraint_type::AbstractString,
+    constraint_type::ConstraintType,
+    meta = CONTAINER_KEY_EMPTY_META,
 )
-    return get_constraint(optimization_container, make_constraint_name(constraint_type))
+    return get_constraint(optimization_container, ConstraintKey(constraint_type, meta))
 end
 
-function get_constraint(optimization_container::OptimizationContainer, name::Symbol)
-    var = get(optimization_container.constraints, name, nothing)
+function get_constraint(optimization_container::OptimizationContainer, key::ConstraintKey)
+    var = get(optimization_container.constraints, key, nothing)
     if var === nothing
-        @error "$name is not stored" sort!(get_constraint_names(optimization_container))
-        throw(IS.InvalidValue("constraint $name is not stored"))
+        @error "$name is not stored" sort!(get_constraint_keys(optimization_container))
+        throw(IS.InvalidValue("constraint $key is not stored"))
     end
 
     return var
 end
 
-function get_constraint_names(optimization_container::OptimizationContainer)
+function get_constraint_keys(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.constraints))
-end
-
-function assign_constraint!(
-    optimization_container::OptimizationContainer,
-    constraint_type::AbstractString,
-    ::Type{T},
-    value,
-) where {T <: PSY.Component}
-    assign_constraint!(
-        optimization_container,
-        make_constraint_name(constraint_type, T),
-        value,
-    )
-    return
-end
-
-function assign_constraint!(
-    optimization_container::OptimizationContainer,
-    constraint_type::AbstractString,
-    value,
-)
-    assign_constraint!(optimization_container, make_constraint_name(constraint_type), value)
-    return
-end
-
-function assign_constraint!(
-    optimization_container::OptimizationContainer,
-    name::Symbol,
-    value,
-)
-    @debug "set_constraint" name
-    optimization_container.constraints[name] = value
-    return
 end
 
 function add_cons_container!(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    constaint_type::T,
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    cons_key = ConstraintKey(T, U, meta)
+    return add_cons_container!(optimization_container, cons_key, axs...; sparse = sparse)
+end
+
+function add_cons_container!(
+    optimization_container::OptimizationContainer,
+    cons_key::ConstraintKey,
     axs...;
     sparse = false,
 )
-    if !haskey(optimization_container.constraints, cons_name)
-        if sparse
-            container = sparse_container_spec(JuMP.ConstraintRef, axs...)
-        else
-            container = container_spec(JuMP.ConstraintRef, axs...)
-        end
-        assign_constraint!(optimization_container, cons_name, container)
+    if sparse
+        container = sparse_container_spec(JuMP.ConstraintRef, axs...)
     else
-        Throw(error("constraint container already exists: $cons_name"))
+        container = container_spec(JuMP.ConstraintRef, axs...)
     end
+    _assign_container!(optimization_container.constraints, cons_key, container)
     return container
 end
 
@@ -609,7 +564,8 @@ end
 
 function read_variables(optimization_container::OptimizationContainer)
     return Dict(
-        k => axis_array_to_dataframe(v) for (k, v) in get_variables(optimization_container)
+        encode_key(k) => axis_array_to_dataframe(v) for
+        (k, v) in get_variables(optimization_container)
     )
 end
 
@@ -696,8 +652,8 @@ function build_impl!(
         )
     end
     for device_model in values(template.devices)
-        @debug "Building $(device_model.component_type) with $(device_model.formulation) formulation"
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(device_model.component_type)" begin
+        @debug "Building $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             construct_device!(optimization_container, sys, device_model, transmission)
             @debug get_problem_size(optimization_container)
         end
@@ -710,8 +666,8 @@ function build_impl!(
     end
 
     for branch_model in values(template.branches)
-        @debug "Building $(branch_model.component_type) with $(branch_model.formulation) formulation"
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(branch_model.component_type)" begin
+        @debug "Building $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
             construct_device!(optimization_container, sys, branch_model, transmission)
             @debug get_problem_size(optimization_container)
         end

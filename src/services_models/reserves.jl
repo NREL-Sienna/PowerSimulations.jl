@@ -6,11 +6,11 @@ struct RampReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables #########################################
 
 get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
-############################### ActiveServiceVariable, Reserve #########################################
+############################### ActivePowerReserveVariable, Reserve #########################################
 
-get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
-get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = nothing
-get_variable_lower_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
+get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
+get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.Reserve, ::PSY.Component, _) = nothing
+get_variable_lower_bound(::ActivePowerReserveVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
 
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 
@@ -30,20 +30,20 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
     name = PSY.get_name(service)
-    constraint =
-        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(optimization_container, name, SR)
+    constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
+    reserve_variable =
+        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_services_slack_variables(optimization_container.settings)
 
     ts_vector = get_time_series(optimization_container, service, "requirement")
 
-    use_slacks && (slack_vars = reserve_slacks(optimization_container, name))
+    use_slacks && (slack_vars = reserve_slacks(optimization_container, service))
 
     requirement = PSY.get_requirement(service)
     if parameters
         container = get_parameter_container(
             optimization_container,
-            UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"),
+            UpdateRef{SR}("service_requirement", "requirement"),
         )
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
@@ -81,12 +81,12 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
     name = PSY.get_name(service)
-    constraint =
-        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(optimization_container, name, SR)
+    constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
+    reserve_variable =
+        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_services_slack_variables(optimization_container.settings)
 
-    use_slacks && (slack_vars = reserve_slacks(optimization_container, name))
+    use_slacks && (slack_vars = reserve_slacks(optimization_container, service))
 
     requirement = PSY.get_requirement(service)
     for t in time_steps
@@ -109,7 +109,12 @@ function cost_function!(
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
-    reserve = get_variable(optimization_container, PSY.get_name(service), SR)
+    reserve = get_variable(
+        optimization_container,
+        ActivePowerReserveVariable(),
+        SR,
+        PSY.get_name(service),
+    )
     for r in reserve
         JuMP.add_to_expression!(
             optimization_container.cost_function,
@@ -129,10 +134,11 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
     name = PSY.get_name(service)
-    constraint =
-        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(optimization_container, name, SR)
-    requirement_variable = get_variable(optimization_container, SERVICE_REQUIREMENT, SR)
+    constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
+    reserve_variable =
+        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
+    requirement_variable =
+        get_variable(optimization_container, ServiceRequirementVariable(), SR)
 
     for t in time_steps
         constraint[name, t] = JuMP.@constraint(
@@ -170,8 +176,6 @@ function _get_data_for_ramp_limit(
 
     for d in contributing_devices
         name = PSY.get_name(d)
-        non_binding_up = false
-        non_binding_down = false
         ramp_limits = _get_ramp_limits(d)
         if !(ramp_limits === nothing)
             p_lims = PSY.get_active_power_limits(d)
@@ -202,16 +206,16 @@ function ramp_constraints!(
     T <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    initial_time = model_initial_time(optimization_container)
     data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
     service_name = PSY.get_name(service)
     if !isempty(data)
         service_upward_rateofchange!(
             optimization_container,
             data,
-            make_constraint_name(RAMP, SR),
-            make_variable_name(service_name, SR),
+            RampConstraint(),
+            ActivePowerReserveVariable(),
             service_name,
+            SR,
         )
     else
         @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
@@ -229,17 +233,16 @@ function ramp_constraints!(
     T <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    initial_time = model_initial_time(optimization_container)
     data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
     service_name = PSY.get_name(service)
     if !isempty(data)
-        # TODO: `make_constraint_name` to build unique constraint name using  service_name
         service_downward_rateofchange!(
             optimization_container,
             data,
-            make_constraint_name(RAMP, SR),
-            make_variable_name(service_name, SR),
+            RampConstraint(),
+            ActivePowerReserveVariable(),
             service_name,
+            SR,
         )
     else
         @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
@@ -296,7 +299,7 @@ function cost_function!(
     service::SR,
     model::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
-    spec = AddCostSpec(SR, model.formulation, optimization_container)
+    spec = AddCostSpec(SR, get_formulation(model), optimization_container)
     @debug SR, spec
     add_to_cost!(optimization_container, spec, service, PSY.get_name(service))
     return
@@ -309,7 +312,7 @@ function modify_device_model!(
 )
     device_types = unique(typeof.(contributing_devices))
     for dt in device_types
-        for (device_model_name, device_model) in devices_template
+        for device_model in values(devices_template)
             # add message here when it exists
             get_component_type(device_model) != dt && continue
             service_model in device_model.services && continue
@@ -328,10 +331,10 @@ function include_service!(
     T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     SR <: PSY.Reserve{PSY.ReserveUp},
 }
-    for (ix, service) in enumerate(services)
+    for service in services
         push!(
             constraint_info.additional_terms_ub,
-            make_constraint_name(PSY.get_name(service), SR),
+            VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service)),
         )
     end
     return
@@ -345,17 +348,17 @@ function include_service!(
     T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     SR <: PSY.Reserve{PSY.ReserveDown},
 }
-    for (ix, service) in enumerate(services)
+    for service in services
         push!(
             constraint_info.additional_terms_lb,
-            make_constraint_name(PSY.get_name(service), SR),
+            VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service)),
         )
     end
     return
 end
 
 function include_service!(
-    constraint_info::T,
+    ::T,
     services,
     ::ServiceModel{SR, RampReserve},
 ) where {T <: AbstractRampConstraintInfo, SR <: PSY.Reserve{PSY.ReserveDown}}
@@ -367,11 +370,10 @@ function include_service!(
     services,
     ::ServiceModel{SR, RampReserve},
 ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
-    for (ix, service) in enumerate(services)
-        # Should this be make_variable_name ?
-        name = make_constraint_name(PSY.get_name(service), SR)
-        push!(constraint_info.additional_terms_up, name)
-        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+    for service in services
+        key = VariableKey(ActivePowerReserveVariable, SR, get_name(service))
+        push!(constraint_info.additional_terms_up, key)
+        set_time_frame!(constraint_info, (key => PSY.get_time_frame(service)))
     end
     return
 end
@@ -381,11 +383,10 @@ function include_service!(
     services,
     ::ServiceModel{SR, RampReserve},
 ) where {SR <: PSY.Reserve{PSY.ReserveDown}}
-    for (ix, service) in enumerate(services)
-        # Should this be make_variable_name ?
-        name = make_constraint_name(PSY.get_name(service), SR)
-        push!(constraint_info.additional_terms_dn, name)
-        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+    for service in services
+        key = VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service))
+        push!(constraint_info.additional_terms_dn, key)
+        set_time_frame!(constraint_info, (key => PSY.get_time_frame(service)))
     end
     return
 end
@@ -399,10 +400,9 @@ function add_device_services!(
     D <: PSY.Device,
 }
     for service_model in get_services(model)
-        if PSY.has_service(device, service_model.component_type)
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
-            )
+        service_type = get_component_type(service_model)
+        if PSY.has_service(device, service_type)
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
             include_service!(constraint_info, services, service_model)
         end
@@ -427,10 +427,9 @@ function add_device_services!(
     model::DeviceModel{D, BatteryAncillaryServices},
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
-        if PSY.has_service(device, service_model.component_type)
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
-            )
+        service_type = get_component_type(service_model)
+        if PSY.has_service(device, service_type)
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
             include_service!(constraint_info, services, service_model)
         end
@@ -445,28 +444,29 @@ function add_device_services!(
     model::DeviceModel{D, <:AbstractStorageFormulation},
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
-        if PSY.has_service(device, service_model.component_type)
-            services = (
-                s for s in PSY.get_services(device) if isa(s, service_model.component_type)
-            )
+        service_type = get_component_type(service_model)
+        if PSY.has_service(device)
+            services = (s for s in PSY.get_services(device) if isa(s, service_type))
             @assert !isempty(services)
-            if service_model.component_type <: PSY.Reserve{PSY.ReserveDown}
+            if service_type <: PSY.Reserve{PSY.ReserveDown}
                 for service in services
                     push!(
                         constraint_data_in.additional_terms_ub,
-                        make_constraint_name(
+                        VariableKey(
+                            ActivePowerReserveVariable,
+                            service_type,
                             PSY.get_name(service),
-                            service_model.component_type,
                         ),
                     )
                 end
-            elseif service_model.component_type <: PSY.Reserve{PSY.ReserveUp}
+            elseif service_type <: PSY.Reserve{PSY.ReserveUp}
                 for service in services
                     push!(
                         constraint_data_out.additional_terms_ub,
-                        make_constraint_name(
+                        VariableKey(
+                            ActivePowerReserveVariable,
+                            service_type,
                             PSY.get_name(service),
-                            service_model.component_type,
                         ),
                     )
                 end

@@ -30,19 +30,32 @@ If t > 1:
 function device_linear_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-)
+    cons_type::ConstraintType,
+    var_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
     parameters = model_has_parameters(optimization_container)
     time_steps = model_time_steps(optimization_container)
-    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_type, T)
 
     set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(optimization_container, up_name, set_name, time_steps)
-    con_down = add_cons_container!(optimization_container, down_name, set_name, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "dn",
+    )
 
     for r in rate_data
         name = get_component_name(r)
@@ -133,29 +146,42 @@ If t > 1:
                                                                      (3) gives min/max for 'variable'
 * initial_conditions::Vector{InitialCondition} : for time zero 'variable'
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
-- : var_names[1] : 'variable'
-- : var_names[2] : 'varstart'
-- : var_names[3] : 'varstop'
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey} : the names of the variables
+- : var_keys[1] : 'variable'
+- : var_keys[2] : 'varstart'
+- : var_keys[3] : 'varstop'
 """
 function device_mixedinteger_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
-    cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
-)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
     parameters = model_has_parameters(optimization_container)
     time_steps = model_time_steps(optimization_container)
-    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    variable = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    variable = get_variable(optimization_container, var_types[1], T)
+    varstart = get_variable(optimization_container, var_types[2], T)
+    varstop = get_variable(optimization_container, var_types[3], T)
 
     set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(optimization_container, up_name, set_name, time_steps)
-    con_down = add_cons_container!(optimization_container, down_name, set_name, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "dn",
+    )
 
     for r in rate_data
         name = get_component_name(r)
@@ -250,24 +276,36 @@ If t > 1:
                                                                      (3) gives min/max for 'variable'
 * initial_conditions::Vector{InitialCondition} : for time zero 'variable'
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey} : the names of the variables
 - : var_name : 'variable'
 """
 function device_multistart_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-)
+    cons_type::ConstraintType,
+    var_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
-
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_type, T)
 
     set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(optimization_container, up_name, set_name, time_steps)
-    con_down = add_cons_container!(optimization_container, down_name, set_name, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "dn",
+    )
 
     for r in rate_data
         name = get_component_name(r)
@@ -330,17 +368,25 @@ end
 function service_upward_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{ServiceRampConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
+    cons_type::ConstraintType,
+    var_type::VariableType,
     service_name::AbstractString,
-)
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up" * service_name)
 
-    variable = get_variable(optimization_container, var_name)
+    # TODO DT: is this change valid?
+    variable = get_variable(optimization_container, var_type, T, service_name)
 
     set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(optimization_container, up_name, set_name, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_name,
+        time_steps,
+        meta = service_name,
+    )
 
     for r in rate_data, t in time_steps
         name = get_component_name(r)
@@ -356,17 +402,23 @@ end
 function service_downward_rateofchange!(
     optimization_container::OptimizationContainer,
     rate_data::Vector{ServiceRampConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
+    cons_type::ConstraintType,
+    var_type::VariableType,
     service_name::AbstractString,
-)
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn" * service_name)
-
-    variable = get_variable(optimization_container, var_name)
-
+    # TODO DT: is this change valid?
+    variable = get_variable(optimization_container, var_type, T, service_name)
     set_name = [get_component_name(r) for r in rate_data]
-    con_down = add_cons_container!(optimization_container, down_name, set_name, time_steps)
+    con_down = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_name,
+        time_steps,
+        meta = service_name,
+    )
 
     for r in rate_data, t in time_steps
         name = get_component_name(r)

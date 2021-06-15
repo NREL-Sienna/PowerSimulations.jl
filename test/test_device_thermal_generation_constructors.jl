@@ -13,17 +13,17 @@ end
 
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
-    bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
     ]
 
-    uc_constraint_names = [
-        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
-        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
-        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+    uc_constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "dn"),
     ]
 
     aux_vars_keys = [
@@ -36,8 +36,8 @@ end
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
-    psi_constraint_test(op_problem, uc_constraint_names)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_constraint_test(op_problem, uc_constraint_keys)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
     psi_aux_var_test(op_problem, aux_vars_keys)
 
@@ -49,8 +49,8 @@ end
     )
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 480, 0, 480, 120, 120, true)
-    psi_constraint_test(op_problem, uc_constraint_names)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_constraint_test(op_problem, uc_constraint_keys)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -63,22 +63,22 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
 @testset "Thermal UC With AC - PF" begin
-    bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
     ]
-    uc_constraint_names = [
-        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
-        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
-        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+    uc_constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "dn"),
     ]
 
     aux_vars_keys = [
@@ -92,8 +92,8 @@ end
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 600, 0, 600, 240, 120, true)
-    psi_constraint_test(op_problem, uc_constraint_names)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_constraint_test(op_problem, uc_constraint_keys)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
     psi_aux_var_test(op_problem, aux_vars_keys)
 
@@ -105,8 +105,8 @@ end
     )
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 600, 0, 600, 240, 120, true)
-    psi_constraint_test(op_problem, uc_constraint_names)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_constraint_test(op_problem, uc_constraint_keys)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -119,22 +119,22 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
 @testset "Thermal MultiStart UC With DC - PF" begin
-    bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
     ]
-    uc_constraint_names = [
-        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalMultiStart),
+    uc_constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalMultiStart, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalMultiStart, "dn"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalMultiStart, "up"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalMultiStart, "dn"),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalStandardUnitCommitment)
 
@@ -148,23 +148,23 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 384, 0, 240, 48, 96, true)
-        psi_constraint_test(op_problem, uc_constraint_names)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_constraint_test(op_problem, uc_constraint_keys)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 @testset "Thermal MultiStart UC With AC - PF" begin
-    bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
     ]
-    uc_constraint_names = [
-        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalMultiStart),
+    uc_constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalMultiStart, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalMultiStart, "dn"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalMultiStart, "up"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalMultiStart, "dn"),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalStandardUnitCommitment)
 
@@ -178,18 +178,18 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 432, 0, 288, 96, 96, true)
-        psi_constraint_test(op_problem, uc_constraint_names)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_constraint_test(op_problem, uc_constraint_keys)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 ################################### Basic Unit Commitment tests ############################
 @testset "Thermal Basic UC With DC - PF" begin
-    bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -197,7 +197,7 @@ end
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 480, 0, 240, 120, 120, true)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     op_problem = OperationsProblem(
@@ -208,7 +208,7 @@ end
     )
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 480, 0, 240, 120, 120, true)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -221,16 +221,16 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
 @testset "Thermal Basic UC With AC - PF" begin
-    bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -238,7 +238,7 @@ end
     op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 600, 0, 360, 240, 120, true)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     op_problem = OperationsProblem(
@@ -249,7 +249,7 @@ end
     )
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 600, 0, 360, 240, 120, true)
-    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -262,16 +262,16 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
-    bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
 
@@ -285,16 +285,16 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 384, 0, 96, 48, 96, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 @testset "Thermal MultiStart Basic UC With AC - PF" begin
-    bin_variable_names = [
-        PSI.make_variable_name(PSI.ON, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.START, PSY.ThermalMultiStart),
-        PSI.make_variable_name(PSI.STOP, PSY.ThermalMultiStart),
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StartVariable, PSY.ThermalMultiStart),
+        PSI.VariableKey(StopVariable, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment)
 
@@ -308,7 +308,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 432, 0, 144, 96, 96, true)
-        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkbinvar_test(op_problem, bin_variable_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -418,7 +418,8 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
+        key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
+        moi_lbvalue_test(op_problem, key, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -432,7 +433,8 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
+        key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
+        moi_lbvalue_test(op_problem, key, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -449,7 +451,8 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
+        key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
+        moi_lbvalue_test(op_problem, key, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -463,7 +466,8 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
+        key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
+        moi_lbvalue_test(op_problem, key, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -504,11 +508,11 @@ end
     end
 end
 =#
-################################### Ramp Limited Testing ##################################
+################################## Ramp Limited Testing ##################################
 @testset "Thermal Ramp Limited Dispatch With DC - PF" begin
-    constraint_names = [
-        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+    constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
@@ -521,7 +525,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 120, 0, 216, 120, 0, false)
-        psi_constraint_test(op_problem, constraint_names)
+        psi_constraint_test(op_problem, constraint_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -540,9 +544,9 @@ end
 end
 
 @testset "Thermal Ramp Limited Dispatch With AC - PF" begin
-    constraint_names = [
-        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+    constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
@@ -555,7 +559,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 336, 240, 0, false)
-        psi_constraint_test(op_problem, constraint_names)
+        psi_constraint_test(op_problem, constraint_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -574,9 +578,9 @@ end
 end
 
 @testset "Thermal Ramp Limited Dispatch With DC - PF" begin
-    constraint_names = [
-        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalMultiStart),
+    constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalMultiStart, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalMultiStart, "dn"),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalRampLimited)
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
@@ -589,15 +593,15 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 144, 48, 48, false)
-        psi_constraint_test(op_problem, constraint_names)
+        psi_constraint_test(op_problem, constraint_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 @testset "Thermal Ramp Limited Dispatch With AC - PF" begin
-    constraint_names = [
-        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalMultiStart),
+    constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalMultiStart, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalMultiStart, "dn"),
     ]
     model = DeviceModel(ThermalMultiStart, ThermalRampLimited)
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
@@ -610,7 +614,7 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 288, 0, 192, 96, 48, false)
-        psi_constraint_test(op_problem, constraint_names)
+        psi_constraint_test(op_problem, constraint_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
@@ -618,14 +622,22 @@ end
 ################################### ThermalMultiStart Testing ##################################
 
 @testset "Thermal MultiStart with MultiStart UC and DC - PF" begin
-    constraint_names = [
-        PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.START_TYPE, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.MUST_RUN_LB, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_WARM, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_HOT, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_LB, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
+    constraint_keys = [
+        PSI.ConstraintKey(ActiveRangeICConstraint, PSY.ThermalMultiStart),
+        PSI.ConstraintKey(StartTypeConstraint, PSY.ThermalMultiStart),
+        PSI.ConstraintKey(MustRunConstraint, PSY.ThermalMultiStart, "lb"),
+        PSI.ConstraintKey(
+            StartupTimeLimitTemperatureConstraint,
+            PSY.ThermalMultiStart,
+            "warm",
+        ),
+        PSI.ConstraintKey(
+            StartupTimeLimitTemperatureConstraint,
+            PSY.ThermalMultiStart,
+            "hot",
+        ),
+        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "lb"),
+        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "ub"),
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 334, false => 330)
@@ -639,20 +651,28 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 528, 0, no_less_than[p], 106, 144, true)
-        psi_constraint_test(op_problem, constraint_names)
+        psi_constraint_test(op_problem, constraint_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
 @testset "Thermal MultiStart with MultiStart UC and AC - PF" begin
-    constraint_names = [
-        PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.START_TYPE, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.MUST_RUN_LB, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_WARM, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_HOT, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_LB, PSY.ThermalMultiStart),
-        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
+    constraint_keys = [
+        PSI.ConstraintKey(ActiveRangeICConstraint, PSY.ThermalMultiStart),
+        PSI.ConstraintKey(StartTypeConstraint, PSY.ThermalMultiStart),
+        PSI.ConstraintKey(MustRunConstraint, PSY.ThermalMultiStart, "lb"),
+        PSI.ConstraintKey(
+            StartupTimeLimitTemperatureConstraint,
+            PSY.ThermalMultiStart,
+            "warm",
+        ),
+        PSI.ConstraintKey(
+            StartupTimeLimitTemperatureConstraint,
+            PSY.ThermalMultiStart,
+            "hot",
+        ),
+        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "lb"),
+        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "ub"),
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 382, false => 378)
@@ -666,12 +686,12 @@ end
         )
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 576, 0, no_less_than[p], 154, 144, true)
-        psi_constraint_test(op_problem, constraint_names)
+        psi_constraint_test(op_problem, constraint_keys)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 end
 
-################################### Thermal Compact UC Testing ##################################
+################################## Thermal Compact UC Testing ##################################
 @testset "Thermal Standard with Compact UC and DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -736,7 +756,7 @@ end
     end
 end
 
-################################### Thermal Compact Dispatch Testing ##################################
+################################## Thermal Compact Dispatch Testing ##################################
 
 @testset "Thermal Standard with Compact Dispatch and DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)

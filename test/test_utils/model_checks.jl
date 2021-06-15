@@ -26,10 +26,10 @@ end
 
 function psi_constraint_test(
     op_problem::OperationsProblem,
-    constraint_names::Vector{Symbol},
+    constraint_keys::Vector{<:PSI.ConstraintKey},
 )
     constraints = PSI.get_constraints(op_problem)
-    for con in constraint_names
+    for con in constraint_keys
         @test !isnothing(get(constraints, con, nothing))
     end
     return
@@ -49,10 +49,10 @@ end
 
 function psi_checkbinvar_test(
     op_problem::OperationsProblem,
-    bin_variable_names::Vector{Symbol},
+    bin_variable_keys::Vector{<:PSI.VariableKey},
 )
     container = PSI.get_optimization_container(op_problem)
-    for variable in bin_variable_names
+    for variable in bin_variable_keys
         for v in PSI.get_variable(container, variable)
             @test JuMP.is_binary(v)
         end
@@ -66,8 +66,12 @@ function psi_checkobjfun_test(op_problem::OperationsProblem, exp_type)
     return
 end
 
-function moi_lbvalue_test(op_problem::OperationsProblem, con_name::Symbol, value::Number)
-    for con in PSI.get_constraints(op_problem)[con_name]
+function moi_lbvalue_test(
+    op_problem::OperationsProblem,
+    con_key::PSI.ConstraintKey,
+    value::Number,
+)
+    for con in PSI.get_constraints(op_problem)[con_key]
         @test JuMP.constraint_object(con).set.lower == value
     end
     return
@@ -110,9 +114,17 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
     return lmp[!, sort(propertynames(lmp))]
 end
 
-function check_variable_unbounded(op_problem::OperationsProblem, var_name)
+function check_variable_unbounded(
+    op_problem::OperationsProblem,
+    ::Type{T},
+    ::Type{U},
+) where {T <: PSI.VariableType, U <: PSY.Component}
+    return check_variable_unbounded(op_problem::OperationsProblem, PSI.VariableKey(T, U))
+end
+
+function check_variable_unbounded(op_problem::OperationsProblem, var_key::PSI.VariableKey)
     psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_name)
+    variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
         if JuMP.has_lower_bound(var) || JuMP.has_upper_bound(var)
             return false
@@ -121,9 +133,17 @@ function check_variable_unbounded(op_problem::OperationsProblem, var_name)
     return true
 end
 
-function check_variable_bounded(op_problem::OperationsProblem, var_name)
+function check_variable_bounded(
+    op_problem::OperationsProblem,
+    ::Type{T},
+    ::Type{U},
+) where {T <: PSI.VariableType, U <: PSY.Component}
+    return check_variable_bounded(op_problem::OperationsProblem, PSI.VariableKey(T, U))
+end
+
+function check_variable_bounded(op_problem::OperationsProblem, var_key::PSI.VariableKey)
     psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_name)
+    variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
         if !JuMP.has_lower_bound(var) || !JuMP.has_upper_bound(var)
             return false
@@ -134,12 +154,13 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    var_name::Symbol,
+    ::Type{T},
+    ::Type{U},
     device_name::String,
     limit::Float64,
-)
+) where {T <: PSI.VariableType, U <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_name)
+    variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
         if !(JuMP.value(var) <= (limit + 1e-2))
             return false
@@ -150,13 +171,14 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    var_name::Symbol,
+    ::Type{T},
+    ::Type{U},
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
-)
+) where {T <: PSI.VariableType, U <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_name)
+    variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
         if !(JuMP.value(var) <= (limit_max + 1e-2)) ||
            !(JuMP.value(var) >= (limit_min - 1e-2))
@@ -168,16 +190,17 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    pvar_name::Symbol,
-    qvar_name::Symbol,
+    ::Type{T},
+    ::Type{U},
+    ::Type{V},
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
-)
+) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
     time_steps = PSI.model_time_steps(psi_cont)
-    pvariable = PSI.get_variable(psi_cont, pvar_name)
-    qvariable = PSI.get_variable(psi_cont, qvar_name)
+    pvariable = PSI.get_variable(psi_cont, T(), V)
+    qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
         fp = JuMP.value(pvariable[device_name, t])
         fq = JuMP.value(qvariable[device_name, t])
@@ -191,15 +214,16 @@ end
 
 function check_flow_variable_values(
     op_problem::OperationsProblem,
-    pvar_name::Symbol,
-    qvar_name::Symbol,
+    ::Type{T},
+    ::Type{U},
+    ::Type{V},
     device_name::String,
     limit::Float64,
-)
+) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
     time_steps = PSI.model_time_steps(psi_cont)
-    pvariable = PSI.get_variable(psi_cont, pvar_name)
-    qvariable = PSI.get_variable(psi_cont, qvar_name)
+    pvariable = PSI.get_variable(psi_cont, T(), V)
+    qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
         fp = JuMP.value(pvariable[device_name, t])
         fq = JuMP.value(qvariable[device_name, t])

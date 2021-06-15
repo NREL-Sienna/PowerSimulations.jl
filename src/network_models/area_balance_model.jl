@@ -7,11 +7,14 @@ function area_balance(
     time_steps = model_time_steps(optimization_container)
     remove_undef!(optimization_container.expressions[expression])
     nodal_net_balance = optimization_container.expressions[expression]
-    constraint_bal = JuMPConstraintArray(undef, keys(area_mapping), time_steps)
-    participation_assignment_up = JuMPConstraintArray(undef, keys(area_mapping), time_steps)
-    participation_assignment_dn = JuMPConstraintArray(undef, keys(area_mapping), time_steps)
-    assign_constraint!(optimization_container, "area_dispatch_balance", constraint_bal)
-    area_balance = get_variable(optimization_container, ActivePowerVariable, PSY.Area)
+    constraint = add_cons_container!(
+        optimization_container,
+        AreaDispatchBalanceConstraint(),
+        PSY.Area,  # TODO DT: is this correct?
+        keys(area_mapping),
+        time_steps,
+    )
+    area_balance = get_variable(optimization_container, ActivePowerVariable(), PSY.Area)
     for (k, buses_in_area) in area_mapping
         for t in time_steps
             area_net =
@@ -20,7 +23,7 @@ function area_balance(
             for b in buses_in_area
                 JuMP.add_to_expression!(area_net, nodal_net_balance[PSY.get_number(b), t])
             end
-            constraint_bal[k, t] = JuMP.@constraint(
+            constraint[k, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
                 area_balance[k, t] == area_net
             )
@@ -30,15 +33,21 @@ function area_balance(
     expr_up = get_expression(optimization_container, :emergency_up)
     expr_dn = get_expression(optimization_container, :emergency_dn)
 
-    assign_constraint!(
+    participation_assignment_up = add_cons_container!(
         optimization_container,
-        "participation_assignment_up",
-        participation_assignment_up,
+        AreaParticipationAssignmentConstraint(),
+        PSY.Area,  # # TODO DT: correct?
+        keys(area_mapping),
+        time_steps,
+        meta = "up",
     )
-    assign_constraint!(
+    participation_assignment_dn = add_cons_container!(
         optimization_container,
-        "participation_assignment_dn",
-        participation_assignment_dn,
+        AreaParticipationAssignmentConstraint(),
+        PSY.Area,  # TODO DT: correct?
+        keys(area_mapping),
+        time_steps,
+        meta = "dn",
     )
 
     for area in keys(area_mapping), t in time_steps

@@ -13,16 +13,18 @@
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 648, 0, 120, 216, 72, false)
-        symbols = [
-            :Reserve1__VariableReserve_ReserveUp,
-            :Reserve11__VariableReserve_ReserveUp,
-            :Reserve2__VariableReserve_ReserveDown,
-            :ORDC1__ReserveDemandCurve_ReserveUp,
+        reserve_variables = [
+            :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1
+            :ActivePowerReserveVariable_ReserveDemandCurve_ReserveUp_ORDC1
+            :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2
+            :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11
         ]
-        for sym in symbols
-            for v in op_problem.internal.optimization_container.variables[sym]
-                @test JuMP.has_lower_bound(v)
-                @test JuMP.lower_bound(v) == 0.0
+        for (k, var_array) in op_problem.internal.optimization_container.variables
+            if PSI.encode_key(k) in reserve_variables
+                for var in var_array
+                    @test JuMP.has_lower_bound(var)
+                    @test JuMP.lower_bound(var) == 0.0
+                end
             end
         end
     end
@@ -39,15 +41,17 @@ end
         @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         moi_tests(op_problem, p, 384, 0, 336, 192, 24, false)
-        symbols = [
-            :Reserve1__VariableReserve_ReserveUp,
-            :Reserve11__VariableReserve_ReserveUp,
-            :Reserve2__VariableReserve_ReserveDown,
+        reserve_variables = [
+            :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2,
+            :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1,
+            :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11,
         ]
-        for sym in symbols
-            for v in op_problem.internal.optimization_container.variables[sym]
-                @test JuMP.has_lower_bound(v)
-                @test JuMP.lower_bound(v) == 0.0
+        for (k, var_array) in op_problem.internal.optimization_container.variables
+            if PSI.encode_key(k) in reserve_variables
+                for var in var_array
+                    @test JuMP.has_lower_bound(var)
+                    @test JuMP.lower_bound(var) == 0.0
+                end
             end
         end
     end

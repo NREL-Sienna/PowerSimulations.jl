@@ -22,7 +22,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -31,7 +31,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -40,7 +40,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -97,7 +97,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -106,7 +106,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -175,7 +175,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        ReserveVariable,
+        ReservationVariable,
         devices,
         BookKeepingwReservation(),
     )
@@ -186,7 +186,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -195,7 +195,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -204,7 +204,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -267,7 +267,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        ReserveVariable,
+        ReservationVariable,
         devices,
         BookKeepingwReservation(),
     )
@@ -278,7 +278,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -287,7 +287,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -336,14 +336,14 @@ function construct_device!(
     add_variables!(optimization_container, EnergyVariable, devices, EnergyTarget())
     add_variables!(optimization_container, EnergyShortageVariable, devices, EnergyTarget())
     add_variables!(optimization_container, EnergySurplusVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, ReserveVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, ReservationVariable, devices, EnergyTarget())
     # Initial Conditions
     initial_conditions!(optimization_container, devices, EnergyTarget())
 
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -352,7 +352,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -361,7 +361,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -419,14 +419,14 @@ function construct_device!(
     add_variables!(optimization_container, EnergyVariable, devices, EnergyTarget())
     add_variables!(optimization_container, EnergyShortageVariable, devices, EnergyTarget())
     add_variables!(optimization_container, EnergySurplusVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, ReserveVariable, devices, EnergyTarget())
+    add_variables!(optimization_container, ReservationVariable, devices, EnergyTarget())
     # Initial Conditions
     initial_conditions!(optimization_container, devices, EnergyTarget())
 
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -435,7 +435,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -514,7 +514,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        ReserveVariable,
+        ReservationVariable,
         devices,
         BatteryAncillaryServices(),
     )
@@ -524,7 +524,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -533,7 +533,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -542,7 +542,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -612,7 +612,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        ReserveVariable,
+        ReservationVariable,
         devices,
         BatteryAncillaryServices(),
     )
@@ -622,7 +622,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -631,7 +631,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,

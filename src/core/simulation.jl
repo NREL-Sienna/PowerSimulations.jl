@@ -142,7 +142,7 @@ function _create_cache(
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
-        cache = TimeStatusChange(T, ON)
+        cache = TimeStatusChange(T, OnVariable())
         push!(caches, cache)
     end
     return
@@ -154,7 +154,7 @@ function _create_cache(
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
-        cache = TimeStatusChange(T, ON)
+        cache = TimeStatusChange(T, OnVariable())
         push!(caches, cache)
     end
     return
@@ -166,7 +166,7 @@ function _create_cache(
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
-        cache = StoredEnergy(T, ENERGY)
+        cache = StoredEnergy(T, EnergyVariable())
         push!(caches, cache)
     end
     return
@@ -331,6 +331,66 @@ set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
 set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
     sim.internal.build_status = status
 set_current_time!(sim::Simulation, val) = sim.internal.current_time = val
+
+function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
+    source_problem = get_problems(sim)[key.first]
+    source_problem_horizon = get_horizon(source_problem)
+    sequence = get_sequence(sim)
+    destination_problem_interval = get_interval(sequence, key.second)
+
+    source_problem_resolution = get_resolution(source_problem)
+    @debug source_problem_resolution, destination_problem_interval
+    # How many times the second problem executes per solution retireved from the source_problem.
+    # E.g. source_problem_resolution = 1 Hour, destination_problem_interval = 5 minutes => 12 executions per solution
+    destination_problem_executions_per_solution =
+        Int(source_problem_resolution / destination_problem_interval)
+    # Number of periods in the horizon that will be synchronized between the source_problem and the destination_problem
+    source_problem_sync = sync.periods
+
+    if source_problem_sync > source_problem_horizon
+        throw(
+            IS.ConflictingInputsError(
+                "The lookahead length $(source_problem_horizon) in problem is insufficient to syncronize with $(source_problem_sync) feedforward periods",
+            ),
+        )
+    end
+
+    if (source_problem_sync % destination_problem_executions_per_solution) != 0
+        throw(
+            IS.ConflictingInputsError(
+                "The current configuration implies $(source_problem_sync / destination_problem_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in problem $(key.first) needs to be a mutiple of the number of problem $(key.second) execution for every problem $(key.first) interval.",
+            ),
+        )
+    end
+
+    return
+end
+
+function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
+    source_problem = get_problems(sim)[key.first]
+    source_problem_horizon = get_horizon(source_problem)
+    if source_problem_horizon != source_problem_interval
+        @warn(
+            "Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_problem_horizon) in problem $(key.first) will be replaced with $(source_problem_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon"
+        )
+    end
+    get_sequence(sim).horizons[key.first] = get_interval(sim, key.first)
+    return
+end
+
+check_chronology!(sim::Simulation, key::Pair, ::RecedingHorizon) = nothing
+check_chronology!(sim::Simulation, key::Pair, ::FullHorizon) = nothing
+# TODO: Add missing check
+check_chronology!(sim::Simulation, key::Pair, ::Range) = nothing
+
+function check_chronology!(
+    sim::Simulation,
+    key::Pair,
+    ::T,
+) where {T <: FeedForwardChronology}
+    error("Chronology $(T) not implemented")
+    return
+end
 
 function get_problem_cache_definition(sim::Simulation, problem::Symbol)
     caches = get_sequence(sim).cache
@@ -505,12 +565,12 @@ desired amount of simulation steps ($(sim.steps*get_execution_count(problem)))."
 end
 
 function _check_required_ini_cond_caches(sim::Simulation)
-    for (ix, (problem_name, problem)) in enumerate(get_problems(sim))
+    for (problem_name, problem) in get_problems(sim)
         optimization_container = get_optimization_container(problem)
         for (k, v) in iterate_initial_conditions(optimization_container)
             # No cache needed for the initial condition -> continue
             v[1].cache_type === nothing && continue
-            c = get_cache(sim, v[1].cache_type, k.device_type)
+            c = get_cache(sim, v[1].cache_type, get_component_type(k))
             if c === nothing
                 throw(
                     ArgumentError(

@@ -9,8 +9,8 @@
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -49,8 +49,8 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -83,8 +83,8 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -183,12 +183,12 @@ end
     )
     feedforward = Dict(
         ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-            variable_source_problem = PSI.ACTIVE_POWER,
-            affected_variables = [PSI.ACTIVE_POWER],
+            variable_source_problem = ActivePowerVariable,
+            affected_variables = [ActivePowerVariable],
         ),
         ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-            variable_source_problem = PSI.ACTIVE_POWER,
-            affected_variables = [PSI.ACTIVE_POWER],
+            variable_source_problem = ActivePowerVariable,
+            affected_variables = [ActivePowerVariable],
         ),
     )
     test_sequence = SimulationSequence(
@@ -227,8 +227,8 @@ end
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
+#                 binary_source_stage = OnVariable,
+#                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
 #         ini_cond_chronology = InterProblemChronology(),
@@ -256,11 +256,11 @@ end
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
+#                 binary_source_stage = OnVariable,
+#                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
-#         cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
+#         cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, OnVariable)),
 #         ini_cond_chronology = InterProblemChronology(),
 #     )
 #     sim = Simulation(
@@ -288,11 +288,11 @@ end
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
+#                 binary_source_stage = OnVariable,
+#                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
-#         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
+#         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, OnVariable)),
 #         ini_cond_chronology = IntraProblemChronology(),
 #     )
 #

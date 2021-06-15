@@ -10,7 +10,10 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
+        println(
+            io,
+            "\tType: $(get_component_type(ix))\n \tFormulation: $(get_formulation(ix))\n",
+        )
         if ix.use_service_name
             println(io, "\tName specific Model\n")
         end
@@ -29,7 +32,10 @@ function _display_model(
         return
     end
     for (i, ix) in val
-        println(io, "\tType: $(ix.component_type)\n \tFormulation: $(ix.formulation)\n")
+        println(
+            io,
+            "\tType: $(get_component_type(ix))\n \tFormulation: $(get_formulation(ix))\n",
+        )
     end
 end
 
@@ -359,16 +365,14 @@ function Base.show(io::IO, sequence::SimulationSequence)
     println(io, "Feed Forward Chronology")
     println(io, "-----------------------\n")
     to = []
-    from = String("")
+    from = ""
     for (k, v) in sequence.feedforward
-        println(io, "$(k[1]): $(typeof(v)) -> $(k[3])\n")
-        to = String.(v.affected_variables)
+        println(io, "$(k): $(typeof(v)) -> $(v.device_type)\n")
+        to = string.(v.affected_variables)
         if isa(v, SemiContinuousFF)
-            from = String.(v.binary_source_problem)
-        elseif isa(v, RangeFF)
-            from = String.([v.variable_source_problem_ub, v.variable_source_problem_lb])
+            from = string.(v.binary_source_problem)
         else
-            from = String.(v.variable_source_problem)
+            from = string.(v.variable_source_problem)
         end
         _print_feedforward(io, sequence.feedforward_chronologies, to, from)
     end

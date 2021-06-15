@@ -77,16 +77,15 @@ function _get_execution_order_vector(
 end
 
 function _check_feedforward(
-    feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward},
+    feedforward::Dict{String, <:AbstractAffectFeedForward},
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology},
 )
     isempty(feedforward) && return
     for problem_key in keys(feedforward)
-        @debug problem_key
-        if !mapreduce(x -> x.second == problem_key[1], |, keys(feedforward_chronologies))
+        if problem_key ∉ [k.second for k in keys(feedforward_chronologies)]
             throw(
                 ArgumentError(
-                    "No valid Chronology has been defined for the feedforward added to $(problem_key[1])",
+                    "No valid Chronology has been defined for the feedforward added to $(problem_key)",
                 ),
             )
         end
@@ -141,7 +140,7 @@ end
                         intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
                         order::Dict{Int, String}
                         feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
-                        feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
+                        feedforward::Dict{String, <:AbstractAffectFeedForward}
                         ini_cond_chronology::Dict{String, <:FeedForwardChronology}
                         cache::Dict{String, AbstractCache}
                         )
@@ -153,7 +152,7 @@ mutable struct SimulationSequence
     # The string here is the name of the problem
     intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
-    feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
+    feedforward::Dict{String, <:AbstractAffectFeedForward}
     ini_cond_chronology::InitialConditionChronology
     cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
@@ -166,7 +165,7 @@ mutable struct SimulationSequence
         # JDNOTE: We could remove interval here later
         intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
         feedforward_chronologies = Dict{Pair{String, String}, FeedForwardChronology}(),
-        feedforward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
+        feedforward = Dict{String, AbstractAffectFeedForward}(),
         ini_cond_chronology = InterProblemChronology(),
         cache = Dict{Tuple, AbstractCache}(),
     )

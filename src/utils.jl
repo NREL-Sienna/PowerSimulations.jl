@@ -347,12 +347,6 @@ function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     return JuMP.Containers.SparseAxisArray(contents)
 end
 
-function middle_rename(original::Symbol, split_char::String, addition::String)
-    parts = split(String(original), split_char)
-    parts[1] = parts[1] * "_" * addition
-    return Symbol(join(parts, split_char))
-end
-
 "Replaces the string in `char` with the string`replacement`"
 function replace_chars(s::String, char::String, replacement::String)
     return replace(s, Regex("[$char]") => replacement)
@@ -447,6 +441,10 @@ function encode_symbol(::Type{T}, name::Symbol) where {T}
     return encode_symbol(T, string(name))
 end
 
+function encode_symbol(name1::Symbol, name2::Symbol)
+    return encode_symbol(string(name1), string(name2))
+end
+
 function encode_symbol(name::AbstractString)
     return Symbol(name)
 end
@@ -462,3 +460,182 @@ end
 function decode_symbol(name::Symbol)
     return split(String(name), PSI_NAME_DELIMITER)
 end
+
+###############################
+#=
+const ACTIVE_POWER = "P"
+const ACTIVE_POWER_IN = "Pin"
+const ACTIVE_POWER_OUT = "Pout"
+const COLD_START = "start_cold"
+const ENERGY = "E"
+const ENERGY_UP = "Eup"
+const ENERGY_DOWN = "Edown"
+const ENERGY_BUDGET = "energy_budget"
+const ENERGY_BUDGET_UP = "energy_budget_up"
+const ENERGY_BUDGET_DOWN = "energy_budget_down"
+const ENERGY_SHORTAGE = "energy_shortage"
+const ENERGY_SURPLUS = "energy_surplus"
+const FLOW_REACTIVE_POWER_FROM_TO = "FqFT"
+const FLOW_REACTIVE_POWER_TO_FROM = "FqTF"
+const FLOW_ACTIVE_POWER_FROM_TO = "FpFT"
+const FLOW_ACTIVE_POWER_TO_FROM = "FpTF"
+const FLOW_ACTIVE_POWER = "Fp"
+const FLOW_REACTIVE_POWER = "Fq"
+const HOT_START = "start_hot"
+const INFLOW = "In"
+const TARGET = "Target"
+const OUTFLOW = "Out"
+const ON = "On"
+const REACTIVE_POWER = "Q"
+const RESERVE = "R"
+const SERVICE_REQUIREMENT = "service_requirement"
+const SLACK_DN = "γ⁻"
+const SLACK_UP = "γ⁺"
+const SPILLAGE = "Sp"
+const START = "start"
+const STOP = "stop"
+const THETA = "theta"
+const VM = "Vm"
+const LIFT = "z"
+const ACTIVE_POWER_PUMP = "Ppump"
+
+make_variable_name(var_type) = encode_symbol(var_type)
+
+###############################
+
+make_variable_name(::Type{ActivePowerVariable}, ::Type{T}) where {T <: PSY.Component} =
+    encode_symbol(T, "P")
+
+make_variable_name(::Type{ActivePowerInVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "Pin")
+
+make_variable_name(::Type{ActivePowerOutVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "Pout")
+
+make_variable_name(::Type{HotStartVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "start_hot")
+
+make_variable_name(::Type{WarmStartVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "start_warm")
+
+make_variable_name(::Type{ColdStartVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "start_cold")
+
+make_variable_name(::Type{EnergyVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "E")
+
+make_variable_name(::Type{EnergyVariableUp}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "Eup")
+
+make_variable_name(::Type{EnergyVariableDown}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "Edown")
+
+make_variable_name(::Type{EnergySurplusVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "energy_surplus")
+
+make_variable_name(::Type{EnergyShortageVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "energy_shortage")
+
+make_variable_name(::Type{LiftVariable}) = :lift
+
+make_variable_name(::Type{LiftVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "lift")
+
+make_variable_name(::Type{OnVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "On")
+
+make_variable_name(::Type{ReactivePowerVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "Q")
+
+make_variable_name(::Type{ReservationVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "R")
+
+make_variable_name(
+    ::Type{ServiceRequirementVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "service_requirement")
+
+make_variable_name(::Type{WaterSpillageVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "Sp")
+
+make_variable_name(::Type{StartVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "start")
+
+make_variable_name(::Type{StopVariable}, ::Type{T}) where {T <: PSY.Device} =
+    encode_symbol(T, "stop")
+
+make_variable_name(::Type{SteadyStateFrequencyDeviation}) = :Δf
+
+make_variable_name(::Type{AreaMismatchVariable}) = :area_mismatch
+
+make_variable_name(
+    ::Type{DeltaActivePowerUpVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "ΔP_up")
+
+make_variable_name(
+    ::Type{DeltaActivePowerUpVariable},
+    ::Type{PSY.RegulationDevice{T}},
+) where {T <: PSY.Device} = encode_symbol(T, "ΔP_up")
+
+make_variable_name(
+    ::Type{DeltaActivePowerDownVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "ΔP_dn")
+
+make_variable_name(
+    ::Type{DeltaActivePowerDownVariable},
+    ::Type{PSY.RegulationDevice{T}},
+) where {T <: PSY.Device} = encode_symbol(T, "ΔP_dn")
+
+make_variable_name(
+    ::Type{AdditionalDeltaActivePowerUpVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "ΔPe_up")
+
+make_variable_name(
+    ::Type{AdditionalDeltaActivePowerUpVariable},
+    ::Type{PSY.RegulationDevice{T}},
+) where {T <: PSY.Device} = encode_symbol(T, "ΔPe_up")
+
+make_variable_name(
+    ::Type{AdditionalDeltaActivePowerDownVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "ΔPe_dn")
+
+make_variable_name(
+    ::Type{AdditionalDeltaActivePowerDownVariable},
+    ::Type{PSY.RegulationDevice{T}},
+) where {T <: PSY.Device} = encode_symbol(T, "ΔPe_dn")
+
+VariableKey(::Type{SmoothACE}, ::Type{T}) where {T <: PSY.AggregationTopology} =
+    encode_symbol(T, "SACE")
+
+make_variable_name(::Type{FlowActivePowerVariable}, ::Type{T}) where {T <: PSY.Component} =
+    encode_symbol(T, "Fp")
+
+make_variable_name(
+    ::Type{FlowReactivePowerVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "Fq")
+
+make_variable_name(
+    ::Type{FlowActivePowerFromToVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "FpFT")
+
+make_variable_name(
+    ::Type{FlowActivePowerToFromVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "FpTF")
+
+make_variable_name(
+    ::Type{FlowReactivePowerFromToVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "FqFT")
+
+make_variable_name(
+    ::Type{FlowReactivePowerToFromVariable},
+    ::Type{T},
+) where {T <: PSY.Component} = encode_symbol(T, "FqTF")
+=#

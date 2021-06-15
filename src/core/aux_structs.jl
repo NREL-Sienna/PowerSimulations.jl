@@ -1,5 +1,3 @@
-abstract type OptimizationContainerKey end
-
 """Reference for parameters update when present"""
 struct UpdateRef{T}
     access_ref::Symbol
@@ -19,8 +17,15 @@ end
 
 function UpdateRef{T}(
     ::Type{U},
+    variable_type::Type{V},
+) where {T <: JuMP.VariableRef, U <: PSY.Component, V <: VariableType}
+    return UpdateRef{T}(encode_symbol(U, V), nothing)
+end
+
+function UpdateRef{T}(
+    ::Type{U},
     name::AbstractString,
-) where {T <: Union{JuMP.VariableRef, PJ.ParameterRef}, U <: PSY.Component}
+) where {T <: PJ.ParameterRef, U <: PSY.Component}
     return UpdateRef{T}(encode_symbol(U, name), nothing)
 end
 

@@ -4,7 +4,7 @@ Construct model for HydroGen with FixedOutput Formulation
 function construct_device!(
     optimization_container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{H, FixedOutput},
+    ::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
@@ -44,7 +44,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -53,7 +53,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -94,7 +94,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -141,7 +141,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -150,7 +150,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -202,7 +202,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -263,7 +263,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
@@ -283,7 +283,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -292,7 +292,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -363,7 +363,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
@@ -382,7 +382,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -444,7 +444,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -453,7 +453,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -501,7 +501,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -545,7 +545,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -554,7 +554,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -605,7 +605,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -671,7 +671,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
@@ -690,7 +690,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -699,7 +699,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
         model,
@@ -775,7 +775,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
@@ -794,7 +794,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
         model,
@@ -876,7 +876,7 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroDispatchPumpedStorage(),
     )
@@ -884,7 +884,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -893,7 +893,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -978,13 +978,13 @@ function construct_device!(
     )
     add_variables!(
         optimization_container,
-        SpillageVariable,
+        WaterSpillageVariable,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )
     add_variables!(
         optimization_container,
-        ReserveVariable,
+        ReservationVariable,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )
@@ -992,7 +992,7 @@ function construct_device!(
     # Constraints
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
@@ -1001,7 +1001,7 @@ function construct_device!(
     )
     add_constraints!(
         optimization_container,
-        RangeConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
