@@ -591,7 +591,7 @@ function add_to_cost!(
         start_cost_data = spec.start_up_cost(cost_data)
         if spec.has_multistart_variables
             for (st, var_type) in enumerate(START_VARIABLES)
-                 var_name = VariableKey(var_type, spec.component_type)
+                var_name = VariableKey(var_type, spec.component_type)
                 for t in time_steps
                     linear_gen_cost!(
                         optimization_container,
