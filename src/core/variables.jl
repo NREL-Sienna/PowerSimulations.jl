@@ -7,6 +7,7 @@ function VariableKey(
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: PSY.Component}
+    check_meta_chars(meta)
     return VariableKey{T, U}(meta)
 end
 
