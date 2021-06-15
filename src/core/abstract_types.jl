@@ -18,6 +18,13 @@ function encode_symbol(
     return Symbol("$(IS.strip_module_name(string(U)))_$(T_)" * meta_)
 end
 
+function check_meta_chars(meta)
+    # Underscores in this field will prevent us from being able to decode keys.
+    if occursin("_", meta)
+        throw(IS.InvalidValue("'_' is not allowed in meta"))
+    end
+end
+
 abstract type AbstractAffectFeedForward end
 
 abstract type AbstractCache end
