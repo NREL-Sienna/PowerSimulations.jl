@@ -17,6 +17,13 @@ end
 
 function UpdateRef{T}(
     ::Type{U},
+    variable_type::V,
+) where {T <: JuMP.VariableRef, U <: PSY.Component, V <: VariableType}
+    return UpdateRef{T}(U, V)
+end
+
+function UpdateRef{T}(
+    ::Type{U},
     variable_type::Type{V},
 ) where {T <: JuMP.VariableRef, U <: PSY.Component, V <: VariableType}
     return UpdateRef{T}(encode_symbol(U, V), nothing)
