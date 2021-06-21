@@ -676,6 +676,8 @@ function initial_condition_update!(
     sim::Simulation,
 )
     # TODO: Replace this convoluted way to get information with access to data store
+    execution_count = get_execution_count(problem)
+    execution_count == 0 && return
     simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
         name = get_device_name(ic)
@@ -720,7 +722,6 @@ function initial_condition_update!(
     # TODO: Replace this convoluted way to get information with access to data store
     simulation_cache = sim.internal.simulation_cache
     execution_index = get_execution_order(sim)
-    execution_count = get_execution_count(problem)
     problem_name = get_name(problem)
     sequence = get_sequence(sim)
     interval = get_interval(sequence, problem_name)
