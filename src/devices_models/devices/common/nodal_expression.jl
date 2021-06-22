@@ -69,9 +69,8 @@ function _nodal_expression!(
         include_parameters!(
             optimization_container,
             constraint_infos,
-            ActivePowerTimeSeries(),
+            ActivePowerTimeSeries(forecast_label),
             T,
-            forecast_label,
             expression_name,
             spec.multiplier,
         )

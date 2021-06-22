@@ -549,11 +549,10 @@ function add_param_container!(
     axs...,
 )
     container = ParameterContainer(
-        param_reference,
         JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
         fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
-    _assign_container!(optimization_container.parameters, container, key)
+    _assign_container!(optimization_container.parameters, key, container)
     return container
 end
 
