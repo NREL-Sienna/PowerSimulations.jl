@@ -22,12 +22,6 @@ end
 get_entry_type(::ParameterKey{T, U}) where {T <: VariableType, U <: PSY.Component} = T
 get_component_type(::ParameterKey{T, U}) where {T <: VariableType, U <: PSY.Component} = U
 
-"""
-Parameters implemented through ParameterJuMP
-"""
-abstract type RightHandSideParameter end
-abstract type ObjectiveFunctionParameter end
-
 struct ParameterContainer
     parameter_array::JuMP.Containers.DenseAxisArray
     multiplier_array::JuMP.Containers.DenseAxisArray
@@ -37,3 +31,21 @@ get_parameter_array(c::ParameterContainer) = c.parameter_array
 get_multiplier_array(c::ParameterContainer) = c.multiplier_array
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
+
+"""
+Parameters implemented through ParameterJuMP
+"""
+abstract type RightHandSideParameter end
+abstract type ObjectiveFunctionParameter end
+
+abstract type TimeSeriesParameter <: RightHandSideParameter end
+
+struct ActivePowerTimeSeries <: TimeSeriesParameter end
+struct ServiceRequirementTimeSeries <: TimeSeriesParameter end
+
+abstract type VariableValueParameter <: RightHandSideParameter end
+
+struct BinaryValueParameter <: VariableValueParameter end
+struct UpperBoundValueParameter <: VariableValueParameter end
+
+abstract type AuxVariableValueParameter <: RightHandSideParameter end
