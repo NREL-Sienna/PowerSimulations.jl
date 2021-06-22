@@ -27,7 +27,7 @@ function ub_ff(
     optimization_container::OptimizationContainer,
     cons_type::ConstraintType,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
-    parameter_type::VariableValueParameter,
+    parameter::VariableValueParameter,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
@@ -37,7 +37,7 @@ function ub_ff(
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    container = add_param_container!(optimization_container, parameter_type, T, set_name)
+    container = add_param_container!(optimization_container, parameter, T, set_name)
     param_ub = get_parameter_array(container)
     multiplier_ub = get_multiplier_array(container)
     con_ub = add_cons_container!(optimization_container, cons_type, T, set_name, time_steps)

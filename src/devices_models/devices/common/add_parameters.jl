@@ -2,7 +2,7 @@
 function include_parameters!(
     optimization_container::OptimizationContainer,
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    parameter_type::RightHandSideParameter,
+    parameter::RightHandSideParameter,
     ::Type{T},
     expression_name::Symbol,
     multiplier::Float64 = 1.0,
@@ -10,14 +10,9 @@ function include_parameters!(
     @assert model_has_parameters(optimization_container)
     time_steps = model_time_steps(optimization_container)
     names = [get_component_name(r) for r in constraint_infos]
-    @debug "adding" parameter_type "parameter"
-    container = add_param_container!(
-        optimization_container,
-        parameter_type,
-        T,
-        names,
-        time_steps
-    )
+    @debug "adding" parameter
+    container =
+        add_param_container!(optimization_container, parameter, T, names, time_steps)
     param = get_parameter_array(container)
     mult = get_multiplier_array(container)
     expr = get_expression(optimization_container, expression_name)
@@ -39,20 +34,15 @@ end
 function include_parameters!(
     optimization_container::OptimizationContainer,
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    parameter_type::RightHandSideParameter,
+    parameter::RightHandSideParameter,
     ::Type{T},
     multiplier::Float64 = 1.0,
 ) where {T <: PSY.Device}
     @assert model_has_parameters(optimization_container)
     time_steps = model_time_steps(optimization_container)
     names = [get_component_name(r) for r in constraint_infos]
-    container = add_param_container!(
-        optimization_container,
-        parameter_type,
-        T,
-        names,
-        time_steps
-    )
+    container =
+        add_param_container!(optimization_container, parameter, T, names, time_steps)
     param = get_parameter_array(container)
     mult = get_multiplier_array(container)
     for t in time_steps, r in constraint_infos

@@ -10,7 +10,11 @@ function construct_device!(
         return
     end
 
-    nodal_expression!(optimization_container, devices, S)
+    nodal_expression!(
+        optimization_container,
+        devices,
+        ActivePowerTimeSeries("max_active_power"),
+    )
 
     return
 end
