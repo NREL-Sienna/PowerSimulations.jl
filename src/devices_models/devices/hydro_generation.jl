@@ -765,7 +765,7 @@ function device_energy_budget_param_ub(
     optimization_container::OptimizationContainer,
     energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_type::ConstraintType,
-    param_reference::UpdateRef,
+    param_type::UpperBoundValueParameter,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
@@ -776,7 +776,7 @@ function device_energy_budget_param_ub(
     set_name = [get_component_name(r) for r in energy_budget_data]
     constraint = add_cons_container!(optimization_container, cons_type, T, set_name)
     container =
-        add_param_container!(optimization_container, param_reference, set_name, time_steps)
+        add_param_container!(optimization_container, param_type, T, set_name, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     for constraint_info in energy_budget_data

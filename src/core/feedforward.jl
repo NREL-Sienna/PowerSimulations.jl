@@ -27,7 +27,7 @@ function ub_ff(
     optimization_container::OptimizationContainer,
     cons_type::ConstraintType,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
-    param_reference::UpdateRef,
+    parameter_type::VariableValueParameter,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
@@ -37,7 +37,7 @@ function ub_ff(
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    container = add_param_container!(optimization_container, param_reference, set_name)
+    container = add_param_container!(optimization_container, parameter_type, T, set_name)
     param_ub = get_parameter_array(container)
     multiplier_ub = get_multiplier_array(container)
     con_ub = add_cons_container!(optimization_container, cons_type, T, set_name, time_steps)
@@ -93,7 +93,7 @@ function range_ff(
     cons_type_lb::ConstraintType,
     cons_type_ub::ConstraintType,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
-    param_reference::NTuple{2, UpdateRef},
+    param_reference::NTuple{2, <:VariableValueParameter},
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
@@ -106,11 +106,11 @@ function range_ff(
 
     # Create containers for the constraints
     container_lb =
-        add_param_container!(optimization_container, param_reference[1], set_name)
+        add_param_container!(optimization_container, param_reference[1], T, set_name)
     param_lb = get_parameter_array(container_lb)
     multiplier_lb = get_multiplier_array(container_lb)
     container_ub =
-        add_param_container!(optimization_container, param_reference[2], set_name)
+        add_param_container!(optimization_container, param_reference[2], T, set_name)
     param_ub = get_parameter_array(container_ub)
     multiplier_ub = get_multiplier_array(container_ub)
     # Create containers for the parameters
@@ -193,7 +193,7 @@ function semicontinuousrange_ff(
     constraint_type::ConstraintType,
     ::Type{T},
     constraint_infos::Vector{DeviceRangeConstraintInfo},
-    param_reference::UpdateRef,
+    param_type::VariableValueParameter,
     variable_type::VariableType,
 ) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
@@ -202,7 +202,7 @@ function semicontinuousrange_ff(
     axes = JuMP.axes(variable)
     set_name = [get_component_name(ci) for ci in constraint_infos]
     @assert axes[2] == time_steps
-    container = add_param_container!(optimization_container, param_reference, set_name)
+    container = add_param_container!(optimization_container, param_reference, T, set_name)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     con_ub = add_cons_container!(
@@ -299,7 +299,7 @@ function integral_limit_ff(
     optimization_container::OptimizationContainer,
     constraint_type::ConstraintType,
     ::Type{T},
-    param_reference::UpdateRef,
+    param_type::VariableValueParameter,
     variable_type::VariableType,
 ) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
@@ -309,7 +309,7 @@ function integral_limit_ff(
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    container_ub = add_param_container!(optimization_container, param_reference, set_name)
+    container_ub = add_param_container!(optimization_container, param_type, T, set_name)
     param_ub = get_parameter_array(container_ub)
     multiplier_ub = get_multiplier_array(container_ub)
     con_ub = add_cons_container!(optimization_container, constraint_type, T, set_name)
