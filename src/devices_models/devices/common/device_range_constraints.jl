@@ -35,8 +35,7 @@ struct TimeSeriesConstraintSpec
     constraint_type::ConstraintType
     variable_type::VariableType
     bin_variable_type::Union{Nothing, VariableType}
-    parameter_name::Union{Nothing, String}
-    forecast_label::Union{Nothing, String}
+    parameter::TimeSeriesParameter
     multiplier_func::Union{Nothing, Function}
     constraint_func::Function
     component_type::Type{<:PSY.Component}
@@ -46,8 +45,7 @@ function TimeSeriesConstraintSpec(;
     constraint_type,
     variable_type,
     bin_variable_type = nothing,
-    parameter_name,
-    forecast_label,
+    parameter,
     multiplier_func,
     constraint_func,
     component_type,
@@ -56,8 +54,7 @@ function TimeSeriesConstraintSpec(;
         constraint_type,
         variable_type,
         bin_variable_type,
-        parameter_name,
-        forecast_label,
+        parameter,
         multiplier_func,
         constraint_func,
         component_type,
@@ -234,9 +231,10 @@ function _apply_timeseries_range_constraint_spec!(
         @debug "Skip adding $variable_type because it is handled by feedforward"
         return
     end
+    forecast_label = get_label(spec.parameter)
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (i, dev) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, dev, spec.forecast_label)
+        ts_vector = get_time_series(optimization_container, dev, forecast_label)
         constraint_info =
             DeviceTimeSeriesConstraintInfo(dev, spec.multiplier_func, ts_vector)
         add_device_services!(constraint_info.range, dev, model)
@@ -248,8 +246,7 @@ function _apply_timeseries_range_constraint_spec!(
         spec.constraint_type,
         variable_type,
         spec.bin_variable_type,
-        spec.parameter_name === nothing ? nothing :
-        UpdateRef{T}(spec.parameter_name, spec.forecast_label),
+        spec.parameter,
         T,
     )
     spec.constraint_func(optimization_container, ts_inputs)

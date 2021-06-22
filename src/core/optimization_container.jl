@@ -558,7 +558,7 @@ end
 
 function add_param_container!(
     optimization_container::OptimizationContainer,
-    parameter_type::T,
+    parameter::T,
     ::Type{U},
     axs...;
     meta = CONTAINER_KEY_EMPTY_META,
@@ -582,7 +582,7 @@ end
 
 function get_parameter(
     optimization_container::OptimizationContainer,
-    parameter_type::T,
+    parameter::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}

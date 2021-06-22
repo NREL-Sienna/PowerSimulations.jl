@@ -44,7 +44,12 @@ function construct_device!(
     )
 
     # Constraints
-    nodal_expression!(optimization_container, devices, S)
+    nodal_expression!(
+        optimization_container,
+        devices,
+        ActivePowerTimeSeries("max_active_power"),
+    )
+
     add_constraints!(
         optimization_container,
         DeltaActivePowerUpVariableLimitsConstraint,
@@ -115,7 +120,12 @@ function construct_device!(
     )
 
     # Constraints
-    nodal_expression!(optimization_container, devices, S)
+    nodal_expression!(
+        optimization_container,
+        devices,
+        ActivePowerTimeSeries("max_active_power"),
+    )
+
     add_constraints!(
         optimization_container,
         DeltaActivePowerUpVariableLimitsConstraint,
@@ -156,6 +166,10 @@ function construct_device!(
     if !validate_available_devices(T, devices)
         return
     end
-    nodal_expression!(optimization_container, devices, S)
+    nodal_expression!(
+        optimization_container,
+        devices,
+        ActivePowerTimeSeries("max_active_power"),
+    )
     return
 end
