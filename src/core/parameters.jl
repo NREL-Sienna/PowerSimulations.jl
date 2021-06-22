@@ -6,21 +6,21 @@ function ParameterKey(
     ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: ParameterType, U <: PSY.Component}
     check_meta_chars(meta)
     return ParameterKey{T, U}(meta)
 end
 
-function ParameterKey(::Type{T}) where {T <: VariableType}
+function ParameterKey(::Type{T}) where {T <: ParameterType}
     return ParameterKey(T, PSY.Component, CONTAINER_KEY_EMPTY_META)
 end
 
-function ParameterKey(::Type{T}, meta::String) where {T <: VariableType}
+function ParameterKey(::Type{T}, meta::String) where {T <: ParameterType}
     return ParameterKey(T, PSY.Component, meta)
 end
 
-get_entry_type(::ParameterKey{T, U}) where {T <: VariableType, U <: PSY.Component} = T
-get_component_type(::ParameterKey{T, U}) where {T <: VariableType, U <: PSY.Component} = U
+get_entry_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = T
+get_component_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = U
 
 struct ParameterContainer
     parameter_array::JuMP.Containers.DenseAxisArray
@@ -35,13 +35,20 @@ Base.size(c::ParameterContainer) = size(c.parameter_array)
 """
 Parameters implemented through ParameterJuMP
 """
-abstract type RightHandSideParameter end
-abstract type ObjectiveFunctionParameter end
+abstract type RightHandSideParameter <: ParameterType end
+abstract type ObjectiveFunctionParameter <: ParameterType end
 
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
-struct ActivePowerTimeSeries <: TimeSeriesParameter end
-struct ServiceRequirementTimeSeries <: TimeSeriesParameter end
+struct ActivePowerTimeSeries <: TimeSeriesParameter
+    label::String
+end
+
+struct ServiceRequirementTimeSeries <: TimeSeriesParameter
+    label::String
+end
+
+get_label(key::TimeSeriesParameter) = key.label
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 
