@@ -52,6 +52,15 @@ struct ServiceRequirementTimeSeries <: TimeSeriesParameter
     label::String
 end
 
+struct EnergyTargetTimeSeries <: TimeSeriesParameter
+    label::String
+end
+
+struct EnergyBudgetTimeSeries <: TimeSeriesParameter
+    label::String
+end
+
+
 get_label(key::TimeSeriesParameter) = key.label
 
 abstract type VariableValueParameter <: RightHandSideParameter end
@@ -60,3 +69,5 @@ struct BinaryValueParameter <: VariableValueParameter end
 struct UpperBoundValueParameter <: VariableValueParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
+
+struct EnergyTargetParameter <: AuxVariableValueParameter end

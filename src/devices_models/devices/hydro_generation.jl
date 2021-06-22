@@ -465,7 +465,6 @@ function energy_target_constraint!(
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
     time_steps = model_time_steps(optimization_container)
-    target_forecast_label = "storage_target"
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     if use_forecast_data
         for (ix, d) in enumerate(devices)
@@ -498,14 +497,14 @@ function energy_target_constraint!(
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            UpdateRef{T}("target", target_forecast_label),
+            EnergyTargetTimeSeries("storage_target"),
             T,
         )
     else
         energy_target!(
             optimization_container,
             constraint_infos_target,
-            EnergyTargetConstraint(),
+            EnergyTargetTimeSeries("storage_target"),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
             T,
         )
@@ -739,7 +738,7 @@ function energy_budget_constraints!(
             optimization_container,
             constraint_data,
             EnergyBudgetConstraint(),
-            UpdateRef{H}("energy_budget", forecast_label),
+            EnergyBudgeTimeSeries("energy_budget"),
             ActivePowerVariable(),
             H,
         )
