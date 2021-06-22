@@ -288,6 +288,12 @@ export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
 
+# Parameters
+export ActivePowerTimeSeries
+export ServiceRequirementTimeSeries
+export BinaryValueParameter
+export UpperBoundValueParameter
+
 #################################################################################
 # Imports
 import DataStructures: OrderedDict, Deque, SortedDict
