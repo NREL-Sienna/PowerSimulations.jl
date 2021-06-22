@@ -4,8 +4,7 @@ struct DeviceEnergyBalanceConstraintSpec
     initial_condition::Type{<:InitialConditionType}
     pin_variable_types::Vector{<:VariableType}
     pout_variable_types::Vector{<:VariableType}
-    parameter_name::Union{Nothing, String}
-    forecast_label::Union{Nothing, String}
+    parameter::Union{Nothing, RightHandSideParameter}
     multiplier_func::Union{Nothing, Function}
     constraint_func::Function
     component_type::Type{<:PSY.Component}
@@ -19,8 +18,7 @@ function DeviceEnergyBalanceConstraintSpec(;
     component_type::Type{<:PSY.Component},
     pin_variable_types::Vector{<:VariableType} = Vector{VariableType}(),
     pout_variable_types::Vector{<:VariableType} = Vector{VariableType}(),
-    parameter_name::Union{Nothing, String} = nothing,
-    forecast_label::Union{Nothing, String} = nothing,
+    parameter::Union{Nothing, RightHandSideParameter} = nothing,
     multiplier_func::Union{Nothing, Function} = nothing,
 )
     return DeviceEnergyBalanceConstraintSpec(
@@ -29,8 +27,7 @@ function DeviceEnergyBalanceConstraintSpec(;
         initial_condition,
         pin_variable_types,
         pout_variable_types,
-        parameter_name,
-        forecast_label,
+        parameter,
         multiplier_func,
         constraint_func,
         component_type,
@@ -93,7 +90,7 @@ struct DeviceEnergyBalanceConstraintSpecInternal
     energy_variable::VariableType
     pin_variable_types::Vector{<:VariableType}
     pout_variable_types::Vector{<:VariableType}
-    param_reference::Union{Nothing, UpdateRef}
+    parameter::Union{Nothing, RightHandSideParameter}
     component_type::Type{<:PSY.Component}
 end
 
@@ -109,8 +106,9 @@ function _apply_energy_balance_constraint_spec!(
     for (ix, ic) in enumerate(initial_conditions)
         device = ic.device
         dev_name = PSY.get_name(device)
-        if !isnothing(spec.forecast_label)
-            ts_vector = get_time_series(optimization_container, device, spec.forecast_label)
+        if !isnothing(spec.parameter)
+            forecast_label = get_label(spec.parameter)
+            ts_vector = get_time_series(optimization_container, device, forecast_label)
             multiplier = spec.multiplier_func(device)
             constraint_info = EnergyBalanceConstraintInfo(
                 dev_name,
@@ -137,8 +135,7 @@ function _apply_energy_balance_constraint_spec!(
             spec.energy_variable,
             spec.pin_variable_types,
             spec.pout_variable_types,
-            spec.parameter_name === nothing ? nothing :
-            UpdateRef{T}(spec.parameter_name, spec.forecast_label),
+            spec.parameter,
             T,
         ),
     )

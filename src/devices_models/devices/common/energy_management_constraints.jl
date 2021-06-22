@@ -49,16 +49,16 @@ Constructs constraint energy target data, and variable
 * time_series_data::Vector{DeviceTimeSeriesConstraintInfo} : Target reservoir storage forecast information
 * cons_names::Symbol : name of the constraint
 * var_names::Symbol : the name of the energy variable
-* param_reference::UpdateRef : UpdateRef to access the target parameter
+* parameter::TimeSeriesParameter : TimeSeriesParameter for the RHS
 """
 # TODO DT: fix all docstrings that are now invalid
 function energy_target_param!(
     optimization_container::OptimizationContainer,
     target_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_type::ConstraintType,
-    var_types::Tuple{VariableType, VariableType, VariableType},
     # TODO: This should be done with AuxVariables
-    param_type::VariableValueParameter,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    parameter::TimeSeriesParameter,
     ::Type{T},
 ) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
@@ -69,7 +69,8 @@ function energy_target_param!(
 
     container_target = add_param_container!(
         optimization_container,
-        param_reference,
+        parameter,
+        T,
         name_index,
         time_steps,
     )
