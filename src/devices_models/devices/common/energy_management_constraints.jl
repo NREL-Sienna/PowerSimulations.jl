@@ -57,7 +57,8 @@ function energy_target_param!(
     target_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_type::ConstraintType,
     var_types::Tuple{VariableType, VariableType, VariableType},
-    param_reference::UpdateRef,
+    # TODO: This should be done with AuxVariables
+    param_type::VariableValueParameter,
     ::Type{T},
 ) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)

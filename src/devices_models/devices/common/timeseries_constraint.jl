@@ -185,7 +185,8 @@ function device_timeseries_param_ub!(
     )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.param_type,
+        inputs.component_type,
         names,
         time_steps,
     )
@@ -254,7 +255,8 @@ function device_timeseries_param_lb!(
     )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.param_type,
+        inputs.component_type,
         names,
         time_steps,
     )
@@ -391,7 +393,8 @@ function device_timeseries_ub_bigM!(
     )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.param_type,
+        inputs.component_type,
         names,
         time_steps,
     )
