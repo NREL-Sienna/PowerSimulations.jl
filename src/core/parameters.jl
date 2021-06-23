@@ -52,7 +52,7 @@ struct RequirementTimeSeriesParameter <: TimeSeriesParameter
     name::String
 end
 
-struct EnergyTargetTimeSeriesParameterParameter <: TimeSeriesParameter
+struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter
     name::String
 end
 
