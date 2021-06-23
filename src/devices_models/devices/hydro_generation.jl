@@ -497,14 +497,14 @@ function energy_target_constraint!(
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            EnergyTargetTimeSeries("storage_target"),
+            EnergyTargetTimeSeriesParameter("storage_target"),
             T,
         )
     else
         energy_target!(
             optimization_container,
             constraint_infos_target,
-            EnergyTargetTimeSeries("storage_target"),
+            EnergyTargetTimeSeriesParameter("storage_target"),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
             T,
         )

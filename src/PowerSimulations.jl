@@ -290,7 +290,10 @@ export StartupTimeLimitTemperatureConstraint
 
 # Parameters
 export ActivePowerTimeSeriesParameter
+export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
+export EnergyTargetTimeSeriesParameterParameter
+export EnergyBudgetTimeSeriesParameter
 export BinaryValueParameter
 export UpperBoundValueParameter
 
