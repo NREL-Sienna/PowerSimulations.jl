@@ -60,6 +60,14 @@ struct EnergyBudgetTimeSeries <: TimeSeriesParameter
     label::String
 end
 
+struct InflowTimeSeries <: TimeSeriesParameter
+    label::String
+end
+
+struct OutflowTimeSeries <: TimeSeriesParameter
+    label::String
+end
+
 get_label(key::TimeSeriesParameter) = key.label
 
 abstract type VariableValueParameter <: RightHandSideParameter end
