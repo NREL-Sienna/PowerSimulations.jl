@@ -41,23 +41,23 @@ abstract type ObjectiveFunctionParameter <: ParameterType end
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
 struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct EnergyTargetTimeSeriesParameterParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 get_label(key::TimeSeriesParameter) = key.label

@@ -397,7 +397,7 @@ function DeviceEnergyBalanceConstraintSpec(
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
         parameter_name = "inflow",
-        forecast_label = "inflow",
+        forecast_name = "inflow",
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -425,7 +425,7 @@ function DeviceEnergyBalanceConstraintSpec(
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
         parameter_name = "inflow",
-        forecast_label = "inflow",
+        forecast_name = "inflow",
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -449,7 +449,7 @@ function DeviceEnergyBalanceConstraintSpec(
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
         parameter_name = "outflow",
-        forecast_label = "outflow",
+        forecast_name = "outflow",
         multiplier_func = x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -469,7 +469,7 @@ function energy_target_constraint!(
     if use_forecast_data
         for (ix, d) in enumerate(devices)
             ts_vector_target =
-                get_time_series(optimization_container, d, target_forecast_label)
+                get_time_series(optimization_container, d, target_forecast_name)
             constraint_info_target = DeviceTimeSeriesConstraintInfo(
                 d,
                 x -> PSY.get_storage_capacity(x),
@@ -723,10 +723,10 @@ function energy_budget_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     ::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen}
-    forecast_label = "hydro_budget"
+    forecast_name = "hydro_budget"
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, forecast_label)
+        ts_vector = get_time_series(optimization_container, d, forecast_name)
         @debug "time_series" ts_vector
         constraint_d =
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)
