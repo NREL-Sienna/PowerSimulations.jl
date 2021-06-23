@@ -223,7 +223,7 @@ function pwl_gencost_sos!(
     elseif spec.sos_status == SOSStatusVariable.PARAMETER
         param_key = encode_symbol("ON", string(spec.component_type))
         bin =
-            get_parameter_container(optimization_container, param_key).parameter_array[component_name]
+            get_parameter(optimization_container, param_key).parameter_array[component_name]
         @debug "Using Piecewise Linear cost function with parameter $(param_key)" _group =
             LOG_GROUP_COST_FUNCTIONS
     elseif spec.sos_status == SOSStatusVariable.VARIABLE
