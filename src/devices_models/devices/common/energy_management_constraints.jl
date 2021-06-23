@@ -67,13 +67,8 @@ function energy_target_param!(
     varslack_up = get_variable(optimization_container, var_types[2], T)
     varslack_dn = get_variable(optimization_container, var_types[3], T)
 
-    container_target = add_param_container!(
-        optimization_container,
-        parameter,
-        T,
-        name_index,
-        time_steps,
-    )
+    container_target =
+        add_param_container!(optimization_container, parameter, T, name_index, time_steps)
     param_target = get_parameter_array(container_target)
     multiplier_target = get_multiplier_array(container_target)
     target_constraint =
