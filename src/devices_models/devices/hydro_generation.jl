@@ -396,7 +396,7 @@ function DeviceEnergyBalanceConstraintSpec(
         pout_variable_types = [ActivePowerVariable(), WaterSpillageVariable()],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
-        parameter = InflowTimeSeries("inflow"),
+        parameter = InflowTimeSeriesParameter("inflow"),
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -423,7 +423,7 @@ function DeviceEnergyBalanceConstraintSpec(
         pout_variable_types = [ActivePowerOutVariable(), WaterSpillageVariable()],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
-        parameter = InflowTimeSeries("inflow"),
+        parameter = InflowTimeSeriesParameter("inflow"),
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -446,7 +446,7 @@ function DeviceEnergyBalanceConstraintSpec(
         pin_variable_types = [ActivePowerOutVariable(), WaterSpillageVariable()],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
-        parameter = OutflowTimeSeries("outflow"),
+        parameter = OutflowTimeSeriesParameter("outflow"),
         multiplier_func = x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -493,7 +493,7 @@ function energy_target_constraint!(
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            EnergyTargetTimeSeries("storage_target"),
+            EnergyTargetTimeSeriesParameter("storage_target"),
             T,
         )
     else
@@ -734,7 +734,7 @@ function energy_budget_constraints!(
             optimization_container,
             constraint_data,
             EnergyBudgetConstraint(),
-            EnergyBudgetTimeSeries("hydro_budget"),
+            EnergyBudgetTimeSeriesParameter("hydro_budget"),
             ActivePowerVariable(),
             H,
         )

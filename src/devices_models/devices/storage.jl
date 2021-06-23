@@ -350,7 +350,7 @@ function energy_target_constraint!(
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            EnergyTargetTimeSeries(target_forecast_label),
+            EnergyTargetTimeSeriesParameter(target_forecast_label),
             T,
         )
     else
