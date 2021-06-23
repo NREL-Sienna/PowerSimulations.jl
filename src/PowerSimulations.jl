@@ -292,7 +292,7 @@ export StartupTimeLimitTemperatureConstraint
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
-export EnergyTargetTimeSeriesParameterParameter
+export  EnergyTargetTimeSeriesParameter
 export EnergyBudgetTimeSeriesParameter
 export BinaryValueParameter
 export UpperBoundValueParameter
