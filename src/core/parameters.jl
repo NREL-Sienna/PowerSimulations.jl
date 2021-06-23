@@ -40,11 +40,11 @@ abstract type ObjectiveFunctionParameter <: ParameterType end
 
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
-struct ActivePowerTimeSeries <: TimeSeriesParameter
+struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter
     label::String
 end
 
-struct ReactivePowerTimeSeries <: TimeSeriesParameter
+struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
     label::String
 end
 

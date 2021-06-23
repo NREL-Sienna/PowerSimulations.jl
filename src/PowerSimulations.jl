@@ -289,8 +289,8 @@ export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
 
 # Parameters
-export ActivePowerTimeSeries
-export ServiceRequirementTimeSeries
+export ActivePowerTimeSeriesParameter
+export RequirementTimeSeriesParameter
 export BinaryValueParameter
 export UpperBoundValueParameter
 

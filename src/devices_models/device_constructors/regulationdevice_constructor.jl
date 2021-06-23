@@ -47,7 +47,7 @@ function construct_device!(
     nodal_expression!(
         optimization_container,
         devices,
-        ActivePowerTimeSeries("max_active_power"),
+        ActivePowerTimeSeriesParameter("max_active_power"),
     )
 
     add_constraints!(
@@ -123,7 +123,7 @@ function construct_device!(
     nodal_expression!(
         optimization_container,
         devices,
-        ActivePowerTimeSeries("max_active_power"),
+        ActivePowerTimeSeriesParameter("max_active_power"),
     )
 
     add_constraints!(
@@ -169,7 +169,7 @@ function construct_device!(
     nodal_expression!(
         optimization_container,
         devices,
-        ActivePowerTimeSeries("max_active_power"),
+        ActivePowerTimeSeriesParameter("max_active_power"),
     )
     return
 end
