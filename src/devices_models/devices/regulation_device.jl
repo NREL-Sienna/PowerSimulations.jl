@@ -64,10 +64,8 @@ function add_constraints!(
     end
 
     if parameters
-        base_points_param = get_parameter(
-            optimization_container,
-            VariableKey(ActivePowerVariable, U),
-        )
+        base_points_param =
+            get_parameter(optimization_container, VariableKey(ActivePowerVariable, U))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -123,10 +121,8 @@ function add_constraints!(
     end
 
     if parameters
-        base_points_param = get_parameter(
-            optimization_container,
-            VariableKey(ActivePowerVariable, T),
-        )
+        base_points_param =
+            get_parameter(optimization_container, VariableKey(ActivePowerVariable, T))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
