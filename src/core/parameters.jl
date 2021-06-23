@@ -53,19 +53,19 @@ struct RequirementTimeSeriesParameter <: TimeSeriesParameter
 end
 
 struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct InflowTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct OutflowTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 get_name(key::TimeSeriesParameter) = key.name
