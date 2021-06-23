@@ -231,7 +231,7 @@ function _apply_timeseries_range_constraint_spec!(
         @debug "Skip adding $variable_type because it is handled by feedforward"
         return
     end
-    forecast_name = get_label(spec.parameter)
+    forecast_name = get_name(spec.parameter)
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (i, dev) in enumerate(devices)
         ts_vector = get_time_series(optimization_container, dev, forecast_name)
