@@ -465,8 +465,7 @@ function energy_target_constraint!(
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     if use_forecast_data
         for (ix, d) in enumerate(devices)
-            ts_vector_target =
-                get_time_series(optimization_container, d, "storage_target")
+            ts_vector_target = get_time_series(optimization_container, d, "storage_target")
             constraint_info_target = DeviceTimeSeriesConstraintInfo(
                 d,
                 x -> PSY.get_storage_capacity(x),
