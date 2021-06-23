@@ -54,6 +54,7 @@ const LOG_FILE = "power-simulations-test.log"
 
 const DISABLED_TEST_FILES = [
     "test_device_hydro_generation_constructors",
+    "test_services_constructor",
     "test_operations_problem",
     "test_simulation_build.jl",
     "test_simulation_execute.jl",
