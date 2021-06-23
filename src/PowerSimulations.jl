@@ -408,6 +408,8 @@ include("devices_models/devices/common/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 
+include("core/initialization.jl")
+
 # Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")
 include("devices_models/device_constructors/thermalgeneration_constructor.jl")
