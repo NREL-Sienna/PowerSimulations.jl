@@ -48,7 +48,7 @@ struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
     label::String
 end
 
-struct ServiceRequirementTimeSeries <: TimeSeriesParameter
+struct RequirementTimeSeriesParameter <: TimeSeriesParameter
     label::String
 end
 

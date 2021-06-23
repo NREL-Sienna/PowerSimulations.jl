@@ -43,7 +43,7 @@ function service_requirement_constraint!(
     if parameters
         container = get_parameter(
             optimization_container,
-            ServiceRequirementTimeSeries("requirement"),
+            RequirementTimeSeriesParameter("requirement"),
             SR,
         )
         param = get_parameter_array(container)
