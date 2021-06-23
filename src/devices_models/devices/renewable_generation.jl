@@ -114,7 +114,7 @@ function DeviceRangeConstraintSpec(
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(;
             constraint_type = ActivePowerVariableLimitsConstraint(),
             variable_type = ActivePowerVariable(),
-            parameter = ActivePowerTimeSeries("max_active_power"),
+            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -126,7 +126,7 @@ end
 ########################## Addition to the nodal balances ##################################
 function NodalExpressionSpec(
     ::Type{T},
-    parameter::ReactivePowerTimeSeries,
+    parameter::ReactivePowerTimeSeriesParameter,
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}
     return NodalExpressionSpec(
@@ -138,10 +138,9 @@ function NodalExpressionSpec(
     )
 end
 
-# ActivePowerTimeSeries("max_active_power")
 function NodalExpressionSpec(
     ::Type{T},
-    parameter::ActivePowerTimeSeries,
+    parameter::ActivePowerTimeSeriesParameter,
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}
     return NodalExpressionSpec(

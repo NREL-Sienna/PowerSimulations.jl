@@ -370,7 +370,7 @@ end
 
 function NodalExpressionSpec(
     ::Type{<:PSY.RegulationDevice{T}},
-    parameter::ActivePowerTimeSeries,
+    parameter::ActivePowerTimeSeriesParameter,
     use_forecasts::Bool,
 ) where {T <: PSY.StaticInjection}
     return NodalExpressionSpec(
