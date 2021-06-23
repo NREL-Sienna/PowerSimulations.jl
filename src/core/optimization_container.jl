@@ -586,7 +586,7 @@ function get_parameter(
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return get_parameter_container(optimization_container, ParameterKey(T, U, meta))
+    return get_parameter(optimization_container, ParameterKey(T, U, meta))
 end
 
 function get_parameter_array(optimization_container::OptimizationContainer, key)

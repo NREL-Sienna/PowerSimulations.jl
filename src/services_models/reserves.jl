@@ -42,9 +42,10 @@ function service_requirement_constraint!(
 
     requirement = PSY.get_requirement(service)
     if parameters
-        container = get_parameter_container(
+        container = get_parameter(
             optimization_container,
-            UpdateRef{SR}("service_requirement", "requirement"),
+            ServiceRequirementTimeSeries("requirement"),
+            SR,
         )
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
