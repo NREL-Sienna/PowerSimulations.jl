@@ -229,16 +229,6 @@ function construct_service!(
     time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
 
-    if model_has_parameters(optimization_container)
-        add_param_container!(
-            optimization_container,
-            RequirementTimeSeriesParameter("requirement"),
-            SR,
-            names,
-            time_steps,
-        )
-    end
-
     add_cons_container!(
         optimization_container,
         RequirementConstraint(),
