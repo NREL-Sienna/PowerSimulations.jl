@@ -69,7 +69,7 @@ function construct_service!(
     if model_has_parameters(optimization_container)
         add_param_container!(
             optimization_container,
-            ServiceRequirementTimeSeries("requirement"),
+            RequirementTimeSeriesParameter("requirement"),
             SR,
             names,
             time_steps,
@@ -232,7 +232,7 @@ function construct_service!(
     if model_has_parameters(optimization_container)
         add_param_container!(
             optimization_container,
-            ServiceRequirementTimeSeries("requirement"),
+            RequirementTimeSeriesParameter("requirement"),
             SR,
             names,
             time_steps,
@@ -278,7 +278,7 @@ function construct_service!(
     if model_has_parameters(optimization_container)
         add_param_container!(
             optimization_container,
-            ServiceRequirementTimeSeries("requirement"),
+            RequirementTimeSeriesParameter("requirement"),
             SR,
             names,
             time_steps,
