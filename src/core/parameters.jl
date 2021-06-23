@@ -41,15 +41,15 @@ abstract type ObjectiveFunctionParameter <: ParameterType end
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
 struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter
-    label::String
+    name::String
 end
 
 struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter
@@ -68,7 +68,7 @@ struct OutflowTimeSeriesParameter <: TimeSeriesParameter
     label::String
 end
 
-get_label(key::TimeSeriesParameter) = key.label
+get_name(key::TimeSeriesParameter) = key.name
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 

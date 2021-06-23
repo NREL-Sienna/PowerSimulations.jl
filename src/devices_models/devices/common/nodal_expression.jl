@@ -43,16 +43,16 @@ function _nodal_expression!(
 ) where {T <: PSY.Device}
     parameters = model_has_parameters(optimization_container)
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    forecast_label = get_label(spec.parameter)
+    forecast_name = get_name(spec.parameter)
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, forecast_label)
+        ts_vector = get_time_series(optimization_container, d, forecast_name)
         @debug "building constraint info" get_name(d), summary(ts_vector)
         constraint_info =
             DeviceTimeSeriesConstraintInfo(d, spec.peak_value_function, ts_vector)
         constraint_infos[ix] = constraint_info
     end
     if parameters
-        @debug spec.parameter_name forecast_label
+        @debug spec.parameter_name forecast_name
         include_parameters!(
             optimization_container,
             constraint_infos,
