@@ -1,7 +1,7 @@
 function get_time_series(
     optimization_container::OptimizationContainer,
     component::PSY.Component,
-    forecast_label::String,
+    forecast_name::String,
 )
     initial_time = model_initial_time(optimization_container)
     @debug initial_time
@@ -11,7 +11,7 @@ function get_time_series(
         forecast = PSY.get_time_series(
             PSY.Deterministic,
             component,
-            forecast_label;
+            forecast_name;
             start_time = initial_time,
             count = 1,
         )

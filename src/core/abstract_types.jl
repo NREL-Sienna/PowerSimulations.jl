@@ -2,7 +2,9 @@
 
 abstract type OptimizationContainerKey end
 abstract type VariableType end
+abstract type ConstraintType end
 abstract type AuxVariableType end
+abstract type ParameterType end
 
 function encode_key(key::OptimizationContainerKey)
     return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)

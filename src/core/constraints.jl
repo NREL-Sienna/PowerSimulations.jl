@@ -1,8 +1,3 @@
-# The constants below are strings instead of enums because there is a requirement that users
-# should be able to define their own without changing PowerSimulations.
-
-abstract type ConstraintType end
-
 struct AbsoluteValueConstraint <: ConstraintType end
 struct ActiveConstraint <: ConstraintType end
 struct ActivePowerVariableLimitsConstraint <: ConstraintType end

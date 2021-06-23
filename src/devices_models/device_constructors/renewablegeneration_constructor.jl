@@ -94,7 +94,37 @@ function construct_device!(
         return
     end
 
-    nodal_expression!(optimization_container, devices, S)
+    nodal_expression!(
+        optimization_container,
+        devices,
+        ActivePowerTimeSeriesParameter("max_active_power"),
+    )
+    nodal_expression!(
+        optimization_container,
+        devices,
+        ReactivePowerTimeSeriesParameter("max_active_power"),
+    )
+
+    return
+end
+
+function construct_device!(
+    optimization_container::OptimizationContainer,
+    sys::PSY.System,
+    ::DeviceModel{R, FixedOutput},
+    ::Type{S},
+) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(R, sys)
+
+    if !validate_available_devices(R, devices)
+        return
+    end
+
+    nodal_expression!(
+        optimization_container,
+        devices,
+        ActivePowerTimeSeriesParameter("max_active_power"),
+    )
 
     return
 end

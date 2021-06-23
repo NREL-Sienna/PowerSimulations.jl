@@ -1499,19 +1499,3 @@ function cost_function!(
 )
     error("DispatchNoMin is not compatible with ThermalMultiStart")
 end
-
-# TODO: Define for now just for Area Balance and reason about others later. This will
-# be needed and useful for PowerFlow
-function NodalExpressionSpec(
-    ::Type{T},
-    ::Type{AreaBalancePowerModel},
-    use_forecasts::Bool,
-) where {T <: PSY.ThermalGen}
-    return NodalExpressionSpec(
-        "max_active_power",
-        "P",
-        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
-        1.0,
-        T,
-    )
-end

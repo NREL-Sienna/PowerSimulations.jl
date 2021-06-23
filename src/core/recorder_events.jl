@@ -92,7 +92,7 @@ end
 function FeedForwardUpdateEvent(
     category::String,
     simulation_time::Dates.DateTime,
-    update_ref::UpdateRef{JuMP.VariableRef},
+    parameter::VariableValueParameter,
     device_name::String,
     val::Float64,
     previous_value::Float64,
@@ -103,7 +103,7 @@ function FeedForwardUpdateEvent(
         IS.RecorderEventCommon("FeedForwardUpdateEvent"),
         category,
         simulation_time,
-        string(update_ref.access_ref),
+        parameter,
         device_name,
         previous_value,
         val,

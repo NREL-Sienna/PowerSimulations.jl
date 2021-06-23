@@ -164,8 +164,7 @@ function DeviceRangeConstraintSpec(
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = ActivePowerVariableLimitsConstraint(),
             variable_type = ActivePowerVariable(),
-            parameter_name = use_parameters ? "P" : nothing,
-            forecast_label = "max_active_power",
+            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -363,8 +362,7 @@ function commit_hydro_active_power_ub!(
             timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
                 constraint_type = CommitmentConstraint(),
                 variable_type = ActivePowerVariable(),
-                parameter_name = use_parameters ? "P" : nothing,
-                forecast_label = "max_active_power",
+                parameter = ActivePowerTimeSeriesParameter("max_active_power"),
                 multiplier_func = x -> PSY.get_max_active_power(x),
                 constraint_func = use_parameters ? device_timeseries_param_ub! :
                                   device_timeseries_ub!,
@@ -399,7 +397,7 @@ function DeviceEnergyBalanceConstraintSpec(
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
         parameter_name = "inflow",
-        forecast_label = "inflow",
+        forecast_name = "inflow",
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -427,7 +425,7 @@ function DeviceEnergyBalanceConstraintSpec(
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
         parameter_name = "inflow",
-        forecast_label = "inflow",
+        forecast_name = "inflow",
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -451,7 +449,7 @@ function DeviceEnergyBalanceConstraintSpec(
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
         parameter_name = "outflow",
-        forecast_label = "outflow",
+        forecast_name = "outflow",
         multiplier_func = x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -467,12 +465,11 @@ function energy_target_constraint!(
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
     time_steps = model_time_steps(optimization_container)
-    target_forecast_label = "storage_target"
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     if use_forecast_data
         for (ix, d) in enumerate(devices)
             ts_vector_target =
-                get_time_series(optimization_container, d, target_forecast_label)
+                get_time_series(optimization_container, d, target_forecast_name)
             constraint_info_target = DeviceTimeSeriesConstraintInfo(
                 d,
                 x -> PSY.get_storage_capacity(x),
@@ -500,14 +497,14 @@ function energy_target_constraint!(
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            UpdateRef{T}("target", target_forecast_label),
+            EnergyTargetTimeSeriesParameter("storage_target"),
             T,
         )
     else
         energy_target!(
             optimization_container,
             constraint_infos_target,
-            EnergyTargetConstraint(),
+            EnergyTargetTimeSeriesParameter("storage_target"),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
             T,
         )
@@ -676,32 +673,31 @@ function storage_energy_initial_condition!(
 end
 
 ########################## Addition to the nodal balances #################################
-
 function NodalExpressionSpec(
     ::Type{T},
-    ::Type{<:PM.AbstractPowerModel},
+    parameter::ReactivePowerTimeSeriesParameter,
     use_forecasts::Bool,
 ) where {T <: PSY.HydroGen}
     return NodalExpressionSpec(
-        "max_active_power",
-        "Q",
+        parameter,
+        T,
         use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
         1.0,
-        T,
+        :nodal_balance_reactive,
     )
 end
 
 function NodalExpressionSpec(
     ::Type{T},
-    ::Type{<:PM.AbstractActivePowerModel},
+    parameter::ActivePowerTimeSeriesParameter,
     use_forecasts::Bool,
 ) where {T <: PSY.HydroGen}
     return NodalExpressionSpec(
-        "max_active_power",
-        "P",
+        parameter,
+        T,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,
-        T,
+        :nodal_balance_active,
     )
 end
 
@@ -727,10 +723,10 @@ function energy_budget_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     ::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen}
-    forecast_label = "hydro_budget"
+    forecast_name = "hydro_budget"
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, forecast_label)
+        ts_vector = get_time_series(optimization_container, d, forecast_name)
         @debug "time_series" ts_vector
         constraint_d =
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)
@@ -742,7 +738,7 @@ function energy_budget_constraints!(
             optimization_container,
             constraint_data,
             EnergyBudgetConstraint(),
-            UpdateRef{H}("energy_budget", forecast_label),
+            EnergyBudgeTimeSeries("energy_budget"),
             ActivePowerVariable(),
             H,
         )
@@ -765,7 +761,7 @@ function device_energy_budget_param_ub(
     optimization_container::OptimizationContainer,
     energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_type::ConstraintType,
-    param_reference::UpdateRef,
+    param_type::UpperBoundValueParameter,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
@@ -776,7 +772,7 @@ function device_energy_budget_param_ub(
     set_name = [get_component_name(r) for r in energy_budget_data]
     constraint = add_cons_container!(optimization_container, cons_type, T, set_name)
     container =
-        add_param_container!(optimization_container, param_reference, set_name, time_steps)
+        add_param_container!(optimization_container, param_type, T, set_name, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     for constraint_info in energy_budget_data

@@ -64,10 +64,8 @@ function add_constraints!(
     end
 
     if parameters
-        base_points_param = get_parameter_container(
-            optimization_container,
-            VariableKey(ActivePowerVariable, U),
-        )
+        base_points_param =
+            get_parameter(optimization_container, VariableKey(ActivePowerVariable, U))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -123,10 +121,8 @@ function add_constraints!(
     end
 
     if parameters
-        base_points_param = get_parameter_container(
-            optimization_container,
-            VariableKey(ActivePowerVariable, T),
-        )
+        base_points_param =
+            get_parameter(optimization_container, VariableKey(ActivePowerVariable, T))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -374,14 +370,14 @@ end
 
 function NodalExpressionSpec(
     ::Type{<:PSY.RegulationDevice{T}},
-    ::Type{AreaBalancePowerModel},
+    parameter::ActivePowerTimeSeriesParameter,
     use_forecasts::Bool,
 ) where {T <: PSY.StaticInjection}
     return NodalExpressionSpec(
-        "max_active_power",
-        VariableKey(ActivePowerVariable, T),
+        parameter,
+        T,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,
-        JuMP.VariableRef,
+        :nodal_balance_active,
     )
 end

@@ -4,7 +4,8 @@ struct TimeSeriesConstraintSpecInternal
     constraint_type::ConstraintType
     variable_type::VariableType
     bin_variable_type::Union{Nothing, VariableType}
-    param_reference::Union{Nothing, UpdateRef}
+    # Only needed because of the must_run constraints
+    parameter::Union{Nothing, TimeSeriesParameter}
     component_type::Type{<:PSY.Component}
 end
 
@@ -185,7 +186,8 @@ function device_timeseries_param_ub!(
     )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.parameter,
+        inputs.component_type,
         names,
         time_steps,
     )
@@ -254,7 +256,8 @@ function device_timeseries_param_lb!(
     )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.parameter,
+        inputs.component_type,
         names,
         time_steps,
     )
@@ -391,7 +394,8 @@ function device_timeseries_ub_bigM!(
     )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.parameter,
+        inputs.component_type,
         names,
         time_steps,
     )
