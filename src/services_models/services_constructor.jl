@@ -86,8 +86,10 @@ function construct_service!(
         contributing_devices =
             services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
         if !isempty(incompatible_device_types)
-            contributing_devices =
-                [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types && PSY.get_available(d)]
+            contributing_devices = [
+                d for d in contributing_devices if
+                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+            ]
         end
         # Services without contributing devices should have been filtered out in the validation
         @assert !isempty(contributing_devices)
@@ -141,8 +143,10 @@ function construct_service!(
                 name = PSY.get_name(service),
             )].contributing_devices
         if !isempty(incompatible_device_types)
-            contributing_devices =
-                [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types && PSY.get_available(d)]
+            contributing_devices = [
+                d for d in contributing_devices if
+                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+            ]
         end
         # Variables
         add_variables!(
@@ -280,8 +284,10 @@ function construct_service!(
                 name = PSY.get_name(service),
             )].contributing_devices
         if !isempty(incompatible_device_types)
-            contributing_devices =
-                [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types && PSY.get_available(d)]
+            contributing_devices = [
+                d for d in contributing_devices if
+                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+            ]
         end
         # Variables
         add_variables!(
