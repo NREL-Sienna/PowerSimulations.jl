@@ -396,8 +396,7 @@ function DeviceEnergyBalanceConstraintSpec(
         pout_variable_types = [ActivePowerVariable(), WaterSpillageVariable()],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
-        parameter_name = "inflow",
-        forecast_name = "inflow",
+        parameter = InflowTimeSeriesParameter("inflow"),
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -424,8 +423,7 @@ function DeviceEnergyBalanceConstraintSpec(
         pout_variable_types = [ActivePowerOutVariable(), WaterSpillageVariable()],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
-        parameter_name = "inflow",
-        forecast_name = "inflow",
+        parameter = InflowTimeSeriesParameter("inflow"),
         multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -448,8 +446,7 @@ function DeviceEnergyBalanceConstraintSpec(
         pin_variable_types = [ActivePowerOutVariable(), WaterSpillageVariable()],
         constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
         component_type = H,
-        parameter_name = "outflow",
-        forecast_name = "outflow",
+        parameter = OutflowTimeSeriesParameter("outflow"),
         multiplier_func = x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
     )
 end
@@ -468,8 +465,7 @@ function energy_target_constraint!(
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     if use_forecast_data
         for (ix, d) in enumerate(devices)
-            ts_vector_target =
-                get_time_series(optimization_container, d, target_forecast_name)
+            ts_vector_target = get_time_series(optimization_container, d, "storage_target")
             constraint_info_target = DeviceTimeSeriesConstraintInfo(
                 d,
                 x -> PSY.get_storage_capacity(x),
@@ -504,7 +500,7 @@ function energy_target_constraint!(
         energy_target!(
             optimization_container,
             constraint_infos_target,
-            EnergyTargetTimeSeriesParameter("storage_target"),
+            EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
             T,
         )
@@ -738,7 +734,7 @@ function energy_budget_constraints!(
             optimization_container,
             constraint_data,
             EnergyBudgetConstraint(),
-            EnergyBudgeTimeSeries("energy_budget"),
+            EnergyBudgetTimeSeriesParameter("hydro_budget"),
             ActivePowerVariable(),
             H,
         )
@@ -761,7 +757,7 @@ function device_energy_budget_param_ub(
     optimization_container::OptimizationContainer,
     energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_type::ConstraintType,
-    param_type::UpperBoundValueParameter,
+    param_type::TimeSeriesParameter,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}

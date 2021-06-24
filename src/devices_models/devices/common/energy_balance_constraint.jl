@@ -248,7 +248,7 @@ function energy_balance_param!(
     resolution = model_resolution(optimization_container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    has_parameter_data = !isnothing(inputs.param_reference)
+    has_parameter_data = !isnothing(inputs.parameter)
 
     varenergy =
         get_variable(optimization_container, inputs.energy_variable, inputs.component_type)
@@ -264,7 +264,8 @@ function energy_balance_param!(
     if has_parameter_data
         container = add_param_container!(
             optimization_container,
-            inputs.param_reference,
+            inputs.parameter,
+            inputs.component_type,
             names,
             time_steps,
         )
