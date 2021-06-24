@@ -77,7 +77,7 @@ function _get_execution_order_vector(
 end
 
 function _check_feedforward(
-    feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward},
+    feedforward,
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology},
 )
     isempty(feedforward) && return
@@ -153,7 +153,7 @@ mutable struct SimulationSequence
     # The string here is the name of the problem
     intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
-    feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
+    feedforward::Dict{<:Tuple, <:AbstractAffectFeedForward}
     ini_cond_chronology::InitialConditionChronology
     cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
