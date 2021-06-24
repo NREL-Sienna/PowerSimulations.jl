@@ -50,13 +50,17 @@ function _get_constraint_data(
     for (ix, d) in enumerate(devices)
         limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
         name = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
+        services_ub = Vector{VariableKey}()
         for service in PSY.get_services(d)
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
-        constraint_infos[ix] =
-            DeviceRangeConstraintInfo(name, limit_values, services_ub, Vector{Symbol}())
+        constraint_infos[ix] = DeviceRangeConstraintInfo(
+            name,
+            limit_values,
+            services_ub,
+            Vector{VariableKey}(),
+        )
     end
     return constraint_infos
 end
@@ -68,7 +72,12 @@ function branch_rate_bounds!(
     ::Type{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
     constraint_infos = _get_constraint_data(devices)
-    set_variable_bounds!(optimization_container, constraint_infos, FLOW_ACTIVE_POWER, B)
+    set_variable_bounds!(
+        optimization_container,
+        constraint_infos,
+        FlowActivePowerVariable(),
+        B,
+    )
     return
 end
 
@@ -82,13 +91,13 @@ function branch_rate_bounds!(
     set_variable_bounds!(
         optimization_container,
         constraint_infos,
-        FLOW_ACTIVE_POWER_FROM_TO,
+        FlowActivePowerFromToVariable(),
         B,
     )
     set_variable_bounds!(
         optimization_container,
         constraint_infos,
-        FLOW_ACTIVE_POWER_TO_FROM,
+        FlowActivePowerToFromVariable(),
         B,
     )
     return
@@ -107,8 +116,9 @@ function branch_rate_constraints!(
         optimization_container,
         RangeConstraintSpecInternal(
             constraint_infos,
-            make_constraint_name(RATE_LIMIT, B),
-            make_variable_name(FLOW_ACTIVE_POWER, B),
+            RateLimitConstraint(),
+            FlowActivePowerVariable(),
+            B,
         ),
     )
     return
@@ -125,21 +135,17 @@ function branch_rate_constraints!(
     rating_constraint!(
         optimization_container,
         range_data,
-        make_constraint_name(RATE_LIMIT_FT, B),
-        (
-            make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
-            make_variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
-        ),
+        RateLimitFTConstraint(),
+        (FlowActivePowerFromToVariable(), FlowReactivePowerFromToVariable()),
+        B,
     )
 
     rating_constraint!(
         optimization_container,
         range_data,
-        make_constraint_name(RATE_LIMIT_TF, B),
-        (
-            make_variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
-            make_variable_name(FLOW_REACTIVE_POWER_TO_FROM, B),
-        ),
+        RateLimitTFConstraint(),
+        (FlowActivePowerToFromVariable(), FlowReactivePowerToFromVariable()),
+        B,
     )
     return
 end
@@ -167,11 +173,15 @@ function branch_flow_values!(
     ptdf = get_PTDF(optimization_container)
     branches = PSY.get_name.(devices)
     time_steps = model_time_steps(optimization_container)
-    constraint_name = make_constraint_name(NETWORK_FLOW, B)
-    branch_flow =
-        add_cons_container!(optimization_container, constraint_name, branches, time_steps)
+    branch_flow = add_cons_container!(
+        optimization_container,
+        NetworkFlowConstraint(),
+        B,
+        branches,
+        time_steps,
+    )
     nodal_balance_expressions = optimization_container.expressions[:nodal_balance_active]
-    flow_variables = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
+    flow_variables = get_variable(optimization_container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(optimization_container)
     for br in devices
         name = PSY.get_name(br)
@@ -217,8 +227,9 @@ function branch_flow_constraints!(
         optimization_container,
         RangeConstraintSpecInternal(
             constraint_infos,
-            make_constraint_name(FLOW_LIMIT, PSY.MonitoredLine),
-            make_variable_name(FLOW_ACTIVE_POWER, PSY.MonitoredLine),
+            FlowLimitConstraint(),
+            FlowActivePowerVariable(),
+            PSY.MonitoredLine,
         ),
     )
     return
@@ -254,16 +265,18 @@ function branch_flow_constraints!(
         optimization_container,
         RangeConstraintSpecInternal(
             to,
-            make_constraint_name(FLOW_LIMIT_FROM_TO, PSY.MonitoredLine),
-            make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLine),
+            FlowLimitFromToConstraint(),
+            FlowActivePowerFromToVariable(),
+            PSY.MonitoredLine,
         ),
     )
     device_range!(
         optimization_container,
         RangeConstraintSpecInternal(
             from,
-            make_constraint_name(FLOW_LIMIT_TO_FROM, PSY.MonitoredLine),
-            make_variable_name(FLOW_ACTIVE_POWER_TO_FROM, PSY.MonitoredLine),
+            FlowLimitToFromConstraint(),
+            FlowActivePowerToFromVariable(),
+            PSY.MonitoredLine,
         ),
     )
     return

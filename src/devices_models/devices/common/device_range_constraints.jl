@@ -1,60 +1,63 @@
 struct RangeConstraintSpec
-    constraint_name::Symbol
-    variable_name::Symbol
-    bin_variable_names::Vector{Symbol}
+    constraint_type::ConstraintType
+    variable_type::VariableType
+    bin_variable_types::Vector{VariableType}
     limits_func::Function
     constraint_func::Function
     constraint_struct::Type{<:AbstractRangeConstraintInfo}
+    component_type::Type{<:PSY.Component}
     lag_limits_func::Union{Function, Nothing}
 end
 
 function RangeConstraintSpec(;
-    constraint_name,
-    variable_name,
-    bin_variable_names = Vector{Symbol}(),
+    constraint_type,
+    variable_type,
+    bin_variable_types = Vector{VariableType}(),
     limits_func,
     constraint_func,
     constraint_struct,
+    component_type,
     lag_limits_func = nothing,
 )
     return RangeConstraintSpec(
-        constraint_name,
-        variable_name,
-        bin_variable_names,
+        constraint_type,
+        variable_type,
+        bin_variable_types,
         limits_func,
         constraint_func,
         constraint_struct,
+        component_type,
         lag_limits_func,
     )
 end
 
 struct TimeSeriesConstraintSpec
-    constraint_name::Symbol
-    variable_name::Symbol
-    bin_variable_name::Union{Nothing, Symbol}
-    parameter_name::Union{Nothing, String}
-    forecast_label::Union{Nothing, String}
+    constraint_type::ConstraintType
+    variable_type::VariableType
+    bin_variable_type::Union{Nothing, VariableType}
+    parameter::TimeSeriesParameter
     multiplier_func::Union{Nothing, Function}
     constraint_func::Function
+    component_type::Type{<:PSY.Component}
 end
 
 function TimeSeriesConstraintSpec(;
-    constraint_name,
-    variable_name,
-    bin_variable_name = nothing,
-    parameter_name,
-    forecast_label,
+    constraint_type,
+    variable_type,
+    bin_variable_type = nothing,
+    parameter,
     multiplier_func,
     constraint_func,
+    component_type,
 )
     return TimeSeriesConstraintSpec(
-        constraint_name,
-        variable_name,
-        bin_variable_name,
-        parameter_name,
-        forecast_label,
+        constraint_type,
+        variable_type,
+        bin_variable_type,
+        parameter,
         multiplier_func,
         constraint_func,
+        component_type,
     )
 end
 
@@ -81,7 +84,7 @@ function add_constraints!(
     ::Type{X},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
-    T <: RangeConstraint,
+    T <: ConstraintType,
     U <: VariableType,
     V <: PSY.Device,
     W <: AbstractDeviceFormulation,
@@ -176,13 +179,13 @@ function _apply_range_constraint_spec!(
 ) where {T <: PSY.Device}
     constraint_struct = spec.constraint_struct
     constraint_infos = Vector{constraint_struct}(undef, length(devices))
-    constraint_name = spec.constraint_name
-    variable_name = spec.variable_name
-    if variable_name in ff_affected_variables
-        @debug "Skip adding $variable_name because it is handled by feedforward"
+    constraint_type = spec.constraint_type
+    variable_type = spec.variable_type
+    if variable_type in ff_affected_variables
+        @debug "Skip adding $variable_type because it is handled by feedforward"
         return
     end
-    bin_var_name = spec.bin_variable_names
+    bin_var_name = spec.bin_variable_types
     for (i, dev) in enumerate(devices)
         dev_name = PSY.get_name(dev)
         limits = spec.limits_func(dev)
@@ -207,9 +210,10 @@ function _apply_range_constraint_spec!(
         optimization_container,
         RangeConstraintSpecInternal(
             constraint_infos,
-            constraint_name,
-            variable_name,
+            constraint_type,
+            variable_type,
             bin_var_name,
+            T,
         ),
     )
     return
@@ -222,14 +226,15 @@ function _apply_timeseries_range_constraint_spec!(
     model,
     ff_affected_variables,
 ) where {T <: PSY.Device}
-    variable_name = spec.variable_name
-    if variable_name in ff_affected_variables
-        @debug "Skip adding $variable_name because it is handled by feedforward"
+    variable_type = spec.variable_type
+    if variable_type in ff_affected_variables
+        @debug "Skip adding $variable_type because it is handled by feedforward"
         return
     end
+    forecast_name = get_name(spec.parameter)
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (i, dev) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, dev, spec.forecast_label)
+        ts_vector = get_time_series(optimization_container, dev, forecast_name)
         constraint_info =
             DeviceTimeSeriesConstraintInfo(dev, spec.multiplier_func, ts_vector)
         add_device_services!(constraint_info.range, dev, model)
@@ -238,11 +243,11 @@ function _apply_timeseries_range_constraint_spec!(
 
     ts_inputs = TimeSeriesConstraintSpecInternal(
         constraint_infos,
-        spec.constraint_name,
-        variable_name,
-        spec.bin_variable_name,
-        spec.parameter_name === nothing ? nothing :
-        UpdateRef{T}(spec.parameter_name, spec.forecast_label),
+        spec.constraint_type,
+        variable_type,
+        spec.bin_variable_type,
+        spec.parameter,
+        T,
     )
     spec.constraint_func(optimization_container, ts_inputs)
     return

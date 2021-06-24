@@ -22,10 +22,10 @@ function construct_services!(
     incompatible_device_types = get_incompatible_devices(devices_template)
 
     function _construct_valid_services!(service_model::ServiceModel)
-        @debug "Building $(service_model.component_type) with $(service_model.formulation) formulation"
-        services = service_model.component_type[]
+        @debug "Building $(get_component_type(service_model)) with $(get_formulation(service_model)) formulation"
+        services = get_component_type(service_model)[]
         if validate_services!(
-            service_model.component_type,
+            get_component_type(service_model),
             services,
             incompatible_device_types,
             sys,
@@ -44,7 +44,7 @@ function construct_services!(
     groupservice = nothing
 
     for (key, service_model) in services_template
-        if service_model.formulation === GroupReserve  # group service needs to be constructed last
+        if get_formulation(service_model) === GroupReserve  # group service needs to be constructed last
             groupservice = key
             continue
         end
@@ -69,7 +69,8 @@ function construct_service!(
     if model_has_parameters(optimization_container)
         add_param_container!(
             optimization_container,
-            UpdateRef{SR}("service_requirement", "requirement"),
+            RequirementTimeSeriesParameter("requirement"),
+            SR,
             names,
             time_steps,
         )
@@ -77,7 +78,8 @@ function construct_service!(
 
     add_cons_container!(
         optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
+        RequirementConstraint(),
+        SR,
         names,
         time_steps,
     )
@@ -94,7 +96,7 @@ function construct_service!(
         # Variables
         add_variables!(
             optimization_container,
-            ActiveServiceVariable,
+            ActivePowerReserveVariable,
             service,
             contributing_devices,
             RangeReserve(),
@@ -129,7 +131,8 @@ function construct_service!(
     )
     add_cons_container!(
         optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
+        RequirementConstraint(),
+        SR,
         names,
         time_steps,
     )
@@ -147,7 +150,7 @@ function construct_service!(
         # Variables
         add_variables!(
             optimization_container,
-            ActiveServiceVariable,
+            ActivePowerReserveVariable,
             service,
             contributing_devices,
             StepwiseCostReserve(),
@@ -213,18 +216,10 @@ function construct_service!(
     time_steps = model_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
 
-    if model_has_parameters(optimization_container)
-        add_param_container!(
-            optimization_container,
-            UpdateRef{SR}("service_requirement", "requirement"),
-            names,
-            time_steps,
-        )
-    end
-
     add_cons_container!(
         optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
+        RequirementConstraint(),
+        SR,
         names,
         time_steps,
     )
@@ -260,7 +255,8 @@ function construct_service!(
     if model_has_parameters(optimization_container)
         add_param_container!(
             optimization_container,
-            UpdateRef{SR}("service_requirement", "requirement"),
+            RequirementTimeSeriesParameter("requirement"),
+            SR,
             names,
             time_steps,
         )
@@ -268,7 +264,8 @@ function construct_service!(
 
     add_cons_container!(
         optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
+        RequirementConstraint(),
+        SR,
         names,
         time_steps,
     )
@@ -286,7 +283,7 @@ function construct_service!(
         # Variables
         add_variables!(
             optimization_container,
-            ActiveServiceVariable,
+            ActivePowerReserveVariable,
             service,
             contributing_devices,
             RampReserve(),

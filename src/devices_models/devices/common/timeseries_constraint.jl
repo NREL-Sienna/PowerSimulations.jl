@@ -1,10 +1,12 @@
 
 struct TimeSeriesConstraintSpecInternal
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo}
-    constraint_name::Symbol
-    variable_name::Symbol
-    bin_variable_name::Union{Nothing, Symbol}
-    param_reference::Union{Nothing, UpdateRef}
+    constraint_type::ConstraintType
+    variable_type::VariableType
+    bin_variable_type::Union{Nothing, VariableType}
+    # Only needed because of the must_run constraints
+    parameter::Union{Nothing, TimeSeriesParameter}
+    component_type::Type{<:PSY.Component}
 end
 
 function lazy_lb!(
@@ -13,9 +15,16 @@ function lazy_lb!(
 )
     time_steps = model_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    variable = get_variable(optimization_container, inputs.variable_name)
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    variable =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    con_lb = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
 
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
@@ -58,9 +67,16 @@ function device_timeseries_ub!(
 )
     time_steps = model_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    variable = get_variable(optimization_container, inputs.variable_name)
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
+    variable =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    con_ub = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
     lazy_add_lb = false
 
     for constraint_info in inputs.constraint_infos
@@ -108,10 +124,17 @@ function device_timeseries_lb!(
     inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(optimization_container)
-    variable = get_variable(optimization_container, inputs.variable_name)
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    variable =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    constraint = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    constraint = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
 
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
@@ -151,12 +174,20 @@ function device_timeseries_param_ub!(
 )
     time_steps = model_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    variable = get_variable(optimization_container, inputs.variable_name)
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
+    variable =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    con_ub = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.parameter,
+        inputs.component_type,
         names,
         time_steps,
     )
@@ -212,13 +243,21 @@ function device_timeseries_param_lb!(
     inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(optimization_container)
-    variable = get_variable(optimization_container, inputs.variable_name)
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    variable =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    constraint = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.parameter,
+        inputs.component_type,
         names,
         time_steps,
     )
@@ -270,11 +309,22 @@ function device_timeseries_ub_bin!(
     inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    varcts = get_variable(optimization_container, inputs.variable_name)
-    varbin = get_variable(optimization_container, inputs.bin_variable_name)
+    varcts =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    varbin = get_variable(
+        optimization_container,
+        inputs.bin_variable_type,
+        inputs.component_type,
+    )
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
+    con_ub = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
     for constraint_info in inputs.constraint_infos
         ci_name = get_component_name(constraint_info)
         for t in time_steps
@@ -317,17 +367,35 @@ function device_timeseries_ub_bigM!(
     inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    key_status = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "status")
 
-    varcts = get_variable(optimization_container, inputs.variable_name)
-    varbin = get_variable(optimization_container, inputs.bin_variable_name)
+    varcts =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    varbin = get_variable(
+        optimization_container,
+        inputs.bin_variable_type,
+        inputs.component_type,
+    )
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
-    con_status = add_cons_container!(optimization_container, key_status, names, time_steps)
+    con_ub = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+    con_status = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "status",
+    )
     container = add_param_container!(
         optimization_container,
-        inputs.param_reference,
+        inputs.parameter,
+        inputs.component_type,
         names,
         time_steps,
     )

@@ -8,22 +8,23 @@ Constructs constraint energy target data, and variable
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * time_series_data::Vector{DeviceTimeSeriesConstraintInfo} : Target reservoir storage forecast information
 * cons_name::Symbol : energy target constraint name
-* var_name::Symbol : the name of the Energy  variable
+* var_key::VariableKey : the name of the Energy  variable
 """
 function energy_target!(
     optimization_container::OptimizationContainer,
     target_data::Vector{T},
-    cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
-) where {T <: DeviceTimeSeriesConstraintInfo}
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{U},
+) where {T <: DeviceTimeSeriesConstraintInfo, U <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
     name_index = [get_component_name(d) for d in target_data]
-    varenergy = get_variable(optimization_container, var_names[1])
-    varslack_up = get_variable(optimization_container, var_names[2])
-    varslack_dn = get_variable(optimization_container, var_names[3])
+    varenergy = get_variable(optimization_container, var_types[1], U)
+    varslack_up = get_variable(optimization_container, var_types[2], U)
+    varslack_dn = get_variable(optimization_container, var_types[3], U)
 
     target_constraint =
-        add_cons_container!(optimization_container, cons_name, name_index, time_steps)
+        add_cons_container!(optimization_container, cons_type, U, name_index, time_steps)
 
     for data in target_data, t in time_steps
         name = get_component_name(data)
@@ -48,31 +49,30 @@ Constructs constraint energy target data, and variable
 * time_series_data::Vector{DeviceTimeSeriesConstraintInfo} : Target reservoir storage forecast information
 * cons_names::Symbol : name of the constraint
 * var_names::Symbol : the name of the energy variable
-* param_reference::UpdateRef : UpdateRef to access the target parameter
+* parameter::TimeSeriesParameter : TimeSeriesParameter for the RHS
 """
+# TODO DT: fix all docstrings that are now invalid
 function energy_target_param!(
     optimization_container::OptimizationContainer,
     target_data::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
-    param_reference::UpdateRef,
-)
+    cons_type::ConstraintType,
+    # TODO: This should be done with AuxVariables
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    parameter::TimeSeriesParameter,
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
     name_index = [get_component_name(d) for d in target_data]
-    varenergy = get_variable(optimization_container, var_names[1])
-    varslack_up = get_variable(optimization_container, var_names[2])
-    varslack_dn = get_variable(optimization_container, var_names[3])
+    varenergy = get_variable(optimization_container, var_types[1], T)
+    varslack_up = get_variable(optimization_container, var_types[2], T)
+    varslack_dn = get_variable(optimization_container, var_types[3], T)
 
-    container_target = add_param_container!(
-        optimization_container,
-        param_reference,
-        name_index,
-        time_steps,
-    )
+    container_target =
+        add_param_container!(optimization_container, parameter, T, name_index, time_steps)
     param_target = get_parameter_array(container_target)
     multiplier_target = get_multiplier_array(container_target)
     target_constraint =
-        add_cons_container!(optimization_container, cons_name, name_index, time_steps)
+        add_cons_container!(optimization_container, cons_type, T, name_index, time_steps)
 
     for d in target_data, t in time_steps
         name = get_component_name(d)

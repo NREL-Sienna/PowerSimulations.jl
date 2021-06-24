@@ -1,176 +1,3 @@
-function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
-    source_problem = get_problems(sim)[key.first]
-    destination_problem = get_problems(sim)[key.second]
-    source_problem_horizon = get_horizon(source_problem)
-    destination_problem_horizon = get_horizon(destination_problem)
-    sequence = get_sequence(sim)
-    source_problem_interval = get_interval(sequence, key.first)
-    destination_problem_interval = get_interval(sequence, key.second)
-
-    source_problem_resolution = get_resolution(source_problem)
-    @debug source_problem_resolution, destination_problem_interval
-    # How many times the second problem executes per solution retireved from the source_problem.
-    # E.g. source_problem_resolution = 1 Hour, destination_problem_interval = 5 minutes => 12 executions per solution
-    destination_problem_executions_per_solution =
-        Int(source_problem_resolution / destination_problem_interval)
-    # Number of periods in the horizon that will be synchronized between the source_problem and the destination_problem
-    source_problem_sync = sync.periods
-
-    if source_problem_sync > source_problem_horizon
-        throw(
-            IS.ConflictingInputsError(
-                "The lookahead length $(source_problem_horizon) in problem is insufficient to syncronize with $(source_problem_sync) feedforward periods",
-            ),
-        )
-    end
-
-    if (source_problem_sync % destination_problem_executions_per_solution) != 0
-        throw(
-            IS.ConflictingInputsError(
-                "The current configuration implies $(source_problem_sync / destination_problem_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in problem $(key.first) needs to be a mutiple of the number of problem $(key.second) execution for every problem $(key.first) interval.",
-            ),
-        )
-    end
-
-    return
-end
-
-function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
-    source_problem = get_problems(sim)[key.first]
-    destination_problem = get_problems(sim)[key.second]
-    source_problem_horizon = get_horizon(source_problem)
-    destination_problem_horizon = get_horizon(destination_problem)
-    if source_problem_horizon != source_problem_interval
-        @warn(
-            "Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_problem_horizon) in problem $(key.first) will be replaced with $(source_problem_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon"
-        )
-    end
-    get_sequence(sim).horizons[key.first] = get_interval(sim, key.first)
-    return
-end
-
-check_chronology!(sim::Simulation, key::Pair, ::RecedingHorizon) = nothing
-check_chronology!(sim::Simulation, key::Pair, ::FullHorizon) = nothing
-# TODO: Add missing check
-check_chronology!(sim::Simulation, key::Pair, ::Range) = nothing
-
-function check_chronology!(
-    sim::Simulation,
-    key::Pair,
-    ::T,
-) where {T <: FeedForwardChronology}
-    error("Chronology $(T) not implemented")
-    return
-end
-
-############################ FeedForward Definitions ########################################
-
-struct UpperBoundFF <: AbstractAffectFeedForward
-    variable_source_problem::Symbol
-    affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
-    function UpperBoundFF(
-        variable_source_problem::AbstractString,
-        affected_variables::Vector{<:AbstractString},
-        cache::Union{Nothing, Type{<:AbstractCache}},
-    )
-        new(Symbol(variable_source_problem), Symbol.(affected_variables), cache)
-    end
-end
-
-function UpperBoundFF(; variable_source_problem, affected_variables)
-    return UpperBoundFF(variable_source_problem, affected_variables, nothing)
-end
-
-get_variable_source_problem(p::UpperBoundFF) = p.variable_source_problem
-
-struct RangeFF <: AbstractAffectFeedForward
-    variable_source_problem_ub::Symbol
-    variable_source_problem_lb::Symbol
-    affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
-    function RangeFF(
-        variable_source_problem_ub::AbstractString,
-        variable_source_problem_lb::AbstractString,
-        affected_variables::Vector{<:AbstractString},
-        cache::Union{Nothing, Type{<:AbstractCache}},
-    )
-        new(
-            Symbol(variable_source_problem_ub),
-            Symbol(variable_source_problem_lb),
-            Symbol.(affected_variables),
-            cache,
-        )
-    end
-end
-
-function RangeFF(;
-    variable_source_problem_ub,
-    variable_source_problem_lb,
-    affected_variables,
-)
-    return RangeFF(
-        variable_source_problem_ub,
-        variable_source_problem_lb,
-        affected_variables,
-        nothing,
-    )
-end
-
-get_bounds_source_problem(p::RangeFF) =
-    (p.variable_source_problem_lb, p.variable_source_problem_lb)
-
-struct SemiContinuousFF <: AbstractAffectFeedForward
-    binary_source_problem::Symbol
-    affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
-    function SemiContinuousFF(
-        binary_source_problem::AbstractString,
-        affected_variables::Vector{<:AbstractString},
-        cache::Union{Nothing, Type{<:AbstractCache}},
-    )
-        new(Symbol(binary_source_problem), Symbol.(affected_variables), cache)
-    end
-end
-
-function SemiContinuousFF(; binary_source_problem, affected_variables)
-    return SemiContinuousFF(binary_source_problem, affected_variables, nothing)
-end
-
-get_binary_source_problem(p::SemiContinuousFF) = p.binary_source_problem
-get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
-
-struct IntegralLimitFF <: AbstractAffectFeedForward
-    variable_source_problem::Symbol
-    affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
-    function IntegralLimitFF(
-        variable_source_problem::AbstractString,
-        affected_variables::Vector{<:AbstractString},
-        cache::Union{Nothing, Type{<:AbstractCache}},
-    )
-        new(Symbol(variable_source_problem), Symbol.(affected_variables), cache)
-    end
-end
-
-function IntegralLimitFF(; variable_source_problem, affected_variables)
-    return IntegralLimitFF(variable_source_problem, affected_variables, nothing)
-end
-
-get_variable_source_problem(p::IntegralLimitFF) = p.variable_source_problem
-
-struct ParameterFF <: AbstractAffectFeedForward
-    variable_source_problem::Symbol
-    affected_parameters::Any
-    function ParameterFF(variable_source_problem::AbstractString, affected_parameters)
-        new(Symbol(variable_source_problem), affected_parameters)
-    end
-end
-
-function ParameterFF(; variable_source_problem, affected_parameters)
-    return ParameterFF(variable_source_problem, affected_parameters)
-end
-
 ####################### Feed Forward Affects ###############################################
 
 @doc raw"""
@@ -178,7 +5,7 @@ end
               cons_name::Symbol,
               constraint_infos::Vector{DeviceRangeConstraintInfo},
               param_reference::UpdateRef,
-              var_name::Symbol)
+              var_key::VariableKey)
 
 Constructs a parametrized upper bound constraint to implement feedforward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
@@ -194,26 +21,26 @@ The Parameters are initialized using the uppper boundary values of the provided 
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 """
 function ub_ff(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    cons_type::ConstraintType,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
-    param_reference::UpdateRef,
-    var_name::Symbol,
-)
+    parameter::VariableValueParameter,
+    var_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_type, T)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    container = add_param_container!(optimization_container, param_reference, set_name)
+    container = add_param_container!(optimization_container, parameter, T, set_name)
     param_ub = get_parameter_array(container)
     multiplier_ub = get_multiplier_array(container)
-    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
+    con_ub = add_cons_container!(optimization_container, cons_type, T, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
@@ -239,7 +66,7 @@ end
         range_ff(optimization_container::OptimizationContainer,
                         cons_name::Symbol,
                         param_reference::NTuple{2, UpdateRef},
-                        var_name::Symbol)
+                        var_key::VariableKey)
 
 Constructs min/max range parametrized constraint from device variable to include feedforward.
 
@@ -259,20 +86,19 @@ where r in range_data.
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * param_reference::NTuple{2, UpdateRef} : Tuple with the lower bound and upper bound parameter reference
 * cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 """
 function range_ff(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    cons_type_lb::ConstraintType,
+    cons_type_ub::ConstraintType,
     constraint_infos::Vector{DeviceRangeConstraintInfo},
-    param_reference::NTuple{2, UpdateRef},
-    var_name::Symbol,
-)
+    param_reference::NTuple{2, <:VariableValueParameter},
+    var_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, var_type)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -280,16 +106,18 @@ function range_ff(
 
     # Create containers for the constraints
     container_lb =
-        add_param_container!(optimization_container, param_reference[1], set_name)
+        add_param_container!(optimization_container, param_reference[1], T, set_name)
     param_lb = get_parameter_array(container_lb)
     multiplier_lb = get_multiplier_array(container_lb)
     container_ub =
-        add_param_container!(optimization_container, param_reference[2], set_name)
+        add_param_container!(optimization_container, param_reference[2], T, set_name)
     param_ub = get_parameter_array(container_ub)
     multiplier_ub = get_multiplier_array(container_ub)
     # Create containers for the parameters
-    con_lb = add_cons_container!(optimization_container, lb_name, set_name, time_steps)
-    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
+    con_lb =
+        add_cons_container!(optimization_container, cons_type_lb, T, set_name, time_steps)
+    con_ub =
+        add_cons_container!(optimization_container, cons_type_ub, T, set_name, time_steps)
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
@@ -330,7 +158,7 @@ end
 @doc raw"""
             semicontinuousrange_ff(optimization_container::OptimizationContainer,
                                     cons_name::Symbol,
-                                    var_name::Symbol,
+                                    var_key::VariableKey,
                                     param_reference::UpdateRef)
 
 Constructs min/max range constraint from device variable with parameter setting.
@@ -357,29 +185,42 @@ where r in range_data.
 # Arguments
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 * param_reference::UpdateRef : UpdateRef of the parameter
 """
 function semicontinuousrange_ff(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
+    constraint_type::ConstraintType,
+    ::Type{T},
     constraint_infos::Vector{DeviceRangeConstraintInfo},
-    param_reference::UpdateRef,
-    var_name::Symbol,
-)
+    param_type::VariableValueParameter,
+    variable_type::VariableType,
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, variable_type, T)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = [get_component_name(ci) for ci in constraint_infos]
     @assert axes[2] == time_steps
-    container = add_param_container!(optimization_container, param_reference, set_name)
+    container = add_param_container!(optimization_container, param_reference, T, set_name)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
-    con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, set_name, time_steps)
+    con_ub = add_cons_container!(
+        optimization_container,
+        constraint_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "up",
+    )
+    con_lb = add_cons_container!(
+        optimization_container,
+        constraint_type,
+        T,
+        set_name,
+        time_steps,
+        meta = "lb",
+    )
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
@@ -433,7 +274,7 @@ end
         integral_limit_ff(optimization_container::OptimizationContainer,
                         cons_name::Symbol,
                         param_reference::UpdateRef,
-                        var_name::Symbol)
+                        var_key::VariableKey)
 
 Constructs a parametrized integral limit constraint to implement feedforward from other models.
 The Parameters are initialized using the upper boundary values of the provided variables.
@@ -452,26 +293,26 @@ The Parameters are initialized using the upper boundary values of the provided v
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
-* var_name::Symbol : the name of the continuous variable
+* var_key::VariableKey : the name of the continuous variable
 """
 function integral_limit_ff(
     optimization_container::OptimizationContainer,
-    cons_name::Symbol,
-    param_reference::UpdateRef,
-    var_name::Symbol,
-)
+    constraint_type::ConstraintType,
+    ::Type{T},
+    param_type::VariableValueParameter,
+    variable_type::VariableType,
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
-    variable = get_variable(optimization_container, var_name)
+    variable = get_variable(optimization_container, variable_type, T)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    container_ub = add_param_container!(optimization_container, param_reference, set_name)
+    container_ub = add_param_container!(optimization_container, param_type, T, set_name)
     param_ub = get_parameter_array(container_ub)
     multiplier_ub = get_multiplier_array(container_ub)
-    con_ub = add_cons_container!(optimization_container, ub_name, set_name)
+    con_ub = add_cons_container!(optimization_container, constraint_type, T, set_name)
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
@@ -510,15 +351,16 @@ function feedforward!(
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info
     end
-    for prefix in get_affected_variables(ff_model)
-        var_name = make_variable_name(prefix, T)
-        parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
+    for var_key in get_affected_variables(ff_model)
+        var_type = get_entry_type(var_key)
+        parameter_ref = UpdateRef{JuMP.VariableRef}(var_key)
         ub_ff(
             optimization_container,
-            constraint_name(FEEDFORWARD_UB, T),
+            FeedforwardUBConstraint(),
             constraint_infos,
             parameter_ref,
-            var_name,
+            var_type,
+            T,
         )
     end
 end
@@ -529,7 +371,7 @@ function feedforward!(
     model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::SemiContinuousFF,
 ) where {T <: PSY.StaticInjection}
-    bin_var = make_variable_name(get_binary_source_problem(ff_model), T)
+    bin_var = VariableKey(get_binary_source_problem(ff_model), T)
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -539,14 +381,14 @@ function feedforward!(
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info
     end
-    for prefix in get_affected_variables(ff_model)
-        var_name = make_variable_name(prefix, T)
+    for var_key in get_affected_variables(ff_model)
         semicontinuousrange_ff(
             optimization_container,
-            make_constraint_name(FEEDFORWARD_BIN, T),
+            FeedforwardBinConstraint,
+            T,
             constraint_infos,
             parameter_ref,
-            var_name,
+            get_entry_type(var_key),  # TODO DT: Jose, the old code was creating a new key; not sure why
         )
     end
 end
@@ -557,14 +399,14 @@ function feedforward!(
     ::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::IntegralLimitFF,
 ) where {T <: PSY.StaticInjection}
-    for prefix in get_affected_variables(ff_model)
-        var_name = make_variable_name(prefix, T)
-        parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
+    for var_key in get_affected_variables(ff_model)
+        parameter_ref = UpdateRef{JuMP.VariableRef}(var_key)
         integral_limit_ff(
             optimization_container,
-            make_constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
+            FeedforwardIntegralLimitConstraint,
+            T,
             parameter_ref,
-            var_name,
+            get_entry_type(var_key),  # TODO DT: Jose, the old code was creating a new key; not sure why
         )
     end
 end

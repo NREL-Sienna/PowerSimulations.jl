@@ -68,8 +68,8 @@ function InitialConditionUpdateEvent(
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
         simulation_time,
-        string(key.ic_type),
-        string(key.device_type),
+        string(get_entry_type(key)),
+        string(get_component_type(key)),
         get_device_name(ic),
         val,
         previous_value,
@@ -92,7 +92,7 @@ end
 function FeedForwardUpdateEvent(
     category::String,
     simulation_time::Dates.DateTime,
-    update_ref::UpdateRef{JuMP.VariableRef},
+    parameter::VariableValueParameter,
     device_name::String,
     val::Float64,
     previous_value::Float64,
@@ -103,7 +103,7 @@ function FeedForwardUpdateEvent(
         IS.RecorderEventCommon("FeedForwardUpdateEvent"),
         category,
         simulation_time,
-        string(update_ref.access_ref),
+        parameter,
         device_name,
         previous_value,
         val,

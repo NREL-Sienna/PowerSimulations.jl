@@ -55,12 +55,12 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_problem = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
+                variable_source_problem = ActivePowerVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -100,11 +100,10 @@ end
         sequence = single_sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
-    # Disabled due to https://github.com/NREL-SIIP/PowerSystemCaseBuilder.jl/issues/11
-    #build_out = build!(sim_single_wcache)
-    #@test build_out == PSI.BuildStatus.BUILT
-    #execute_out = execute!(sim_single_wcache)
-    #@test execute_out == PSI.RunStatus.SUCCESSFUL
+    build_out = build!(sim_single_wcache)
+    @test build_out == PSI.BuildStatus.BUILT
+    execute_out = execute!(sim_single_wcache)
+    @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
 @testset "Simulation with 2-Stages and Cache" begin
@@ -126,16 +125,16 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_problem = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
+                variable_source_problem = ActivePowerVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         cache = Dict(
-            ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
+            ("UC",) => TimeStatusChange(PSY.ThermalStandard, OnVariable),
             ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -178,8 +177,8 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -230,12 +229,12 @@ end
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_problem = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
+                variable_source_problem = ActivePowerVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),

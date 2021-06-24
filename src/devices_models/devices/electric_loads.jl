@@ -39,7 +39,7 @@ get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadForm
 Reactive Power Constraints on Controllable Loads Assume Constant power_factor
 """
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ReactivePowerVariableLimitsConstraint},
     ::Type{ReactivePowerVariable},
     ::Type{<:PSY.ElectricLoad},
     ::Type{<:AbstractControllablePowerLoadFormulation},
@@ -59,21 +59,25 @@ function custom_reactive_power_constraints!(
     ::Type{<:AbstractControllablePowerLoadFormulation},
 ) where {T <: PSY.ElectricLoad}
     time_steps = model_time_steps(optimization_container)
-    constraint = JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
-    assign_constraint!(optimization_container, REACTIVE, T, constraint)
-
+    constraint = add_cons_container!(
+        optimization_container,
+        EqualityConstraint(),
+        T,
+        [PSY.get_name(d) for d in devices],
+        time_steps,
+    )
+    jump_model = get_jump_model(optimization_container)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
-        reactive = get_variable(optimization_container, REACTIVE_POWER, T)[name, t]
-        real = get_variable(optimization_container, ACTIVE_POWER, T)[name, t] * pf
-        constraint[name, t] =
-            JuMP.@constraint(optimization_container.JuMPmodel, reactive == real)
+        reactive = get_variable(optimization_container, ActivePowerVariable(), T)[name, t]
+        real = get_variable(optimization_container, ActivePowerVariable(), T)[name, t] * pf
+        constraint[name, t] = JuMP.@constraint(jump_model, reactive == real)
     end
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
     ::Type{<:DispatchablePowerLoad},
@@ -85,34 +89,31 @@ function DeviceRangeConstraintSpec(
     if (!use_parameters && !use_forecasts)
         return DeviceRangeConstraintSpec(;
             range_constraint_spec = RangeConstraintSpec(;
-                constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariable,
-                    T,
-                ),
-                variable_name = make_variable_name(ActivePowerVariable, T),
+                constraint_type = ActivePowerVariableLimitsConstraint(),
+                variable_type = ActivePowerVariable(),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
+                component_type = T,
             ),
         )
     end
 
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
-            parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-            forecast_label = "max_active_power",
+            constraint_type = ActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerVariable(),
+            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
+            component_type = T,
         ),
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
     ::Type{<:InterruptiblePowerLoad},
@@ -124,61 +125,57 @@ function DeviceRangeConstraintSpec(
     if (!use_parameters && !use_forecasts)
         return DeviceRangeConstraintSpec(;
             range_constraint_spec = RangeConstraintSpec(;
-                constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariable,
-                    T,
-                ),
-                variable_name = make_variable_name(ActivePowerVariable, T),
-                bin_variable_names = [make_variable_name(OnVariable, T)],
+                constraint_type = ActivePowerVariableLimitsConstraint(),
+                variable_type = ActivePowerVariable(),
+                bin_variable_types = [OnVariable()],
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_semicontinuousrange!,
                 constraint_struct = DeviceRangeConstraintInfo,
+                component_type = T,
             ),
         )
     end
 
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
-            bin_variable_name = make_variable_name(OnVariable, T),
-            parameter_name = use_parameters ? ON : nothing,
-            forecast_label = "max_active_power",
+            constraint_type = ActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerVariable(),
+            bin_variable_type = OnVariable(),
+            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_ub_bigM! :
                               device_timeseries_ub_bin!,
+            component_type = T,
         ),
     )
 end
 
 ########################## Addition to the nodal balances ##################################
-
 function NodalExpressionSpec(
     ::Type{T},
-    ::Type{<:PM.AbstractPowerModel},
+    parameter::ReactivePowerTimeSeriesParameter,
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
-        "max_active_power",
-        REACTIVE_POWER,
+        parameter,
+        T,
         use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
         -1.0,
-        T,
+        :nodal_balance_reactive,
     )
 end
 
 function NodalExpressionSpec(
     ::Type{T},
-    ::Type{<:PM.AbstractActivePowerModel},
+    parameter::ActivePowerTimeSeriesParameter,
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
-        "max_active_power",
-        ACTIVE_POWER,
+        parameter,
+        T,
         use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         -1.0,
-        T,
+        :nodal_balance_active,
     )
 end
 

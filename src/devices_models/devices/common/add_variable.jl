@@ -5,7 +5,7 @@ function add_variables!(
     optimization_container::OptimizationContainer,
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
-    formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+    formulation::Union{AbstractServiceFormulation, AbstractDeviceFormulation},
 ) where {T <: VariableType, U <: PSY.Component}
     add_variable!(optimization_container, T(), devices, formulation)
 end
@@ -17,10 +17,16 @@ function add_variables!(
     optimization_container::OptimizationContainer,
     ::Type{T},
     service::U,
-    devices::Vector{V},
+    contributing_devices::Vector{V},
     formulation::AbstractReservesFormulation,
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
-    add_variable!(optimization_container, T(), devices, service, formulation)
+    add_service_variable!(
+        optimization_container,
+        T(),
+        service,
+        contributing_devices,
+        formulation,
+    )
 end
 
 @doc raw"""
@@ -45,7 +51,7 @@ If binary = true:
 # Arguments
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * devices : Vector or Iterator with the devices
-* var_name::Symbol : Base Name for the variable
+* var_key::VariableKey : Base Name for the variable
 * binary::Bool : Select if the variable is binary
 * expression_name::Symbol : Expression_name name stored in optimization_container.expressions to add the variable
 * sign::Float64 : sign of the addition of the variable to the expression_name. Default Value is 1.0
@@ -58,21 +64,23 @@ If binary = true:
 """
 function add_variable!(
     optimization_container::OptimizationContainer,
-    variable_type::VariableType,
+    variable_type::T,
     devices::U,
     formulation,
-) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
+) where {
+    T <: VariableType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
     settings = get_settings(optimization_container)
-    var_name = make_variable_name(typeof(variable_type), D)
     binary = get_variable_binary(variable_type, D, formulation)
     expression_name = get_variable_expression_name(variable_type, D)
-    sign = get_variable_sign(variable_type, D, formulation)
 
     variable = add_var_container!(
         optimization_container,
-        var_name,
+        variable_type,
+        D,
         [PSY.get_name(d) for d in devices],
         time_steps,
     )
@@ -81,7 +89,7 @@ function add_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(var_name)_{$(name), $(t)}",
+            # base_name ="$(encode_symbol(D, T))_{$(name), $(t)}",
             binary = binary
         )
 
@@ -111,37 +119,36 @@ function add_variable!(
     return
 end
 
-# TODO: refactor this function when ServiceModel is updated to include service name
-function add_variable!(
+function add_service_variable!(
     optimization_container::OptimizationContainer,
     variable_type::VariableType,
-    devices::U,
     service::T,
+    contributing_devices::U,
     formulation::AbstractReservesFormulation,
 ) where {
     T <: PSY.Service,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    @assert !isempty(devices)
+    @assert !isempty(contributing_devices)
     time_steps = model_time_steps(optimization_container)
 
-    var_name = make_variable_name(PSY.get_name(service), T)
     binary = get_variable_binary(variable_type, T, formulation)
     expression_name = get_variable_expression_name(variable_type, T)
-    sign = get_variable_sign(variable_type, T, formulation)
 
     variable = add_var_container!(
         optimization_container,
-        var_name,
-        [PSY.get_name(d) for d in devices],
+        variable_type,
+        T,
+        PSY.get_name(service),
+        [PSY.get_name(d) for d in contributing_devices],
         time_steps,
     )
 
-    for t in time_steps, d in devices
+    for t in time_steps, d in contributing_devices
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(var_name)_{$(name), $(t)}",
+            # base_name ="$(var_key)_{$(name), $(t)}",
             binary = binary
         )
 
@@ -203,7 +210,7 @@ Adds a bounds to a variable in the optimization model.
 function set_variable_bounds!(
     optimization_container::OptimizationContainer,
     bounds::Vector{DeviceRangeConstraintInfo},
-    var_type::AbstractString,
+    var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
     var = get_variable(optimization_container, var_type, T)
