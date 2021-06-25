@@ -83,24 +83,20 @@ function add_variables!(optimization_container::OptimizationContainer, ::Type{T}
 end
 
 ########################## Initial Condition ###########################
-function area_control_initial_condition!(
+function add_initial_condition!(
     optimization_container::OptimizationContainer,
-    services::Vector{PSY.AGC},
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ::D,
-) where {D <: AbstractAGCFormulation}
-    key = ICKey(AreaControlError, PSY.AGC)
+    initial_conditions_type::Type{<:InitialConditionType},
+) where {T <: PSY.Component, D <: AbstractServiceFormulation}
     _make_initial_conditions!(
         optimization_container,
-        services,
+        devices,
         D(),
         nothing,
-        key,
-        _make_initial_condition_area_control,
+        ICKey(initial_conditions_type, T),
         _get_variable_initial_value,
-        # Doesn't require Cache
     )
-
-    return
 end
 
 function _get_variable_initial_value(
