@@ -205,7 +205,7 @@ function _make_initial_conditions!(
         @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data" _group =
             LOG_GROUP_INITIAL_CONDITIONS
         ini_conds = Vector{InitialCondition}(undef, length_devices)
-        ic_container[key] = ini_conds
+        set_initial_conditions!(optimization_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
             val_ = get_val_func(dev, key, device_formulation, variable_type)
             val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
