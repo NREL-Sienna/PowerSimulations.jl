@@ -1,23 +1,37 @@
-struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
+struct InitialCondition{T <: InitialConditionType, V <: Union{PJ.ParameterRef, Float64}}
     device::PSY.Component
-    update_ref::UpdateRef
-    value::T
+    value::V
     cache_type::Union{Nothing, Type{<:AbstractCache}}
 end
 
 function InitialCondition(
-    device::PSY.Device,
-    update_ref::UpdateRef,
-    value::T,
-) where {T <: Union{PJ.ParameterRef, Float64}}
-    return InitialCondition(device, update_ref, value, nothing)
+    ::Type{T},
+    device::PSY.Component,
+    value::V,
+) where {T <: InitialConditionType, V <: Union{PJ.ParameterRef, Float64}}
+    return InitialCondition{T, V}(device, value, nothing)
 end
 
-function get_condition(p::InitialCondition{Float64})
+function InitialCondition(
+    ::ICKey{T, U},
+    device::U,
+    value::V,
+    cache_type::Union{Nothing, Type{<:AbstractCache}},
+) where {
+    T <: InitialConditionType,
+    V <: Union{PJ.ParameterRef, Float64},
+    U <: PSY.Component,
+}
+    return InitialCondition{T, V}(device, value, cache_type)
+end
+
+function get_condition(p::InitialCondition{T, Float64}) where {T <: InitialConditionType}
     return p.value
 end
 
-function get_condition(p::InitialCondition{PJ.ParameterRef})
+function get_condition(
+    p::InitialCondition{T, PJ.ParameterRef},
+) where {T <: InitialConditionType}
     return PJ.value(p.value)
 end
 

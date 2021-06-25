@@ -12,7 +12,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     cost_function::JuMP.AbstractJuMPScalar
     expressions::DenseAxisArrayContainer
     parameters::Dict{ParameterKey, ParameterContainer}
-    initial_conditions::InitialConditions
+    initial_conditions::Dict{ICKey, Vector{InitialCondition}}
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
@@ -39,7 +39,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
             zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
             Dict{ParameterKey, ParameterContainer}(),
-            InitialConditions(use_parameters = use_parameters),
+            Dict{ICKey, Vector{InitialCondition}}(),
             nothing,
             PSY.get_base_power(sys),
             Dict{Symbol, Any}(),
@@ -212,7 +212,6 @@ function optimization_container_init!(
                 ),
             )
         end
-        set_use_parameters!(get_initial_conditions(optimization_container), use_parameters)
     end
 
     if get_initial_time(settings) == UNSET_INI_TIME
@@ -641,11 +640,11 @@ end
 
 ###################################Initial Conditions Containers############################
 function has_initial_conditions(optimization_container::OptimizationContainer, key::ICKey)
-    return has_initial_conditions(optimization_container.initial_conditions, key)
+    return haskey(optimization_container.initial_conditions, key)
 end
 
 function iterate_initial_conditions(optimization_container::OptimizationContainer)
-    return iterate_initial_conditions(optimization_container.initial_conditions)
+    return pairs(optimization_container.initial_conditions)
 end
 
 function get_initial_conditions(
@@ -657,7 +656,11 @@ function get_initial_conditions(
 end
 
 function get_initial_conditions(optimization_container::OptimizationContainer, key::ICKey)
-    return get_initial_conditions(optimization_container.initial_conditions, key)
+    initial_conditions = get(optimization_container.initial_conditions, key, nothing)
+    if initial_conditions === nothing
+        throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
+    end
+    return initial_conditions
 end
 
 function set_initial_conditions!(
@@ -665,5 +668,6 @@ function set_initial_conditions!(
     key::ICKey,
     value,
 )
-    set_initial_conditions!(optimization_container.initial_conditions, key, value)
+    @debug "set_initial_condition_container" key
+    optimization_container.initial_conditions[key] = value
 end
