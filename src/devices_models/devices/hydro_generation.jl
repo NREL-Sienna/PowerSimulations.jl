@@ -541,9 +541,32 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::AbstractHydroUnitCommitment,
 ) where {H <: PSY.HydroGen}
-    status_initial_condition!(optimization_container, devices, device_formulation)
-    output_initial_condition!(optimization_container, devices, device_formulation)
-    duration_initial_condition!(optimization_container, devices, device_formulation)
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        DeviceStatus,
+        OnVariable,
+    )
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        DevicePower,
+        ActivePowerVariable,
+    )
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        InitialTimeDurationOn,
+    )
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        InitialTimeDurationOff,
+    )
 
     return
 end
@@ -553,118 +576,13 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::AbstractHydroDispatchFormulation,
 ) where {H <: PSY.HydroGen}
-    output_initial_condition!(optimization_container, devices, device_formulation)
-
-    return
-end
-
-######################### Initialize Functions for Hydro #################################
-function status_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.HydroGen, D <: AbstractHydroUnitCommitment}
-    _make_initial_conditions!(
+    add_initial_condition!(
         optimization_container,
         devices,
-        D(),
-        OnVariable(),
-        ICKey(DeviceStatus, T),
-        _make_initial_condition_active_power,
-        _get_variable_initial_value,
-        # Doesn't require Cache
+        formulation,
+        DevicePower,
+        ActivePowerVariable,
     )
-end
-
-function output_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.HydroGen, D <: AbstractHydroFormulation}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        D(),
-        ActivePowerVariable(),
-        ICKey(DevicePower, T),
-        _make_initial_condition_active_power,
-        _get_variable_initial_value,
-        # Doesn't require Cache
-    )
-
-    return
-end
-
-function duration_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.HydroGen, D <: AbstractHydroUnitCommitment}
-    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
-        _make_initial_conditions!(
-            optimization_container,
-            devices,
-            D(),
-            nothing,
-            key,
-            _make_initial_condition_active_power,
-            _get_variable_initial_value,
-            TimeStatusChange,
-        )
-    end
-
-    return
-end
-
-function storage_energy_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.HydroGen, D <: AbstractHydroFormulation}
-    key = ICKey(InitialEnergyLevel, T)
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        D(),
-        EnergyVariable(),
-        key,
-        _make_initial_condition_reservoir_energy,
-        _get_variable_initial_value,
-        StoredEnergy,
-    )
-
-    return
-end
-
-function storage_energy_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.HydroPumpedStorage, D <: AbstractHydroFormulation}
-    key_up = ICKey(InitialEnergyLevelUp, T)
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        D(),
-        EnergyVariableUp(),
-        key_up,
-        _make_initial_condition_reservoir_energy_up,
-        _get_variable_initial_value,
-        StoredEnergy,
-    )
-
-    key_down = ICKey(InitialEnergyLevelDown, T)
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        D(),
-        EnergyVariableDown(),
-        key_down,
-        _make_initial_condition_reservoir_energy_down,
-        _get_variable_initial_value,
-        StoredEnergy,
-    )
-
     return
 end
 

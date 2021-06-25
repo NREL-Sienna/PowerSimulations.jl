@@ -400,9 +400,33 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractThermalUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    status_initial_condition!(optimization_container, devices, formulation)
-    output_initial_condition!(optimization_container, devices, formulation)
-    duration_initial_condition!(optimization_container, devices, formulation)
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        DeviceStatus,
+        OnVariable,
+    )
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        DevicePower,
+        ActivePowerVariable,
+    )
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        InitialTimeDurationOn,
+    )
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        InitialTimeDurationOff,
+    )
+
     return
 end
 
@@ -411,8 +435,20 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::ThermalBasicUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    status_initial_condition!(optimization_container, devices, formulation)
-    output_initial_condition!(optimization_container, devices, formulation)
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        DeviceStatus,
+        OnVariable,
+    )
+    add_initial_condition!(
+        optimization_container,
+        devices,
+        formulation,
+        DevicePower,
+        ActivePowerVariable,
+    )
     return
 end
 
@@ -421,109 +457,13 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractThermalDispatchFormulation,
 ) where {T <: PSY.ThermalGen}
-    output_initial_condition!(optimization_container, devices, formulation)
-    return
-end
-
-######################### Initialize Functions for ThermalGen ##############################
-"""
-Status Init is always calculated based on the Power Output of the device
-This is to make it easier to calculate when the previous model doesn't
-contain binaries. For instance, looking back on an ED model to find the
-IC of the UC model
-"""
-function status_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
-    _make_initial_conditions!(
+    add_initial_condition!(
         optimization_container,
         devices,
-        D(),
-        OnVariable(),
-        ICKey(DeviceStatus, T),
-        _make_initial_condition_active_power,
-        _get_variable_initial_value,
+        formulation,
+        DevicePower,
+        ActivePowerVariable,
     )
-
-    return
-end
-
-function status_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        D(),
-        OnVariable(),
-        ICKey(DeviceStatus, T),
-        _make_initial_condition_status,
-        _get_variable_initial_value,
-    )
-
-    return
-end
-
-function output_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        D(),
-        ActivePowerVariable(),
-        ICKey(DevicePower, T),
-        _make_initial_condition_active_power,
-        _get_variable_initial_value,
-    )
-    return
-end
-
-function duration_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation}
-    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
-        _make_initial_conditions!(
-            optimization_container,
-            devices,
-            D(),
-            nothing,
-            key,
-            _make_initial_condition_active_power,
-            _get_variable_initial_value,
-            TimeStatusChange,
-        )
-    end
-
-    return
-end
-
-function duration_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
-    for key in (ICKey(InitialTimeDurationOn, T), ICKey(InitialTimeDurationOff, T))
-        _make_initial_conditions!(
-            optimization_container,
-            devices,
-            D(),
-            nothing,
-            key,
-            _make_initial_condition_status,
-            _get_variable_initial_value,
-            TimeStatusChange,
-        )
-    end
-
     return
 end
 
