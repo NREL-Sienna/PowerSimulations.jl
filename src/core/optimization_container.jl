@@ -499,6 +499,10 @@ function get_constraint_keys(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.constraints))
 end
 
+function get_initial_conditions_keys(optimization_container::OptimizationContainer)
+    return collect(keys(optimization_container.initial_conditions))
+end
+
 function get_constraint(optimization_container::OptimizationContainer, key::ConstraintKey)
     var = get(optimization_container.constraints, key, nothing)
     if var === nothing
@@ -658,6 +662,7 @@ end
 function get_initial_conditions(optimization_container::OptimizationContainer, key::ICKey)
     initial_conditions = get(optimization_container.initial_conditions, key, nothing)
     if initial_conditions === nothing
+        @error "$key is not stored" sort!(get_initial_conditions_keys(optimization_container))
         throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
     end
     return initial_conditions
