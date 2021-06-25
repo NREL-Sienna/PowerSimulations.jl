@@ -8,7 +8,7 @@ const RELAXED_FORMULATION_MAPPING = Dict(
     :HydroPumpedStorage =>
         DeviceModel(PSY.HydroPumpedStorage, HydroDispatchPumpedStorage),
     :RenewableFix => DeviceModel(PSY.RenewableFix, FixedOutput),
-    :RenewableDispatch => DeviceModel(PSY.RenewableDispatch, RenewableFullDispatch),
+    :RenewableDispatch => DeviceModel(PSY.RenewableDispatch, FixedOutput),
     :GenericBattery => DeviceModel(PSY.GenericBattery, BookKeeping),
     :BatteryEMS => DeviceModel(PSY.BatteryEMS, BookKeeping),
     :TapTransformer => DeviceModel(PSY.TapTransformer, StaticBranch),
@@ -17,24 +17,20 @@ const RELAXED_FORMULATION_MAPPING = Dict(
     :Line => DeviceModel(PSY.Line, StaticBranch),
     :HVDCLine => DeviceModel(PSY.HVDCLine, HVDCDispatch),
     :PowerLoad => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
-    :InterruptibleLoad => DeviceModel(PSY.InterruptibleLoad, InterruptiblePowerLoad),
-    :VariableReserve => ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
-    :ReserveDemandCurve =>
-        ServiceModel(PSY.ReserveDemandCurve{PSY.ReserveUp}, StepwiseCostReserve),
+    :InterruptibleLoad => DeviceModel(PSY.InterruptibleLoad, StaticPowerLoad),
 )
 
 function _build_initialization_template(problem::OperationsProblem)
     ic_template = OperationsProblemTemplate(problem.template.transmission)
-    for (device, model) in problem.template.devices
+    for (device, _) in problem.template.devices
         model = RELAXED_FORMULATION_MAPPING[device]
         set_device_model!(ic_template, model)
     end
-    for (device, model) in problem.template.branches
+    for (device, _) in problem.template.branches
         model = RELAXED_FORMULATION_MAPPING[device]
         set_device_model!(ic_template, model)
     end
     for (device, model) in problem.template.services
-        model = RELAXED_FORMULATION_MAPPING[device]
         set_service_model!(ic_template, model)
     end
     return ic_template
@@ -48,11 +44,15 @@ function _build_initialization_problem(
     set_horizon!(settings, 1)
     template = _build_initialization_template(problem)
     ic_op_problem = OperationsProblem{M}(template, problem.sys, settings)
-    build!(ic_op_problem, output_dir = get_internal(problem).output_dir)
+    build!(ic_op_problem; output_dir = get_internal(problem).output_dir, serialize = false)
     return ic_op_problem
 end
 
-function _perform_initialization_step!(ic_op_problem::OperationsProblem, problem::OperationsProblem, sim::Simulation)
+function _perform_initialization_step!(
+    ic_op_problem::OperationsProblem,
+    problem::OperationsProblem,
+    sim::Simulation,
+)
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
     optimization_containter = get_optimization_container(problem)
     for (ini_cond_key, initial_conditions) in
