@@ -566,8 +566,10 @@ function feedforward!(
     ::ServiceModel{SR, <:AbstractServiceFormulation},
     ff_model::RangeFF,
 ) where {SR <: PSY.Service, T <: PSY.Device}
-    parameter_ref_ub = UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_ub, "ub")
-    parameter_ref_lb = UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_lb, "lb")
+    parameter_ref_ub =
+        UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_ub, "ub")
+    parameter_ref_lb =
+        UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_lb, "lb")
     for var_name in get_affected_variables(ff_model)
         range_ff(
             optimization_container,
@@ -578,7 +580,6 @@ function feedforward!(
         )
     end
 end
-
 
 ######################### FeedForward Variables Updating #####################################
 # This makes the choice in which variable to get from the results.
