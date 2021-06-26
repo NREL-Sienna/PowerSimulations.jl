@@ -108,6 +108,9 @@ function construct_service!(
         # Cost Function
         cost_function!(optimization_container, service, model)
     end
+
+    feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+
     return
 end
 
@@ -159,10 +162,12 @@ function construct_service!(
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
-
         # Cost Function
         cost_function!(optimization_container, service, model)
     end
+
+    feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+
     return
 end
 
