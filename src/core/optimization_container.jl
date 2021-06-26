@@ -491,7 +491,10 @@ function get_parameter_container(
     optimization_container::OptimizationContainer,
     ref::UpdateRef,
 )
-    return get_parameter_container(optimization_container, ref.access_ref)
+    name = ref.access_ref
+    dl = ref.data_label !== nothing ? ref.data_label : ""
+    name = Symbol("$name" * "_ " * dl)
+    return get_parameter_container(optimization_container, name)
 end
 
 function get_parameter_array(optimization_container::OptimizationContainer, ref)
@@ -504,9 +507,8 @@ function assign_parameter!(
 )
     @debug "assign_parameter" container.update_ref
     name = container.update_ref.access_ref
-    if name isa AbstractString
-        name = Symbol(name)
-    end
+    dl = container.update_ref.data_label !== nothing ? container.update_ref.data_label : ""
+    name = Symbol("$name" * "_ " * dl)
 
     if haskey(optimization_container.parameters, name)
         @error "parameter $name is already stored" sort!(

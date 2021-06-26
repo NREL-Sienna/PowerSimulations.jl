@@ -9,13 +9,14 @@ get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
 ############################### ActiveServiceVariable, Reserve #########################################
 
 get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
-get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = nothing
+get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, d::PSY.Component, _) = PSY.get_max_active_power(d)
+get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, d::PSY.Storage, _) =  PSY.get_output_active_power_limits(d).max
 get_variable_lower_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
 
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 
 get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}, ::AbstractReservesFormulation) = false
-get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, ::AbstractReservesFormulation) = nothing
+get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, d::PSY.Component, ::AbstractReservesFormulation) = PSY.get_max_active_power(d)
 get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, ::AbstractReservesFormulation) = 0.0
 
 #! format: on

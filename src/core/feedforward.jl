@@ -264,7 +264,7 @@ where r in range_data.
 function range_ff(
     optimization_container::OptimizationContainer,
     cons_name::Symbol,
-    constraint_infos::Vector{DeviceRangeConstraintInfo},
+    devices::Vector,
     param_reference::NTuple{2, UpdateRef},
     var_name::Symbol,
 )
@@ -291,8 +291,7 @@ function range_ff(
     con_lb = add_cons_container!(optimization_container, lb_name, set_name, time_steps)
     con_ub = add_cons_container!(optimization_container, ub_name, set_name, time_steps)
 
-    for constraint_info in constraint_infos
-        name = get_component_name(constraint_info)
+    for name in set_name
         param_lb[name] = add_parameter(
             optimization_container.JuMPmodel,
             JuMP.lower_bound(variable[name, 1]),
@@ -305,21 +304,13 @@ function range_ff(
         multiplier_ub[name] = 1.0
         multiplier_lb[name] = 1.0
         for t in time_steps
-            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-            for val in constraint_info.additional_terms_ub
-                JuMP.add_to_expression!(expression_ub, variable[name, t])
-            end
-            expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-            for val in constraint_info.additional_terms_lb
-                JuMP.add_to_expression!(expression_lb, variable[name, t], -1.0)
-            end
             con_ub[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_ub <= param_ub[name] * multiplier_ub[name]
+                variable[name, t] <= param_ub[name] * multiplier_ub[name]
             )
             con_lb[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                expression_lb >= param_lb[name] * multiplier_lb[name]
+                variable[name, t] >= param_lb[name] * multiplier_lb[name]
             )
         end
     end
@@ -568,6 +559,26 @@ function feedforward!(
         )
     end
 end
+
+function feedforward!(
+    optimization_container::OptimizationContainer,
+    devices::Vector{T},
+    ::ServiceModel{SR, <:AbstractServiceFormulation},
+    ff_model::RangeFF,
+) where {SR <: PSY.Service, T <: PSY.Device}
+    parameter_ref_ub = UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_ub, "ub")
+    parameter_ref_lb = UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_lb, "lb")
+    for var_name in get_affected_variables(ff_model)
+        range_ff(
+            optimization_container,
+            Symbol("RANGE_FF_" * "$var_name"),
+            devices,
+            (parameter_ref_lb, parameter_ref_ub),
+            var_name,
+        )
+    end
+end
+
 
 ######################### FeedForward Variables Updating #####################################
 # This makes the choice in which variable to get from the results.
