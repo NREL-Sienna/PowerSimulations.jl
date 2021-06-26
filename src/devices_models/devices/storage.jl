@@ -48,13 +48,13 @@ get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage =
 
 get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_lower_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
-get_variable_upper_bound(::EnergyShortageVariable, d::PSY.HydroGen, ::AbstractStorageFormulation) = PSY.get_rating(d)
+get_variable_upper_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_rating(d)
 
 ############## EnergySlackDown, Storage ####################
 
 get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
-get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractStorageFormulation) = - PSY.get_rating(d)
+get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
 #! format: on
 
 ################################## output power constraints#################################
