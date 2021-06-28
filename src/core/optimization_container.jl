@@ -508,7 +508,7 @@ function assign_parameter!(
     @debug "assign_parameter" container.update_ref
     name = container.update_ref.access_ref
     dl = container.update_ref.data_label !== nothing ? container.update_ref.data_label : ""
-    name = Symbol("$name" * "_" * dl)
+    name = Symbol(strip("$name" * "_" * dl))
 
     if haskey(optimization_container.parameters, name)
         @error "parameter $name is already stored" sort!(
