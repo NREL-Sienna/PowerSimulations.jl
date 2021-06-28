@@ -493,7 +493,7 @@ function get_parameter_container(
 )
     name = ref.access_ref
     dl = ref.data_label !== nothing ? ref.data_label : ""
-    name = Symbol("$name" * "_ " * dl)
+    name = Symbol("$name" * "_" * dl)
     return get_parameter_container(optimization_container, name)
 end
 
