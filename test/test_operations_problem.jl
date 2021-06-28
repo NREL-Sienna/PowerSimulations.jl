@@ -211,7 +211,8 @@ end
     end
 
     system = PSI.get_system(op_problem)
-    params = PSI.get_parameters(optimization_container)[:P__max_active_power__PowerLoad]
+    params =
+        PSI.get_parameters(optimization_container)[:P__max_active_power__PowerLoad_max_active_power]
     param_vals = PSI.axis_array_to_dataframe(params.parameter_array)
     param_mult = PSI.axis_array_to_dataframe(params.multiplier_array)
     for load in get_components(PowerLoad, system)

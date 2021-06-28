@@ -179,8 +179,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test size(v) == (12, 6)
         end
 
-        ren_dispatch_params =
-            read_parameter(results_ed, :P__max_active_power__RenewableDispatch)
+        ren_dispatch_params = read_parameter(
+            results_ed,
+            :P__max_active_power__RenewableDispatch_max_active_power,
+        )
         @test length(keys(ren_dispatch_params)) == 48
         for v in values(ren_dispatch_params)
             @test size(v) == (12, 4)
@@ -209,7 +211,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         realized_param_uc = read_realized_parameters(
             results_uc,
-            names = [:P__max_active_power__RenewableDispatch],
+            names = [:P__max_active_power__RenewableDispatch_max_active_power],
         )
         @test length(keys(realized_param_uc)) == 1
         for param in values(realized_param_uc)
@@ -311,12 +313,14 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             initial_time = initial_time,
             variables = [:P__ThermalStandard],
             duals = [:CopperPlateBalance],
-            parameters = [:P__max_active_power__RenewableDispatch],
+            parameters = [:P__max_active_power__RenewableDispatch_max_active_power],
         )
 
         @test !isempty(results_ed.variable_values[:P__ThermalStandard])
         @test !isempty(results_ed.dual_values[:CopperPlateBalance])
-        @test !isempty(results_ed.parameter_values[:P__max_active_power__RenewableDispatch])
+        @test !isempty(
+            results_ed.parameter_values[:P__max_active_power__RenewableDispatch_max_active_power],
+        )
 
         @test !isempty(results_ed)
         @test !isempty(results)
@@ -408,8 +412,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test size(v) == (24, 6)
         end
 
-        ren_dispatch_params =
-            read_parameter(results_rh, :P__max_active_power__RenewableDispatch)
+        ren_dispatch_params = read_parameter(
+            results_rh,
+            :P__max_active_power__RenewableDispatch_max_active_power,
+        )
         @test length(keys(ren_dispatch_params)) == 2
         for v in values(ren_dispatch_params)
             @test size(v) == (24, 4)
