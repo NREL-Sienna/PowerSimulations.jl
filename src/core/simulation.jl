@@ -681,6 +681,7 @@ function build!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     serialize = true,
+    initialize_problem = false,
 )
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Simulation" begin
@@ -717,6 +718,7 @@ function build!(
             close(logger)
         end
     end
+    initialize_problem && _initialization_problems!(sim)
     @info "\n$(BUILD_PROBLEMS_TIMER)\n"
     return get_simulation_build_status(sim)
 end

@@ -155,121 +155,74 @@ function calculate_ic_quantity(
 end
 
 ############################# Initial Conditions Initialization ############################
+
+function add_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
+    ::D,
+    initial_conditions_type::Type{<:InitialConditionType},
+) where {
+    T <: PSY.Component,
+    D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        D(),
+        nothing,
+        ICKey(initial_conditions_type, T),
+        _get_variable_initial_value,
+    )
+end
+
+function add_initial_condition!(
+    optimization_container::OptimizationContainer,
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
+    ::D,
+    initial_conditions_type::Type{<:InitialConditionType},
+    variable_type::Type{<:VariableType},
+) where {
+    T <: PSY.Component,
+    D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+}
+    _make_initial_conditions!(
+        optimization_container,
+        devices,
+        D(),
+        variable_type(),
+        ICKey(initial_conditions_type, T),
+        _get_variable_initial_value,
+    )
+end
+
 function _make_initial_conditions!(
     optimization_container::OptimizationContainer,
     devices::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
     device_formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     variable_type::Union{Nothing, VariableType},
     key::ICKey,
-    make_ic_func::Function, # Function to make the initial condition object
     get_val_func::Function, # Function to get the value from the device to intialize
     cache = nothing,
 ) where {T <: PSY.Component}
     length_devices = length(devices)
     parameters = model_has_parameters(optimization_container)
     ic_container = get_initial_conditions(optimization_container)
-    if !has_initial_conditions(ic_container, key)
+    if !haskey(ic_container, key)
         @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data" _group =
             LOG_GROUP_INITIAL_CONDITIONS
         ini_conds = Vector{InitialCondition}(undef, length_devices)
-        set_initial_conditions!(ic_container, key, ini_conds)
+        set_initial_conditions!(optimization_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
             val_ = get_val_func(dev, key, device_formulation, variable_type)
             val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
-            ic = make_ic_func(ic_container, dev, val, cache)
+            ic = InitialCondition(key, dev, val, cache)
             ini_conds[ix] = ic
-            @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_
-        end
-    else
-        ini_conds = get_initial_conditions(ic_container, key)
-        ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
-        for dev in devices
-            IS.get_uuid(dev) in ic_devices && continue
-            @debug "Setting $(get_entry_type(key)) initial conditions device $(PSY.get_name(dev)) based on system data" _group =
-                LOG_GROUP_INITIAL_CONDITIONS
-            val_ = get_val_func(dev, key, device_formulation, variable_type)
-            val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
-            ic = make_ic_func(ic_container, dev, val, cache)
-            push!(ini_conds, ic)
             @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_
         end
     end
 
     @assert length(ini_conds) == length_devices
     return
-end
-
-function _make_initial_condition_active_power(
-    container,
-    device::T,
-    value,
-    cache = nothing,
-) where {T <: PSY.Component}
-    return InitialCondition(device, _get_ref_active_power(T, container), value, cache)
-end
-
-function _make_initial_condition_status(
-    container,
-    device::T,
-    value,
-    cache = nothing,
-) where {T <: PSY.Component}
-    return InitialCondition(device, _get_ref_on_status(T, container), value, cache)
-end
-
-function _make_initial_condition_energy(
-    container,
-    device::T,
-    value,
-    cache = nothing,
-) where {T <: PSY.Component}
-    return InitialCondition(device, _get_ref_energy(T, container), value, cache)
-end
-
-function _make_initial_condition_reservoir_energy(
-    container,
-    device::T,
-    value,
-    cache = nothing,
-) where {T <: PSY.Component}
-    return InitialCondition(device, _get_ref_reservoir_energy(T, container), value, cache)
-end
-
-function _make_initial_condition_reservoir_energy_up(
-    container,
-    device::T,
-    value,
-    cache = nothing,
-) where {T <: PSY.Component}
-    return InitialCondition(
-        device,
-        _get_ref_reservoir_energy_up(T, container),
-        value,
-        cache,
-    )
-end
-
-function _make_initial_condition_reservoir_energy_down(
-    container,
-    device::T,
-    value,
-    cache = nothing,
-) where {T <: PSY.Component}
-    return InitialCondition(
-        device,
-        _get_ref_reservoir_energy_down(T, container),
-        value,
-        cache,
-    )
-end
-
-function _make_initial_condition_area_control(
-    container,
-    device::PSY.AGC,
-    value,
-    cache = nothing,
-)
-    return InitialCondition(device, _get_ref_ace_error(PSY.AGC, container), value, cache)
 end
 
 function _get_variable_initial_value(
@@ -303,66 +256,4 @@ function _get_duration_value(dev, key)
     end
 
     return value
-end
-
-function _get_ref_active_power(
-    ::Type{T},
-    container::InitialConditions,
-) where {T <: PSY.Component}
-    if get_use_parameters(container)
-        return UpdateRef{JuMP.VariableRef}(T, ActivePowerVariable())
-    else
-        return UpdateRef{T}("P", "active_power")
-    end
-end
-
-function _get_ref_on_status(
-    ::Type{T},
-    container::InitialConditions,
-) where {T <: PSY.Component}
-    if get_use_parameters(container)
-        return UpdateRef{JuMP.VariableRef}(T, OnVariable())
-    else
-        return UpdateRef{T}("On", "On")
-    end
-end
-
-function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
-    return get_use_parameters(container) ?
-           UpdateRef{JuMP.VariableRef}(T, EnergyVariable()) :
-           UpdateRef{T}("E", "initial_energy")
-end
-
-function _get_ref_reservoir_energy(
-    ::Type{T},
-    container::InitialConditions,
-) where {T <: PSY.Component}
-    return get_use_parameters(container) ?
-           UpdateRef{JuMP.VariableRef}(T, EnergyVariable()) :
-           UpdateRef{T}("E", "hydro_budget")
-end
-
-function _get_ref_reservoir_energy_up(
-    ::Type{T},
-    container::InitialConditions,
-) where {T <: PSY.Component}
-    return get_use_parameters(container) ?
-           UpdateRef{JuMP.VariableRef}(T, EnergyVariableUp()) :
-           UpdateRef{T}("Eup", "get_hydro_budget")
-end
-
-function _get_ref_reservoir_energy_down(
-    ::Type{T},
-    container::InitialConditions,
-) where {T <: PSY.Component}
-    return get_use_parameters(container) ?
-           UpdateRef{JuMP.VariableRef}(T, EnergyVariableDown()) :
-           UpdateRef{T}("Edown", "get_hydro_budget")
-end
-
-function _get_ref_ace_error(::Type{PSY.AGC}, container::InitialConditions)
-    T = PSY.AGC
-    return get_use_parameters(container) ?
-           UpdateRef{JuMP.VariableRef}(T, AreaControlError()) :
-           UpdateRef{T}("ACE", "initial_ace")
 end

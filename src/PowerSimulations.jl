@@ -406,8 +406,8 @@ include("core/cache.jl")
 include("core/feedforward_chronologies.jl")
 include("core/optimizer_stats.jl")
 include("core/initial_condition_types.jl")
-include("core/initial_condition.jl")
 include("core/initial_conditions.jl")
+include("core/initial_condition.jl")
 include("core/operations_problem_template.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
@@ -474,6 +474,8 @@ include("network_models/powermodels_interface.jl")
 include("devices_models/devices/common/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
+
+include("core/initialization.jl")
 
 # Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")

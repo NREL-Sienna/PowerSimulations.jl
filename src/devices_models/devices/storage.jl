@@ -185,29 +185,13 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{St},
     formulation::AbstractStorageFormulation,
 ) where {St <: PSY.Storage}
-    storage_energy_initial_condition!(optimization_container, devices, formulation)
-    return
-end
-
-######################### Initialize Functions for Storage #################################
-# TODO: This IC needs a cache for Simulation over long periods of tim
-function storage_energy_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::D,
-) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
-    key = ICKey(InitialEnergyLevel, T)
-    _make_initial_conditions!(
+    add_initial_condition!(
         optimization_container,
         devices,
-        D(),
-        EnergyVariable(),
-        key,
-        _make_initial_condition_energy,
-        _get_variable_initial_value,
-        StoredEnergy,
+        formulation,
+        InitialEnergyLevel,
+        EnergyVariable,
     )
-
     return
 end
 

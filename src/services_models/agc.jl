@@ -83,25 +83,6 @@ function add_variables!(optimization_container::OptimizationContainer, ::Type{T}
 end
 
 ########################## Initial Condition ###########################
-function area_control_initial_condition!(
-    optimization_container::OptimizationContainer,
-    services::Vector{PSY.AGC},
-    ::D,
-) where {D <: AbstractAGCFormulation}
-    key = ICKey(AreaControlError, PSY.AGC)
-    _make_initial_conditions!(
-        optimization_container,
-        services,
-        D(),
-        nothing,
-        key,
-        _make_initial_condition_area_control,
-        _get_variable_initial_value,
-        # Doesn't require Cache
-    )
-
-    return
-end
 
 function _get_variable_initial_value(
     d::PSY.Component,
