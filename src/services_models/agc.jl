@@ -83,21 +83,6 @@ function add_variables!(optimization_container::OptimizationContainer, ::Type{T}
 end
 
 ########################## Initial Condition ###########################
-function add_initial_condition!(
-    optimization_container::OptimizationContainer,
-    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
-    ::D,
-    initial_conditions_type::Type{<:InitialConditionType},
-) where {T <: PSY.Component, D <: AbstractServiceFormulation}
-    _make_initial_conditions!(
-        optimization_container,
-        devices,
-        D(),
-        nothing,
-        ICKey(initial_conditions_type, T),
-        _get_variable_initial_value,
-    )
-end
 
 function _get_variable_initial_value(
     d::PSY.Component,
