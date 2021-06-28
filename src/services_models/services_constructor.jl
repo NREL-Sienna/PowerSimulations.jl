@@ -109,7 +109,9 @@ function construct_service!(
         cost_function!(optimization_container, service, model)
     end
 
-    feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+    if get_feedforward(model) !== nothing
+        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+    end
 
     return
 end
@@ -166,7 +168,9 @@ function construct_service!(
         cost_function!(optimization_container, service, model)
     end
 
-    feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+    if get_feedforward(model) !== nothing
+        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+    end
 
     return
 end
