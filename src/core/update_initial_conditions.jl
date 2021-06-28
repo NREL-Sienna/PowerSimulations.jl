@@ -161,7 +161,10 @@ function add_initial_condition!(
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ::D,
     initial_conditions_type::Type{<:InitialConditionType},
-) where {T <: PSY.Component, D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation}}
+) where {
+    T <: PSY.Component,
+    D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+}
     _make_initial_conditions!(
         optimization_container,
         devices,
@@ -178,7 +181,10 @@ function add_initial_condition!(
     ::D,
     initial_conditions_type::Type{<:InitialConditionType},
     variable_type::Type{<:VariableType},
-) where {T <: PSY.Component, D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation}}
+) where {
+    T <: PSY.Component,
+    D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+}
     _make_initial_conditions!(
         optimization_container,
         devices,
