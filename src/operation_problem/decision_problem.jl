@@ -1,5 +1,5 @@
 """Default PowerSimulations Operation Problem Type"""
-struct GenericOpProblem <:  PowerSimulationsDecisionProblem end
+struct GenericOpProblem <: PowerSimulationsDecisionProblem end
 
 """
     DecisionProblem(::Type{M},
@@ -405,7 +405,7 @@ end
 """
 Default implementation of build method for Operational Problems for models conforming with  PowerSimulationsDecisionProblem specification. Overload this function to implement a custom build method
 """
-function problem_build!(problem::DecisionProblem{<: PowerSimulationsDecisionProblem})
+function problem_build!(problem::DecisionProblem{<:PowerSimulationsDecisionProblem})
     build_impl!(
         get_optimization_container(problem),
         get_template(problem),
@@ -417,7 +417,7 @@ serialize_optimization_model(::DecisionProblem) = nothing
 serialize_problem(::DecisionProblem) = nothing
 
 function serialize_optimization_model(
-    op_problem::DecisionProblem{<: PowerSimulationsDecisionProblem},
+    op_problem::DecisionProblem{<:PowerSimulationsDecisionProblem},
 )
     name = get_name(op_problem)
     problem_name = isempty(name) ? "OptimizationModel" : "$(name)_OptimizationModel"
@@ -433,9 +433,7 @@ struct DecisionProblemSerializationWrapper
     op_problem_type::DataType
 end
 
-function serialize_problem(
-    op_problem::DecisionProblem{<: PowerSimulationsDecisionProblem},
-)
+function serialize_problem(op_problem::DecisionProblem{<:PowerSimulationsDecisionProblem})
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
     problem_name = isempty(get_name(op_problem)) ? "OperationProblem" : get_name(op_problem)
@@ -537,7 +535,7 @@ results = solve!(OpModel)
 automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
-function solve!(problem::DecisionProblem{<: PowerSimulationsDecisionProblem}; kwargs...)
+function solve!(problem::DecisionProblem{<:PowerSimulationsDecisionProblem}; kwargs...)
     status = solve_impl(problem; kwargs...)
     set_run_status!(problem, status)
     return status
@@ -545,7 +543,7 @@ end
 
 function write_problem_results!(
     step::Int,
-    problem::DecisionProblem{<: PowerSimulationsDecisionProblem},
+    problem::DecisionProblem{<:PowerSimulationsDecisionProblem},
     start_time::Dates.DateTime,
     store::SimulationStore,
     exports,

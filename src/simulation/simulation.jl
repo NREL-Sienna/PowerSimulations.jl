@@ -1022,7 +1022,7 @@ end
 function update_problem!(
     problem::DecisionProblem{M},
     sim::Simulation,
-) where {M <:  PowerSimulationsDecisionProblem}
+) where {M <: PowerSimulationsDecisionProblem}
     _update_problem!(problem, sim)
     return
 end
