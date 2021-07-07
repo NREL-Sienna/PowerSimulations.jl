@@ -1,5 +1,3 @@
-# TODO: make a unit test that checks for this.
-
 abstract type OptimizationContainerKey end
 abstract type VariableType end
 abstract type ConstraintType end
@@ -34,7 +32,13 @@ abstract type FeedForwardChronology end
 
 get_trigger(val::FeedForwardChronology) = val.trigger
 
-abstract type AbstractOperationsProblem end
-abstract type PowerSimulationsOperationsProblem <: AbstractOperationsProblem end
+abstract type OperationsProblem end
+
+abstract type AbstractDecisionProblem end
+abstract type PowerSimulationsDecisionProblem <: AbstractDecisionProblem end
+
+abstract type AbstractEmulationProblem end
+abstract type PowerSimulationsEmulationProblem <: AbstractDecisionProblem end
+
 
 abstract type PSIResults <: IS.Results end

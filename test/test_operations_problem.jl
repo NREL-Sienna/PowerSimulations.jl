@@ -4,9 +4,9 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
 
-    @test_throws MethodError OperationsProblem(template, c_sys5; bad_kwarg = 10)
+    @test_throws MethodError DecisionProblem(template, c_sys5; bad_kwarg = 10)
 
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         template,
         c_sys5;
         use_forecast_data = false,
@@ -18,14 +18,14 @@
         PSI.get_settings(PSI.get_optimization_container(op_problem)),
     ) == false
 
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         MockOperationProblem,
         get_thermal_dispatch_template_network(),
         c_sys5_re;
         optimizer = GLPK_optimizer,
         balance_slack_variables = true,
     )
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         get_thermal_dispatch_template_network(),
         c_sys5;
         use_forecast_data = false,
@@ -41,7 +41,7 @@
     my_model = JuMP.Model()
     my_model.ext[:PSI_Testing] = 1
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         get_thermal_dispatch_template_network(),
         c_sys5,
         my_model;
@@ -59,7 +59,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
-    UC = OperationsProblem(template, c_sys5)
+    UC = DecisionProblem(template, c_sys5)
     output_dir = mktempdir(cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
@@ -78,7 +78,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
-    op_problem = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
+    op_problem = DecisionProblem(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     optimization_container = PSI.get_optimization_container(op_problem)
@@ -106,9 +106,9 @@ end
 end
 
 # @testset "Test print methods" begin
-#     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+#     template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 #     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     op_problem = OperationsProblem(
+#     op_problem = DecisionProblem(
 #         MockOperationProblem,
 #         template,
 #         c_sys5;
@@ -126,7 +126,7 @@ end
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
     for network in networks
         template = get_thermal_dispatch_template_network(network)
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             template,
             c_sys5_re;
             balance_slack_variables = true,
@@ -167,7 +167,7 @@ end
     LMPs = []
     for (ix, network) in enumerate(networks), p in parameters
         template = get_template_dispatch_with_network(network)
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             template,
             sys;
             optimizer = OSQP_optimizer,
@@ -196,7 +196,7 @@ end
 @testset "Test ProblemResults interfaces" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(CopperPlatePowerModel)
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         template,
         sys;
         optimizer = OSQP_optimizer,
@@ -250,7 +250,7 @@ end
     path = mktempdir(cleanup = true)
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(CopperPlatePowerModel)
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         template,
         sys;
         optimizer = OSQP_optimizer,
@@ -264,12 +264,12 @@ end
     @test "OptimizationModel.json" in file_list
     @test "OperationProblem.bin" in file_list
     filename = joinpath(path, "OperationProblem.bin")
-    ED2 = OperationsProblem(filename, optimizer = OSQP_optimizer)
+    ED2 = DecisionProblem(filename, optimizer = OSQP_optimizer)
     build!(ED2, output_dir = path)
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 
     path2 = mktempdir(cleanup = true)
-    op_problem_no_sys = OperationsProblem(
+    op_problem_no_sys = DecisionProblem(
         template,
         sys;
         optimizer = OSQP_optimizer,
@@ -284,7 +284,7 @@ end
     file_list = sort!(collect(readdir(path2)))
     @test .!all(occursin.(r".h5", file_list))
     filename = joinpath(path2, "OperationProblem.bin")
-    ED3 = OperationsProblem(filename; system = sys, optimizer = OSQP_optimizer)
+    ED3 = DecisionProblem(filename; system = sys, optimizer = OSQP_optimizer)
     build!(ED3, output_dir = path2)
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end

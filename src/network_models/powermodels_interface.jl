@@ -295,7 +295,7 @@ function powermodels_network!(
     optimization_container::OptimizationContainer,
     system_formulation::Type{S},
     sys::PSY.System,
-    template::OperationsProblemTemplate,
+    template::ProblemTemplate,
     instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
@@ -327,7 +327,7 @@ function powermodels_network!(
     optimization_container::OptimizationContainer,
     system_formulation::Type{S},
     sys::PSY.System,
-    template::OperationsProblemTemplate,
+    template::ProblemTemplate,
     instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractActivePowerModel}
     time_steps = model_time_steps(optimization_container)

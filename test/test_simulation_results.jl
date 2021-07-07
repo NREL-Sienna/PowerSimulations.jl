@@ -53,13 +53,13 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
         time_series_cache_size = 0  # This is only for test coverage.
         problems = SimulationProblems(
-            UC = OperationsProblem(
+            UC = DecisionProblem(
                 template_uc,
                 c_sys5_hy_uc;
                 optimizer = GLPK_optimizer,
                 time_series_cache_size = time_series_cache_size,
             ),
-            ED = OperationsProblem(
+            ED = DecisionProblem(
                 template_ed,
                 c_sys5_hy_ed;
                 optimizer = GLPK_optimizer,
@@ -355,7 +355,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         template_uc = get_template_hydro_st_uc()
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
         problems = SimulationProblems(
-            UC = OperationsProblem(
+            UC = DecisionProblem(
                 template_uc,
                 c_sys5_hy_uc;
                 optimizer = GLPK_optimizer,

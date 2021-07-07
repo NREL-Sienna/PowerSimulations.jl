@@ -40,24 +40,24 @@ function _display_model(
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
+    Base.show(io::IO, ::MIME"text/plain", op_problem::DecisionProblem)
 
-This function goes through the fields in OperationsProblem and then in OperationsProblemTemplate,
+This function goes through the fields in DecisionProblem and then in ProblemTemplate,
 if the field contains a Device model dictionary, it calls organize_device_model() &
 prints the data by field, key, value. If the field is not a Device model dictionary,
 and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, m::MIME"text/plain", op_problem::OperationsProblem)
+function Base.show(io::IO, m::MIME"text/plain", op_problem::DecisionProblem)
     show(io, m, op_problem.template)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTemplate)
+function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
     println(io, "\nOperations Problem Specification")
     println(io, "============================================")
 
-    for field in fieldnames(OperationsProblemTemplate)
+    for field in fieldnames(ProblemTemplate)
         val = getfield(template, Symbol(field))
         if field == :transmission
             println(io, "Transmission: $val")
@@ -178,8 +178,8 @@ function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     end
 end
 
-function Base.show(io::IO, stage::OperationsProblem)
-    println(io, "OperationsProblem()")
+function Base.show(io::IO, stage::DecisionProblem)
+    println(io, "DecisionProblem()")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)

@@ -1,28 +1,28 @@
 # NOTE: None of the models and function in this file are functional. All of these are used for testing purposes and do not represent valid examples either to develop custom
 # models. Please refer to the documentation.
 
-struct MockOperationProblem <: PSI.AbstractOperationsProblem end
+struct MockOperationProblem <: PSI.AbstractDecisionProblem end
 
-function PSI.OperationsProblem(
+function PSI.DecisionProblem(
     ::Type{MockOperationProblem},
     ::Type{T},
     sys::PSY.System;
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     settings = PSI.Settings(sys; kwargs...)
-    return OperationsProblem{MockOperationProblem}(
-        OperationsProblemTemplate(T),
+    return DecisionProblem{MockOperationProblem}(
+        ProblemTemplate(T),
         sys,
         settings,
         nothing,
     )
 end
 
-function PSI.OperationsProblem(::Type{MockOperationProblem}; kwargs...)
+function PSI.DecisionProblem(::Type{MockOperationProblem}; kwargs...)
     sys = System(100.0)
     settings = PSI.Settings(sys; kwargs...)
-    return OperationsProblem{MockOperationProblem}(
-        OperationsProblemTemplate(CopperPlatePowerModel),
+    return DecisionProblem{MockOperationProblem}(
+        ProblemTemplate(CopperPlatePowerModel),
         sys,
         settings,
         nothing,
@@ -30,7 +30,7 @@ function PSI.OperationsProblem(::Type{MockOperationProblem}; kwargs...)
 end
 
 # Only used for testing
-function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProblem}, model)
+function mock_construct_device!(problem::PSI.DecisionProblem{MockOperationProblem}, model)
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
     PSI.optimization_container_init!(
@@ -54,7 +54,7 @@ function mock_construct_device!(problem::PSI.OperationsProblem{MockOperationProb
 end
 
 function mock_construct_network!(
-    problem::PSI.OperationsProblem{MockOperationProblem},
+    problem::PSI.DecisionProblem{MockOperationProblem},
     model,
 )
     PSI.set_transmission_model!(problem.template, model)
@@ -69,8 +69,8 @@ end
 
 function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
     return SimulationProblems(
-        UC = OperationsProblem(MockOperationProblem; horizon = uc_horizon),
-        ED = OperationsProblem(MockOperationProblem; horizon = ed_horizon),
+        UC = DecisionProblem(MockOperationProblem; horizon = uc_horizon),
+        ED = DecisionProblem(MockOperationProblem; horizon = ed_horizon),
     )
 end
 
@@ -82,8 +82,8 @@ function create_simulation_build_test_problems(
 )
     c_sys5_uc =
         c_sys5_ed = return SimulationProblems(
-            UC = OperationsProblem(template_uc, sys_uc; optimizer = GLPK_optimizer),
-            ED = OperationsProblem(template_ed, sys_ed, optimizer = GLPK_optimizer),
+            UC = DecisionProblem(template_uc, sys_uc; optimizer = GLPK_optimizer),
+            ED = DecisionProblem(template_ed, sys_ed, optimizer = GLPK_optimizer),
         )
 end
 

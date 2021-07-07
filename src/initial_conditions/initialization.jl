@@ -20,8 +20,8 @@ const RELAXED_FORMULATION_MAPPING = Dict(
     :InterruptibleLoad => DeviceModel(PSY.InterruptibleLoad, StaticPowerLoad),
 )
 
-function _build_initialization_template(problem::OperationsProblem)
-    ic_template = OperationsProblemTemplate(problem.template.transmission)
+function _build_initialization_template(problem::DecisionProblem)
+    ic_template = ProblemTemplate(problem.template.transmission)
     for (device, _) in problem.template.devices
         model = RELAXED_FORMULATION_MAPPING[device]
         set_device_model!(ic_template, model)
@@ -37,20 +37,20 @@ function _build_initialization_template(problem::OperationsProblem)
 end
 
 function _build_initialization_problem(
-    problem::OperationsProblem{M},
+    problem::DecisionProblem{M},
     sim::Simulation,
-) where {M <: AbstractOperationsProblem}
+) where {M <: AbstractDecisionProblem}
     settings = deepcopy(get_settings(problem))
     set_horizon!(settings, 1)
     template = _build_initialization_template(problem)
-    ic_op_problem = OperationsProblem{M}(template, problem.sys, settings)
+    ic_op_problem = DecisionProblem{M}(template, problem.sys, settings)
     build!(ic_op_problem; output_dir = get_internal(problem).output_dir, serialize = false)
     return ic_op_problem
 end
 
 function _perform_initialization_step!(
-    ic_op_problem::OperationsProblem,
-    problem::OperationsProblem,
+    ic_op_problem::DecisionProblem,
+    problem::DecisionProblem,
     sim::Simulation,
 )
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
@@ -98,9 +98,9 @@ function _create_initialization_problem(sim::Simulation)
 end
 
 function _initialization_problems!(sim::Simulation)
-    # NOTE: Here we assume the solution to the 1st period in the simulation provides a good initial conditions 
+    # NOTE: Here we assume the solution to the 1st period in the simulation provides a good initial conditions
     # for initializing the simulation, but is not always guaranteed to provide a feasible initial conditions.
-    # Currently the formulations used in the initialization problem are pre-defined, customization option 
+    # Currently the formulations used in the initialization problem are pre-defined, customization option
     # is be added in future release.
     ic_op_problem = _create_initialization_problem(sim)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))

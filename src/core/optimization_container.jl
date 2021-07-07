@@ -280,7 +280,7 @@ end
 
 function build_impl!(
     optimization_container::OptimizationContainer,
-    template::OperationsProblemTemplate,
+    template::ProblemTemplate,
     sys::PSY.System,
 )
     transmission = template.transmission
