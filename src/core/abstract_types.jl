@@ -36,3 +36,5 @@ get_trigger(val::FeedForwardChronology) = val.trigger
 
 abstract type AbstractOperationsProblem end
 abstract type PowerSimulationsOperationsProblem <: AbstractOperationsProblem end
+
+abstract type PSIResults <: IS.Results end
