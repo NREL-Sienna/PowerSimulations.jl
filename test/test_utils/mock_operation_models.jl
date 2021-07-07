@@ -10,12 +10,7 @@ function PSI.DecisionProblem(
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     settings = PSI.Settings(sys; kwargs...)
-    return DecisionProblem{MockOperationProblem}(
-        ProblemTemplate(T),
-        sys,
-        settings,
-        nothing,
-    )
+    return DecisionProblem{MockOperationProblem}(ProblemTemplate(T), sys, settings, nothing)
 end
 
 function PSI.DecisionProblem(::Type{MockOperationProblem}; kwargs...)
@@ -53,10 +48,7 @@ function mock_construct_device!(problem::PSI.DecisionProblem{MockOperationProble
     return
 end
 
-function mock_construct_network!(
-    problem::PSI.DecisionProblem{MockOperationProblem},
-    model,
-)
+function mock_construct_network!(problem::PSI.DecisionProblem{MockOperationProblem}, model)
     PSI.set_transmission_model!(problem.template, model)
     PSI.construct_network!(
         PSI.get_optimization_container(problem),

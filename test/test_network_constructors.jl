@@ -280,12 +280,8 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = DecisionProblem(
-            template,
-            sys;
-            optimizer = ipopt_optimizer,
-            use_parameters = p,
-        )
+        ps_model =
+            DecisionProblem(template, sys; optimizer = ipopt_optimizer, use_parameters = p)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -435,12 +431,8 @@ end
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
     for network in networks, sys in systems, p in parameters
         template = get_thermal_dispatch_template_network(network)
-        ps_model = DecisionProblem(
-            template,
-            sys;
-            optimizer = ipopt_optimizer,
-            use_parameters = p,
-        )
+        ps_model =
+            DecisionProblem(template, sys; optimizer = ipopt_optimizer, use_parameters = p)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)

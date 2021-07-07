@@ -318,12 +318,8 @@ end
     model = DeviceModel(ThermalStandard, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            DCPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -347,12 +343,8 @@ end
     model = DeviceModel(ThermalStandard, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -377,12 +369,8 @@ end
     model = DeviceModel(ThermalMultiStart, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            DCPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 48, 48, 48, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -393,12 +381,8 @@ end
     model = DeviceModel(ThermalMultiStart, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 288, 0, 96, 96, 48, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -411,12 +395,8 @@ end
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            DCPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
@@ -444,12 +424,8 @@ end
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
@@ -697,12 +673,8 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            DCPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 480, 0, 595, 115, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -729,12 +701,8 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 600, 0, 715, 235, 120, true)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -763,12 +731,8 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            DCPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 120, 0, 168, 120, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -795,12 +759,8 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = DecisionProblem(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        op_problem =
+            DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5; use_parameters = p)
         mock_construct_device!(op_problem, model)
         moi_tests(op_problem, p, 240, 0, 288, 240, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)

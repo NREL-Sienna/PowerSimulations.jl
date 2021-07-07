@@ -40,5 +40,4 @@ abstract type PowerSimulationsDecisionProblem <: AbstractDecisionProblem end
 abstract type AbstractEmulationProblem end
 abstract type PowerSimulationsEmulationProblem <: AbstractDecisionProblem end
 
-
 abstract type PSIResults <: IS.Results end

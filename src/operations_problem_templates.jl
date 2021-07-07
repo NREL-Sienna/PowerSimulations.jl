@@ -1,7 +1,7 @@
 
-struct EconomicDispatchProblem <:  PowerSimulationsDecisionProblem end
-struct UnitCommitmentProblem <:  PowerSimulationsDecisionProblem end
-struct AGCReserveDeployment <:  PowerSimulationsDecisionProblem end
+struct EconomicDispatchProblem <: PowerSimulationsDecisionProblem end
+struct UnitCommitmentProblem <: PowerSimulationsDecisionProblem end
+struct AGCReserveDeployment <: PowerSimulationsDecisionProblem end
 
 function _default_devices_uc()
     return [

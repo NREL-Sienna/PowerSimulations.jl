@@ -60,8 +60,7 @@ function UnitCommitmentProblem(system::PSY.System; kwargs...)
     kwargs, problem_kwargs = _filter_kwargs(kwargs)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_unit_commitment(; kwargs...)
-    op_problem =
-        DecisionProblem(UnitCommitmentProblem, template, system; problem_kwargs...)
+    op_problem = DecisionProblem(UnitCommitmentProblem, template, system; problem_kwargs...)
     res = build!(op_problem; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build succesfully")
@@ -87,8 +86,7 @@ function AGCReserveDeployment(system::PSY.System; kwargs...)
     kwargs, problem_kwargs = _filter_kwargs(kwargs)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_agc_reserve_deployment(; kwargs...)
-    op_problem =
-        DecisionProblem(UnitCommitmentProblem, template, system; problem_kwargs...)
+    op_problem = DecisionProblem(UnitCommitmentProblem, template, system; problem_kwargs...)
     res = build!(op_problem; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build succesfully")
