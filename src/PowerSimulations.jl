@@ -15,6 +15,7 @@ export SimulationSequence
 export SimulationResults
 
 # Network Relevant Exports
+export NetworkModel
 export StandardPTDFModel
 export PTDFPowerModel
 export CopperPlatePowerModel
