@@ -1,6 +1,6 @@
 function _check_pm_formulation(
     ::Type{T},
-) where {T <: PM.AbstractActivePowerModel}
+) where {T <: PM.AbstractPowerModel}
     if !isconcretetype(T)
         throw(
             ArgumentError(
@@ -26,18 +26,18 @@ feedforward to enable passing values between operation model at simulation time
 thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
 ```
 """
-mutable struct NetworkModel{T <: PM.AbstractActivePowerModel}
+mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
     PTDF::Union{Nothing, PSY.PTDF}
     duals::Vector{<:ConstraintType}
 
-    function DeviceModel(
-        ::Type{T},
+    function NetworkModel(
+        ::Type{T};
         use_slacks = false,
         PTDF = nothing,
         duals = Vector{ConstraintType}()
-    ) where {T <: PM.AbstractActivePowerModel}
-        _check_device_formulation(T)
+    ) where {T <: PM.AbstractPowerModel}
+        _check_pm_formulation(T)
         new{T}(use_slacks, PTDF, duals)
     end
 end
