@@ -3,7 +3,7 @@
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
-        op_problem_m = OperationsProblem(
+        op_problem_m = DecisionProblem(
             template,
             system;
             optimizer = OSQP_optimizer,
@@ -33,7 +33,7 @@ end
         template = get_thermal_dispatch_template_network(model)
         set_device_model!(template, DeviceModel(Line, StaticBranch))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
-        op_problem_m = OperationsProblem(
+        op_problem_m = DecisionProblem(
             template,
             system;
             optimizer = OSQP_optimizer,
@@ -61,7 +61,7 @@ end
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     template = get_thermal_dispatch_template_network(ACPPowerModel)
-    op_problem_m = OperationsProblem(template, system; optimizer = ipopt_optimizer)
+    op_problem_m = DecisionProblem(template, system; optimizer = ipopt_optimizer)
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
@@ -110,7 +110,7 @@ end
 
         template = get_template_dispatch_with_network(model)
         set_device_model!(template, HVDCLine, hvdc_model)
-        op_problem_m = OperationsProblem(
+        op_problem_m = DecisionProblem(
             template,
             system;
             optimizer = OSQP_optimizer,
@@ -177,7 +177,7 @@ end
         set_device_model!(template, DeviceModel(HVDCLine, HVDCUnbounded))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
-        op_problem_m = OperationsProblem(
+        op_problem_m = DecisionProblem(
             template,
             system;
             optimizer = OSQP_optimizer,
@@ -257,7 +257,7 @@ end
 
     template = get_template_dispatch_with_network(ACPPowerModel)
     set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
-    op_problem_m = OperationsProblem(template, system; optimizer = ipopt_optimizer)
+    op_problem_m = DecisionProblem(template, system; optimizer = ipopt_optimizer)
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
@@ -337,7 +337,7 @@ end
 
     template = get_template_dispatch_with_network(StandardPTDFModel)
     set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
-    op_problem_m = OperationsProblem(template, system; PTDF = PSY.PTDF(system), optimizer = ipopt_optimizer)
+    op_problem_m = DecisionProblem(template, system; PTDF = PSY.PTDF(system), optimizer = ipopt_optimizer)
     @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 

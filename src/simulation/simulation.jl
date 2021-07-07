@@ -122,7 +122,7 @@ end
 
 function _add_initial_condition_caches(
     sim::SimulationInternal,
-    problem::OperationsProblem,
+    problem::DecisionProblem,
     caches::Union{Nothing, Vector{<:AbstractCache}},
 )
     initial_conditions = problem.internal.optimization_container.initial_conditions
@@ -174,7 +174,7 @@ end
 
 function _set_internal_caches(
     internal::SimulationInternal,
-    problem::OperationsProblem,
+    problem::DecisionProblem,
     caches::Vector{<:AbstractCache},
 )
     for c in caches
@@ -213,7 +213,7 @@ end
 # TODO: Add DocString
 @doc raw"""
     Simulation(steps::Int
-                problems::Dict{String, OperationsProblem{<:AbstractOperationsProblem}}
+                problems::Dict{String, DecisionProblem{<:AbstractDecisionProblem}}
                 sequence::Union{Nothing, SimulationSequence}
                 simulation_folder::String
                 name::String
@@ -731,7 +731,7 @@ end
 
 """ Updates the initial conditions of the problem"""
 function initial_condition_update!(
-    problem::OperationsProblem,
+    problem::DecisionProblem,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
     ::IntraProblemChronology,
@@ -773,7 +773,7 @@ end
 
 """ Updates the initial conditions of the problem"""
 function initial_condition_update!(
-    problem::OperationsProblem,
+    problem::DecisionProblem,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
     ::InterProblemChronology,
@@ -822,7 +822,7 @@ function initial_condition_update!(
     return
 end
 
-function _update_caches!(sim::Simulation, problem::OperationsProblem)
+function _update_caches!(sim::Simulation, problem::DecisionProblem)
     for cache in get_caches(problem)
         update_cache!(sim, cache, problem)
     end
@@ -835,7 +835,7 @@ end
 function update_cache!(
     sim::Simulation,
     ::CacheKey{TimeStatusChange, D},
-    problem::OperationsProblem,
+    problem::DecisionProblem,
 ) where {D <: PSY.Device}
     # TODO: Remove debug statements and use recorder here
     c = get_cache(sim, TimeStatusChange, D)
@@ -870,7 +870,7 @@ function update_cache!(
     return
 end
 
-function get_increment(sim::Simulation, problem::OperationsProblem, cache::TimeStatusChange)
+function get_increment(sim::Simulation, problem::DecisionProblem, cache::TimeStatusChange)
     units = cache.units
     problem_name = get_name(problem)
     sequence = get_sequence(sim)
@@ -882,7 +882,7 @@ end
 function update_cache!(
     sim::Simulation,
     ::CacheKey{StoredEnergy, D},
-    problem::OperationsProblem,
+    problem::DecisionProblem,
 ) where {D <: PSY.Device}
     c = get_cache(sim, StoredEnergy, D)
     variable = get_variable(problem.internal.optimization_container, c.ref)
@@ -901,7 +901,7 @@ end
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    problem::OperationsProblem,
+    problem::DecisionProblem,
     sim::Simulation,
 ) where {T <: PSY.Component}
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
@@ -932,7 +932,7 @@ end
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    problem::OperationsProblem,
+    problem::DecisionProblem,
     sim::Simulation,
 ) where {T <: PSY.Service}
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
@@ -964,7 +964,7 @@ end
 function update_parameter!(
     param_reference::UpdateRef{JuMP.VariableRef},
     container::ParameterContainer,
-    problem::OperationsProblem,
+    problem::DecisionProblem,
     sim::Simulation,
 )
     param_array = get_parameter_array(container)
@@ -984,7 +984,7 @@ function update_parameter!(
     return
 end
 
-function _update_initial_conditions!(problem::OperationsProblem, sim::Simulation)
+function _update_initial_conditions!(problem::DecisionProblem, sim::Simulation)
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
     optimization_containter = get_optimization_container(problem)
     for (k, v) in iterate_initial_conditions(optimization_containter)
@@ -993,7 +993,7 @@ function _update_initial_conditions!(problem::OperationsProblem, sim::Simulation
     return
 end
 
-function _update_parameters(problem::OperationsProblem, sim::Simulation)
+function _update_parameters(problem::DecisionProblem, sim::Simulation)
     optimization_container = get_optimization_container(problem)
     for container in iterate_parameter_containers(optimization_container)
         update_parameter!(container.update_ref, container, problem, sim)
@@ -1001,7 +1001,7 @@ function _update_parameters(problem::OperationsProblem, sim::Simulation)
     return
 end
 
-function _apply_warm_start!(problem::OperationsProblem)
+function _apply_warm_start!(problem::DecisionProblem)
     optimization_container = get_optimization_container(problem)
     jump_model = get_jump_model(optimization_container)
     all_vars = JuMP.all_variables(jump_model)
@@ -1010,7 +1010,7 @@ function _apply_warm_start!(problem::OperationsProblem)
 end
 
 """ Required update problem function call"""
-function _update_problem!(problem::OperationsProblem, sim::Simulation)
+function _update_problem!(problem::DecisionProblem, sim::Simulation)
     _update_parameters(problem, sim)
     _update_initial_conditions!(problem, sim)
     return
@@ -1020,9 +1020,9 @@ end
 ## These are the functions that the user will have to implement to update a custom problem ###
 """ Generic problem update function for most problems with no customization"""
 function update_problem!(
-    problem::OperationsProblem{M},
+    problem::DecisionProblem{M},
     sim::Simulation,
-) where {M <: PowerSimulationsOperationsProblem}
+) where {M <:  PowerSimulationsDecisionProblem}
     _update_problem!(problem, sim)
     return
 end
@@ -1440,10 +1440,10 @@ function deserialize_model(
             )
         end
 
-        problems = Dict{Symbol, OperationsProblem{<:AbstractOperationsProblem}}()
+        problems = Dict{Symbol, DecisionProblem{<:AbstractDecisionProblem}}()
         for name in obj.problems
             problem =
-                deserialize_problem(OperationsProblem, joinpath("problems", "$(name).bin"))
+                deserialize_problem(DecisionProblem, joinpath("problems", "$(name).bin"))
             if !haskey(problem_info[key], "optimizer")
                 throw(ArgumentError("problem_info must define 'optimizer'"))
             end

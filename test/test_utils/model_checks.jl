@@ -2,7 +2,7 @@ const GAEVF = JuMP.GenericAffExpr{Float64, VariableRef}
 const GQEVF = JuMP.GenericQuadExpr{Float64, VariableRef}
 
 function moi_tests(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     params::Bool,
     vars::Int,
     interval::Int,
@@ -25,7 +25,7 @@ function moi_tests(
 end
 
 function psi_constraint_test(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     constraint_keys::Vector{<:PSI.ConstraintKey},
 )
     constraints = PSI.get_constraints(op_problem)
@@ -36,7 +36,7 @@ function psi_constraint_test(
 end
 
 function psi_aux_var_test(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     constraint_keys::Vector{<:PSI.AuxVarKey},
 )
     op_container = PSI.get_optimization_container(op_problem)
@@ -48,7 +48,7 @@ function psi_aux_var_test(
 end
 
 function psi_checkbinvar_test(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     bin_variable_keys::Vector{<:PSI.VariableKey},
 )
     container = PSI.get_optimization_container(op_problem)
@@ -60,14 +60,14 @@ function psi_checkbinvar_test(
     return
 end
 
-function psi_checkobjfun_test(op_problem::OperationsProblem, exp_type)
+function psi_checkobjfun_test(op_problem::DecisionProblem, exp_type)
     model = PSI.get_jump_model(op_problem)
     @test JuMP.objective_function_type(model) == exp_type
     return
 end
 
 function moi_lbvalue_test(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     con_key::PSI.ConstraintKey,
     value::Number,
 )
@@ -77,14 +77,14 @@ function moi_lbvalue_test(
     return
 end
 
-function psi_checksolve_test(op_problem::OperationsProblem, status)
+function psi_checksolve_test(op_problem::DecisionProblem, status)
     model = PSI.get_jump_model(op_problem)
     JuMP.optimize!(model)
     @test termination_status(model) in status
 end
 
 function psi_checksolve_test(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     status,
     expected_result,
     tol = 0.0,
@@ -115,14 +115,14 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
 end
 
 function check_variable_unbounded(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     ::Type{T},
     ::Type{U},
 ) where {T <: PSI.VariableType, U <: PSY.Component}
-    return check_variable_unbounded(op_problem::OperationsProblem, PSI.VariableKey(T, U))
+    return check_variable_unbounded(op_problem::DecisionProblem, PSI.VariableKey(T, U))
 end
 
-function check_variable_unbounded(op_problem::OperationsProblem, var_key::PSI.VariableKey)
+function check_variable_unbounded(op_problem::DecisionProblem, var_key::PSI.VariableKey)
     psi_cont = PSI.get_optimization_container(op_problem)
     variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
@@ -134,14 +134,14 @@ function check_variable_unbounded(op_problem::OperationsProblem, var_key::PSI.Va
 end
 
 function check_variable_bounded(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     ::Type{T},
     ::Type{U},
 ) where {T <: PSI.VariableType, U <: PSY.Component}
-    return check_variable_bounded(op_problem::OperationsProblem, PSI.VariableKey(T, U))
+    return check_variable_bounded(op_problem::DecisionProblem, PSI.VariableKey(T, U))
 end
 
-function check_variable_bounded(op_problem::OperationsProblem, var_key::PSI.VariableKey)
+function check_variable_bounded(op_problem::DecisionProblem, var_key::PSI.VariableKey)
     psi_cont = PSI.get_optimization_container(op_problem)
     variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
@@ -153,7 +153,7 @@ function check_variable_bounded(op_problem::OperationsProblem, var_key::PSI.Vari
 end
 
 function check_flow_variable_values(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     ::Type{T},
     ::Type{U},
     device_name::String,
@@ -170,7 +170,7 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     ::Type{T},
     ::Type{U},
     device_name::String,
@@ -189,7 +189,7 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     ::Type{T},
     ::Type{U},
     ::Type{V},
@@ -213,7 +213,7 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_problem::OperationsProblem,
+    op_problem::DecisionProblem,
     ::Type{T},
     ::Type{U},
     ::Type{V},

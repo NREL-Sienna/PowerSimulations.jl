@@ -2,7 +2,7 @@
     template_ed = get_template_nomin_ed_simulation()
     c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
     problems = SimulationProblems(
-        ED = OperationsProblem(template_ed, c_sys, optimizer = ipopt_optimizer),
+        ED = DecisionProblem(template_ed, c_sys, optimizer = ipopt_optimizer),
     )
     test_sequence = SimulationSequence(
         problems = problems,
@@ -30,13 +30,13 @@ end
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     problems = SimulationProblems(
-        UC = OperationsProblem(
+        UC = DecisionProblem(
             template_uc,
             c_sys5_hy_uc;
             optimizer = GLPK_optimizer,
             balance_slack_variables = true,
         ),
-        ED = OperationsProblem(
+        ED = DecisionProblem(
             template_ed,
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,
@@ -83,7 +83,7 @@ end
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     template = get_template_hydro_st_ed()
     problems = SimulationProblems(
-        ED = OperationsProblem(template, c_sys5_hy_ed; optimizer = ipopt_optimizer),
+        ED = DecisionProblem(template, c_sys5_hy_ed; optimizer = ipopt_optimizer),
     )
 
     single_sequence = SimulationSequence(
@@ -112,8 +112,8 @@ end
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
     problems = SimulationProblems(
-        UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
-        ED = OperationsProblem(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),
+        UC = DecisionProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
+        ED = DecisionProblem(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),
     )
 
     sequence_cache = SimulationSequence(
@@ -158,8 +158,8 @@ end
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     problems = SimulationProblems(
-        UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
-        ED = OperationsProblem(
+        UC = DecisionProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
+        ED = DecisionProblem(
             template_ed,
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,
@@ -204,13 +204,13 @@ end
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     problems = SimulationProblems(
-        UC = OperationsProblem(
+        UC = DecisionProblem(
             template_uc,
             c_sys5_hy_uc;
             optimizer = GLPK_optimizer,
             constraint_duals = [:CopperPlateBalance],
         ),
-        ED = OperationsProblem(
+        ED = DecisionProblem(
             template_ed,
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,

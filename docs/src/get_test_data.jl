@@ -10,7 +10,7 @@ Cbc_optimizer = optimizer_with_attributes(Cbc.Optimizer)
 
 include("../../../test/test_utils/get_test_data.jl")
 
-abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
+abstract type TestOpProblem <: PSI.AbstractDecisionProblem end
 
 system = build_c_sys5_re(; add_reserves = true)
 solver = optimizer_with_attributes(Cbc.Optimizer)
@@ -26,9 +26,9 @@ branches = Dict{Symbol, DeviceModel}(
 );
 services = Dict{Symbol, ServiceModel}();
 
-template = PSI.OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+template = PSI.ProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
-operations_problem = PSI.OperationsProblem(
+operations_problem = PSI.DecisionProblem(
     TestOpProblem,
     template,
     system;

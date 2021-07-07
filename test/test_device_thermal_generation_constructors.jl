@@ -4,7 +4,7 @@ test_path = mktempdir()
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
     c_sys5_re_only = PSB.build_system(PSITestSystems, "c_sys5_re_only")
-    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
     @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
         op_problem,
         model,
@@ -33,7 +33,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_problem, uc_constraint_keys)
@@ -41,7 +41,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
     psi_aux_var_test(op_problem, aux_vars_keys)
 
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         MockOperationProblem,
         DCPPowerModel,
         c_sys5_uc;
@@ -55,7 +55,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys14;
@@ -89,7 +89,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 600, 0, 600, 240, 120, true)
     psi_constraint_test(op_problem, uc_constraint_keys)
@@ -97,7 +97,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
     psi_aux_var_test(op_problem, aux_vars_keys)
 
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         MockOperationProblem,
         ACPPowerModel,
         c_sys5_uc;
@@ -111,7 +111,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys14;
@@ -140,7 +140,7 @@ end
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5_uc;
@@ -170,7 +170,7 @@ end
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_uc;
@@ -194,13 +194,13 @@ end
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 480, 0, 240, 120, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         MockOperationProblem,
         DCPPowerModel,
         c_sys5_uc;
@@ -213,7 +213,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys14;
@@ -235,13 +235,13 @@ end
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    op_problem = OperationsProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, false, 600, 0, 360, 240, 120, true)
     psi_checkbinvar_test(op_problem, bin_variable_keys)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         MockOperationProblem,
         ACPPowerModel,
         c_sys5_uc;
@@ -254,7 +254,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys14;
@@ -277,7 +277,7 @@ end
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5_uc;
@@ -300,7 +300,7 @@ end
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_uc;
@@ -318,7 +318,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5;
@@ -331,7 +331,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys14;
@@ -347,7 +347,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5;
@@ -360,7 +360,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys14;
@@ -377,7 +377,7 @@ end
     model = DeviceModel(ThermalMultiStart, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5;
@@ -393,7 +393,7 @@ end
     model = DeviceModel(ThermalMultiStart, ThermalDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5;
@@ -411,7 +411,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5;
@@ -426,7 +426,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys14;
@@ -444,7 +444,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5;
@@ -459,7 +459,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys14;
@@ -479,7 +479,7 @@ end
     model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5;
@@ -496,7 +496,7 @@ end
     model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5;
@@ -518,7 +518,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5_uc;
@@ -532,7 +532,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys14;
@@ -552,7 +552,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_uc;
@@ -566,7 +566,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys14;
@@ -586,7 +586,7 @@ end
     model = DeviceModel(ThermalMultiStart, ThermalRampLimited)
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5_uc;
@@ -607,7 +607,7 @@ end
     model = DeviceModel(ThermalMultiStart, ThermalRampLimited)
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_uc;
@@ -644,7 +644,7 @@ end
     no_less_than = Dict(true => 334, false => 330)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5_pglib;
@@ -679,7 +679,7 @@ end
     no_less_than = Dict(true => 382, false => 378)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_pglib;
@@ -697,7 +697,7 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5;
@@ -713,7 +713,7 @@ end
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5_pglib;
@@ -729,7 +729,7 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5;
@@ -745,7 +745,7 @@ end
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_pglib;
@@ -763,7 +763,7 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5;
@@ -779,7 +779,7 @@ end
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             DCPPowerModel,
             c_sys5_pglib;
@@ -795,7 +795,7 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5;
@@ -812,7 +812,7 @@ end
     no_less_than = Dict(true => 382, false => 378)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     for p in [true, false]
-        op_problem = OperationsProblem(
+        op_problem = DecisionProblem(
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_pglib;
@@ -827,10 +827,10 @@ end
 ############################# Model validation tests #######################################
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
     ramp_test_sys = PSB.build_system(PSITestSystems, "c_ramp_test")
-    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalRampLimited)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    ED = OperationsProblem(
+    ED = DecisionProblem(
         EconomicDispatchProblem,
         template,
         ramp_test_sys;
@@ -845,7 +845,7 @@ end
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
     template = get_thermal_standard_uc_template()
-    UC = OperationsProblem(
+    UC = DecisionProblem(
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_duration_test");
@@ -860,7 +860,7 @@ end
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Convex PWL" begin
     template = get_thermal_standard_uc_template()
-    UC = OperationsProblem(
+    UC = DecisionProblem(
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_linear_pwl_test");
@@ -874,7 +874,7 @@ end
 
 @testset "Solving UC with CopperPlate testing PWL-SOS2 implementation" begin
     template = get_thermal_standard_uc_template()
-    UC = OperationsProblem(
+    UC = DecisionProblem(
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_sos_pwl_test");
@@ -892,7 +892,7 @@ end
         template,
         DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
     )
-    UC = OperationsProblem(
+    UC = DecisionProblem(
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_market_bid_cost");
@@ -907,7 +907,7 @@ end
     c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
     template = get_thermal_dispatch_template_network()
     set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
-    op_problem = OperationsProblem(
+    op_problem = DecisionProblem(
         MockOperationProblem,
         CopperPlatePowerModel,
         c_sys5_pwl_ed_nonconvex;
@@ -932,7 +932,7 @@ end
     for net in networks, p in parameters_value, sys in systems
         template = get_thermal_dispatch_template_network(net)
         set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
-        UC = OperationsProblem(
+        UC = DecisionProblem(
             template,
             sys;
             optimizer = GLPK_optimizer,

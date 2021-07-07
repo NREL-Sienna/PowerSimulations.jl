@@ -23,7 +23,7 @@ IS.get_parameters(res::ProblemResults) = res.parameter_values
 IS.get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
 
-function ProblemResults(problem::OperationsProblem)
+function ProblemResults(problem::DecisionProblem)
     status = get_run_status(problem)
     status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
 
@@ -56,7 +56,7 @@ Exports all results from the operations problem.
 function export_results(results::ProblemResults; kwargs...)
     all_fields = Set(["all"])
     exports = ProblemResultsExport(
-        "OperationsProblem",
+        "DecisionProblem",
         variables = all_fields,
         duals = all_fields,
         parameters = all_fields,

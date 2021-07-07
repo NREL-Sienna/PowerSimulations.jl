@@ -415,10 +415,10 @@ end
 # This makes the choice in which variable to get from the results.
 function get_problem_variable(
     chron::RecedingHorizon,
-    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
     device_name::AbstractString,
     var_ref::UpdateRef,
-) where {T, U <: AbstractOperationsProblem}
+) where {T, U <: AbstractDecisionProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     step = axes(variable)[2][chron.periods]
@@ -432,10 +432,10 @@ end
 
 function get_problem_variable(
     ::Consecutive,
-    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
-) where {T, U <: AbstractOperationsProblem}
+) where {T, U <: AbstractDecisionProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     step = axes(variable)[2][get_end_of_interval_step(problems.first)]
@@ -449,10 +449,10 @@ end
 
 function get_problem_variable(
     chron::Synchronize,
-    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
-) where {T, U <: AbstractOperationsProblem}
+) where {T, U <: AbstractDecisionProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     e_count = get_execution_count(problems.second)
@@ -469,10 +469,10 @@ end
 
 function get_problem_variable(
     ::FullHorizon,
-    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
-) where {T, U <: AbstractOperationsProblem}
+) where {T, U <: AbstractDecisionProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     vars = variable[device_name, :]
@@ -485,10 +485,10 @@ end
 
 function get_problem_variable(
     chron::Range,
-    problems::Pair{OperationsProblem{T}, OperationsProblem{U}},
+    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
     device_name::String,
     var_ref::UpdateRef,
-) where {T, U <: AbstractOperationsProblem}
+) where {T, U <: AbstractDecisionProblem}
     variable =
         get_variable(problems.first.internal.optimization_container, var_ref.access_ref)
     vars = variable[device_name, chron.range]
@@ -500,8 +500,8 @@ function get_problem_variable(
 end
 
 function feedforward_update!(
-    destination_problem::OperationsProblem,
-    source_problem::OperationsProblem,
+    destination_problem::DecisionProblem,
+    source_problem::DecisionProblem,
     chronology::FeedForwardChronology,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,

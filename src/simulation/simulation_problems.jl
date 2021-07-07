@@ -4,7 +4,7 @@ SimulationProblems, the order in which the problems are created determines the o
 the simulation is executed.
 """
 mutable struct SimulationProblems
-    op_problems::OrderedDict{Symbol, OperationsProblem}
+    op_problems::OrderedDict{Symbol, DecisionProblem}
     names::Vector{Symbol}
     function SimulationProblems(; kwargs...)
         prob_dict = OrderedDict(kwargs...)

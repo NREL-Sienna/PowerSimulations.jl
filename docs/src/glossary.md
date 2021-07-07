@@ -48,7 +48,7 @@
 
 **Stage:** Each stage represents a formulation of a problem to be solved, such as unit commitment or economic dispatch. Each stage has its own system with a specified time-scale.
 - Example:
-`"UC" => OperationsProblem(GenericOpProblem, template, system, optimizer)`
+`"UC" => DecisionProblem(GenericOpProblem, template, system, optimizer)`
 
 **problem:** The optimization problem populated with the specific system to be solved.
 

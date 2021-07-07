@@ -6,9 +6,9 @@ module PowerSimulations
 
 # Base Models
 export Simulation
-export OperationsProblem
+export DecisionProblem
 export ProblemResults
-export OperationsProblemTemplate
+export ProblemTemplate
 export InitialCondition
 export SimulationProblems
 export SimulationSequence
@@ -407,7 +407,7 @@ include("core/optimizer_stats.jl")
 include("initial_conditions/initial_condition_types.jl")
 include("initial_conditions/initial_conditions.jl")
 include("initial_conditions/initial_condition.jl")
-include("operation_problem/operations_problem_template.jl")
+include("operation_problem/problem_template.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
 include("simulation/param_result_cache.jl")
@@ -419,8 +419,9 @@ include("operation_problem/problem_results_export.jl")
 include("simulation/simulation_results_export.jl")
 include("core/optimization_container.jl")
 include("initial_conditions/update_initial_conditions.jl")
+include("operation_problem/operations_problem_interface.jl")
 include("operation_problem/problem_internal.jl")
-include("operation_problem/operations_problem.jl")
+include("operation_problem/decision_problem.jl")
 include("operation_problem/operations_problem_results.jl")
 include("simulation/simulation_problems.jl")
 include("simulation/simulation_sequence.jl")
@@ -494,7 +495,7 @@ include("network_models/network_constructor.jl")
 include("operations_problem_templates.jl")
 
 # Operations Problems
-include("operations_problems.jl")
+include("operation_problem/decision_problems.jl")
 
 # Printing
 include("printing.jl")
