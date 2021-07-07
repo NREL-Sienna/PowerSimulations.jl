@@ -27,9 +27,9 @@ function service_requirement_constraint!(
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     parameters = model_has_parameters(optimization_container)
-    initial_time = model_initial_time(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     @debug initial_time
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     name = PSY.get_name(service)
     constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
     reserve_variable =
@@ -78,9 +78,9 @@ function service_requirement_constraint!(
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.StaticReserve, T <: AbstractReservesFormulation}
-    initial_time = model_initial_time(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     @debug initial_time
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     name = PSY.get_name(service)
     constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
     reserve_variable =
@@ -131,9 +131,9 @@ function service_requirement_constraint!(
     service::SR,
     ::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
-    initial_time = model_initial_time(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     @debug initial_time
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     name = PSY.get_name(service)
     constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
     reserve_variable =
@@ -164,7 +164,7 @@ function _get_data_for_ramp_limit(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     time_frame = PSY.get_time_frame(service)
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
@@ -275,7 +275,7 @@ function add_to_cost!(
     service::SR,
     component_name::String,
 ) where {SR <: PSY.Reserve}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
     if !use_forecast_data
         error("StepwiseCostReserve is only supported with forecast")

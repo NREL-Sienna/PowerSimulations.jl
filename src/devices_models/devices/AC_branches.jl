@@ -172,7 +172,7 @@ function branch_flow_values!(
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF(optimization_container)
     branches = PSY.get_name.(devices)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     branch_flow = add_cons_container!(
         optimization_container,
         NetworkFlowConstraint(),

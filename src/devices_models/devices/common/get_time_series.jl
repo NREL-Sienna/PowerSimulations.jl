@@ -3,10 +3,10 @@ function get_time_series(
     component::PSY.Component,
     forecast_name::String,
 )
-    initial_time = model_initial_time(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     @debug initial_time
     use_forecast_data = model_uses_forecasts(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     if use_forecast_data
         forecast = PSY.get_time_series(
             PSY.Deterministic,

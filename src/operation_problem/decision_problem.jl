@@ -867,7 +867,7 @@ function get_initial_cache(cache::StoredEnergy, problem::DecisionProblem)
 end
 
 function get_timestamps(problem::DecisionProblem)
-    start_time = model_initial_time(get_optimization_container(problem))
+    start_time = get_initial_time(get_optimization_container(problem))
     resolution = get_resolution(problem)
     horizon = get_horizon(problem)
     return range(start_time, length = horizon, step = resolution)

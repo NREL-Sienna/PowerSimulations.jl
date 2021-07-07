@@ -35,7 +35,7 @@ function device_linear_rateofchange!(
     ::Type{T},
 ) where {T <: PSY.Component}
     parameters = model_has_parameters(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     variable = get_variable(optimization_container, var_type, T)
 
@@ -159,7 +159,7 @@ function device_mixedinteger_rateofchange!(
     ::Type{T},
 ) where {T <: PSY.Component}
     parameters = model_has_parameters(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     variable = get_variable(optimization_container, var_types[1], T)
     varstart = get_variable(optimization_container, var_types[2], T)
@@ -286,7 +286,7 @@ function device_multistart_rateofchange!(
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable = get_variable(optimization_container, var_type, T)
 
     set_name = [get_component_name(r) for r in rate_data]
@@ -373,7 +373,7 @@ function service_upward_rateofchange!(
     service_name::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     # TODO DT: is this change valid?
     variable = get_variable(optimization_container, var_type, T, service_name)
@@ -407,7 +407,7 @@ function service_downward_rateofchange!(
     service_name::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     # TODO DT: is this change valid?
     variable = get_variable(optimization_container, var_type, T, service_name)
     set_name = [get_component_name(r) for r in rate_data]

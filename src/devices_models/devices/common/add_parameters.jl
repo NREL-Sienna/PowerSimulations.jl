@@ -8,7 +8,7 @@ function include_parameters!(
     multiplier::Float64 = 1.0,
 ) where {T <: PSY.Device}
     @assert model_has_parameters(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [get_component_name(r) for r in constraint_infos]
     @debug "adding" parameter
     container =
@@ -39,7 +39,7 @@ function include_parameters!(
     multiplier::Float64 = 1.0,
 ) where {T <: PSY.Device}
     @assert model_has_parameters(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [get_component_name(r) for r in constraint_infos]
     container =
         add_param_container!(optimization_container, parameter, T, names, time_steps)

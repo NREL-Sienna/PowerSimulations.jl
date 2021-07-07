@@ -67,7 +67,7 @@ function custom_reactive_power_constraints!(
     ::Type{RenewableConstantPowerFactor},
 ) where {T <: PSY.RenewableGen}
     names = [PSY.get_name(d) for d in devices]
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     p_var = get_variable(optimization_container, ActivePowerVariable(), T)
     q_var = get_variable(optimization_container, ReactivePowerVariable(), T)
     jump_model = get_jump_model(optimization_container)

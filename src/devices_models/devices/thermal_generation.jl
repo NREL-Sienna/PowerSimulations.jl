@@ -477,8 +477,8 @@ function calculate_aux_variable_value!(
     aux_var_container = get_aux_variables(optimization_container)[key]
     ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOn, T)
 
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    resolution = get_resolution(optimization_container)
     minutes_per_period = Dates.value(Dates.Minute(resolution))
 
     for ix in eachindex(JuMP.axes(aux_var_container)[1])
@@ -519,8 +519,8 @@ function calculate_aux_variable_value!(
     aux_var_container = get_aux_variables(optimization_container)[key]
     ini_cond = get_initial_conditions(optimization_container, InitialTimeDurationOff, T)
 
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    resolution = get_resolution(optimization_container)
     minutes_per_period = Dates.value(Dates.Minute(resolution))
 
     for ix in eachindex(JuMP.axes(aux_var_container)[1])
@@ -559,7 +559,7 @@ function _get_data_for_rocc(
     optimization_container::OptimizationContainer,
     ::Type{T},
 ) where {T <: PSY.ThermalGen}
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
@@ -735,7 +735,7 @@ function turbine_temperature(
     var_starts::Tuple{VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     start_vars = [
         get_variable(optimization_container, var_starts[1], T),
         get_variable(optimization_container, var_starts[2], T),
@@ -816,7 +816,7 @@ function device_start_type_constraint!(
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     varstart = get_variable(optimization_container, var_start, T)
     start_vars = [
         get_variable(optimization_container, var_types[1], T),
@@ -875,7 +875,7 @@ function device_startup_initial_condition!(
     bin_var::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     set_name = [get_device_name(ic) for ic in initial_conditions]
     varbin = get_variable(optimization_container, bin_var, T)
@@ -938,7 +938,7 @@ function startup_time_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel, T <: PSY.ThermalMultiStart}
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     lenght_devices = length(devices)
     start_time_params = Vector{DeviceStartUpConstraintInfo}(undef, lenght_devices)
     for (ix, g) in enumerate(devices)
@@ -1028,7 +1028,7 @@ function startup_initial_condition_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel, T <: PSY.ThermalMultiStart}
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     key_off = ICKey(InitialTimeDurationOff, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(optimization_container, key_off)
     constraint_data = _get_data_startup_ic(initial_conditions_offtime, resolution)
@@ -1055,7 +1055,7 @@ function must_run_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel, T <: PSY.ThermalMultiStart}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = ones(time_steps[end])
@@ -1132,7 +1132,7 @@ function time_constraints!(
     S <: PM.AbstractPowerModel,
 }
     parameters = model_has_parameters(optimization_container)
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     initial_conditions_on =
         get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOn, T))
     initial_conditions_off =
@@ -1173,7 +1173,7 @@ function time_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     parameters = model_has_parameters(optimization_container)
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     initial_conditions_on =
         get_initial_conditions(optimization_container, ICKey(InitialTimeDurationOn, T))
     initial_conditions_off =
@@ -1384,7 +1384,7 @@ function cost_function!(
         variable_cost = PSY.get_variable,
         fixed_cost = PSY.get_fixed,
     )
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for g in devices
         component_name = PSY.get_name(g)
@@ -1411,7 +1411,7 @@ function cost_function!(
             else
                 cost_function_data = cost_component.cost
             end
-            time_steps = model_time_steps(optimization_container)
+            time_steps = get_time_steps(optimization_container)
             for t in time_steps
                 gen_cost = pwl_gencost_linear!(
                     optimization_container,

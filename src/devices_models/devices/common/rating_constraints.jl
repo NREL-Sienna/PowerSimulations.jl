@@ -26,7 +26,7 @@ function rating_constraint!(
     var_types::Tuple{VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     var1 = get_variable(optimization_container, var_types[1], T)
     var2 = get_variable(optimization_container, var_types[2], T)
     add_cons_container!(

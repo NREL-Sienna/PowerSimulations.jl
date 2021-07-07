@@ -307,7 +307,7 @@ function energy_target_constraint!(
 ) where {T <: PSY.Storage}
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     target_forecast_name = "storage_target"
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     if use_forecast_data

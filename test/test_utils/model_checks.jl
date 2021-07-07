@@ -198,7 +198,7 @@ function check_flow_variable_values(
     limit_max::Float64,
 ) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
-    time_steps = PSI.model_time_steps(psi_cont)
+    time_steps = PSI.get_time_steps(psi_cont)
     pvariable = PSI.get_variable(psi_cont, T(), V)
     qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
@@ -221,7 +221,7 @@ function check_flow_variable_values(
     limit::Float64,
 ) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
     psi_cont = PSI.get_optimization_container(op_problem)
-    time_steps = PSI.model_time_steps(psi_cont)
+    time_steps = PSI.get_time_steps(psi_cont)
     pvariable = PSI.get_variable(psi_cont, T(), V)
     qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps

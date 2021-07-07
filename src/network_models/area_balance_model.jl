@@ -4,7 +4,7 @@ function area_balance(
     area_mapping::Dict{String, Array{PSY.Bus, 1}},
     branches,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     remove_undef!(optimization_container.expressions[expression])
     nodal_net_balance = optimization_container.expressions[expression]
     constraint = add_cons_container!(

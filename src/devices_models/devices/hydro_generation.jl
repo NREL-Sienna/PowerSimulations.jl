@@ -461,7 +461,7 @@ function energy_target_constraint!(
     key = ICKey(InitialEnergyLevel, T)
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     if use_forecast_data
         for (ix, d) in enumerate(devices)
@@ -679,8 +679,8 @@ function device_energy_budget_param_ub(
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    resolution = get_resolution(optimization_container)
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     variable_out = get_variable(optimization_container, var_type, T)
     set_name = [get_component_name(r) for r in energy_budget_data]
@@ -718,14 +718,14 @@ function device_energy_budget_ub(
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable_out = get_variable(optimization_container, var_type, T)
     names = [get_component_name(x) for x in energy_budget_constraints]
     constraint = add_cons_container!(optimization_container, cons_type, T, names)
 
     for constraint_info in energy_budget_constraints
         name = get_component_name(constraint_info)
-        resolution = model_resolution(optimization_container)
+        resolution = get_resolution(optimization_container)
         inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
         forecast = constraint_info.timeseries
         multiplier = constraint_info.multiplier * inv_dt

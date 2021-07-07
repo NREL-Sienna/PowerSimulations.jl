@@ -63,7 +63,7 @@ function construct_service!(
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(optimization_container)
@@ -127,7 +127,7 @@ function construct_service!(
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
     # Does not use the standard implementation of add_variable!()
     add_variable!(
@@ -226,7 +226,7 @@ function construct_service!(
     ::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
 
     add_cons_container!(
@@ -262,7 +262,7 @@ function construct_service!(
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(optimization_container)

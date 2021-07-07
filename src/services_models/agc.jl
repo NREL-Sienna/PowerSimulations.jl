@@ -73,7 +73,7 @@ get_variable_lower_bound(::LiftVariable, ::PSY.Area, ::AbstractAGCFormulation) =
 Steady State deviation of the frequency
 """
 function add_variables!(optimization_container::OptimizationContainer, ::Type{T}) where {T <: SteadyStateFrequencyDeviation}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable = add_var_container!(optimization_container, T(), PSY.Area, time_steps)
     for t in time_steps
         variable[t] = JuMP.@variable(optimization_container.JuMPmodel,
@@ -98,7 +98,7 @@ end
 
 function balancing_auxiliary_variables!(optimization_container, sys)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     R_up_emergency = add_var_container!(optimization_container, AdditionalDeltaActivePowerUpVariable(),  PSY.Area, area_names, time_steps)
     R_dn_emergency = add_var_container!(optimization_container, AdditionalDeltaActivePowerDownVariable(),  PSY.Area, area_names, time_steps)
 
@@ -125,7 +125,7 @@ function balancing_auxiliary_variables!(optimization_container, sys)
 end
 
 function absolute_value_lift(optimization_container::OptimizationContainer, areas)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     area_names = [PSY.get_name(a) for a in areas]
     # TODO DT: correct component type and meta?
     container_lb = add_cons_container!(optimization_container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "lb")
@@ -150,7 +150,7 @@ end
 Expression for the power deviation given deviation in the frequency. This expression allows updating the response of the frequency depending on commitment decisions
 """
 function frequency_response_constraint!(optimization_container::OptimizationContainer, sys::PSY.System)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     services = PSY.get_components(PSY.AGC, sys)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
     frequency_response = 0.0
@@ -195,7 +195,7 @@ function frequency_response_constraint!(optimization_container::OptimizationCont
 end
 
 function smooth_ace_pid!(optimization_container::OptimizationContainer, services::Vector{PSY.AGC})
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
     RAW_ACE = add_expression_container!(optimization_container, :RAW_ACE, area_names, time_steps)
     SACE = get_variable(optimization_container, SmoothACE(), PSY.Area)
@@ -240,7 +240,7 @@ function smooth_ace_pid!(optimization_container::OptimizationContainer, services
 end
 
 function aux_constraints!(optimization_container::OptimizationContainer, sys::PSY.System)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
     aux_equation = add_cons_container!(optimization_container, BalanceAuxConstraint(), PSY.System, area_names, time_steps)
     area_mismatch = get_variable(optimization_container,  AreaMismatchVariable(), PSY.Area)

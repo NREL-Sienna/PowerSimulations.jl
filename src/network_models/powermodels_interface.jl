@@ -298,7 +298,7 @@ function powermodels_network!(
     template::ProblemTemplate,
     instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
@@ -330,7 +330,7 @@ function powermodels_network!(
     template::ProblemTemplate,
     instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractActivePowerModel}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
@@ -470,7 +470,7 @@ function add_pm_var_refs!(
     system_formulation::Type{S},
     ::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     bus_dict = optimization_container.pm.ext[:PMmap].bus
     ACbranch_dict = optimization_container.pm.ext[:PMmap].arcs
     ACbranch_types = typeof.(values(ACbranch_dict))
@@ -556,7 +556,7 @@ function add_pm_con_refs!(
     system_formulation::Type{S},
     ::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     bus_dict = optimization_container.pm.ext[:PMmap].bus
 
     pm_con_names = [
@@ -587,7 +587,7 @@ function add_pm_expr_refs!(
     system_formulation::Type{S},
     ::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     ACbranch_dict = optimization_container.pm.ext[:PMmap].arcs
     ACbranch_types = typeof.(values(ACbranch_dict))

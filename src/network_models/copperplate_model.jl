@@ -3,7 +3,7 @@ function copper_plate(
     expression::Symbol,
     bus_count::Int,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     expressions = get_expression(optimization_container, expression)
     remove_undef!(optimization_container.expressions[expression])
     constraint = add_cons_container!(

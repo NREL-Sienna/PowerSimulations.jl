@@ -8,6 +8,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     settings_copy::Settings
     variables::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
+    dual_values::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::DenseAxisArrayContainer
@@ -33,9 +34,10 @@ mutable struct OptimizationContainer <: AbstractModelContainer
             resolution,
             settings,
             copy_for_serialization(settings),
-            Dict{Symbol, AbstractArray}(),
-            Dict{Symbol, AbstractArray}(),
-            Dict{Symbol, AbstractArray}(),
+            Dict{VariableKey, AbstractArray}(),
+            Dict{AuxVarKey, AbstractArray}(),
+            Dict{ConstraintKey, AbstractArray}(),
+            Dict{ConstraintKey, AbstractArray}(),
             zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
             Dict{ParameterKey, ParameterContainer}(),
@@ -47,15 +49,11 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     end
 end
 
-model_time_steps(optimization_container::OptimizationContainer) =
+get_time_steps(optimization_container::OptimizationContainer) =
     optimization_container.time_steps
-model_resolution(optimization_container::OptimizationContainer) =
+get_resolution(optimization_container::OptimizationContainer) =
     optimization_container.resolution
-model_has_parameters(optimization_container::OptimizationContainer) =
-    get_use_parameters(optimization_container.settings)
-model_uses_forecasts(optimization_container::OptimizationContainer) =
-    get_use_forecast_data(optimization_container.settings)
-model_initial_time(optimization_container::OptimizationContainer) =
+get_initial_time(optimization_container::OptimizationContainer) =
     get_initial_time(optimization_container.settings)
 # Internal Variables, Constraints and Parameters accessors
 get_variables(optimization_container::OptimizationContainer) =
@@ -70,8 +68,6 @@ get_expression(optimization_container::OptimizationContainer, name::Symbol) =
     optimization_container.expressions[name]
 get_initial_conditions(optimization_container::OptimizationContainer) =
     optimization_container.initial_conditions
-get_PTDF(optimization_container::OptimizationContainer) =
-    get_PTDF(optimization_container.settings)
 get_settings(optimization_container::OptimizationContainer) =
     optimization_container.settings
 get_jump_model(optimization_container::OptimizationContainer) =

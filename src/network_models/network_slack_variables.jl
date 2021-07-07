@@ -3,7 +3,7 @@ function _add_system_balance_slacks!(
     expression::Symbol,
     single_first_axes::Bool = false,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     expression_array = get_expression(optimization_container, expression)
     single_first_axes && (first_index = [axes(expression_array)[1][1]])
     !single_first_axes && (first_index = axes(expression_array)[1])

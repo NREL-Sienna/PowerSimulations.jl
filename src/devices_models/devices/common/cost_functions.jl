@@ -170,7 +170,7 @@ function linear_gen_cost!(
     linear_term::Float64,
     time_period::Int,
 )
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     variable = get_variable(optimization_container, var_key)[component_name, time_period]
     gen_cost = sum(variable) * linear_term
@@ -340,7 +340,7 @@ function add_to_cost!(
     component::PSY.Component,
 )
     component_name = PSY.get_name(component)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     @debug "TwoPartCost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     if !(spec.variable_cost === nothing)
         variable_cost = spec.variable_cost(cost_data)
@@ -392,7 +392,7 @@ function add_to_cost!(
 )
     component_name = PSY.get_name(component)
     @debug "ThreePartCost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     variable_cost = spec.variable_cost(cost_data)
     if spec.uses_compact_power &&
@@ -404,7 +404,7 @@ function add_to_cost!(
     else
         variable_cost_data = spec.variable_cost(cost_data)
     end
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     for t in time_steps
         variable_cost!(optimization_container, spec, component_name, variable_cost_data, t)
     end
@@ -474,9 +474,9 @@ function add_to_cost!(
     component::PSY.Component,
 )
     component_name = PSY.get_name(component)
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     if !(spec.fixed_cost === nothing) && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
@@ -566,10 +566,10 @@ function add_to_cost!(
 )
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    time_steps = model_time_steps(optimization_container)
-    initial_time = model_initial_time(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     variable_cost_forecast = PSY.get_variable_cost(
         component,
         PSY.get_operation_cost(component);
@@ -662,10 +662,10 @@ function add_to_cost!(
 )
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    time_steps = model_time_steps(optimization_container)
-    initial_time = model_initial_time(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     variable_cost_forecast = PSY.get_variable_cost(
         component,
         PSY.get_operation_cost(component);
@@ -746,8 +746,8 @@ function add_service_bid_cost!(
     component::PSY.Component,
     service::PSY.Reserve{T},
 ) where {T <: PSY.ReserveDirection}
-    time_steps = model_time_steps(optimization_container)
-    initial_time = model_initial_time(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     base_power = get_base_power(optimization_container)
     forecast_data = PSY.get_services_bid(
         component,
@@ -795,12 +795,12 @@ function add_to_cost!(
 )
     component_name = PSY.get_name(component)
     @debug "Energy Target Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    time_steps = model_time_steps(optimization_container)
-    initial_time = model_initial_time(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     variable_cost = PSY.get_variable(cost_data)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     for t in time_steps
         variable_cost!(optimization_container, spec, component_name, variable_cost, t)
     end
@@ -951,7 +951,7 @@ function variable_cost!(
     cost_data = PSY.get_cost(cost_component)
     if cost_data[1] >= eps()
         @debug "Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-        resolution = model_resolution(optimization_container)
+        resolution = get_resolution(optimization_container)
         dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
         variable =
             get_variable(optimization_container, var_key)[component_name, time_period]
@@ -1005,7 +1005,7 @@ function variable_cost!(
     time_period::Int,
 )
     @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(optimization_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     # If array is full of tuples with zeros return 0.0
     cost_data = PSY.get_cost(cost_component)

@@ -31,7 +31,7 @@ function ub_ff(
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable = get_variable(optimization_container, var_type, T)
 
     axes = JuMP.axes(variable)
@@ -97,7 +97,7 @@ function range_ff(
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable = get_variable(optimization_container, var_type)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
@@ -187,7 +187,7 @@ function semicontinuousrange_ff(
     param_type::VariableValueParameter,
     variable_type::VariableType,
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable = get_variable(optimization_container, variable_type, T)
     # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
@@ -293,7 +293,7 @@ function integral_limit_ff(
     param_type::VariableValueParameter,
     variable_type::VariableType,
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable = get_variable(optimization_container, variable_type, T)
 
     axes = JuMP.axes(variable)

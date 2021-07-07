@@ -2,7 +2,7 @@ function reserve_slacks(
     optimization_container::OptimizationContainer,
     service::T,
 ) where {T <: PSY.Reserve}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable = add_var_container!(
         optimization_container,
         ReserveRequirementSlack(),

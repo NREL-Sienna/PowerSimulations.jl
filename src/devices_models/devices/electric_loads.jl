@@ -58,7 +58,7 @@ function custom_reactive_power_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractControllablePowerLoadFormulation},
 ) where {T <: PSY.ElectricLoad}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     constraint = add_cons_container!(
         optimization_container,
         EqualityConstraint(),
