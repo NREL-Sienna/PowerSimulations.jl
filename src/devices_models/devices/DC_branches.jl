@@ -40,7 +40,7 @@ function add_variable_to_expression!(
     ::DeviceModel{B, <:AbstractDCLineFormulation},
     ::Type{S},
 ) where {B <: PSY.DCBranch, S <: Union{StandardPTDFModel, PTDFPowerModel}}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     var = get_variable(optimization_container, FlowActivePowerVariable(), B)
 
     for d in devices
@@ -73,7 +73,7 @@ function branch_rate_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
     var = get_variable(optimization_container, FlowActivePowerVariable(), B)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [PSY.get_name(d) for d in devices]
     constraint = add_cons_container!(
         optimization_container,
@@ -114,7 +114,7 @@ function branch_rate_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [PSY.get_name(d) for d in devices]
     for (var_type, cons_type) in zip(
         (FlowActivePowerVariable(), FlowActivePowerVariable()),

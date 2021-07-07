@@ -45,7 +45,7 @@ function device_range!(
     optimization_container::OptimizationContainer,
     inputs::RangeConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
@@ -124,7 +124,7 @@ function device_semicontinuousrange!(
     optimization_container::OptimizationContainer,
     inputs::RangeConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     varcts =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     @assert length(inputs.bin_variable_types) == 1
@@ -215,7 +215,7 @@ function reserve_device_semicontinuousrange!(
     optimization_container::OptimizationContainer,
     inputs::RangeConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     varcts =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     @assert length(inputs.bin_variable_types) == 1
@@ -308,7 +308,7 @@ function device_multistart_range!(
     optimization_container::OptimizationContainer,
     inputs::RangeConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     varp = get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     @assert length(inputs.bin_variable_types) == 3
     varstatus = get_variable(
@@ -454,7 +454,7 @@ function reserve_power_ub!(
     var_types::Tuple{VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     var_in = get_variable(optimization_container, var_types[1], T)
     var_out = get_variable(optimization_container, var_types[2], T)
     names = [get_component_name(x) for x in charging_range_data]
@@ -514,7 +514,7 @@ function reserve_energy_ub!(
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     var_e = get_variable(optimization_container, var_type, T)
     names = [get_component_name(x) for x in constraint_infos]
     con_up = add_cons_container!(

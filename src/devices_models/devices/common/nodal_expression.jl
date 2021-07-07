@@ -64,7 +64,7 @@ function _nodal_expression!(
         return
     else
         for constraint_info in constraint_infos
-            for t in model_time_steps(optimization_container)
+            for t in get_time_steps(optimization_container)
                 add_to_expression!(
                     optimization_container.expressions[spec.expression],
                     constraint_info.bus_number,

@@ -46,7 +46,7 @@ function device_duration_retrospective!(
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     varon = get_variable(optimization_container, var_types[1], T)
     varstart = get_variable(optimization_container, var_types[2], T)
@@ -158,7 +158,7 @@ function device_duration_look_ahead!(
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     varon = get_variable(optimization_container, var_types[1], T)
     varstart = get_variable(optimization_container, var_types[2], T)
     varstop = get_variable(optimization_container, var_types[3], T)
@@ -258,7 +258,7 @@ function device_duration_parameters!(
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     varon = get_variable(optimization_container, var_types[1], T)
     varstart = get_variable(optimization_container, var_types[2], T)
@@ -378,7 +378,7 @@ function device_duration_compact_retrospective!(
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     varon = get_variable(optimization_container, var_types[1], T)
     varstart = get_variable(optimization_container, var_types[2], T)

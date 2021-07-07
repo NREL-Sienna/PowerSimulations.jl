@@ -40,7 +40,7 @@ function device_commitment!(
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     varstart = get_variable(optimization_container, var_types[1], T)
     varstop = get_variable(optimization_container, var_types[2], T)
     varon = get_variable(optimization_container, var_types[3], T)

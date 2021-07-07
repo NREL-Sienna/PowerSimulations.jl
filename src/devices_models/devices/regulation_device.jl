@@ -40,7 +40,7 @@ function add_constraints!(
     var_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     # TODO DT: should "up" be specified in meta instead of the constraint type?
     container_up = add_cons_container!(
@@ -98,7 +98,7 @@ function add_constraints!(
     var_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     container_dn = add_cons_container!(
         optimization_container,
@@ -154,7 +154,7 @@ function add_constraints!(
     var_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     container_up = add_cons_container!(
         optimization_container,
@@ -189,7 +189,7 @@ function add_constraints!(
     var_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     container_dn = add_cons_container!(
         optimization_container,
@@ -222,9 +222,9 @@ function ramp_constraints!(
     R_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), T)
     R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), T)
 
-    resolution = Dates.value(Dates.Second(model_resolution(optimization_container)))
+    resolution = Dates.value(Dates.Second(get_resolution(optimization_container)))
     names = [PSY.get_name(g) for g in devices]
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     # TODO DT: appropriate use of meta?
     # TODO DT: is component_type correct?
@@ -271,7 +271,7 @@ function participation_assignment!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     R_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), T)
     R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), T)
     R_up_emergency =
@@ -340,7 +340,7 @@ function regulation_cost!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractRegulationFormulation},
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     R_up_emergency =
         get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), T)
     R_dn_emergency =

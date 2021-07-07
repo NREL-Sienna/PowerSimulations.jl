@@ -13,7 +13,7 @@ function lazy_lb!(
     optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
     variable =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
@@ -65,7 +65,7 @@ function device_timeseries_ub!(
     optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
     variable =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
@@ -123,7 +123,7 @@ function device_timeseries_lb!(
     optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
@@ -172,7 +172,7 @@ function device_timeseries_param_ub!(
     optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
     variable =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
@@ -242,7 +242,7 @@ function device_timeseries_param_lb!(
     optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     variable =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
@@ -308,7 +308,7 @@ function device_timeseries_ub_bin!(
     optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     varcts =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     varbin = get_variable(
@@ -366,7 +366,7 @@ function device_timeseries_ub_bigM!(
     optimization_container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     varcts =
         get_variable(optimization_container, inputs.variable_type, inputs.component_type)

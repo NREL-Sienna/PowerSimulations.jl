@@ -28,9 +28,9 @@ function service_requirement_constraint!(
     ::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
 ) where {SR <: PSY.StaticReserveGroup}
-    initial_time = model_initial_time(optimization_container)
+    initial_time = get_initial_time(optimization_container)
     @debug initial_time
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     name = PSY.get_name(service)
     constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
     use_slacks = get_services_slack_variables(optimization_container.settings)

@@ -72,7 +72,7 @@ function add_variable!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     @assert !isempty(devices)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     settings = get_settings(optimization_container)
     binary = get_variable_binary(variable_type, D, formulation)
     expression_name = get_variable_expression_name(variable_type, D)
@@ -130,7 +130,7 @@ function add_service_variable!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     @assert !isempty(contributing_devices)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
 
     binary = get_variable_binary(variable_type, T, formulation)
     expression_name = get_variable_expression_name(variable_type, T)
@@ -214,7 +214,7 @@ function set_variable_bounds!(
     ::Type{T},
 ) where {T <: PSY.Component}
     var = get_variable(optimization_container, var_type, T)
-    for t in model_time_steps(optimization_container), bound in bounds
+    for t in get_time_steps(optimization_container), bound in bounds
         _var = var[get_component_name(bound), t]
         JuMP.set_upper_bound(_var, bound.limits.max)
         JuMP.set_lower_bound(_var, bound.limits.min)

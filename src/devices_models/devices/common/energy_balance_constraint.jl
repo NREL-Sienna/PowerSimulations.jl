@@ -160,8 +160,8 @@ function energy_balance!(
     optimization_container::OptimizationContainer,
     inputs::DeviceEnergyBalanceConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    resolution = get_resolution(optimization_container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [get_component_name(x) for x in inputs.constraint_infos]
 
@@ -244,8 +244,8 @@ function energy_balance_param!(
     optimization_container::OptimizationContainer,
     inputs::DeviceEnergyBalanceConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
+    time_steps = get_time_steps(optimization_container)
+    resolution = get_resolution(optimization_container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [get_component_name(x) for x in inputs.constraint_infos]
     has_parameter_data = !isnothing(inputs.parameter)

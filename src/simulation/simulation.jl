@@ -907,7 +907,7 @@ function update_parameter!(
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
         components = get_available_components(T, problem.sys)
         initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-        horizon = length(model_time_steps(problem.internal.optimization_container))
+        horizon = length(get_time_steps(problem.internal.optimization_container))
         for d in components
             ts_vector = get_time_series_values!(
                 PSY.Deterministic,
@@ -938,7 +938,7 @@ function update_parameter!(
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
         components = get_available_components(T, problem.sys)
         initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-        horizon = length(model_time_steps(problem.internal.optimization_container))
+        horizon = length(get_time_steps(problem.internal.optimization_container))
         param_array = get_parameter_array(container)
         for ix in axes(param_array)[1]
             service = PSY.get_component(T, problem.sys, ix)

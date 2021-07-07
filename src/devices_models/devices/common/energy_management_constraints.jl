@@ -17,7 +17,7 @@ function energy_target!(
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{U},
 ) where {T <: DeviceTimeSeriesConstraintInfo, U <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     name_index = [get_component_name(d) for d in target_data]
     varenergy = get_variable(optimization_container, var_types[1], U)
     varslack_up = get_variable(optimization_container, var_types[2], U)
@@ -61,7 +61,7 @@ function energy_target_param!(
     parameter::TimeSeriesParameter,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(optimization_container)
     name_index = [get_component_name(d) for d in target_data]
     varenergy = get_variable(optimization_container, var_types[1], T)
     varslack_up = get_variable(optimization_container, var_types[2], T)
