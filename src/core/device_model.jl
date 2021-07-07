@@ -1,15 +1,3 @@
-"""
-Abstract type for Device Formulations (a.k.a Models)
-
-# Example
-```julia
-import PowerSimulations
-const PSI = PowerSimulations
-struct MyCustomFormulation <: PSI.AbstractDeviceFormulation
-```
-"""
-abstract type AbstractDeviceFormulation end
-
 """Formulation that fixes the injection values of devices"""
 struct FixedOutput <: AbstractDeviceFormulation end
 
@@ -43,16 +31,20 @@ thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
 """
 mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     feedforward::Union{Nothing, AbstractAffectFeedForward}
+    use_slacks::Bool
+    duals::Vector{<:ConstraintType}
     services::Vector{ServiceModel}
 
     function DeviceModel(
         ::Type{D},
-        ::Type{B},
+        ::Type{B};
         feedforward = nothing,
+        use_slacks = false,
+        duals = Vector{ConstraintType}()
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)
-        new{D, B}(feedforward, Vector{ServiceModel}())
+        new{D, B}(feedforward, use_slacks, duals, Vector{ServiceModel}())
     end
 end
 
@@ -65,6 +57,8 @@ get_formulation(
 get_feedforward(m::DeviceModel) = m.feedforward
 get_services(m::DeviceModel) = m.services
 get_services(::Nothing) = nothing
+get_use_slacks(m::DeviceModel) = m.use_slacks
+get_duals(m::DeviceModel) = m.duals
 
 DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
 

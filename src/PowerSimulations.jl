@@ -394,8 +394,9 @@ include("core/abstract_types.jl")
 include("core/aux_structs.jl")
 
 include("network_models/powermodels_formulations.jl")
-include("core/service_models.jl")
-include("core/device_models.jl")
+include("core/network_model.jl")
+include("core/service_model.jl")
+include("core/device_model.jl")
 
 include("core/parameters.jl")
 include("core/variables.jl")

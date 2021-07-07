@@ -34,22 +34,16 @@ OpModel = DecisionProblem(MockOperationProblem, template, system)
 # Accepted Key Words
 
 - `optimizer`: The optimizer that will be used in the optimization model.
-- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `horizon::Int`: Manually specify the length of the forecast Horizon
 - `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `balance_slack_variables::Bool`: True will add slacks to the system balance constraints
-- `services_slack_variables::Bool`: True will add slacks to the services requirement constraints
 - `constraint_duals::Vector{Symbol}`: Vector with the duals to query from the optimization model
 - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
 - `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default to false.
 - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
 - `optimizer_log_print::Bool`: True to print the optimizer solve log. Default to false.
 - `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default to false.
-- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Default is false.
-- `use_forecast_data::Bool`: If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
-
 """
 mutable struct DecisionProblem{M <: AbstractDecisionProblem} <: OperationsProblem
     template::ProblemTemplate
@@ -73,19 +67,14 @@ function DecisionProblem{M}(
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     optimizer = nothing,
-    PTDF = nothing,
     horizon = UNSET_HORIZON,
     warm_start = true,
-    balance_slack_variables = false,
-    services_slack_variables = false,
     constraint_duals = Vector{Symbol}(),
     system_to_file = true,
     export_pwl_vars = false,
     allow_fails = false,
     optimizer_log_print = false,
     direct_mode_optimizer = false,
-    use_parameters = false,
-    use_forecast_data = true,
     initial_time = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
 ) where {M <: AbstractDecisionProblem}

@@ -25,19 +25,61 @@ function check_meta_chars(meta)
     end
 end
 
+"""
+Abstract type for Device Formulations (a.k.a Models)
+
+# Example
+```julia
+import PowerSimulations
+const PSI = PowerSimulations
+struct MyCustomFormulation <: PSI.AbstractDeviceFormulation
+```
+"""
+abstract type AbstractDeviceFormulation end
+
+abstract type OperationsProblem end
+
+#TODO: Document the required interfaces for custom types
+"""
+Abstract type for Decision Problems
+
+# Example
+```julia
+import PowerSimulations
+const PSI = PowerSimulations
+struct MyCustomProblem <: PSI.AbstractDecisionProblem
+```
+"""
+abstract type AbstractDecisionProblem end
+
+"""
+Abstract type for Decision Problems that use PowerSimulations Interfaces
+"""
+abstract type PowerSimulationsDecisionProblem <: AbstractDecisionProblem end
+
+
+"""
+Abstract type for Emulation Problems
+
+# Example
+```julia
+import PowerSimulations
+const PSI = PowerSimulations
+struct MyCustomEmulator <: PSI.AbstractEmulationProblem
+```
+"""
+abstract type AbstractEmulationProblem end
+
+"""
+Abstract type for Emulation Problems that use PowerSimulations Interfaces
+"""
+abstract type PowerSimulationsEmulationProblem <: AbstractDecisionProblem end
+
+abstract type PSIResults <: IS.Results end
+
 abstract type AbstractAffectFeedForward end
 
 abstract type AbstractCache end
 abstract type FeedForwardChronology end
 
 get_trigger(val::FeedForwardChronology) = val.trigger
-
-abstract type OperationsProblem end
-
-abstract type AbstractDecisionProblem end
-abstract type PowerSimulationsDecisionProblem <: AbstractDecisionProblem end
-
-abstract type AbstractEmulationProblem end
-abstract type PowerSimulationsEmulationProblem <: AbstractDecisionProblem end
-
-abstract type PSIResults <: IS.Results end

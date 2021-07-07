@@ -1,13 +1,8 @@
 struct Settings
     horizon::Base.RefValue{Int}
-    use_forecast_data::Bool
-    use_parameters::Base.RefValue{Bool}
     time_series_cache_size::Int
     warm_start::Base.RefValue{Bool}
-    balance_slack_variables::Bool
-    services_slack_variables::Bool
     initial_time::Base.RefValue{Dates.DateTime}
-    PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, MOI.OptimizerWithAttributes}
     direct_mode_optimizer::Bool
     optimizer_log_print::Bool
@@ -21,14 +16,9 @@ end
 function Settings(
     sys;
     initial_time::Dates.DateTime = UNSET_INI_TIME,
-    use_parameters::Bool = false,
-    use_forecast_data::Bool = true,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
     warm_start::Bool = true,
-    balance_slack_variables::Bool = false,
-    services_slack_variables::Bool = false,
     horizon::Int = UNSET_HORIZON,
-    PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer = nothing,
     direct_mode_optimizer::Bool = false,
     optimizer_log_print::Bool = false,
@@ -56,14 +46,9 @@ function Settings(
 
     return Settings(
         Ref(horizon),
-        use_forecast_data,
-        Ref(use_parameters),
         time_series_cache_size,
         Ref(warm_start),
-        balance_slack_variables,
-        services_slack_variables,
         Ref(initial_time),
-        PTDF,
         optimizer_,
         direct_mode_optimizer,
         optimizer_log_print,
@@ -124,16 +109,11 @@ function restore_from_copy(
 end
 
 get_horizon(settings::Settings) = settings.horizon[]
-get_use_forecast_data(settings::Settings) = settings.use_forecast_data
-get_use_parameters(settings::Settings) = settings.use_parameters[]
 get_initial_time(settings::Settings)::Dates.DateTime = settings.initial_time[]
-get_PTDF(settings::Settings) = settings.PTDF
 get_optimizer(settings::Settings) = settings.optimizer
 get_ext(settings::Settings) = settings.ext
 get_warm_start(settings::Settings) = settings.warm_start[]
 get_constraint_duals(settings::Settings) = settings.constraint_duals
-get_balance_slack_variables(settings::Settings) = settings.balance_slack_variables
-get_services_slack_variables(settings::Settings) = settings.services_slack_variables
 get_system_to_file(settings::Settings) = settings.system_to_file
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails
