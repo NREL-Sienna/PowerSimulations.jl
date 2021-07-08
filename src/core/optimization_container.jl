@@ -326,12 +326,12 @@ function _add_var_container!(
     axs...,
 ) where {T <: VariableType, U <: PSY.Component}
     if sparse
-        container_ = sparse_container_spec(JuMP.VariableRef, axs...)
+        var_container = sparse_container_spec(JuMP.VariableRef, axs...)
     else
-        container_ = container_spec(JuMP.VariableRef, axs...)
+        var_container = container_spec(JuMP.VariableRef, axs...)
     end
-    _assign_container!(container.variables, var_key, container_)
-    return container_
+    _assign_container!(container.variables, var_key, var_container)
+    return var_container
 end
 
 function add_var_container!(
@@ -397,12 +397,12 @@ function add_aux_var_container!(
 ) where {T <: AuxVariableType, U <: PSY.Component}
     var_key = AuxVarKey(T, U)
     if sparse
-        container_ = sparse_container_spec(Float64, axs...)
+        aux_var_container = sparse_container_spec(Float64, axs...)
     else
-        container_ = container_spec(Float64, axs...)
+        aux_var_container = container_spec(Float64, axs...)
     end
-    _assign_container!(container.aux_variables, var_key, container_)
-    return container
+    _assign_container!(container.aux_variables, var_key, aux_var_container)
+    return aux_var_container
 end
 
 function get_aux_variable_keys(container::OptimizationContainer)
@@ -417,12 +417,12 @@ function _add_cons_container!(
     sparse = false,
 )
     if sparse
-        container_ = sparse_container_spec(JuMP.ConstraintRef, axs...)
+        cons_container = sparse_container_spec(JuMP.ConstraintRef, axs...)
     else
-        container_ = container_spec(JuMP.ConstraintRef, axs...)
+        cons_container = container_spec(JuMP.ConstraintRef, axs...)
     end
-    _assign_container!(container.constraints, cons_key, container_)
-    return container_
+    _assign_container!(container.constraints, cons_key, cons_container)
+    return cons_container
 end
 
 function add_cons_container!(
@@ -465,7 +465,7 @@ end
 
 function get_constraint(
     container::OptimizationContainer,
-    constraint_type::T,
+    ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: PSY.Component}
@@ -489,12 +489,12 @@ end
 
 ##################################### Parameter Container ##################################
 function add_param_container!(container::OptimizationContainer, key::ParameterKey, axs...)
-    container_ = ParameterContainer(
+    param_container = ParameterContainer(
         JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
         fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
-    _assign_container!(container.parameters, key, container_)
-    return container_
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
 end
 
 function add_param_container!(
@@ -513,12 +513,12 @@ function get_parameter_names(container::OptimizationContainer)
 end
 
 function get_parameter(container::OptimizationContainer, key::ParameterKey)
-    container_ = get(container.parameters, key, nothing)
-    if container === nothing
+    param_container = get(container.parameters, key, nothing)
+    if param_container === nothing
         @error "$name is not stored" sort!(get_parameter_names(container))
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
-    return container_
+    return param_container
 end
 
 function get_parameter(
