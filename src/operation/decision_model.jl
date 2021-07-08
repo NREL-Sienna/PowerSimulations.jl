@@ -475,7 +475,7 @@ end
 
 """
 Default solve method the operational model for a single instance. Solves problems
-    that conform to the requirements of DecisionModel{<:  DecisionProblem}
+    that conform to the requirements of DecisionModel{<: DecisionProblem}
 # Arguments
 - `model::OperationModel = model`: operation model
 # Examples
@@ -507,7 +507,7 @@ function write_problem_results!(
 end
 
 """
-Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<:  DecisionProblem}
+Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<: DecisionProblem}
 
 # Arguments
 - `step::Int`: Simulation Step
