@@ -350,7 +350,7 @@ function build!(
     set_file_level!(model, file_level)
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
-    logger = configure_logging(problem.internal, "w")
+    logger = configure_logging(model.internal, "w")
     try
         Logging.with_logger(logger) do
             return _build!(model, serialize)

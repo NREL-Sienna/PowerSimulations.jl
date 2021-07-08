@@ -1,5 +1,5 @@
 """
-    Container for the initial condition data
+Container for the initial condition data
 """
 struct InitialCondition{T <: InitialConditionType, V <: Union{PJ.ParameterRef, Float64}}
     device::PSY.Component
