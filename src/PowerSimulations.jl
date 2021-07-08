@@ -421,10 +421,10 @@ include("operation_problem/problem_results_export.jl")
 include("simulation/simulation_results_export.jl")
 include("core/optimization_container.jl")
 include("initial_conditions/update_initial_conditions.jl")
-include("operation_problem/operations_problem_interface.jl")
+include("operation_problem/operation_problem_interface.jl")
 include("operation_problem/problem_internal.jl")
 include("operation_problem/decision_problem.jl")
-include("operation_problem/operations_problem_results.jl")
+include("operation_problem/operation_problem_results.jl")
 include("simulation/simulation_problems.jl")
 include("simulation/simulation_sequence.jl")
 include("simulation/simulation.jl")
@@ -494,7 +494,7 @@ include("devices_models/device_constructors/regulationdevice_constructor.jl")
 include("network_models/network_constructor.jl")
 
 # Templates
-include("operations_problem_templates.jl")
+include("operation_problem_templates.jl")
 
 # Operations Problems
 include("operation_problem/decision_problems.jl")

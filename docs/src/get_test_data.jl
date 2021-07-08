@@ -28,16 +28,16 @@ services = Dict{Symbol, ServiceModel}();
 
 template = PSI.ProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
-operations_problem =
+operation_problem =
     PSI.DecisionProblem(TestOpProblem, template, system; optimizer = solver);
 
 set_services_template!(
-    operations_problem,
+    operation_problem,
     Dict(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :Down_Reserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
     ),
 )
 
-op_results = solve!(operations_problem)
+op_results = solve!(operation_problem)
 re_results = PSI.run_economic_dispatch(system; optimizer = solver, use_parameters = true)
