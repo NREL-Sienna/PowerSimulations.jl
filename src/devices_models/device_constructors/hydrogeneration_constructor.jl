@@ -2,7 +2,7 @@
 Construct model for HydroGen with FixedOutput Formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     ::DeviceModel{H, FixedOutput},
     ::Type{S},
@@ -14,12 +14,12 @@ function construct_device!(
     end
 
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ReactivePowerTimeSeriesParameter("max_active_power"),
     )
@@ -28,7 +28,7 @@ function construct_device!(
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     ::DeviceModel{H, FixedOutput},
     ::Type{S},
@@ -40,7 +40,7 @@ function construct_device!(
     end
 
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
@@ -52,7 +52,7 @@ end
 Construct model for HydroGen with RunOfRiver Dispatch Formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, D},
     ::Type{S},
@@ -68,12 +68,12 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, ReactivePowerVariable, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -82,7 +82,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -90,10 +90,10 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -103,7 +103,7 @@ Construct model for HydroGen with RunOfRiver Dispatch Formulation
 with only Active Power.
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, D},
     ::Type{S},
@@ -119,11 +119,11 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -131,10 +131,10 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -143,7 +143,7 @@ end
 Construct model for HydroGen with ReservoirBudget Dispatch Formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
@@ -155,14 +155,9 @@ function construct_device!(
     end
 
     # Variables
+    add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
     add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        HydroDispatchReservoirBudget(),
-    )
-    add_variables!(
-        optimization_container,
+        container,
         ReactivePowerVariable,
         devices,
         HydroDispatchReservoirBudget(),
@@ -170,7 +165,7 @@ function construct_device!(
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -179,7 +174,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -189,18 +184,12 @@ function construct_device!(
     )
 
     # Energy Budget Constraint
-    energy_budget_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    energy_budget_constraints!(container, devices, model, S, get_feedforward(model))
 
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -210,7 +199,7 @@ Construct model for HydroGen with ReservoirBudget Dispatch Formulation
 with only Active Power.
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
@@ -222,16 +211,11 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        HydroDispatchReservoirBudget(),
-    )
+    add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -241,18 +225,12 @@ function construct_device!(
     )
 
     # Energy Budget Constraint
-    energy_budget_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    energy_budget_constraints!(container, devices, model, S, get_feedforward(model))
 
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -261,7 +239,7 @@ end
 Construct model for HydroGen with ReservoirStorage Dispatch Formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
@@ -273,38 +251,28 @@ function construct_device!(
     end
 
     # Variables
+    add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirStorage())
     add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        HydroDispatchReservoirStorage(),
-    )
-    add_variables!(
-        optimization_container,
+        container,
         ReactivePowerVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
+    add_variables!(container, EnergyVariable, devices, HydroDispatchReservoirStorage())
     add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        HydroDispatchReservoirStorage(),
-    )
-    add_variables!(
-        optimization_container,
+        container,
         WaterSpillageVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergyShortageVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergySurplusVariable,
         devices,
         HydroDispatchReservoirStorage(),
@@ -312,7 +280,7 @@ function construct_device!(
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -321,7 +289,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -332,7 +300,7 @@ function construct_device!(
 
     # Initial Conditions
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         HydroDispatchReservoirStorage(),
         InitialEnergyLevel,
@@ -340,7 +308,7 @@ function construct_device!(
     )
     # Energy Balance Constraint
     add_constraints!(
-        optimization_container,
+        container,
         EnergyBalanceConstraint,
         EnergyVariable,
         devices,
@@ -348,17 +316,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    energy_target_constraint!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -368,7 +330,7 @@ Construct model for HydroGen with ReservoirStorage Dispatch Formulation
 with only Active Power
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
@@ -381,39 +343,29 @@ function construct_device!(
 
     # Variables
 
+    add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirStorage())
+    add_variables!(container, EnergyVariable, devices, HydroDispatchReservoirStorage())
     add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        HydroDispatchReservoirStorage(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        HydroDispatchReservoirStorage(),
-    )
-    add_variables!(
-        optimization_container,
+        container,
         WaterSpillageVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergyShortageVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergySurplusVariable,
         devices,
         HydroDispatchReservoirStorage(),
     )
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -424,7 +376,7 @@ function construct_device!(
 
     # Initial Conditions
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         HydroDispatchReservoirStorage(),
         InitialEnergyLevel,
@@ -432,7 +384,7 @@ function construct_device!(
     )
     # Energy Balance Constraint
     add_constraints!(
-        optimization_container,
+        container,
         EnergyBalanceConstraint,
         EnergyVariable,
         devices,
@@ -440,17 +392,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    energy_target_constraint!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -459,7 +405,7 @@ end
 Construct model for HydroGen with RunOfRiver Commitment Formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, D},
     ::Type{S},
@@ -471,13 +417,13 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, ReactivePowerVariable, devices, D())
+    add_variables!(container, OnVariable, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -486,7 +432,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -494,16 +440,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commit_hydro_active_power_ub!(
-        optimization_container,
-        devices,
-        model,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -513,7 +454,7 @@ Construct model for HydroGen with RunOfRiver Commitment Formulation
 with only Active Power.
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, D},
     ::Type{S},
@@ -529,12 +470,12 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, OnVariable, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -542,16 +483,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commit_hydro_active_power_ub!(
-        optimization_container,
-        devices,
-        model,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -560,7 +496,7 @@ end
 Construct model for HydroGen with ReservoirBudget Commitment Formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, D},
     ::Type{S},
@@ -572,13 +508,13 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, ReactivePowerVariable, devices, D())
+    add_variables!(container, OnVariable, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -587,7 +523,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -596,18 +532,12 @@ function construct_device!(
         get_feedforward(model),
     )
     # Energy Budget Constraint
-    energy_budget_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    energy_budget_constraints!(container, devices, model, S, get_feedforward(model))
 
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -617,7 +547,7 @@ Construct model for HydroGen with ReservoirBudget Commitment Formulation
 with only Active Power.
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, D},
     ::Type{S},
@@ -633,12 +563,12 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, OnVariable, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -647,18 +577,12 @@ function construct_device!(
         get_feedforward(model),
     )
     # Energy Budget Constraint
-    energy_budget_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    energy_budget_constraints!(container, devices, model, S, get_feedforward(model))
 
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -667,7 +591,7 @@ end
 Construct model for HydroGen with ReservoirStorage Commitment Formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     ::Type{S},
@@ -680,50 +604,40 @@ function construct_device!(
 
     # Variables
     add_variables!(
-        optimization_container,
+        container,
         ActivePowerVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         ReactivePowerVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
+    add_variables!(container, OnVariable, devices, HydroCommitmentReservoirStorage())
+    add_variables!(container, EnergyVariable, devices, HydroCommitmentReservoirStorage())
     add_variables!(
-        optimization_container,
-        OnVariable,
-        devices,
-        HydroCommitmentReservoirStorage(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        HydroCommitmentReservoirStorage(),
-    )
-    add_variables!(
-        optimization_container,
+        container,
         WaterSpillageVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergyShortageVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergySurplusVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -732,7 +646,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -743,7 +657,7 @@ function construct_device!(
 
     # Initial Conditions
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         HydroCommitmentReservoirStorage(),
         InitialEnergyLevel,
@@ -751,7 +665,7 @@ function construct_device!(
     )
     # Energy Balance Constraint
     add_constraints!(
-        optimization_container,
+        container,
         EnergyBalanceConstraint,
         EnergyVariable,
         devices,
@@ -759,17 +673,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    energy_target_constraint!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -779,7 +687,7 @@ Construct model for HydroGen with ReservoirStorage Dispatch Formulation
 with only Active Power
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     ::Type{S},
@@ -792,44 +700,34 @@ function construct_device!(
 
     # Variables
     add_variables!(
-        optimization_container,
+        container,
         ActivePowerVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
+    add_variables!(container, OnVariable, devices, HydroCommitmentReservoirStorage())
+    add_variables!(container, EnergyVariable, devices, HydroCommitmentReservoirStorage())
     add_variables!(
-        optimization_container,
-        OnVariable,
-        devices,
-        HydroCommitmentReservoirStorage(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        HydroCommitmentReservoirStorage(),
-    )
-    add_variables!(
-        optimization_container,
+        container,
         WaterSpillageVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergyShortageVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergySurplusVariable,
         devices,
         HydroCommitmentReservoirStorage(),
     )
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -840,7 +738,7 @@ function construct_device!(
 
     # Initial Conditions
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         HydroCommitmentReservoirStorage(),
         InitialEnergyLevel,
@@ -849,7 +747,7 @@ function construct_device!(
 
     # Energy Balance Constraint
     add_constraints!(
-        optimization_container,
+        container,
         EnergyBalanceConstraint,
         EnergyVariable,
         devices,
@@ -857,17 +755,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    energy_target_constraint!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -877,7 +769,7 @@ Construct model for HydroPumpedStorage with PumpedStorage Dispatch Formulation
 with only Active Power
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchPumpedStorage},
     ::Type{S},
@@ -889,40 +781,15 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerInVariable,
-        devices,
-        HydroDispatchPumpedStorage(),
-    )
-    add_variables!(
-        optimization_container,
-        ActivePowerOutVariable,
-        devices,
-        HydroDispatchPumpedStorage(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariableUp,
-        devices,
-        HydroDispatchPumpedStorage(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariableDown,
-        devices,
-        HydroDispatchPumpedStorage(),
-    )
-    add_variables!(
-        optimization_container,
-        WaterSpillageVariable,
-        devices,
-        HydroDispatchPumpedStorage(),
-    )
+    add_variables!(container, ActivePowerInVariable, devices, HydroDispatchPumpedStorage())
+    add_variables!(container, ActivePowerOutVariable, devices, HydroDispatchPumpedStorage())
+    add_variables!(container, EnergyVariableUp, devices, HydroDispatchPumpedStorage())
+    add_variables!(container, EnergyVariableDown, devices, HydroDispatchPumpedStorage())
+    add_variables!(container, WaterSpillageVariable, devices, HydroDispatchPumpedStorage())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
@@ -931,7 +798,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
@@ -942,14 +809,14 @@ function construct_device!(
 
     # Initial Conditions
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         HydroDispatchPumpedStorage(),
         InitialEnergyLevelUp,
         EnergyVariableUp,
     )
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         HydroDispatchPumpedStorage(),
         InitialEnergyLevelDown,
@@ -958,7 +825,7 @@ function construct_device!(
 
     # Energy Balanace limits
     add_constraints!(
-        optimization_container,
+        container,
         EnergyBalanceConstraint,
         EnergyVariableUp,
         devices,
@@ -967,7 +834,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         EnergyBalanceConstraint,
         EnergyVariableDown,
         devices,
@@ -975,10 +842,10 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end
@@ -988,7 +855,7 @@ Construct model for HydroPumpedStorage with PumpedStorage Dispatch Formulation w
 reservation constraint with only Active Power
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{H, HydroDispatchPumpedStoragewReservation},
     ::Type{S},
@@ -1001,37 +868,37 @@ function construct_device!(
 
     # Variables
     add_variables!(
-        optimization_container,
+        container,
         ActivePowerInVariable,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         ActivePowerOutVariable,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergyVariableUp,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         EnergyVariableDown,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         WaterSpillageVariable,
         devices,
         HydroDispatchPumpedStoragewReservation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         ReservationVariable,
         devices,
         HydroDispatchPumpedStoragewReservation(),
@@ -1039,7 +906,7 @@ function construct_device!(
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
@@ -1048,7 +915,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
@@ -1059,14 +926,14 @@ function construct_device!(
 
     # Initial Conditions
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         HydroDispatchPumpedStoragewReservation(),
         InitialEnergyLevelUp,
         EnergyVariableUp,
     )
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         HydroDispatchPumpedStoragewReservation(),
         InitialEnergyLevelDown,
@@ -1074,7 +941,7 @@ function construct_device!(
     )
     # Energy Balanace limits
     add_constraints!(
-        optimization_container,
+        container,
         EnergyBalanceConstraint,
         EnergyVariableUp,
         devices,
@@ -1083,7 +950,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         EnergyBalanceConstraint,
         EnergyVariableDown,
         devices,
@@ -1091,10 +958,10 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S, nothing)
 
     return
 end

@@ -131,11 +131,6 @@ function set_initial_time!(settings::Settings, initial_time::Dates.DateTime)
     return
 end
 
-function set_use_parameters!(settings::Settings, val::Bool)
-    settings.use_parameters[] = val
-    return
-end
-
 function set_warm_start!(settings::Settings, warm_start::Bool)
     settings.warm_start[] = warm_start
     return

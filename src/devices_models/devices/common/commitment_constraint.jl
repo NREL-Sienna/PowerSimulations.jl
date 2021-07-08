@@ -25,7 +25,7 @@ If t > 1:
 
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varon'
 * cons_name::Symbol : name of the constraint
 * var_keys::Tuple{VariableKey, VariableKey, VariableKey} : the names of the variables
@@ -34,26 +34,20 @@ If t > 1:
 -  : var_keys[3] : varon
 """
 function device_commitment!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     initial_conditions::Vector{InitialCondition},
     cons_type::ConstraintType,
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = get_time_steps(optimization_container)
-    varstart = get_variable(optimization_container, var_types[1], T)
-    varstop = get_variable(optimization_container, var_types[2], T)
-    varon = get_variable(optimization_container, var_types[3], T)
+    time_steps = get_time_steps(container)
+    varstart = get_variable(container, var_types[1], T)
+    varstop = get_variable(container, var_types[2], T)
+    varon = get_variable(container, var_types[3], T)
     varstart_names = axes(varstart, 1)
-    constraint = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        varstart_names,
-        time_steps,
-    )
+    constraint = add_cons_container!(container, cons_type, T, varstart_names, time_steps)
     aux_constraint = add_cons_container!(
-        optimization_container,
+        container,
         cons_type,
         T,
         varstart_names,
@@ -64,11 +58,11 @@ function device_commitment!(
     for ic in initial_conditions
         name = PSY.get_name(ic.device)
         constraint[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1]
         )
         aux_constraint[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             varstart[name, 1] + varstop[name, 1] <= 1.0
         )
     end
@@ -76,11 +70,11 @@ function device_commitment!(
     for t in time_steps[2:end], i in initial_conditions
         name = PSY.get_name(i.device)
         constraint[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             varon[name, t] == varon[name, t - 1] + varstart[name, t] - varstop[name, t]
         )
         aux_constraint[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             varstart[name, t] + varstop[name, t] <= 1.0
         )
     end

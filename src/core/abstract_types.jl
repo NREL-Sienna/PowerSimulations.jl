@@ -57,7 +57,6 @@ Abstract type for Decision Problems that use PowerSimulations Interfaces
 """
 abstract type PowerSimulationsDecisionProblem <: AbstractDecisionProblem end
 
-
 """
 Abstract type for Emulation Problems
 

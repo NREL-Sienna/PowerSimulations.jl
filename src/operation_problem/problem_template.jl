@@ -18,18 +18,25 @@ mutable struct ProblemTemplate
     branches::BranchModelContainer
     services::ServicesModelContainer
     function ProblemTemplate(network::NetworkModel{T}) where {T <: PM.AbstractPowerModel}
-        new(network, DevicesModelContainer(), BranchModelContainer(), ServicesModelContainer())
+        new(
+            network,
+            DevicesModelContainer(),
+            BranchModelContainer(),
+            ServicesModelContainer(),
+        )
     end
 end
 
-ProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel} = ProblemTemplate(NetworkModel(T))
+ProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel} =
+    ProblemTemplate(NetworkModel(T))
 ProblemTemplate() = ProblemTemplate(CopperPlatePowerModel)
 
 get_device_models(template::ProblemTemplate) = template.devices
 get_branch_models(template::ProblemTemplate) = template.branches
 get_service_models(template::ProblemTemplate) = template.services
 get_network_model(template::ProblemTemplate) = template.network_model
-get_network_formulation(template::ProblemTemplate) = get_network_formulation(get_network_model(template))
+get_network_formulation(template::ProblemTemplate) =
+    get_network_formulation(get_network_model(template))
 
 # Note to devs. PSY exports set_model! these names are choosen to avoid name clashes
 

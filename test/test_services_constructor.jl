@@ -19,7 +19,7 @@
             :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2
             :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11
         ]
-        for (k, var_array) in op_problem.internal.optimization_container.variables
+        for (k, var_array) in op_problem.internal.container.variables
             if PSI.encode_key(k) in reserve_variables
                 for var in var_array
                     @test JuMP.has_lower_bound(var)
@@ -46,7 +46,7 @@ end
             :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1,
             :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11,
         ]
-        for (k, var_array) in op_problem.internal.optimization_container.variables
+        for (k, var_array) in op_problem.internal.container.variables
             if PSI.encode_key(k) in reserve_variables
                 for var in var_array
                     @test JuMP.has_lower_bound(var)

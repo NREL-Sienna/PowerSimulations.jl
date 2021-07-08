@@ -37,7 +37,7 @@ function mock_construct_device!(problem::PSI.DecisionProblem{MockOperationProble
         PSI.get_optimization_container(problem),
         PSI.get_system(problem),
         model,
-        problem.template.transmission,
+        PSI.get_network_formulation(template),
     )
 
     JuMP.@objective(

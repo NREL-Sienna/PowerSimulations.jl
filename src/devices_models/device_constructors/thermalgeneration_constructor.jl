@@ -1,5 +1,5 @@
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     ::DeviceModel{T, FixedOutput},
     ::Type{S},
@@ -11,7 +11,7 @@ function construct_device!(
     end
 
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
@@ -23,7 +23,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S},
@@ -39,23 +39,23 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
-    add_variables!(optimization_container, StartVariable, devices, D())
-    add_variables!(optimization_container, StopVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, ReactivePowerVariable, devices, D())
+    add_variables!(container, OnVariable, devices, D())
+    add_variables!(container, StartVariable, devices, D())
+    add_variables!(container, StopVariable, devices, D())
 
     # Aux Variables
-    add_variables!(optimization_container, TimeDurationOn, devices, D())
-    add_variables!(optimization_container, TimeDurationOff, devices, D())
+    add_variables!(container, TimeDurationOn, devices, D())
+    add_variables!(container, TimeDurationOff, devices, D())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, D())
+    initial_conditions!(container, devices, D())
 
     # Constraints
     # TODO DT: why aren't these passing variable and constraint instances?
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -64,7 +64,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -72,19 +72,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    time_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -93,7 +87,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S},
@@ -109,21 +103,21 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, OnVariable, devices, D())
-    add_variables!(optimization_container, StartVariable, devices, D())
-    add_variables!(optimization_container, StopVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, OnVariable, devices, D())
+    add_variables!(container, StartVariable, devices, D())
+    add_variables!(container, StopVariable, devices, D())
 
     # Aux Variables
-    add_variables!(optimization_container, TimeDurationOn, devices, D())
-    add_variables!(optimization_container, TimeDurationOff, devices, D())
+    add_variables!(container, TimeDurationOn, devices, D())
+    add_variables!(container, TimeDurationOff, devices, D())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, D())
+    initial_conditions!(container, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -131,19 +125,13 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    time_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -152,7 +140,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     ::Type{S},
@@ -164,45 +152,20 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        ReactivePowerVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        OnVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StartVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StopVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
+    add_variables!(container, ActivePowerVariable, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, ReactivePowerVariable, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, OnVariable, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, StartVariable, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, StopVariable, devices, ThermalBasicUnitCommitment())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalBasicUnitCommitment())
+    initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
     # Constraints
     # TODO: active_power_constraints
     # TODO: refactor constraints such that ALL variables for all devices are added first, and then the constraint creation is trigged
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -211,7 +174,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -219,17 +182,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -238,7 +195,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     ::Type{S},
@@ -250,37 +207,17 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        OnVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StartVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StopVariable,
-        devices,
-        ThermalBasicUnitCommitment(),
-    )
+    add_variables!(container, ActivePowerVariable, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, OnVariable, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, StartVariable, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, StopVariable, devices, ThermalBasicUnitCommitment())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalBasicUnitCommitment())
+    initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -288,17 +225,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -307,7 +238,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalRampLimited},
     ::Type{S},
@@ -319,25 +250,15 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        ThermalRampLimited(),
-    )
-    add_variables!(
-        optimization_container,
-        ReactivePowerVariable,
-        devices,
-        ThermalRampLimited(),
-    )
+    add_variables!(container, ActivePowerVariable, devices, ThermalRampLimited())
+    add_variables!(container, ReactivePowerVariable, devices, ThermalRampLimited())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalRampLimited())
+    initial_conditions!(container, devices, ThermalRampLimited())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -346,7 +267,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -354,11 +275,11 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
@@ -367,7 +288,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalRampLimited},
     ::Type{S},
@@ -379,19 +300,14 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        ThermalRampLimited(),
-    )
+    add_variables!(container, ActivePowerVariable, devices, ThermalRampLimited())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalRampLimited())
+    initial_conditions!(container, devices, ThermalRampLimited())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -399,17 +315,17 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S},
@@ -425,14 +341,14 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, ReactivePowerVariable, devices, D())
 
     # Initial Conditions
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -441,7 +357,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -449,16 +365,16 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
     ::Type{S},
@@ -474,13 +390,13 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
 
     # Initial Conditions
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -488,16 +404,16 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S};
@@ -511,74 +427,34 @@ function construct_device!(
 
     # Variables
     add_variables!(
-        optimization_container,
+        container,
         ActivePowerVariable,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
     add_variables!(
-        optimization_container,
+        container,
         ReactivePowerVariable,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
-    add_variables!(
-        optimization_container,
-        OnVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StopVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StartVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        ColdStartVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        WarmStartVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        HotStartVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
+    add_variables!(container, OnVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, StopVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, StartVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, ColdStartVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, WarmStartVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, HotStartVariable, devices, ThermalMultiStartUnitCommitment())
 
     # Aux Variables
-    add_variables!(
-        optimization_container,
-        TimeDurationOn,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        TimeDurationOff,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
+    add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalMultiStartUnitCommitment())
+    initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -587,7 +463,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -595,53 +471,29 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    startup_time_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    startup_type_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    time_constraints!(container, devices, model, S, get_feedforward(model))
+    startup_time_constraints!(container, devices, model, S, get_feedforward(model))
+    startup_type_constraints!(container, devices, model, S, get_feedforward(model))
     startup_initial_condition_constraints!(
-        optimization_container,
+        container,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-    must_run_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    initial_range_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    must_run_constraints!(container, devices, model, S, get_feedforward(model))
+    initial_range_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
@@ -654,68 +506,28 @@ function construct_device!(
 
     # Variables
     add_variables!(
-        optimization_container,
+        container,
         ActivePowerVariable,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
-    add_variables!(
-        optimization_container,
-        OnVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StopVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StartVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        ColdStartVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        WarmStartVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        HotStartVariable,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
+    add_variables!(container, OnVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, StopVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, StartVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, ColdStartVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, WarmStartVariable, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, HotStartVariable, devices, ThermalMultiStartUnitCommitment())
 
     # Aux Variables
-    add_variables!(
-        optimization_container,
-        TimeDurationOn,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        TimeDurationOff,
-        devices,
-        ThermalMultiStartUnitCommitment(),
-    )
+    add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalMultiStartUnitCommitment())
+    initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -723,53 +535,29 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    startup_time_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    startup_type_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    time_constraints!(container, devices, model, S, get_feedforward(model))
+    startup_time_constraints!(container, devices, model, S, get_feedforward(model))
+    startup_type_constraints!(container, devices, model, S, get_feedforward(model))
     startup_initial_condition_constraints!(
-        optimization_container,
+        container,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-    must_run_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    initial_range_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    must_run_constraints!(container, devices, model, S, get_feedforward(model))
+    initial_range_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
@@ -781,57 +569,27 @@ function construct_device!(
     end
 
     # Variables
+    add_variables!(container, ActivePowerVariable, devices, ThermalCompactUnitCommitment())
     add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
+        container,
         ReactivePowerVariable,
         devices,
         ThermalCompactUnitCommitment(),
     )
-    add_variables!(
-        optimization_container,
-        OnVariable,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StartVariable,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StopVariable,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
+    add_variables!(container, OnVariable, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, StartVariable, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, StopVariable, devices, ThermalCompactUnitCommitment())
 
     # Aux Variables
-    add_variables!(
-        optimization_container,
-        TimeDurationOn,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        TimeDurationOff,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
+    add_variables!(container, TimeDurationOn, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, TimeDurationOff, devices, ThermalCompactUnitCommitment())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalCompactUnitCommitment())
+    initial_conditions!(container, devices, ThermalCompactUnitCommitment())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -840,7 +598,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -848,25 +606,19 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
+    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    time_constraints!(container, devices, model, S, get_feedforward(model))
 
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
@@ -878,51 +630,21 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        OnVariable,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StartVariable,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        StopVariable,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
+    add_variables!(container, ActivePowerVariable, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, OnVariable, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, StartVariable, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, StopVariable, devices, ThermalCompactUnitCommitment())
 
     # Aux Variables
-    add_variables!(
-        optimization_container,
-        TimeDurationOn,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
-    add_variables!(
-        optimization_container,
-        TimeDurationOff,
-        devices,
-        ThermalCompactUnitCommitment(),
-    )
+    add_variables!(container, TimeDurationOn, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, TimeDurationOff, devices, ThermalCompactUnitCommitment())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalCompactUnitCommitment())
+    initial_conditions!(container, devices, ThermalCompactUnitCommitment())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -930,24 +652,18 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    time_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    time_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
@@ -959,25 +675,15 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        ThermalCompactDispatch(),
-    )
-    add_variables!(
-        optimization_container,
-        ReactivePowerVariable,
-        devices,
-        ThermalCompactDispatch(),
-    )
+    add_variables!(container, ActivePowerVariable, devices, ThermalCompactDispatch())
+    add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalCompactDispatch())
+    initial_conditions!(container, devices, ThermalCompactDispatch())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -986,7 +692,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -994,16 +700,16 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
@@ -1015,19 +721,14 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerVariable,
-        devices,
-        ThermalCompactDispatch(),
-    )
+    add_variables!(container, ActivePowerVariable, devices, ThermalCompactDispatch())
 
     # Initial Conditions
-    initial_conditions!(optimization_container, devices, ThermalCompactDispatch())
+    initial_conditions!(container, devices, ThermalCompactDispatch())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -1035,10 +736,10 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, get_feedforward(model))
 
     return
 end

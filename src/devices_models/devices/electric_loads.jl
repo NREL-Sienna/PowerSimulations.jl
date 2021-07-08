@@ -54,24 +54,24 @@ function DeviceRangeConstraintSpec(
 end
 
 function custom_reactive_power_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractControllablePowerLoadFormulation},
 ) where {T <: PSY.ElectricLoad}
-    time_steps = get_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     constraint = add_cons_container!(
-        optimization_container,
+        container,
         EqualityConstraint(),
         T,
         [PSY.get_name(d) for d in devices],
         time_steps,
     )
-    jump_model = get_jump_model(optimization_container)
+    jump_model = get_jump_model(container)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
-        reactive = get_variable(optimization_container, ActivePowerVariable(), T)[name, t]
-        real = get_variable(optimization_container, ActivePowerVariable(), T)[name, t] * pf
+        reactive = get_variable(container, ActivePowerVariable(), T)[name, t]
+        real = get_variable(container, ActivePowerVariable(), T)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(jump_model, reactive == real)
     end
 end

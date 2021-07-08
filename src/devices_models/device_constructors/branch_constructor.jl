@@ -36,7 +36,7 @@ construct_device!(
 
 # For DC Power only. Implements constraints
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, StaticBranch},
     ::Type{S},
@@ -45,19 +45,13 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    branch_rate_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
     return
 end
 
 # For DC Power only
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, StaticBranch},
     ::Type{S},
@@ -67,20 +61,14 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, S, devices, StaticBranch())
-    branch_flow_values!(optimization_container, devices, model, S)
-    branch_rate_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_variables!(container, S, devices, StaticBranch())
+    branch_flow_values!(container, devices, model, S)
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, StaticBranchBounds},
     ::Type{S},
@@ -90,14 +78,14 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, S, devices, StaticBranchBounds())
-    branch_flow_values!(optimization_container, devices, model, S)
-    branch_rate_bounds!(optimization_container, devices, model, S)
+    add_variables!(container, S, devices, StaticBranchBounds())
+    branch_flow_values!(container, devices, model, S)
+    branch_rate_bounds!(container, devices, model, S)
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, StaticBranchUnbounded},
     ::Type{S},
@@ -107,14 +95,14 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, S, devices, StaticBranchUnbounded())
-    branch_flow_values!(optimization_container, devices, model, S)
+    add_variables!(container, S, devices, StaticBranchUnbounded())
+    branch_flow_values!(container, devices, model, S)
     return
 end
 
 # For AC Power only. Implements Bounds on the active power and rating constraints on the aparent power
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, StaticBranch},
     ::Type{S},
@@ -123,19 +111,13 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    branch_rate_bounds!(optimization_container, devices, model, S)
-    branch_rate_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    branch_rate_bounds!(container, devices, model, S)
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, StaticBranchBounds},
     ::Type{S},
@@ -144,12 +126,12 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    branch_rate_bounds!(optimization_container, devices, model, S)
+    branch_rate_bounds!(container, devices, model, S)
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, <:AbstractDCLineFormulation},
     ::Type{S},
@@ -158,18 +140,12 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    branch_rate_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, U},
     ::Type{S},
@@ -183,20 +159,14 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, FlowActivePowerVariable, devices, U())
-    add_variable_to_expression!(optimization_container, devices, model, S)
-    branch_rate_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_variables!(container, FlowActivePowerVariable, devices, U())
+    add_variable_to_expression!(container, devices, model, S)
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{B, U},
     ::Type{S},
@@ -210,14 +180,8 @@ function construct_device!(
         return
     end
 
-    add_variables!(optimization_container, FlowActivePowerVariable, devices, U())
+    add_variables!(container, FlowActivePowerVariable, devices, U())
 
-    branch_rate_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
     return
 end

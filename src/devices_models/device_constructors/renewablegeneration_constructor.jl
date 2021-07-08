@@ -1,5 +1,5 @@
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{R, D},
     ::Type{S},
@@ -15,12 +15,12 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
+    add_variables!(container, ReactivePowerVariable, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -29,7 +29,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -37,16 +37,16 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S)
+    cost_function!(container, devices, model, S)
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{R, D},
     ::Type{S},
@@ -62,11 +62,11 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(optimization_container, ActivePowerVariable, devices, D())
+    add_variables!(container, ActivePowerVariable, devices, D())
 
     # Constraints
     add_constraints!(
-        optimization_container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
         devices,
@@ -74,16 +74,16 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
-    cost_function!(optimization_container, devices, model, S)
+    cost_function!(container, devices, model, S)
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
@@ -95,12 +95,12 @@ function construct_device!(
     end
 
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ReactivePowerTimeSeriesParameter("max_active_power"),
     )
@@ -109,7 +109,7 @@ function construct_device!(
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
@@ -121,7 +121,7 @@ function construct_device!(
     end
 
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )

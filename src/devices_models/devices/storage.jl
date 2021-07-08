@@ -152,7 +152,7 @@ end
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
 function add_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{<:ReactivePowerVariableLimitsConstraint},
     ::Type{ReactivePowerVariable},
     devices::IS.FlattenIteratorWrapper{St},
@@ -168,7 +168,7 @@ function add_constraints!(
     end
 
     device_range!(
-        optimization_container,
+        container,
         RangeConstraintSpecInternal(
             constraint_infos,
             ReactivePowerVariableLimitsConstraint(),
@@ -181,12 +181,12 @@ end
 
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
     formulation::AbstractStorageFormulation,
 ) where {St <: PSY.Storage}
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         formulation,
         InitialEnergyLevel,
@@ -197,7 +197,7 @@ end
 
 ############################ Energy Capacity Constraints####################################
 function energy_capacity_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St, D},
     ::Type{S},
@@ -213,7 +213,7 @@ function energy_capacity_constraints!(
     end
 
     device_range!(
-        optimization_container,
+        container,
         RangeConstraintSpecInternal(
             constraint_infos,
             EnergyCapacityConstraint(),
@@ -250,7 +250,7 @@ end
 ############################ reserve constraints ######################################
 
 function reserve_contribution_constraint!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
@@ -277,7 +277,7 @@ function reserve_contribution_constraint!(
     end
 
     reserve_power_ub!(
-        optimization_container,
+        container,
         constraint_infos_up,
         constraint_infos_dn,
         RangeLimitConstraint(),
@@ -286,7 +286,7 @@ function reserve_contribution_constraint!(
     )
 
     reserve_energy_ub!(
-        optimization_container,
+        container,
         constraint_infos_energy,
         ReserveEnergyConstraint(),
         EnergyVariable(),
@@ -298,39 +298,27 @@ end
 
 ############################ Energy Management constraints ######################################
 function energy_target_constraint!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, EnergyTarget},
     ::Type{<:PM.AbstractPowerModel},
     ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage}
-    parameters = model_has_parameters(optimization_container)
-    use_forecast_data = model_uses_forecasts(optimization_container)
-    time_steps = get_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     target_forecast_name = "storage_target"
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    if use_forecast_data
-        for (ix, d) in enumerate(devices)
-            ts_vector_target =
-                get_time_series(optimization_container, d, target_forecast_name)
-            constraint_info_target =
-                DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector_target)
-            constraint_infos_target[ix] = constraint_info_target
-        end
-    else
-        for (ix, d) in enumerate(devices)
-            ts_vector_target =
-                length(time_steps) == 1 ? [PSY.get_storage_target(d)] :
-                vcat(zeros(time_steps[end - 1]), PSY.get_storage_target(d))
-            constraint_info_target =
-                DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector_target)
-            constraint_infos_target[ix] = constraint_info_target
-        end
+    for (ix, d) in enumerate(devices)
+        ts_vector_target =
+            length(time_steps) == 1 ? [PSY.get_storage_target(d)] :
+            vcat(zeros(time_steps[end - 1]), PSY.get_storage_target(d))
+        constraint_info_target =
+            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector_target)
+        constraint_infos_target[ix] = constraint_info_target
     end
 
-    if parameters
+    if built_for_simulation(container)
         energy_target_param!(
-            optimization_container,
+            container,
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
@@ -339,7 +327,7 @@ function energy_target_constraint!(
         )
     else
         energy_target!(
-            optimization_container,
+            container,
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
@@ -362,7 +350,7 @@ function energy_target_constraint!(
     end
     if !isempty(constraint_infos)
         device_range!(
-            optimization_container,
+            container,
             RangeConstraintSpecInternal(
                 constraint_infos,
                 EnergyShortageVariableLimitsConstraint(),
@@ -379,7 +367,7 @@ end
 function AddCostSpec(
     ::Type{PSY.BatteryEMS},
     ::Type{EnergyTarget},
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
 )
     return AddCostSpec(;
         variable_type = ActivePowerOutVariable,

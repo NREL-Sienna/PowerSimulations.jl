@@ -53,7 +53,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         use_slacks = false,
         feedforward = nothing,
         use_service_name::Bool = false,
-        duals = Vector{ConstraintType}()
+        duals = Vector{ConstraintType}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)

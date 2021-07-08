@@ -6,8 +6,7 @@ warm_start_enabled(problem::OperationsProblem) =
 built_for_simulation(problem::OperationsProblem) = get_simulation_info(problem) !== nothing
 get_caches(x::OperationsProblem) =
     built_for_simulation(x) ? get_simulation_info(x).caches : nothing
-get_constraints(problem::OperationsProblem) =
-    get_internal(problem).optimization_container.constraints
+get_constraints(problem::OperationsProblem) = get_internal(problem).container.constraints
 get_end_of_interval_step(problem::OperationsProblem) =
     get_simulation_info(problem).end_of_interval_step
 get_execution_count(problem::OperationsProblem) =
@@ -16,12 +15,10 @@ get_executions(problem::OperationsProblem) = get_simulation_info(problem).execut
 get_initial_time(problem::OperationsProblem) = get_initial_time(get_settings(problem))
 get_horizon(problem::OperationsProblem) = get_horizon(get_settings(problem))
 get_internal(problem::OperationsProblem) = problem.internal
-get_jump_model(problem::OperationsProblem) =
-    get_internal(problem).optimization_container.JuMPmodel
+get_jump_model(problem::OperationsProblem) = get_internal(problem).container.JuMPmodel
 get_name(x::OperationsProblem) = built_for_simulation(x) ? get_simulation_info(x).name : ""
 
-get_optimization_container(problem::OperationsProblem) =
-    problem.internal.optimization_container
+get_optimization_container(problem::OperationsProblem) = problem.internal.container
 function get_resolution(problem::OperationsProblem)
     resolution = PSY.get_time_series_resolution(get_system(problem))
     return IS.time_period_conversion(resolution)

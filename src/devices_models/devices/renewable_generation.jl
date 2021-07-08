@@ -62,22 +62,16 @@ function DeviceRangeConstraintSpec(
 end
 
 function custom_reactive_power_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{RenewableConstantPowerFactor},
 ) where {T <: PSY.RenewableGen}
     names = [PSY.get_name(d) for d in devices]
-    time_steps = get_time_steps(optimization_container)
-    p_var = get_variable(optimization_container, ActivePowerVariable(), T)
-    q_var = get_variable(optimization_container, ReactivePowerVariable(), T)
-    jump_model = get_jump_model(optimization_container)
-    constraint = add_cons_container!(
-        optimization_container,
-        EqualityConstraint(),
-        T,
-        names,
-        time_steps,
-    )
+    time_steps = get_time_steps(container)
+    p_var = get_variable(container, ActivePowerVariable(), T)
+    q_var = get_variable(container, ReactivePowerVariable(), T)
+    jump_model = get_jump_model(container)
+    constraint = add_cons_container!(container, EqualityConstraint(), T, names, time_steps)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_power_factor(d)))

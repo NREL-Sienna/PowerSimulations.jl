@@ -2,7 +2,7 @@
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
     ::Type{S},
@@ -19,25 +19,25 @@ function construct_device!(
 
     # Variables
     add_variables!(
-        optimization_container,
+        container,
         DeltaActivePowerUpVariable,
         devices,
         DeviceLimitedRegulation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         DeltaActivePowerDownVariable,
         devices,
         DeviceLimitedRegulation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         AdditionalDeltaActivePowerUpVariable,
         devices,
         DeviceLimitedRegulation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         AdditionalDeltaActivePowerDownVariable,
         devices,
         DeviceLimitedRegulation(),
@@ -45,13 +45,13 @@ function construct_device!(
 
     # Constraints
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
 
     add_constraints!(
-        optimization_container,
+        container,
         DeltaActivePowerUpVariableLimitsConstraint,
         DeltaActivePowerUpVariable,
         devices,
@@ -60,7 +60,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         DeltaActivePowerDownVariableLimitsConstraint,
         DeltaActivePowerDownVariable,
         devices,
@@ -68,9 +68,9 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    participation_assignment!(optimization_container, devices, model, S, nothing)
-    regulation_cost!(optimization_container, devices, model)
+    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    participation_assignment!(container, devices, model, S, nothing)
+    regulation_cost!(container, devices, model)
     return
 end
 
@@ -78,7 +78,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
     ::Type{S},
@@ -95,25 +95,25 @@ function construct_device!(
 
     # Variables
     add_variables!(
-        optimization_container,
+        container,
         DeltaActivePowerUpVariable,
         devices,
         ReserveLimitedRegulation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         DeltaActivePowerDownVariable,
         devices,
         ReserveLimitedRegulation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         AdditionalDeltaActivePowerUpVariable,
         devices,
         ReserveLimitedRegulation(),
     )
     add_variables!(
-        optimization_container,
+        container,
         AdditionalDeltaActivePowerDownVariable,
         devices,
         ReserveLimitedRegulation(),
@@ -121,13 +121,13 @@ function construct_device!(
 
     # Constraints
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
 
     add_constraints!(
-        optimization_container,
+        container,
         DeltaActivePowerUpVariableLimitsConstraint,
         DeltaActivePowerUpVariable,
         devices,
@@ -136,7 +136,7 @@ function construct_device!(
         get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
+        container,
         DeltaActivePowerDownVariableLimitsConstraint,
         DeltaActivePowerDownVariable,
         devices,
@@ -144,8 +144,8 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    participation_assignment!(optimization_container, devices, model, S, nothing)
-    regulation_cost!(optimization_container, devices, model)
+    participation_assignment!(container, devices, model, S, nothing)
+    regulation_cost!(container, devices, model)
     return
 end
 
@@ -153,7 +153,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
     ::Type{S},
@@ -167,7 +167,7 @@ function construct_device!(
         return
     end
     nodal_expression!(
-        optimization_container,
+        container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
