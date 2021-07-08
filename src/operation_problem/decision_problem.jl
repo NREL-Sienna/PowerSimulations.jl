@@ -69,7 +69,6 @@ function DecisionProblem{M}(
     optimizer = nothing,
     horizon = UNSET_HORIZON,
     warm_start = true,
-    constraint_duals = Vector{Symbol}(),
     system_to_file = true,
     export_pwl_vars = false,
     allow_fails = false,
@@ -83,19 +82,13 @@ function DecisionProblem{M}(
         horizon = horizon,
         initial_time = initial_time,
         optimizer = optimizer,
-        use_parameters = use_parameters,
         time_series_cache_size = time_series_cache_size,
         warm_start = warm_start,
-        balance_slack_variables = balance_slack_variables,
-        services_slack_variables = services_slack_variables,
-        constraint_duals = constraint_duals,
         system_to_file = system_to_file,
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
-        PTDF = PTDF,
         optimizer_log_print = optimizer_log_print,
         direct_mode_optimizer = direct_mode_optimizer,
-        use_forecast_data = use_forecast_data,
     )
     return DecisionProblem{M}(template, sys, settings, jump_model)
 end
@@ -124,10 +117,7 @@ problem = DecisionProblem(MyOpProblemType template, system, optimizer)
 ```
 # Accepted Key Words
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
-- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
-- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 - `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
 - `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
 - `optimizer_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
@@ -325,7 +315,7 @@ function build_pre_step!(problem::DecisionProblem)
         @info "Initializing Optimization Container"
         optimization_container_init!(
             get_optimization_container(problem),
-            get_transmission_model(get_template(problem)),
+            get_network_formulation(get_template(problem)),
             get_system(problem),
         )
         set_status!(problem, BuildStatus.IN_PROGRESS)

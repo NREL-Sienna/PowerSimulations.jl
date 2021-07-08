@@ -30,7 +30,7 @@ function mock_construct_device!(problem::PSI.DecisionProblem{MockOperationProble
     template = PSI.get_template(problem)
     PSI.optimization_container_init!(
         PSI.get_optimization_container(problem),
-        PSI.get_transmission_model(template),
+        PSI.get_network_formulation(template),
         PSI.get_system(problem),
     )
     PSI.construct_device!(

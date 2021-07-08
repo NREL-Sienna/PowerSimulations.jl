@@ -129,7 +129,7 @@ export run_unit_commitment
 export set_device_model!
 export set_service_model!
 export set_transmission_model!
-export get_transmission_model
+export get_network_formulation
 ## Results interfaces
 export SimulationResultsExport
 export ProblemResultsExport

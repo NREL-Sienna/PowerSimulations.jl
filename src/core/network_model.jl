@@ -44,3 +44,4 @@ end
 
 get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF(m::NetworkModel) = m.PTDF
+get_network_formulation(::NetworkModel{T}) where T <: PM.AbstractPowerModel = T
