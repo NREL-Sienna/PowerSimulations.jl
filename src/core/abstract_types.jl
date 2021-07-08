@@ -75,7 +75,6 @@ abstract type EmulationProblem end
 
 abstract type PSIResults <: IS.Results end
 
-
 ################################ Abstract Types for Simulation #############################
 """
 Provides storage of simulation data
@@ -103,6 +102,5 @@ abstract type AbstractCache end
 abstract type FeedForwardChronology end
 
 get_trigger(val::FeedForwardChronology) = val.trigger
-
 
 abstract type InitialConditionChronology end
