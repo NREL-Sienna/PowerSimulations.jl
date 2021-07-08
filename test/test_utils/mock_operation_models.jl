@@ -1,22 +1,22 @@
 # NOTE: None of the models and function in this file are functional. All of these are used for testing purposes and do not represent valid examples either to develop custom
 # models. Please refer to the documentation.
 
-struct MockOperationProblem <: PSI.AbstractDecisionProblem end
+struct MockOperationProblem <: PSI.DecisionProblem end
 
-function PSI.DecisionProblem(
+function PSI.DecisionModel(
     ::Type{MockOperationProblem},
     ::Type{T},
     sys::PSY.System;
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     settings = PSI.Settings(sys; kwargs...)
-    return DecisionProblem{MockOperationProblem}(ProblemTemplate(T), sys, settings, nothing)
+    return DecisionModel{MockOperationProblem}(ProblemTemplate(T), sys, settings, nothing)
 end
 
-function PSI.DecisionProblem(::Type{MockOperationProblem}; kwargs...)
+function PSI.DecisionModel(::Type{MockOperationProblem}; kwargs...)
     sys = System(100.0)
     settings = PSI.Settings(sys; kwargs...)
-    return DecisionProblem{MockOperationProblem}(
+    return DecisionModel{MockOperationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,
         settings,
@@ -25,34 +25,34 @@ function PSI.DecisionProblem(::Type{MockOperationProblem}; kwargs...)
 end
 
 # Only used for testing
-function mock_construct_device!(problem::PSI.DecisionProblem{MockOperationProblem}, model)
+function mock_construct_device!(problem::PSI.DecisionModel{MockOperationProblem}, model)
     set_device_model!(problem.template, model)
-    template = PSI.get_template(problem)
+    template = PSI.get_template(model)
     PSI.optimization_container_init!(
-        PSI.get_optimization_container(problem),
+        PSI.get_optimization_container(model),
         PSI.get_network_formulation(template),
-        PSI.get_system(problem),
+        PSI.get_system(model),
     )
     PSI.construct_device!(
-        PSI.get_optimization_container(problem),
-        PSI.get_system(problem),
+        PSI.get_optimization_container(model),
+        PSI.get_system(model),
         model,
         PSI.get_network_formulation(template),
     )
 
     JuMP.@objective(
-        PSI.get_jump_model(problem),
+        PSI.get_jump_model(model),
         MOI.MIN_SENSE,
-        PSI.get_optimization_container(problem).cost_function
+        PSI.get_optimization_container(model).cost_function
     )
     return
 end
 
-function mock_construct_network!(problem::PSI.DecisionProblem{MockOperationProblem}, model)
+function mock_construct_network!(problem::PSI.DecisionModel{MockOperationProblem}, model)
     PSI.set_transmission_model!(problem.template, model)
     PSI.construct_network!(
-        PSI.get_optimization_container(problem),
-        PSI.get_system(problem),
+        PSI.get_optimization_container(model),
+        PSI.get_system(model),
         model,
         problem.template.branches,
     )
@@ -61,8 +61,8 @@ end
 
 function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
     return SimulationProblems(
-        UC = DecisionProblem(MockOperationProblem; horizon = uc_horizon),
-        ED = DecisionProblem(MockOperationProblem; horizon = ed_horizon),
+        UC = DecisionModel(MockOperationProblem; horizon = uc_horizon),
+        ED = DecisionModel(MockOperationProblem; horizon = ed_horizon),
     )
 end
 
@@ -74,8 +74,8 @@ function create_simulation_build_test_problems(
 )
     c_sys5_uc =
         c_sys5_ed = return SimulationProblems(
-            UC = DecisionProblem(template_uc, sys_uc; optimizer = GLPK_optimizer),
-            ED = DecisionProblem(template_ed, sys_ed, optimizer = GLPK_optimizer),
+            UC = DecisionModel(template_uc, sys_uc; optimizer = GLPK_optimizer),
+            ED = DecisionModel(template_ed, sys_ed, optimizer = GLPK_optimizer),
         )
 end
 

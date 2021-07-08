@@ -96,8 +96,8 @@ function FeedForwardUpdateEvent(
     device_name::String,
     val::Float64,
     previous_value::Float64,
-    destination_problem::DecisionProblem,
-    source_problem::DecisionProblem,
+    destination_model::DecisionModel,
+    source_model::DecisionModel,
 )
     return FeedForwardUpdateEvent(
         IS.RecorderEventCommon("FeedForwardUpdateEvent"),

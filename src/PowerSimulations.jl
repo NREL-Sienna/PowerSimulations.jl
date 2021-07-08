@@ -6,7 +6,7 @@ module PowerSimulations
 
 # Base Models
 export Simulation
-export DecisionProblem
+export DecisionModel
 export ProblemResults
 export ProblemTemplate
 export InitialCondition
@@ -409,7 +409,7 @@ include("core/optimizer_stats.jl")
 include("initial_conditions/initial_condition_types.jl")
 include("initial_conditions/initial_conditions.jl")
 include("initial_conditions/initial_condition.jl")
-include("operation_problem/problem_template.jl")
+include("operation/problem_template.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
 include("simulation/param_result_cache.jl")
@@ -417,14 +417,14 @@ include("simulation/result_cache.jl")
 include("simulation/simulation_store.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
-include("operation_problem/problem_results_export.jl")
+include("operation/problem_results_export.jl")
 include("simulation/simulation_results_export.jl")
 include("core/optimization_container.jl")
 include("initial_conditions/update_initial_conditions.jl")
-include("operation_problem/operation_problem_interface.jl")
-include("operation_problem/problem_internal.jl")
-include("operation_problem/decision_problem.jl")
-include("operation_problem/simulation_problem_results.jl")
+include("operation/operation_model_interface.jl")
+include("operation/problem_internal.jl")
+include("operation/decision_model.jl")
+include("simulation/simulation_problem_results.jl")
 include("simulation/simulation_problems.jl")
 include("simulation/simulation_sequence.jl")
 include("simulation/simulation.jl")
@@ -447,7 +447,7 @@ include("devices_models/devices/common/get_time_series.jl")
 
 include("feedforward/feedforward_structs.jl")
 include("feedforward/feedforward.jl")
-include("operation_problem/problem_results.jl")
+include("operation/problem_results.jl")
 include("simulation/simulation_results.jl")
 include("core/recorder_events.jl")
 
@@ -494,10 +494,10 @@ include("devices_models/device_constructors/regulationdevice_constructor.jl")
 include("network_models/network_constructor.jl")
 
 # Templates
-include("operation_problem_templates.jl")
+include("operation_templates.jl")
 
 # Operations Problems
-include("operation_problem/decision_problems.jl")
+include("operation/decision_problems.jl")
 
 # Printing
 include("printing.jl")

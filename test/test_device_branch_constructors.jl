@@ -3,21 +3,21 @@
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(model)
-        op_problem_m = DecisionProblem(
+        model_m = DecisionModel(
             template,
             system;
             optimizer = OSQP_optimizer,
             PTDF = PSY.PTDF(system),
         )
-        @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
+        @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
-        @test check_variable_bounded(op_problem_m, FlowActivePowerVariable, MonitoredLine)
-        @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, Line)
+        @test check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
+        @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
 
-        @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == RunStatus.SUCCESSFUL
         @test check_flow_variable_values(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             MonitoredLine,
             "1",
@@ -33,22 +33,22 @@ end
         template = get_thermal_dispatch_template_network(model)
         set_device_model!(template, DeviceModel(Line, StaticBranch))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
-        op_problem_m = DecisionProblem(
+        model_m = DecisionModel(
             template,
             system;
             optimizer = OSQP_optimizer,
             PTDF = PSY.PTDF(system),
         )
-        @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
+        @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
-        @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, MonitoredLine)
+        @test check_variable_unbounded(model_m, FlowActivePowerVariable, MonitoredLine)
         # Broken
-        # @test check_variable_bounded(op_problem_m, FlowActivePowerVariable, Line)
+        # @test check_variable_bounded(model_m, FlowActivePowerVariable, Line)
 
-        @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == RunStatus.SUCCESSFUL
         @test check_flow_variable_values(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             Line,
             "2",
@@ -61,20 +61,20 @@ end
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     template = get_thermal_dispatch_template_network(ACPPowerModel)
-    op_problem_m = DecisionProblem(template, system; optimizer = ipopt_optimizer)
-    @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
+    model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
+    @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
-    @test check_variable_bounded(op_problem_m, FlowActivePowerFromToVariable, MonitoredLine)
+    @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, MonitoredLine)
     @test check_variable_unbounded(
-        op_problem_m,
+        model_m,
         FlowReactivePowerFromToVariable,
         MonitoredLine,
     )
 
-    @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+    @test solve!(model_m) == RunStatus.SUCCESSFUL
     @test check_flow_variable_values(
-        op_problem_m,
+        model_m,
         FlowActivePowerFromToVariable,
         FlowReactivePowerFromToVariable,
         MonitoredLine,
@@ -110,29 +110,29 @@ end
 
         template = get_template_dispatch_with_network(model)
         set_device_model!(template, HVDCLine, hvdc_model)
-        op_problem_m = DecisionProblem(
+        model_m = DecisionModel(
             template,
             system;
             optimizer = OSQP_optimizer,
             PTDF = PSY.PTDF(system),
         )
-        @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
+        @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
-        @test check_variable_bounded(op_problem_m, FlowActivePowerVariable, HVDCLine)
+        @test check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
         @test check_variable_unbounded(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             TapTransformer,
         )
-        @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, Transformer2W)
+        @test check_variable_unbounded(model_m, FlowActivePowerVariable, Transformer2W)
 
-        psi_constraint_test(op_problem_m, ratelimit_constraint_keys)
+        psi_constraint_test(model_m, ratelimit_constraint_keys)
 
-        @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == RunStatus.SUCCESSFUL
 
         @test check_flow_variable_values(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             HVDCLine,
             "DCLine3",
@@ -140,7 +140,7 @@ end
             limits_max,
         )
         @test check_flow_variable_values(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             TapTransformer,
             "Trans3",
@@ -148,7 +148,7 @@ end
             rate_limit,
         )
         @test check_flow_variable_values(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             Transformer2W,
             "Trans4",
@@ -177,35 +177,35 @@ end
         set_device_model!(template, DeviceModel(HVDCLine, HVDCUnbounded))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
-        op_problem_m = DecisionProblem(
+        model_m = DecisionModel(
             template,
             system;
             optimizer = OSQP_optimizer,
             PTDF = PSY.PTDF(system),
         )
-        @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
+        @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
         if model == DCPPowerModel
             # TODO: Currently Broken, remove variable bounds in HVDCUnbounded
-            # @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, HVDCLine)
+            # @test check_variable_unbounded(model_m, FlowActivePowerVariable, HVDCLine)
 
             @test check_variable_bounded(
-                op_problem_m,
+                model_m,
                 FlowActivePowerVariable,
                 TapTransformer,
             )
             @test check_variable_bounded(
-                op_problem_m,
+                model_m,
                 FlowActivePowerVariable,
                 TapTransformer,
             )
         end
 
-        @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == RunStatus.SUCCESSFUL
 
         @test check_flow_variable_values(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             HVDCLine,
             "DCLine3",
@@ -213,7 +213,7 @@ end
             limits_max,
         )
         @test check_flow_variable_values(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             TapTransformer,
             "Trans3",
@@ -221,7 +221,7 @@ end
             rate_limit,
         )
         @test check_flow_variable_values(
-            op_problem_m,
+            model_m,
             FlowActivePowerVariable,
             Transformer2W,
             "Trans4",
@@ -257,35 +257,35 @@ end
 
     template = get_template_dispatch_with_network(ACPPowerModel)
     set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
-    op_problem_m = DecisionProblem(template, system; optimizer = ipopt_optimizer)
-    @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
+    model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
+    @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
-    check_variable_bounded(op_problem_m, FlowReactivePowerToFromVariable, HVDCLine)
-    check_variable_bounded(op_problem_m, FlowActivePowerVariable, HVDCLine)
+    check_variable_bounded(model_m, FlowReactivePowerToFromVariable, HVDCLine)
+    check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
     @test check_variable_bounded(
-        op_problem_m,
+        model_m,
         FlowActivePowerFromToVariable,
         TapTransformer,
     )
     @test check_variable_unbounded(
-        op_problem_m,
+        model_m,
         FlowReactivePowerFromToVariable,
         TapTransformer,
     )
-    @test check_variable_bounded(op_problem_m, FlowActivePowerToFromVariable, Transformer2W)
+    @test check_variable_bounded(model_m, FlowActivePowerToFromVariable, Transformer2W)
     @test check_variable_unbounded(
-        op_problem_m,
+        model_m,
         FlowReactivePowerToFromVariable,
         Transformer2W,
     )
 
-    psi_constraint_test(op_problem_m, ratelimit_constraint_keys)
+    psi_constraint_test(model_m, ratelimit_constraint_keys)
 
-    @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+    @test solve!(model_m) == RunStatus.SUCCESSFUL
 
     @test check_flow_variable_values(
-        op_problem_m,
+        model_m,
         FlowActivePowerVariable,
         FlowReactivePowerToFromVariable,
         HVDCLine,
@@ -293,7 +293,7 @@ end
         limits_max,
     )
     @test check_flow_variable_values(
-        op_problem_m,
+        model_m,
         FlowActivePowerFromToVariable,
         FlowReactivePowerFromToVariable,
         TapTransformer,
@@ -301,7 +301,7 @@ end
         rate_limit,
     )
     @test check_flow_variable_values(
-        op_problem_m,
+        model_m,
         FlowActivePowerToFromVariable,
         FlowReactivePowerToFromVariable,
         Transformer2W,
@@ -337,37 +337,37 @@ end
 
     template = get_template_dispatch_with_network(StandardPTDFModel)
     set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
-    op_problem_m = DecisionProblem(template, system; PTDF = PSY.PTDF(system), optimizer = ipopt_optimizer)
-    @test build!(op_problem_m; output_dir = mktempdir(cleanup = true)) ==
+    model_m = DecisionModel(template, system; PTDF = PSY.PTDF(system), optimizer = ipopt_optimizer)
+    @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
 
-    check_variable_bounded(op_problem_m, FlowReactivePowerToFromVariable,HVDCLine)
-    check_variable_bounded(op_problem_m, FlowActivePowerToFromVariable,HVDCLine)
-    @test check_variable_bounded(op_problem_m, FlowActivePowerFromToVariable,TapTransformer)
-    @test check_variable_unbounded(op_problem_m, FlowReactivePowerFromToVariable,TapTransformer)
-    @test check_variable_bounded(op_problem_m, FlowActivePowerToFromVariable,Transformer2W)
-    @test check_variable_unbounded(op_problem_m, FlowReactivePowerToFromVariable,Transformer2W)
+    check_variable_bounded(model_m, FlowReactivePowerToFromVariable,HVDCLine)
+    check_variable_bounded(model_m, FlowActivePowerToFromVariable,HVDCLine)
+    @test check_variable_bounded(model_m, FlowActivePowerFromToVariable,TapTransformer)
+    @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable,TapTransformer)
+    @test check_variable_bounded(model_m, FlowActivePowerToFromVariable,Transformer2W)
+    @test check_variable_unbounded(model_m, FlowReactivePowerToFromVariable,Transformer2W)
 
-    psi_constraint_test(op_problem_m, ratelimit_constraint_names)
+    psi_constraint_test(model_m, ratelimit_constraint_names)
 
-    @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
+    @test solve!(model_m) == RunStatus.SUCCESSFUL
 
     @test check_flow_variable_values(
-        op_problem_m,
+        model_m,
         FlowActivePowerToFromVariable,HVDCLine,
         FlowReactivePowerToFromVariable,HVDCLine,
         "DCLine3",
         limits_max,
     )
     @test check_flow_variable_values(
-        op_problem_m,
+        model_m,
         FlowActivePowerFromToVariable,TapTransformer,
         FlowReactivePowerFromToVariable,TapTransformer,
         "Trans3",
         rate_limit,
     )
     @test check_flow_variable_values(
-        op_problem_m,
+        model_m,
         FlowActivePowerToFromVariable,Transformer2W,
         FlowReactivePowerToFromVariable,Transformer2W,
         "Trans4",

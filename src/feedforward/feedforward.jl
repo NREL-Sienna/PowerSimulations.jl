@@ -403,10 +403,10 @@ end
 # This makes the choice in which variable to get from the results.
 function get_problem_variable(
     chron::RecedingHorizon,
-    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
+    problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::AbstractString,
     var_ref::UpdateRef,
-) where {T, U <: AbstractDecisionProblem}
+) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     step = axes(variable)[2][chron.periods]
     var = variable[device_name, step]
@@ -419,10 +419,10 @@ end
 
 function get_problem_variable(
     ::Consecutive,
-    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
+    problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::String,
     var_ref::UpdateRef,
-) where {T, U <: AbstractDecisionProblem}
+) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     step = axes(variable)[2][get_end_of_interval_step(problems.first)]
     var = variable[device_name, step]
@@ -435,10 +435,10 @@ end
 
 function get_problem_variable(
     chron::Synchronize,
-    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
+    problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::String,
     var_ref::UpdateRef,
-) where {T, U <: AbstractDecisionProblem}
+) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     e_count = get_execution_count(problems.second)
     wait_count = get_execution_wait_count(get_trigger(chron))
@@ -454,10 +454,10 @@ end
 
 function get_problem_variable(
     ::FullHorizon,
-    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
+    problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::String,
     var_ref::UpdateRef,
-) where {T, U <: AbstractDecisionProblem}
+) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     vars = variable[device_name, :]
     if JuMP.is_binary(first(vars))
@@ -469,10 +469,10 @@ end
 
 function get_problem_variable(
     chron::Range,
-    problems::Pair{DecisionProblem{T}, DecisionProblem{U}},
+    problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::String,
     var_ref::UpdateRef,
-) where {T, U <: AbstractDecisionProblem}
+) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     vars = variable[device_name, chron.range]
     if JuMP.is_binary(first(vars))
@@ -483,8 +483,8 @@ function get_problem_variable(
 end
 
 function feedforward_update!(
-    destination_problem::DecisionProblem,
-    source_problem::DecisionProblem,
+    destination_model::DecisionModel,
+    source_model::DecisionModel,
     chronology::FeedForwardChronology,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,

@@ -98,7 +98,7 @@ problem = :ED
 var_name = :P__ThermalStandard
 timestamp = DateTime("2020-01-01T05:00:00")
 store = open_store(HdfSimulationStore, path)
-df = PowerSimulations.read_result(DataFrame, store, problem, :variables, var_name, timestamp)
+df = PowerSimulations.read_result(DataFrame, store, model, :variables, var_name, timestamp)
 ```
 """
 function open_store(
@@ -166,7 +166,7 @@ function write_optimizer_stats!(
     stats::OptimizerStats,
     timestamp,  # Unused here. Matches the interface for InMemorySimulationStore.
 )
-    problem_name = Symbol(problem)
+    problem_name = Symbol(model)
     dataset = _get_dataset(OptimizerStats, store, problem_name)
 
     # Uncomment for performance measures of HDF Store
@@ -218,7 +218,7 @@ function initialize_problem_storage!(
 
     for problem in keys(store.params.problems)
         store.datasets[problem] = ProblemDatasets()
-        problem_group = _get_group_or_create(problems_group, string(problem))
+        problem_group = _get_group_or_create(problems_group, string(model))
         for type in STORE_CONTAINERS
             group = _get_group_or_create(problem_group, string(type))
             for (name, reqs) in getfield(problem_reqs[problem], type)
@@ -230,7 +230,7 @@ function initialize_problem_storage!(
                 column_dataset = group[col]
                 datasets = getfield(store.datasets[problem], type)
                 datasets[name] = Dataset(dataset, column_dataset)
-                key = make_cache_key(problem, type, name)
+                key = make_cache_key(model, type, name)
                 add_param_cache!(store.cache, key, get_rule(flush_rules, key))
             end
         end
@@ -442,7 +442,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     empty!(store.datasets)
     for problem in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/problems/$problem"]
-        problem_name = Symbol(problem)
+        problem_name = Symbol(model)
         store.params.problems[problem_name] = SimulationStoreProblemParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
@@ -557,7 +557,7 @@ end
 
 _make_column_name(name) = string(name) * "__columns"
 
-function _get_indices(store::HdfSimulationStore, problem, timestamp)
+function _get_indices(store::HdfSimulationStore, model, timestamp)
     time_diff = Dates.Millisecond(timestamp - store.params.initial_time)
     step = time_diff ÷ store.params.step_resolution + 1
     if step > store.params.num_steps
