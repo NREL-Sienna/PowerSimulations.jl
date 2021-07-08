@@ -32,7 +32,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.RenewableGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -54,7 +54,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.RenewableGen}
     return DeviceRangeConstraintSpec(;
         custom_optimization_container_func = custom_reactive_power_constraints!,
@@ -89,21 +89,8 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.RenewableGen}
-    if !use_parameters && !use_forecasts
-        return DeviceRangeConstraintSpec(;
-            range_constraint_spec = RangeConstraintSpec(;
-                constraint_type = ActivePowerVariableLimitsConstraint(),
-                variable_type = ActivePowerVariable(),
-                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
-                constraint_func = device_range!,
-                constraint_struct = DeviceRangeConstraintInfo,
-                component_type = T,
-            ),
-        )
-    end
 
+) where {T <: PSY.RenewableGen}
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(;
             constraint_type = ActivePowerVariableLimitsConstraint(),
@@ -121,7 +108,7 @@ end
 function NodalExpressionSpec(
     ::Type{T},
     parameter::ReactivePowerTimeSeriesParameter,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.RenewableGen}
     return NodalExpressionSpec(
         parameter,
@@ -135,7 +122,7 @@ end
 function NodalExpressionSpec(
     ::Type{T},
     parameter::ActivePowerTimeSeriesParameter,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.RenewableGen}
     return NodalExpressionSpec(
         parameter,
