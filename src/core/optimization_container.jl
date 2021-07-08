@@ -1,5 +1,3 @@
-abstract type AbstractModelContainer end
-
 mutable struct OptimizationContainer <: AbstractModelContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
@@ -236,7 +234,7 @@ end
 
 function build_impl!(
     container::OptimizationContainer,
-    template::ProblemTemplate,
+    template,
     sys::PSY.System,
 )
     transmission = get_network_formulation(template)

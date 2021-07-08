@@ -1,8 +1,14 @@
+########################### Abstract Types for Model Construction ##########################
+
+abstract type AbstractModelContainer end
+
 abstract type OptimizationContainerKey end
+
 abstract type VariableType end
 abstract type ConstraintType end
 abstract type AuxVariableType end
 abstract type ParameterType end
+abstract type InitialConditionType end
 
 function encode_key(key::OptimizationContainerKey)
     return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
@@ -69,9 +75,34 @@ abstract type EmulationProblem end
 
 abstract type PSIResults <: IS.Results end
 
+
+################################ Abstract Types for Simulation #############################
+"""
+Provides storage of simulation data
+"""
+abstract type SimulationStore end
+
+# Required methods:
+# - open_store
+# - Base.isopen(store::SimulationStore)
+# - Base.close(store::SimulationStore)
+# - Base.flush(store::SimulationStore)
+# - get_params(store::SimulationStore)
+# - initialize_problem_storage!
+# - list_fields(store::SimulationStore, problem::Symbol, container_type::Symbol)
+# - list_problems(store::SimulationStore)
+# - log_cache_hit_percentages(store::SimulationStore)
+# - write_result!
+# - read_result!
+# - write_optimizer_stats!
+# - read_problem_optimizer_stats
+
 abstract type AbstractAffectFeedForward end
 
 abstract type AbstractCache end
 abstract type FeedForwardChronology end
 
 get_trigger(val::FeedForwardChronology) = val.trigger
+
+
+abstract type InitialConditionChronology end

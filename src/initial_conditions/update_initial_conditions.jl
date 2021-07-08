@@ -155,7 +155,6 @@ function calculate_ic_quantity(
 end
 
 ############################# Initial Conditions Initialization ############################
-
 function add_initial_condition!(
     container::OptimizationContainer,
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
