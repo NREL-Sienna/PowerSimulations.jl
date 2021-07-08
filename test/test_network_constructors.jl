@@ -77,7 +77,6 @@ end
         template,
         PSB.build_system(PSITestSystems, "c_sys5_re");
         optimizer = GLPK_optimizer,
-        use_parameters = true,
         balance_slack_variables = true,
     )
     @test build!(ps_model_re; output_dir = mktempdir(cleanup = true)) ==
@@ -119,7 +118,7 @@ end
             template,
             sys;
             optimizer = OSQP_optimizer,
-            use_parameters = p,
+
             PTDF = PTDF_ref[sys],
         )
 
@@ -383,7 +382,7 @@ end
             template,
             sys;
             optimizer = fast_ipopt_optimizer,
-            use_parameters = p,
+
         )
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT

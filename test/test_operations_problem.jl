@@ -41,7 +41,6 @@
         c_sys5,
         my_model;
         optimizer = GLPK_optimizer,
-        use_parameters = true,
     )
     build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test haskey(PSI.get_optimization_container(op_problem).JuMPmodel.ext, :PSI_Testing)
@@ -108,7 +107,7 @@ end
 #         template,
 #         c_sys5;
 #         optimizer = GLPK_optimizer,
-#         use_parameters = true,
+#
 #     )
 #     list = [template, op_problem, op_problem.container, services]
 #     _test_plain_print_methods(list)
@@ -166,7 +165,7 @@ end
             template,
             sys;
             optimizer = OSQP_optimizer,
-            use_parameters = p,
+
             PTDF = ptdf,
             constraint_duals = dual_constraint[ix],
         )
@@ -195,7 +194,6 @@ end
         template,
         sys;
         optimizer = OSQP_optimizer,
-        use_parameters = true,
         constraint_duals = [:CopperPlateBalance],
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
@@ -248,7 +246,6 @@ end
         template,
         sys;
         optimizer = OSQP_optimizer,
-        use_parameters = true,
         constraint_duals = [:CopperPlateBalance],
     )
     @test build!(op_problem; output_dir = path) == PSI.BuildStatus.BUILT
@@ -267,7 +264,6 @@ end
         template,
         sys;
         optimizer = OSQP_optimizer,
-        use_parameters = true,
         system_to_file = false,
         constraint_duals = [:CopperPlateBalance],
     )

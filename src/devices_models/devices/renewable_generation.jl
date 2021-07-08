@@ -32,7 +32,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.RenewableGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -54,7 +53,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.RenewableGen}
     return DeviceRangeConstraintSpec(;
         custom_optimization_container_func = custom_reactive_power_constraints!,
@@ -89,7 +87,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.RenewableGen}
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(;
@@ -108,12 +105,11 @@ end
 function NodalExpressionSpec(
     ::Type{T},
     parameter::ReactivePowerTimeSeriesParameter,
-
 ) where {T <: PSY.RenewableGen}
     return NodalExpressionSpec(
         parameter,
         T,
-        use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
+        x -> PSY.get_max_reactive_power(x),
         1.0,
         :nodal_balance_reactive,
     )
@@ -122,12 +118,11 @@ end
 function NodalExpressionSpec(
     ::Type{T},
     parameter::ActivePowerTimeSeriesParameter,
-
 ) where {T <: PSY.RenewableGen}
     return NodalExpressionSpec(
         parameter,
         T,
-        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
+        x -> PSY.get_max_active_power(x),
         1.0,
         :nodal_balance_active,
     )
