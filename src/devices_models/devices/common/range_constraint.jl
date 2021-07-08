@@ -42,15 +42,14 @@ where limits in constraint_infos.
 `` limits^{min} \leq x \leq limits^{max}, \text{ otherwise } ``
 """
 function device_range!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     inputs::RangeConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
-    variable =
-        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    time_steps = get_time_steps(container)
+    variable = get_variable(container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
     con_ub = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -58,7 +57,7 @@ function device_range!(
         meta = "ub",
     )
     con_lb = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -70,25 +69,22 @@ function device_range!(
         ci_name = get_component_name(constraint_info)
         expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
         for val in constraint_info.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[ci_name, t],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[ci_name, t])
         end
         expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
         for val in constraint_info.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[ci_name, t],
+                get_variable(container, val)[ci_name, t],
                 -1.0,
             )
         end
         con_ub[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub <= constraint_info.limits.max
         )
         con_lb[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_lb >= constraint_info.limits.min
         )
     end
@@ -121,23 +117,18 @@ where limits in constraint_infos.
 `` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin}, \text{ otherwise } ``
 """
 function device_semicontinuousrange!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     inputs::RangeConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
-    varcts =
-        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    time_steps = get_time_steps(container)
+    varcts = get_variable(container, inputs.variable_type, inputs.component_type)
     @assert length(inputs.bin_variable_types) == 1
-    varbin = get_variable(
-        optimization_container,
-        inputs.bin_variable_types[1],
-        inputs.component_type,
-    )
+    varbin = get_variable(container, inputs.bin_variable_types[1], inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
     con_ub = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -145,7 +136,7 @@ function device_semicontinuousrange!(
         meta = "ub",
     )
     con_lb = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -160,25 +151,22 @@ function device_semicontinuousrange!(
         end
         expression_ub = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
         for val in constraint_info.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[ci_name, t],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[ci_name, t])
         end
         expression_lb = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
         for val in constraint_info.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[ci_name, t],
+                get_variable(container, val)[ci_name, t],
                 -1.0,
             )
         end
         con_ub[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub <= constraint_info.limits.max * varbin[ci_name, t]
         )
         con_lb[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_lb >= constraint_info.limits.min * varbin[ci_name, t]
         )
     end
@@ -212,24 +200,19 @@ where limits in constraint_infos.
 `` limits^{min} (1 - x^{bin} ) \leq x^{cts} \leq limits^{max} (1 - x^{bin} ), \text{ otherwise } ``
 """
 function reserve_device_semicontinuousrange!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     inputs::RangeConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
-    varcts =
-        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    time_steps = get_time_steps(container)
+    varcts = get_variable(container, inputs.variable_type, inputs.component_type)
     @assert length(inputs.bin_variable_types) == 1
-    varbin = get_variable(
-        optimization_container,
-        inputs.bin_variable_types[1],
-        inputs.component_type,
-    )
+    varbin = get_variable(container, inputs.bin_variable_types[1], inputs.component_type)
 
     names = [get_component_name(x) for x in inputs.constraint_infos]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
     con_ub = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -237,7 +220,7 @@ function reserve_device_semicontinuousrange!(
         meta = "ub",
     )
     con_lb = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -252,25 +235,22 @@ function reserve_device_semicontinuousrange!(
         end
         expression_ub = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
         for val in constraint_info.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[ci_name, t],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[ci_name, t])
         end
         expression_lb = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
         for val in constraint_info.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[ci_name, t],
+                get_variable(container, val)[ci_name, t],
                 -1.0,
             )
         end
         con_ub[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub <= constraint_info.limits.max * (1 - varbin[ci_name, t])
         )
         con_lb[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_lb >= constraint_info.limits.min * (1 - varbin[ci_name, t])
         )
     end
@@ -298,38 +278,26 @@ where limits and lag_ramp_limits is in range_data.
 `` x^{cts} \leq (limits^{max}-limits^{min}) x^{bin} - max(limits^{max} - lag^{shutdown}, 0) x^{off}``
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_type::VariableType : the name of the continuous variable
 * binvar_names::Symbol : the names of the binary variables
 """
 function device_multistart_range!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     inputs::RangeConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
-    varp = get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    time_steps = get_time_steps(container)
+    varp = get_variable(container, inputs.variable_type, inputs.component_type)
     @assert length(inputs.bin_variable_types) == 3
-    varstatus = get_variable(
-        optimization_container,
-        inputs.bin_variable_types[1],
-        inputs.component_type,
-    )
-    varon = get_variable(
-        optimization_container,
-        inputs.bin_variable_types[2],
-        inputs.component_type,
-    )
-    varoff = get_variable(
-        optimization_container,
-        inputs.bin_variable_types[3],
-        inputs.component_type,
-    )
+    varstatus = get_variable(container, inputs.bin_variable_types[1], inputs.component_type)
+    varon = get_variable(container, inputs.bin_variable_types[2], inputs.component_type)
+    varoff = get_variable(container, inputs.bin_variable_types[3], inputs.component_type)
 
     names = [get_component_name(x) for x in inputs.constraint_infos]
     con_on = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -337,7 +305,7 @@ function device_multistart_range!(
         meta = "on",
     )
     con_off = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -345,7 +313,7 @@ function device_multistart_range!(
         meta = "off",
     )
     con_lb = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -364,11 +332,11 @@ function device_multistart_range!(
         for val in constraint_info.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_products,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
             )
         end
         con_on[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_products <=
             (limits.max - limits.min) * varstatus[name, t] -
             max(limits.max - lag_ramp_limits.startup, 0) * varon[name, t]
@@ -377,7 +345,7 @@ function device_multistart_range!(
             continue
         else
             con_off[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 expression_products <=
                 (limits.max - limits.min) * varstatus[name, t] -
                 max(limits.max - lag_ramp_limits.shutdown, 0) * varoff[name, t + 1]
@@ -388,11 +356,11 @@ function device_multistart_range!(
         for val in constraint_info.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_products,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
                 -1.0,
             )
         end
-        con_lb[name, t] = JuMP.@constraint(optimization_container.JuMPmodel, exp_lb >= 0)
+        con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, exp_lb >= 0)
     end
 
     return
@@ -413,31 +381,31 @@ where limits in range_data.
 `` max(limits^{max} - lag^{shutdown}, 0) x^{off} \leq initial_condition^{power} - (limits^{max} - limits^{min}) initial_condition^{status}``
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
 * initial_conditions::Matrix{InitialCondition} :
 * cons_name::Symbol : name of the constraint
 * var_type::VariableType : name of the shutdown variable
 """
 function device_multistart_range_ic!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     range_data::Vector{DeviceMultiStartRangeConstraintsInfo},
     initial_conditions::Matrix{InitialCondition},## 1 is initial power, 2 is initial status
     cons_type::ConstraintType,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    varstop = get_variable(optimization_container, var_type, T)
+    varstop = get_variable(container, var_type, T)
 
     set_name = [get_device_name(ic) for ic in initial_conditions[:, 1]]
-    con = add_cons_container!(optimization_container, cons_type, T, set_name)
+    con = add_cons_container!(container, cons_type, T, set_name)
 
     for (ix, ic) in enumerate(initial_conditions[:, 1])
         name = get_device_name(ic)
         data = range_data[ix]
         val = max(data.limits.max - data.lag_ramp_limits.shutdown, 0)
         con[name] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             val * varstop[get_component_name(data), 1] <=
             initial_conditions[ix, 2].value * (data.limits.max - data.limits.min) -
             ic.value
@@ -447,33 +415,19 @@ function device_multistart_range_ic!(
 end
 
 function reserve_power_ub!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     charging_range_data::Vector{DeviceRangeConstraintInfo},
     discharging_range_data::Vector{DeviceRangeConstraintInfo},
     cons_type::ConstraintType,
     var_types::Tuple{VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
-    var_in = get_variable(optimization_container, var_types[1], T)
-    var_out = get_variable(optimization_container, var_types[2], T)
+    time_steps = get_time_steps(container)
+    var_in = get_variable(container, var_types[1], T)
+    var_out = get_variable(container, var_types[2], T)
     names = [get_component_name(x) for x in charging_range_data]
-    con_up = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        names,
-        time_steps,
-        meta = "up",
-    )
-    con_dn = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        names,
-        time_steps,
-        meta = "dn",
-    )
+    con_up = add_cons_container!(container, cons_type, T, names, time_steps, meta = "up")
+    con_dn = add_cons_container!(container, cons_type, T, names, time_steps, meta = "dn")
 
     for (up_info, dn_info) in zip(charging_range_data, discharging_range_data),
         t in time_steps
@@ -483,7 +437,7 @@ function reserve_power_ub!(
         for val in up_info.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_up,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
                 1.0,
             )
         end
@@ -491,16 +445,16 @@ function reserve_power_ub!(
         for val in dn_info.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_dn,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
                 1.0,
             )
         end
         con_up[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_up <= var_in[name, t] + (up_info.limits.max - var_out[name, t])
         )
         con_dn[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_dn <= var_out[name, t] + (dn_info.limits.max - var_in[name, t])
         )
     end
@@ -508,31 +462,17 @@ function reserve_power_ub!(
 end
 
 function reserve_energy_ub!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     constraint_infos::Vector{ReserveRangeConstraintInfo},
     cons_type::ConstraintType,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
-    var_e = get_variable(optimization_container, var_type, T)
+    time_steps = get_time_steps(container)
+    var_e = get_variable(container, var_type, T)
     names = [get_component_name(x) for x in constraint_infos]
-    con_up = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        names,
-        time_steps,
-        meta = "up",
-    )
-    con_dn = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        names,
-        time_steps,
-        meta = "dn",
-    )
+    con_up = add_cons_container!(container, cons_type, T, names, time_steps, meta = "up")
+    con_dn = add_cons_container!(container, cons_type, T, names, time_steps, meta = "dn")
 
     for const_info in constraint_infos, t in time_steps
         name = get_component_name(const_info)
@@ -540,7 +480,7 @@ function reserve_energy_ub!(
         for val in const_info.additional_terms_up
             JuMP.add_to_expression!(
                 expression_up,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
                 get_time_frame(const_info, val) / MINUTES_IN_HOUR,
             )
         end
@@ -548,17 +488,17 @@ function reserve_energy_ub!(
         for val in const_info.additional_terms_dn
             JuMP.add_to_expression!(
                 expression_dn,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
                 get_time_frame(const_info, val) / MINUTES_IN_HOUR,
             )
         end
         con_up[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_up <=
             (var_e[name, t] - const_info.limits.min) * const_info.efficiency.out
         )
         con_dn[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_dn <=
             (const_info.limits.max - var_e[name, t]) / const_info.efficiency.in
         )

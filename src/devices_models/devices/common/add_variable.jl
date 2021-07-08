@@ -2,31 +2,25 @@
 Add variables to the OptimizationContainer for any component.
 """
 function add_variables!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     formulation::Union{AbstractServiceFormulation, AbstractDeviceFormulation},
 ) where {T <: VariableType, U <: PSY.Component}
-    add_variable!(optimization_container, T(), devices, formulation)
+    add_variable!(container, T(), devices, formulation)
 end
 
 """
 Add variables to the OptimizationContainer for a service.
 """
 function add_variables!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{T},
     service::U,
     contributing_devices::Vector{V},
     formulation::AbstractReservesFormulation,
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
-    add_service_variable!(
-        optimization_container,
-        T(),
-        service,
-        contributing_devices,
-        formulation,
-    )
+    add_service_variable!(container, T(), service, contributing_devices, formulation)
 end
 
 @doc raw"""
@@ -49,11 +43,11 @@ If binary = true:
 ``  x^{device}_t \in {0,1} \forall t iff \text{binary = true}``
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * devices : Vector or Iterator with the devices
 * var_key::VariableKey : Base Name for the variable
 * binary::Bool : Select if the variable is binary
-* expression_name::Symbol : Expression_name name stored in optimization_container.expressions to add the variable
+* expression_name::Symbol : Expression_name name stored in container.expressions to add the variable
 * sign::Float64 : sign of the addition of the variable to the expression_name. Default Value is 1.0
 
 # Accepted Keyword Arguments
@@ -63,7 +57,7 @@ If binary = true:
 
 """
 function add_variable!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     variable_type::T,
     devices::U,
     formulation,
@@ -72,13 +66,13 @@ function add_variable!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     @assert !isempty(devices)
-    time_steps = model_time_steps(optimization_container)
-    settings = get_settings(optimization_container)
+    time_steps = get_time_steps(container)
+    settings = get_settings(container)
     binary = get_variable_binary(variable_type, D, formulation)
     expression_name = get_variable_expression_name(variable_type, D)
 
     variable = add_var_container!(
-        optimization_container,
+        container,
         variable_type,
         D,
         [PSY.get_name(d) for d in devices],
@@ -88,7 +82,7 @@ function add_variable!(
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             # base_name ="$(encode_symbol(D, T))_{$(name), $(t)}",
             binary = binary
         )
@@ -107,7 +101,7 @@ function add_variable!(
         if !((expression_name === nothing))
             bus_number = PSY.get_number(PSY.get_bus(d))
             add_to_expression!(
-                get_expression(optimization_container, expression_name),
+                get_expression(container, expression_name),
                 bus_number,
                 t,
                 variable[name, t],
@@ -120,7 +114,7 @@ function add_variable!(
 end
 
 function add_service_variable!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     variable_type::VariableType,
     service::T,
     contributing_devices::U,
@@ -130,13 +124,13 @@ function add_service_variable!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     @assert !isempty(contributing_devices)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
 
     binary = get_variable_binary(variable_type, T, formulation)
     expression_name = get_variable_expression_name(variable_type, T)
 
     variable = add_var_container!(
-        optimization_container,
+        container,
         variable_type,
         T,
         PSY.get_name(service),
@@ -147,34 +141,24 @@ function add_service_variable!(
     for t in time_steps, d in contributing_devices
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             # base_name ="$(var_key)_{$(name), $(t)}",
             binary = binary
         )
 
-        ub = get_variable_upper_bound(
-            variable_type,
-            service,
-            d,
-            optimization_container.settings,
-        )
+        ub = get_variable_upper_bound(variable_type, service, d, container.settings)
         !(ub === nothing) && JuMP.set_upper_bound(variable[name, t], ub)
 
-        lb = get_variable_lower_bound(
-            variable_type,
-            service,
-            d,
-            optimization_container.settings,
-        )
+        lb = get_variable_lower_bound(variable_type, service, d, container.settings)
         !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
-        init = get_variable_initial_value(variable_type, d, optimization_container.settings)
+        init = get_variable_initial_value(variable_type, d, container.settings)
         !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
 
         if !((expression_name === nothing))
             bus_number = PSY.get_number(PSY.get_bus(d))
             add_to_expression!(
-                get_expression(optimization_container, expression_name),
+                get_expression(container, expression_name),
                 bus_number,
                 t,
                 variable[name, t],
@@ -201,20 +185,20 @@ Adds a bounds to a variable in the optimization model.
 ``  x^{device}_t <= bound^{max} \forall t ``
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * bounds::DeviceRangeConstraintInfo : contains names and vector of min / max
 * var_type::AbstractString : type of the variable
 * T: type of the device
 
 """
 function set_variable_bounds!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     bounds::Vector{DeviceRangeConstraintInfo},
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    var = get_variable(optimization_container, var_type, T)
-    for t in model_time_steps(optimization_container), bound in bounds
+    var = get_variable(container, var_type, T)
+    for t in get_time_steps(container), bound in bounds
         _var = var[get_component_name(bound), t]
         JuMP.set_upper_bound(_var, bound.limits.max)
         JuMP.set_lower_bound(_var, bound.limits.min)

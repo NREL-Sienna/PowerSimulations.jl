@@ -1,7 +1,7 @@
 
-struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
-struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
-struct AGCReserveDeployment <: PowerSimulationsOperationsProblem end
+struct EconomicDispatchProblem <: DecisionProblem end
+struct UnitCommitmentProblem <: DecisionProblem end
+struct AGCReserveDeployment <: DecisionProblem end
 
 function _default_devices_uc()
     return [
@@ -35,7 +35,7 @@ end
 """
     template_unit_commitment(; kwargs...)
 
-Creates an `OperationsProblemTemplate` with default DeviceModels for a Unit Commitment
+Creates an `ProblemTemplate` with default DeviceModels for a Unit Commitment
 problem.
 
 # Example
@@ -50,7 +50,7 @@ template = template_unit_commitment()
 """
 function template_unit_commitment(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
-    template = OperationsProblemTemplate(network)
+    template = ProblemTemplate(network)
     for model in get(kwargs, :devices, _default_devices_uc())
         set_device_model!(template, model)
     end
@@ -64,7 +64,7 @@ end
 """
     template_economic_dispatch(; kwargs...)
 
-Creates an `OperationsProblemTemplate` with default DeviceModels for an Economic Dispatch
+Creates an `ProblemTemplate` with default DeviceModels for an Economic Dispatch
 problem.
 
 # Example
@@ -79,7 +79,7 @@ template = template_economic_dispatch()
 """
 function template_economic_dispatch(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
-    template = OperationsProblemTemplate(network)
+    template = ProblemTemplate(network)
     for model in get(kwargs, :devices, _default_devices_dispatch())
         set_device_model!(template, model)
     end
@@ -94,7 +94,7 @@ end
 """
     template_agc_reserve_deployment(; kwargs...)
 
-Creates an `OperationsProblemTemplate` with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn't support customization
+Creates an `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn't support customization
 
 # Example
 ```julia
@@ -105,7 +105,7 @@ function template_agc_reserve_deployment(; kwargs...)
     if !isempty(kwargs)
         throw(ArgumentError("AGC Template doesn't currently support customization"))
     end
-    template = OperationsProblemTemplate(AreaBalancePowerModel)
+    template = ProblemTemplate(AreaBalancePowerModel)
     set_device_model!(template, PSY.ThermalStandard, FixedOutput)
     set_device_model!(template, PSY.RenewableDispatch, FixedOutput)
     set_device_model!(template, PSY.PowerLoad, StaticPowerLoad)

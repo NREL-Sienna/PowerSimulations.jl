@@ -12,8 +12,8 @@ end
 """
     EconomicDispatchProblem(system::PSY.System; kwargs...)
 
-Creates an `OperationsProblemTemplate` with default DeviceModels for an EconomicDispatch
-problem. Uses the template to create an `OperationsProblem`.
+Creates an `ProblemTemplate` with default DeviceModels for an EconomicDispatch
+problem. Uses the template to create an `DecisionProblem`.
 
 # Example
 ```julia
@@ -24,26 +24,25 @@ ed_problem = EconomicDispatchProblem(system)
 - `network::Type{<:PM.AbstractPowerModel}` : override default network model settings
 - `devices::Dict{String, DeviceModel}` : override default `DeviceModel` settings
 - `services::Dict{String, ServiceModel}` : override default `ServiceModel` settings
-- Key word arguments supported by `OperationsProblem`
+- Key word arguments supported by `DecisionProblem`
 """
 function EconomicDispatchProblem(system::PSY.System; kwargs...)
     kwargs, problem_kwargs = _filter_kwargs(kwargs)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_economic_dispatch(; kwargs...)
-    op_problem =
-        OperationsProblem(EconomicDispatchProblem, template, system; problem_kwargs...)
-    res = build!(op_problem; output_dir = output_dir)
+    model = DecisionModel(EconomicDispatchProblem, template, system; problem_kwargs...)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build succesfully")
     end
-    return op_problem
+    return model
 end
 
 """
     UnitCommitmentProblem(system::PSY.System; kwargs...)
 
-Creates an `OperationsProblemTemplate` with default DeviceModels for a Unit Commitment
-problem. Uses the template to create an `OperationsProblem`.
+Creates an `ProblemTemplate` with default DeviceModels for a Unit Commitment
+problem. Uses the template to create an `DecisionProblem`.
 
 # Example
 ```julia
@@ -54,26 +53,25 @@ uc_problem = UnitCommitmentProblem(system)
 - `network::Type{<:PM.AbstractPowerModel}` : override default network model settings
 - `devices::Dict{String, DeviceModel}` : override default `DeviceModel` settings
 - `services::Dict{String, ServiceModel}` : override default `ServiceModel` settings
-- Key word arguments supported by `OperationsProblem`
+- Key word arguments supported by `DecisionProblem`
 """
 function UnitCommitmentProblem(system::PSY.System; kwargs...)
     kwargs, problem_kwargs = _filter_kwargs(kwargs)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_unit_commitment(; kwargs...)
-    op_problem =
-        OperationsProblem(UnitCommitmentProblem, template, system; problem_kwargs...)
-    res = build!(op_problem; output_dir = output_dir)
+    model = DecisionModel(UnitCommitmentProblem, template, system; problem_kwargs...)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build succesfully")
     end
-    return op_problem
+    return model
 end
 
 """
     AGCReserveDeployment(system::PSY.System; kwargs...)
 
-Creates an `OperationsProblemTemplate` with default DeviceModels for an AGC Reserve Deplyoment Problem.
-Uses the template to create an `OperationsProblem`.
+Creates an `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyoment Problem.
+Uses the template to create an `DecisionProblem`.
 
 # Example
 ```julia
@@ -81,26 +79,25 @@ agc_problem = AGCReserveDeployment(system)
 ```
 
 # Accepted Key Words
-- Key word arguments supported by `OperationsProblem`
+- Key word arguments supported by `DecisionProblem`
 """
 function AGCReserveDeployment(system::PSY.System; kwargs...)
     kwargs, problem_kwargs = _filter_kwargs(kwargs)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_agc_reserve_deployment(; kwargs...)
-    op_problem =
-        OperationsProblem(UnitCommitmentProblem, template, system; problem_kwargs...)
-    res = build!(op_problem; output_dir = output_dir)
+    model = DecisionModel(UnitCommitmentProblem, template, system; problem_kwargs...)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build succesfully")
     end
-    return op_problem
+    return model
 end
 
 """
     run_unit_commitment(system::PSY.System; kwargs...)
 
-Creates an `OperationsProblemTemplate` with default DeviceModels for a Unit Commitment
-problem. Uses the template to create an `OperationsProblem`. Solves the created operations problem.
+Creates an `ProblemTemplate` with default DeviceModels for a Unit Commitment
+problem. Uses the template to create an `DecisionProblem`. Solves the created operations problem.
 
 # Example
 ```julia
@@ -113,20 +110,20 @@ results = run_unit_commitment(system; optimizer = optimizer)
 - `services::Dict{String, ServiceModel}` : override default `ServiceModel` settings
 - `optimizer::JuMP Optimizer` : An optimizer is a required key word
 - `output_dir::AbstractString`  : Path to save outputs
-- Key word arguments supported by `OperationsProblem`
+- Key word arguments supported by `DecisionProblem`
 """
 
 function run_unit_commitment(sys::PSY.System; kwargs...)
-    op_problem = UnitCommitmentProblem(sys; kwargs...)
-    solve_status = solve!(op_problem)
+    model = UnitCommitmentProblem(sys; kwargs...)
+    solve_status = solve!(model)
     return solve_status
 end
 
 """
     run_economic_dispatch(system::PSY.System; kwargs...)
 
-Creates an `OperationsProblemTemplate` with default DeviceModels for an EconomicDispatch
-problem. Uses the template to create an `OperationsProblem`.
+Creates an `ProblemTemplate` with default DeviceModels for an EconomicDispatch
+problem. Uses the template to create an `DecisionProblem`.
 
 # Example
 ```julia
@@ -139,10 +136,10 @@ results = run_economic_dispatch(system; optimizer = optimizer)
 - `services::Dict{String, ServiceModel}` : override default `ServiceModel` settings
 - `optimizer::JuMP optimizer` : a JuMP optimizer is a required key word
 - `output_dir::AbstractString`  : Path to save outputs
-- Key word arguments supported by `OperationsProblem`
+- Key word arguments supported by `DecisionProblem`
 """
 function run_economic_dispatch(sys::PSY.System; kwargs...)
-    op_problem = EconomicDispatchProblem(sys; kwargs...)
-    solve_status = solve!(op_problem)
+    model = EconomicDispatchProblem(sys; kwargs...)
+    solve_status = solve!(model)
     return solve_status
 end

@@ -76,7 +76,7 @@ Users of this function must implement a method for
 Users may also implement custom active_power_constraints! methods.
 """
 function add_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
@@ -90,12 +90,9 @@ function add_constraints!(
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
-    use_parameters = model_has_parameters(optimization_container)
-    use_forecasts = model_uses_forecasts(optimization_container)
-    @assert !(use_parameters && !use_forecasts)
-    spec =
-        DeviceRangeConstraintSpec(T, U, V, W, X, feedforward, use_parameters, use_forecasts)
-    device_range_constraints!(optimization_container, devices, model, feedforward, spec)
+    use_parameters = built_for_simulation(container)
+    spec = DeviceRangeConstraintSpec(T, U, V, W, X, feedforward, use_parameters)
+    device_range_constraints!(container, devices, model, feedforward, spec)
 end
 
 """
@@ -125,7 +122,7 @@ function DeviceRangeConstraintSpec(;
 end
 
 function device_range_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
@@ -147,7 +144,7 @@ function device_range_constraints!(
 
     if !(range_constraint_spec === nothing)
         _apply_range_constraint_spec!(
-            optimization_container,
+            container,
             range_constraint_spec,
             devices,
             model,
@@ -157,7 +154,7 @@ function device_range_constraints!(
 
     if !(timeseries_range_constraint_spec === nothing)
         _apply_timeseries_range_constraint_spec!(
-            optimization_container,
+            container,
             timeseries_range_constraint_spec,
             devices,
             model,
@@ -166,12 +163,12 @@ function device_range_constraints!(
     end
 
     if !(custom_optimization_container_func === nothing)
-        custom_optimization_container_func(optimization_container, devices, U)
+        custom_optimization_container_func(container, devices, U)
     end
 end
 
 function _apply_range_constraint_spec!(
-    optimization_container,
+    container,
     spec,
     devices::IS.FlattenIteratorWrapper{T},
     model,
@@ -207,7 +204,7 @@ function _apply_range_constraint_spec!(
     end
 
     spec.constraint_func(
-        optimization_container,
+        container,
         RangeConstraintSpecInternal(
             constraint_infos,
             constraint_type,
@@ -220,7 +217,7 @@ function _apply_range_constraint_spec!(
 end
 
 function _apply_timeseries_range_constraint_spec!(
-    optimization_container,
+    container,
     spec,
     devices::IS.FlattenIteratorWrapper{T},
     model,
@@ -234,7 +231,7 @@ function _apply_timeseries_range_constraint_spec!(
     forecast_name = get_name(spec.parameter)
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (i, dev) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, dev, forecast_name)
+        ts_vector = get_time_series(container, dev, forecast_name)
         constraint_info =
             DeviceTimeSeriesConstraintInfo(dev, spec.multiplier_func, ts_vector)
         add_device_services!(constraint_info.range, dev, model)
@@ -249,6 +246,6 @@ function _apply_timeseries_range_constraint_spec!(
         spec.parameter,
         T,
     )
-    spec.constraint_func(optimization_container, ts_inputs)
+    spec.constraint_func(container, ts_inputs)
     return
 end

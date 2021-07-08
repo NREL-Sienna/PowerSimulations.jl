@@ -1,6 +1,6 @@
 # This file is WIP while the interface for templates is finalized
 @testset "Manual Operations Template" begin
-    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
     set_device_model!(template, Line, StaticBranchUnbounded)
@@ -10,7 +10,7 @@
 end
 
 @testset "Operations Template Overwrite" begin
-    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
     @test_logs (:info, "Overwriting ThermalStandard existing model") set_device_model!(
@@ -27,7 +27,7 @@ end
     @test PSI.get_formulation(uc_template.devices[:ThermalStandard]) ==
           ThermalBasicUnitCommitment
     uc_template = template_unit_commitment(network = DCPPowerModel)
-    @test get_transmission_model(uc_template) == DCPPowerModel
+    @test get_network_formulation(uc_template) == DCPPowerModel
     @test !isempty(uc_template.branches)
     @test !isempty(uc_template.services)
 
@@ -35,7 +35,7 @@ end
     @test !isempty(ed_template.devices)
     @test PSI.get_formulation(ed_template.devices[:ThermalStandard]) == ThermalDispatch
     ed_template = template_economic_dispatch(network = ACPPowerModel)
-    @test get_transmission_model(ed_template) == ACPPowerModel
+    @test get_network_formulation(ed_template) == ACPPowerModel
     @test !isempty(ed_template.branches)
     @test !isempty(ed_template.services)
 end

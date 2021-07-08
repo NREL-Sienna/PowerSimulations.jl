@@ -25,12 +25,11 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in networks
         template = get_thermal_dispatch_template_network(network)
-        ps_model = OperationsProblem(template, c_sys5; optimizer = solver)
+        ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        @test !isnothing(ps_model.internal.optimization_container.pm)
-        @test :nodal_balance_active in
-              keys(ps_model.internal.optimization_container.expressions)
+        @test !isnothing(ps_model.internal.container.pm)
+        @test :nodal_balance_active in keys(ps_model.internal.container.expressions)
     end
 end
 
@@ -56,7 +55,7 @@ end
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model =
-            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+            DecisionModel(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
@@ -74,11 +73,10 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.OPTIMAL], test_obj_values[sys], 10000)
     end
-    ps_model_re = OperationsProblem(
+    ps_model_re = DecisionModel(
         template,
         PSB.build_system(PSITestSystems, "c_sys5_re");
         optimizer = GLPK_optimizer,
-        use_parameters = true,
         balance_slack_variables = true,
     )
     @test build!(ps_model_re; output_dir = mktempdir(cleanup = true)) ==
@@ -116,13 +114,8 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = OSQP_optimizer,
-            use_parameters = p,
-            PTDF = PTDF_ref[sys],
-        )
+        ps_model =
+            DecisionModel(template, sys; optimizer = OSQP_optimizer, PTDF = PTDF_ref[sys])
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
@@ -146,7 +139,7 @@ end
         )
     end
     # PTDF input Error testing
-    ps_model = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
+    ps_model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
@@ -180,7 +173,7 @@ end
     )
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model =
-            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+            DecisionModel(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
@@ -230,7 +223,7 @@ end
     )
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model =
-            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+            DecisionModel(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -280,12 +273,8 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = ipopt_optimizer,
-            use_parameters = p,
-        )
+        ps_model =
+            DecisionModel(template, sys; optimizer = ipopt_optimizer, use_parameters = p)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -331,7 +320,7 @@ end
     )
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model =
-            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+            DecisionModel(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -384,12 +373,7 @@ end
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
     for network in networks, sys in systems, p in parameters
         template = get_thermal_dispatch_template_network(network)
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = fast_ipopt_optimizer,
-            use_parameters = p,
-        )
+        ps_model = DecisionModel(template, sys; optimizer = fast_ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -403,7 +387,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test !isnothing(ps_model.internal.optimization_container.pm)
+        @test !isnothing(ps_model.internal.container.pm)
     end
 end
 
@@ -435,12 +419,8 @@ end
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
     for network in networks, sys in systems, p in parameters
         template = get_thermal_dispatch_template_network(network)
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = ipopt_optimizer,
-            use_parameters = p,
-        )
+        ps_model =
+            DecisionModel(template, sys; optimizer = ipopt_optimizer, use_parameters = p)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -454,7 +434,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test !isnothing(ps_model.internal.optimization_container.pm)
+        @test !isnothing(ps_model.internal.container.pm)
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -467,7 +447,7 @@ end
 @testset "Network Unsupported Power Model Formulations" begin
     for network in PSI.UNSUPPORTED_POWERMODELS
         template = get_thermal_dispatch_template_network(network)
-        ps_model = OperationsProblem(
+        ps_model = DecisionModel(
             template,
             PSB.build_system(PSITestSystems, "c_sys5");
             optimizer = ipopt_optimizer,

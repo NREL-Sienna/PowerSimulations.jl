@@ -36,7 +36,7 @@ makedocs(
         "Introduction" => "index.md",
         #"Quick Start Guide" => "qs_guide.md",
         "Logging" => "man/logging.md",
-        "Operation Model" => "man/op_problem.md",
+        "Operation Model" => "man/model.md",
         # "How To" => Any[
         #     "Set Up Plots" => "howto/3.0_set_up_plots.md",
         #     "Make Stack Plots" => "howto/3.1_make_stack_plots.md",

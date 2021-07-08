@@ -1,5 +1,3 @@
-abstract type AbstractModelContainer end
-
 mutable struct OptimizationContainer <: AbstractModelContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
@@ -8,6 +6,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     settings_copy::Settings
     variables::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
+    dual_values::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::DenseAxisArrayContainer
@@ -16,6 +15,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
+    built_for_simulation::Bool
 
     function OptimizationContainer(
         sys::PSY.System,
@@ -23,19 +23,17 @@ mutable struct OptimizationContainer <: AbstractModelContainer
         jump_model::Union{Nothing, JuMP.Model},
     )
         resolution = PSY.get_time_series_resolution(sys)
-        resolution = IS.time_period_conversion(resolution)
-        use_parameters = get_use_parameters(settings)
-
         new(
             jump_model === nothing ? _make_jump_model(settings) :
-            _prepare_external_jump_model!(jump_model, settings),
+            _finalize_jump_model!(jump_model, settings),
             1:1,
-            resolution,
+            IS.time_period_conversion(resolution),
             settings,
             copy_for_serialization(settings),
-            Dict{Symbol, AbstractArray}(),
-            Dict{Symbol, AbstractArray}(),
-            Dict{Symbol, AbstractArray}(),
+            Dict{VariableKey, AbstractArray}(),
+            Dict{AuxVarKey, AbstractArray}(),
+            Dict{ConstraintKey, AbstractArray}(),
+            Dict{ConstraintKey, AbstractArray}(),
             zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
             Dict{ParameterKey, ParameterContainer}(),
@@ -43,41 +41,25 @@ mutable struct OptimizationContainer <: AbstractModelContainer
             nothing,
             PSY.get_base_power(sys),
             Dict{Symbol, Any}(),
+            false,
         )
     end
 end
 
-model_time_steps(optimization_container::OptimizationContainer) =
-    optimization_container.time_steps
-model_resolution(optimization_container::OptimizationContainer) =
-    optimization_container.resolution
-model_has_parameters(optimization_container::OptimizationContainer) =
-    get_use_parameters(optimization_container.settings)
-model_uses_forecasts(optimization_container::OptimizationContainer) =
-    get_use_forecast_data(optimization_container.settings)
-model_initial_time(optimization_container::OptimizationContainer) =
-    get_initial_time(optimization_container.settings)
+get_time_steps(container::OptimizationContainer) = container.time_steps
+get_resolution(container::OptimizationContainer) = container.resolution
+get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
 # Internal Variables, Constraints and Parameters accessors
-get_variables(optimization_container::OptimizationContainer) =
-    optimization_container.variables
-get_aux_variables(optimization_container::OptimizationContainer) =
-    optimization_container.aux_variables
-get_constraints(optimization_container::OptimizationContainer) =
-    optimization_container.constraints
-get_parameters(optimization_container::OptimizationContainer) =
-    optimization_container.parameters
-get_expression(optimization_container::OptimizationContainer, name::Symbol) =
-    optimization_container.expressions[name]
-get_initial_conditions(optimization_container::OptimizationContainer) =
-    optimization_container.initial_conditions
-get_PTDF(optimization_container::OptimizationContainer) =
-    get_PTDF(optimization_container.settings)
-get_settings(optimization_container::OptimizationContainer) =
-    optimization_container.settings
-get_jump_model(optimization_container::OptimizationContainer) =
-    optimization_container.JuMPmodel
-get_base_power(optimization_container::OptimizationContainer) =
-    optimization_container.base_power
+get_variables(container::OptimizationContainer) = container.variables
+get_aux_variables(container::OptimizationContainer) = container.aux_variables
+get_constraints(container::OptimizationContainer) = container.constraints
+get_parameters(container::OptimizationContainer) = container.parameters
+get_expression(container::OptimizationContainer, name::Symbol) = container.expressions[name]
+get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
+get_settings(container::OptimizationContainer) = container.settings
+get_jump_model(container::OptimizationContainer) = container.JuMPmodel
+get_base_power(container::OptimizationContainer) = container.base_power
+built_for_simulation(container::OptimizationContainer) = container.built_for_simulation
 
 function is_milp(container::OptimizationContainer)
     type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)
@@ -102,6 +84,14 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
 
+    if get_direct_mode_optimizer(settings)
+        throw(
+            IS.ConflictingInputsError(
+                "Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model",
+            ),
+        )
+    end
+
     if get_optimizer_log_print(settings)
         JuMP.unset_silent(JuMPmodel)
         @debug "optimizer unset to silent"
@@ -111,31 +101,17 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     end
 end
 
-function _prepare_external_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
-    parameters = get_use_parameters(settings)
-    optimizer = get_optimizer(settings)
-    if get_direct_mode_optimizer(settings)
-        throw(
-            IS.ConflictingInputsError(
-                "Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model",
-            ),
-        )
+function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Settings)
+    if !haskey(JuMPmodel.ext, :ParameterJuMP)
+        @debug("Model doesn't have Parameters enabled. Parameters will be enabled")
+        PJ.enable_parameters(JuMPmodel)
+        JuMP.set_optimizer(JuMPmodel, optimizer)
     end
-
-    if parameters
-        if !haskey(JuMPmodel.ext, :ParameterJuMP)
-            @info("Model doesn't have Parameters enabled. Parameters will be enabled")
-            PJ.enable_parameters(JuMPmodel)
-            JuMP.set_optimizer(JuMPmodel, optimizer)
-        end
-    end
-    _finalize_jump_model!(JuMPmodel, settings)
-    return JuMPmodel
+    return
 end
 
 function _make_jump_model(settings::Settings)
     @debug "Instantiating the JuMP model"
-    parameters = get_use_parameters(settings)
     optimizer = get_optimizer(settings)
     if get_direct_mode_optimizer(settings)
         JuMPmodel = JuMP.direct_model(MOI.instantiate(optimizer))
@@ -145,7 +121,6 @@ function _make_jump_model(settings::Settings)
     else
         JuMPmodel = JuMP.Model(optimizer)
     end
-    parameters && PJ.enable_parameters(JuMPmodel)
     _finalize_jump_model!(JuMPmodel, settings)
 
     return JuMPmodel
@@ -161,14 +136,14 @@ function _make_container_array(parameters::Bool, ax...)
 end
 
 function _make_expressions_dict!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
-    settings = optimization_container.settings
-    parameters = get_use_parameters(settings)
+    settings = container.settings
+    parameters = false
     time_steps = 1:get_horizon(settings)
-    optimization_container.expressions = DenseAxisArrayContainer(
+    container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
             _make_container_array(parameters, bus_numbers, time_steps),
         :nodal_balance_reactive =>
@@ -178,14 +153,14 @@ function _make_expressions_dict!(
 end
 
 function _make_expressions_dict!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
 )
-    settings = optimization_container.settings
-    parameters = get_use_parameters(settings)
+    settings = container.settings
+    parameters = false
     time_steps = 1:get_horizon(settings)
-    optimization_container.expressions = DenseAxisArrayContainer(
+    container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
             _make_container_array(parameters, bus_numbers, time_steps),
     )
@@ -193,72 +168,51 @@ function _make_expressions_dict!(
 end
 
 function optimization_container_init!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    @assert !(optimization_container.JuMPmodel === nothing)
+    @assert !(container.JuMPmodel === nothing)
     PSY.set_units_base_system!(sys, "SYSTEM_BASE")
     # The order of operations matter
-    settings = get_settings(optimization_container)
-    use_parameters = get_use_parameters(settings)
-    use_forecasts = get_use_forecast_data(settings)
-
-    if use_parameters
-        if !use_forecasts
-            throw(
-                IS.ConflictingInputsError(
-                    "enabling parameters without forecasts is not supported",
-                ),
-            )
-        end
-    end
+    settings = get_settings(container)
 
     if get_initial_time(settings) == UNSET_INI_TIME
         set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
     end
 
-    if use_forecasts
-        if get_horizon(settings) == UNSET_HORIZON
-            set_horizon!(settings, PSY.get_forecast_horizon(sys))
-        end
-        total_number_of_devices = length(get_available_components(PSY.Device, sys))
-        optimization_container.time_steps = 1:get_horizon(settings)
-        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
-        # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
-        # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
-        variable_count_estimate =
-            length(optimization_container.time_steps) * total_number_of_devices
-        if variable_count_estimate > 10e6
-            @warn(
-                "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
-            )
-        end
-    else
-        set_horizon!(settings, 1)
+    if get_horizon(settings) == UNSET_HORIZON
+        set_horizon!(settings, PSY.get_forecast_horizon(sys))
+    end
+    total_number_of_devices = length(get_available_components(PSY.Device, sys))
+    container.time_steps = 1:get_horizon(settings)
+    # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
+    # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
+    # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
+    variable_count_estimate = length(container.time_steps) * total_number_of_devices
+    if variable_count_estimate > 10e6
+        @warn(
+            "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
+        )
     end
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
-    _make_expressions_dict!(optimization_container, bus_numbers, T)
+    _make_expressions_dict!(container, bus_numbers, T)
     return
 end
 
-function add_to_setting_ext!(
-    optimization_container::OptimizationContainer,
-    key::String,
-    value,
-)
-    settings = get_settings(optimization_container)
+function add_to_setting_ext!(container::OptimizationContainer, key::String, value)
+    settings = get_settings(container)
     push!(get_ext(settings), key => value)
     @debug "Add to settings ext" key value
     return
 end
 
-function check_optimization_container(optimization_container::OptimizationContainer)
+function check_optimization_container(container::OptimizationContainer)
     valid = true
     # Check for parameter invalid values
-    if model_has_parameters(optimization_container)
-        for param_array in values(optimization_container.parameters)
+    if built_for_simulation(container)
+        for param_array in values(container.parameters)
             valid = !all(isnan.(param_array.multiplier_array.data))
         end
     end
@@ -268,8 +222,8 @@ function check_optimization_container(optimization_container::OptimizationContai
     return
 end
 
-function get_problem_size(optimization_container::OptimizationContainer)
-    model = optimization_container.JuMPmodel
+function get_problem_size(container::OptimizationContainer)
+    model = container.JuMPmodel
     vars = JuMP.num_variables(model)
     cons = 0
     for (exp, c_type) in JuMP.list_of_constraint_types(model)
@@ -278,77 +232,66 @@ function get_problem_size(optimization_container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-function build_impl!(
-    optimization_container::OptimizationContainer,
-    template::OperationsProblemTemplate,
-    sys::PSY.System,
-)
-    transmission = template.transmission
+function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
+    transmission = get_network_formulation(template)
     # Order is required
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
         construct_services!(
-            optimization_container,
+            container,
             sys,
-            template.services,
-            template.devices,
+            get_service_models(template),
+            get_device_models(template),
         )
     end
     for device_model in values(template.devices)
         @debug "Building $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
-            construct_device!(optimization_container, sys, device_model, transmission)
-            @debug get_problem_size(optimization_container)
+            construct_device!(container, sys, device_model, transmission)
+            @debug get_problem_size(container)
         end
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
         @debug "Building $(transmission) network formulation"
-        construct_network!(optimization_container, sys, transmission, template)
-        @debug get_problem_size(optimization_container)
+        construct_network!(container, sys, transmission, template)
+        @debug get_problem_size(container)
     end
 
     for branch_model in values(template.branches)
         @debug "Building $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation"
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
-            construct_device!(optimization_container, sys, branch_model, transmission)
-            @debug get_problem_size(optimization_container)
+            construct_device!(container, sys, branch_model, transmission)
+            @debug get_problem_size(container)
         end
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Objective" begin
         @debug "Building Objective"
-        JuMP.@objective(
-            optimization_container.JuMPmodel,
-            MOI.MIN_SENSE,
-            optimization_container.cost_function
-        )
+        JuMP.@objective(container.JuMPmodel, MOI.MIN_SENSE, container.cost_function)
     end
-    @debug "Total operation count $(optimization_container.JuMPmodel.operator_counter)"
+    @debug "Total operation count $(container.JuMPmodel.operator_counter)"
 
-    check_optimization_container(optimization_container)
+    check_optimization_container(container)
     return
 end
 
 function export_optimizer_stats(
     optimizer_stats::Dict{Symbol, Any},
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     path::String,
 )
-    optimizer_stats[:termination_status] =
-        Int(JuMP.termination_status(optimization_container.JuMPmodel))
-    optimizer_stats[:primal_status] =
-        Int(JuMP.primal_status(optimization_container.JuMPmodel))
-    optimizer_stats[:dual_status] = Int(JuMP.dual_status(optimization_container.JuMPmodel))
+    optimizer_stats[:termination_status] = Int(JuMP.termination_status(container.JuMPmodel))
+    optimizer_stats[:primal_status] = Int(JuMP.primal_status(container.JuMPmodel))
+    optimizer_stats[:dual_status] = Int(JuMP.dual_status(container.JuMPmodel))
 
     if optimizer_stats[:primal_status] == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        optimizer_stats[:obj_value] = JuMP.objective_value(optimization_container.JuMPmodel)
+        optimizer_stats[:obj_value] = JuMP.objective_value(container.JuMPmodel)
     else
         optimizer_stats[:obj_value] = Inf
     end
 
     try
-        optimizer_stats[:solve_time] =
-            MOI.get(optimization_container.JuMPmodel, MOI.SolveTime())
+        optimizer_stats[:solve_time] = MOI.get(container.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
         optimizer_stats[:solve_time] = NaN # "Not Supported by solver"
@@ -358,12 +301,9 @@ function export_optimizer_stats(
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function serialize_optimization_model(
-    optimization_container::OptimizationContainer,
-    save_path::String,
-)
+function serialize_optimization_model(container::OptimizationContainer, save_path::String)
     MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
-    MOI.copy_to(MOF_model, JuMP.backend(optimization_container.JuMPmodel))
+    MOI.copy_to(MOF_model, JuMP.backend(container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
 end
@@ -379,25 +319,34 @@ function _assign_container!(container::Dict, key, value)
 end
 
 ####################################### Variable Container #################################
+function _add_var_container!(
+    container::OptimizationContainer,
+    var_key::VariableKey{T, U},
+    sparse::Bool,
+    axs...,
+) where {T <: VariableType, U <: PSY.Component}
+    if sparse
+        var_container = sparse_container_spec(JuMP.VariableRef, axs...)
+    else
+        var_container = container_spec(JuMP.VariableRef, axs...)
+    end
+    _assign_container!(container.variables, var_key, var_container)
+    return var_container
+end
+
 function add_var_container!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::T,
     ::Type{U},
     axs...;
     sparse = false,
 ) where {T <: VariableType, U <: PSY.Component}
     var_key = VariableKey(T, U)
-    if sparse
-        container = sparse_container_spec(JuMP.VariableRef, axs...)
-    else
-        container = container_spec(JuMP.VariableRef, axs...)
-    end
-    _assign_container!(optimization_container.variables, var_key, container)
-    return container
+    return _add_var_container!(container, var_key, sparse, axs...)
 end
 
 function add_var_container!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::T,
     ::Type{U},
     meta::String,
@@ -405,24 +354,18 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: PSY.Component}
     var_key = VariableKey(T, U, meta)
-    if sparse
-        container = sparse_container_spec(JuMP.VariableRef, axs...)
-    else
-        container = container_spec(JuMP.VariableRef, axs...)
-    end
-    _assign_container!(optimization_container.variables, var_key, container)
-    return container
+    return _add_var_container!(container, var_key, sparse; axs...)
 end
 
-function get_variable_keys(optimization_container::OptimizationContainer)
-    return collect(keys(optimization_container.variables))
+function get_variable_keys(container::OptimizationContainer)
+    return collect(keys(container.variables))
 end
 
-function get_variable(optimization_container::OptimizationContainer, key::VariableKey)
-    var = get(optimization_container.variables, key, nothing)
+function get_variable(container::OptimizationContainer, key::VariableKey)
+    var = get(container.variables, key, nothing)
     if var === nothing
         name = encode_key(key)
-        keys = encode_key.(get_variable_keys(optimization_container))
+        keys = encode_key.(get_variable_keys(container))
         @error "$name is not stored" sort!(keys)
         throw(IS.InvalidValue("variable $name is not stored"))
     end
@@ -430,24 +373,23 @@ function get_variable(optimization_container::OptimizationContainer, key::Variab
 end
 
 function get_variable(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::T,
     ::Type{U},
     meta::String = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: PSY.Component}
-    return get_variable(optimization_container, VariableKey(T, U, meta))
+    return get_variable(container, VariableKey(T, U, meta))
 end
 
-function read_variables(optimization_container::OptimizationContainer)
+function read_variables(container::OptimizationContainer)
     return Dict(
-        encode_key(k) => axis_array_to_dataframe(v) for
-        (k, v) in get_variables(optimization_container)
+        encode_key(k) => axis_array_to_dataframe(v) for (k, v) in get_variables(container)
     )
 end
 
 ##################################### AuxVariable Container ################################
 function add_aux_var_container!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::T,
     ::Type{U},
     axs...;
@@ -455,36 +397,36 @@ function add_aux_var_container!(
 ) where {T <: AuxVariableType, U <: PSY.Component}
     var_key = AuxVarKey(T, U)
     if sparse
-        container = sparse_container_spec(Float64, axs...)
+        aux_var_container = sparse_container_spec(Float64, axs...)
     else
-        container = container_spec(Float64, axs...)
+        aux_var_container = container_spec(Float64, axs...)
     end
-    _assign_container!(optimization_container.aux_variables, var_key, container)
-    return container
+    _assign_container!(container.aux_variables, var_key, aux_var_container)
+    return aux_var_container
 end
 
-function get_aux_variable_keys(optimization_container::OptimizationContainer)
-    return collect(keys(optimization_container.aux_variables))
+function get_aux_variable_keys(container::OptimizationContainer)
+    return collect(keys(container.aux_variables))
 end
 
 ##################################### Constraint Container #################################
-function add_cons_container!(
-    optimization_container::OptimizationContainer,
+function _add_cons_container!(
+    container::OptimizationContainer,
     cons_key::ConstraintKey,
     axs...;
     sparse = false,
 )
     if sparse
-        container = sparse_container_spec(JuMP.ConstraintRef, axs...)
+        cons_container = sparse_container_spec(JuMP.ConstraintRef, axs...)
     else
-        container = container_spec(JuMP.ConstraintRef, axs...)
+        cons_container = container_spec(JuMP.ConstraintRef, axs...)
     end
-    _assign_container!(optimization_container.constraints, cons_key, container)
-    return container
+    _assign_container!(container.constraints, cons_key, cons_container)
+    return cons_container
 end
 
 function add_cons_container!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     constaint_type::T,
     ::Type{U},
     axs...;
@@ -492,21 +434,21 @@ function add_cons_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     cons_key = ConstraintKey(T, U, meta)
-    return add_cons_container!(optimization_container, cons_key, axs...; sparse = sparse)
+    return _add_cons_container!(container, cons_key, axs...; sparse = sparse)
 end
 
-function get_constraint_keys(optimization_container::OptimizationContainer)
-    return collect(keys(optimization_container.constraints))
+function get_constraint_keys(container::OptimizationContainer)
+    return collect(keys(container.constraints))
 end
 
-function get_initial_conditions_keys(optimization_container::OptimizationContainer)
-    return collect(keys(optimization_container.initial_conditions))
+function get_initial_conditions_keys(container::OptimizationContainer)
+    return collect(keys(container.initial_conditions))
 end
 
-function get_constraint(optimization_container::OptimizationContainer, key::ConstraintKey)
-    var = get(optimization_container.constraints, key, nothing)
+function get_constraint(container::OptimizationContainer, key::ConstraintKey)
+    var = get(container.constraints, key, nothing)
     if var === nothing
-        @error "$name is not stored" sort!(get_constraint_keys(optimization_container))
+        @error "$name is not stored" sort!(get_constraint_keys(container))
         throw(IS.InvalidValue("constraint $key is not stored"))
     end
 
@@ -514,25 +456,25 @@ function get_constraint(optimization_container::OptimizationContainer, key::Cons
 end
 
 function get_constraint(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     constraint_type::ConstraintType,
     meta = CONTAINER_KEY_EMPTY_META,
 )
-    return get_constraint(optimization_container, ConstraintKey(constraint_type, meta))
+    return get_constraint(container, ConstraintKey(constraint_type, meta))
 end
 
 function get_constraint(
-    optimization_container::OptimizationContainer,
-    constraint_type::T,
+    container::OptimizationContainer,
+    ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: PSY.Component}
-    return get_constraint(optimization_container, ConstraintKey(T, U, meta))
+    return get_constraint(container, ConstraintKey(T, U, meta))
 end
 
-function read_duals(optimization_container::OptimizationContainer)
-    cons = get_constraint_duals(optimization_container.settings)
-    return read_duals(optimization_container, cons)
+function read_duals(container::OptimizationContainer)
+    cons = get_constraint_duals(container.settings)
+    return read_duals(container, cons)
 end
 
 function read_duals(op::OptimizationContainer, cons::Vector{Symbol})
@@ -546,69 +488,65 @@ function read_duals(op::OptimizationContainer, cons::Vector{Symbol})
 end
 
 ##################################### Parameter Container ##################################
-function add_param_container!(
-    optimization_container::OptimizationContainer,
-    key::ParameterKey,
-    axs...,
-)
-    container = ParameterContainer(
+function add_param_container!(container::OptimizationContainer, key::ParameterKey, axs...)
+    param_container = ParameterContainer(
         JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
         fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
-    _assign_container!(optimization_container.parameters, key, container)
-    return container
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
 end
 
 function add_param_container!(
-    optimization_container::OptimizationContainer,
-    parameter::T,
+    container::OptimizationContainer,
+    ::T,
     ::Type{U},
     axs...;
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
     param_key = ParameterKey(T, U, meta)
-    return add_param_container!(optimization_container, param_key, axs...)
+    return add_param_container!(container, param_key, axs...)
 end
 
-function get_parameter_names(optimization_container::OptimizationContainer)
-    return collect(keys(optimization_container.parameters))
+function get_parameter_names(container::OptimizationContainer)
+    return collect(keys(container.parameters))
 end
 
-function get_parameter(optimization_container::OptimizationContainer, key::ParameterKey)
-    container = get(optimization_container.parameters, key, nothing)
-    if container === nothing
-        @error "$name is not stored" sort!(get_parameter_names(optimization_container))
+function get_parameter(container::OptimizationContainer, key::ParameterKey)
+    param_container = get(container.parameters, key, nothing)
+    if param_container === nothing
+        @error "$name is not stored" sort!(get_parameter_names(container))
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
-    return container
+    return param_container
 end
 
 function get_parameter(
-    optimization_container::OptimizationContainer,
-    parameter::T,
+    container::OptimizationContainer,
+    ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return get_parameter(optimization_container, ParameterKey(T, U, meta))
+    return get_parameter(container, ParameterKey(T, U, meta))
 end
 
-function get_parameter_array(optimization_container::OptimizationContainer, key)
-    return get_parameter_array(get_parameter(optimization_container, key))
+function get_parameter_array(container::OptimizationContainer, key)
+    return get_parameter_array(get_parameter(container, key))
 end
 
-function iterate_parameter_containers(optimization_container::OptimizationContainer)
+function iterate_parameter_containers(container::OptimizationContainer)
     Channel() do channel
-        for container in values(optimization_container.parameters)
-            put!(channel, container)
+        for param_container in values(container.parameters)
+            put!(channel, param_container)
         end
     end
 end
 
-function read_parameters(optimization_container::OptimizationContainer)
+function read_parameters(container::OptimizationContainer)
     # TODO: Still not obvious implementation since it needs to get the multipliers from
     # the system
     params_dict = Dict{Symbol, DataFrames.DataFrame}()
-    parameters = get_parameters(optimization_container)
+    parameters = get_parameters(container)
     (isnothing(parameters) || isempty(parameters)) && return params_dict
     for (k, v) in parameters
         !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
@@ -622,59 +560,49 @@ function read_parameters(optimization_container::OptimizationContainer)
 end
 
 ##################################### Expression Container #################################
-function assign_expression!(
-    optimization_container::OptimizationContainer,
-    name::Symbol,
-    value,
-)
+function assign_expression!(container::OptimizationContainer, name::Symbol, value)
     @debug "set_expression" name
-    optimization_container.expressions[name] = value
+    container.expressions[name] = value
     return
 end
 
 function add_expression_container!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     exp_name::Symbol,
     axs...,
 )
     container = JuMP.Containers.DenseAxisArray{JuMP.GenericAffExpr}(undef, axs...)
-    assign_expression!(optimization_container, exp_name, container)
+    assign_expression!(container, exp_name, container)
     return container
 end
 
 ###################################Initial Conditions Containers############################
-function has_initial_conditions(optimization_container::OptimizationContainer, key::ICKey)
-    return haskey(optimization_container.initial_conditions, key)
+function has_initial_conditions(container::OptimizationContainer, key::ICKey)
+    return haskey(container.initial_conditions, key)
 end
 
-function iterate_initial_conditions(optimization_container::OptimizationContainer)
-    return pairs(optimization_container.initial_conditions)
+function iterate_initial_conditions(container::OptimizationContainer)
+    return pairs(container.initial_conditions)
 end
 
 function get_initial_conditions(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{D},
 ) where {T <: InitialConditionType, D <: PSY.Device}
-    return get_initial_conditions(optimization_container, ICKey(T, D))
+    return get_initial_conditions(container, ICKey(T, D))
 end
 
-function get_initial_conditions(optimization_container::OptimizationContainer, key::ICKey)
-    initial_conditions = get(optimization_container.initial_conditions, key, nothing)
+function get_initial_conditions(container::OptimizationContainer, key::ICKey)
+    initial_conditions = get(container.initial_conditions, key, nothing)
     if initial_conditions === nothing
-        @error "$key is not stored" sort!(
-            get_initial_conditions_keys(optimization_container),
-        )
+        @error "$key is not stored" sort!(get_initial_conditions_keys(container))
         throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
     end
     return initial_conditions
 end
 
-function set_initial_conditions!(
-    optimization_container::OptimizationContainer,
-    key::ICKey,
-    value,
-)
+function set_initial_conditions!(container::OptimizationContainer, key::ICKey, value)
     @debug "set_initial_condition_container" key
-    optimization_container.initial_conditions[key] = value
+    container.initial_conditions[key] = value
 end

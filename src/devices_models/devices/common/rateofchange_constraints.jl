@@ -21,41 +21,28 @@ If t > 1:
 `` r^{down} \leq x_t - x_{t-1} \leq r^{up}, \forall t \geq 2 ``
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * rate_data::Tuple{Vector{String}, Vector{UpDown}} : gives name (1) and max ramp up/down rates (2)
 * initial_conditions::Vector{InitialCondition} : for time zero 'variable'
 * cons_name::Symbol : name of the constraint
 * var_name::Tuple{Symbol, Symbol, Symbol} : the name of the variable
 """
 function device_linear_rateofchange!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
     cons_type::ConstraintType,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    parameters = model_has_parameters(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    parameters = built_for_simulation(container)
+    time_steps = get_time_steps(container)
 
-    variable = get_variable(optimization_container, var_type, T)
+    variable = get_variable(container, var_type, T)
 
     set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        set_name,
-        time_steps,
-        meta = "up",
-    )
-    con_down = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        set_name,
-        time_steps,
-        meta = "dn",
-    )
+    con_up = add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "up")
+    con_down =
+        add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "dn")
 
     for r in rate_data
         name = get_component_name(r)
@@ -64,25 +51,22 @@ function device_linear_rateofchange!(
         @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in r.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[name, 1],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, 1])
         end
         con_up[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub - ic_power <= r.ramp_limits.up
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in r.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[name, 1],
+                get_variable(container, val)[name, 1],
                 -1.0,
             )
         end
         con_down[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             ic_power - expression_lb <= r.ramp_limits.down
         )
     end
@@ -91,25 +75,22 @@ function device_linear_rateofchange!(
         name = get_component_name(r)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[name, t],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, t])
         end
         con_up[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub - variable[name, t - 1] <= r.ramp_limits.up
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
                 -1.0,
             )
         end
         con_down[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             variable[name, t - 1] - expression_lb <= r.ramp_limits.down
         )
     end
@@ -140,7 +121,7 @@ If t > 1:
 `` r^{down} + r^{min} x^{stop}_t \leq x_t - x_{t-1} \leq r^{up} + r^{max} x^{start}_t, \forall t \geq 2 ``
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}} : (1) gives name
                                                                      (2) gives min/max ramp rates
                                                                      (3) gives min/max for 'variable'
@@ -152,36 +133,23 @@ If t > 1:
 - : var_keys[3] : 'varstop'
 """
 function device_mixedinteger_rateofchange!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
     cons_type::ConstraintType,
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    parameters = model_has_parameters(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    parameters = built_for_simulation(container)
+    time_steps = get_time_steps(container)
 
-    variable = get_variable(optimization_container, var_types[1], T)
-    varstart = get_variable(optimization_container, var_types[2], T)
-    varstop = get_variable(optimization_container, var_types[3], T)
+    variable = get_variable(container, var_types[1], T)
+    varstart = get_variable(container, var_types[2], T)
+    varstop = get_variable(container, var_types[3], T)
 
     set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        set_name,
-        time_steps,
-        meta = "up",
-    )
-    con_down = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        set_name,
-        time_steps,
-        meta = "dn",
-    )
+    con_up = add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "up")
+    con_down =
+        add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "dn")
 
     for r in rate_data
         name = get_component_name(r)
@@ -190,13 +158,10 @@ function device_mixedinteger_rateofchange!(
         @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in r.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[name, 1],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, 1])
         end
         con_up[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub - (ic_power) <=
             r.ramp_limits.up + r.limits.max * varstart[name, 1]
         )
@@ -204,12 +169,12 @@ function device_mixedinteger_rateofchange!(
         for val in r.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[name, 1],
+                get_variable(container, val)[name, 1],
                 -1.0,
             )
         end
         con_down[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             (ic_power) - expression_lb <=
             r.ramp_limits.down + r.limits.min * varstop[name, 1]
         )
@@ -219,13 +184,10 @@ function device_mixedinteger_rateofchange!(
         name = get_component_name(r)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[name, t],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, t])
         end
         con_up[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub - variable[name, t - 1] <=
             r.ramp_limits.up + r.limits.max * varstart[name, 1]
         )
@@ -233,12 +195,12 @@ function device_mixedinteger_rateofchange!(
         for val in r.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
                 -1.0,
             )
         end
         con_down[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             variable[name, t - 1] - expression_lb <=
             r.ramp_limits.down + r.limits.min * varstop[name, t]
         )
@@ -270,7 +232,7 @@ If t > 1:
 `` r^{down} \leq x_t - x_{t-1} \leq r^{up}  \forall t \geq 2 ``
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}} : (1) gives name
                                                                      (2) gives min/max ramp rates
                                                                      (3) gives min/max for 'variable'
@@ -280,57 +242,41 @@ If t > 1:
 - : var_name : 'variable'
 """
 function device_multistart_rateofchange!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
     cons_type::ConstraintType,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
-    variable = get_variable(optimization_container, var_type, T)
+    time_steps = get_time_steps(container)
+    variable = get_variable(container, var_type, T)
 
     set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        set_name,
-        time_steps,
-        meta = "up",
-    )
-    con_down = add_cons_container!(
-        optimization_container,
-        cons_type,
-        T,
-        set_name,
-        time_steps,
-        meta = "dn",
-    )
+    con_up = add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "up")
+    con_down =
+        add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "dn")
 
     for r in rate_data
         name = get_component_name(r)
         ic_power = get_value(get_ic_power(r))
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in r.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[name, 1],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, 1])
         end
         con_up[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub - (ic_power) <= r.ramp_limits.up
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in r.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[name, 1],
+                get_variable(container, val)[name, 1],
                 1.0,
             )
         end
         con_down[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             (ic_power) - expression_lb <= r.ramp_limits.down
         )
     end
@@ -339,25 +285,22 @@ function device_multistart_rateofchange!(
         name = get_component_name(r)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[name, t],
-            )
+            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, t])
         end
         con_up[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             expression_ub - variable[name, t - 1] <= r.ramp_limits.up
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(optimization_container, val)[name, t],
+                get_variable(container, val)[name, t],
                 1.0,
             )
         end
         con_down[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             variable[name, t - 1] - expression_lb <= r.ramp_limits.down
         )
     end
@@ -366,21 +309,21 @@ function device_multistart_rateofchange!(
 end
 
 function service_upward_rateofchange!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     rate_data::Vector{ServiceRampConstraintInfo},
     cons_type::ConstraintType,
     var_type::VariableType,
     service_name::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
 
     # TODO DT: is this change valid?
-    variable = get_variable(optimization_container, var_type, T, service_name)
+    variable = get_variable(container, var_type, T, service_name)
 
     set_name = [get_component_name(r) for r in rate_data]
     con_up = add_cons_container!(
-        optimization_container,
+        container,
         cons_type,
         T,
         set_name,
@@ -390,29 +333,27 @@ function service_upward_rateofchange!(
 
     for r in rate_data, t in time_steps
         name = get_component_name(r)
-        con_up[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            variable[name, t] <= r.ramp_limits.up
-        )
+        con_up[name, t] =
+            JuMP.@constraint(container.JuMPmodel, variable[name, t] <= r.ramp_limits.up)
     end
 
     return
 end
 
 function service_downward_rateofchange!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     rate_data::Vector{ServiceRampConstraintInfo},
     cons_type::ConstraintType,
     var_type::VariableType,
     service_name::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     # TODO DT: is this change valid?
-    variable = get_variable(optimization_container, var_type, T, service_name)
+    variable = get_variable(container, var_type, T, service_name)
     set_name = [get_component_name(r) for r in rate_data]
     con_down = add_cons_container!(
-        optimization_container,
+        container,
         cons_type,
         T,
         set_name,
@@ -422,10 +363,8 @@ function service_downward_rateofchange!(
 
     for r in rate_data, t in time_steps
         name = get_component_name(r)
-        con_down[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            variable[name, t] <= r.ramp_limits.down
-        )
+        con_down[name, t] =
+            JuMP.@constraint(container.JuMPmodel, variable[name, t] <= r.ramp_limits.down)
     end
 
     return

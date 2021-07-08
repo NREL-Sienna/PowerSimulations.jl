@@ -40,27 +40,27 @@ function _display_model(
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
+    Base.show(io::IO, ::MIME"text/plain", op_model::DecisionModel)
 
-This function goes through the fields in OperationsProblem and then in OperationsProblemTemplate,
+This function goes through the fields in DecisionModel and then in ProblemTemplate,
 if the field contains a Device model dictionary, it calls organize_device_model() &
 prints the data by field, key, value. If the field is not a Device model dictionary,
 and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, m::MIME"text/plain", op_problem::OperationsProblem)
-    show(io, m, op_problem.template)
+function Base.show(io::IO, m::MIME"text/plain", op_model::DecisionModel)
+    show(io, m, model.template)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTemplate)
+function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
     println(io, "\nOperations Problem Specification")
     println(io, "============================================")
 
-    for field in fieldnames(OperationsProblemTemplate)
+    for field in fieldnames(ProblemTemplate)
         val = getfield(template, Symbol(field))
-        if field == :transmission
-            println(io, "Transmission: $val")
+        if field == :network_model
+            println(io, "Transmission: $(get_network_formulation(val))")
         elseif typeof(val) <: Dict{Symbol, <:DeviceModel}
             println(io, "============================================")
             _display_model(val, field, io)
@@ -74,8 +74,8 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
     println(io, "============================================")
 end
 
-function Base.show(io::IO, optimization_container::OptimizationContainer)
-    show(io, get_jump_model(optimization_container))
+function Base.show(io::IO, container::OptimizationContainer)
+    show(io, get_jump_model(container))
 end
 
 function Base.show(io::IO, sim::Simulation)
@@ -178,8 +178,8 @@ function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     end
 end
 
-function Base.show(io::IO, stage::OperationsProblem)
-    println(io, "OperationsProblem()")
+function Base.show(io::IO, stage::DecisionModel)
+    println(io, "DecisionModel()")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)

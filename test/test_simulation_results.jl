@@ -10,13 +10,13 @@ function verify_export_results(results, export_path)
         rpath = problem_results.results_output_folder
         for timestamp in get_existing_timestamps(problem_results)
             for name in get_existing_duals(problem_results)
-                compare_results(rpath, export_path, problem, "duals", name, timestamp)
+                compare_results(rpath, export_path, model, "duals", name, timestamp)
             end
             for name in get_existing_parameters(problem_results)
-                compare_results(rpath, export_path, problem, "parameters", name, timestamp)
+                compare_results(rpath, export_path, model, "parameters", name, timestamp)
             end
             for name in get_existing_variables(problem_results)
-                compare_results(rpath, export_path, problem, "variables", name, timestamp)
+                compare_results(rpath, export_path, model, "variables", name, timestamp)
             end
         end
 
@@ -31,10 +31,10 @@ function verify_export_results(results, export_path)
     end
 end
 
-function compare_results(rpath, epath, problem, field, name, timestamp)
+function compare_results(rpath, epath, model, field, name, timestamp)
     filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
-    df1 = PSI.read_dataframe(joinpath(rpath, problem, field, filename))
-    df2 = PSI.read_dataframe(joinpath(epath, problem, field, filename))
+    df1 = PSI.read_dataframe(joinpath(rpath, model, field, filename))
+    df2 = PSI.read_dataframe(joinpath(epath, model, field, filename))
     @test df1 == df2
 end
 
@@ -53,13 +53,13 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
         time_series_cache_size = 0  # This is only for test coverage.
         problems = SimulationProblems(
-            UC = OperationsProblem(
+            UC = DecisionModel(
                 template_uc,
                 c_sys5_hy_uc;
                 optimizer = GLPK_optimizer,
                 time_series_cache_size = time_series_cache_size,
             ),
-            ED = OperationsProblem(
+            ED = DecisionModel(
                 template_ed,
                 c_sys5_hy_ed;
                 optimizer = GLPK_optimizer,
@@ -351,7 +351,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         template_uc = get_template_hydro_st_uc()
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
         problems = SimulationProblems(
-            UC = OperationsProblem(
+            UC = DecisionModel(
                 template_uc,
                 c_sys5_hy_uc;
                 optimizer = GLPK_optimizer,

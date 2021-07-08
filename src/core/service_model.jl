@@ -45,15 +45,19 @@ reserves = ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve)
 mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     feedforward::Union{Nothing, AbstractAffectFeedForward}
     use_service_name::Bool
+    use_slacks::Bool
+    duals::Vector{<:ConstraintType}
     function ServiceModel(
         ::Type{D},
         ::Type{B};
-        feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
+        use_slacks = false,
+        feedforward = nothing,
         use_service_name::Bool = false,
+        duals = Vector{ConstraintType}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)
-        new{D, B}(feedforward, use_service_name)
+        new{D, B}(feedforward, use_service_name, use_slacks, duals)
     end
 end
 
@@ -64,6 +68,8 @@ get_formulation(
     ::ServiceModel{D, B},
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation} = B
 get_feedforward(m::ServiceModel) = m.feedforward
+get_use_slacks(m::ServiceModel) = m.use_slacks
+get_duals(m::ServiceModel) = m.duals
 
 function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)
     if haskey(dict, key)

@@ -20,8 +20,8 @@ const RELAXED_FORMULATION_MAPPING = Dict(
     :InterruptibleLoad => DeviceModel(PSY.InterruptibleLoad, StaticPowerLoad),
 )
 
-function _build_initialization_template(problem::OperationsProblem)
-    ic_template = OperationsProblemTemplate(problem.template.transmission)
+function _build_initialization_template(model::DecisionModel)
+    ic_template = ProblemTemplate(problem.template.transmission)
     for (device, _) in problem.template.devices
         model = RELAXED_FORMULATION_MAPPING[device]
         set_device_model!(ic_template, model)
@@ -37,24 +37,24 @@ function _build_initialization_template(problem::OperationsProblem)
 end
 
 function _build_initialization_problem(
-    problem::OperationsProblem{M},
+    model::DecisionModel{M},
     sim::Simulation,
-) where {M <: AbstractOperationsProblem}
-    settings = deepcopy(get_settings(problem))
+) where {M <: DecisionProblem}
+    settings = deepcopy(get_settings(model))
     set_horizon!(settings, 1)
-    template = _build_initialization_template(problem)
-    ic_op_problem = OperationsProblem{M}(template, problem.sys, settings)
-    build!(ic_op_problem; output_dir = get_internal(problem).output_dir, serialize = false)
-    return ic_op_problem
+    template = _build_initialization_template(model)
+    ic_model = DecisionModel{M}(template, problem.sys, settings)
+    build!(ic_model; output_dir = get_internal(model).output_dir, serialize = false)
+    return ic_model
 end
 
 function _perform_initialization_step!(
-    ic_op_problem::OperationsProblem,
-    problem::OperationsProblem,
+    ic_op_model::DecisionModel,
+    model::DecisionModel,
     sim::Simulation,
 )
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
-    optimization_containter = get_optimization_container(problem)
+    optimization_containter = get_optimization_container(model)
     for (ini_cond_key, initial_conditions) in
         iterate_initial_conditions(optimization_containter)
         # TODO: Replace this convoluted way to get information with access to data store
@@ -63,7 +63,7 @@ function _perform_initialization_step!(
             name = get_device_name(ic)
             var_value = get_problem_variable(
                 RecedingHorizon(),
-                (ic_op_problem => problem),
+                (ic_model => problem),
                 name,
                 ic.update_ref,
             )
@@ -74,7 +74,7 @@ function _perform_initialization_step!(
                 ic,
                 var_value,
                 simulation_cache,
-                get_resolution(problem),
+                get_resolution(model),
             )
             previous_value = get_condition(ic)
             PJ.set_value(ic.value, quantity)
@@ -84,7 +84,7 @@ function _perform_initialization_step!(
                 ic,
                 quantity,
                 previous_value,
-                get_simulation_number(problem),
+                get_simulation_number(model),
             )
         end
     end
@@ -92,18 +92,18 @@ function _perform_initialization_step!(
 end
 
 function _create_initialization_problem(sim::Simulation)
-    ic_op_problem = _build_initialization_problem(first(get_problems(sim)), sim)
-    solve!(ic_op_problem)
-    return ic_op_problem
+    ic_model = _build_initialization_problem(first(get_problems(sim)), sim)
+    solve!(ic_model)
+    return ic_model
 end
 
 function _initialization_problems!(sim::Simulation)
-    # NOTE: Here we assume the solution to the 1st period in the simulation provides a good initial conditions 
+    # NOTE: Here we assume the solution to the 1st period in the simulation provides a good initial conditions
     # for initializing the simulation, but is not always guaranteed to provide a feasible initial conditions.
-    # Currently the formulations used in the initialization problem are pre-defined, customization option 
+    # Currently the formulations used in the initialization problem are pre-defined, customization option
     # is be added in future release.
-    ic_op_problem = _create_initialization_problem(sim)
+    ic_model = _create_initialization_problem(sim)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        _perform_initialization_step!(ic_op_problem, problem, sim)
+        _perform_initialization_step!(ic_model, model, sim)
     end
 end

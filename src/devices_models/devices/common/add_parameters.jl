@@ -1,24 +1,23 @@
 
 function include_parameters!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
     parameter::RightHandSideParameter,
     ::Type{T},
     expression_name::Symbol,
     multiplier::Float64 = 1.0,
 ) where {T <: PSY.Device}
-    @assert model_has_parameters(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    @assert built_for_simulation(container)
+    time_steps = get_time_steps(container)
     names = [get_component_name(r) for r in constraint_infos]
     @debug "adding" parameter
-    container =
-        add_param_container!(optimization_container, parameter, T, names, time_steps)
+    container = add_param_container!(container, parameter, T, names, time_steps)
     param = get_parameter_array(container)
     mult = get_multiplier_array(container)
-    expr = get_expression(optimization_container, expression_name)
+    expr = get_expression(container, expression_name)
     for t in time_steps, r in constraint_infos
         param[get_component_name(r), t] =
-            add_parameter(optimization_container.JuMPmodel, r.timeseries[t])
+            add_parameter(container.JuMPmodel, r.timeseries[t])
         mult[get_component_name(r), t] = r.multiplier * multiplier
         add_to_expression!(
             expr,
@@ -32,22 +31,21 @@ function include_parameters!(
 end
 
 function include_parameters!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
     parameter::RightHandSideParameter,
     ::Type{T},
     multiplier::Float64 = 1.0,
 ) where {T <: PSY.Device}
-    @assert model_has_parameters(optimization_container)
-    time_steps = model_time_steps(optimization_container)
+    @assert built_for_simulation(container)
+    time_steps = get_time_steps(container)
     names = [get_component_name(r) for r in constraint_infos]
-    container =
-        add_param_container!(optimization_container, parameter, T, names, time_steps)
+    container = add_param_container!(container, parameter, T, names, time_steps)
     param = get_parameter_array(container)
     mult = get_multiplier_array(container)
     for t in time_steps, r in constraint_infos
         param[get_component_name(r), t] =
-            add_parameter(optimization_container.JuMPmodel, r.timeseries[t])
+            add_parameter(container.JuMPmodel, r.timeseries[t])
         mult[get_component_name(r), t] = r.multiplier * multiplier
     end
     return container

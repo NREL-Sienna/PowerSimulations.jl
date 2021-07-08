@@ -4,7 +4,7 @@ SimulationProblems, the order in which the problems are created determines the o
 the simulation is executed.
 """
 mutable struct SimulationProblems
-    op_problems::OrderedDict{Symbol, OperationsProblem}
+    models::OrderedDict{Symbol, DecisionProblem}
     names::Vector{Symbol}
     function SimulationProblems(; kwargs...)
         prob_dict = OrderedDict(kwargs...)
@@ -12,12 +12,12 @@ mutable struct SimulationProblems
     end
 end
 
-Base.getindex(problems::SimulationProblems, key::Symbol) = problems.op_problems[key]
+Base.getindex(problems::SimulationProblems, key::Symbol) = problems.models[key]
 Base.getindex(problems::SimulationProblems, key) = getindex(problems, Symbol(key))
 
-Base.length(problems::SimulationProblems) = length(problems.op_problems)
-Base.first(problems::SimulationProblems) = first(problems.op_problems)
-Base.iterate(problems::SimulationProblems, args...) = iterate(problems.op_problems, args...)
+Base.length(problems::SimulationProblems) = length(problems.models)
+Base.first(problems::SimulationProblems) = first(problems.models)
+Base.iterate(problems::SimulationProblems, args...) = iterate(problems.models, args...)
 
 get_problem_names(problems::SimulationProblems) = problems.names
 
@@ -27,12 +27,12 @@ end
 
 function determine_horizons!(problems::SimulationProblems)
     horizons = OrderedDict{Symbol, Int}()
-    for (name, problem) in problems.op_problems
-        optimization_container = get_optimization_container(problem)
-        settings = get_settings(optimization_container)
+    for (name, problem) in problems.models
+        container = get_optimization_container(model)
+        settings = get_settings(container)
         horizon = get_horizon(settings)
         if horizon == UNSET_HORIZON
-            sys = get_system(problem)
+            sys = get_system(model)
             horizon = PSY.get_forecast_horizon(sys)
             set_horizon!(settings, horizon)
         end
@@ -46,7 +46,7 @@ function determine_step_resolution(intervals)
 end
 
 function initialize_simulation_internals!(problems::SimulationProblems, uuid::Base.UUID)
-    for (ix, (name, problem)) in enumerate(problems.op_problems)
+    for (ix, (name, problem)) in enumerate(problems.models)
         info = SimulationInfo(
             ix,
             # JDNOTE: Making conversion to avoid breaking things
@@ -59,8 +59,6 @@ function initialize_simulation_internals!(problems::SimulationProblems, uuid::Ba
             false,
             uuid,
         )
-        set_simulation_info!(problem, info)
-        settings = get_settings(problem)
-        set_use_parameters!(settings, true)
+        set_simulation_info!(model, info)
     end
 end

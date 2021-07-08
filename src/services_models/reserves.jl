@@ -21,35 +21,31 @@ get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve,
 #! format: on
 ################################## Reserve Requirement Constraint ##########################
 function service_requirement_constraint!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
-    parameters = model_has_parameters(optimization_container)
-    initial_time = model_initial_time(optimization_container)
+    parameters = built_for_simulation(container)
+    initial_time = get_initial_time(container)
     @debug initial_time
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
-    reserve_variable =
-        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
-    use_slacks = get_services_slack_variables(optimization_container.settings)
+    constraint = get_constraint(container, RequirementConstraint(), SR)
+    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
+    use_slacks = get_services_slack_variables(container.settings)
 
-    ts_vector = get_time_series(optimization_container, service, "requirement")
+    ts_vector = get_time_series(container, service, "requirement")
 
-    use_slacks && (slack_vars = reserve_slacks(optimization_container, service))
+    use_slacks && (slack_vars = reserve_slacks(container, service))
 
     requirement = PSY.get_requirement(service)
     if parameters
-        container = get_parameter(
-            optimization_container,
-            RequirementTimeSeriesParameter("requirement"),
-            SR,
-        )
+        container =
+            get_parameter(container, RequirementTimeSeriesParameter("requirement"), SR)
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps
-            param[name, t] = add_parameter(optimization_container.JuMPmodel, ts_vector[t])
+            param[name, t] = add_parameter(container.JuMPmodel, ts_vector[t])
             multiplier[name, t] = 1.0
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
@@ -58,14 +54,14 @@ function service_requirement_constraint!(
             end
             mul = (requirement * multiplier[name, t])
             constraint[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 resource_expression >= param[name, t] * mul
             )
         end
     else
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 sum(reserve_variable[:, t]) >= ts_vector[t] * requirement
             )
         end
@@ -74,20 +70,19 @@ function service_requirement_constraint!(
 end
 
 function service_requirement_constraint!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.StaticReserve, T <: AbstractReservesFormulation}
-    initial_time = model_initial_time(optimization_container)
+    initial_time = get_initial_time(container)
     @debug initial_time
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
-    reserve_variable =
-        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
-    use_slacks = get_services_slack_variables(optimization_container.settings)
+    constraint = get_constraint(container, RequirementConstraint(), SR)
+    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
+    use_slacks = get_services_slack_variables(container.settings)
 
-    use_slacks && (slack_vars = reserve_slacks(optimization_container, service))
+    use_slacks && (slack_vars = reserve_slacks(container, service))
 
     requirement = PSY.get_requirement(service)
     for t in time_steps
@@ -96,54 +91,42 @@ function service_requirement_constraint!(
         if use_slacks
             resource_expression += slack_vars[t]
         end
-        constraint[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            resource_expression >= requirement
-        )
+        constraint[name, t] =
+            JuMP.@constraint(container.JuMPmodel, resource_expression >= requirement)
     end
 
     return
 end
 
 function cost_function!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
-    reserve = get_variable(
-        optimization_container,
-        ActivePowerReserveVariable(),
-        SR,
-        PSY.get_name(service),
-    )
+    reserve =
+        get_variable(container, ActivePowerReserveVariable(), SR, PSY.get_name(service))
     for r in reserve
-        JuMP.add_to_expression!(
-            optimization_container.cost_function,
-            r,
-            DEFAULT_RESERVE_COST,
-        )
+        JuMP.add_to_expression!(container.cost_function, r, DEFAULT_RESERVE_COST)
     end
     return
 end
 
 function service_requirement_constraint!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
-    initial_time = model_initial_time(optimization_container)
+    initial_time = get_initial_time(container)
     @debug initial_time
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
-    reserve_variable =
-        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
-    requirement_variable =
-        get_variable(optimization_container, ServiceRequirementVariable(), SR)
+    constraint = get_constraint(container, RequirementConstraint(), SR)
+    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
+    requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
 
     for t in time_steps
         constraint[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             sum(reserve_variable[:, t]) >= requirement_variable[name, t]
         )
     end
@@ -156,7 +139,7 @@ _get_ramp_limits(d::PSY.ThermalGen) = PSY.get_ramp_limits(d)
 _get_ramp_limits(d::PSY.HydroGen) = PSY.get_ramp_limits(d)
 
 function _get_data_for_ramp_limit(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     contributing_devices::U,
 ) where {
@@ -164,7 +147,7 @@ function _get_data_for_ramp_limit(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     time_frame = PSY.get_time_frame(service)
-    resolution = model_resolution(optimization_container)
+    resolution = get_resolution(container)
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
@@ -198,7 +181,7 @@ function _get_data_for_ramp_limit(
 end
 
 function ramp_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     contributing_devices::U,
     ::ServiceModel{SR, T},
@@ -207,11 +190,11 @@ function ramp_constraints!(
     T <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
+    data = _get_data_for_ramp_limit(container, service, contributing_devices)
     service_name = PSY.get_name(service)
     if !isempty(data)
         service_upward_rateofchange!(
-            optimization_container,
+            container,
             data,
             RampConstraint(),
             ActivePowerReserveVariable(),
@@ -225,7 +208,7 @@ function ramp_constraints!(
 end
 
 function ramp_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     contributing_devices::U,
     ::ServiceModel{SR, T},
@@ -234,11 +217,11 @@ function ramp_constraints!(
     T <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    data = _get_data_for_ramp_limit(optimization_container, service, contributing_devices)
+    data = _get_data_for_ramp_limit(container, service, contributing_devices)
     service_name = PSY.get_name(service)
     if !isempty(data)
         service_downward_rateofchange!(
-            optimization_container,
+            container,
             data,
             RampConstraint(),
             ActivePowerReserveVariable(),
@@ -254,7 +237,7 @@ end
 function AddCostSpec(
     ::Type{T},
     ::Type{StepwiseCostReserve},
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
 ) where {T <: PSY.Reserve}
     return AddCostSpec(;
         variable_type = ServiceRequirementVariable,
@@ -270,39 +253,31 @@ function AddCostSpec(
 end
 
 function add_to_cost!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     spec::AddCostSpec,
     service::SR,
     component_name::String,
 ) where {SR <: PSY.Reserve}
-    time_steps = model_time_steps(optimization_container)
-    use_forecast_data = model_uses_forecasts(optimization_container)
+    time_steps = get_time_steps(container)
     if !use_forecast_data
         error("StepwiseCostReserve is only supported with forecast")
     end
-    variable_cost_forecast =
-        get_time_series(optimization_container, service, "variable_cost")
+    variable_cost_forecast = get_time_series(container, service, "variable_cost")
     variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
     for t in time_steps
-        variable_cost!(
-            optimization_container,
-            spec,
-            component_name,
-            variable_cost_forecast[t],
-            t,
-        )
+        variable_cost!(container, spec, component_name, variable_cost_forecast[t], t)
     end
     return
 end
 
 function cost_function!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     model::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
     spec = AddCostSpec(SR, get_formulation(model), optimization_container)
     @debug SR, spec
-    add_to_cost!(optimization_container, spec, service, PSY.get_name(service))
+    add_to_cost!(container, spec, service, PSY.get_name(service))
     return
 end
 

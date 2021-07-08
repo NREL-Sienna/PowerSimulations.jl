@@ -35,7 +35,7 @@ function DeviceEnergyBalanceConstraintSpec(;
 end
 
 function add_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
@@ -49,33 +49,21 @@ function add_constraints!(
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
-    use_parameters = model_has_parameters(optimization_container)
-    use_forecasts = model_uses_forecasts(optimization_container)
-    # @assert !(use_parameters && !use_forecasts)
-    spec = DeviceEnergyBalanceConstraintSpec(
-        T,
-        U,
-        V,
-        W,
-        X,
-        feedforward,
-        use_parameters,
-        use_forecasts,
-    )
-    energy_balance_constraints!(optimization_container, devices, model, feedforward, spec)
+    use_parameters = built_for_simulation(container)
+    spec = DeviceEnergyBalanceConstraintSpec(T, U, V, W, X, feedforward, use_parameters)
+    energy_balance_constraints!(container, devices, model, feedforward, spec)
 end
 
 function energy_balance_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     spec::DeviceEnergyBalanceConstraintSpec,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
-    initial_conditions =
-        get_initial_conditions(optimization_container, spec.initial_condition, T)
+    initial_conditions = get_initial_conditions(container, spec.initial_condition, T)
     _apply_energy_balance_constraint_spec!(
-        optimization_container,
+        container,
         spec,
         devices,
         initial_conditions,
@@ -95,7 +83,7 @@ struct DeviceEnergyBalanceConstraintSpecInternal
 end
 
 function _apply_energy_balance_constraint_spec!(
-    optimization_container,
+    container,
     spec,
     devices::IS.FlattenIteratorWrapper{T},
     initial_conditions::Vector{InitialCondition},
@@ -108,7 +96,7 @@ function _apply_energy_balance_constraint_spec!(
         dev_name = PSY.get_name(device)
         if !isnothing(spec.parameter)
             forecast_name = get_name(spec.parameter)
-            ts_vector = get_time_series(optimization_container, device, forecast_name)
+            ts_vector = get_time_series(container, device, forecast_name)
             multiplier = spec.multiplier_func(device)
             constraint_info = EnergyBalanceConstraintInfo(
                 dev_name,
@@ -128,7 +116,7 @@ function _apply_energy_balance_constraint_spec!(
     end
 
     spec.constraint_func(
-        optimization_container,
+        container,
         DeviceEnergyBalanceConstraintSpecInternal(
             constraint_infos,
             spec.constraint_type,
@@ -153,31 +141,30 @@ If t > 1:
 `` x^{energy}_1 == x^{energy}_{init} + frhr \eta^{in} x^{in}_1 - \frac{frhr}{\eta^{out}} x^{out}_1, \text{ for } t = 1 ``
 `` x^{energy}_t == x^{energy}_{t-1} + frhr \eta^{in} x^{in}_t - \frac{frhr}{\eta^{out}} x^{out}_t, \forall t \geq 2 ``
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * inputs::Vector{DeviceEnergyBalanceConstraintSpecInternal} : stores constraint information
 """
 function energy_balance!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     inputs::DeviceEnergyBalanceConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [get_component_name(x) for x in inputs.constraint_infos]
 
-    varenergy =
-        get_variable(optimization_container, inputs.energy_variable, inputs.component_type)
+    varenergy = get_variable(container, inputs.energy_variable, inputs.component_type)
     varin = [
-        get_variable(optimization_container, var, inputs.component_type) for
+        get_variable(container, var, inputs.component_type) for
         var in inputs.pin_variable_types
     ]
     varout = [
-        get_variable(optimization_container, var, inputs.component_type) for
+        get_variable(container, var, inputs.component_type) for
         var in inputs.pout_variable_types
     ]
 
     constraint = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -199,7 +186,7 @@ function energy_balance!(
             JuMP.add_to_expression!(expr, var[name, 1], -1.0 * fraction_of_hour / eff_out)
         end
         constraint[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             varenergy[name, 1] == info.ic_energy.value + expr + ts_value
         )
     end
@@ -217,10 +204,8 @@ function energy_balance!(
         for var in varout
             JuMP.add_to_expression!(expr, var[name, t], -1.0 * fraction_of_hour / eff_out)
         end
-        constraint[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            varenergy[name, t] == expr + ts_value
-        )
+        constraint[name, t] =
+            JuMP.@constraint(container.JuMPmodel, varenergy[name, t] == expr + ts_value)
     end
 
     return
@@ -237,33 +222,32 @@ If t > 1:
 `` x^{energy}_1 == x^{energy}_{init} + frhr \eta^{in} x^{in}_1 - \frac{frhr}{\eta^{out}} x^{out}_1, \text{ for } t = 1 ``
 `` x^{energy}_t == x^{energy}_{t-1} + frhr \eta^{in} x^{in}_t - \frac{frhr}{\eta^{out}} x^{out}_t, \forall t \geq 2 ``
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * inputs::Vector{DeviceEnergyBalanceConstraintSpecInternal} : stores constraint information
 """
 function energy_balance_param!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     inputs::DeviceEnergyBalanceConstraintSpecInternal,
 )
-    time_steps = model_time_steps(optimization_container)
-    resolution = model_resolution(optimization_container)
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [get_component_name(x) for x in inputs.constraint_infos]
     has_parameter_data = !isnothing(inputs.parameter)
 
-    varenergy =
-        get_variable(optimization_container, inputs.energy_variable, inputs.component_type)
+    varenergy = get_variable(container, inputs.energy_variable, inputs.component_type)
     varin = [
-        get_variable(optimization_container, var, inputs.component_type) for
+        get_variable(container, var, inputs.component_type) for
         var in inputs.pin_variable_types
     ]
     varout = [
-        get_variable(optimization_container, var, inputs.component_type) for
+        get_variable(container, var, inputs.component_type) for
         var in inputs.pout_variable_types
     ]
 
     if has_parameter_data
         container = add_param_container!(
-            optimization_container,
+            container,
             inputs.parameter,
             inputs.component_type,
             names,
@@ -274,7 +258,7 @@ function energy_balance_param!(
     end
 
     constraint = add_cons_container!(
-        optimization_container,
+        container,
         inputs.constraint_type,
         inputs.component_type,
         names,
@@ -295,12 +279,11 @@ function energy_balance_param!(
         end
         if has_parameter_data
             multiplier[name, 1] = info.multiplier
-            param[name, 1] =
-                PJ.add_parameter(optimization_container.JuMPmodel, info.timeseries[1])
+            param[name, 1] = PJ.add_parameter(container.JuMPmodel, info.timeseries[1])
             JuMP.add_to_expression!(expr, param[name, 1], multiplier[name, 1])
         end
         constraint[name, 1] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             varenergy[name, 1] == info.ic_energy.value + expr
         )
     end
@@ -319,12 +302,11 @@ function energy_balance_param!(
         end
         if has_parameter_data
             multiplier[name, t] = info.multiplier
-            param[name, t] =
-                PJ.add_parameter(optimization_container.JuMPmodel, info.timeseries[t])
+            param[name, t] = PJ.add_parameter(container.JuMPmodel, info.timeseries[t])
             JuMP.add_to_expression!(expr, param[name, t], multiplier[name, t])
         end
         constraint[name, t] =
-            JuMP.@constraint(optimization_container.JuMPmodel, varenergy[name, t] == expr)
+            JuMP.@constraint(container.JuMPmodel, varenergy[name, t] == expr)
     end
 
     return

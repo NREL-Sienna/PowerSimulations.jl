@@ -81,7 +81,7 @@ function write_optimizer_stats!(
     stats::OptimizerStats,
     timestamp,
 )
-    store.optimizer_stats[Symbol(problem)][timestamp] = stats
+    store.optimizer_stats[Symbol(model)][timestamp] = stats
     return
 end
 

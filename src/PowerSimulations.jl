@@ -6,15 +6,16 @@ module PowerSimulations
 
 # Base Models
 export Simulation
-export OperationsProblem
+export DecisionModel
 export ProblemResults
-export OperationsProblemTemplate
+export ProblemTemplate
 export InitialCondition
 export SimulationProblems
 export SimulationSequence
 export SimulationResults
 
 # Network Relevant Exports
+export NetworkModel
 export StandardPTDFModel
 export PTDFPowerModel
 export CopperPlatePowerModel
@@ -128,7 +129,7 @@ export run_unit_commitment
 export set_device_model!
 export set_service_model!
 export set_transmission_model!
-export get_transmission_model
+export get_network_formulation
 ## Results interfaces
 export SimulationResultsExport
 export ProblemResultsExport
@@ -384,47 +385,53 @@ const TS = TimeSeries
 ################################################################################
 # Includes
 
-include("utils.jl")
-include("logging.jl")
-
 include("core/definitions.jl")
 
-# Models and constructors
+# Core components
 include("core/abstract_types.jl")
 include("core/aux_structs.jl")
-
 include("network_models/powermodels_formulations.jl")
-include("core/service_models.jl")
-include("core/device_models.jl")
-
+include("core/network_model.jl")
+include("core/service_model.jl")
+include("core/device_model.jl")
 include("core/parameters.jl")
 include("core/variables.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
 include("core/cache.jl")
-include("feedforward/feedforward_chronologies.jl")
-include("core/optimizer_stats.jl")
-include("initial_conditions/initial_condition_types.jl")
-include("initial_conditions/initial_conditions.jl")
-include("initial_conditions/initial_condition.jl")
-include("operation_problem/operations_problem_template.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
+include("core/optimizer_stats.jl")
+
+include("initial_conditions/initial_conditions.jl")
+include("initial_conditions/initial_condition.jl")
+include("initial_conditions/initial_condition_chronologies.jl")
+
+# TODO: Clean the Initial Condition relationship with the Optimization Container
+include("core/optimization_container.jl")
+include("initial_conditions/update_initial_conditions.jl")
+
+include("operation/problem_template.jl")
+include("operation/operation_model_interface.jl")
+include("operation/problem_internal.jl")
+include("operation/decision_model.jl")
+include("operation/problem_results_export.jl")
+include("operation/problem_results.jl")
+
+include("feedforward/feedforward_chronologies.jl")
+include("feedforward/feedforward_structs.jl")
+
 include("simulation/param_result_cache.jl")
 include("simulation/result_cache.jl")
 include("simulation/simulation_store.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
-include("operation_problem/problem_results_export.jl")
-include("simulation/simulation_results_export.jl")
-include("core/optimization_container.jl")
-include("initial_conditions/update_initial_conditions.jl")
-include("operation_problem/problem_internal.jl")
-include("operation_problem/operations_problem.jl")
-include("operation_problem/operations_problem_results.jl")
+include("simulation/simulation_problem_results.jl")
 include("simulation/simulation_problems.jl")
 include("simulation/simulation_sequence.jl")
 include("simulation/simulation.jl")
+include("simulation/simulation_results_export.jl")
+include("simulation/simulation_results.jl")
 
 include("devices_models/devices/common/constraints_structs.jl")
 include("devices_models/devices/common/cost_functions.jl")
@@ -442,11 +449,7 @@ include("devices_models/devices/common/energy_balance_constraint.jl")
 include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
-include("feedforward/feedforward_structs.jl")
-include("feedforward/feedforward.jl")
-include("operation_problem/problem_results.jl")
-include("simulation/simulation_results.jl")
-include("core/recorder_events.jl")
+include("feedforward/feedforward_constraints.jl")
 
 # Device Modeling components
 include("devices_models/devices/interfaces.jl")
@@ -471,7 +474,7 @@ include("services_models/services_constructor.jl")
 # Network models
 include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
-include("devices_models/devices/common/pm_translator.jl")
+include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 
@@ -490,13 +493,19 @@ include("devices_models/device_constructors/regulationdevice_constructor.jl")
 # Network constructors
 include("network_models/network_constructor.jl")
 
-# Templates
-include("operations_problem_templates.jl")
+# Templates for Operation Problems
+include("operation/operation_problem_templates.jl")
 
-# Operations Problems
-include("operations_problems.jl")
+# Operations Decision Problems
+include("operation/decision_problems.jl")
 
-# Printing
-include("printing.jl")
+# Utils
+include("utils/printing.jl")
+include("utils/file_utils.jl")
+include("utils/logging.jl")
+include("utils/dataframes_utils.jl")
+include("utils/jump_utils.jl")
+include("utils/powersystems_utils.jl")
+include("utils/recorder_events.jl")
 
 end

@@ -11,7 +11,7 @@ const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 # Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
-const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
+const PGAE = PJ.parameterizedGenericAffExpr{Float64, JuMP.VariableRef}
 const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
@@ -54,8 +54,8 @@ const NO_SERVICE_NAME_PROVIDED = ""
 const CONTAINER_KEY_EMPTY_META = ""
 
 # File Names definitions
-const PROBLEM_SERIALIZATION_FILENAME = "operations_problem.bin"
-const PROBLEM_BUILD_LOG_FILENAME = "operations_problem_build.log"
+const PROBLEM_SERIALIZATION_FILENAME = "operation_problem.bin"
+const PROBLEM_BUILD_LOG_FILENAME = "operation_problem_build.log"
 const HASH_FILENAME = "check.sha256"
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"

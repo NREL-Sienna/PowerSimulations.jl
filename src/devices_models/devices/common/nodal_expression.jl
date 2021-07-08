@@ -12,7 +12,6 @@ Construct NodalExpressionSpec for specific types.
 function NodalExpressionSpec(
     ::T,
     ::Type{U},
-    use_forecasts::Bool,
 ) where {T <: PSY.Device, U <: TimeSeriesParameter}
     error("NodalExpressionSpec is not implemented for type $T $U")
 end
@@ -25,27 +24,26 @@ for their specific types.
 Users may also implement custom nodal_expression! methods.
 """
 function nodal_expression!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     parameter::TimeSeriesParameter,
 ) where {T <: PSY.Device}
     # Run the Active Power Loop.
-    use_forecast_data = model_uses_forecasts(optimization_container)
-    spec = NodalExpressionSpec(T, parameter, use_forecast_data)
-    _nodal_expression!(optimization_container, devices, spec)
+    spec = NodalExpressionSpec(T, parameter)
+    _nodal_expression!(container, devices, spec)
     return
 end
 
 function _nodal_expression!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     spec::NodalExpressionSpec,
 ) where {T <: PSY.Device}
-    parameters = model_has_parameters(optimization_container)
+    parameters = built_for_simulation(container)
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     forecast_name = get_name(spec.parameter)
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, forecast_name)
+        ts_vector = get_time_series(container, d, forecast_name)
         @debug "building constraint info" get_name(d), summary(ts_vector)
         constraint_info =
             DeviceTimeSeriesConstraintInfo(d, spec.peak_value_function, ts_vector)
@@ -54,7 +52,7 @@ function _nodal_expression!(
     if parameters
         @debug spec.parameter_name forecast_name
         include_parameters!(
-            optimization_container,
+            container,
             constraint_infos,
             spec.parameter,
             T,
@@ -64,9 +62,9 @@ function _nodal_expression!(
         return
     else
         for constraint_info in constraint_infos
-            for t in model_time_steps(optimization_container)
+            for t in get_time_steps(container)
                 add_to_expression!(
-                    optimization_container.expressions[spec.expression],
+                    container.expressions[spec.expression],
                     constraint_info.bus_number,
                     t,
                     spec.multiplier *

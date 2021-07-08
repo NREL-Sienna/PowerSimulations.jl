@@ -4,62 +4,53 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
 
-    @test_throws MethodError OperationsProblem(template, c_sys5; bad_kwarg = 10)
+    @test_throws MethodError DecisionModel(template, c_sys5; bad_kwarg = 10)
 
-    op_problem = OperationsProblem(
+    model = DecisionModel(
         template,
         c_sys5;
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    @test PSI.get_use_forecast_data(
-        PSI.get_settings(PSI.get_optimization_container(op_problem)),
-    ) == false
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
 
-    op_problem = OperationsProblem(
+    model = DecisionModel(
         MockOperationProblem,
         get_thermal_dispatch_template_network(),
         c_sys5_re;
         optimizer = GLPK_optimizer,
         balance_slack_variables = true,
     )
-    op_problem = OperationsProblem(
+    model = DecisionModel(
         get_thermal_dispatch_template_network(),
         c_sys5;
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    @test PSI.get_use_forecast_data(
-        PSI.get_settings(PSI.get_optimization_container(op_problem)),
-    ) == false
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    e
 
     #"Test passing custom JuMP model"
     my_model = JuMP.Model()
     my_model.ext[:PSI_Testing] = 1
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    op_problem = OperationsProblem(
+    model = DecisionModel(
         get_thermal_dispatch_template_network(),
         c_sys5,
         my_model;
         optimizer = GLPK_optimizer,
-        use_parameters = true,
     )
-    build!(op_problem; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    @test haskey(PSI.get_optimization_container(op_problem).JuMPmodel.ext, :PSI_Testing)
-    @test (
-        :ParameterJuMP in keys(PSI.get_optimization_container(op_problem).JuMPmodel.ext)
-    ) == true
+    build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test haskey(PSI.get_optimization_container(model).JuMPmodel.ext, :PSI_Testing)
+    @test (:ParameterJuMP in keys(PSI.get_optimization_container(model).JuMPmodel.ext)) ==
+          true
 end
 
 @testset "Set optimizer at solve call" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
-    UC = OperationsProblem(template, c_sys5)
+    UC = DecisionModel(template, c_sys5)
     output_dir = mktempdir(cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
@@ -78,44 +69,43 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
-    op_problem = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    optimization_container = PSI.get_optimization_container(op_problem)
-    MOIU.attach_optimizer(optimization_container.JuMPmodel)
-    constraint_indices = get_all_constraint_index(op_problem)
+    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    container = PSI.get_optimization_container(model)
+    MOIU.attach_optimizer(container.JuMPmodel)
+    constraint_indices = get_all_constraint_index(model)
     for (key, index, moi_index) in constraint_indices
-        val1 = get_con_index(op_problem, moi_index)
-        val2 = optimization_container.constraints[key].data[index]
+        val1 = get_con_index(model, moi_index)
+        val2 = container.constraints[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_con_index(op_problem, length(constraint_indices) + 1))
+    @test isnothing(get_con_index(model, length(constraint_indices) + 1))
 
-    var_keys = PSI.get_all_var_keys(op_problem)
-    var_index = get_all_var_index(op_problem)
+    var_keys = PSI.get_all_var_keys(model)
+    var_index = get_all_var_index(model)
     for (ix, (key, index, moi_index)) in enumerate(var_keys)
         index_tuple = var_index[ix]
         @test index_tuple[1] == PSI.encode_key(key)
         @test index_tuple[2] == index
         @test index_tuple[3] == moi_index
-        val1 = get_var_index(op_problem, moi_index)
-        val2 = optimization_container.variables[key].data[index]
+        val1 = get_var_index(model, moi_index)
+        val2 = container.variables[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_var_index(op_problem, length(var_index) + 1))
+    @test isnothing(get_var_index(model, length(var_index) + 1))
 end
 
 # @testset "Test print methods" begin
-#     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+#     template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 #     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     op_problem = OperationsProblem(
+#     model = DecisionModel(
 #         MockOperationProblem,
 #         template,
 #         c_sys5;
 #         optimizer = GLPK_optimizer,
-#         use_parameters = true,
+#
 #     )
-#     list = [template, op_problem, op_problem.optimization_container, services]
+#     list = [template, model, model.container, services]
 #     _test_plain_print_methods(list)
 #     list = [services]
 #     _test_html_print_methods(list)
@@ -126,25 +116,24 @@ end
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
     for network in networks
         template = get_thermal_dispatch_template_network(network)
-        op_problem = OperationsProblem(
+        model = DecisionModel(
             template,
             c_sys5_re;
             balance_slack_variables = true,
             optimizer = ipopt_optimizer,
             PTDF = PTDF(c_sys5_re),
         )
-        @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        @test solve!(op_problem) == RunStatus.SUCCESSFUL
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+        @test solve!(model) == RunStatus.SUCCESSFUL
     end
 end
 
 @testset "Default Operations Constructors" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    op_problem_ed = EconomicDispatchProblem(c_sys5; output_dir = mktempdir())
-    moi_tests(op_problem_ed, false, 120, 0, 120, 120, 24, false)
-    op_problem_uc = UnitCommitmentProblem(c_sys5; output_dir = mktempdir())
-    moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
+    model_ed = EconomicDispatchProblem(c_sys5; output_dir = mktempdir())
+    moi_tests(model_ed, false, 120, 0, 120, 120, 24, false)
+    model_uc = UnitCommitmentProblem(c_sys5; output_dir = mktempdir())
+    moi_tests(model_uc, false, 480, 0, 240, 120, 144, true)
     ED_output = run_economic_dispatch(
         c_sys5;
         output_dir = mktempdir(),
@@ -167,18 +156,16 @@ end
     LMPs = []
     for (ix, network) in enumerate(networks), p in parameters
         template = get_template_dispatch_with_network(network)
-        op_problem = OperationsProblem(
+        model = DecisionModel(
             template,
             sys;
             optimizer = OSQP_optimizer,
-            use_parameters = p,
             PTDF = ptdf,
             constraint_duals = dual_constraint[ix],
         )
-        @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        @test solve!(op_problem) == RunStatus.SUCCESSFUL
-        res = ProblemResults(op_problem)
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+        @test solve!(model) == RunStatus.SUCCESSFUL
+        res = ProblemResults(model)
 
         # These tests require results to be working
         if network == StandardPTDFModel
@@ -196,30 +183,28 @@ end
 @testset "Test ProblemResults interfaces" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(CopperPlatePowerModel)
-    op_problem = OperationsProblem(
+    model = DecisionModel(
         template,
         sys;
         optimizer = OSQP_optimizer,
-        use_parameters = true,
         constraint_duals = [:CopperPlateBalance],
     )
-    @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    @test solve!(op_problem) == RunStatus.SUCCESSFUL
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test solve!(model) == RunStatus.SUCCESSFUL
 
-    optimization_container = PSI.get_optimization_container(op_problem)
-    constraints = PSI.get_constraints(optimization_container)[PSI.ConstraintKey(
+    container = PSI.get_optimization_container(model)
+    constraints = PSI.get_constraints(container)[PSI.ConstraintKey(
         CopperPlateBalanceConstraint,
         PSY.System,
     )]
-    dual_results = read_duals(optimization_container, [:CopperPlateBalance])
+    dual_results = read_duals(container, [:CopperPlateBalance])
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
         @test isapprox(dual, dual_results[:CopperPlateBalance][i, 1])
     end
 
-    system = PSI.get_system(op_problem)
-    params = PSI.get_parameters(optimization_container)[:P__max_active_power__PowerLoad]
+    system = PSI.get_system(model)
+    params = PSI.get_parameters(container)[:P__max_active_power__PowerLoad]
     param_vals = PSI.axis_array_to_dataframe(params.parameter_array)
     param_mult = PSI.axis_array_to_dataframe(params.multiplier_array)
     for load in get_components(PowerLoad, system)
@@ -229,7 +214,7 @@ end
         @test all(vals .== param_vals[!, name])
     end
 
-    res = ProblemResults(op_problem)
+    res = ProblemResults(model)
     @test length(get_existing_variables(res)) == 1
     @test length(get_existing_parameters(res)) == 1
     @test length(get_existing_duals(res)) == 1
@@ -249,41 +234,39 @@ end
     path = mktempdir(cleanup = true)
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(CopperPlatePowerModel)
-    op_problem = OperationsProblem(
+    model = DecisionModel(
         template,
         sys;
         optimizer = OSQP_optimizer,
-        use_parameters = true,
         constraint_duals = [:CopperPlateBalance],
     )
-    @test build!(op_problem; output_dir = path) == PSI.BuildStatus.BUILT
-    @test solve!(op_problem) == RunStatus.SUCCESSFUL
+    @test build!(model; output_dir = path) == PSI.BuildStatus.BUILT
+    @test solve!(model) == RunStatus.SUCCESSFUL
 
     file_list = sort!(collect(readdir(path)))
     @test "OptimizationModel.json" in file_list
     @test "OperationProblem.bin" in file_list
     filename = joinpath(path, "OperationProblem.bin")
-    ED2 = OperationsProblem(filename, optimizer = OSQP_optimizer)
+    ED2 = DecisionModel(filename, optimizer = OSQP_optimizer)
     build!(ED2, output_dir = path)
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 
     path2 = mktempdir(cleanup = true)
-    op_problem_no_sys = OperationsProblem(
+    model_no_sys = DecisionModel(
         template,
         sys;
         optimizer = OSQP_optimizer,
-        use_parameters = true,
         system_to_file = false,
         constraint_duals = [:CopperPlateBalance],
     )
 
-    @test build!(op_problem_no_sys; output_dir = path2) == PSI.BuildStatus.BUILT
-    @test solve!(op_problem) == RunStatus.SUCCESSFUL
+    @test build!(model_no_sys; output_dir = path2) == PSI.BuildStatus.BUILT
+    @test solve!(model) == RunStatus.SUCCESSFUL
 
     file_list = sort!(collect(readdir(path2)))
     @test .!all(occursin.(r".h5", file_list))
     filename = joinpath(path2, "OperationProblem.bin")
-    ED3 = OperationsProblem(filename; system = sys, optimizer = OSQP_optimizer)
+    ED3 = DecisionModel(filename; system = sys, optimizer = OSQP_optimizer)
     build!(ED3, output_dir = path2)
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end

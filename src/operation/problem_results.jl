@@ -23,30 +23,30 @@ IS.get_parameters(res::ProblemResults) = res.parameter_values
 IS.get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
 
-function ProblemResults(problem::OperationsProblem)
-    status = get_run_status(problem)
+function ProblemResults(model::DecisionModel)
+    status = get_run_status(model)
     status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
 
-    container = get_optimization_container(problem)
+    container = get_optimization_container(model)
     variables = read_variables(container)
     duals = read_duals(container)
     parameters = read_parameters(container)
-    timestamps = get_timestamps(problem)
-    optimizer_stats = OptimizerStats(problem)
+    timestamps = get_timestamps(model)
+    optimizer_stats = OptimizerStats(model)
 
     for df in Iterators.flatten(((values(variables), values(duals), values(parameters))))
         DataFrames.insertcols!(df, 1, :DateTime => timestamps)
     end
 
     return ProblemResults(
-        get_problem_base_power(problem),
+        get_problem_base_power(model),
         timestamps,
         problem.sys,
         variables,
         duals,
         parameters,
         optimizer_stats,
-        mkpath(joinpath(get_output_dir(problem), "results")),
+        mkpath(joinpath(get_output_dir(model), "results")),
     )
 end
 
@@ -56,7 +56,7 @@ Exports all results from the operations problem.
 function export_results(results::ProblemResults; kwargs...)
     all_fields = Set(["all"])
     exports = ProblemResultsExport(
-        "OperationsProblem",
+        "DecisionProblem",
         variables = all_fields,
         duals = all_fields,
         parameters = all_fields,

@@ -155,9 +155,8 @@ function calculate_ic_quantity(
 end
 
 ############################# Initial Conditions Initialization ############################
-
 function add_initial_condition!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ::D,
     initial_conditions_type::Type{<:InitialConditionType},
@@ -166,7 +165,7 @@ function add_initial_condition!(
     D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
 }
     _make_initial_conditions!(
-        optimization_container,
+        container,
         devices,
         D(),
         nothing,
@@ -176,7 +175,7 @@ function add_initial_condition!(
 end
 
 function add_initial_condition!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ::D,
     initial_conditions_type::Type{<:InitialConditionType},
@@ -186,7 +185,7 @@ function add_initial_condition!(
     D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
 }
     _make_initial_conditions!(
-        optimization_container,
+        container,
         devices,
         D(),
         variable_type(),
@@ -196,7 +195,7 @@ function add_initial_condition!(
 end
 
 function _make_initial_conditions!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
     device_formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     variable_type::Union{Nothing, VariableType},
@@ -205,16 +204,16 @@ function _make_initial_conditions!(
     cache = nothing,
 ) where {T <: PSY.Component}
     length_devices = length(devices)
-    parameters = model_has_parameters(optimization_container)
-    ic_container = get_initial_conditions(optimization_container)
+    parameters = built_for_simulation(container)
+    ic_container = get_initial_conditions(container)
     if !haskey(ic_container, key)
         @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data" _group =
             LOG_GROUP_INITIAL_CONDITIONS
         ini_conds = Vector{InitialCondition}(undef, length_devices)
-        set_initial_conditions!(optimization_container, key, ini_conds)
+        set_initial_conditions!(container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
             val_ = get_val_func(dev, key, device_formulation, variable_type)
-            val = parameters ? add_parameter(optimization_container.JuMPmodel, val_) : val_
+            val = parameters ? add_parameter(container.JuMPmodel, val_) : val_
             ic = InitialCondition(key, dev, val, cache)
             ini_conds[ix] = ic
             @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_

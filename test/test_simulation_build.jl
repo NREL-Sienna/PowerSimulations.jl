@@ -68,7 +68,7 @@ end
     @test build_out == PSI.BuildStatus.BUILT
 
     for (_, problem) in PSI.get_problems(sim)
-        @test PSI.get_initial_time(problem) == second_day
+        @test PSI.get_initial_time(model) == second_day
     end
 end
 
@@ -160,15 +160,15 @@ end
 
     sys_ed = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_ed_sys")
 
-    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
 
     problems = SimulationProblems(
-        MD = OperationsProblem(template, sys_md, system_to_file = false),
-        UC = OperationsProblem(template, sys_uc, system_to_file = false),
-        ED = OperationsProblem(template, sys_ed, system_to_file = false),
+        MD = DecisionModel(template, sys_md, system_to_file = false),
+        UC = DecisionModel(template, sys_uc, system_to_file = false),
+        ED = DecisionModel(template, sys_ed, system_to_file = false),
     )
 
     feedforward_chronologies = Dict(

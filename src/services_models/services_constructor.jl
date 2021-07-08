@@ -13,7 +13,7 @@ function get_incompatible_devices(devices_template::Dict)
 end
 
 function construct_services!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     services_template::ServicesModelContainer,
     devices_template::DevicesModelContainer,
@@ -31,7 +31,7 @@ function construct_services!(
             sys,
         )
             construct_service!(
-                optimization_container,
+                container,
                 services,
                 sys,
                 service_model,
@@ -55,7 +55,7 @@ function construct_services!(
 end
 
 function construct_service!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, RangeReserve},
@@ -63,12 +63,12 @@ function construct_service!(
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in services]
 
-    if model_has_parameters(optimization_container)
+    if built_for_simulation(container)
         add_param_container!(
-            optimization_container,
+            container,
             RequirementTimeSeriesParameter("requirement"),
             SR,
             names,
@@ -76,13 +76,7 @@ function construct_service!(
         )
     end
 
-    add_cons_container!(
-        optimization_container,
-        RequirementConstraint(),
-        SR,
-        names,
-        time_steps,
-    )
+    add_cons_container!(container, RequirementConstraint(), SR, names, time_steps)
 
     for service in services
         contributing_devices =
@@ -95,24 +89,24 @@ function construct_service!(
         @assert !isempty(contributing_devices)
         # Variables
         add_variables!(
-            optimization_container,
+            container,
             ActivePowerReserveVariable,
             service,
             contributing_devices,
             RangeReserve(),
         )
         # Constraints
-        service_requirement_constraint!(optimization_container, service, model)
+        service_requirement_constraint!(container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
 
         # Cost Function
-        cost_function!(optimization_container, service, model)
+        cost_function!(container, service, model)
     end
     return
 end
 
 function construct_service!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, StepwiseCostReserve},
@@ -120,22 +114,11 @@ function construct_service!(
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in services]
     # Does not use the standard implementation of add_variable!()
-    add_variable!(
-        optimization_container,
-        ServiceRequirementVariable(),
-        services,
-        StepwiseCostReserve(),
-    )
-    add_cons_container!(
-        optimization_container,
-        RequirementConstraint(),
-        SR,
-        names,
-        time_steps,
-    )
+    add_variable!(container, ServiceRequirementVariable(), services, StepwiseCostReserve())
+    add_cons_container!(container, RequirementConstraint(), SR, names, time_steps)
 
     for service in services
         contributing_devices =
@@ -149,24 +132,24 @@ function construct_service!(
         end
         # Variables
         add_variables!(
-            optimization_container,
+            container,
             ActivePowerReserveVariable,
             service,
             contributing_devices,
             StepwiseCostReserve(),
         )
         # Constraints
-        service_requirement_constraint!(optimization_container, service, model)
+        service_requirement_constraint!(container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
 
         # Cost Function
-        cost_function!(optimization_container, service, model)
+        cost_function!(container, service, model)
     end
     return
 end
 
 function construct_service!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     services::Vector{PSY.AGC},
     sys::PSY.System,
     ::ServiceModel{PSY.AGC, T},
@@ -184,64 +167,53 @@ function construct_service!(
             #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
         end
     end
-    add_variables!(optimization_container, SteadyStateFrequencyDeviation)
-    add_variables!(optimization_container, AreaMismatchVariable, areas, T())
-    add_variables!(optimization_container, SmoothACE, areas, T())
-    add_variables!(optimization_container, LiftVariable, areas, T())
-    add_variables!(optimization_container, ActivePowerVariable, areas, T())
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas, T())
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas, T())
-    # add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, areas)
-    # add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, areas)
-    balancing_auxiliary_variables!(optimization_container, sys)
+    add_variables!(container, SteadyStateFrequencyDeviation)
+    add_variables!(container, AreaMismatchVariable, areas, T())
+    add_variables!(container, SmoothACE, areas, T())
+    add_variables!(container, LiftVariable, areas, T())
+    add_variables!(container, ActivePowerVariable, areas, T())
+    add_variables!(container, DeltaActivePowerUpVariable, areas, T())
+    add_variables!(container, DeltaActivePowerDownVariable, areas, T())
+    # add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas)
+    # add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas)
+    balancing_auxiliary_variables!(container, sys)
 
-    absolute_value_lift(optimization_container, areas)
-    frequency_response_constraint!(optimization_container, sys)
-    add_initial_condition!(optimization_container, services, T(), AreaControlError)
-    smooth_ace_pid!(optimization_container, services)
-    aux_constraints!(optimization_container, sys)
+    absolute_value_lift(container, areas)
+    frequency_response_constraint!(container, sys)
+    add_initial_condition!(container, services, T(), AreaControlError)
+    smooth_ace_pid!(container, services)
+    aux_constraints!(container, sys)
 end
 
 """
     Constructs a service for StaticReserveGroup.
 """
 function construct_service!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     services::Vector{SR},
     ::PSY.System,
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in services]
 
-    add_cons_container!(
-        optimization_container,
-        RequirementConstraint(),
-        SR,
-        names,
-        time_steps,
-    )
+    add_cons_container!(container, RequirementConstraint(), SR, names, time_steps)
 
     for service in services
         contributing_services = PSY.get_contributing_services(service)
 
         # check if variables exist
-        check_activeservice_variables(optimization_container, contributing_services)
+        check_activeservice_variables(container, contributing_services)
         # Constraints
-        service_requirement_constraint!(
-            optimization_container,
-            service,
-            model,
-            contributing_services,
-        )
+        service_requirement_constraint!(container, service, model, contributing_services)
     end
     return
 end
 
 function construct_service!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     services::Vector{SR},
     sys::PSY.System,
     model::ServiceModel{SR, RampReserve},
@@ -249,12 +221,12 @@ function construct_service!(
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in services]
 
-    if model_has_parameters(optimization_container)
+    if built_for_simulation(container)
         add_param_container!(
-            optimization_container,
+            container,
             RequirementTimeSeriesParameter("requirement"),
             SR,
             names,
@@ -262,13 +234,7 @@ function construct_service!(
         )
     end
 
-    add_cons_container!(
-        optimization_container,
-        RequirementConstraint(),
-        SR,
-        names,
-        time_steps,
-    )
+    add_cons_container!(container, RequirementConstraint(), SR, names, time_steps)
 
     for service in services
         contributing_devices =
@@ -282,19 +248,19 @@ function construct_service!(
         end
         # Variables
         add_variables!(
-            optimization_container,
+            container,
             ActivePowerReserveVariable,
             service,
             contributing_devices,
             RampReserve(),
         )
         # Constraints
-        service_requirement_constraint!(optimization_container, service, model)
-        ramp_constraints!(optimization_container, service, contributing_devices, model)
+        service_requirement_constraint!(container, service, model)
+        ramp_constraints!(container, service, contributing_devices, model)
         modify_device_model!(devices_template, model, contributing_devices)
 
         # Cost Function
-        cost_function!(optimization_container, service, model)
+        cost_function!(container, service, model)
     end
     return
 end
