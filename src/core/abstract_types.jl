@@ -46,7 +46,7 @@ abstract type AbstractDeviceFormulation end
 """
 Abstract type for Decision Model and Emulation Model. OperationModel structs are parametrized with DecisionProblem or Emulation Problem structs
 """
-abstract type OperationsModel end
+abstract type OperationModel end
 
 #TODO: Document the required interfaces for custom types
 """

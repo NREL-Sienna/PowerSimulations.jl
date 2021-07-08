@@ -44,7 +44,7 @@ OpModel = DecisionModel(MockOperationProblem, template, system)
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
-mutable struct DecisionModel{M <: DecisionProblem} <: OperationsModel
+mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     template::ProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ProblemInternal}
