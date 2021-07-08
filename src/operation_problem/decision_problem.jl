@@ -36,7 +36,6 @@ OpModel = DecisionProblem(MockOperationProblem, template, system)
 - `optimizer`: The optimizer that will be used in the optimization model.
 - `horizon::Int`: Manually specify the length of the forecast Horizon
 - `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `constraint_duals::Vector{Symbol}`: Vector with the duals to query from the optimization model
 - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
 - `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default to false.
 - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
