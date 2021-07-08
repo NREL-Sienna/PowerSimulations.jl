@@ -21,7 +21,7 @@ end
               param_reference::UpdateRef,
               var_key::VariableKey)
 
-Constructs a parametrized upper bound constraint to implement feedforward from other models.
+Constructs a parameterized upper bound constraint to implement feedforward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
 
 # Constraints
@@ -82,7 +82,7 @@ end
                         param_reference::NTuple{2, UpdateRef},
                         var_key::VariableKey)
 
-Constructs min/max range parametrized constraint from device variable to include feedforward.
+Constructs min/max range parameterized constraint from device variable to include feedforward.
 
 # Constraints
 
@@ -270,7 +270,7 @@ end
                         param_reference::UpdateRef,
                         var_key::VariableKey)
 
-Constructs a parametrized integral limit constraint to implement feedforward from other models.
+Constructs a parameterized integral limit constraint to implement feedforward from other models.
 The Parameters are initialized using the upper boundary values of the provided variables.
 
 # Constraints

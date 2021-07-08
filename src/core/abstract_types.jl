@@ -44,7 +44,7 @@ struct MyCustomFormulation <: PSI.AbstractDeviceFormulation
 abstract type AbstractDeviceFormulation end
 
 """
-Abstract type for Decision Model and Emulation Model. OperationModel structs are parametrized with DecisionProblem or Emulation Problem structs
+Abstract type for Decision Model and Emulation Model. OperationModel structs are parameterized with DecisionProblem or Emulation Problem structs
 """
 abstract type OperationModel end
 
