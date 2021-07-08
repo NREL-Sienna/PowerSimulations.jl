@@ -154,7 +154,7 @@ function _make_expressions_dict!(
     ::Type{<:PM.AbstractPowerModel},
 )
     settings = optimization_container.settings
-    parameters = get_use_parameters(settings)
+    parameters = false
     time_steps = 1:get_horizon(settings)
     optimization_container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
@@ -171,7 +171,7 @@ function _make_expressions_dict!(
     ::Type{<:PM.AbstractActivePowerModel},
 )
     settings = optimization_container.settings
-    parameters = get_use_parameters(settings)
+    parameters = false
     time_steps = 1:get_horizon(settings)
     optimization_container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
@@ -189,41 +189,25 @@ function optimization_container_init!(
     PSY.set_units_base_system!(sys, "SYSTEM_BASE")
     # The order of operations matter
     settings = get_settings(optimization_container)
-    use_parameters = get_use_parameters(settings)
-    use_forecasts = get_use_forecast_data(settings)
-
-    if use_parameters
-        if !use_forecasts
-            throw(
-                IS.ConflictingInputsError(
-                    "enabling parameters without forecasts is not supported",
-                ),
-            )
-        end
-    end
 
     if get_initial_time(settings) == UNSET_INI_TIME
         set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
     end
 
-    if use_forecasts
-        if get_horizon(settings) == UNSET_HORIZON
-            set_horizon!(settings, PSY.get_forecast_horizon(sys))
-        end
-        total_number_of_devices = length(get_available_components(PSY.Device, sys))
-        optimization_container.time_steps = 1:get_horizon(settings)
-        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
-        # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
-        # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
-        variable_count_estimate =
-            length(optimization_container.time_steps) * total_number_of_devices
-        if variable_count_estimate > 10e6
-            @warn(
-                "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
-            )
-        end
-    else
-        set_horizon!(settings, 1)
+    if get_horizon(settings) == UNSET_HORIZON
+        set_horizon!(settings, PSY.get_forecast_horizon(sys))
+    end
+    total_number_of_devices = length(get_available_components(PSY.Device, sys))
+    optimization_container.time_steps = 1:get_horizon(settings)
+    # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
+    # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
+    # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
+    variable_count_estimate =
+        length(optimization_container.time_steps) * total_number_of_devices
+    if variable_count_estimate > 10e6
+        @warn(
+            "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
+        )
     end
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
