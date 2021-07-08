@@ -12,8 +12,7 @@
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
 
     model = DecisionModel(
         MockOperationProblem,
@@ -28,8 +27,7 @@
         use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     e
 
     #"Test passing custom JuMP model"
@@ -44,9 +42,8 @@
     )
     build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test haskey(PSI.get_optimization_container(model).JuMPmodel.ext, :PSI_Testing)
-    @test (
-        :ParameterJuMP in keys(PSI.get_optimization_container(model).JuMPmodel.ext)
-    ) == true
+    @test (:ParameterJuMP in keys(PSI.get_optimization_container(model).JuMPmodel.ext)) ==
+          true
 end
 
 @testset "Set optimizer at solve call" begin
@@ -73,8 +70,7 @@ end
     template = get_thermal_standard_uc_template()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
     model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     container = PSI.get_optimization_container(model)
     MOIU.attach_optimizer(container.JuMPmodel)
     constraint_indices = get_all_constraint_index(model)
@@ -127,8 +123,7 @@ end
             optimizer = ipopt_optimizer,
             PTDF = PTDF(c_sys5_re),
         )
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         @test solve!(model) == RunStatus.SUCCESSFUL
     end
 end
@@ -165,12 +160,10 @@ end
             template,
             sys;
             optimizer = OSQP_optimizer,
-
             PTDF = ptdf,
             constraint_duals = dual_constraint[ix],
         )
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         @test solve!(model) == RunStatus.SUCCESSFUL
         res = ProblemResults(model)
 
@@ -196,8 +189,7 @@ end
         optimizer = OSQP_optimizer,
         constraint_duals = [:CopperPlateBalance],
     )
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     container = PSI.get_optimization_container(model)

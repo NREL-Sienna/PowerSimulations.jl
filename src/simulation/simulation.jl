@@ -743,8 +743,7 @@ function initial_condition_update!(
     simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
         name = get_device_name(ic)
-        interval_chronology =
-            get_problem_interval_chronology(sim.sequence, get_name(model))
+        interval_chronology = get_problem_interval_chronology(sim.sequence, get_name(model))
         var_value = get_problem_variable(
             interval_chronology,
             (problem => problem),

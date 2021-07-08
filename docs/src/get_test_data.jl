@@ -28,8 +28,7 @@ services = Dict{Symbol, ServiceModel}();
 
 template = PSI.ProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
-operation_problem =
-    PSI.DecisionModel(TestOpProblem, template, system; optimizer = solver);
+operation_problem = PSI.DecisionModel(TestOpProblem, template, system; optimizer = solver);
 
 set_services_template!(
     operation_problem,

@@ -259,8 +259,7 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(model), key)
 end
 
-set_console_level!(model::DecisionModel, val) =
-    get_internal(model).console_level = val
+set_console_level!(model::DecisionModel, val) = get_internal(model).console_level = val
 set_file_level!(model::DecisionModel, val) = get_internal(model).file_level = val
 set_executions!(model::DecisionModel, val::Int) =
     model.internal.simulation_info.executions = val
@@ -379,19 +378,13 @@ end
 Default implementation of build method for Operational Problems for models conforming with  DecisionProblem specification. Overload this function to implement a custom build method
 """
 function problem_build!(model::DecisionModel{<:DecisionProblem})
-    build_impl!(
-        get_optimization_container(model),
-        get_template(model),
-        get_system(model),
-    )
+    build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end
 
 serialize_optimization_model(::DecisionProblem) = nothing
 serialize_problem(::DecisionProblem) = nothing
 
-function serialize_optimization_model(
-    model::DecisionModel{<:DecisionProblem},
-)
+function serialize_optimization_model(model::DecisionModel{<:DecisionProblem})
     name = get_name(model)
     problem_name = isempty(name) ? "OptimizationModel" : "$(name)_OptimizationModel"
     json_file_name = "$problem_name.json"

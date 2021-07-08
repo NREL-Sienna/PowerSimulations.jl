@@ -630,7 +630,6 @@ end
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
-
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
@@ -665,7 +664,6 @@ end
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
-
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
@@ -702,7 +700,6 @@ end
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
-
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
@@ -728,8 +725,7 @@ end
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
     )
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, true, 15, 0, 6, 6, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], 5621.0, 10.0)
 end
@@ -746,8 +742,7 @@ end
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
     )
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, true, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], 21.0)
 end
@@ -764,8 +759,7 @@ end
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
     )
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, true, 15, 0, 6, 6, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], -5429.0, 10.0)
 end
@@ -782,8 +776,7 @@ end
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
     )
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, true, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], 21.0, 10.0)
 end
@@ -800,8 +793,7 @@ end
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
     )
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, true, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], -17179.0)
 end

@@ -47,13 +47,7 @@ end
         # @test check_variable_bounded(model_m, FlowActivePowerVariable, Line)
 
         @test solve!(model_m) == RunStatus.SUCCESSFUL
-        @test check_flow_variable_values(
-            model_m,
-            FlowActivePowerVariable,
-            Line,
-            "2",
-            1.5,
-        )
+        @test check_flow_variable_values(model_m, FlowActivePowerVariable, Line, "2", 1.5)
     end
 end
 
@@ -62,15 +56,10 @@ end
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     template = get_thermal_dispatch_template_network(ACPPowerModel)
     model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
-    @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model_m; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
 
     @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, MonitoredLine)
-    @test check_variable_unbounded(
-        model_m,
-        FlowReactivePowerFromToVariable,
-        MonitoredLine,
-    )
+    @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, MonitoredLine)
 
     @test solve!(model_m) == RunStatus.SUCCESSFUL
     @test check_flow_variable_values(
@@ -120,11 +109,7 @@ end
               PSI.BuildStatus.BUILT
 
         @test check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
-        @test check_variable_unbounded(
-            model_m,
-            FlowActivePowerVariable,
-            TapTransformer,
-        )
+        @test check_variable_unbounded(model_m, FlowActivePowerVariable, TapTransformer)
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, Transformer2W)
 
         psi_constraint_test(model_m, ratelimit_constraint_keys)
@@ -190,16 +175,8 @@ end
             # TODO: Currently Broken, remove variable bounds in HVDCUnbounded
             # @test check_variable_unbounded(model_m, FlowActivePowerVariable, HVDCLine)
 
-            @test check_variable_bounded(
-                model_m,
-                FlowActivePowerVariable,
-                TapTransformer,
-            )
-            @test check_variable_bounded(
-                model_m,
-                FlowActivePowerVariable,
-                TapTransformer,
-            )
+            @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
+            @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
         end
 
         @test solve!(model_m) == RunStatus.SUCCESSFUL
@@ -258,27 +235,14 @@ end
     template = get_template_dispatch_with_network(ACPPowerModel)
     set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
     model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
-    @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model_m; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
 
     check_variable_bounded(model_m, FlowReactivePowerToFromVariable, HVDCLine)
     check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
-    @test check_variable_bounded(
-        model_m,
-        FlowActivePowerFromToVariable,
-        TapTransformer,
-    )
-    @test check_variable_unbounded(
-        model_m,
-        FlowReactivePowerFromToVariable,
-        TapTransformer,
-    )
+    @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, TapTransformer)
+    @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, TapTransformer)
     @test check_variable_bounded(model_m, FlowActivePowerToFromVariable, Transformer2W)
-    @test check_variable_unbounded(
-        model_m,
-        FlowReactivePowerToFromVariable,
-        Transformer2W,
-    )
+    @test check_variable_unbounded(model_m, FlowReactivePowerToFromVariable, Transformer2W)
 
     psi_constraint_test(model_m, ratelimit_constraint_keys)
 

@@ -44,12 +44,7 @@ end
     model = DeviceModel(RenewableDispatch, RenewableFullDispatch)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     for p in [true, false]
-        model = DecisionModel(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5_re;
-
-        )
+        model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
         mock_construct_device!(model, model)
         if p
             moi_tests(model, p, 144, 0, 144, 72, 0, false)
@@ -107,12 +102,7 @@ end
     model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     for p in [true, false]
-        model = DecisionModel(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5_re;
-
-        )
+        model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
         mock_construct_device!(model, model)
         if p
             moi_tests(model, p, 144, 0, 72, 0, 72, false)
@@ -141,12 +131,7 @@ end
     model = DeviceModel(RenewableDispatch, FixedOutput)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     for p in [true, false]
-        model = DecisionModel(
-            MockOperationProblem,
-            DCPPowerModel,
-            c_sys5_re;
-
-        )
+        model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re;)
         mock_construct_device!(model, model)
         if p
             moi_tests(model, p, 0, 0, 0, 0, 0, false)
@@ -162,12 +147,7 @@ end
     model = DeviceModel(RenewableDispatch, FixedOutput)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     for p in [true, false]
-        model = DecisionModel(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5_re;
-
-        )
+        model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
         mock_construct_device!(model, model)
         if p
             moi_tests(model, p, 0, 0, 0, 0, 0, false)

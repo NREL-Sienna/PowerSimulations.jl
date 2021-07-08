@@ -242,7 +242,12 @@ function build_impl!(
     transmission = get_network_formulation(template)
     # Order is required
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
-        construct_services!(container, sys, get_service_models(template), get_device_models(template))
+        construct_services!(
+            container,
+            sys,
+            get_service_models(template),
+            get_device_models(template),
+        )
     end
     for device_model in values(template.devices)
         @debug "Building $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"

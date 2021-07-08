@@ -10,8 +10,7 @@
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
         model = DecisionModel(template, c_sys5_uc)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         moi_tests(model, p, 648, 0, 120, 216, 72, false)
         reserve_variables = [
             :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1
@@ -38,8 +37,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     for p in [true, false]
         model = DecisionModel(template, c_sys5_uc)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         moi_tests(model, p, 384, 0, 336, 192, 24, false)
         reserve_variables = [
             :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2,
@@ -69,8 +67,7 @@ end
 
     for p in [true, false]
         model = DecisionModel(template, c_sys5_uc)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         moi_tests(model, p, 1008, 0, 480, 216, 192, true)
     end
 end
@@ -88,8 +85,7 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
     for p in [true, false]
         model = DecisionModel(template, c_sys5_re)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         moi_tests(model, p, 360, 0, 72, 48, 72, false)
     end
 end
@@ -108,8 +104,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves = true)
     for p in [true, false]
         model = DecisionModel(template, c_sys5_bat)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         moi_tests(model, p, 408, 0, 192, 264, 96, false)
     end
 end
@@ -128,8 +123,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
     for p in [true, false]
         model = DecisionModel(template, c_sys5_hyd)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         moi_tests(model, p, 240, 0, 24, 96, 72, false)
     end
 end
@@ -144,12 +138,10 @@ end
         model = DecisionModel(
             template,
             c_sys5_uc;
-
             services_slack_variables = true,
             balance_slack_variables = true,
         )
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         moi_tests(model, p, 504, 0, 120, 192, 24, false)
     end
 end
@@ -197,8 +189,7 @@ end
 
     for p in [true, false]
         model = DecisionModel(template, c_sys5_uc)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         moi_tests(model, p, 648, 0, 120, 240, 72, false)
     end
 end
@@ -254,7 +245,6 @@ end
     static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test typeof(model) <: DecisionProblem
 end
