@@ -232,11 +232,7 @@ function get_problem_size(container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-function build_impl!(
-    container::OptimizationContainer,
-    template,
-    sys::PSY.System,
-)
+function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     # Order is required
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin

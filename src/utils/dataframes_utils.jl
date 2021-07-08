@@ -1,5 +1,4 @@
 
-
 """
 Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
 
