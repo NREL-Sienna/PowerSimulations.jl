@@ -66,7 +66,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.Storage}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -88,7 +87,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.Storage}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -110,7 +108,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.Storage}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -133,7 +130,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.Storage}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -234,7 +230,6 @@ function DeviceEnergyBalanceConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {St <: PSY.Storage}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_type = EnergyLimitConstraint(),

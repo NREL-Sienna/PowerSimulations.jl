@@ -25,12 +25,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hy;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hy;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -58,12 +53,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -95,12 +85,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hy;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hy;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 24, 0, 24, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -117,12 +102,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        ACPPowerModel,
-        c_sys5_hy;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_hy;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 48, 0, 48, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -150,12 +130,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 24, 0, 24, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -183,12 +158,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        ACPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 48, 0, 48, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -220,12 +190,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hy;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hy;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 48, 0, 48, 24, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -242,12 +207,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        ACPPowerModel,
-        c_sys5_hy;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_hy;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 72, 0, 72, 48, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -275,12 +235,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 48, 0, 48, 24, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -308,12 +263,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        ACPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 72, 0, 72, 48, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -345,12 +295,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 24, 0, 25, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -378,12 +323,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        ACPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 48, 0, 49, 48, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -415,12 +355,7 @@ end
     c_sys5_phes_ed = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_phes_ed;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_phes_ed;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 60, 0, 24, 24, 24, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -448,12 +383,7 @@ end
     c_sys5_phes_ed = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_phes_ed;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_phes_ed;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 72, 0, 24, 24, 24, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -485,12 +415,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 48, 0, 25, 24, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -518,12 +443,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        ACPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 72, 0, 49, 48, 0, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -555,12 +475,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 120, 0, 24, 24, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -588,12 +503,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        ACPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 144, 0, 48, 48, 48, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -625,12 +535,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 144, 0, 24, 24, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -658,12 +563,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
 
     # Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        ACPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, ACPPowerModel, c_sys5_hyd;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 168, 0, 48, 48, 48, true)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -703,7 +603,6 @@ end
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
-                use_parameters = true,
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
@@ -731,7 +630,7 @@ end
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
-                use_parameters = p,
+
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
@@ -766,7 +665,7 @@ end
                 template,
                 sys;
                 optimizer = ipopt_optimizer,
-                use_parameters = p,
+
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
@@ -803,7 +702,7 @@ end
                 template,
                 sys;
                 optimizer = GLPK_optimizer,
-                use_parameters = p,
+
             )
             @test build!(ED; output_dir = mktempdir(cleanup = true)) ==
                   PSI.BuildStatus.BUILT
@@ -828,7 +727,6 @@ end
         template,
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -847,7 +745,6 @@ end
         template,
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -866,7 +763,6 @@ end
         template,
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -885,7 +781,6 @@ end
         template,
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -904,7 +799,6 @@ end
         template,
         c_sys5_hyd;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT

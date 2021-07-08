@@ -239,10 +239,10 @@ function build_impl!(
     template::ProblemTemplate,
     sys::PSY.System,
 )
-    transmission = template.transmission
+    transmission = get_network_formulation(template)
     # Order is required
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
-        construct_services!(container, sys, template.services, template.devices)
+        construct_services!(container, sys, get_service_models(template), get_device_models(template))
     end
     for device_model in values(template.devices)
         @debug "Building $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"
@@ -324,7 +324,7 @@ function _add_var_container!(
     container::OptimizationContainer,
     var_key::VariableKey{T, U},
     sparse::Bool,
-    axs...
+    axs...,
 ) where {T <: VariableType, U <: PSY.Component}
     if sparse
         container_ = sparse_container_spec(JuMP.VariableRef, axs...)

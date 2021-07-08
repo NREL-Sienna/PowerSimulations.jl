@@ -99,7 +99,6 @@ end
         template,
         c_sys5;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -119,7 +118,6 @@ end
         template,
         c_sys5;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -139,7 +137,6 @@ end
         template,
         c_sys5;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -158,7 +155,6 @@ end
         template,
         c_sys5;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -178,7 +174,6 @@ end
         template,
         c_sys5;
         optimizer = Cbc_optimizer,
-        use_parameters = true,
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT

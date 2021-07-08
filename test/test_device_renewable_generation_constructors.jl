@@ -23,12 +23,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # Using Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_re;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_re;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 72, 0, 72, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -53,7 +48,7 @@ end
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_re;
-            use_parameters = p,
+
         )
         mock_construct_device!(op_problem, model)
         if p
@@ -91,12 +86,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # Using Parameters Testing
-    op_problem = DecisionProblem(
-        MockOperationProblem,
-        DCPPowerModel,
-        c_sys5_re;
-        use_parameters = true,
-    )
+    op_problem = DecisionProblem(MockOperationProblem, DCPPowerModel, c_sys5_re;)
     mock_construct_device!(op_problem, model)
     moi_tests(op_problem, true, 72, 0, 72, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -121,7 +111,7 @@ end
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_re;
-            use_parameters = p,
+
         )
         mock_construct_device!(op_problem, model)
         if p
@@ -155,7 +145,7 @@ end
             MockOperationProblem,
             DCPPowerModel,
             c_sys5_re;
-            use_parameters = p,
+
         )
         mock_construct_device!(op_problem, model)
         if p
@@ -176,7 +166,7 @@ end
             MockOperationProblem,
             ACPPowerModel,
             c_sys5_re;
-            use_parameters = p,
+
         )
         mock_construct_device!(op_problem, model)
         if p

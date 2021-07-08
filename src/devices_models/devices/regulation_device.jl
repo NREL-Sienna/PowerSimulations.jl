@@ -349,12 +349,11 @@ end
 function NodalExpressionSpec(
     ::Type{<:PSY.RegulationDevice{T}},
     parameter::ActivePowerTimeSeriesParameter,
-
 ) where {T <: PSY.StaticInjection}
     return NodalExpressionSpec(
         parameter,
         T,
-        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
+        x -> PSY.get_max_active_power(x),
         1.0,
         :nodal_balance_active,
     )

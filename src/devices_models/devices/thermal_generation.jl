@@ -69,7 +69,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::SemiContinuousFF,
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec()
 end
@@ -85,7 +84,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -110,7 +108,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -136,7 +133,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -177,7 +173,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalMultiStart}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -205,7 +200,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -303,7 +297,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -325,7 +318,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::SemiContinuousFF,
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec()
 end
@@ -341,7 +333,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -364,7 +355,6 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::SemiContinuousFF,
     use_parameters::Bool,
-
 ) where {T <: PSY.ThermalGen}
     return DeviceRangeConstraintSpec()
 end
