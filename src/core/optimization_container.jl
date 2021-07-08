@@ -320,6 +320,21 @@ function _assign_container!(container::Dict, key, value)
 end
 
 ####################################### Variable Container #################################
+function _add_var_container!(
+    container::OptimizationContainer,
+    var_key::VariableKey{T, U},
+    sparse::Bool,
+    axs...
+) where {T <: VariableType, U <: PSY.Component}
+    if sparse
+        container_ = sparse_container_spec(JuMP.VariableRef, axs...)
+    else
+        container_ = container_spec(JuMP.VariableRef, axs...)
+    end
+    _assign_container!(container.variables, var_key, container_)
+    return container_
+end
+
 function add_var_container!(
     container::OptimizationContainer,
     ::T,
@@ -328,13 +343,7 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: PSY.Component}
     var_key = VariableKey(T, U)
-    if sparse
-        container = sparse_container_spec(JuMP.VariableRef, axs...)
-    else
-        container = container_spec(JuMP.VariableRef, axs...)
-    end
-    _assign_container!(container.variables, var_key, container)
-    return container
+    return _add_var_container!(container, var_key, sparse, axs...)
 end
 
 function add_var_container!(
@@ -346,13 +355,7 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: PSY.Component}
     var_key = VariableKey(T, U, meta)
-    if sparse
-        container = sparse_container_spec(JuMP.VariableRef, axs...)
-    else
-        container = container_spec(JuMP.VariableRef, axs...)
-    end
-    _assign_container!(container.variables, var_key, container)
-    return container
+    return _add_var_container!(container, var_key, sparse; axs...)
 end
 
 function get_variable_keys(container::OptimizationContainer)
@@ -395,11 +398,11 @@ function add_aux_var_container!(
 ) where {T <: AuxVariableType, U <: PSY.Component}
     var_key = AuxVarKey(T, U)
     if sparse
-        container = sparse_container_spec(Float64, axs...)
+        container_ = sparse_container_spec(Float64, axs...)
     else
-        container = container_spec(Float64, axs...)
+        container_ = container_spec(Float64, axs...)
     end
-    _assign_container!(container.aux_variables, var_key, container)
+    _assign_container!(container.aux_variables, var_key, container_)
     return container
 end
 
@@ -415,12 +418,12 @@ function add_cons_container!(
     sparse = false,
 )
     if sparse
-        container = sparse_container_spec(JuMP.ConstraintRef, axs...)
+        container_ = sparse_container_spec(JuMP.ConstraintRef, axs...)
     else
-        container = container_spec(JuMP.ConstraintRef, axs...)
+        container_ = container_spec(JuMP.ConstraintRef, axs...)
     end
-    _assign_container!(container.constraints, cons_key, container)
-    return container
+    _assign_container!(container.constraints, cons_key, container_)
+    return container_
 end
 
 function add_cons_container!(
@@ -487,17 +490,17 @@ end
 
 ##################################### Parameter Container ##################################
 function add_param_container!(container::OptimizationContainer, key::ParameterKey, axs...)
-    container = ParameterContainer(
+    container_ = ParameterContainer(
         JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
         fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
-    _assign_container!(container.parameters, key, container)
-    return container
+    _assign_container!(container.parameters, key, container_)
+    return container_
 end
 
 function add_param_container!(
     container::OptimizationContainer,
-    parameter::T,
+    ::T,
     ::Type{U},
     axs...;
     meta = CONTAINER_KEY_EMPTY_META,
@@ -511,17 +514,17 @@ function get_parameter_names(container::OptimizationContainer)
 end
 
 function get_parameter(container::OptimizationContainer, key::ParameterKey)
-    container = get(container.parameters, key, nothing)
+    container_ = get(container.parameters, key, nothing)
     if container === nothing
         @error "$name is not stored" sort!(get_parameter_names(container))
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
-    return container
+    return container_
 end
 
 function get_parameter(
     container::OptimizationContainer,
-    parameter::T,
+    ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
@@ -534,8 +537,8 @@ end
 
 function iterate_parameter_containers(container::OptimizationContainer)
     Channel() do channel
-        for container in values(container.parameters)
-            put!(channel, container)
+        for param_container in values(container.parameters)
+            put!(channel, param_container)
         end
     end
 end

@@ -79,7 +79,7 @@ function cost_function!(
     feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
 ) where {T <: PSY.Component, U <: AbstractDeviceFormulation}
     for d in devices
-        spec = AddCostSpec(T, U, optimization_container)
+        spec = AddCostSpec(T, U, container)
         @debug T, spec _group = LOG_GROUP_COST_FUNCTIONS
         services = PSY.get_services(d)
         add_service_variables!(spec, services)

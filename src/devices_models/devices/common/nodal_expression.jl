@@ -12,7 +12,7 @@ Construct NodalExpressionSpec for specific types.
 function NodalExpressionSpec(
     ::T,
     ::Type{U},
-    use_forecasts::Bool,
+
 ) where {T <: PSY.Device, U <: TimeSeriesParameter}
     error("NodalExpressionSpec is not implemented for type $T $U")
 end

@@ -46,7 +46,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 )
     return DeviceRangeConstraintSpec(;
         custom_optimization_container_func = custom_reactive_power_constraints!,
@@ -84,21 +84,8 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.ElectricLoad}
-    if (!use_parameters && !use_forecasts)
-        return DeviceRangeConstraintSpec(;
-            range_constraint_spec = RangeConstraintSpec(;
-                constraint_type = ActivePowerVariableLimitsConstraint(),
-                variable_type = ActivePowerVariable(),
-                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
-                constraint_func = device_range!,
-                constraint_struct = DeviceRangeConstraintInfo,
-                component_type = T,
-            ),
-        )
-    end
 
+) where {T <: PSY.ElectricLoad}
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = ActivePowerVariableLimitsConstraint(),
@@ -120,22 +107,8 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.ElectricLoad}
-    if (!use_parameters && !use_forecasts)
-        return DeviceRangeConstraintSpec(;
-            range_constraint_spec = RangeConstraintSpec(;
-                constraint_type = ActivePowerVariableLimitsConstraint(),
-                variable_type = ActivePowerVariable(),
-                bin_variable_types = [OnVariable()],
-                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
-                constraint_func = device_semicontinuousrange!,
-                constraint_struct = DeviceRangeConstraintInfo,
-                component_type = T,
-            ),
-        )
-    end
 
+) where {T <: PSY.ElectricLoad}
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = ActivePowerVariableLimitsConstraint(),
@@ -154,7 +127,7 @@ end
 function NodalExpressionSpec(
     ::Type{T},
     parameter::ReactivePowerTimeSeriesParameter,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
         parameter,
@@ -168,7 +141,7 @@ end
 function NodalExpressionSpec(
     ::Type{T},
     parameter::ActivePowerTimeSeriesParameter,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
         parameter,

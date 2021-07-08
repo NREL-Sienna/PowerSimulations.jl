@@ -119,7 +119,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -145,21 +145,8 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.HydroGen}
-    if !use_parameters && !use_forecasts
-        return DeviceRangeConstraintSpec(;
-            range_constraint_spec = RangeConstraintSpec(;
-                constraint_type = ActivePowerVariableLimitsConstraint(),
-                variable_type = ActivePowerVariable(),
-                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
-                constraint_func = device_range!,
-                constraint_struct = DeviceRangeConstraintInfo,
-                component_type = T,
-            ),
-        )
-    end
 
+) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = ActivePowerVariableLimitsConstraint(),
@@ -185,7 +172,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -211,7 +198,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -238,7 +225,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -261,7 +248,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -283,7 +270,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -305,7 +292,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -328,7 +315,7 @@ function DeviceRangeConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
@@ -384,7 +371,7 @@ function DeviceEnergyBalanceConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {H <: PSY.HydroEnergyReservoir}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_type = EnergyCapacityConstraint(),
@@ -410,7 +397,7 @@ function DeviceEnergyBalanceConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {H <: PSY.HydroPumpedStorage}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_type = EnergyCapacityUpConstraint(),
@@ -433,7 +420,7 @@ function DeviceEnergyBalanceConstraintSpec(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
+
 ) where {H <: PSY.HydroPumpedStorage}
     return DeviceEnergyBalanceConstraintSpec(;
         constraint_type = EnergyCapacityDownConstraint(),
@@ -557,7 +544,7 @@ end
 function NodalExpressionSpec(
     ::Type{T},
     parameter::ReactivePowerTimeSeriesParameter,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return NodalExpressionSpec(
         parameter,
@@ -571,7 +558,7 @@ end
 function NodalExpressionSpec(
     ::Type{T},
     parameter::ActivePowerTimeSeriesParameter,
-    use_forecasts::Bool,
+
 ) where {T <: PSY.HydroGen}
     return NodalExpressionSpec(
         parameter,
