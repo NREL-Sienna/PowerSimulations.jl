@@ -35,10 +35,7 @@ function psi_constraint_test(
     return
 end
 
-function psi_aux_var_test(
-    op_model::DecisionModel,
-    constraint_keys::Vector{<:PSI.AuxVarKey},
-)
+function psi_aux_var_test(op_model::DecisionModel, constraint_keys::Vector{<:PSI.AuxVarKey})
     op_container = PSI.get_optimization_container(model)
     vars = PSI.get_aux_variables(op_container)
     for key in constraint_keys
@@ -83,12 +80,7 @@ function psi_checksolve_test(op_model::DecisionModel, status)
     @test termination_status(model) in status
 end
 
-function psi_checksolve_test(
-    op_model::DecisionModel,
-    status,
-    expected_result,
-    tol = 0.0,
-)
+function psi_checksolve_test(op_model::DecisionModel, status, expected_result, tol = 0.0)
     res = solve!(model)
     model = PSI.get_jump_model(model)
     @test termination_status(model) in status

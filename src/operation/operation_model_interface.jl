@@ -9,8 +9,7 @@ get_caches(x::OperationsModel) =
 get_constraints(problem::OperationsModel) = get_internal(model).container.constraints
 get_end_of_interval_step(problem::OperationsModel) =
     get_simulation_info(model).end_of_interval_step
-get_execution_count(problem::OperationsModel) =
-    get_simulation_info(model).execution_count
+get_execution_count(problem::OperationsModel) = get_simulation_info(model).execution_count
 get_executions(problem::OperationsModel) = get_simulation_info(model).executions
 get_initial_time(problem::OperationsModel) = get_initial_time(get_settings(model))
 get_horizon(problem::OperationsModel) = get_horizon(get_settings(model))
