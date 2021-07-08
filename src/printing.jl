@@ -59,8 +59,8 @@ function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
 
     for field in fieldnames(ProblemTemplate)
         val = getfield(template, Symbol(field))
-        if field == :transmission
-            println(io, "Transmission: $val")
+        if field == :network_model
+            println(io, "Transmission: $(get_network_formulation(val))")
         elseif typeof(val) <: Dict{Symbol, <:DeviceModel}
             println(io, "============================================")
             _display_model(val, field, io)

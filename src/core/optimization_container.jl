@@ -25,11 +25,10 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     )
         resolution = PSY.get_time_series_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
-        use_parameters = get_use_parameters(settings)
 
         new(
             jump_model === nothing ? _make_jump_model(settings) :
-            _prepare_external_jump_model!(jump_model, settings),
+            _finalize_jump_model!(jump_model, settings),
             1:1,
             resolution,
             settings,
@@ -98,6 +97,14 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
 
+    if get_direct_mode_optimizer(settings)
+        throw(
+            IS.ConflictingInputsError(
+                "Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model",
+            ),
+        )
+    end
+
     if get_optimizer_log_print(settings)
         JuMP.unset_silent(JuMPmodel)
         @debug "optimizer unset to silent"
@@ -107,31 +114,17 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     end
 end
 
-function _prepare_external_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
-    parameters = get_use_parameters(settings)
-    optimizer = get_optimizer(settings)
-    if get_direct_mode_optimizer(settings)
-        throw(
-            IS.ConflictingInputsError(
-                "Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model",
-            ),
-        )
+function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Settings)
+    if !haskey(JuMPmodel.ext, :ParameterJuMP)
+        @debug("Model doesn't have Parameters enabled. Parameters will be enabled")
+        PJ.enable_parameters(JuMPmodel)
+        JuMP.set_optimizer(JuMPmodel, optimizer)
     end
-
-    if parameters
-        if !haskey(JuMPmodel.ext, :ParameterJuMP)
-            @info("Model doesn't have Parameters enabled. Parameters will be enabled")
-            PJ.enable_parameters(JuMPmodel)
-            JuMP.set_optimizer(JuMPmodel, optimizer)
-        end
-    end
-    _finalize_jump_model!(JuMPmodel, settings)
-    return JuMPmodel
+    return
 end
 
 function _make_jump_model(settings::Settings)
     @debug "Instantiating the JuMP model"
-    parameters = get_use_parameters(settings)
     optimizer = get_optimizer(settings)
     if get_direct_mode_optimizer(settings)
         JuMPmodel = JuMP.direct_model(MOI.instantiate(optimizer))
@@ -141,7 +134,6 @@ function _make_jump_model(settings::Settings)
     else
         JuMPmodel = JuMP.Model(optimizer)
     end
-    parameters && PJ.enable_parameters(JuMPmodel)
     _finalize_jump_model!(JuMPmodel, settings)
 
     return JuMPmodel
