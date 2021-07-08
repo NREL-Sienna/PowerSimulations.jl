@@ -411,7 +411,7 @@ function get_aux_variable_keys(container::OptimizationContainer)
 end
 
 ##################################### Constraint Container #################################
-function add_cons_container!(
+function _add_cons_container!(
     container::OptimizationContainer,
     cons_key::ConstraintKey,
     axs...;
@@ -435,7 +435,7 @@ function add_cons_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     cons_key = ConstraintKey(T, U, meta)
-    return add_cons_container!(container, cons_key, axs...; sparse = sparse)
+    return _add_cons_container!(container, cons_key, axs...; sparse = sparse)
 end
 
 function get_constraint_keys(container::OptimizationContainer)
