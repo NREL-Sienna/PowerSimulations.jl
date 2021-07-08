@@ -305,11 +305,6 @@ function build_pre_step!(problem::DecisionProblem)
             @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(problem)
         end
-        settings = get_settings(problem)
-        if !get_use_parameters(settings)
-            set_use_parameters!(settings, built_for_simulation(problem))
-            @debug "Set use_parameters = true for use in simulation"
-        end
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
         @info "Initializing Optimization Container"

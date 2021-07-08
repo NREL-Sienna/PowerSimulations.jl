@@ -14,9 +14,6 @@
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    @test PSI.get_use_forecast_data(
-        PSI.get_settings(PSI.get_optimization_container(op_problem)),
-    ) == false
 
     op_problem = DecisionProblem(
         MockOperationProblem,
@@ -33,9 +30,7 @@
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-    @test PSI.get_use_forecast_data(
-        PSI.get_settings(PSI.get_optimization_container(op_problem)),
-    ) == false
+e
 
     #"Test passing custom JuMP model"
     my_model = JuMP.Model()
