@@ -6,29 +6,23 @@
 
     @test_throws MethodError DecisionModel(template, c_sys5; bad_kwarg = 10)
 
-    model = DecisionModel(
-        template,
-        c_sys5;
-        use_forecast_data = false,
-        optimizer = GLPK_optimizer,
-    )
+    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
 
     model = DecisionModel(
         MockOperationProblem,
-        get_thermal_dispatch_template_network(),
+        get_thermal_dispatch_template_network(
+            NetworkModel(CopperPlatePowerModel; use_slacks = true),
+        ),
         c_sys5_re;
         optimizer = GLPK_optimizer,
-        balance_slack_variables = true,
     )
     model = DecisionModel(
         get_thermal_dispatch_template_network(),
         c_sys5;
-        use_forecast_data = false,
         optimizer = GLPK_optimizer,
     )
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    e
 
     #"Test passing custom JuMP model"
     my_model = JuMP.Model()
@@ -43,7 +37,7 @@
     build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test haskey(PSI.get_optimization_container(model).JuMPmodel.ext, :PSI_Testing)
     @test (:ParameterJuMP in keys(PSI.get_optimization_container(model).JuMPmodel.ext)) ==
-          true
+          false
 end
 
 @testset "Set optimizer at solve call" begin
@@ -115,14 +109,10 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
     for network in networks
-        template = get_thermal_dispatch_template_network(network)
-        model = DecisionModel(
-            template,
-            c_sys5_re;
-            balance_slack_variables = true,
-            optimizer = ipopt_optimizer,
-            PTDF = PTDF(c_sys5_re),
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(network; use_slacks = true, PTDF = PTDF(c_sys5_re)),
         )
+        model = DecisionModel(template, c_sys5_re; optimizer = ipopt_optimizer)
         @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         @test solve!(model) == RunStatus.SUCCESSFUL
     end
@@ -151,18 +141,19 @@ end
     parameters = [true, false]
     ptdf = PTDF(sys)
     # These are the duals of interest for the test
-    dual_constraint =
-        [[:nodal_balance_active__Bus], [:CopperPlateBalance, :network_flow__Line]]
+    dual_constraint = [[NodalBalanceActiveConstraint], [CopperPlateBalanceConstraint]]
     LMPs = []
     for (ix, network) in enumerate(networks), p in parameters
-        template = get_template_dispatch_with_network(network)
-        model = DecisionModel(
-            template,
-            sys;
-            optimizer = OSQP_optimizer,
-            PTDF = ptdf,
-            constraint_duals = dual_constraint[ix],
+        template = get_template_dispatch_with_network(
+            NetworkModel(network; PTDF = ptdf, duals = dual_constraint[ix]),
         )
+        if network == StandardPTDFModel
+            set_device_model!(
+                template,
+                DeviceModel(PSY.Line, PSI.StaticBranch; duals = [NetworkFlowConstraint]),
+            )
+        end
+        model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
         @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         @test solve!(model) == RunStatus.SUCCESSFUL
         res = ProblemResults(model)
@@ -171,52 +162,45 @@ end
         if network == StandardPTDFModel
             push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
         else
-            duals = res.dual_values[:nodal_balance_active__Bus]
+            duals = res.dual_values[:NodalBalanceActiveConstraint_Bus]
             duals = abs.(duals[:, propertynames(duals) .!== :DateTime])
             push!(LMPs, duals[!, sort(propertynames(duals))])
         end
     end
-
     @test isapprox(LMPs[1], LMPs[3], atol = 100.0)
 end
 
 @testset "Test ProblemResults interfaces" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
-    template = get_template_dispatch_with_network(CopperPlatePowerModel)
-    model = DecisionModel(
-        template,
-        sys;
-        optimizer = OSQP_optimizer,
-        constraint_duals = [:CopperPlateBalance],
+    template = get_template_dispatch_with_network(
+        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
     )
+    model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     container = PSI.get_optimization_container(model)
-    constraints = PSI.get_constraints(container)[PSI.ConstraintKey(
-        CopperPlateBalanceConstraint,
-        PSY.System,
-    )]
-    dual_results = read_duals(container, [:CopperPlateBalance])
+    constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
+    constraints = PSI.get_constraints(container)[constraint_key]
+    dual_results = read_duals(container)[:CopperPlateBalanceConstraint_System]
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
-        @test isapprox(dual, dual_results[:CopperPlateBalance][i, 1])
+        @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint_System])
     end
 
-    system = PSI.get_system(model)
-    params = PSI.get_parameters(container)[:P__max_active_power__PowerLoad]
-    param_vals = PSI.axis_array_to_dataframe(params.parameter_array)
-    param_mult = PSI.axis_array_to_dataframe(params.multiplier_array)
-    for load in get_components(PowerLoad, system)
-        name = get_name(load)
-        vals = get_time_series_values(Deterministic, load, "max_active_power")
-        @test all([-1 * x == get_max_active_power(load) for x in param_mult[!, name]])
-        @test all(vals .== param_vals[!, name])
-    end
+    # system = PSI.get_system(model)
+    # params = PSI.get_parameters(container)[:P__max_active_power__PowerLoad]
+    # param_vals = PSI.axis_array_to_dataframe(params.parameter_array)
+    # param_mult = PSI.axis_array_to_dataframe(params.multiplier_array)
+    # for load in get_components(PowerLoad, system)
+    #     name = get_name(load)
+    #     vals = get_time_series_values(Deterministic, load, "max_active_power")
+    #     @test all([-1 * x == get_max_active_power(load) for x in param_mult[!, name]])
+    #     @test all(vals .== param_vals[!, name])
+    # end
 
     res = ProblemResults(model)
     @test length(get_existing_variables(res)) == 1
-    @test length(get_existing_parameters(res)) == 1
     @test length(get_existing_duals(res)) == 1
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
@@ -233,13 +217,10 @@ end
 @testset "Test Serialization, deserialization and write optimizer problem" begin
     path = mktempdir(cleanup = true)
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
-    template = get_template_dispatch_with_network(CopperPlatePowerModel)
-    model = DecisionModel(
-        template,
-        sys;
-        optimizer = OSQP_optimizer,
-        constraint_duals = [:CopperPlateBalance],
+    template = get_template_dispatch_with_network(
+        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
     )
+    model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
     @test build!(model; output_dir = path) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
@@ -252,13 +233,8 @@ end
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 
     path2 = mktempdir(cleanup = true)
-    model_no_sys = DecisionModel(
-        template,
-        sys;
-        optimizer = OSQP_optimizer,
-        system_to_file = false,
-        constraint_duals = [:CopperPlateBalance],
-    )
+    model_no_sys =
+        DecisionModel(template, sys; optimizer = OSQP_optimizer, system_to_file = false)
 
     @test build!(model_no_sys; output_dir = path2) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL

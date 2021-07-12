@@ -1,18 +1,18 @@
 @testset "Load data misspecification" begin
-    model = DeviceModel(InterruptibleLoad, DispatchablePowerLoad)
+    device_model = DeviceModel(InterruptibleLoad, DispatchablePowerLoad)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     warn_message = "The data doesn't include devices of type InterruptibleLoad, consider changing the device models"
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
         model,
-        model,
+        device_model,
     )
-    model = DeviceModel(PowerLoad, DispatchablePowerLoad)
+    device_model = DeviceModel(PowerLoad, DispatchablePowerLoad)
     warn_message = "The Formulation DispatchablePowerLoad only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
         model,
-        model,
+        device_model,
     )
 end
 
@@ -20,12 +20,11 @@ end
     models = [StaticPowerLoad, DispatchablePowerLoad, InterruptiblePowerLoad]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [DCPPowerModel, ACPPowerModel]
-    param_spec = [true, false]
-    for m in models, n in networks, p in param_spec
-        model = DeviceModel(PowerLoad, m)
+    for m in models, n in networks
+        device_model = DeviceModel(PowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
-        mock_construct_device!(model, model)
-        moi_tests(model, p, 0, 0, 0, 0, 0, false)
+        mock_construct_device!(model, device_model)
+        moi_tests(model, false, 0, 0, 0, 0, 0, false)
         psi_checkobjfun_test(model, GAEVF)
     end
 end
@@ -34,12 +33,11 @@ end
     models = [DispatchablePowerLoad]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [DCPPowerModel]
-    param_spec = [true, false]
-    for m in models, n in networks, p in param_spec
-        model = DeviceModel(InterruptibleLoad, m)
+    for m in models, n in networks
+        device_model = DeviceModel(InterruptibleLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
-        mock_construct_device!(model, model)
-        moi_tests(model, p, 24, 0, 24, 0, 0, false)
+        mock_construct_device!(model, device_model)
+        moi_tests(model, false, 24, 0, 24, 0, 0, false)
         psi_checkobjfun_test(model, GAEVF)
     end
 end
@@ -48,12 +46,11 @@ end
     models = [DispatchablePowerLoad]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [ACPPowerModel]
-    param_spec = [true, false]
-    for m in models, n in networks, p in param_spec
-        model = DeviceModel(InterruptibleLoad, m)
+    for m in models, n in networks
+        device_model = DeviceModel(InterruptibleLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
-        mock_construct_device!(model, model)
-        moi_tests(model, p, 48, 0, 24, 0, 24, false)
+        mock_construct_device!(model, device_model)
+        moi_tests(model, false, 48, 0, 24, 0, 24, false)
         psi_checkobjfun_test(model, GAEVF)
     end
 end
@@ -62,12 +59,11 @@ end
     models = [InterruptiblePowerLoad]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [DCPPowerModel]
-    param_spec = [true, false]
-    for m in models, n in networks, p in param_spec
-        model = DeviceModel(InterruptibleLoad, m)
+    for m in models, n in networks
+        device_model = DeviceModel(InterruptibleLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
-        mock_construct_device!(model, model)
-        moi_tests(model, p, 48, 0, p * 48 + !p * 24, 0, 0, true)
+        mock_construct_device!(model, device_model)
+        moi_tests(model, false, 48, 0, 24, 0, 0, true)
         psi_checkobjfun_test(model, GAEVF)
     end
 end
@@ -76,12 +72,11 @@ end
     models = [InterruptiblePowerLoad]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [ACPPowerModel]
-    param_spec = [true, false]
-    for m in models, n in networks, p in param_spec
-        model = DeviceModel(InterruptibleLoad, m)
+    for m in models, n in networks
+        device_model = DeviceModel(InterruptibleLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
-        mock_construct_device!(model, model)
-        moi_tests(model, p, 72, 0, p * 48 + !p * 24, 0, 24, true)
+        mock_construct_device!(model, device_model)
+        moi_tests(model, false, 72, 0, 24, 0, 24, true)
         psi_checkobjfun_test(model, GAEVF)
     end
 end

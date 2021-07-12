@@ -1,9 +1,3 @@
-@testset "remove characters" begin
-    s = "Hello_World"
-    new_s = PSI.remove_chars(s, "_")
-    @test new_s == "HelloWorld"
-end
-
 @testset "test key with value" begin
     d = Dict("foo" => "bar")
     @test_throws ErrorException PSI.find_key_with_value(d, "fake")
