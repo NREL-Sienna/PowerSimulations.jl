@@ -345,11 +345,15 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
 end
 
 function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::Int)
-    ac_lines, PMmap_ac =
-        get_branches_to_pm(sys, template.transmission, PSY.ACBranch, template.branches)
+    ac_lines, PMmap_ac = get_branches_to_pm(
+        sys,
+        get_network_formulation(template),
+        PSY.ACBranch,
+        template.branches,
+    )
     dc_lines, PMmap_dc = get_branches_to_pm(
         sys,
-        template.transmission,
+        get_network_formulation(template),
         PSY.DCBranch,
         template.branches,
         length(ac_lines),

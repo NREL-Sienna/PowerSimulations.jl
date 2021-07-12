@@ -474,10 +474,11 @@ function add_pm_var_refs!(
     bus_names = [PSY.get_name(b) for b in values(bus_dict)]
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_types
-            container = add_var_container!(container, ps_v, PSY.Bus, bus_names, time_steps)
+            var_container =
+                add_var_container!(container, ps_v, PSY.Bus, bus_names, time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                container[name, t] = PM.var(container.pm, t, pm_v)[pm_bus] # pm_vars[pm_v][pm_bus]
+                var_container[name, t] = PM.var(container.pm, t, pm_v)[pm_bus] # pm_vars[pm_v][pm_bus]
             end
         end
     end
@@ -518,7 +519,7 @@ function add_pm_var_refs!(
                 for dir in fieldnames(typeof(ps_v))
                     var_type = getfield(ps_v, dir)
                     var_type === nothing && continue
-                    container = add_var_container!(
+                    var_container = add_var_container!(
                         container,
                         var_type,
                         d_type,
@@ -527,7 +528,7 @@ function add_pm_var_refs!(
                     )
                     for t in time_steps, (pm_d, d) in devices
                         var = PM.var(container.pm, t, pm_v, getfield(pm_d, dir))
-                        container[PSY.get_name(d), t] = var
+                        var_container[PSY.get_name(d), t] = var
                     end
                 end
             end
@@ -549,7 +550,7 @@ function add_pm_con_refs!(
     pm_con_map = PMconmap(system_formulation)
     for (pm_v, ps_v) in pm_con_map[PSY.Bus]
         if pm_v in pm_con_names
-            container = PSI.add_cons_container!(
+            cons_container = PSI.add_cons_container!(
                 container,
                 ps_v,
                 PSY.Bus,
@@ -558,7 +559,7 @@ function add_pm_con_refs!(
             )
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                container[name, t] = PM.con(container.pm, t, pm_v)[pm_bus]
+                cons_container[name, t] = PM.con(container.pm, t, pm_v)[pm_bus]
             end
         end
     end
