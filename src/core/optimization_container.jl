@@ -52,6 +52,7 @@ get_initial_time(container::OptimizationContainer) = get_initial_time(container.
 # Internal Variables, Constraints and Parameters accessors
 get_variables(container::OptimizationContainer) = container.variables
 get_aux_variables(container::OptimizationContainer) = container.aux_variables
+get_dual_values(container::OptimizationContainer) = container.dual_values
 get_constraints(container::OptimizationContainer) = container.constraints
 get_parameters(container::OptimizationContainer) = container.parameters
 get_expression(container::OptimizationContainer, name::Symbol) = container.expressions[name]
@@ -99,6 +100,7 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
         JuMP.set_silent(JuMPmodel)
         @debug "optimizer set to silent"
     end
+    return JuMPmodel
 end
 
 function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Settings)
@@ -234,6 +236,7 @@ end
 
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
+    transmission_model = get_network_model(template)
     # Order is required
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
         construct_services!(
@@ -242,26 +245,30 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             get_service_models(template),
             get_device_models(template),
         )
+        #  TODO: Add dual variable container for services
     end
     for device_model in values(template.devices)
         @debug "Building $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             construct_device!(container, sys, device_model, transmission)
             @debug get_problem_size(container)
+            add_dual_variable!(container, sys, device_model)
         end
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
         @debug "Building $(transmission) network formulation"
-        construct_network!(container, sys, transmission, template)
+        construct_network!(container, sys, transmission_model, template)
         @debug get_problem_size(container)
+        add_dual_variable!(container, sys, transmission_model)
     end
 
     for branch_model in values(template.branches)
         @debug "Building $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation"
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
-            construct_device!(container, sys, branch_model, transmission)
+            construct_device!(container, sys, branch_model, transmission_model)
             @debug get_problem_size(container)
+            add_dual_variable!(container, sys, branch_model)
         end
     end
 
@@ -354,7 +361,7 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: PSY.Component}
     var_key = VariableKey(T, U, meta)
-    return _add_var_container!(container, var_key, sparse; axs...)
+    return _add_var_container!(container, var_key, sparse, axs...)
 end
 
 function get_variable_keys(container::OptimizationContainer)
@@ -409,6 +416,28 @@ function get_aux_variable_keys(container::OptimizationContainer)
     return collect(keys(container.aux_variables))
 end
 
+##################################### DualVariable Container ################################
+function add_dual_container!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    axs...;
+    sparse = false,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    const_key = ConstraintKey(T, U)
+    if sparse
+        dual_container = sparse_container_spec(Float64, axs...)
+    else
+        dual_container = container_spec(Float64, axs...)
+    end
+    _assign_container!(container.dual_values, const_key, dual_container)
+    return dual_container
+end
+
+function get_dual_keys(container::OptimizationContainer)
+    return collect(keys(container.dual_values))
+end
+
 ##################################### Constraint Container #################################
 function _add_cons_container!(
     container::OptimizationContainer,
@@ -448,7 +477,7 @@ end
 function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     var = get(container.constraints, key, nothing)
     if var === nothing
-        @error "$name is not stored" sort!(get_constraint_keys(container))
+        @error "$key is not stored" (get_constraint_keys(container))
         throw(IS.InvalidValue("constraint $key is not stored"))
     end
 
@@ -473,18 +502,10 @@ function get_constraint(
 end
 
 function read_duals(container::OptimizationContainer)
-    cons = get_constraint_duals(container.settings)
-    return read_duals(container, cons)
-end
-
-function read_duals(op::OptimizationContainer, cons::Vector{Symbol})
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-    isempty(cons) && return results_dict
-    for c in cons
-        v = get_constraint(op, c)
-        results_dict[c] = axis_array_to_dataframe(v, [c])
-    end
-    return results_dict
+    return Dict(
+        encode_key(k) => axis_array_to_dataframe(v, [encode_key(k)]) for
+        (k, v) in get_dual_values(container)
+    )
 end
 
 ##################################### Parameter Container ##################################
@@ -571,9 +592,9 @@ function add_expression_container!(
     exp_name::Symbol,
     axs...,
 )
-    container = JuMP.Containers.DenseAxisArray{JuMP.GenericAffExpr}(undef, axs...)
-    assign_expression!(container, exp_name, container)
-    return container
+    exp_container = JuMP.Containers.DenseAxisArray{JuMP.GenericAffExpr}(undef, axs...)
+    assign_expression!(container, exp_name, exp_container)
+    return exp_container
 end
 
 ###################################Initial Conditions Containers############################

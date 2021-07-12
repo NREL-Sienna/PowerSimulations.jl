@@ -444,30 +444,41 @@ function calculate_aux_variables!(model::DecisionModel)
     return
 end
 
+function calculate_dual_variables!(model::DecisionModel)
+    container = get_optimization_container(model)
+    system = get_system(model)
+    duals_vars = get_dual_values(container)
+    for key in keys(duals_vars)
+        calculate_dual_variable_value!(container, key, system)
+    end
+    return
+end
+
 function solve_impl(model::DecisionModel; optimizer = nothing)
     if !is_built(model)
         error(
             "Operations Problem Build status is $(get_status(model)). Solve can't continue",
         )
     end
-    model = get_jump_model(model)
+    jump_model = get_jump_model(model)
     if optimizer !== nothing
-        JuMP.set_optimizer(model, optimizer)
+        JuMP.set_optimizer(jump_model, optimizer)
     end
-    if model.moi_backend.state == MOIU.NO_OPTIMIZER
+    if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
         @error("No Optimizer has been defined, can't solve the operational problem")
         return RunStatus.FAILED
     end
-    @assert model.moi_backend.state != MOIU.NO_OPTIMIZER
+    @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
     status = RunStatus.RUNNING
     timed_log = get_solve_timed_log(model)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
-        @timed JuMP.optimize!(model)
-    model_status = JuMP.primal_status(model)
+        @timed JuMP.optimize!(jump_model)
+    model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         return RunStatus.FAILED
     else
-        calculate_aux_variables!(model::DecisionModel)
+        calculate_aux_variables!(model)
+        calculate_dual_variables!(model)
         status = RunStatus.SUCCESSFUL
     end
     return status
@@ -488,7 +499,7 @@ automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
 function solve!(model::DecisionModel{<:DecisionProblem}; kwargs...)
-    status = solve_impl(problem; kwargs...)
+    status = solve_impl(model; kwargs...)
     set_run_status!(model, status)
     return status
 end
