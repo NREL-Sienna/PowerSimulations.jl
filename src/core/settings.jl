@@ -6,7 +6,6 @@ struct Settings
     optimizer::Union{Nothing, MOI.OptimizerWithAttributes}
     direct_mode_optimizer::Bool
     optimizer_log_print::Bool
-    constraint_duals::Vector{Symbol}
     system_to_file::Bool
     export_pwl_vars::Bool
     allow_fails::Bool
@@ -22,7 +21,6 @@ function Settings(
     optimizer = nothing,
     direct_mode_optimizer::Bool = false,
     optimizer_log_print::Bool = false,
-    constraint_duals::Vector{Symbol} = Vector{Symbol}(),
     system_to_file = true,
     export_pwl_vars = false,
     allow_fails = false,
@@ -52,7 +50,6 @@ function Settings(
         optimizer_,
         direct_mode_optimizer,
         optimizer_log_print,
-        constraint_duals,
         system_to_file,
         export_pwl_vars,
         allow_fails,
@@ -113,7 +110,6 @@ get_initial_time(settings::Settings)::Dates.DateTime = settings.initial_time[]
 get_optimizer(settings::Settings) = settings.optimizer
 get_ext(settings::Settings) = settings.ext
 get_warm_start(settings::Settings) = settings.warm_start[]
-get_constraint_duals(settings::Settings) = settings.constraint_duals
 get_system_to_file(settings::Settings) = settings.system_to_file
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails

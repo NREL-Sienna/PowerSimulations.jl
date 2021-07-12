@@ -47,13 +47,13 @@ get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage =
 
 get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_lower_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
-get_variable_upper_bound(::EnergyShortageVariable, d::PSY.HydroGen, ::AbstractStorageFormulation) = PSY.get_rating(d)
+get_variable_upper_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_rating(d)
 
-############## EnergySlackDown, Storage ####################
+############## EnergySurplusVariable, Storage ####################
 
 get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
-get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractStorageFormulation) = - PSY.get_rating(d)
+get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
 #! format: on
 
 ################################## output power constraints#################################
@@ -303,9 +303,7 @@ function energy_target_constraint!(
     target_forecast_name = "storage_target"
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector_target =
-            length(time_steps) == 1 ? [PSY.get_storage_target(d)] :
-            vcat(zeros(time_steps[end - 1]), PSY.get_storage_target(d))
+        ts_vector_target = get_time_series(container, d, target_forecast_name)
         constraint_info_target =
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector_target)
         constraint_infos_target[ix] = constraint_info_target

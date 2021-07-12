@@ -175,7 +175,7 @@ function frequency_response_constraint!(container::OptimizationContainer, sys::P
     R_dn_emergency =
         get_variable(container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
 
-    container = add_cons_container!(container, FrequencyResponseConstraint(), PSY.System, time_steps)
+    const_container = add_cons_container!(container, FrequencyResponseConstraint(), PSY.System, time_steps)
 
     for s in services, t in time_steps
         system_balance = sum(area_balance.data[:, t])
@@ -186,7 +186,7 @@ function frequency_response_constraint!(container::OptimizationContainer, sys::P
             JuMP.add_to_expression!(total_reg, R_up_emergency[a, t])
             JuMP.add_to_expression!(total_reg, -1 * R_dn_emergency[a, t])
         end
-        container[t] = JuMP.@constraint(
+        const_container[t] = JuMP.@constraint(
             container.JuMPmodel,
             frequency[t] == -inv_frequency_reponse * (system_balance + total_reg)
         )
