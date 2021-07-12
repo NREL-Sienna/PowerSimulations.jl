@@ -428,7 +428,7 @@ function construct_device!(
     # Variables
     add_variables!(
         container,
-        ActivePowerVariable,
+        PowerAboveMinimumVariable,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
@@ -448,7 +448,7 @@ function construct_device!(
     # Aux Variables
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
-
+    add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
     # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
@@ -456,7 +456,7 @@ function construct_device!(
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        PowerAboveMinimumVariable,
         devices,
         model,
         S,
@@ -507,7 +507,7 @@ function construct_device!(
     # Variables
     add_variables!(
         container,
-        ActivePowerVariable,
+        PowerAboveMinimumVariable,
         devices,
         ThermalMultiStartUnitCommitment(),
     )
@@ -521,6 +521,7 @@ function construct_device!(
     # Aux Variables
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
+    add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
@@ -529,7 +530,7 @@ function construct_device!(
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        PowerAboveMinimumVariable,
         devices,
         model,
         S,
@@ -569,7 +570,12 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, ThermalCompactUnitCommitment())
+    add_variables!(
+        container,
+        PowerAboveMinimumVariable,
+        devices,
+        ThermalCompactUnitCommitment(),
+    )
     add_variables!(
         container,
         ReactivePowerVariable,
@@ -583,6 +589,7 @@ function construct_device!(
     # Aux Variables
     add_variables!(container, TimeDurationOn, devices, ThermalCompactUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, PowerOutput, devices, ThermalCompactUnitCommitment())
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
@@ -591,7 +598,7 @@ function construct_device!(
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        PowerAboveMinimumVariable,
         devices,
         model,
         S,
@@ -630,7 +637,12 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, ThermalCompactUnitCommitment())
+    add_variables!(
+        container,
+        PowerAboveMinimumVariable,
+        devices,
+        ThermalCompactUnitCommitment(),
+    )
     add_variables!(container, OnVariable, devices, ThermalCompactUnitCommitment())
     add_variables!(container, StartVariable, devices, ThermalCompactUnitCommitment())
     add_variables!(container, StopVariable, devices, ThermalCompactUnitCommitment())
@@ -638,6 +650,7 @@ function construct_device!(
     # Aux Variables
     add_variables!(container, TimeDurationOn, devices, ThermalCompactUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalCompactUnitCommitment())
+    add_variables!(container, PowerOutput, devices, ThermalCompactUnitCommitment())
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
@@ -646,7 +659,7 @@ function construct_device!(
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        PowerAboveMinimumVariable,
         devices,
         model,
         S,
@@ -675,8 +688,11 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, ThermalCompactDispatch())
+    add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
     add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
+
+    # Aux Variables
+    add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
@@ -685,7 +701,7 @@ function construct_device!(
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        PowerAboveMinimumVariable,
         devices,
         model,
         S,
@@ -721,7 +737,10 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, ThermalCompactDispatch())
+    add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
+
+    # Aux Variables
+    add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
@@ -730,7 +749,7 @@ function construct_device!(
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        PowerAboveMinimumVariable,
         devices,
         model,
         S,
