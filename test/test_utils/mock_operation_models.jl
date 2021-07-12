@@ -27,23 +27,23 @@ end
 # Only used for testing
 function mock_construct_device!(problem::PSI.DecisionModel{MockOperationProblem}, model)
     set_device_model!(problem.template, model)
-    template = PSI.get_template(model)
+    template = PSI.get_template(problem)
     PSI.optimization_container_init!(
-        PSI.get_optimization_container(model),
+        PSI.get_optimization_container(problem),
         PSI.get_network_formulation(template),
-        PSI.get_system(model),
+        PSI.get_system(problem),
     )
     PSI.construct_device!(
-        PSI.get_optimization_container(model),
-        PSI.get_system(model),
+        PSI.get_optimization_container(problem),
+        PSI.get_system(problem),
         model,
         PSI.get_network_formulation(template),
     )
 
     JuMP.@objective(
-        PSI.get_jump_model(model),
+        PSI.get_jump_model(problem),
         MOI.MIN_SENSE,
-        PSI.get_optimization_container(model).cost_function
+        PSI.get_optimization_container(problem).cost_function
     )
     return
 end
@@ -51,8 +51,8 @@ end
 function mock_construct_network!(problem::PSI.DecisionModel{MockOperationProblem}, model)
     PSI.set_transmission_model!(problem.template, model)
     PSI.construct_network!(
-        PSI.get_optimization_container(model),
-        PSI.get_system(model),
+        PSI.get_optimization_container(problem),
+        PSI.get_system(problem),
         model,
         problem.template.branches,
     )
