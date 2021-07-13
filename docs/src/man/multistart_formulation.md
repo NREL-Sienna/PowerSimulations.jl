@@ -125,7 +125,7 @@ subject to:\
 \end{align}
 ```
 
-*Must run constriant*
+*Must run constraint*
 ```math
 \begin{align}
 		& u_g(t) \geq U_g & \hspace{1cm} \forall t \in \cT, \, \forall g \in \cG \label{eq:MustRun}
@@ -138,7 +138,7 @@ subject to:\
 \end{align}
 ```
 
-*Start-up type selection constriant*
+*Start-up type selection constraint*
 ```math
 \begin{align}
 		& v_g(t) = \sum_{s = 1}^{S_g} \delta^s_g(t) & \forall t \in \cT,\, \forall g \in \cG \label{eq:STILink}

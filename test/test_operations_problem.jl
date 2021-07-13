@@ -180,7 +180,7 @@ end
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     container = PSI.get_optimization_container(model)
-    constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
+    constraint_key = PSI.ConstraintKey()
     constraints = PSI.get_constraints(container)[constraint_key]
     dual_results = read_duals(container)[:CopperPlateBalanceConstraint_System]
     for i in axes(constraints)[1]

@@ -4,7 +4,7 @@
 # - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
 
 const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
-const FieldResultsByTime = Dict{Symbol, ResultsByTime}
+const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}
 
 """Holds the results of a simulation problem for plotting or exporting"""
 mutable struct SimulationProblemResults <: PSIResults
@@ -173,9 +173,13 @@ function _get_store_value(
     return results
 end
 
-function _validate_names(existing_names::Vector{Symbol}, names::Vector{Symbol})
+function _validate_names(
+    existing_names::Vector{OptimizationContainerKey},
+    names::Vector{OptimizationContainerKey},
+)
+    existing = Set(existing_names)
     for name in names
-        if name ∉ existing_names
+        if name ∉ existing
             @error("$name is not stored", sort(existing_names))
             throw(IS.InvalidValue("$name is not stored"))
         end
@@ -213,22 +217,23 @@ end
 
 function _read_variables(
     res::SimulationProblemResults,
-    names::Vector{Symbol},
+    variables::Vector{Tuple},
     timestamps,
     store,
 )
-    isempty(names) && return FieldResultsByTime()
-    existing_names = get_existing_variables(res)
-    _validate_names(existing_names, names)
+    isempty(variables) && return FieldResultsByTime()
+    existing_variables = get_existing_variables(res)
+    _validate_names(existing_variables, variables)
     same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
     names_with_values = [k for (k, v) in res.variable_values if !isempty(v)]
-    same_names = isempty([n for n in names if n ∉ names_with_values])
+    same_names = isempty([n for n in variables if n ∉ names_with_values])
     if same_time_stamps && same_names
         @info "reading variables from SimulationsResults"
-        vals = filter(p -> (p.first ∈ names), res.variable_values)
+        vals = filter(p -> (p.first ∈ variables), res.variable_values)
     else
         @info "reading variables from data store"
-        vals = _get_store_value(res, STORE_CONTAINER_VARIABLES, names, timestamps, store)
+        vals =
+            _get_store_value(res, STORE_CONTAINER_VARIABLES, variables, timestamps, store)
     end
     return vals
 end
@@ -387,8 +392,16 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
 """
-function read_parameter(res::SimulationProblemResults, name::Symbol; kwargs...)
-    return read_parameters(res; names = [name], kwargs...)[name]
+function read_parameter(
+    res::SimulationProblemResults,
+    param_type::Type{ParameterType},
+    device_type::Type{PSY.Component},
+    time_series_name = nothing;
+    kwargs...,
+)
+    #paramter_key = ParameterKey(param_type(time_series_name), device_type)
+    paramter_key = ParameterKey(param_type, device_type)
+    return read_parameters(res; names = [parameter_key], kwargs...)[name]
 end
 
 """
@@ -625,9 +638,9 @@ function load_results!(
     res::SimulationProblemResults,
     count::Int;
     initial_time::Union{Dates.DateTime, Nothing} = nothing,
-    variables::Vector{Symbol} = Symbol[],
-    duals::Vector{Symbol} = Symbol[],
-    parameters::Vector{Symbol} = Symbol[],
+    variables::Vector{Tuple} = Vector{Tuple}(),
+    duals::Vector{Tuple} = Vector{Tuple}(),
+    parameters::Vector{Tuple} = Vector{Tuple}(),
 )
     initial_time =
         isnothing(initial_time) ? first(get_existing_timestamps(res)) : initial_time

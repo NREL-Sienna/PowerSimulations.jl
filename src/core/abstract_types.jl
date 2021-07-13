@@ -10,6 +10,16 @@ abstract type AuxVariableType end
 abstract type ParameterType end
 abstract type InitialConditionType end
 
+const _DELIMITER = "_"
+
+function get_entry_type_module(key::OptimizationContainerKey)
+    return parentmodule(get_entry_type(key))
+end
+
+function get_component_type_module(key::OptimizationContainerKey)
+    return parentmodule(get_component_type(key))
+end
+
 function encode_key(key::OptimizationContainerKey)
     return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
 end
@@ -19,15 +29,15 @@ function encode_symbol(
     ::Type{U},
     meta::String = CONTAINER_KEY_EMPTY_META,
 ) where {T <: Union{PSY.Component, PSY.System}, U}
-    meta_ = isempty(meta) ? meta : "_" * meta
-    T_ = replace(replace(IS.strip_module_name(T), "{" => "_"), "}" => "")
-    return Symbol("$(IS.strip_module_name(string(U)))_$(T_)" * meta_)
+    meta_ = isempty(meta) ? meta : _DELIMITER * meta
+    T_ = replace(replace(IS.strip_module_name(T), "{" => _DELIMITER), "}" => "")
+    return Symbol("$(IS.strip_module_name(string(U)))$(_DELIMITER)$(T_)" * meta_)
 end
 
 function check_meta_chars(meta)
     # Underscores in this field will prevent us from being able to decode keys.
-    if occursin("_", meta)
-        throw(IS.InvalidValue("'_' is not allowed in meta"))
+    if occursin(_DELIMITER, meta)
+        throw(IS.InvalidValue("'$_DELIMITER' is not allowed in meta"))
     end
 end
 

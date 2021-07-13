@@ -298,6 +298,9 @@ export EnergyBudgetTimeSeriesParameter
 export BinaryValueParameter
 export UpperBoundValueParameter
 
+export register_types!
+export empty_registrations!
+
 #################################################################################
 # Imports
 import DataStructures: OrderedDict, Deque, SortedDict
@@ -450,6 +453,7 @@ include("devices_models/devices/common/energy_balance_constraint.jl")
 include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
+include("core/type_registrations.jl")
 include("feedforward/feedforward_constraints.jl")
 
 # Device Modeling components
