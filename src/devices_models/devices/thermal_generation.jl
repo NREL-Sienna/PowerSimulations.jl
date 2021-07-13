@@ -488,7 +488,7 @@ function calculate_aux_variable_value!(
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(container, OnVariable(), T)
-    aux_var_container = get_aux_variables(container)[key]
+    aux_var_container = get_aux_variable(container, TimeDurationOn(), T)
     ini_cond = get_initial_conditions(container, InitialTimeDurationOn, T)
 
     time_steps = get_time_steps(container)
@@ -530,7 +530,7 @@ function calculate_aux_variable_value!(
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(container, OnVariable(), T)
-    aux_var_container = get_aux_variables(container)[key]
+    aux_var_container = get_aux_variable(container, TimeDurationOff(), T)
     ini_cond = get_initial_conditions(container, InitialTimeDurationOff, T)
 
     time_steps = get_time_steps(container)
@@ -565,16 +565,15 @@ function calculate_aux_variable_value!(
 end
 
 function calculate_aux_variable_value!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     key::AuxVarKey{PowerOutput, T},
     system::PSY.System,
 ) where {T <: PSY.ThermalGen}
     devices = PSY.get_components(T, system)
-    time_steps = model_time_steps(optimization_container)
-    on_var_results = get_variable(optimization_container, OnVariable(), T)
-    p_var_results = get_variable(optimization_container, PowerAboveMinimumVariable(), T)
-    aux_var_container = get_aux_variables(optimization_container)[key]
-
+    time_steps = model_time_steps(container)
+    on_var_results = get_variable(container, OnVariable(), T)
+    p_var_results = get_variable(container, PowerAboveMinimumVariable(), T)
+    aux_var_container = get_aux_variable(container, PowerOutput(), T)
     for d in devices, t in time_steps
         name = PSY.get_name(d)
         min = PSY.get_active_power_limits(d).min

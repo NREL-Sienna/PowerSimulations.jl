@@ -416,6 +416,26 @@ function get_aux_variable_keys(container::OptimizationContainer)
     return collect(keys(container.aux_variables))
 end
 
+function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
+    aux = get(container.aux_variables, key, nothing)
+    if aux === nothing
+        name = encode_key(key)
+        keys = encode_key.(get_variable_keys(container))
+        @error "$name is not stored" sort!(keys)
+        throw(IS.InvalidValue("Auxiliary variable $name is not stored"))
+    end
+    return aux
+end
+
+function get_aux_variable(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta::String = CONTAINER_KEY_EMPTY_META,
+) where {T <: AuxVariableType, U <: PSY.Component}
+    return get_aux_variable(container, AuxVarKey(T, U, meta))
+end
+
 ##################################### DualVariable Container ################################
 function add_dual_container!(
     container::OptimizationContainer,
