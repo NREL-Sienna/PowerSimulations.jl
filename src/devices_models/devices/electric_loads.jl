@@ -141,7 +141,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         parameter,
         T,
-        PSY.get_max_active_power(x),
+        x -> PSY.get_max_active_power(x),
         -1.0,
         :nodal_balance_active,
     )

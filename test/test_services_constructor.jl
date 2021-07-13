@@ -8,22 +8,20 @@
     )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
-    for p in [true, false]
-        model = DecisionModel(template, c_sys5_uc)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-        moi_tests(model, p, 648, 0, 120, 216, 72, false)
-        reserve_variables = [
-            :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1
-            :ActivePowerReserveVariable_ReserveDemandCurve_ReserveUp_ORDC1
-            :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2
-            :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11
-        ]
-        for (k, var_array) in model.internal.container.variables
-            if PSI.encode_key(k) in reserve_variables
-                for var in var_array
-                    @test JuMP.has_lower_bound(var)
-                    @test JuMP.lower_bound(var) == 0.0
-                end
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 648, 0, 120, 216, 72, false)
+    reserve_variables = [
+        :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1
+        :ActivePowerReserveVariable_ReserveDemandCurve_ReserveUp_ORDC1
+        :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2
+        :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11
+    ]
+    for (k, var_array) in model.internal.container.variables
+        if PSI.encode_key(k) in reserve_variables
+            for var in var_array
+                @test JuMP.has_lower_bound(var)
+                @test JuMP.lower_bound(var) == 0.0
             end
         end
     end
@@ -35,21 +33,19 @@ end
     set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RampReserve))
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
-    for p in [true, false]
-        model = DecisionModel(template, c_sys5_uc)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-        moi_tests(model, p, 384, 0, 336, 192, 24, false)
-        reserve_variables = [
-            :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2,
-            :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1,
-            :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11,
-        ]
-        for (k, var_array) in model.internal.container.variables
-            if PSI.encode_key(k) in reserve_variables
-                for var in var_array
-                    @test JuMP.has_lower_bound(var)
-                    @test JuMP.lower_bound(var) == 0.0
-                end
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 384, 0, 336, 192, 24, false)
+    reserve_variables = [
+        :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2,
+        :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1,
+        :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11,
+    ]
+    for (k, var_array) in model.internal.container.variables
+        if PSI.encode_key(k) in reserve_variables
+            for var in var_array
+                @test JuMP.has_lower_bound(var)
+                @test JuMP.lower_bound(var) == 0.0
             end
         end
     end
@@ -65,11 +61,9 @@ end
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
-    for p in [true, false]
-        model = DecisionModel(template, c_sys5_uc)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-        moi_tests(model, p, 1008, 0, 480, 216, 192, true)
-    end
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 1008, 0, 480, 216, 192, true)
 end
 
 @testset "Test Upwards Reserves from Renewable Dispatch" begin
@@ -83,11 +77,9 @@ end
     )
 
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
-    for p in [true, false]
-        model = DecisionModel(template, c_sys5_re)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-        moi_tests(model, p, 360, 0, 72, 48, 72, false)
-    end
+    model = DecisionModel(template, c_sys5_re)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 360, 0, 72, 48, 72, false)
 end
 
 @testset "Test Reserves from Storage" begin
@@ -102,11 +94,9 @@ end
     )
 
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves = true)
-    for p in [true, false]
-        model = DecisionModel(template, c_sys5_bat)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-        moi_tests(model, p, 408, 0, 192, 264, 96, false)
-    end
+    model = DecisionModel(template, c_sys5_bat)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 408, 0, 192, 264, 96, false)
 end
 
 @testset "Test Reserves from Hydro" begin
@@ -121,29 +111,28 @@ end
     )
 
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
-    for p in [true, false]
-        model = DecisionModel(template, c_sys5_hyd)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-        moi_tests(model, p, 240, 0, 24, 96, 72, false)
-    end
+    model = DecisionModel(template, c_sys5_hyd)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 240, 0, 24, 96, 72, false)
 end
 
 @testset "Test Reserves from with slack variables" begin
-    template = get_thermal_dispatch_template_network()
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(CopperPlatePowerModel; use_slacks = true),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve; use_slacks = true),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve; use_slacks = true),
+    )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
-    for p in [true, false]
-        model = DecisionModel(
-            template,
-            c_sys5_uc;
-            services_slack_variables = true,
-            balance_slack_variables = true,
-        )
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-        moi_tests(model, p, 504, 0, 120, 192, 24, false)
-    end
+    model = DecisionModel(template, c_sys5_uc;)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 504, 0, 120, 192, 24, false)
 end
 
 @testset "Test AGC" begin
@@ -187,11 +176,9 @@ end
     )
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
-    for p in [true, false]
-        model = DecisionModel(template, c_sys5_uc)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-        moi_tests(model, p, 648, 0, 120, 240, 72, false)
-    end
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 648, 0, 120, 240, 72, false)
 end
 
 # TODO: Test is broken
@@ -246,5 +233,5 @@ end
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    @test typeof(model) <: DecisionProblem
+    @test typeof(model) <: DecisionModel{<:PSI.DecisionProblem}
 end

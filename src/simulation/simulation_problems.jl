@@ -4,7 +4,7 @@ SimulationProblems, the order in which the problems are created determines the o
 the simulation is executed.
 """
 mutable struct SimulationProblems
-    models::OrderedDict{Symbol, DecisionProblem}
+    models::OrderedDict{Symbol, DecisionModel}
     names::Vector{Symbol}
     function SimulationProblems(; kwargs...)
         prob_dict = OrderedDict(kwargs...)
@@ -27,7 +27,7 @@ end
 
 function determine_horizons!(problems::SimulationProblems)
     horizons = OrderedDict{Symbol, Int}()
-    for (name, problem) in problems.models
+    for (name, model) in problems.models
         container = get_optimization_container(model)
         settings = get_settings(container)
         horizon = get_horizon(settings)
@@ -46,7 +46,7 @@ function determine_step_resolution(intervals)
 end
 
 function initialize_simulation_internals!(problems::SimulationProblems, uuid::Base.UUID)
-    for (ix, (name, problem)) in enumerate(problems.models)
+    for (ix, (name, model)) in enumerate(problems.models)
         info = SimulationInfo(
             ix,
             # JDNOTE: Making conversion to avoid breaking things

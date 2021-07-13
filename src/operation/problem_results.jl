@@ -41,7 +41,7 @@ function ProblemResults(model::DecisionModel)
     return ProblemResults(
         get_problem_base_power(model),
         timestamps,
-        problem.sys,
+        model.sys,
         variables,
         duals,
         parameters,

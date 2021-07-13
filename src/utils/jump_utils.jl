@@ -75,3 +75,22 @@ function to_array(array::JuMP.Containers.SparseAxisArray)
 end
 
 to_array(array::Array) = array
+
+""" Returns the correct container spec for the selected type of JuMP Model"""
+function container_spec(::Type{T}, axs...) where {T <: Any}
+    return JuMP.Containers.DenseAxisArray{T}(undef, axs...)
+end
+
+""" Returns the correct container spec for the selected type of JuMP Model"""
+function container_spec(::Type{Float64}, axs...)
+    cont = JuMP.Containers.DenseAxisArray{Float64}(undef, axs...)
+    cont.data .= ones(size(cont.data)) .* NaN
+    return cont
+end
+
+""" Returns the correct container spec for the selected type of JuMP Model"""
+function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
+    indexes = Base.Iterators.product(axs...)
+    contents = Dict{eltype(indexes), Any}(indexes .=> 0)
+    return JuMP.Containers.SparseAxisArray(contents)
+end
