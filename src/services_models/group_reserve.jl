@@ -25,7 +25,7 @@ This function creates the requirement constraint that will be attained by the ap
 function service_requirement_constraint!(
     container::OptimizationContainer,
     service::SR,
-    ::ServiceModel{SR, GroupReserve},
+    model::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
 ) where {SR <: PSY.StaticReserveGroup}
     initial_time = get_initial_time(container)
@@ -33,7 +33,7 @@ function service_requirement_constraint!(
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     constraint = get_constraint(container, RequirementConstraint(), SR)
-    use_slacks = get_services_slack_variables(container.settings)
+    use_slacks = get_use_slacks(model)
     reserve_variables = [
         get_variable(container, ActivePowerReserveVariable(), typeof(r), PSY.get_name(r)) for r in contributing_services
     ]

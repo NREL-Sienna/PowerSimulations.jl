@@ -21,14 +21,15 @@ struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 get_variable_sign(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
 ############## ActivePowerVariable, ThermalGen ####################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
+get_variable_binary(::PowerAboveMinimumVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_active
 get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
-get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
+get_variable_initial_value(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = 0.0
+get_variable_lower_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
-get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = PSY.get_active_power_limits(d).max - PSY.get_active_power_limits(d).min
+get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = PSY.get_active_power_limits(d).max - PSY.get_active_power_limits(d).min
 
 ############## ReactivePowerVariable, ThermalGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
@@ -90,6 +91,31 @@ function DeviceRangeConstraintSpec(
             constraint_type = ActivePowerVariableLimitsConstraint(),
             variable_type = ActivePowerVariable(),
             limits_func = x -> PSY.get_active_power_limits(x),
+            constraint_func = device_range!,
+            constraint_struct = DeviceRangeConstraintInfo,
+            component_type = T,
+        ),
+    )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:ActivePowerVariableLimitsConstraint},
+    ::Type{PowerAboveMinimumVariable},
+    ::Type{T},
+    ::Type{ThermalCompactDispatch},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Nothing,
+    use_parameters::Bool,
+) where {T <: PSY.ThermalGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_type = ActivePowerVariableLimitsConstraint(),
+            variable_type = PowerAboveMinimumVariable(),
+            limits_func = x -> (
+                min = 0.0,
+                max = PSY.get_active_power_limits(x).max -
+                      PSY.get_active_power_limits(x).min,
+            ),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
             component_type = T,
@@ -167,7 +193,7 @@ This function adds the active power limits of generators. Constraint (17) & (18)
 """
 function DeviceRangeConstraintSpec(
     ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
+    ::Type{PowerAboveMinimumVariable},
     ::Type{T},
     ::Type{<:ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
@@ -177,7 +203,7 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
+            variable_type = PowerAboveMinimumVariable(),
             limits_func = x -> (
                 min = 0.0,
                 max = PSY.get_active_power_limits(x).max -
@@ -194,7 +220,7 @@ end
 
 function DeviceRangeConstraintSpec(
     ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
+    ::Type{PowerAboveMinimumVariable},
     ::Type{T},
     ::Type{<:AbstractCompactUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
@@ -204,10 +230,11 @@ function DeviceRangeConstraintSpec(
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
             constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
+            variable_type = PowerAboveMinimumVariable(),
             limits_func = x -> (
-                min = PSY.get_active_power_limits(x).min,
-                max = PSY.get_active_power_limits(x).max,
+                min = 0.0,
+                max = PSY.get_active_power_limits(x).max -
+                      PSY.get_active_power_limits(x).min,
             ),
             bin_variable_types = [OnVariable(), StartVariable(), StopVariable()],
             constraint_func = device_multistart_range!,
@@ -407,6 +434,25 @@ end
 function initial_conditions!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
+    formulation::AbstractCompactUnitCommitment,
+) where {T <: PSY.ThermalGen}
+    add_initial_condition!(container, devices, formulation, DeviceStatus, OnVariable)
+    add_initial_condition!(
+        container,
+        devices,
+        formulation,
+        DevicePower,
+        PowerAboveMinimumVariable,
+    )
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
+
+    return
+end
+
+function initial_conditions!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
     formulation::ThermalBasicUnitCommitment,
 ) where {T <: PSY.ThermalGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus, OnVariable)
@@ -442,7 +488,7 @@ function calculate_aux_variable_value!(
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(container, OnVariable(), T)
-    aux_var_container = get_aux_variables(container)[key]
+    aux_var_container = get_aux_variable(container, TimeDurationOn(), T)
     ini_cond = get_initial_conditions(container, InitialTimeDurationOn, T)
 
     time_steps = get_time_steps(container)
@@ -484,7 +530,7 @@ function calculate_aux_variable_value!(
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(container, OnVariable(), T)
-    aux_var_container = get_aux_variables(container)[key]
+    aux_var_container = get_aux_variable(container, TimeDurationOff(), T)
     ini_cond = get_initial_conditions(container, InitialTimeDurationOff, T)
 
     time_steps = get_time_steps(container)
@@ -513,6 +559,26 @@ function calculate_aux_variable_value!(
                 previous_condition = aux_var_container.data[ix, t] = time_value
             end
         end
+    end
+
+    return
+end
+
+function calculate_aux_variable_value!(
+    container::OptimizationContainer,
+    key::AuxVarKey{PowerOutput, T},
+    system::PSY.System,
+) where {T <: PSY.ThermalGen}
+    devices = PSY.get_components(T, system)
+    time_steps = model_time_steps(container)
+    on_var_results = get_variable(container, OnVariable(), T)
+    p_var_results = get_variable(container, PowerAboveMinimumVariable(), T)
+    aux_var_container = get_aux_variable(container, PowerOutput(), T)
+    for d in devices, t in time_steps
+        name = PSY.get_name(d)
+        min = PSY.get_active_power_limits(d).min
+        aux_var_container[name, t] =
+            JuMP.value(on_var_results[name, t]) * min + JuMP.value(p_var_results[name, t])
     end
 
     return
@@ -604,6 +670,62 @@ function ramp_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     T <: PSY.ThermalGen,
+    D <: AbstractCompactUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
+    data = _get_data_for_rocc(container, T)
+    if !isempty(data)
+        # Here goes the reactive power ramp limits when versions for AC and DC are added
+        for r in data
+            add_device_services!(r, r.ic_power.device, model)
+        end
+        device_mixedinteger_rateofchange!(
+            container,
+            data,
+            RampConstraint(),
+            (PowerAboveMinimumVariable(), StartVariable(), StopVariable()),
+            T,
+        )
+    else
+        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
+    end
+    return
+end
+
+function ramp_constraints!(
+    container::OptimizationContainer,
+    ::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, ThermalCompactDispatch},
+    ::Type{S},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    data = _get_data_for_rocc(container, T)
+    if !isempty(data)
+        for r in data
+            add_device_services!(r, r.ic_power.device, model)
+        end
+        # Here goes the reactive power ramp limits when versions for AC and DC are added
+        device_linear_rateofchange!(
+            container,
+            data,
+            RampConstraint(),
+            PowerAboveMinimumVariable(),
+            T,
+        )
+    else
+        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
+    end
+    return
+end
+
+function ramp_constraints!(
+    container::OptimizationContainer,
+    ::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, D},
+    ::Type{S},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {
+    T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
@@ -644,7 +766,7 @@ function ramp_constraints!(
             container,
             data,
             RampConstraint(),
-            ActivePowerVariable(),
+            PowerAboveMinimumVariable(),
             T,
         )
     else
@@ -1237,7 +1359,7 @@ function AddCostSpec(
 ) where {T <: PSY.ThermalGen, U <: AbstractCompactUnitCommitment}
     fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
     return AddCostSpec(;
-        variable_type = ActivePowerVariable,
+        variable_type = PowerAboveMinimumVariable,
         component_type = T,
         has_status_variable = has_on_variable(container, T),
         has_status_parameter = has_on_parameter(container, T),
@@ -1262,7 +1384,7 @@ function AddCostSpec(
     end
     fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
     return AddCostSpec(;
-        variable_type = ActivePowerVariable,
+        variable_type = PowerAboveMinimumVariable,
         component_type = T,
         has_status_variable = has_on_variable(container, T),
         has_status_parameter = has_on_parameter(container, T),
@@ -1280,7 +1402,7 @@ function AddCostSpec(
 ) where {T <: PSY.ThermalGen, U <: ThermalMultiStartUnitCommitment}
     fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
     return AddCostSpec(;
-        variable_type = ActivePowerVariable,
+        variable_type = PowerAboveMinimumVariable,
         component_type = T,
         has_status_variable = has_on_variable(container, T),
         has_status_parameter = has_on_parameter(container, T),

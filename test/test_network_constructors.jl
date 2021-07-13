@@ -24,7 +24,9 @@
     ]
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in networks
-        template = get_thermal_dispatch_template_network(network)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(network; PTDF = PSY.PTDF(c_sys5)),
+        )
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
@@ -53,16 +55,15 @@ end
         c_sys14_dc => 142000.0,
     )
 
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            DecisionModel(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -73,11 +74,13 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.OPTIMAL], test_obj_values[sys], 10000)
     end
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(CopperPlatePowerModel; use_slacks = true),
+    )
     ps_model_re = DecisionModel(
         template,
         PSB.build_system(PSITestSystems, "c_sys5_re");
         optimizer = GLPK_optimizer,
-        balance_slack_variables = true,
     )
     @test build!(ps_model_re; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -97,7 +100,6 @@ end
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
-    parameters = [true, false]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
         c_sys14 => PTDF(c_sys14),
@@ -113,16 +115,18 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            DecisionModel(template, sys; optimizer = OSQP_optimizer, PTDF = PTDF_ref[sys])
+    for (ix, sys) in enumerate(systems)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(StandardPTDFModel; PTDF = PTDF_ref[sys]),
+        )
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -160,7 +164,6 @@ end
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
-    parameters = [true, false]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 168],
         c_sys14 => [600, 0, 600, 600, 504],
@@ -171,16 +174,15 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            DecisionModel(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -210,7 +212,6 @@ end
         PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
     ]
-    parameters = [true, false]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
         c_sys14 => [936, 0, 1080, 1080, 840],
@@ -221,15 +222,14 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            DecisionModel(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -261,7 +261,6 @@ end
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
         PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
     ]
-    parameters = [true, false]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 384, 384, 264],
         c_sys14 => [2832, 0, 720, 720, 696],
@@ -272,15 +271,14 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            DecisionModel(template, sys; optimizer = ipopt_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -307,7 +305,6 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus)]
-    parameters = [true, false]
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 120],
         c_sys14 => [600, 0, 600, 600, 336],
@@ -318,15 +315,14 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            DecisionModel(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -354,7 +350,6 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
-    parameters = [true, false]
     # TODO: add model specific constraints to this list. Voltages, etc.
     constraint_keys = [
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
@@ -371,7 +366,7 @@ end
         c_sys14_dc => [3696, 96, 672, 672, 2472],
     )
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
-    for network in networks, sys in systems, p in parameters
+    for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = fast_ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
@@ -379,7 +374,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[network][sys][1],
             test_results[network][sys][2],
             test_results[network][sys][3],
@@ -417,16 +412,15 @@ end
         c_sys14_dc => [3264, 96, 672, 672, 2472],
     )
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
-    for network in networks, sys in systems, p in parameters
+    for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
-        ps_model =
-            DecisionModel(template, sys; optimizer = ipopt_optimizer, use_parameters = p)
+        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[network][sys][1],
             test_results[network][sys][2],
             test_results[network][sys][3],

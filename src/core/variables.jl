@@ -25,6 +25,9 @@ get_component_type(::VariableKey{T, U}) where {T <: VariableType, U <: PSY.Compo
 """Struct to dispatch the creation of Active Power Variables"""
 struct ActivePowerVariable <: VariableType end
 
+"""Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations"""
+struct PowerAboveMinimumVariable <: VariableType end
+
 """Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro"""
 struct ActivePowerInVariable <: VariableType end
 

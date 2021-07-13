@@ -23,7 +23,7 @@ get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve,
 function service_requirement_constraint!(
     container::OptimizationContainer,
     service::SR,
-    ::ServiceModel{SR, T},
+    model::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     parameters = built_for_simulation(container)
     initial_time = get_initial_time(container)
@@ -32,7 +32,7 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint = get_constraint(container, RequirementConstraint(), SR)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
-    use_slacks = get_services_slack_variables(container.settings)
+    use_slacks = get_use_slacks(model)
 
     ts_vector = get_time_series(container, service, "requirement")
 
@@ -72,7 +72,7 @@ end
 function service_requirement_constraint!(
     container::OptimizationContainer,
     service::SR,
-    ::ServiceModel{SR, T},
+    model::ServiceModel{SR, T},
 ) where {SR <: PSY.StaticReserve, T <: AbstractReservesFormulation}
     initial_time = get_initial_time(container)
     @debug initial_time
@@ -80,8 +80,7 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint = get_constraint(container, RequirementConstraint(), SR)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
-    use_slacks = get_services_slack_variables(container.settings)
-
+    use_slacks = get_use_slacks(model)
     use_slacks && (slack_vars = reserve_slacks(container, service))
 
     requirement = PSY.get_requirement(service)
@@ -259,9 +258,6 @@ function add_to_cost!(
     component_name::String,
 ) where {SR <: PSY.Reserve}
     time_steps = get_time_steps(container)
-    if !use_forecast_data
-        error("StepwiseCostReserve is only supported with forecast")
-    end
     variable_cost_forecast = get_time_series(container, service, "variable_cost")
     variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
     for t in time_steps
@@ -275,7 +271,7 @@ function cost_function!(
     service::SR,
     model::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
-    spec = AddCostSpec(SR, get_formulation(model), optimization_container)
+    spec = AddCostSpec(SR, get_formulation(model), container)
     @debug SR, spec
     add_to_cost!(container, spec, service, PSY.get_name(service))
     return

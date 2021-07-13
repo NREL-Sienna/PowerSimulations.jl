@@ -2,7 +2,7 @@ const GAEVF = JuMP.GenericAffExpr{Float64, VariableRef}
 const GQEVF = JuMP.GenericQuadExpr{Float64, VariableRef}
 
 function moi_tests(
-    op_model::DecisionModel,
+    model::DecisionModel,
     params::Bool,
     vars::Int,
     interval::Int,
@@ -25,7 +25,7 @@ function moi_tests(
 end
 
 function psi_constraint_test(
-    op_model::DecisionModel,
+    model::DecisionModel,
     constraint_keys::Vector{<:PSI.ConstraintKey},
 )
     constraints = PSI.get_constraints(model)
@@ -35,7 +35,7 @@ function psi_constraint_test(
     return
 end
 
-function psi_aux_var_test(op_model::DecisionModel, constraint_keys::Vector{<:PSI.AuxVarKey})
+function psi_aux_var_test(model::DecisionModel, constraint_keys::Vector{<:PSI.AuxVarKey})
     op_container = PSI.get_optimization_container(model)
     vars = PSI.get_aux_variables(op_container)
     for key in constraint_keys
@@ -45,7 +45,7 @@ function psi_aux_var_test(op_model::DecisionModel, constraint_keys::Vector{<:PSI
 end
 
 function psi_checkbinvar_test(
-    op_model::DecisionModel,
+    model::DecisionModel,
     bin_variable_keys::Vector{<:PSI.VariableKey},
 )
     container = PSI.get_optimization_container(model)
@@ -57,30 +57,26 @@ function psi_checkbinvar_test(
     return
 end
 
-function psi_checkobjfun_test(op_model::DecisionModel, exp_type)
+function psi_checkobjfun_test(model::DecisionModel, exp_type)
     model = PSI.get_jump_model(model)
     @test JuMP.objective_function_type(model) == exp_type
     return
 end
 
-function moi_lbvalue_test(
-    op_model::DecisionModel,
-    con_key::PSI.ConstraintKey,
-    value::Number,
-)
+function moi_lbvalue_test(model::DecisionModel, con_key::PSI.ConstraintKey, value::Number)
     for con in PSI.get_constraints(model)[con_key]
         @test JuMP.constraint_object(con).set.lower == value
     end
     return
 end
 
-function psi_checksolve_test(op_model::DecisionModel, status)
+function psi_checksolve_test(model::DecisionModel, status)
     model = PSI.get_jump_model(model)
     JuMP.optimize!(model)
     @test termination_status(model) in status
 end
 
-function psi_checksolve_test(op_model::DecisionModel, status, expected_result, tol = 0.0)
+function psi_checksolve_test(model::DecisionModel, status, expected_result, tol = 0.0)
     res = solve!(model)
     model = PSI.get_jump_model(model)
     @test termination_status(model) in status
@@ -90,9 +86,16 @@ end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
     duals = get_duals(res)
-    λ = convert(Array, duals[:CopperPlateBalance][:, :CopperPlateBalance])
+    λ = convert(
+        Array,
+        duals[:CopperPlateBalanceConstraint_System][
+            :,
+            :CopperPlateBalanceConstraint_System,
+        ],
+    )
 
-    nf_duals = collect(keys(duals))[occursin.(PSI.NETWORK_FLOW, string.(keys(duals)))]
+    nf_duals =
+        collect(keys(duals))[occursin.(string(NetworkFlowConstraint), string.(keys(duals)))]
     flow_duals =
         hcat([duals[k][:, propertynames(duals[k]) .!== :DateTime] for k in nf_duals]...)
     μ = Matrix(flow_duals[:, ptdf.axes[1]])
@@ -107,14 +110,14 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
 end
 
 function check_variable_unbounded(
-    op_model::DecisionModel,
+    model::DecisionModel,
     ::Type{T},
     ::Type{U},
 ) where {T <: PSI.VariableType, U <: PSY.Component}
-    return check_variable_unbounded(op_model::DecisionModel, PSI.VariableKey(T, U))
+    return check_variable_unbounded(model::DecisionModel, PSI.VariableKey(T, U))
 end
 
-function check_variable_unbounded(op_model::DecisionModel, var_key::PSI.VariableKey)
+function check_variable_unbounded(model::DecisionModel, var_key::PSI.VariableKey)
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
@@ -126,14 +129,14 @@ function check_variable_unbounded(op_model::DecisionModel, var_key::PSI.Variable
 end
 
 function check_variable_bounded(
-    op_model::DecisionModel,
+    model::DecisionModel,
     ::Type{T},
     ::Type{U},
 ) where {T <: PSI.VariableType, U <: PSY.Component}
-    return check_variable_bounded(op_model::DecisionModel, PSI.VariableKey(T, U))
+    return check_variable_bounded(model, PSI.VariableKey(T, U))
 end
 
-function check_variable_bounded(op_model::DecisionModel, var_key::PSI.VariableKey)
+function check_variable_bounded(model::DecisionModel, var_key::PSI.VariableKey)
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
@@ -145,7 +148,7 @@ function check_variable_bounded(op_model::DecisionModel, var_key::PSI.VariableKe
 end
 
 function check_flow_variable_values(
-    op_model::DecisionModel,
+    model::DecisionModel,
     ::Type{T},
     ::Type{U},
     device_name::String,
@@ -162,7 +165,7 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_model::DecisionModel,
+    model::DecisionModel,
     ::Type{T},
     ::Type{U},
     device_name::String,
@@ -181,7 +184,7 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_model::DecisionModel,
+    model::DecisionModel,
     ::Type{T},
     ::Type{U},
     ::Type{V},
@@ -205,7 +208,7 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_model::DecisionModel,
+    model::DecisionModel,
     ::Type{T},
     ::Type{U},
     ::Type{V},

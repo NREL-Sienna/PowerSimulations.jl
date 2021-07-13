@@ -153,9 +153,9 @@ function branch_flow_values!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{StandardPTDFModel},
+    network_model::NetworkModel{StandardPTDFModel},
 ) where {B <: PSY.ACBranch}
-    ptdf = get_PTDF(container)
+    ptdf = get_PTDF(network_model)
     branches = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
     branch_flow =
