@@ -424,14 +424,21 @@ function add_dual_container!(
     axs...;
     sparse = false,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    const_key = ConstraintKey(T, U)
-    if sparse
-        dual_container = sparse_container_spec(Float64, axs...)
+    if is_milp(container)
+        @warn(
+            "Current formulation has resulted in a MILP problem, dual value retrieval is not supported for MILP problems."
+        )
     else
-        dual_container = container_spec(Float64, axs...)
+        const_key = ConstraintKey(T, U)
+        if sparse
+            dual_container = sparse_container_spec(Float64, axs...)
+        else
+            dual_container = container_spec(Float64, axs...)
+        end
+        _assign_container!(container.dual_values, const_key, dual_container)
+        return dual_container
     end
-    _assign_container!(container.dual_values, const_key, dual_container)
-    return dual_container
+    return
 end
 
 function get_dual_keys(container::OptimizationContainer)

@@ -7,9 +7,8 @@ function construct_network!(
     buses = PSY.get_components(PSY.Bus, sys)
     bus_count = length(buses)
 
-    if get_use_slacks(model)
-        add_slacks!(container, CopperPlatePowerModel)
-    end
+    get_use_slacks(model) && add_slacks!(container, CopperPlatePowerModel)
+
     copper_plate(container, :nodal_balance_active, bus_count)
     return
 end
@@ -47,9 +46,7 @@ function construct_network!(
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
-    if get_use_slacks(model)
-        add_slacks!(container, StandardPTDFModel)
-    end
+    get_use_slacks(model) && add_slacks!(container, StandardPTDFModel)
 
     copper_plate(container, :nodal_balance_active, length(buses))
     return
@@ -90,9 +87,7 @@ function construct_network!(
         )
     end
 
-    if get_use_slacks(model)
-        add_slacks!(container, T)
-    end
+    get_use_slacks(model) && add_slacks!(container, T)
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(container, T, sys, template, instantiate_model)
@@ -141,9 +136,7 @@ function construct_network!(
         )
     end
 
-    if get_use_slacks(model)
-        add_slacks!(container, T)
-    end
+    get_use_slacks(model) && add_slacks!(container, T)
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(container, T, sys, template, instantiate_model)

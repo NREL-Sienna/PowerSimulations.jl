@@ -577,10 +577,9 @@ function calculate_aux_variable_value!(
 
     for d in devices, t in time_steps
         name = PSY.get_name(d)
-        active_limits = PSY.get_active_power_limits(d)
+        min = PSY.get_active_power_limits(d).min
         aux_var_container[name, t] =
-            JuMP.value(on_var_results[name, t]) * active_limits.min +
-            JuMP.value(p_var_results[name, t])
+            JuMP.value(on_var_results[name, t]) * min + JuMP.value(p_var_results[name, t])
     end
 
     return

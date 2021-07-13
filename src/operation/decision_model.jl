@@ -449,7 +449,7 @@ function calculate_dual_variables!(model::DecisionModel)
     system = get_system(model)
     duals_vars = get_dual_values(container)
     for key in keys(duals_vars)
-        calculate_dual_variable_value!(container, key, system)
+        _calculate_dual_variable_value!(container, key, system)
     end
     return
 end

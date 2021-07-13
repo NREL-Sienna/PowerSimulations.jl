@@ -3,8 +3,8 @@ function add_dual_variable!(
     sys::PSY.System,
     model::DeviceModel{T, D},
 ) where {T <: PSY.Component, D <: AbstractDeviceFormulation}
-    devices = get_available_components(T, sys)
     if !isempty(get_duals(model))
+        devices = get_available_components(T, sys)
         for constriant_key in get_duals(model)
             assign_dual_variable!(container, constriant_key, devices, D)
         end
@@ -17,8 +17,8 @@ function add_dual_variable!(
     sys::PSY.System,
     model::NetworkModel{T},
 ) where {T <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.Bus, sys)
     if !isempty(get_duals(model))
+        devices = PSY.get_components(PSY.Bus, sys)
         for constriant_key in get_duals(model)
             assign_dual_variable!(container, constriant_key, devices, T)
         end
@@ -76,7 +76,7 @@ function assign_dual_variable!(
     return
 end
 
-function calculate_dual_variable_value!(
+function _calculate_dual_variable_value!(
     container::OptimizationContainer,
     key::ConstraintKey{CopperPlateBalanceConstraint, D},
     ::PSY.System,
@@ -90,7 +90,11 @@ function calculate_dual_variable_value!(
     return
 end
 
-function calculate_dual_variable_value!(container::OptimizationContainer, key, ::PSY.System)
+function _calculate_dual_variable_value!(
+    container::OptimizationContainer,
+    key,
+    ::PSY.System,
+)
     constraint_container = get_constraint(container, key)
     dual_var_container = get_dual_values(container)[key]
 
