@@ -46,14 +46,14 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     feedforward::Union{Nothing, AbstractAffectFeedForward}
     use_service_name::Bool
     use_slacks::Bool
-    duals::Vector
+    duals::Vector{DataType}
     function ServiceModel(
         ::Type{D},
         ::Type{B};
         use_slacks = false,
         feedforward = nothing,
         use_service_name::Bool = false,
-        duals = Vector(),
+        duals = Vector{DataType}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)

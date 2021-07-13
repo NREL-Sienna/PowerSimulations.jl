@@ -27,13 +27,13 @@ thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
     PTDF::Union{Nothing, PSY.PTDF}
-    duals::Vector
+    duals::Vector{DataType}
 
     function NetworkModel(
         ::Type{T};
         use_slacks = false,
         PTDF = nothing,
-        duals = Vector(),
+        duals = Vector{DataType}(),
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(use_slacks, PTDF, duals)
