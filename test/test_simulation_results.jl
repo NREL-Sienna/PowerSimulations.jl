@@ -63,7 +63,9 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                 template_ed,
                 c_sys5_hy_ed;
                 optimizer = GLPK_optimizer,
-                constraint_duals = [:CopperPlateBalance],
+                constraint_duals = [
+                    ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+                ],
                 time_series_cache_size = time_series_cache_size,
             ),
         )
@@ -188,7 +190,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test size(v) == (12, 4)
         end
 
-        network_duals = read_dual(results_ed, :CopperPlateBalance)
+        network_duals = read_dual(
+            results_ed,
+            PSI.encode_key(ConstraintKey(CopperPlateBalanceConstraint, PSY.System)),
+        )
         @test length(keys(network_duals)) == 48
         for v in values(network_duals)
             @test size(v) == (12, 2)
@@ -359,7 +364,9 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                 template_uc,
                 c_sys5_hy_uc;
                 optimizer = GLPK_optimizer,
-                constraint_duals = [:CopperPlateBalance],
+                constraint_duals = [
+                    ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+                ],
             ),
         )
 

@@ -23,7 +23,7 @@
 end
 
 @testset "All stages executed - No Cache" begin
-    duals = [:CopperPlateBalance]
+    duals = [ConstraintKey(CopperPlateBalanceConstraint, PSY.System)]
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
@@ -208,7 +208,7 @@ end
             template_uc,
             c_sys5_hy_uc;
             optimizer = GLPK_optimizer,
-            constraint_duals = [:CopperPlateBalance],
+            constraint_duals = [ConstraintKey(CopperPlateBalanceConstraint, PSY.System)],
         ),
         ED = DecisionModel(
             template_ed,
@@ -216,7 +216,7 @@ end
             optimizer = ipopt_optimizer,
             # Added because of data issues
             balance_slack_variables = true,
-            constraint_duals = [:CopperPlateBalance],
+            constraint_duals = [ConstraintKey(CopperPlateBalanceConstraint, PSY.System)],
         ),
     )
 

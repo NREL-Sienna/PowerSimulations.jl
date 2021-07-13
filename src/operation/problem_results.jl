@@ -164,7 +164,7 @@ function write_optimizer_stats(res::ProblemResults, directory::AbstractString)
     data = to_dict(res.optimizer_stats)
     JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(data))
 end
-#=
+
 function _read_realized_results(
     result_values::Dict{Symbol, DataFrames.DataFrame},
     names::Union{Nothing, Vector{Symbol}},
@@ -228,10 +228,7 @@ function read_parameters(
     return _read_results(result_values, names, first(get_timestamps(res)))
 end
 
-function read_duals(
-    res::ProblemResults;
-    names::Union{Vector{Symbol}, Nothing} = nothing,
-)
+function read_duals(res::ProblemResults; names::Union{Vector{Symbol}, Nothing} = nothing)
     result_values = get_duals(res)
     return _read_results(result_values, names, first(get_timestamps(res)))
 end
@@ -241,4 +238,3 @@ function read_optimizer_stats(res::ProblemResults)
     stats = [to_namedtuple(data)]
     return DataFrames.DataFrame(stats)
 end
-=#

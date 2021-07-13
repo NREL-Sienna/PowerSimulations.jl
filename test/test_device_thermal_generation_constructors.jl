@@ -405,7 +405,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
-################################### ThermalMultiStart Testing ##################################
+################################### ThermalMultiStart Testing ##############################
 
 @testset "Thermal MultiStart with MultiStart UC and DC - PF" begin
     constraint_keys = [
@@ -463,7 +463,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
-################################## Thermal Compact UC Testing ##################################
+################################ Thermal Compact UC Testing ################################
 @testset "Thermal Standard with Compact UC and DC - PF" begin
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -500,7 +500,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
-################################## Thermal Compact Dispatch Testing ##################################
+############################ Thermal Compact Dispatch Testing ##############################
 
 @testset "Thermal Standard with Compact Dispatch and DC - PF" begin
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)

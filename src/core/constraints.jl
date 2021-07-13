@@ -91,3 +91,5 @@ get_component_type(
 function encode_key(key::ConstraintKey)
     return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
 end
+
+Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(name)...)

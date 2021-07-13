@@ -5,8 +5,8 @@ function add_dual_variable!(
 ) where {T <: PSY.Component, D <: AbstractDeviceFormulation}
     if !isempty(get_duals(model))
         devices = get_available_components(T, sys)
-        for constriant_key in get_duals(model)
-            assign_dual_variable!(container, constriant_key, devices, D)
+        for constraint_type in get_duals(model)
+            assign_dual_variable!(container, constraint_type, devices, D)
         end
     end
     return
@@ -19,8 +19,8 @@ function add_dual_variable!(
 ) where {T <: PM.AbstractPowerModel}
     if !isempty(get_duals(model))
         devices = PSY.get_components(PSY.Bus, sys)
-        for constriant_key in get_duals(model)
-            assign_dual_variable!(container, constriant_key, devices, T)
+        for constraint_type in get_duals(model)
+            assign_dual_variable!(container, constraint_type, devices, T)
         end
     end
     return
@@ -32,8 +32,8 @@ function add_dual_variable!(
     model::NetworkModel{T},
 ) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
     if !isempty(get_duals(model))
-        for constriant_key in get_duals(model)
-            assign_dual_variable!(container, constriant_key, sys, T)
+        for constraint_type in get_duals(model)
+            assign_dual_variable!(container, constraint_type, sys, T)
         end
     end
     return
@@ -49,7 +49,7 @@ end
 
 function assign_dual_variable!(
     container::OptimizationContainer,
-    constriant_type::Type{<:ConstraintType},
+    constraint_type::Type{<:ConstraintType},
     devices::U,
     formulation,
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
@@ -57,7 +57,7 @@ function assign_dual_variable!(
     time_steps = get_time_steps(container)
     add_dual_container!(
         container,
-        constriant_type,
+        constraint_type,
         D,
         [PSY.get_name(d) for d in devices],
         time_steps,
@@ -67,12 +67,12 @@ end
 
 function assign_dual_variable!(
     container::OptimizationContainer,
-    constriant_type::Type{<:ConstraintType},
+    constraint_type::Type{<:ConstraintType},
     sys::U,
     formulation,
 ) where {U <: PSY.System}
     time_steps = get_time_steps(container)
-    add_dual_container!(container, constriant_type, U, time_steps)
+    add_dual_container!(container, constraint_type, U, time_steps)
     return
 end
 

@@ -44,28 +44,56 @@ struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter
     name::String
 end
 
+function ActivePowerTimeSeriesParameter()
+    ActivePowerTimeSeriesParameter("max_active_power")
+end
+
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
     name::String
+end
+
+function ReactivePowerTimeSeriesParameter()
+    ReactivePowerTimeSeriesParameter("max_active_power")
 end
 
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter
     name::String
 end
 
+function RequirementTimeSeriesParameter()
+    RequirementTimeSeriesParameter("requirement")
+end
+
 struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter
     name::String
+end
+
+function EnergyTargetTimeSeriesParameter()
+    EnergyTargetTimeSeriesParameter("storage_target")
 end
 
 struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter
     name::String
 end
 
+function EnergyBudgetTimeSeriesParameter()
+    EnergyBudgetTimeSeriesParameter("hydro_budget")
+end
+
 struct InflowTimeSeriesParameter <: TimeSeriesParameter
     name::String
 end
 
+function InflowTimeSeriesParameter()
+    InflowTimeSeriesParameter("inflow")
+end
+
 struct OutflowTimeSeriesParameter <: TimeSeriesParameter
     name::String
+end
+
+function OutflowTimeSeriesParameter()
+    OutflowTimeSeriesParameter("outflow")
 end
 
 get_name(key::TimeSeriesParameter) = key.name
