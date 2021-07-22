@@ -10,7 +10,7 @@ export DecisionModel
 export ProblemResults
 export ProblemTemplate
 export InitialCondition
-export SimulationProblems
+export SimulationModels
 export SimulationSequence
 export SimulationResults
 
@@ -134,28 +134,28 @@ export get_network_formulation
 export SimulationResultsExport
 export ProblemResultsExport
 export export_results
-export get_existing_duals
-export get_existing_parameters
-export get_existing_timestamps
-export get_existing_variables
+export get_dual_values
+export get_parameter_values
+export get_variable_values
+export get_timestamps
 export get_problem_name
 export get_problem_results
 export get_system
 export get_system!
 export set_system!
+export list_dual_names
+export list_parameter_names
+export list_variable_names
 export list_problems
 export list_supported_formats
 export load_results!
 export read_dual
-export read_duals
-export read_realized_duals
-export read_realized_variables
-export read_realized_parameters
-export get_realized_timestamps
+#export read_realized_duals
+#export read_realized_variables
+#export read_realized_parameters
+#export get_realized_timestamps
 export read_variable
-export read_variables
 export read_parameter
-export read_parameters
 export get_problem_base_power
 export get_objective_value
 export read_optimizer_stats
@@ -298,8 +298,8 @@ export EnergyBudgetTimeSeriesParameter
 export BinaryValueParameter
 export UpperBoundValueParameter
 
-export register_types!
-export empty_registrations!
+#export register_types!
+#export empty_registrations!
 
 #################################################################################
 # Imports
@@ -330,9 +330,6 @@ import InfrastructureSystems:
     @assert_op
 export get_name
 export get_model_base_power
-export get_variables
-export get_duals
-export get_parameters
 export get_total_cost
 export get_optimizer_stats
 export get_timestamp
@@ -430,7 +427,7 @@ include("simulation/simulation_store.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
 include("simulation/simulation_problem_results.jl")
-include("simulation/simulation_problems.jl")
+include("simulation/simulation_models.jl")
 include("simulation/simulation_sequence.jl")
 include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
@@ -453,7 +450,6 @@ include("devices_models/devices/common/energy_balance_constraint.jl")
 include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
-include("core/type_registrations.jl")
 include("feedforward/feedforward_constraints.jl")
 
 # Device Modeling components
@@ -512,5 +508,7 @@ include("utils/dataframes_utils.jl")
 include("utils/jump_utils.jl")
 include("utils/powersystems_utils.jl")
 include("utils/recorder_events.jl")
+
+#register_default_types!()
 
 end

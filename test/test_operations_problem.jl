@@ -51,7 +51,7 @@ end
     res = ProblemResults(UC)
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
-    @test :ActivePowerVariable_ThermalStandard in keys(vars)
+    @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
     export_results(res)
     results_dir = joinpath(output_dir, "results")
     @test isfile(joinpath(results_dir, "optimizer_stats.csv"))
@@ -162,7 +162,7 @@ end
         if network == StandardPTDFModel
             push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
         else
-            duals = res.dual_values[:NodalBalanceActiveConstraint_Bus]
+            duals = read_dual(res, NodalBalanceActiveConstraint, Bus)
             duals = abs.(duals[:, propertynames(duals) .!== :DateTime])
             push!(LMPs, duals[!, sort(propertynames(duals))])
         end
@@ -180,16 +180,16 @@ end
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     container = PSI.get_optimization_container(model)
-    constraint_key = PSI.ConstraintKey()
+    constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
     constraints = PSI.get_constraints(container)[constraint_key]
-    dual_results = read_duals(container)[:CopperPlateBalanceConstraint_System]
+    dual_results = PSI.read_duals(container)[constraint_key]
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
         @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint_System])
     end
 
     # system = PSI.get_system(model)
-    # params = PSI.get_parameters(container)[:P__max_active_power__PowerLoad]
+    # params = PSI.get_parameter_values(container)[:P__max_active_power__PowerLoad]
     # param_vals = PSI.axis_array_to_dataframe(params.parameter_array)
     # param_mult = PSI.axis_array_to_dataframe(params.multiplier_array)
     # for load in get_components(PowerLoad, system)
@@ -200,15 +200,15 @@ end
     # end
 
     res = ProblemResults(model)
-    @test length(get_existing_variables(res)) == 1
-    @test length(get_existing_duals(res)) == 1
+    @test length(list_variable_names(res)) == 1
+    @test length(list_dual_names(res)) == 1
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
-    @test isa(get_variables(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(get_variable_values(res), Dict{PSI.VariableKey, DataFrames.DataFrame})
     @test isa(get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), PSI.OptimizerStats)
-    @test isa(get_duals(res), Dict{Symbol, DataFrames.DataFrame})
-    @test isa(get_parameters(res), Dict{Symbol, DataFrames.DataFrame})
+    @test isa(get_dual_values(res), Dict{PSI.ConstraintKey, DataFrames.DataFrame})
+    @test isa(get_parameter_values(res), Dict{PSI.ParameterKey, DataFrames.DataFrame})
     @test isa(get_resolution(res), Dates.TimePeriod)
     @test isa(get_system(res), PSY.System)
     @test length(get_timestamps(res)) == 24
@@ -225,9 +225,12 @@ end
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     file_list = sort!(collect(readdir(path)))
-    @test "OptimizationModel.json" in file_list
-    @test "OperationProblem.bin" in file_list
-    filename = joinpath(path, "OperationProblem.bin")
+    model_name = PSI.get_name(model)
+    expected_json = "$(model_name)_OptimizationModel.json"
+    @test expected_json in file_list
+    expected_bin = "$(model_name).bin"
+    @test expected_bin in file_list
+    filename = joinpath(path, expected_bin)
     ED2 = DecisionModel(filename, optimizer = OSQP_optimizer)
     build!(ED2, output_dir = path)
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
@@ -241,7 +244,7 @@ end
 
     file_list = sort!(collect(readdir(path2)))
     @test .!all(occursin.(r".h5", file_list))
-    filename = joinpath(path2, "OperationProblem.bin")
+    filename = joinpath(path2, "$(model_name).bin")
     ED3 = DecisionModel(filename; system = sys, optimizer = OSQP_optimizer)
     build!(ED3, output_dir = path2)
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)

@@ -1,18 +1,18 @@
 @testset "Single stage sequential tests" begin
     template_ed = get_template_nomin_ed_simulation()
     c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    problems = SimulationProblems(
-        ED = DecisionModel(template_ed, c_sys, optimizer = ipopt_optimizer),
-    )
+    models = SimulationModels([
+        DecisionModel(template_ed, c_sys, name = "ED", optimizer = ipopt_optimizer),
+    ])
     test_sequence = SimulationSequence(
-        problems = problems,
+        models = models,
         intervals = Dict("ED" => (Hour(24), Consecutive())),
         ini_cond_chronology = InterProblemChronology(),
     )
     sim_single = Simulation(
         name = "consecutive",
         steps = 2,
-        problems = problems,
+        models = models,
         sequence = test_sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
@@ -23,13 +23,17 @@
 end
 
 @testset "All stages executed - No Cache" begin
-    duals = [ConstraintKey(CopperPlateBalanceConstraint, PSY.System)]
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
+    set_network_model!(
+        template_ed,
+        CopperPlatePowerBalance,
+        duals = [CopperPlateBalanceConstraint],
+    )
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    problems = SimulationProblems(
+    problems = SimulationModels(
         UC = DecisionModel(
             template_uc,
             c_sys5_hy_uc;
@@ -40,7 +44,6 @@ end
             template_ed,
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,
-            constraint_duals = duals,
             # Needed do to inconsistency in the test data
             balance_slack_variables = true,
         ),
@@ -82,7 +85,7 @@ end
 @testset "Simulation Single Stage with Cache" begin
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     template = get_template_hydro_st_ed()
-    problems = SimulationProblems(
+    problems = SimulationModels(
         ED = DecisionModel(template, c_sys5_hy_ed; optimizer = ipopt_optimizer),
     )
 
@@ -111,7 +114,7 @@ end
     template_ed = get_template_hydro_st_ed()
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
-    problems = SimulationProblems(
+    problems = SimulationModels(
         UC = DecisionModel(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
         ED = DecisionModel(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),
     )
@@ -157,7 +160,7 @@ end
     template_ed = get_template_nomin_ed_simulation()
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    problems = SimulationProblems(
+    problems = SimulationModels(
         UC = DecisionModel(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
         ED = DecisionModel(
             template_ed,
@@ -203,7 +206,7 @@ end
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    problems = SimulationProblems(
+    problems = SimulationModels(
         UC = DecisionModel(
             template_uc,
             c_sys5_hy_uc;

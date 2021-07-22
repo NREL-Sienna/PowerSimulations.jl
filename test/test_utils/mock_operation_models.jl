@@ -7,13 +7,20 @@ function PSI.DecisionModel(
     ::Type{MockOperationProblem},
     ::Type{T},
     sys::PSY.System;
+    name = nothing,
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     settings = PSI.Settings(sys; kwargs...)
-    return DecisionModel{MockOperationProblem}(ProblemTemplate(T), sys, settings, nothing)
+    return DecisionModel{MockOperationProblem}(
+        ProblemTemplate(T),
+        sys,
+        settings,
+        nothing,
+        name = name,
+    )
 end
 
-function PSI.DecisionModel(::Type{MockOperationProblem}; kwargs...)
+function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs...)
     sys = System(100.0)
     settings = PSI.Settings(sys; kwargs...)
     return DecisionModel{MockOperationProblem}(
@@ -21,6 +28,7 @@ function PSI.DecisionModel(::Type{MockOperationProblem}; kwargs...)
         sys,
         settings,
         nothing,
+        name = name,
     )
 end
 
@@ -60,9 +68,9 @@ function mock_construct_network!(problem::PSI.DecisionModel{MockOperationProblem
 end
 
 function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
-    return SimulationProblems(
-        UC = DecisionModel(MockOperationProblem; horizon = uc_horizon),
-        ED = DecisionModel(MockOperationProblem; horizon = ed_horizon),
+    return SimulationModels(
+        DecisionModel(MockOperationProblem; horizon = uc_horizon, name = "UC"),
+        DecisionModel(MockOperationProblem; horizon = ed_horizon, name = "ED"),
     )
 end
 
@@ -72,11 +80,10 @@ function create_simulation_build_test_problems(
     sys_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"),
     sys_ed = PSB.build_system(PSITestSystems, "c_sys5_ed"),
 )
-    c_sys5_uc =
-        c_sys5_ed = return SimulationProblems(
-            UC = DecisionModel(template_uc, sys_uc; optimizer = GLPK_optimizer),
-            ED = DecisionModel(template_ed, sys_ed, optimizer = GLPK_optimizer),
-        )
+    return SimulationModels(
+        DecisionModel(template_uc, sys_uc; name = "UC", optimizer = GLPK_optimizer),
+        DecisionModel(template_ed, sys_ed; name = "ED", optimizer = GLPK_optimizer),
+    )
 end
 
 struct MockStagesStruct

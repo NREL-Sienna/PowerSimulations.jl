@@ -44,3 +44,9 @@ get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF(m::NetworkModel) = m.PTDF
 get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T <: PM.AbstractPowerModel} = T
+
+function add_dual!(model::NetworkModel, dual)
+    dual in model.duals && error("dual = $dual is already stored")
+    push!(model.duals, dual)
+    @debug "Added dual" dual
+end

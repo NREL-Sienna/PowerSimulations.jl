@@ -85,17 +85,16 @@ function psi_checksolve_test(model::DecisionModel, status, expected_result, tol 
 end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
-    duals = get_duals(res)
+    duals = get_dual_values(res)
     λ = convert(
         Array,
-        duals[:CopperPlateBalanceConstraint_System][
+        duals[PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)][
             :,
             :CopperPlateBalanceConstraint_System,
         ],
     )
 
-    nf_duals =
-        collect(keys(duals))[occursin.(string(NetworkFlowConstraint), string.(keys(duals)))]
+    nf_duals = [k for k in keys(duals) if PSI.get_entry_type(k) == NetworkFlowConstraint]
     flow_duals =
         hcat([duals[k][:, propertynames(duals[k]) .!== :DateTime] for k in nf_duals]...)
     μ = Matrix(flow_duals[:, ptdf.axes[1]])

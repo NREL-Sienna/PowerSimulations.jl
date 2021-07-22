@@ -1,7 +1,7 @@
 # JDNOTE: This might be merged with the structs in simulation_store
 mutable struct SimulationInfo
     number::Int
-    name::String
+    name::Symbol
     executions::Int
     execution_count::Int
     caches::Set{CacheKey}

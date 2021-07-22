@@ -32,9 +32,9 @@ get_status(model::OperationModel) = model.internal.status
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
 get_output_dir(model::OperationModel) = model.internal.output_dir
-get_variables(model::OperationModel) = get_optimization_container(model).variables
-get_parameters(model::OperationModel) = get_optimization_container(model).parameters
-get_duals(model::OperationModel) = get_optimization_container(model).duals
+get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
+get_parameters(model::OperationModel) = get_parameters(get_optimization_container(model))
+get_duals(model::OperationModel) = get_duals(get_optimization_container(model))
 
 get_run_status(model::OperationModel) = model.internal.run_status
 set_run_status!(model::OperationModel, status) = model.internal.run_status = status

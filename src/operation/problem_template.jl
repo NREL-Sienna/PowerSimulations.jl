@@ -38,9 +38,23 @@ get_network_model(template::ProblemTemplate) = template.network_model
 get_network_formulation(template::ProblemTemplate) =
     get_network_formulation(get_network_model(template))
 
-# Note to devs. PSY exports set_model! these names are choosen to avoid name clashes
+function get_model(template::ProblemTemplate, device_type)
+    if device_type <: PSY.Device
+        return get(template.devices, Symbol(device_type), nothing)
+    elseif device_type <: PSY.Branch
+        return get(template.branches, Symbol(device_type), nothing)
+    elseif device_type <: PSY.Service
+        return get(template.services, Symbol(device_type), nothing)
+    else
+        error("not supported: $device_type")
+    end
+end
 
-"""Sets the transmission model in a template"""
+# Note to devs. PSY exports set_model! these names are chosen to avoid name clashes
+
+"""
+Sets the transmission model in a template.
+"""
 function set_transmission_model!(
     template::ProblemTemplate,
     model::NetworkModel{<:PM.AbstractPowerModel},
@@ -50,8 +64,8 @@ function set_transmission_model!(
 end
 
 """
-    Sets the device model in a template using the component type and formulation.
-    Builds a default DeviceModel
+Sets the device model in a template using the component type and formulation.
+Builds a default DeviceModel
 """
 function set_device_model!(
     template::ProblemTemplate,
@@ -63,7 +77,7 @@ function set_device_model!(
 end
 
 """
-    Sets the device model in a template using a DeviceModel instance
+Sets the device model in a template using a DeviceModel instance
 """
 function set_device_model!(
     template::ProblemTemplate,
@@ -82,7 +96,8 @@ function set_device_model!(
 end
 
 """
-    Sets the service model in a template using a name and the service type and formulation. Builds a default ServiceModel with use_service_name set to true.
+Sets the service model in a template using a name and the service type and formulation.
+Builds a default ServiceModel with use_service_name set to true.
 """
 function set_service_model!(
     template::ProblemTemplate,
@@ -99,7 +114,7 @@ function set_service_model!(
 end
 
 """
-    Sets the service model in a template using a ServiceModel instance.
+Sets the service model in a template using a ServiceModel instance.
 """
 function set_service_model!(
     template::ProblemTemplate,
