@@ -384,3 +384,22 @@ function Base.show(io::IO, sequence::SimulationSequence)
         _print_inter_stages(io, stages)
     end
 end
+
+function Base.show(io::IO, ::MIME"text/plain", bounds::ConstraintBounds)
+    println(io, "ConstraintBounds:")
+    println(io, "Constraint Coefficient")
+    show(io, MIME"text/plain"(), bounds.coefficient)
+    println(io, "Constraint RHS")
+    show(io, MIME"text/plain"(), bounds.rhs)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", bounds::VariableBounds)
+    println(io, "VariableBounds:")
+    show(io, MIME"text/plain"(), bounds.bounds)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", bounds::NumericalBounds)
+    spacing = 1
+    println(io, rpad("  Minimum", 20), "Maximum")
+    println(io, rpad("  $(bounds.min)", 20), "$(bounds.max)")
+end

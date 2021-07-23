@@ -501,6 +501,7 @@ include("operation/operation_problem_templates.jl")
 include("operation/decision_problems.jl")
 
 # Utils
+include("utils/jump_model_utils.jl")
 include("utils/printing.jl")
 include("utils/file_utils.jl")
 include("utils/logging.jl")
