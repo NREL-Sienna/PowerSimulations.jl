@@ -16,14 +16,6 @@ function make_key(::Type{T}, args...) where {T <: OptimizationContainerKey}
     return T(args...)
 end
 
-function get_entry_type_module(key::OptimizationContainerKey)
-    return parentmodule(get_entry_type(key))
-end
-
-function get_component_type_module(key::OptimizationContainerKey)
-    return parentmodule(get_component_type(key))
-end
-
 function encode_key(key::OptimizationContainerKey)
     return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
 end
