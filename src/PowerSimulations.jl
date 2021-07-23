@@ -389,6 +389,7 @@ include("core/definitions.jl")
 
 # Core components
 include("core/abstract_types.jl")
+include("core/optimization_container_keys.jl")
 include("core/aux_structs.jl")
 include("network_models/powermodels_formulations.jl")
 include("core/network_model.jl")
@@ -509,7 +510,5 @@ include("utils/dataframes_utils.jl")
 include("utils/jump_utils.jl")
 include("utils/powersystems_utils.jl")
 include("utils/recorder_events.jl")
-
-#register_default_types!()
 
 end
