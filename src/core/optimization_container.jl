@@ -27,7 +27,7 @@ has_container_key(x::OptimizationContainerMetadata, key) =
     haskey(x.container_key_lookup, key)
 
 mutable struct OptimizationContainer <: AbstractModelContainer
-    JuMPmodel::Union{Nothing, JuMP.Model}
+    JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     settings::Settings
