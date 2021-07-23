@@ -25,16 +25,16 @@ DEFAULT_MAX_CHUNK_BYTES = 128 * KiB
 Stores HDF5 datasets for one problem.
 """
 mutable struct ProblemDatasets
-    duals::Dict{OptimizationContainerKey, Dataset}
-    parameters::Dict{OptimizationContainerKey, Dataset}
-    variables::Dict{OptimizationContainerKey, Dataset}
+    duals::Dict{ConstraintKey, Dataset}
+    parameters::Dict{ParameterKey, Dataset}
+    variables::Dict{VariableKey, Dataset}
 end
 
 function ProblemDatasets()
     return ProblemDatasets(
-        Dict{OptimizationContainerKey, Dataset}(),
-        Dict{OptimizationContainerKey, Dataset}(),
-        Dict{OptimizationContainerKey, Dataset}(),
+        Dict{ConstraintKey, Dataset}(),
+        Dict{ParameterKey, Dataset}(),
+        Dict{VariableKey, Dataset}(),
     )
 end
 
