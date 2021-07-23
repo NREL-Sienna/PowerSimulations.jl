@@ -93,6 +93,13 @@ Construct and open an HdfSimulationStore.
 When reading or writing results in a program you should use the method that accepts a
 function in order to guarantee that the file handle gets closed.
 
+# Arguments
+- `directory::AbstractString`: Directory containing the store file
+- `mode::AbstractString`: Mode to use to open the store file
+- `filename::AbstractString`: Base name of the store file
+- `problem_path::AbstractString`: Path to the directory containing serialized problem
+   information. Required when reading an existing simulation.
+
 # Examples
 
 ```julia
