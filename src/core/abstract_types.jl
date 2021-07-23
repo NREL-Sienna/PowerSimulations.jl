@@ -2,7 +2,6 @@
 
 abstract type AbstractModelContainer end
 
-
 abstract type VariableType end
 abstract type ConstraintType end
 abstract type AuxVariableType end
