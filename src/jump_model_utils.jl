@@ -1,3 +1,8 @@
+# The Numerical stability checks code in this file is based on the code from the SDDP.jl package, 
+ # from the below mentioned commit and file.
+ # commit :8cd305188caffc50a1734913053fc81bba613778 
+ # link to file :https://github.com/odow/SDDP.jl/blob/d353fe5a2903421e7fed6d609eb9377c35d715a1/src/print.jl#L190
+ 
 ########### JuMP model utils #########
 
 mutable struct NumericalBounds
@@ -22,17 +27,17 @@ mutable struct ConstraintBounds
     end
 end
 
-function update_coefficient_bounds(
+function _update_coefficient_bounds(
     v::ConstraintBounds,
     constraint::JuMP.ScalarConstraint,
     idx,
 )
-    update_numerical_bounds(v.coefficient, constraint.func, idx)
+    _update_numerical_bounds(v.coefficient, constraint.func, idx)
     return
 end
 
-function update_rhs_bounds(v::ConstraintBounds, constraint::JuMP.ScalarConstraint, idx)
-    update_numerical_bounds(v.rhs, constraint.set, idx)
+function _update_rhs_bounds(v::ConstraintBounds, constraint::JuMP.ScalarConstraint, idx)
+    _update_numerical_bounds(v.rhs, constraint.set, idx)
 end
 
 mutable struct VariableBounds
@@ -43,11 +48,16 @@ mutable struct VariableBounds
 end
 
 function _update_variable_bounds(v::VariableBounds, variable::JuMP.VariableRef, idx)
-    if JuMP.has_lower_bound(variable)
-        update_numerical_bounds(v.bounds, JuMP.lower_bound(variable), idx)
-    end
-    if JuMP.has_upper_bound(variable)
-        update_numerical_bounds(v.bounds, JuMP.upper_bound(variable), idx)
+    if JuMP.is_binary(variable)
+        set_min!(v.bounds, 0.0)
+        _update_numerical_bounds(v.bounds, 1.0, idx)
+    else
+        if JuMP.has_lower_bound(variable)
+            _update_numerical_bounds(v.bounds, JuMP.lower_bound(variable), idx)
+        end
+        if JuMP.has_upper_bound(variable)
+            _update_numerical_bounds(v.bounds, JuMP.upper_bound(variable), idx)
+        end
     end
     return
 end
@@ -65,32 +75,32 @@ function _update_numerical_bounds(v::NumericalBounds, value::Real, idx)
     return
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::JuMP.GenericAffExpr, idx)
+function _update_numerical_bounds(bonuds::NumericalBounds, func::JuMP.GenericAffExpr, idx)
     for coefficient in values(func.terms)
-        update_numerical_bounds(bonuds, coefficient, idx)
+        _update_numerical_bounds(bonuds, coefficient, idx)
     end
     return
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.LessThan, idx)
-    return update_numerical_bounds(bonuds, func.upper, idx)
+function _update_numerical_bounds(bonuds::NumericalBounds, func::MOI.LessThan, idx)
+    return _update_numerical_bounds(bonuds, func.upper, idx)
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.GreaterThan, idx)
-    return update_numerical_bounds(bonuds, func.lower, idx)
+function _update_numerical_bounds(bonuds::NumericalBounds, func::MOI.GreaterThan, idx)
+    return _update_numerical_bounds(bonuds, func.lower, idx)
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.EqualTo, idx)
-    return update_numerical_bounds(bonuds, func.value, idx)
+function _update_numerical_bounds(bonuds::NumericalBounds, func::MOI.EqualTo, idx)
+    return _update_numerical_bounds(bonuds, func.value, idx)
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.Interval, idx)
-    update_numerical_bounds(bonuds, func.upper, idx)
-    return update_numerical_bounds(bonuds, func.lower, idx)
+function _update_numerical_bounds(bonuds::NumericalBounds, func::MOI.Interval, idx)
+    _update_numerical_bounds(bonuds, func.upper, idx)
+    return _update_numerical_bounds(bonuds, func.lower, idx)
 end
 
 # Default fallback for unsupported constraints.
-update_numerical_bounds(range::NumericalBounds, func, idx) = nothing
+_update_numerical_bounds(range::NumericalBounds, func, idx) = nothing
 
 function get_constraint_numerical_bounds(model::OperationsProblem; verbose = false)
     if verbose
@@ -100,8 +110,8 @@ function get_constraint_numerical_bounds(model::OperationsProblem; verbose = fal
             bounds = ConstraintBounds()
             for idx in Iterators.product(constriant_array.axes...)
                 con_obj = JuMP.constraint_object(constriant_array[idx...])
-                update_coefficient_bounds(bounds, con_obj, idx)
-                update_rhs_bounds(bounds, con_obj, idx)
+                _update_coefficient_bounds(bounds, con_obj, idx)
+                _update_rhs_bounds(bounds, con_obj, idx)
             end
             constraint_bounds[const_key] = bounds
         end
@@ -112,8 +122,8 @@ function get_constraint_numerical_bounds(model::OperationsProblem; verbose = fal
             get_constraints(get_optimization_container(model))
             for idx in Iterators.product(constriant_array.axes...)
                 con_obj = JuMP.constraint_object(constriant_array[idx...])
-                update_coefficient_bounds(bounds, con_obj, (const_key, idx))
-                update_rhs_bounds(bounds, con_obj, (const_key, idx))
+                _update_coefficient_bounds(bounds, con_obj, (const_key, idx))
+                _update_rhs_bounds(bounds, con_obj, (const_key, idx))
             end
         end
         return bounds
@@ -128,7 +138,7 @@ function get_variable_numerical_bounds(model::OperationsProblem; verbose = false
             bounds = VariableBounds()
             for idx in Iterators.product(variable_array.axes...)
                 var = variable_array[idx...]
-                update_variable_bounds(bounds, var, idx)
+                _update_variable_bounds(bounds, var, idx)
             end
             variable_bounds[variable_key] = bounds
         end
@@ -139,7 +149,7 @@ function get_variable_numerical_bounds(model::OperationsProblem; verbose = false
             get_variables(get_optimization_container(model))
             for idx in Iterators.product(variable_array.axes...)
                 var = variable_array[idx...]
-                update_variable_bounds(bounds, var, (variable_key, idx))
+                _update_variable_bounds(bounds, var, (variable_key, idx))
             end
         end
         return bounds
