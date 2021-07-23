@@ -427,6 +427,9 @@ include("operations_problem_templates.jl")
 # Operations Problems
 include("operations_problems.jl")
 
+# JuMP Model Utils
+include("jump_model_utils.jl")
+
 # Printing
 include("printing.jl")
 
