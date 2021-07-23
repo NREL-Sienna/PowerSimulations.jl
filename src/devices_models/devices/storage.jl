@@ -300,7 +300,7 @@ function energy_target_constraint!(
     ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage}
     time_steps = get_time_steps(container)
-    target_forecast_name = "storage_target"  # TODO DT: should this be a const?
+    target_forecast_name = "storage_target"
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector_target = get_time_series(container, d, target_forecast_name)
