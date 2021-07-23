@@ -5,7 +5,8 @@ import PowerSimulations:
     get_problem_exports,
     should_export_dual,
     should_export_parameter,
-    should_export_variable
+    should_export_variable,
+    OptimizationContainerMetadata
 
 function _make_params()
     sim = Dict(
@@ -33,6 +34,16 @@ function _make_params()
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
     )
+    container_metadata = OptimizationContainerMetadata(
+        Dict(
+            "ActivePowerVariable_ThermalStandard" =>
+                PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+            "EnergyVariable_HydroEnergyReservoir" =>
+                PSI.VariableKey(EnergyVariable, HydroEnergyReservoir),
+            "OnVariable_ThermalStandard" =>
+                PSI.VariableKey(OnVariable, ThermalStandard),
+        ),
+    )
     problems = OrderedDict{Symbol, SimulationStoreProblemParams}()
     for problem in keys(problem_defs)
         problem_params = SimulationStoreProblemParams(
@@ -43,6 +54,7 @@ function _make_params()
             problem_defs[problem]["end_of_interval_step"],
             problem_defs[problem]["base_power"],
             problem_defs[problem]["system_uuid"],
+            container_metadata,
         )
 
         problems[problem] = problem_params
@@ -65,18 +77,73 @@ end
     invalid = Dates.DateTime("2020-01-01T02:00:00")
     invalid2 = Dates.DateTime("2020-01-03T00:00:00")
 
-    @test should_export_variable(exports, valid, "ED", :P__ThermalStandard)
-    @test should_export_variable(exports, valid2, "ED", :P__ThermalStandard)
-    @test !should_export_variable(exports, invalid, "ED", :P__ThermalStandard)
-    @test !should_export_variable(exports, invalid2, "ED", :P__ThermalStandard)
-    @test !should_export_variable(exports, valid, "ED", :not_listed)
-    @test should_export_parameter(exports, valid, "ED", :P__max_active_power__PowerLoad)
-    @test !should_export_dual(exports, valid, "ED", :not_listed)
+    @test should_export_variable(
+        exports,
+        valid,
+        :ED,
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+    )
+    @test should_export_variable(
+        exports,
+        valid2,
+        :ED,
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+    )
+    @test !should_export_variable(
+        exports,
+        invalid,
+        :ED,
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+    )
+    @test !should_export_variable(
+        exports,
+        invalid2,
+        :ED,
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+    )
+    @test !should_export_variable(
+        exports,
+        valid,
+        :ED,
+        PSI.VariableKey(ActivePowerVariable, RenewableFix),
+    )
+    @test should_export_parameter(
+        exports,
+        valid,
+        :ED,
+        PSI.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
+    )
+    @test !should_export_dual(
+        exports,
+        valid,
+        :ED,
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+    )
 
-    @test should_export_variable(exports, valid, "UC", :On__ThermalStandard)
-    @test !should_export_variable(exports, valid, "UC", :not_listed)
-    @test should_export_parameter(exports, valid, "UC", :P__max_active_power__PowerLoad)
-    @test should_export_dual(exports, valid, "UC", :any)
+    @test should_export_variable(
+        exports,
+        valid,
+        :UC,
+        PSI.VariableKey(OnVariable, ThermalStandard),
+    )
+    @test !should_export_variable(
+        exports,
+        valid,
+        :UC,
+        PSI.VariableKey(ActivePowerVariable, RenewableFix),
+    )
+    @test should_export_parameter(
+        exports,
+        valid,
+        :UC,
+        PSI.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
+    )
+    @test should_export_dual(
+        exports,
+        valid,
+        :UC,
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+    )
 
     @test exports.path == "export_path"
     @test exports.format == "csv"
@@ -90,31 +157,25 @@ end
 
     # Invalid start_time
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("start_time" => invalid, "problems" => [Dict("name" => "ED")]),
+        Dict("start_time" => invalid, "models" => [Dict("name" => "ED")]),
         params,
     )
 
     # Invalid end_time
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("end_time" => invalid, "problems" => [Dict("name" => "ED")]),
+        Dict("end_time" => invalid, "models" => [Dict("name" => "ED")]),
         params,
     )
 
     # Invalid format
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("format" => "invalid", "problems" => [Dict("name" => "ED")]),
+        Dict("format" => "invalid", "models" => [Dict("name" => "ED")]),
         params,
     )
 
     # Missing name
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("problems" => [Dict("variables" => [:P__ThermalStandard, :all])]),
-        params,
-    )
-
-    # Can't have a variable and 'all'
-    @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("problems" => [Dict("name" => "ED", "variables" => [:var, :all])]),
+        Dict("models" => [Dict("variables" => ["ActivePowerVariable_ThermalStandard"])]),
         params,
     )
 end

@@ -2,34 +2,11 @@
 
 abstract type AbstractModelContainer end
 
-abstract type OptimizationContainerKey end
-
 abstract type VariableType end
 abstract type ConstraintType end
 abstract type AuxVariableType end
 abstract type ParameterType end
 abstract type InitialConditionType end
-
-function encode_key(key::OptimizationContainerKey)
-    return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
-end
-
-function encode_symbol(
-    ::Type{T},
-    ::Type{U},
-    meta::String = CONTAINER_KEY_EMPTY_META,
-) where {T <: Union{PSY.Component, PSY.System}, U}
-    meta_ = isempty(meta) ? meta : "_" * meta
-    T_ = replace(replace(IS.strip_module_name(T), "{" => "_"), "}" => "")
-    return Symbol("$(IS.strip_module_name(string(U)))_$(T_)" * meta_)
-end
-
-function check_meta_chars(meta)
-    # Underscores in this field will prevent us from being able to decode keys.
-    if occursin("_", meta)
-        throw(IS.InvalidValue("'_' is not allowed in meta"))
-    end
-end
 
 """
 Abstract type for Device Formulations (a.k.a Models)
@@ -97,6 +74,8 @@ abstract type SimulationStore end
 # - read_problem_optimizer_stats
 
 abstract type AbstractAffectFeedForward end
+
+get_device_type(x::AbstractAffectFeedForward) = x.device_type
 
 abstract type AbstractCache end
 abstract type FeedForwardChronology end

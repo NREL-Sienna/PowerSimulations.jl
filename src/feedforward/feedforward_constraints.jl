@@ -355,7 +355,8 @@ function feedforward!(
     end
     for var_key in get_affected_variables(ff_model)
         var_type = get_entry_type(var_key)
-        parameter_ref = UpdateRef{JuMP.VariableRef}(var_key)
+        component_type = get_component_type(var_key)
+        parameter_ref = UpdateRef{JuMP.VariableRef}(component_type, var_type)
         ub_ff(
             container,
             FeedforwardUBConstraint(),
@@ -402,13 +403,15 @@ function feedforward!(
     ff_model::IntegralLimitFF,
 ) where {T <: PSY.StaticInjection}
     for var_key in get_affected_variables(ff_model)
-        parameter_ref = UpdateRef{JuMP.VariableRef}(var_key)
+        var_type = get_entry_type(var_key)
+        component_type = get_component_type(var_key)
+        parameter_ref = UpdateRef{JuMP.VariableRef}(component_type, var_type)
         integral_limit_ff(
             container,
             FeedforwardIntegralLimitConstraint,
             T,
             parameter_ref,
-            get_entry_type(var_key),  # TODO DT: Jose, the old code was creating a new key; not sure why
+            var_type,
         )
     end
 end

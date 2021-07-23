@@ -1,3 +1,31 @@
+struct OptimizationContainerMetadata
+    container_key_lookup::Dict{String, <:OptimizationContainerKey}
+end
+
+function OptimizationContainerMetadata()
+    return OptimizationContainerMetadata(Dict{String, OptimizationContainerKey}())
+end
+
+function deserialize_metadata(
+    ::Type{OptimizationContainerMetadata},
+    output_dir::String,
+    model_name,
+)
+    filename = _make_metadata_filename(output_dir, model_name)
+    return Serialization.deserialize(filename)
+end
+
+function deserialize_key(metadata::OptimizationContainerMetadata, name::AbstractString)
+    !haskey(metadata.container_key_lookup, name) && error("$name is not stored")
+    return metadata.container_key_lookup[name]
+end
+
+add_container_key!(x::OptimizationContainerMetadata, key, val) =
+    x.container_key_lookup[key] = val
+get_container_key(x::OptimizationContainerMetadata, key) = x.container_key_lookup[key]
+has_container_key(x::OptimizationContainerMetadata, key) =
+    haskey(x.container_key_lookup, key)
+
 mutable struct OptimizationContainer <: AbstractModelContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
@@ -6,7 +34,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     settings_copy::Settings
     variables::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
-    dual_values::Dict{ConstraintKey, AbstractArray}
+    duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::DenseAxisArrayContainer
@@ -16,34 +44,60 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
     built_for_simulation::Bool
+    metadata::OptimizationContainerMetadata
+end
 
-    function OptimizationContainer(
-        sys::PSY.System,
-        settings::Settings,
-        jump_model::Union{Nothing, JuMP.Model},
+function OptimizationContainer(
+    sys::PSY.System,
+    settings::Settings,
+    jump_model::Union{Nothing, JuMP.Model},
+)
+    resolution = PSY.get_time_series_resolution(sys)
+    return OptimizationContainer(
+        jump_model === nothing ? _make_jump_model(settings) :
+        _finalize_jump_model!(jump_model, settings),
+        1:1,
+        IS.time_period_conversion(resolution),
+        settings,
+        copy_for_serialization(settings),
+        Dict{VariableKey, AbstractArray}(),
+        Dict{AuxVarKey, AbstractArray}(),
+        Dict{ConstraintKey, AbstractArray}(),
+        Dict{ConstraintKey, AbstractArray}(),
+        zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
+        DenseAxisArrayContainer(),
+        Dict{ParameterKey, ParameterContainer}(),
+        Dict{ICKey, Vector{InitialCondition}}(),
+        nothing,
+        PSY.get_base_power(sys),
+        Dict{Symbol, Any}(),
+        false,
+        OptimizationContainerMetadata(),
     )
-        resolution = PSY.get_time_series_resolution(sys)
-        new(
-            jump_model === nothing ? _make_jump_model(settings) :
-            _finalize_jump_model!(jump_model, settings),
-            1:1,
-            IS.time_period_conversion(resolution),
-            settings,
-            copy_for_serialization(settings),
-            Dict{VariableKey, AbstractArray}(),
-            Dict{AuxVarKey, AbstractArray}(),
-            Dict{ConstraintKey, AbstractArray}(),
-            Dict{ConstraintKey, AbstractArray}(),
-            zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
-            DenseAxisArrayContainer(),
-            Dict{ParameterKey, ParameterContainer}(),
-            Dict{ICKey, Vector{InitialCondition}}(),
-            nothing,
-            PSY.get_base_power(sys),
-            Dict{Symbol, Any}(),
-            false,
-        )
-    end
+end
+
+function OptimizationContainer(filename::AbstractString)
+    return OptimizationContainer(
+        jump_model === nothing ? _make_jump_model(settings) :
+        _finalize_jump_model!(jump_model, settings),
+        1:1,
+        IS.time_period_conversion(resolution),
+        settings,
+        copy_for_serialization(settings),
+        Dict{VariableKey, AbstractArray}(),
+        Dict{AuxVarKey, AbstractArray}(),
+        Dict{ConstraintKey, AbstractArray}(),
+        Dict{ConstraintKey, AbstractArray}(),
+        Dict{String, OptimizationContainerKey}(),
+        zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
+        DenseAxisArrayContainer(),
+        Dict{ParameterKey, ParameterContainer}(),
+        Dict{ICKey, Vector{InitialCondition}}(),
+        nothing,
+        PSY.get_base_power(sys),
+        Dict{Symbol, Any}(),
+        false,
+    )
 end
 
 get_time_steps(container::OptimizationContainer) = container.time_steps
@@ -52,7 +106,7 @@ get_initial_time(container::OptimizationContainer) = get_initial_time(container.
 # Internal Variables, Constraints and Parameters accessors
 get_variables(container::OptimizationContainer) = container.variables
 get_aux_variables(container::OptimizationContainer) = container.aux_variables
-get_dual_values(container::OptimizationContainer) = container.dual_values
+get_duals(container::OptimizationContainer) = container.duals
 get_constraints(container::OptimizationContainer) = container.constraints
 get_parameters(container::OptimizationContainer) = container.parameters
 get_expression(container::OptimizationContainer, name::Symbol) = container.expressions[name]
@@ -60,6 +114,7 @@ get_initial_conditions(container::OptimizationContainer) = container.initial_con
 get_settings(container::OptimizationContainer) = container.settings
 get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_base_power(container::OptimizationContainer) = container.base_power
+get_metadata(container::OptimizationContainer) = container.metadata
 built_for_simulation(container::OptimizationContainer) = container.built_for_simulation
 
 function is_milp(container::OptimizationContainer)
@@ -315,6 +370,46 @@ function serialize_optimization_model(container::OptimizationContainer, save_pat
     return
 end
 
+const _CONTAINER_METADATA_FILE = "optimization_container_metadata.bin"
+
+_make_metadata_filename(output_dir, model_name) =
+    joinpath(output_dir, "$(model_name)_$(_CONTAINER_METADATA_FILE)")
+
+function serialize_metadata!(
+    container::OptimizationContainer,
+    output_dir::String,
+    model_name,
+)
+    for key in Iterators.flatten((
+        keys(container.constraints),
+        keys(container.duals),
+        keys(container.parameters),
+        keys(container.variables),
+    ))
+        encoded_key = encode_key_as_string(key)
+        if has_container_key(container.metadata, encoded_key)
+            # Constraints and Duals can store the same key.
+            IS.@assert_op key == get_container_key(container.metadata, encoded_key)
+        end
+        add_container_key!(container.metadata, encoded_key, key)
+    end
+
+    filename = _make_metadata_filename(output_dir, model_name)
+    Serialization.serialize(filename, container.metadata)
+    @debug "Serialized container keys to $filename" _group = IS.LOG_GROUP_SERIALIZATION
+end
+
+function deserialize_metadata!(
+    container::OptimizationContainer,
+    output_dir::String,
+    model_name,
+)
+    merge!(
+        container.metadata.container_key_lookup,
+        deserialize_metadata(OptimizationContainerMetadata, output_dir, model_name),
+    )
+end
+
 function _assign_container!(container::Dict, key, value)
     if haskey(container, key)
         @error "$(encode_key(key)) is already stored" sort!(encode_key.(keys(container)))
@@ -389,9 +484,7 @@ function get_variable(
 end
 
 function read_variables(container::OptimizationContainer)
-    return Dict(
-        encode_key(k) => axis_array_to_dataframe(v) for (k, v) in get_variables(container)
-    )
+    return Dict(k => axis_array_to_dataframe(v) for (k, v) in get_variables(container))
 end
 
 ##################################### AuxVariable Container ################################
@@ -455,14 +548,14 @@ function add_dual_container!(
         else
             dual_container = container_spec(Float64, axs...)
         end
-        _assign_container!(container.dual_values, const_key, dual_container)
+        _assign_container!(container.duals, const_key, dual_container)
         return dual_container
     end
     return
 end
 
 function get_dual_keys(container::OptimizationContainer)
-    return collect(keys(container.dual_values))
+    return collect(keys(container.duals))
 end
 
 ##################################### Constraint Container #################################
@@ -530,8 +623,7 @@ end
 
 function read_duals(container::OptimizationContainer)
     return Dict(
-        encode_key(k) => axis_array_to_dataframe(v, [encode_key(k)]) for
-        (k, v) in get_dual_values(container)
+        k => axis_array_to_dataframe(v, [encode_key(k)]) for (k, v) in get_duals(container)
     )
 end
 
@@ -593,16 +685,14 @@ end
 function read_parameters(container::OptimizationContainer)
     # TODO: Still not obvious implementation since it needs to get the multipliers from
     # the system
-    params_dict = Dict{Symbol, DataFrames.DataFrame}()
+    params_dict = Dict{ParameterKey, DataFrames.DataFrame}()
     parameters = get_parameters(container)
     (isnothing(parameters) || isempty(parameters)) && return params_dict
     for (k, v) in parameters
         !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
-        params_key_tuple = decode_symbol(k)
-        params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
         param_array = axis_array_to_dataframe(get_parameter_array(v))
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
-        params_dict[params_dict_key] = param_array .* multiplier_array
+        params_dict[k] = param_array .* multiplier_array
     end
     return params_dict
 end
@@ -653,4 +743,8 @@ end
 function set_initial_conditions!(container::OptimizationContainer, key::ICKey, value)
     @debug "set_initial_condition_container" key
     container.initial_conditions[key] = value
+end
+
+function deserialize_key(container::OptimizationContainer, name::AbstractString)
+    return deserialize_key(container.metadata, name)
 end

@@ -45,6 +45,7 @@ OpModel = DecisionModel(MockOperationProblem, template, system)
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
 mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
+    name::Symbol
     template::ProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ProblemInternal}
@@ -54,10 +55,16 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         template::ProblemTemplate,
         sys::PSY.System,
         settings::Settings,
-        jump_model::Union{Nothing, JuMP.Model} = nothing,
+        jump_model::Union{Nothing, JuMP.Model} = nothing;
+        name = nothing,
     ) where {M <: DecisionProblem}
+        if name === nothing
+            name = Symbol(typeof(template))
+        elseif name isa String
+            name = Symbol(name)
+        end
         internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
-        new{M}(template, sys, internal, Dict{String, Any}())
+        new{M}(name, template, sys, internal, Dict{String, Any}())
     end
 end
 
@@ -65,6 +72,7 @@ function DecisionModel{M}(
     template::ProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
+    name = nothing,
     optimizer = nothing,
     horizon = UNSET_HORIZON,
     warm_start = true,
@@ -89,7 +97,7 @@ function DecisionModel{M}(
         optimizer_log_print = optimizer_log_print,
         direct_mode_optimizer = direct_mode_optimizer,
     )
-    return DecisionModel{M}(template, sys, settings, jump_model)
+    return DecisionModel{M}(template, sys, settings, jump_model, name = name)
 end
 
 """
@@ -120,6 +128,7 @@ problem = DecisionModel(MyOpProblemType template, system, optimizer)
 - `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
 - `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
 - `optimizer_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
+- `name`: name of model, string or symbol; defaults to the type of template converted to a symbol
 """
 function DecisionModel(
     ::Type{M},
@@ -151,21 +160,26 @@ Construct an DecisionProblem from a serialized file.
    serialized. Callers should pass whatever they passed to the original problem.
 - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes}` = nothing: The optimizer does
    not get serialized. Callers should pass whatever they passed to the original problem.
+- `system::Union{Nothing, PSY.System}`: Optionally, the system used for the model.
+   If nothing and sys_to_file was set to true when the model was created, the system will
+   be deserialized from a file.
 """
 function DecisionModel(
     filename::AbstractString;
     jump_model::Union{Nothing, JuMP.Model} = nothing,
     optimizer::Union{Nothing, MOI.OptimizerWithAttributes} = nothing,
-    kwargs...,
+    system::Union{Nothing, PSY.System} = nothing,
 )
     return deserialize_problem(
-        DecisionProblem,
+        DecisionModel,
         filename;
         jump_model = jump_model,
         optimizer = optimizer,
-        kwargs...,
+        system = system,
     )
 end
+
+get_name(model::DecisionModel) = model.name
 
 function get_time_series_values!(
     time_series_type::Type{<:IS.TimeSeriesData},
@@ -323,6 +337,11 @@ function _build!(model::DecisionModel{<:DecisionProblem}, serialize::Bool)
             problem_build!(model)
             serialize && serialize_problem(model)
             serialize && serialize_optimization_model(model)
+            serialize_metadata!(
+                get_optimization_container(model),
+                get_output_dir(model),
+                get_name(model),
+            )
             set_status!(model, BuildStatus.BUILT)
             log_values(get_settings(model))
             !built_for_simulation(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
@@ -371,9 +390,8 @@ serialize_optimization_model(::DecisionProblem) = nothing
 serialize_problem(::DecisionProblem) = nothing
 
 function serialize_optimization_model(model::DecisionModel{<:DecisionProblem})
-    name = get_name(model)
-    problem_name = isempty(name) ? "OptimizationModel" : "$(name)_OptimizationModel"
-    json_file_name = "$problem_name.json"
+    problem_name = "$(get_name(model))_OptimizationModel"
+    json_file_name = "$(problem_name).json"
     json_file_name = joinpath(get_output_dir(model), json_file_name)
     serialize_optimization_model(get_optimization_container(model), json_file_name)
 end
@@ -383,12 +401,13 @@ struct DecisionModelSerializationWrapper
     sys::Union{Nothing, String}
     settings::Settings
     model_type::DataType
+    name::String
 end
 
 function serialize_problem(model::DecisionModel{<:DecisionProblem})
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
-    problem_name = isempty(get_name(model)) ? "OperationProblem" : get_name(model)
+    problem_name = get_name(model)
     sys_to_file = get_system_to_file(get_settings(model))
     if sys_to_file
         sys = get_system(model)
@@ -404,6 +423,7 @@ function serialize_problem(model::DecisionModel{<:DecisionProblem})
         sys_filename,
         container.settings_copy,
         typeof(model),
+        string(get_name(model)),
     )
     bin_file_name = "$problem_name.bin"
     bin_file_name = joinpath(get_output_dir(model), bin_file_name)
@@ -411,7 +431,7 @@ function serialize_problem(model::DecisionModel{<:DecisionProblem})
     @info "Serialized DecisionModel to" bin_file_name
 end
 
-function deserialize_problem(::Type{DecisionProblem}, filename::AbstractString; kwargs...)
+function deserialize_problem(::Type{DecisionModel}, filename::AbstractString; kwargs...)
     obj = Serialization.deserialize(filename)
     if !(obj isa DecisionModelSerializationWrapper)
         throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
@@ -431,7 +451,13 @@ function deserialize_problem(::Type{DecisionProblem}, filename::AbstractString; 
         sys = PSY.System(obj.sys)
     end
 
-    return obj.model_type(obj.template, sys, kwargs[:jump_model]; settings...)
+    return obj.model_type(
+        obj.template,
+        sys,
+        kwargs[:jump_model];
+        name = obj.name,
+        settings...,
+    )
 end
 
 function calculate_aux_variables!(model::DecisionModel)
@@ -447,7 +473,7 @@ end
 function calculate_dual_variables!(model::DecisionModel)
     container = get_optimization_container(model)
     system = get_system(model)
-    duals_vars = get_dual_values(container)
+    duals_vars = get_duals(container)
     for key in keys(duals_vars)
         _calculate_dual_variable_value!(container, key, system)
     end
@@ -549,7 +575,7 @@ function write_model_results!(store, model, timestamp; exports = nothing)
     if exports !== nothing
         export_params = Dict{Symbol, Any}(
             :exports => exports,
-            :exports_path => joinpath(exports.path, get_name(model)),
+            :exports_path => joinpath(exports.path, string(get_name(model))),
             :file_type => get_export_file_type(exports),
             :resolution => get_resolution(model),
             :horizon => get_horizon(get_settings(model)),
@@ -558,8 +584,9 @@ function write_model_results!(store, model, timestamp; exports = nothing)
         export_params = nothing
     end
 
+    container = get_optimization_container(model)
     # This line should only be called if the problem is exporting duals. Otherwise ignore.
-    if is_milp(get_optimization_container(model))
+    if is_milp(container)
         @warn "Problem $(get_simulation_info(model).name) is a MILP, duals can't be exported"
     else
         _write_model_dual_results!(store, container, model, timestamp, export_params)
@@ -572,41 +599,38 @@ function write_model_results!(store, model, timestamp; exports = nothing)
 end
 
 function _write_model_dual_results!(store, container, model, timestamp, exports)
-    problem_name_str = get_name(model)
-    problem_name = Symbol(problem_name_str)
+    problem_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "duals")
         mkpath(exports_path)
     end
 
-    for name in get_constraint_duals(container.settings)
-        constraint = get_constraint(container, name)
+    for (key, constraint) in get_duals(container)
         write_result!(
             store,
             problem_name,
             STORE_CONTAINER_DUALS,
-            name,
+            key,
             timestamp,
             constraint,
-            [name],
+            [encode_key(key)],  # TODO DT: this doesn't seem right
         )
 
         if exports !== nothing &&
-           should_export_dual(exports[:exports], timestamp, problem_name_str, name)
+           should_export_dual(exports[:exports], timestamp, problem_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
             df = axis_array_to_dataframe(constraint, [name])
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, name, timestamp, df)
+            export_result(file_type, exports_path, key, timestamp, df)
         end
     end
 end
 
 function _write_model_parameter_results!(store, container, model, timestamp, exports)
-    problem_name_str = get_name(model)
-    problem_name = Symbol(problem_name_str)
+    problem_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "parameters")
         mkpath(exports_path)
@@ -616,7 +640,8 @@ function _write_model_parameter_results!(store, container, model, timestamp, exp
     (isnothing(parameters) || isempty(parameters)) && return
     horizon = get_horizon(get_settings(model))
 
-    for (name, container) in parameters
+    for (key, container) in parameters
+        name = encode_key(key)  # TODO DT
         !isa(container.update_ref, UpdateRef{<:PSY.Component}) && continue
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
@@ -633,58 +658,56 @@ function _write_model_parameter_results!(store, container, model, timestamp, exp
             store,
             problem_name,
             STORE_CONTAINER_PARAMETERS,
-            name,
+            key,
             timestamp,
             data,
             param_array.axes[1],
         )
 
         if exports !== nothing &&
-           should_export_parameter(exports[:exports], timestamp, problem_name_str, name)
+           should_export_parameter(exports[:exports], timestamp, problem_name, key)
             resolution = exports[:resolution]
             file_type = exports[:file_type]
             df = DataFrames.DataFrame(data, param_array.axes[1])
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, name, timestamp, df)
+            export_result(file_type, exports_path, key, timestamp, df)
         end
     end
 end
 
 function _write_model_variable_results!(store, container, model, timestamp, exports)
-    problem_name_str = get_name(model)
-    problem_name = Symbol(problem_name_str)
+    problem_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "variables")
         mkpath(exports_path)
     end
 
-    for (name, variable) in get_variables(container)
+    for (key, variable) in get_variables(container)
         write_result!(
             store,
             problem_name,
             STORE_CONTAINER_VARIABLES,
-            name,
+            key,
             timestamp,
             variable,
         )
 
         if exports !== nothing &&
-           should_export_variable(exports[:exports], timestamp, problem_name_str, name)
+           should_export_variable(exports[:exports], timestamp, problem_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
             df = axis_array_to_dataframe(variable)
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, name, timestamp, df)
+            export_result(file_type, exports_path, key, timestamp, df)
         end
     end
 end
 
 function _write_model_aux_variable_results!(store, container, model, timestamp, exports)
-    problem_name_str = get_name(model)
-    problem_name = Symbol(problem_name_str)
+    problem_name = get_name(model)
     if exports !== nothing
         # TODO: Should the export go to a folder aux_variables
         exports_path = joinpath(exports[:exports_path], "variables")
@@ -692,25 +715,24 @@ function _write_model_aux_variable_results!(store, container, model, timestamp, 
     end
 
     for (key, variable) in get_aux_variables(container)
-        name = encode_key(key)
         write_result!(
             store,
             problem_name,
             STORE_CONTAINER_VARIABLES,
-            name,
+            key,
             timestamp,
             variable,
         )
 
         if exports !== nothing &&
-           should_export_variable(exports[:exports], timestamp, problem_name_str, name)
+           should_export_variable(exports[:exports], timestamp, problem_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
             df = axis_array_to_dataframe(variable)
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, name, timestamp, df)
+            export_result(file_type, exports_path, key, timestamp, df)
         end
     end
 end

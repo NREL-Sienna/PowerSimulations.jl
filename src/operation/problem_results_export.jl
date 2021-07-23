@@ -1,48 +1,65 @@
 struct ProblemResultsExport
-    name::String
-    duals::Set{Symbol}
-    parameters::Set{Symbol}
-    variables::Set{Symbol}
+    name::Symbol
+    duals::Set{ConstraintKey}
+    parameters::Set{ParameterKey}
+    variables::Set{VariableKey}
     optimizer_stats::Bool
+    store_all_flags::Dict{Symbol, Bool}
 
-    function ProblemResultsExport(name, duals, parameters, variables, optimizer_stats)
+    function ProblemResultsExport(
+        name,
+        duals,
+        parameters,
+        variables,
+        optimizer_stats,
+        store_all_flags,
+    )
         duals = _check_fields(duals)
         parameters = _check_fields(parameters)
         variables = _check_fields(variables)
-        new(name, duals, parameters, variables, optimizer_stats)
+        new(name, duals, parameters, variables, optimizer_stats, store_all_flags)
     end
 end
 
 function ProblemResultsExport(
-    name::AbstractString;
-    duals = Set{Symbol}(),
-    parameters = Set{Symbol}(),
-    variables = Set{Symbol}(),
+    name;
+    duals = Set{ConstraintKey}(),
+    parameters = Set{ParameterKey}(),
+    variables = Set{VariableKey}(),
     optimizer_stats = true,
+    store_all_duals = false,
+    store_all_parameters = false,
+    store_all_variables = false,
 )
-    return ProblemResultsExport(name, duals, parameters, variables, optimizer_stats)
+    store_all_flags = Dict(
+        :duals => store_all_duals,
+        :parameters => store_all_parameters,
+        :variables => store_all_variables,
+    )
+    return ProblemResultsExport(
+        Symbol(name),
+        duals,
+        parameters,
+        variables,
+        optimizer_stats,
+        store_all_flags,
+    )
 end
 
 function _check_fields(fields)
-    if !(typeof(fields) <: Set{Symbol})
-        fields = Set(Symbol.(fields))
-    end
-
-    if :all in fields && length(fields) > 1
-        throw(IS.InvalidValue("'all' can only be present if the array has one element"))
+    if !(typeof(fields) <: Set)
+        fields = Set(fields)
     end
 
     return fields
 end
 
-should_export_dual(x::ProblemResultsExport, name) = _should_export(x, :duals, name)
-should_export_parameter(x::ProblemResultsExport, name) =
-    _should_export(x, :parameters, name)
-should_export_variable(x::ProblemResultsExport, name) = _should_export(x, :variables, name)
+should_export_dual(x::ProblemResultsExport, key) = _should_export(x, :duals, key)
+should_export_parameter(x::ProblemResultsExport, key) = _should_export(x, :parameters, key)
+should_export_variable(x::ProblemResultsExport, key) = _should_export(x, :variables, key)
 
-function _should_export(exports::ProblemResultsExport, field_name, name)
-    container = getfield(exports, field_name)
-    isempty(container) && return false
-    first(container) == :all && return true
-    return name in container
+function _should_export(exports::ProblemResultsExport, field_name, key)
+    exports.store_all_flags[field_name] && return true
+    container = getproperty(exports, field_name)
+    return key in container
 end

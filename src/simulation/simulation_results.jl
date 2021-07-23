@@ -59,7 +59,13 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
     simulation_store_path = joinpath(execution_path, "data_store")
     check_file_integrity(simulation_store_path)
 
-    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
+    problem_path = joinpath(execution_path, "problems")
+    return open_store(
+        HdfSimulationStore,
+        simulation_store_path,
+        "r",
+        problem_path = problem_path,
+    ) do store
         problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
         for (name, problem_params) in sim_params.problems
@@ -89,7 +95,7 @@ function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
         problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
         for (name, problem_params) in sim_params.problems
-            problem = get_problem(sim, name)
+            model = get_model(sim, name)
             name = string(name)
             problem_result = SimulationProblemResults(
                 store,
@@ -200,7 +206,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
             !should_export(exports, timestamp) && continue
 
             export_path = mkpath(joinpath(path, problem_results.problem, "variables"))
-            for name in get_existing_variables(problem_results)
+            for name in list_variable_names(problem_results)
                 if should_export_variable(problem_exports, name)
                     dfs = read_variable(
                         problem_results,
@@ -214,7 +220,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
             end
 
             export_path = mkpath(joinpath(path, problem_results.problem, "parameters"))
-            for name in get_existing_parameters(problem_results)
+            for name in list_parameter_names(problem_results)
                 if should_export_parameter(problem_exports, name)
                     dfs = read_parameter(
                         problem_results,
@@ -228,7 +234,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
             end
 
             export_path = mkpath(joinpath(path, problem_results.problem, "duals"))
-            for name in get_existing_duals(problem_results)
+            for name in list_dual_names(problem_results)
                 if should_export_dual(problem_exports, name)
                     dfs = read_dual(
                         problem_results,
@@ -253,16 +259,17 @@ end
 function export_result(
     ::Type{CSV.File},
     path,
-    name,
+    key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     df::DataFrames.DataFrame,
 )
-    filename = joinpath(path, string(name) * "_" * convert_for_path(timestamp) * ".csv")
+    filename =
+        joinpath(path, string(encode_key(key)) * "_" * convert_for_path(timestamp) * ".csv")
     export_result(CSV.File, filename, df)
 end
 
-function export_result(::Type{CSV.File}, path, name, df::DataFrames.DataFrame)
-    filename = joinpath(path, string(name) * ".csv")
+function export_result(::Type{CSV.File}, path, key, df::DataFrames.DataFrame)
+    filename = joinpath(path, string(encode_key(key)) * ".csv")
     export_result(CSV.File, filename, df)
 end
 
