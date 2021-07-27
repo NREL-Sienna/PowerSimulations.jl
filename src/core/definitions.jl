@@ -38,7 +38,7 @@ const MAX_START_STAGES = 3
 const OBJECTIVE_FUNCTION_POSITIVE = 1.0
 const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
 # The DEFAULT_RESERVE_COST value is used to avoid degeneracy of the solutions, reseve cost isn't provided.
-const DEFAULT_RESERVE_COST = 1.0e-4
+const DEFAULT_RESERVE_COST = 1.0
 const KiB = 1024
 const MiB = KiB * KiB
 const GiB = MiB * KiB

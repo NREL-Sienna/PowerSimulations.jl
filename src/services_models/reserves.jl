@@ -50,16 +50,15 @@ function service_requirement_constraint!(
         multiplier = get_multiplier_array(container)
         for t in time_steps
             param[name, t] = add_parameter(optimization_container.JuMPmodel, ts_vector[t])
-            multiplier[name, t] = 1.0
+            multiplier[name, t] = requirement
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
             else
                 resource_expression = sum(reserve_variable[:, t])
             end
-            mul = (requirement * multiplier[name, t])
             constraint[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                resource_expression >= param[name, t] * mul
+                resource_expression >= param[name, t] * requirement
             )
         end
     else
