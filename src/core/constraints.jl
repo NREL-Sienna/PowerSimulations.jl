@@ -1,6 +1,5 @@
 struct AbsoluteValueConstraint <: ConstraintType end
 struct ActiveConstraint <: ConstraintType end
-struct ActivePowerVariableLimitsConstraint <: ConstraintType end
 struct ActiveRangeConstraint <: ConstraintType end
 struct ActiveRangeICConstraint <: ConstraintType end
 struct AreaDispatchBalanceConstraint <: ConstraintType end
@@ -38,23 +37,21 @@ struct FlowReactivePowerFromToConstraint <: ConstraintType end
 struct FlowReactivePowerToFromConstraint <: ConstraintType end
 struct FrequencyResponseConstraint <: ConstraintType end
 struct InflowRangeConstraint <: ConstraintType end
-struct InputActivePowerVariableLimitsConstraint <: ConstraintType end
 struct InputPowerRangeConstraint <: ConstraintType end
 struct MustRunConstraint <: ConstraintType end
 struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
-struct OutputActivePowerVariableLimitsConstraint <: ConstraintType end
 struct OutputPowerRangeConstraint <: ConstraintType end
 struct ParticipationAssignmentConstraint <: ConstraintType end
 struct RampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
 struct RateLimitConstraint <: ConstraintType end
+# TODO: rename TF and FT to ToFrom and FromTo
 struct RateLimitFTConstraint <: ConstraintType end
 struct RateLimitTFConstraint <: ConstraintType end
 struct ReactiveConstraint <: ConstraintType end
-struct ReactivePowerVariableLimitsConstraint <: ConstraintType end
 struct ReactiveRangeConstraint <: ConstraintType end
 struct RegulationLimitsDownConstraint <: ConstraintType end
 struct RegulationLimitsUpConstraint <: ConstraintType end
@@ -65,6 +62,12 @@ struct SACEPidAreaConstraint <: ConstraintType end
 struct StartTypeConstraint <: ConstraintType end
 struct StartupInitialConditionConstraint <: ConstraintType end
 struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
+
+abstract type PowerVariableLimitsConstraint <: ConstraintType end
+struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+struct OutputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+struct ReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 
 struct ConstraintKey{T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} <:
        OptimizationContainerKey

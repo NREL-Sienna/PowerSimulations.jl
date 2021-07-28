@@ -1,36 +1,3 @@
-struct RangeConstraintSpec
-    constraint_type::ConstraintType
-    variable_type::VariableType
-    bin_variable_types::Vector{VariableType}
-    limits_func::Function
-    constraint_func::Function
-    constraint_struct::Type{<:AbstractRangeConstraintInfo}
-    component_type::Type{<:PSY.Component}
-    lag_limits_func::Union{Function, Nothing}
-end
-
-function RangeConstraintSpec(;
-    constraint_type,
-    variable_type,
-    bin_variable_types = Vector{VariableType}(),
-    limits_func,
-    constraint_func,
-    constraint_struct,
-    component_type,
-    lag_limits_func = nothing,
-)
-    return RangeConstraintSpec(
-        constraint_type,
-        variable_type,
-        bin_variable_types,
-        limits_func,
-        constraint_func,
-        constraint_struct,
-        component_type,
-        lag_limits_func,
-    )
-end
-
 struct TimeSeriesConstraintSpec
     constraint_type::ConstraintType
     variable_type::VariableType
@@ -62,7 +29,6 @@ function TimeSeriesConstraintSpec(;
 end
 
 struct DeviceRangeConstraintSpec
-    range_constraint_spec::Union{Nothing, RangeConstraintSpec}
     timeseries_range_constraint_spec::Union{Nothing, TimeSeriesConstraintSpec}
     custom_optimization_container_func::Union{Nothing, Function}
     devices_filter_func::Union{Nothing, Function}
@@ -95,32 +61,6 @@ function add_constraints!(
     device_range_constraints!(container, devices, model, feedforward, spec)
 end
 
-"""
-Construct inputs for creating range constraints.
-
-# Arguments
-`range_constraint_spec::Vector{RangeConstraintSpec}`: May be emtpy.
-`timeseries_range_constraint_spec::Vector{TimeSeriesConstraintSpec}`: May be empty.
-`custom_optimization_container_func::Union{Nothing, Function}`: Optional function to add custom
- constraints to the internals of a OptimizationContainer. Must accept OptimizationContainer, devices iterable,
- and a subtype of AbstractDeviceFormulation.
-`devices_filter_func::Union{Nothing, Function}`: Optional function to filter the devices on
-
-"""
-function DeviceRangeConstraintSpec(;
-    range_constraint_spec = nothing,
-    timeseries_range_constraint_spec = nothing,
-    custom_optimization_container_func = nothing,
-    devices_filter_func = nothing,
-)
-    return DeviceRangeConstraintSpec(
-        range_constraint_spec,
-        timeseries_range_constraint_spec,
-        custom_optimization_container_func,
-        devices_filter_func,
-    )
-end
-
 function device_range_constraints!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -128,7 +68,6 @@ function device_range_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     spec::DeviceRangeConstraintSpec,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
-    range_constraint_spec = spec.range_constraint_spec
     timeseries_range_constraint_spec = spec.timeseries_range_constraint_spec
     custom_optimization_container_func = spec.custom_optimization_container_func
 
@@ -140,16 +79,6 @@ function device_range_constraints!(
         ff_affected_variables = Set{Symbol}()
     else
         ff_affected_variables = Set(get_affected_variables(feedforward))
-    end
-
-    if !(range_constraint_spec === nothing)
-        _apply_range_constraint_spec!(
-            container,
-            range_constraint_spec,
-            devices,
-            model,
-            ff_affected_variables,
-        )
     end
 
     if !(timeseries_range_constraint_spec === nothing)
@@ -167,53 +96,27 @@ function device_range_constraints!(
     end
 end
 
-function _apply_range_constraint_spec!(
-    container,
-    spec,
-    devices::IS.FlattenIteratorWrapper{T},
-    model,
-    ff_affected_variables,
-) where {T <: PSY.Device}
-    constraint_struct = spec.constraint_struct
-    constraint_infos = Vector{constraint_struct}(undef, length(devices))
-    constraint_type = spec.constraint_type
-    variable_type = spec.variable_type
-    if variable_type in ff_affected_variables
-        @debug "Skip adding $variable_type because it is handled by feedforward"
-        return
-    end
-    bin_var_name = spec.bin_variable_types
-    for (i, dev) in enumerate(devices)
-        dev_name = PSY.get_name(dev)
-        limits = spec.limits_func(dev)
-        if limits === nothing
-            limits = (min = 0.0, max = 0.0)
-            @warn "Range constraint limits of $T $dev_name are nothing. Set to" limits
-        end
-        if constraint_struct == DeviceRangeConstraintInfo
-            constraint_info = DeviceRangeConstraintInfo(dev_name, limits)
-        elseif constraint_struct == DeviceMultiStartRangeConstraintsInfo
-            lag_limits = spec.lag_limits_func(dev)
-            constraint_info =
-                DeviceMultiStartRangeConstraintsInfo(dev_name, limits, lag_limits)
-        else
-            error("Missing implementation for $constraint_struct")
-        end
-        add_device_services!(constraint_info, dev, model)
-        constraint_infos[i] = constraint_info
-    end
+"""
+Construct inputs for creating range constraints.
 
-    spec.constraint_func(
-        container,
-        RangeConstraintSpecInternal(
-            constraint_infos,
-            constraint_type,
-            variable_type,
-            bin_var_name,
-            T,
-        ),
+# Arguments
+`timeseries_range_constraint_spec::Vector{TimeSeriesConstraintSpec}`: May be empty.
+`custom_optimization_container_func::Union{Nothing, Function}`: Optional function to add custom
+ constraints to the internals of a OptimizationContainer. Must accept OptimizationContainer, devices iterable,
+ and a subtype of AbstractDeviceFormulation.
+`devices_filter_func::Union{Nothing, Function}`: Optional function to filter the devices on
+
+"""
+function DeviceRangeConstraintSpec(;
+    timeseries_range_constraint_spec = nothing,
+    custom_optimization_container_func = nothing,
+    devices_filter_func = nothing,
+)
+    return DeviceRangeConstraintSpec(
+        timeseries_range_constraint_spec,
+        custom_optimization_container_func,
+        devices_filter_func,
     )
-    return
 end
 
 function _apply_timeseries_range_constraint_spec!(
