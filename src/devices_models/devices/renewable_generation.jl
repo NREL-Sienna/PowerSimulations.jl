@@ -24,59 +24,50 @@ get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}
 #! format: on
 
 ####################################### Reactive Power constraint_infos #########################
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractDeviceFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.RenewableGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ReactivePowerVariableLimitsConstraint(),
-            variable_type = ReactivePowerVariable(),
-            limits_func = x -> PSY.get_reactive_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
+function get_min_max_limits(
+    device,
+    ::Type{ReactivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractRenewableFormulation},
+)
+    PSY.get_reactive_power_limits(device)
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:RenewableConstantPowerFactor},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.RenewableGen}
-    return DeviceRangeConstraintSpec(;
-        custom_optimization_container_func = custom_reactive_power_constraints!,
-    )
-end
-
-function custom_reactive_power_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{RenewableConstantPowerFactor},
-) where {T <: PSY.RenewableGen}
+    T::Type{<:ReactivePowerVariableLimitsConstraint},
+    U::Type{<:ReactivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.RenewableGen, W <: AbstractDeviceFormulation}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+end
+
+"""
+Reactive Power Constraints on Renewable Gen Constant power_factor
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ReactivePowerVariableLimitsConstraint},
+    U::Type{<:ReactivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.RenewableGen, W <: RenewableConstantPowerFactor}
     names = [PSY.get_name(d) for d in devices]
     time_steps = get_time_steps(container)
-    p_var = get_variable(container, ActivePowerVariable(), T)
-    q_var = get_variable(container, ReactivePowerVariable(), T)
+    p_var = get_variable(container, ActivePowerVariable(), V)
+    q_var = get_variable(container, ReactivePowerVariable(), V)
     jump_model = get_jump_model(container)
-    constraint = add_cons_container!(container, EqualityConstraint(), T, names, time_steps)
+    constraint = add_cons_container!(container, EqualityConstraint(), V, names, time_steps)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_power_factor(d)))
         constraint[name, t] =
             JuMP.@constraint(jump_model, q_var[name, t] == p_var[name, t] * pf)
     end
-    return
 end
 
 function DeviceRangeConstraintSpec(

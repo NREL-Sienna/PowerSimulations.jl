@@ -1,6 +1,7 @@
 #! format: off
 
 ########################### Thermal Generation Models ######################################
+
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
@@ -60,191 +61,155 @@ get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariab
 
 #! format: on
 
-######## CONSTRAINTS ############
+######## THERMAL GENERATION CONSTRAINTS ############
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:ConstraintType},
-    ::Type{<:VariableType},
-    ::Type{T},
-    ::Type{<:AbstractThermalFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec()
-end
-
+# active power limits of generators when there are no CommitmentVariables
 """
-This function adds the active power limits of generators when there are no CommitmentVariables
+Min and max active power limits of generators for thermal dispatch formulations
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
+function get_min_max_limits(
+    device,
+    ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractThermalDispatchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
-            limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
+)
+    PSY.get_active_power_limits(device)
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{PowerAboveMinimumVariable},
-    ::Type{T},
-    ::Type{ThermalCompactDispatch},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = PowerAboveMinimumVariable(),
-            limits_func = x -> (
-                min = 0.0,
-                max = PSY.get_active_power_limits(x).max -
-                      PSY.get_active_power_limits(x).min,
-            ),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
-
+# active power limits of generators when there are CommitmentVariables
 """
-This function adds the active power limits of generators when there are CommitmentVariables
+Min and max active power limits of generators for thermal unit commitment formulations
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
+function get_min_max_limits(
+    device,
+    ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractThermalUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
-            bin_variable_types = [OnVariable()],
-            limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_semicontinuousrange!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
+)
+    PSY.get_active_power_limits(device)
 end
 
 """
-This function adds the active power limits of generators when there are no CommitmentVariables
+Range constraints for thermal compact dispatch
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
-    ::Type{<:ThermalDispatchNoMin},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
-            limits_func = x -> (min = 0.0, max = PSY.get_active_power_limits(x).max),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-        custom_optimization_container_func = custom_active_power_constraints!,
-    )
-end
-
-function custom_active_power_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
-    ::IS.FlattenIteratorWrapper{T},
-    ::Type{<:ThermalDispatchNoMin},
-) where {T <: PSY.ThermalGen}
-    var_key = VariableKey(ActivePowerVariable, T)
-    variable = get_variable(container, var_key)
-    # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
-    for v in variable
-        if JuMP.has_lower_bound(v)
-            JuMP.set_lower_bound(v, 0.0)
-        end
-    end
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.ThermalGen, W <: ThermalCompactDispatch}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
 end
 
 """
-This function adds the active power limits of generators. Constraint (17) & (18) from PGLIB
+Min and max active power limits of generators for thermal dispatch compact formulations
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
+function get_min_max_limits(
+    device,
     ::Type{PowerAboveMinimumVariable},
-    ::Type{T},
-    ::Type{<:ThermalMultiStartUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalMultiStart}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = PowerAboveMinimumVariable(),
-            limits_func = x -> (
-                min = 0.0,
-                max = PSY.get_active_power_limits(x).max -
-                      PSY.get_active_power_limits(x).min,
-            ),
-            bin_variable_types = [OnVariable(), StartVariable(), StopVariable()],
-            constraint_func = device_multistart_range!,
-            constraint_struct = DeviceMultiStartRangeConstraintsInfo,
-            lag_limits_func = PSY.get_power_trajectory,
-            component_type = T,
-        ),
+    ::Type{<:ThermalCompactDispatch},
+)
+    (
+        min = 0.0,
+        max = PSY.get_active_power_limits(device).max -
+              PSY.get_active_power_limits(device).min,
     )
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{PowerAboveMinimumVariable},
-    ::Type{T},
+"""
+Min and max active power limits of generators for thermal dispatch no minimum formulations
+"""
+function get_min_max_limits(
+    device,
+    ::Type{ActivePowerVariableLimitsConstraint},
+    ::Type{<:ThermalDispatchNoMin},
+) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
+    (min = 0.0, max = PSY.get_active_power_limits(device).max)
+end
+
+"""
+Semicontinuous range constraints for thermal dispatch formulations
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.ThermalGen, W <: AbstractThermalDispatchFormulation}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+end
+
+"""
+Min and max active power limits for multi-start unit commitment formulations
+"""
+function get_min_max_limits(
+    device,
+    ::Type{ActivePowerVariableLimitsConstraint},
+    ::Type{<:ThermalMultiStartUnitCommitment},
+) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
+    (
+        min = 0.0,
+        max = PSY.get_active_power_limits(device).max -
+              PSY.get_active_power_limits(device).min,
+    )
+end
+
+"""
+Semicontinuous range constraints for unit commitment formulations
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.ThermalGen, W <: AbstractThermalUnitCommitment}
+    add_semicontinuous_range_constraints!(container, T, U, devices, model, X, feedforward)
+end
+
+"""
+Startup and shutdown active power limits for Compact Unit Commitment
+"""
+function get_startup_shutdown_limits(
+    device,
+    ::Type{ActivePowerVariableLimitsConstraint},
+    ::Type{<:ThermalMultiStartUnitCommitment},
+)
+    PSY.get_power_trajectory(device)
+end
+
+"""
+Min and Max active power limits for Compact Unit Commitment
+"""
+function get_min_max_limits(
+    device,
+    ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractCompactUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = PowerAboveMinimumVariable(),
-            limits_func = x -> (
-                min = 0.0,
-                max = PSY.get_active_power_limits(x).max -
-                      PSY.get_active_power_limits(x).min,
-            ),
-            bin_variable_types = [OnVariable(), StartVariable(), StopVariable()],
-            constraint_func = device_multistart_range!,
-            constraint_struct = DeviceMultiStartRangeConstraintsInfo,
-            lag_limits_func = x -> (
-                startup = PSY.get_active_power_limits(x).max,
-                shutdown = PSY.get_active_power_limits(x).max,
-            ),
-            component_type = T,
-        ),
+) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
+    (
+        min = 0,
+        max = PSY.get_active_power_limits(device).max -
+              PSY.get_active_power_limits(device).min,
+    )
+end
+
+"""
+Startup shutdown limits for Compact Unit Commitment
+"""
+function get_startup_shutdown_limits(
+    device,
+    ::Type{ActivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractCompactUnitCommitment},
+)
+    (
+        startup = PSY.get_active_power_limits(device).max,
+        shutdown = PSY.get_active_power_limits(device).max,
     )
 end
 
@@ -270,6 +235,80 @@ end
 """
 This function adds range constraint for the first time period. Constraint (10) from PGLIB formulation
 """
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.ThermalMultiStart, W <: ThermalMultiStartUnitCommitment}
+    time_steps = get_time_steps(container)
+    constraint_type = T()
+    variable_type = U()
+    component_type = V
+    varp = get_variable(container, variable_type, component_type)
+    varstatus = get_variable(container, OnVariable(), component_type)
+    varon = get_variable(container, StartVariable(), component_type)
+    varoff = get_variable(container, StopVariable(), component_type)
+
+    names = [PSY.get_name(x) for x in devices]
+    con_on = add_cons_container!(
+        container,
+        constraint_type,
+        component_type,
+        names,
+        time_steps,
+        meta = "on",
+    )
+    con_off = add_cons_container!(
+        container,
+        constraint_type,
+        component_type,
+        names,
+        time_steps,
+        meta = "off",
+    )
+    con_lb = add_cons_container!(
+        container,
+        constraint_type,
+        component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
+
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        startup_shutdown_limits = get_startup_shutdown_limits(device, T, W)
+        if JuMP.has_lower_bound(varp[name, t])
+            JuMP.set_lower_bound(varp[name, t], 0.0)
+        end
+        expression_products = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
+        con_on[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_products <=
+            (limits.max - limits.min) * varstatus[name, t] -
+            max(limits.max - startup_shutdown_limits.startup, 0) * varon[name, t]
+        )
+        if t == length(time_steps)
+            continue
+        else
+            con_off[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                expression_products <=
+                (limits.max - limits.min) * varstatus[name, t] -
+                max(limits.max - startup_shutdown_limits.shutdown, 0) * varoff[name, t + 1]
+            )
+        end
+
+        exp_lb = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
+        con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, exp_lb >= 0)
+    end
+end
+
 function initial_range_constraints!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -292,8 +331,9 @@ function initial_range_constraints!(
         limits = PSY.get_active_power_limits(d)
         name = PSY.get_name(d)
         @assert name == PSY.get_name(ini_conds[ix, 1].device)
-        lag_ramp_limits = PSY.get_power_trajectory(d)
-        range_data = DeviceMultiStartRangeConstraintsInfo(name, limits, lag_ramp_limits)
+        startup_shutdown_limits = PSY.get_power_trajectory(d)
+        range_data =
+            DeviceMultiStartRangeConstraintsInfo(name, limits, startup_shutdown_limits)
         add_device_services!(range_data, d, model)
         constraint_data[ix] = range_data
     end
@@ -314,82 +354,29 @@ function initial_range_constraints!(
 end
 
 """
-This function adds the reactive  power limits of generators when there are CommitmentVariables
+Reactive power limits of generators for all dispatch formulations
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
+function get_min_max_limits(
+    device,
+    ::Type{ReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractThermalDispatchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ReactivePowerVariableLimitsConstraint(),
-            variable_type = ReactivePowerVariable(),
-            limits_func = x -> PSY.get_reactive_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
-
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractThermalDispatchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec()
+)
+    PSY.get_reactive_power_limits(device)
 end
 
 """
-This function adds the reactive power limits of generators when there CommitmentVariables
+Reactive power limits of generators when there CommitmentVariables
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
+function get_min_max_limits(
+    device,
+    ::Type{ReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractThermalUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ReactivePowerVariableLimitsConstraint(),
-            variable_type = ReactivePowerVariable(),
-            bin_variable_types = [OnVariable()],
-            limits_func = x -> PSY.get_reactive_power_limits(x),
-            constraint_func = device_semicontinuousrange!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
+)
+    PSY.get_reactive_power_limits(device)
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractThermalUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-    use_parameters::Bool,
-) where {T <: PSY.ThermalGen}
-    return DeviceRangeConstraintSpec()
-end
-
-### Constraints for Thermal Generation without commitment variables ####
-"""
-This function adds the Commitment Status constraint when there are CommitmentVariables
-"""
+# Constraints for Thermal Generation without commitment variables
+# Commitment Status constraint when there are CommitmentVariables
 function commitment_constraints!(
     container::OptimizationContainer,
     ::IS.FlattenIteratorWrapper{T},
