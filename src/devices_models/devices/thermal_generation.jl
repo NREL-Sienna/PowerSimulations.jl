@@ -568,10 +568,10 @@ function calculate_aux_variable_value!(
             for (t, v) in enumerate(on_var)
                 if v < 0.99 # Unit turn off
                     time_value = 0.0
-                elseif isapprox(v, 1.0) # Unit is on
+                elseif isapprox(v, 1.0; atol = ABSOLUTE_TOLERANCE) # Unit is on
                     time_value = previous_condition + 1.0
                 else
-                    @assert false
+                    error("Binary condition returned $v")
                 end
                 previous_condition = aux_var_container.data[ix, t] = time_value
             end
@@ -610,8 +610,10 @@ function calculate_aux_variable_value!(
             for (t, v) in enumerate(on_var)
                 if v < 0.99 # Unit turn off
                     time_value = previous_condition + 1.0
-                elseif isapprox(v, 1.0) # Unit is on
+                elseif isapprox(v, 1.0; atol = ABSOLUTE_TOLERANCE) # Unit is on
                     time_value = 0.0
+                else
+                    error("Binary condition returned $v")
                 end
                 previous_condition = aux_var_container.data[ix, t] = time_value
             end
