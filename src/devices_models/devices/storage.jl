@@ -56,6 +56,21 @@ get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStor
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
 #! format: on
 
+get_multiplier_value(
+    ::EnergyTargetTimeSeriesParameter,
+    d::PSY.Storage,
+    ::AbstractStorageFormulation,
+) = PSY.get_rating(d)
+
+function _initialize_timeseries_labels(
+    ::Type{D},
+    ::Type{EnergyTarget},
+) where {D <: PSY.Storage}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        EnergyTargetTimeSeriesParameter => "storage_target",
+    )
+end
+
 ################################## output power constraints#################################
 
 function DeviceRangeConstraintSpec(
@@ -222,24 +237,53 @@ end
 
 ############################ book keeping constraints ######################################
 
-function DeviceEnergyBalanceConstraintSpec(
-    ::Type{<:EnergyBalanceConstraint},
-    ::Type{EnergyVariable},
-    ::Type{St},
-    ::Type{<:AbstractStorageFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{EnergyBalanceConstraint},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {St <: PSY.Storage}
-    return DeviceEnergyBalanceConstraintSpec(;
-        constraint_type = EnergyLimitConstraint(),
-        energy_variable = EnergyVariable(),
-        initial_condition = InitialEnergyLevel,
-        pin_variable_types = [ActivePowerInVariable()],
-        pout_variable_types = [ActivePowerOutVariable()],
-        constraint_func = energy_balance!,
-        component_type = St,
-    )
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
+    names = [PSY.get_name(x) for x in devices]
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevel, V)
+    energy_var = get_variable(container, EnergyVariable(), V)
+    powerin_var = get_variable(container, ActivePowerInVariable(), V)
+    powerout_var = get_variable(container, ActivePowerOutVariable(), V)
+
+    constraint =
+        add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
+
+    for ic in initial_conditions
+        device = ic.device
+        efficiency = PSY.get_efficiency(device)
+        name = PSY.get_name(device)
+        constraint[name, 1] = JuMP.@constraint(
+            container.JuMPmodel,
+            energy_var[name, 1] ==
+            ic.value +
+            (
+                powerin_var[name, 1] * efficiency.in -
+                (powerout_var[name, 1] / efficiency.out)
+            ) * fraction_of_hour
+        )
+
+        for t in time_steps[2:end]
+            constraint[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                energy_var[name, t] ==
+                energy_var[name, t - 1] +
+                (
+                    powerin_var[name, t] * efficiency.in -
+                    (powerout_var[name, t] / efficiency.out)
+                ) * fraction_of_hour
+            )
+        end
+    end
+    return
 end
 
 ############################ reserve constraints ######################################
@@ -292,68 +336,44 @@ function reserve_contribution_constraint!(
 end
 
 ############################ Energy Management constraints ######################################
-function energy_target_constraint!(
+function add_constraints!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, EnergyTarget},
-    ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.Storage}
+    ::Type{EnergyTargetConstraint},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Storage, W <: EnergyTarget, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
-    target_forecast_name = "storage_target"
-    constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector_target = get_time_series(container, d, target_forecast_name)
-        constraint_info_target =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector_target)
-        constraint_infos_target[ix] = constraint_info_target
-    end
+    name_index = [PSY.get_name(d) for d in devices]
+    energy_var = get_variable(container, EnergyVariable(), V)
+    shortage_var = get_variable(container, EnergyShortageVariable(), V)
+    surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
-    if built_for_simulation(container)
-        energy_target_param!(
-            container,
-            constraint_infos_target,
-            EnergyTargetConstraint(),
-            (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            EnergyTargetTimeSeriesParameter(target_forecast_name),
-            T,
-        )
-    else
-        energy_target!(
-            container,
-            constraint_infos_target,
-            EnergyTargetConstraint(),
-            (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            T,
-        )
-    end
+    parameter_container = get_parameter(container, EnergyTargetTimeSeriesParameter(), V)
+    param = get_parameter_array(parameter_container)
+    multiplier = get_multiplier_array(parameter_container)
 
-    constraint_infos = Vector{DeviceRangeConstraintInfo}()
+    constraint =
+        add_cons_container!(container, EnergyTargetConstraint(), V, name_index, time_steps)
     for d in devices
-        op_cost = PSY.get_operation_cost(d)
-        if PSY.get_energy_shortage_cost(op_cost) == 0.0
-            dev_name = PSY.get_name(d)
-            limits = (min = 0.0, max = 0.0)
-            constraint_info = DeviceRangeConstraintInfo(dev_name, limits)
-            push!(constraint_infos, constraint_info)
+        name = PSY.get_name(d)
+        shortage_cost = PSY.get_energy_shortage_cost(PSY.get_operation_cost(d))
+        if shortage_cost == 0.0
             @warn(
-                "Device $dev_name has energy shortage cost set to 0.0, as a result the model will turnoff the EnergyShortageVariable to avoid infeasible/unbounded problem."
+                "Device $name has energy shortage cost set to 0.0, as a result the model will turnoff the EnergyShortageVariable to avoid infeasible/unbounded problem."
+            )
+            JuMP.delete_upper_bound.(shortage_var[name, :])
+            JuMP.set_upper_bound.(shortage_var[name, :], 0.0)
+        end
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                energy_var[name, t] + shortage_var[name, t] + surplus_var[name, t] ==
+                multiplier[name, t] * param[name, t]
             )
         end
     end
-    if !isempty(constraint_infos)
-        device_range!(
-            container,
-            RangeConstraintSpecInternal(
-                constraint_infos,
-                EnergyShortageVariableLimitsConstraint(),
-                EnergyShortageVariable(),
-                Vector{VariableType}(),
-                T,
-            ),
-        )
-    end
-
     return
 end
 
