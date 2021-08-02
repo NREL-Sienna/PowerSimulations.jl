@@ -1,3 +1,30 @@
+function add_parameters!(
+    container::OptimizationContainer,
+    parameter_type::Type{T},
+    devices::U,
+    model::DeviceModel{D, W},
+) where {
+    T <: ParameterType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    @debug "adding" parameter_type
+    parameter_container = add_param_container!(container, T(), D, names, time_steps)
+    param = get_parameter_array(parameter_container)
+    mult = get_multiplier_array(parameter_container)
+    label = get(get_time_series_labels(model), parameter_type, nothing)
+    if !isnothing(label)
+        for d in devices, t in time_steps
+            name = PSY.get_name(d)
+            ts_vector = get_time_series(container, d, label)
+            mult[name, t] = get_multiplier_value(T(), d, W())
+            param[name, t] = PJ.add_parameter(container.JuMPmodel, ts_vector[t])
+        end
+    end
+    return
+end
 
 function include_parameters!(
     container::OptimizationContainer,
