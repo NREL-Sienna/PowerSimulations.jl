@@ -7,3 +7,4 @@ get_variable_expression_name(_, ::Type{<:PSY.Component}) = nothing
 get_variable_initial_value(_, ::PSY.Component, __) = nothing
 get_variable_lower_bound(_, ::PSY.Component, __) = nothing
 get_variable_upper_bound(_, ::PSY.Component, __) = nothing
+get_multiplier_value(_, ::PSY.Component, __) = 1.0
