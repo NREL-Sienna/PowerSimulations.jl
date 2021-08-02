@@ -41,6 +41,8 @@ function construct_device!(
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
+    @debug "construct_device" _group = :BranchGroup
+
     devices = get_available_components(B, sys)
     if !validate_available_devices(B, devices)
         return
@@ -62,8 +64,16 @@ function construct_device!(
     end
 
     add_variables!(container, S, devices, StaticBranch())
-    branch_flow_values!(container, devices, model, network_model)
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        NetworkFlowConstraint,
+        devices,
+        model,
+        network_model,
+        get_feedforward(model),
+    )
+
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
     return
 end
 
@@ -79,7 +89,15 @@ function construct_device!(
     end
 
     add_variables!(container, S, devices, StaticBranchBounds())
-    branch_flow_values!(container, devices, model, network_model)
+    add_constraints!(
+        container,
+        NetworkFlowConstraint,
+        devices,
+        model,
+        network_model,
+        get_feedforward(model),
+    )
+
     branch_rate_bounds!(container, devices, model, S)
     return
 end
@@ -96,7 +114,14 @@ function construct_device!(
     end
 
     add_variables!(container, S, devices, StaticBranchUnbounded())
-    branch_flow_values!(container, devices, model, network_model)
+    add_constraints!(
+        container,
+        NetworkFlowConstraint,
+        devices,
+        model,
+        network_model,
+        get_feedforward(model),
+    )
     return
 end
 
@@ -111,8 +136,25 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
+
     branch_rate_bounds!(container, devices, model, S)
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
+
+    add_constraints!(
+        container,
+        RateLimitFTConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        RateLimitTFConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     return
 end
 
@@ -140,7 +182,7 @@ function construct_device!(
     if !validate_available_devices(B, devices)
         return
     end
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
     return
 end
 
@@ -161,7 +203,7 @@ function construct_device!(
 
     add_variables!(container, FlowActivePowerVariable, devices, U())
     add_variable_to_expression!(container, devices, model, S)
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
     return
 end
 
@@ -175,6 +217,8 @@ function construct_device!(
     U <: AbstractDCLineFormulation,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
+    @debug "construct_device" _group = :BranchGroup
+
     devices = get_available_components(B, sys)
     if !validate_available_devices(B, devices)
         return
@@ -182,6 +226,6 @@ function construct_device!(
 
     add_variables!(container, FlowActivePowerVariable, devices, U())
 
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
+    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
     return
 end
