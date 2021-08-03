@@ -89,6 +89,7 @@ function branch_rate_bounds!(
 end
 
 #################################### Rate Limits constraint_infos ###############################
+# TODO: replace when range constraints are available
 function branch_rate_constraints!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
@@ -109,52 +110,66 @@ function branch_rate_constraints!(
     return
 end
 
-function branch_rate_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
+    cons_type::Type{RateLimitFTConstraint},
     devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::Type{T},
     ::Nothing,
-) where {B <: PSY.ACBranch}
-    range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
-    rating_constraint!(
-        container,
-        range_data,
-        RateLimitFTConstraint(),
-        (FlowActivePowerFromToVariable(), FlowReactivePowerFromToVariable()),
-        B,
-    )
+) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
+    rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
-    rating_constraint!(
-        container,
-        range_data,
-        RateLimitTFConstraint(),
-        (FlowActivePowerToFromVariable(), FlowReactivePowerToFromVariable()),
-        B,
-    )
-    return
+    time_steps = get_time_steps(container)
+    var1 = get_variable(container, FlowActivePowerFromToVariable(), B)
+    var2 = get_variable(container, FlowReactivePowerFromToVariable(), B)
+    add_cons_container!(container, cons_type(), B, [r[1] for r in rating_data], time_steps)
+    constraint = get_constraint(container, cons_type(), B)
+
+    for r in rating_data
+        for t in time_steps
+            constraint[r[1], t] = JuMP.@constraint(
+                container.JuMPmodel,
+                var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
+            )
+        end
+    end
 end
 
-function _branch_flow_constraint!(
-    jump_model::JuMP.Model,
-    ptdf_col::Vector{Float64},
-    nodal_balance_expressions,
-    flow_variables,
-    t::Int,
-)
-    return JuMP.@constraint(
-        jump_model,
-        sum(ptdf_col[i] * nodal_balance_expressions[i, t] for i in 1:length(ptdf_col)) -
-        flow_variables[t] == 0.0
-    )
-end
-
-function branch_flow_values!(
+function add_constraints!(
     container::OptimizationContainer,
+    cons_type::Type{RateLimitTFConstraint},
     devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, <:AbstractBranchFormulation},
-    network_model::NetworkModel{StandardPTDFModel},
-) where {B <: PSY.ACBranch}
+    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::Type{T},
+    ::Nothing,
+) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
+    rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
+
+    time_steps = get_time_steps(container)
+    var1 = get_variable(container, FlowActivePowerToFromVariable(), B)
+    var2 = get_variable(container, FlowReactivePowerToFromVariable(), B)
+    add_cons_container!(container, cons_type(), B, [r[1] for r in rating_data], time_steps)
+    constraint = get_constraint(container, cons_type(), B)
+
+    for r in rating_data
+        for t in time_steps
+            constraint[r[1], t] = JuMP.@constraint(
+                container.JuMPmodel,
+                var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
+            )
+        end
+    end
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    cons_type::Type{NetworkFlowConstraint},
+    devices::IS.FlattenIteratorWrapper{B},
+    model::DeviceModel{B, <:AbstractBranchFormulation},
+    network_model::NetworkModel{S},
+    ::Nothing,
+) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     ptdf = get_PTDF(network_model)
     branches = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
@@ -168,12 +183,12 @@ function branch_flow_values!(
         ptdf_col = ptdf[name, :]
         flow_variables_ = flow_variables[name, :]
         for t in time_steps
-            branch_flow[name, t] = _branch_flow_constraint!(
+            branch_flow[name, t] = JuMP.@constraint(
                 jump_model,
-                ptdf_col,
-                nodal_balance_expressions.data,
-                flow_variables_,
-                t,
+                sum(
+                    ptdf_col[i] * nodal_balance_expressions.data[i, t] for
+                    i in 1:length(ptdf_col)
+                ) - flow_variables_[t] == 0.0
             )
         end
     end
