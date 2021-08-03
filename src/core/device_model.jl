@@ -34,6 +34,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     use_slacks::Bool
     duals::Vector{DataType}
     services::Vector{ServiceModel}
+    time_series_labels::Dict{Type{<:TimeSeriesParameter}, String}
 
     function DeviceModel(
         ::Type{D},
@@ -41,10 +42,17 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         feedforward = nothing,
         use_slacks = false,
         duals = Vector{DataType}(),
+        time_series_labels = _initialize_timeseries_labels(D, B),
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)
-        new{D, B}(feedforward, use_slacks, duals, Vector{ServiceModel}())
+        new{D, B}(
+            feedforward,
+            use_slacks,
+            duals,
+            Vector{ServiceModel}(),
+            time_series_labels,
+        )
     end
 end
 
@@ -59,6 +67,7 @@ get_services(m::DeviceModel) = m.services
 get_services(::Nothing) = nothing
 get_use_slacks(m::DeviceModel) = m.use_slacks
 get_duals(m::DeviceModel) = m.duals
+get_time_series_labels(m::DeviceModel) = m.time_series_labels
 
 DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
 
@@ -71,4 +80,11 @@ function _set_model!(
         @info("Overwriting $(D) existing model")
     end
     dict[key] = model
+end
+
+function _initialize_timeseries_labels(
+    ::Type{D},
+    ::Type{T},
+) where {D <: PSY.Device, T <: AbstractDeviceFormulation}
+    return Dict{Type{<:TimeSeriesParameter}, String}()
 end

@@ -54,7 +54,6 @@ function construct_device!(
     add_constraints!(
         container,
         EnergyBalanceConstraint,
-        EnergyVariable,
         devices,
         model,
         S,
@@ -114,7 +113,6 @@ function construct_device!(
     add_constraints!(
         container,
         EnergyBalanceConstraint,
-        EnergyVariable,
         devices,
         model,
         S,
@@ -181,7 +179,6 @@ function construct_device!(
     add_constraints!(
         container,
         EnergyBalanceConstraint,
-        EnergyVariable,
         devices,
         model,
         S,
@@ -238,7 +235,6 @@ function construct_device!(
     add_constraints!(
         container,
         EnergyBalanceConstraint,
-        EnergyVariable,
         devices,
         model,
         S,
@@ -268,6 +264,10 @@ function construct_device!(
     add_variables!(container, EnergyShortageVariable, devices, EnergyTarget())
     add_variables!(container, EnergySurplusVariable, devices, EnergyTarget())
     add_variables!(container, ReservationVariable, devices, EnergyTarget())
+
+    # Parameters
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
+
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
 
@@ -306,13 +306,19 @@ function construct_device!(
     add_constraints!(
         container,
         EnergyBalanceConstraint,
-        EnergyVariable,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        EnergyTargetConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
@@ -339,6 +345,10 @@ function construct_device!(
     add_variables!(container, EnergyShortageVariable, devices, EnergyTarget())
     add_variables!(container, EnergySurplusVariable, devices, EnergyTarget())
     add_variables!(container, ReservationVariable, devices, EnergyTarget())
+
+    # Parameters
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
+
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
 
@@ -368,13 +378,19 @@ function construct_device!(
     add_constraints!(
         container,
         EnergyBalanceConstraint,
-        EnergyVariable,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-    energy_target_constraint!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        EnergyTargetConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
@@ -438,7 +454,6 @@ function construct_device!(
     add_constraints!(
         container,
         EnergyBalanceConstraint,
-        EnergyVariable,
         devices,
         model,
         S,
@@ -495,7 +510,6 @@ function construct_device!(
     add_constraints!(
         container,
         EnergyBalanceConstraint,
-        EnergyVariable,
         devices,
         model,
         S,

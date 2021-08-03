@@ -101,11 +101,40 @@ get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.HydroGen}, ::AbstractH
 get_variable_upper_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = - PSY.get_storage_capacity(d)
 
-get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.HydroGen = (in = 1.0, out = 1.0)
-get_efficiency(v::PSY.HydroPumpedStorage, var::Type{InitialEnergyLevelUp}) = (in = PSY.get_pump_efficiency(v), out = 1.0)
-get_efficiency(v::PSY.HydroPumpedStorage, var::Type{InitialEnergyLevelDown}) = (in = 1.0, out = PSY.get_pump_efficiency(v))
-
+get_multiplier_value(::EnergyBudgetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
+get_multiplier_value(::EnergyTargetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
+get_multiplier_value(::InflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_inflow(d) * PSY.get_conversion_factor(d)
+get_multiplier_value(::OutflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_outflow(d) * PSY.get_conversion_factor(d)
 #! format: on
+
+function _initialize_timeseries_labels(
+    ::Type{PSY.HydroEnergyReservoir},
+    ::Type{T},
+) where {T <: Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        EnergyBudgetTimeSeriesParameter => "hydro_budget",
+    )
+end
+
+function _initialize_timeseries_labels(
+    ::Type{PSY.HydroEnergyReservoir},
+    ::Type{T},
+) where {T <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        EnergyTargetTimeSeriesParameter => "storage_target",
+        InflowTimeSeriesParameter => "inflow",
+    )
+end
+
+function _initialize_timeseries_labels(
+    ::Type{PSY.HydroPumpedStorage},
+    ::Type{T},
+) where {T <: Union{HydroDispatchPumpedStorage, HydroDispatchPumpedStoragewReservation}}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        InflowTimeSeriesParameter => "inflow",
+        OutflowTimeSeriesParameter => "outflow",
+    )
+end
 
 """
 This function define the range constraint specs for the
@@ -354,142 +383,218 @@ end
 This function defines the constraints for the water level (or state of charge)
 for the Hydro Reservoir.
 """
-function DeviceEnergyBalanceConstraintSpec(
-    ::Type{<:EnergyBalanceConstraint},
-    ::Type{EnergyVariable},
-    ::Type{H},
-    ::Type{<:AbstractHydroFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{EnergyBalanceConstraint},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {H <: PSY.HydroEnergyReservoir}
-    return DeviceEnergyBalanceConstraintSpec(;
-        constraint_type = EnergyCapacityConstraint(),
-        energy_variable = EnergyVariable(),
-        initial_condition = InitialEnergyLevel,
-        pout_variable_types = [ActivePowerVariable(), WaterSpillageVariable()],
-        constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
-        component_type = H,
-        parameter = InflowTimeSeriesParameter("inflow"),
-        multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
-    )
+) where {
+    V <: PSY.HydroEnergyReservoir,
+    W <: AbstractHydroFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
+    names = [PSY.get_name(x) for x in devices]
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevel, V)
+    energy_var = get_variable(container, EnergyVariable(), V)
+    power_var = get_variable(container, ActivePowerVariable(), V)
+    spillage_var = get_variable(container, WaterSpillageVariable(), V)
+
+    constraint =
+        add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
+    parameter_container = get_parameter(container, InflowTimeSeriesParameter(), V)
+    param = get_parameter_array(parameter_container)
+    multiplier = get_multiplier_array(parameter_container)
+
+    for ic in initial_conditions
+        device = ic.device
+        name = PSY.get_name(device)
+        constraint[name, 1] = JuMP.@constraint(
+            container.JuMPmodel,
+            energy_var[name, 1] ==
+            ic.value - power_var[name, 1] * fraction_of_hour -
+            spillage_var[name, 1] * fraction_of_hour +
+            param[name, 1] * multiplier[name, 1]
+        )
+
+        for t in time_steps[2:end]
+            constraint[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                energy_var[name, t] ==
+                energy_var[name, t - 1] + param[name, t] * multiplier[name, t] -
+                power_var[name, t] * fraction_of_hour -
+                spillage_var[name, t] * fraction_of_hour
+            )
+        end
+    end
+    return
 end
 
 """
 This function defines the constraints for the water level (or state of charge)
 for the HydroPumpedStorage.
 """
-function DeviceEnergyBalanceConstraintSpec(
-    ::Type{<:EnergyBalanceConstraint},
-    ::Type{EnergyVariableUp},
-    ::Type{H},
-    ::Type{<:AbstractHydroFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {H <: PSY.HydroPumpedStorage}
-    return DeviceEnergyBalanceConstraintSpec(;
-        constraint_type = EnergyCapacityUpConstraint(),
-        energy_variable = EnergyVariableUp(),
-        initial_condition = InitialEnergyLevelUp,
-        pin_variable_types = [ActivePowerInVariable()],
-        pout_variable_types = [ActivePowerOutVariable(), WaterSpillageVariable()],
-        constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
-        component_type = H,
-        parameter = InflowTimeSeriesParameter("inflow"),
-        multiplier_func = x -> PSY.get_inflow(x) * PSY.get_conversion_factor(x),
-    )
-end
-
-function DeviceEnergyBalanceConstraintSpec(
-    ::Type{<:EnergyBalanceConstraint},
-    ::Type{EnergyVariableDown},
-    ::Type{H},
-    ::Type{<:AbstractHydroFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {H <: PSY.HydroPumpedStorage}
-    return DeviceEnergyBalanceConstraintSpec(;
-        constraint_type = EnergyCapacityDownConstraint(),
-        energy_variable = EnergyVariableDown(),
-        initial_condition = InitialEnergyLevelDown,
-        pout_variable_types = [ActivePowerInVariable()],
-        pin_variable_types = [ActivePowerOutVariable(), WaterSpillageVariable()],
-        constraint_func = use_parameters ? energy_balance_param! : energy_balance!,
-        component_type = H,
-        parameter = OutflowTimeSeriesParameter("outflow"),
-        multiplier_func = x -> PSY.get_outflow(x) * PSY.get_conversion_factor(x),
-    )
-end
-
-function energy_target_constraint!(
+function add_constraints!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, S},
-    system_formulation::Type{<:PM.AbstractPowerModel},
+    ::Type{EnergyCapacityUpConstraint},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.HydroGen, S <: AbstractHydroFormulation}
-    key = ICKey(InitialEnergyLevel, T)
-    parameters = built_for_simulation(container)
-
+) where {
+    V <: PSY.HydroPumpedStorage,
+    W <: AbstractHydroFormulation,
+    X <: PM.AbstractPowerModel,
+}
     time_steps = get_time_steps(container)
-    constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector_target = get_time_series(container, d, "storage_target")
-        constraint_info_target = DeviceTimeSeriesConstraintInfo(
-            d,
-            x -> PSY.get_storage_capacity(x),
-            ts_vector_target,
-        )
-        constraint_infos_target[ix] = constraint_info_target
-    end
+    resolution = get_resolution(container)
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
+    names = [PSY.get_name(x) for x in devices]
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevelUp, V)
 
-    if built_for_simulation(container)
-        energy_target_param!(
-            container,
-            constraint_infos_target,
-            EnergyTargetConstraint(),
-            (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            EnergyTargetTimeSeriesParameter("storage_target"),
-            T,
-        )
-    else
-        energy_target!(
-            container,
-            constraint_infos_target,
-            EnergyTargetConstraint(),
-            (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            T,
-        )
-    end
+    energy_var = get_variable(container, EnergyVariableUp(), V)
+    powerin_var = get_variable(container, ActivePowerInVariable(), V)
+    powerout_var = get_variable(container, ActivePowerOutVariable(), V)
+    spillage_var = get_variable(container, WaterSpillageVariable(), V)
 
-    constraint_infos = Vector{DeviceRangeConstraintInfo}()
-    for (ix, d) in enumerate(devices)
-        op_cost = PSY.get_operation_cost(d)
-        if PSY.get_energy_shortage_cost(op_cost) == 0.0
-            dev_name = PSY.get_name(d)
-            limits = (min = 0.0, max = 0.0)
-            constraint_info = DeviceRangeConstraintInfo(dev_name, limits)
-            push!(constraint_infos, constraint_info)
-            @warn(
-                "Device $dev_name has energy shortage cost set to 0.0, as a result the model will turnoff the EnergyShortageVariable to avoid infeasible/unbounded problem."
+    constraint =
+        add_cons_container!(container, EnergyCapacityUpConstraint(), V, names, time_steps)
+    parameter_container = get_parameter(container, InflowTimeSeriesParameter("inflow"), V)
+    param = get_parameter_array(parameter_container)
+    multiplier = get_multiplier_array(parameter_container)
+
+    for ic in initial_conditions
+        device = ic.device
+        efficiency = PSY.get_pump_efficiency(device)
+        name = PSY.get_name(device)
+        constraint[name, 1] = JuMP.@constraint(
+            container.JuMPmodel,
+            energy_var[name, 1] ==
+            ic.value +
+            (
+                powerin_var[name, 1] * efficiency - spillage_var[name, 1] -
+                powerout_var[name, 1]
+            ) * fraction_of_hour +
+            param[name, 1] * multiplier[name, 1]
+        )
+
+        for t in time_steps[2:end]
+            constraint[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                energy_var[name, t] ==
+                energy_var[name, t - 1] +
+                param[name, t] * multiplier[name, t] +
+                (powerin_var[name, 1] - powerout_var[name, t] - spillage_var[name, t]) *
+                fraction_of_hour
             )
         end
     end
-    if !isempty(constraint_infos)
-        device_range!(
-            container,
-            RangeConstraintSpecInternal(
-                constraint_infos,
-                EnergyShortageVariableLimitsConstraint(),
-                EnergyShortageVariable(),
-                Vector{VariableType}(),
-                T,
-            ),
-        )
-    end
+    return
+end
 
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{EnergyCapacityDownConstraint},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {
+    V <: PSY.HydroPumpedStorage,
+    W <: AbstractHydroFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
+    names = [PSY.get_name(x) for x in devices]
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevelDown, V)
+
+    energy_var = get_variable(container, EnergyVariableDown(), V)
+    powerin_var = get_variable(container, ActivePowerInVariable(), V)
+    powerout_var = get_variable(container, ActivePowerOutVariable(), V)
+    spillage_var = get_variable(container, WaterSpillageVariable(), V)
+
+    constraint =
+        add_cons_container!(container, EnergyCapacityDownConstraint(), V, names, time_steps)
+    parameter_container = get_parameter(container, OutflowTimeSeriesParameter(), V)
+    param = get_parameter_array(parameter_container)
+    multiplier = get_multiplier_array(parameter_container)
+
+    for ic in initial_conditions
+        device = ic.device
+        efficiency = PSY.get_pump_efficiency(device)
+        name = PSY.get_name(device)
+        constraint[name, 1] = JuMP.@constraint(
+            container.JuMPmodel,
+            energy_var[name, 1] ==
+            ic.value -
+            (
+                spillage_var[name, 1] + powerout_var[name, 1] -
+                powerin_var[name, 1] / efficiency
+            ) * fraction_of_hour - param[name, 1] * multiplier[name, 1]
+        )
+
+        for t in time_steps[2:end]
+            constraint[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                energy_var[name, t] ==
+                energy_var[name, t - 1] - param[name, t] * multiplier[name, t] +
+                (
+                    powerout_var[name, 1] - powerin_var[name, t] / efficiency +
+                    spillage_var[name, t]
+                ) * fraction_of_hour
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{EnergyTargetConstraint},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
+    inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
+    set_name = [PSY.get_name(d) for d in devices]
+    constraint =
+        add_cons_container!(container, EnergyTargetConstraint(), V, set_name, time_steps)
+
+    e_var = get_variable(container, EnergyVariable(), V)
+    shortage_var = get_variable(container, EnergyShortageVariable(), V)
+    surplus_var = get_variable(container, EnergySurplusVariable(), V)
+
+    parameter_container = get_parameter(container, EnergyTargetTimeSeriesParameter(), V)
+    param = get_parameter_array(parameter_container)
+    multiplier = get_multiplier_array(parameter_container)
+
+    for d in devices
+        name = PSY.get_name(d)
+        shortage_cost = PSY.get_energy_shortage_cost(PSY.get_operation_cost(d))
+        if shortage_cost == 0.0
+            @warn(
+                "Device $name has energy shortage cost set to 0.0, as a result the model will turnoff the EnergyShortageVariable to avoid infeasible/unbounded problem."
+            )
+            JuMP.delete_upper_bound.(shortage_var[name, :])
+            JuMP.set_upper_bound.(shortage_var[name, :], 0.0)
+        end
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                e_var[name, t] + shortage_var[name, t] + surplus_var[name, t] ==
+                multiplier[name, t] * param[name, t]
+            )
+        end
+    end
     return
 end
 
@@ -556,122 +661,39 @@ function NodalExpressionSpec(
 end
 
 ##################################### Water/Energy Budget Constraint ############################
-energy_budget_constraints!(
-    ::OptimizationContainer,
-    ::IS.FlattenIteratorWrapper{<:PSY.HydroGen},
-    ::DeviceModel{<:PSY.HydroGen, <:AbstractHydroFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    ::IntegralLimitFF,
-) = nothing
-
 """
 This function define the budget constraint for the
 active power budget formulation.
 
 `` sum(P[t]) <= Budget ``
 """
-function energy_budget_constraints!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    ::DeviceModel{H, <:AbstractHydroFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HydroGen}
-    forecast_name = "hydro_budget"
-    constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(container, d, forecast_name)
-        @debug "time_series" ts_vector
-        constraint_d =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)
-        constraint_data[ix] = constraint_d
-    end
 
-    if built_for_simulation(container)
-        device_energy_budget_param_ub(
-            container,
-            constraint_data,
-            EnergyBudgetConstraint(),
-            EnergyBudgetTimeSeriesParameter("hydro_budget"),
-            ActivePowerVariable(),
-            H,
-        )
-    else
-        device_energy_budget_ub(
-            container,
-            constraint_data,
-            EnergyBudgetConstraint(),
-            ActivePowerVariable(),
-            H,
-        )
-    end
-end
-
-"""
-This function define the budget constraint (using params)
-for the active power budget formulation.
-"""
-function device_energy_budget_param_ub(
+function add_constraints!(
     container::OptimizationContainer,
-    energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_type::ConstraintType,
-    param_type::TimeSeriesParameter,
-    var_type::VariableType,
-    ::Type{T},
-) where {T <: PSY.Component}
+    constraint_type::Type{EnergyBudgetConstraint},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
-    variable_out = get_variable(container, var_type, T)
-    set_name = [get_component_name(r) for r in energy_budget_data]
-    constraint = add_cons_container!(container, cons_type, T, set_name)
-    container = add_param_container!(container, param_type, T, set_name, time_steps)
-    multiplier = get_multiplier_array(container)
-    param = get_parameter_array(container)
-    for constraint_info in energy_budget_data
-        name = get_component_name(constraint_info)
-        for t in time_steps
-            multiplier[name, t] = constraint_info.multiplier * inv_dt
-            param[name, t] =
-                add_parameter(container.JuMPmodel, constraint_info.timeseries[t])
-        end
+    set_name = [PSY.get_name(d) for d in devices]
+    constraint = add_cons_container!(container, EnergyBudgetConstraint(), V, set_name)
+
+    variable_out = get_variable(container, ActivePowerVariable(), V)
+    parameter_container = get_parameter(container, EnergyBudgetTimeSeriesParameter(), V)
+    param = get_parameter_array(parameter_container)
+    multiplier = get_multiplier_array(parameter_container)
+
+    for d in devices
+        name = PSY.get_name(d)
         constraint[name] = JuMP.@constraint(
             container.JuMPmodel,
             sum([variable_out[name, t] for t in time_steps]) <= sum([multiplier[name, t] * param[name, t] for t in time_steps])
         )
     end
-
-    return
-end
-
-"""
-This function define the budget constraint
-for the active power budget formulation.
-"""
-function device_energy_budget_ub(
-    container::OptimizationContainer,
-    energy_budget_constraints::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_type::ConstraintType,
-    var_type::VariableType,
-    ::Type{T},
-) where {T <: PSY.Component}
-    time_steps = get_time_steps(container)
-    variable_out = get_variable(container, var_type, T)
-    names = [get_component_name(x) for x in energy_budget_constraints]
-    constraint = add_cons_container!(container, cons_type, T, names)
-
-    for constraint_info in energy_budget_constraints
-        name = get_component_name(constraint_info)
-        resolution = get_resolution(container)
-        inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
-        forecast = constraint_info.timeseries
-        multiplier = constraint_info.multiplier * inv_dt
-        constraint[name] = JuMP.@constraint(
-            container.JuMPmodel,
-            sum([variable_out[name, t] for t in time_steps]) <= multiplier * sum(forecast)
-        )
-    end
-
     return
 end
 
