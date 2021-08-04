@@ -1,8 +1,8 @@
 # The Numerical stability checks code in this file is based on the code from the SDDP.jl package, 
- # from the below mentioned commit and file.
- # commit :8cd305188caffc50a1734913053fc81bba613778 
- # link to file :https://github.com/odow/SDDP.jl/blob/d353fe5a2903421e7fed6d609eb9377c35d715a1/src/print.jl#L190
- 
+# from the below mentioned commit and file.
+# commit :8cd305188caffc50a1734913053fc81bba613778 
+# link to file :https://github.com/odow/SDDP.jl/blob/d353fe5a2903421e7fed6d609eb9377c35d715a1/src/print.jl#L190
+
 ########### JuMP model utils #########
 
 mutable struct NumericalBounds
