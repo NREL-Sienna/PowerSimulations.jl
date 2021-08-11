@@ -73,121 +73,176 @@ end
 
 ################################## output power constraints#################################
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:OutputActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerOutVariable},
-    ::Type{T},
-    ::Type{<:BookKeeping},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.Storage}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = OutputActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerOutVariable(),
-            limits_func = x -> PSY.get_output_active_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
-
-function DeviceRangeConstraintSpec(
-    ::Type{<:InputActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerInVariable},
-    ::Type{T},
-    ::Type{<:BookKeeping},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.Storage}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = InputActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerInVariable(),
-            limits_func = x -> PSY.get_input_active_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
-
-function DeviceRangeConstraintSpec(
-    ::Type{<:OutputActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerOutVariable},
-    ::Type{T},
+get_min_max_limits(
+    device::PSY.Storage,
+    ::Type{<:ReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractStorageFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.Storage}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = OutputActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerOutVariable(),
-            bin_variable_types = [ReservationVariable()],
-            limits_func = x -> PSY.get_output_active_power_limits(x),
-            constraint_func = device_semicontinuousrange!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
-
-function DeviceRangeConstraintSpec(
+) = PSY.get_reactive_power_limits(device)
+get_min_max_limits(
+    device::PSY.Storage,
     ::Type{<:InputActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerInVariable},
-    ::Type{T},
     ::Type{<:AbstractStorageFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.Storage}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = InputActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerInVariable(),
-            bin_variable_types = [ReservationVariable()],
-            limits_func = x -> PSY.get_input_active_power_limits(x),
-            constraint_func = reserve_device_semicontinuousrange!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
+) = PSY.get_input_active_power_limits(device)
+get_min_max_limits(
+    device::PSY.Storage,
+    ::Type{<:OutputActivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractStorageFormulation},
+) = PSY.get_output_active_power_limits(device)
+get_min_max_limits(
+    device::PSY.Storage,
+    ::Type{<:OutputActivePowerVariableLimitsConstraint},
+    ::Type{BookKeeping},
+) = PSY.get_output_active_power_limits(device)
 
-"""
-This function adds the reactive  power limits of generators when there are CommitmentVariables
-"""
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    devices::IS.FlattenIteratorWrapper{St},
-    model::DeviceModel{St, D},
-    ::Type{S},
+    T::Type{InputActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        limits = PSY.get_reactive_power_limits(d)
-        constraint_infos[ix] = DeviceRangeConstraintInfo(name, limits)
-    end
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
+    use_parameters = built_for_simulation(container)
+    constraint = T()
+    variable = U()
+    component_type = V
+    time_steps = get_time_steps(container)
+    jump_variable = get_variable(container, variable, component_type)
+    names = [PSY.get_name(d) for d in devices]
+    binary_variables = [ReservationVariable()]
 
-    device_range!(
+    @assert length(binary_variables) == 1
+    varbin = get_variable(container, only(binary_variables), component_type)
+
+    names = [PSY.get_name(x) for x in devices]
+    # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
+    # In the future this can be updated
+    con_ub = add_cons_container!(
         container,
-        RangeConstraintSpecInternal(
-            constraint_infos,
-            ReactivePowerVariableLimitsConstraint(),
-            ReactivePowerVariable(),
-            St,
-        ),
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "ub",
     )
-    return
+    con_lb = add_cons_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
+
+    for device in devices, t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W)
+        if JuMP.has_lower_bound(jump_variable[ci_name, t])
+            JuMP.set_lower_bound(jump_variable[ci_name, t], 0.0)
+        end
+        expression_ub = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
+        expression_lb = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
+        con_ub[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_ub <= limits.max * (1 - varbin[ci_name, t])
+        )
+        con_lb[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_lb >= limits.min * (1 - varbin[ci_name, t])
+        )
+    end
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
+    use_parameters = built_for_simulation(container)
+    constraint = T()
+    variable = U()
+    component_type = V
+    time_steps = get_time_steps(container)
+    jump_variable = get_variable(container, variable, component_type)
+    names = [PSY.get_name(d) for d in devices]
+    binary_variables = [ReservationVariable()]
+
+    con_ub = add_cons_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+    con_lb = add_cons_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
+
+    @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
+    varbin = get_variable(container, only(binary_variables), component_type)
+
+    for (i, device) in enumerate(devices), t in time_steps
+        ci_name = PSY.get_name(device)
+        # TODO: deal with additional expressions terms for services
+        expression_ub = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
+        expression_lb = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        con_ub[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_ub <= limits.max * varbin[ci_name, t]
+        )
+        con_lb[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_lb >= limits.min * varbin[ci_name, t]
+        )
+    end
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:OutputActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Storage, W <: BookKeeping}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ReactivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Storage, W <: BookKeeping}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{InputActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Storage, W <: BookKeeping}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
 end
 
 ########################## Make initial Conditions for a Model #############################
@@ -207,36 +262,43 @@ function initial_conditions!(
 end
 
 ############################ Energy Capacity Constraints####################################
+"""
+Min and max limits for Energy Capacity Constraint and AbstractStorageFormulation
+"""
+function get_min_max_limits(
+    d,
+    ::Type{EnergyCapacityConstraint},
+    ::Type{<:AbstractStorageFormulation},
+)
+    PSY.get_state_of_charge_limits(d)
+end
+
+"""
+Add Energy Capacity Constraints for AbstractStorageFormulation
+"""
 function energy_capacity_constraints!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-    model::DeviceModel{St, D},
-    ::Type{S},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        limits = PSY.get_state_of_charge_limits(d)
-        constraint_info = DeviceRangeConstraintInfo(name, limits)
-        add_device_services!(constraint_info, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-
-    device_range!(
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
+    add_range_constraints!(
         container,
-        RangeConstraintSpecInternal(
-            constraint_infos,
-            EnergyCapacityConstraint(),
-            EnergyVariable(),
-            St,
-        ),
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        X,
+        feedforward,
     )
-    return
 end
 
 ############################ book keeping constraints ######################################
 
+"""
+Add Energy Balance Constraints for AbstractStorageFormulation
+"""
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{EnergyBalanceConstraint},
@@ -336,6 +398,9 @@ function reserve_contribution_constraint!(
 end
 
 ############################ Energy Management constraints ######################################
+"""
+Add Energy Target Constraints for EnergyTarget formulation
+"""
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{EnergyTargetConstraint},

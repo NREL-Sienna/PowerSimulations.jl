@@ -38,30 +38,20 @@ get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadForm
 """
 Reactive Power Constraints on Controllable Loads Assume Constant power_factor
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{<:PSY.ElectricLoad},
-    ::Type{<:AbstractControllablePowerLoadFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-)
-    return DeviceRangeConstraintSpec(;
-        custom_optimization_container_func = custom_reactive_power_constraints!,
-    )
-end
-
-function custom_reactive_power_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{<:AbstractControllablePowerLoadFormulation},
-) where {T <: PSY.ElectricLoad}
+    T::Type{<:ReactivePowerVariableLimitsConstraint},
+    U::Type{<:ReactivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.ElectricLoad, W <: AbstractControllablePowerLoadFormulation}
     time_steps = get_time_steps(container)
     constraint = add_cons_container!(
         container,
         EqualityConstraint(),
-        T,
+        V,
         [PSY.get_name(d) for d in devices],
         time_steps,
     )
@@ -69,8 +59,8 @@ function custom_reactive_power_constraints!(
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
-        reactive = get_variable(container, ActivePowerVariable(), T)[name, t]
-        real = get_variable(container, ActivePowerVariable(), T)[name, t] * pf
+        reactive = get_variable(container, ActivePowerVariable(), V)[name, t]
+        real = get_variable(container, ActivePowerVariable(), V)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(jump_model, reactive == real)
     end
 end

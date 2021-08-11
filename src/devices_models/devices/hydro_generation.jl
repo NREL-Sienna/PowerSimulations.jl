@@ -136,29 +136,84 @@ function _initialize_timeseries_labels(
     )
 end
 
+# TODO: Jose to refactor based time series
 """
-This function define the range constraint specs for the
-reactive power for dispatch formulations.
+Time series constraints
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractHydroDispatchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ReactivePowerVariableLimitsConstraint(),
-            variable_type = ReactivePowerVariable(),
-            limits_func = x -> PSY.get_reactive_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
+) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
+    use_parameters = built_for_simulation(container)
+    spec = DeviceRangeConstraintSpec(;
+        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
+            constraint_type = T(),
+            variable_type = U(),
+            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
+            multiplier_func = x -> PSY.get_max_active_power(x),
+            constraint_func = use_parameters ? device_timeseries_param_ub! :
+                              device_timeseries_ub!,
+            component_type = V,
         ),
     )
+    device_range_constraints!(container, devices, model, feedforward, spec)
+end
+
+"""
+Add semicontinuous range constraints for Hydro Unit Commitment formulation
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
+    add_semicontinuous_range_constraints!(container, T, U, devices, model, X, feedforward)
+end
+
+"""
+Min and max reactive Power Variable limits
+"""
+function get_min_max_limits(
+    x::PSY.HydroGen,
+    ::Type{<:ReactivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractHydroFormulation},
+)
+    PSY.get_reactive_power_limits(x)
+end
+
+"""
+Min and max active Power Variable limits
+"""
+function get_min_max_limits(
+    x::PSY.HydroGen,
+    ::Type{<:ActivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractHydroFormulation},
+)
+    PSY.get_active_power_limits(x)
+end
+
+"""
+Add power variable limits constraints for hydro dispatch formulation
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroGen, W <: AbstractHydroDispatchFormulation}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
 end
 
 """
@@ -188,167 +243,49 @@ function DeviceRangeConstraintSpec(
 end
 
 """
-This function define the range constraint specs for the
-active power for dispatch Reservoir formulations.
+Min and max output active power variable limits for hydro dispatch pumped storage
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractHydroReservoirFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
-            limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
-
-"""
-This function define the range constraint specs for the
-active power for commitment formulations (semi continuous).
-"""
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractHydroUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
-            bin_variable_types = [OnVariable()],
-            limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_semicontinuousrange!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
-
-"""
-This function define the range constraint specs for the
-reactive power for commitment formulations (semi continuous).
-"""
-function DeviceRangeConstraintSpec(
-    ::Type{<:ReactivePowerVariableLimitsConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractHydroUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = ReactivePowerVariableLimitsConstraint(),
-            variable_type = ReactivePowerVariable(),
-            bin_variable_types = [OnVariable()],
-            limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_semicontinuousrange!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
-end
-
-function DeviceRangeConstraintSpec(
+function get_min_max_limits(
+    x::PSY.HydroGen,
     ::Type{<:OutputActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerOutVariable},
-    ::Type{T},
-    ::Type{<:HydroDispatchPumpedStorage},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = OutputActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerOutVariable(),
-            limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
+    ::Type{HydroDispatchPumpedStorage},
+)
+    PSY.get_active_power_limits(x)
 end
 
-function DeviceRangeConstraintSpec(
+"""
+Min and max input active power variable limits for hydro dispatch pumped storage
+"""
+function get_min_max_limits(
+    x::PSY.HydroGen,
     ::Type{<:InputActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerInVariable},
-    ::Type{T},
-    ::Type{<:HydroDispatchPumpedStorage},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = InputActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerInVariable(),
-            limits_func = x -> PSY.get_active_power_limits_pump(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
+    ::Type{HydroDispatchPumpedStorage},
+)
+    PSY.get_active_power_limits_pump(x)
 end
 
-function DeviceRangeConstraintSpec(
+"""
+Min and max output active power variable limits for hydro dispatch pumped storage with reservation
+"""
+function get_min_max_limits(
+    x::PSY.HydroGen,
     ::Type{<:OutputActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerOutVariable},
-    ::Type{T},
-    ::Type{<:HydroDispatchPumpedStoragewReservation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = OutputActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerOutVariable(),
-            bin_variable_types = [ReservationVariable()],
-            limits_func = x -> PSY.get_active_power_limits(x),
-            constraint_func = reserve_device_semicontinuousrange!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
+    ::Type{HydroDispatchPumpedStoragewReservation},
+)
+    PSY.get_active_power_limits(x)
 end
 
-function DeviceRangeConstraintSpec(
+"""
+Min and max input active power variable limits for hydro dispatch pumped storage with reservation
+"""
+function get_min_max_limits(
+    x::PSY.HydroGen,
     ::Type{<:InputActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerInVariable},
-    ::Type{T},
-    ::Type{<:HydroDispatchPumpedStoragewReservation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_type = InputActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerInVariable(),
-            bin_variable_types = [ReservationVariable()],
-            limits_func = x -> PSY.get_active_power_limits_pump(x),
-            constraint_func = reserve_device_semicontinuousrange!,
-            constraint_struct = DeviceRangeConstraintInfo,
-            component_type = T,
-        ),
-    )
+    ::Type{HydroDispatchPumpedStoragewReservation},
+)
+    PSY.get_active_power_limits_pump(x)
 end
+
 ######################## RoR constraints ############################
 
 """
@@ -496,6 +433,9 @@ function add_constraints!(
     return
 end
 
+"""
+Add energy capacity down constraints for hydro pumped storage
+"""
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{EnergyCapacityDownConstraint},
@@ -554,6 +494,9 @@ function add_constraints!(
     return
 end
 
+"""
+Add energy target constraints for hydro gen
+"""
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{EnergyTargetConstraint},

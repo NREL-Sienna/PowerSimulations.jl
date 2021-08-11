@@ -89,27 +89,43 @@ function branch_rate_bounds!(
 end
 
 #################################### Rate Limits constraint_infos ###############################
-# TODO: replace when range constraints are available
-function branch_rate_constraints!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{<:PM.AbstractActivePowerModel},
-    feedforward::Nothing,
-) where {B <: PSY.ACBranch}
-    constraint_infos = _get_constraint_data(devices)
-    device_range!(
-        container,
-        RangeConstraintSpecInternal(
-            constraint_infos,
-            RateLimitConstraint(),
-            FlowActivePowerVariable(),
-            B,
-        ),
-    )
-    return
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_min_max_limits(
+    device,
+    ::Type{<:ConstraintType},
+    ::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    (min = -1 * PSY.get_rate(device), max = PSY.get_rate(device))
 end
 
+# TODO: Rename these to add_constraints!
+"""
+Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
+"""
+function branch_rate_constraints!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    X::Type{<:PM.AbstractActivePowerModel},
+    feedforward::Nothing,
+) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
+    add_range_constraints!(
+        container,
+        RateLimitConstraint,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
+end
+
+"""
+Add rate limit from to constraints for ACBranch with AbstractPowerModel
+"""
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitFTConstraint},
@@ -136,6 +152,9 @@ function add_constraints!(
     end
 end
 
+"""
+Add rate limit to from constraints for ACBranch with AbstractPowerModel
+"""
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitTFConstraint},
@@ -162,6 +181,9 @@ function add_constraints!(
     end
 end
 
+"""
+Add network flow constraints for ACBranch and NetworkModel with StandardPTDFModel
+"""
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{NetworkFlowConstraint},
@@ -194,86 +216,142 @@ function add_constraints!(
     end
 end
 
-#=
-############################## Flow Limits Constraints #####################################
-function branch_flow_constraints!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
-    model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
-    ::Type{T},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PM.AbstractDCPModel}
-    constraint_infos = Vector{PSI.DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        if PSY.get_flow_limits(d).to_from != PSY.get_flow_limits(d).from_to
-            @info(
-                "Flow limits in Line $(PSY.get_name(d)) aren't equal. The minimum will be used in formulation $(T)"
-            )
-        end
-        limit = min(
-            PSY.get_rate(d),
-            PSY.get_flow_limits(d).to_from,
-            PSY.get_flow_limits(d).from_to,
+"""
+Min and max limits for monitored line
+"""
+function get_min_max_limits(
+    device::PSY.MonitoredLine,
+    ::Type{<:ConstraintType},
+    ::Type{<:AbstractBranchFormulation},
+)
+    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
+        @warn(
+            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
         )
-        minmax = (min = -1 * limit, max = limit)
-        constraint_infos[ix] = DeviceRangeConstraintInfo(PSY.get_name(d), minmax)
     end
-    device_range!(
-        container,
-        RangeConstraintSpecInternal(
-            constraint_infos,
-            FlowLimitConstraint(),
-            FlowActivePowerVariable(),
-            PSY.MonitoredLine,
-        ),
+    limit = min(
+        PSY.get_rate(device),
+        PSY.get_flow_limits(device).to_from,
+        PSY.get_flow_limits(device).from_to,
     )
-    return
+    minmax = (min = -1 * limit, max = limit)
+    return minmax
 end
 
+############################## Flow Limits Constraints #####################################
+# TODO: Write tests for these functions
+# TODO: Rename these to add_constraints!
+"""
+Add branch flow constraints for monitored lines with DC Power Model
+"""
 function branch_flow_constraints!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
-    model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    X::Type{<:PM.AbstractDCPModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.MonitoredLine, U <: AbstractBranchFormulation}
+    add_range_constraints!(
+        container,
+        FlowLimitConstraint,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
+end
+
+"""
+Don't add branch flow constraints for monitored lines if formulation is StaticBranchUnbounded
+"""
+function branch_flow_constraints!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    ::Type{<:PM.AbstractDCPModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
+    nothing
+end
+
+"""
+Min and max limits for flow limit from-to constraint
+"""
+function get_min_max_limits(
+    device::PSY.MonitoredLine,
+    ::Type{FlowLimitFromToConstraint},
+    ::Type{<:AbstractBranchFormulation},
+)
+    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
+        @warn(
+            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
+        )
+    end
+    (
+        min = -1 * PSY.get_flow_limits(device).from_to,
+        max = PSY.get_flow_limits(device).from_to,
+    )
+end
+
+"""
+Min and max limits for flow limit to-from constraint
+"""
+function get_min_max_limits(
+    device::PSY.MonitoredLine,
+    ::Type{FlowLimitToFromConstraint},
+    ::Type{<:AbstractBranchFormulation},
+)
+    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
+        @warn(
+            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
+        )
+    end
+    return (
+        min = -1 * PSY.get_flow_limits(device).to_from,
+        max = PSY.get_flow_limits(device).to_from,
+    )
+end
+
+"""
+Add branch flow constraints for monitored lines
+"""
+function branch_flow_constraints!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-)
-    names = Vector{String}(undef, length(devices))
-    limit_values_FT = Vector{MinMax}(undef, length(devices))
-    limit_values_TF = Vector{MinMax}(undef, length(devices))
-    to = Vector{PSI.DeviceRangeConstraintInfo}(undef, length(devices))
-    from = Vector{PSI.DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        limit_values_FT[ix] = (
-            min = -1 * PSY.get_flow_limits(d).from_to,
-            max = PSY.get_flow_limits(d).from_to,
-        )
-        limit_values_TF[ix] = (
-            min = -1 * PSY.get_flow_limits(d).to_from,
-            max = PSY.get_flow_limits(d).to_from,
-        )
-        names[ix] = PSY.get_name(d)
-        to[ix] = DeviceRangeConstraintInfo(names[ix], limit_values_FT[ix])
-        from[ix] = DeviceRangeConstraintInfo(names[ix], limit_values_TF[ix])
-    end
-
-    device_range!(
+) where {T <: PSY.MonitoredLine, U <: AbstractBranchFormulation}
+    add_range_constraints!(
         container,
-        RangeConstraintSpecInternal(
-            to,
-            FlowLimitFromToConstraint(),
-            FlowActivePowerFromToVariable(),
-            PSY.MonitoredLine,
-        ),
+        FlowLimitFromToConstraint,
+        FlowActivePowerFromToVariable,
+        devices,
+        model,
+        X,
+        feedforward,
     )
-    device_range!(
+    add_range_constraints!(
         container,
-        RangeConstraintSpecInternal(
-            from,
-            FlowLimitToFromConstraint(),
-            FlowActivePowerToFromVariable(),
-            PSY.MonitoredLine,
-        ),
+        FlowLimitToFromConstraint,
+        FlowActivePowerToFromVariable,
+        devices,
+        model,
+        X,
+        feedforward,
     )
-    return
 end
-=#
+
+"""
+Don't add branch flow constraints for monitored lines if formulation is StaticBranchUnbounded
+"""
+function branch_flow_constraints!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
+    nothing
+end
