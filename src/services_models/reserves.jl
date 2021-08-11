@@ -9,13 +9,14 @@ get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
 ############################### ActiveServiceVariable, Reserve #########################################
 
 get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
-get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = nothing
+get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, d::PSY.Component, _) = PSY.get_max_active_power(d)
+get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, d::PSY.Storage, _) =  PSY.get_output_active_power_limits(d).max
 get_variable_lower_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
 
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 
 get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}, ::AbstractReservesFormulation) = false
-get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, ::AbstractReservesFormulation) = nothing
+get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, d::PSY.Component, ::AbstractReservesFormulation) = PSY.get_max_active_power(d)
 get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, ::AbstractReservesFormulation) = 0.0
 
 #! format: on
@@ -26,7 +27,6 @@ function service_requirement_constraint!(
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
     parameters = model_has_parameters(optimization_container)
-    use_forecast_data = model_uses_forecasts(optimization_container)
     initial_time = model_initial_time(optimization_container)
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
@@ -50,16 +50,15 @@ function service_requirement_constraint!(
         multiplier = get_multiplier_array(container)
         for t in time_steps
             param[name, t] = add_parameter(optimization_container.JuMPmodel, ts_vector[t])
-            multiplier[name, t] = 1.0
+            multiplier[name, t] = requirement
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
             else
                 resource_expression = sum(reserve_variable[:, t])
             end
-            mul = (requirement * multiplier[name, t])
             constraint[name, t] = JuMP.@constraint(
                 optimization_container.JuMPmodel,
-                resource_expression >= param[name, t] * mul
+                resource_expression >= param[name, t] * requirement
             )
         end
     else
@@ -78,7 +77,6 @@ function service_requirement_constraint!(
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.StaticReserve, T <: AbstractReservesFormulation}
-    parameters = model_has_parameters(optimization_container)
     initial_time = model_initial_time(optimization_container)
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
@@ -373,7 +371,7 @@ function include_service!(
         # Should this be make_variable_name ?
         name = make_constraint_name(PSY.get_name(service), SR)
         push!(constraint_info.additional_terms_up, name)
-        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+        set_time_frame!(constraint_info, (name => PSY.get_time_frame(service)))
     end
     return
 end
@@ -387,7 +385,7 @@ function include_service!(
         # Should this be make_variable_name ?
         name = make_constraint_name(PSY.get_name(service), SR)
         push!(constraint_info.additional_terms_dn, name)
-        set_time_frame!(constraint_info, (name => get_time_frame(service)))
+        set_time_frame!(constraint_info, (name => PSY.get_time_frame(service)))
     end
     return
 end
@@ -415,7 +413,7 @@ end
 function add_device_services!(
     constraint_info::T,
     device::D,
-    model::DeviceModel{D, BatteryAncialliryServices},
+    model::DeviceModel{D, BatteryAncillaryServices},
 ) where {
     T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     D <: PSY.Storage,
@@ -426,7 +424,7 @@ end
 function add_device_services!(
     constraint_info::ReserveRangeConstraintInfo,
     device::D,
-    model::DeviceModel{D, BatteryAncialliryServices},
+    model::DeviceModel{D, BatteryAncillaryServices},
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.component_type)

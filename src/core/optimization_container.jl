@@ -1,5 +1,7 @@
-mutable struct OptimizationContainer
-    JuMPmodel::Union{Nothing, JuMP.AbstractModel}
+abstract type AbstractModelContainer end
+
+mutable struct OptimizationContainer <: AbstractModelContainer
+    JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     settings::Settings
@@ -8,9 +10,9 @@ mutable struct OptimizationContainer
     aux_variables::Dict{AuxVarKey, AbstractArray}
     constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing, ParametersContainer}
-    initial_conditions::Union{Nothing, InitialConditions}
+    expressions::DenseAxisArrayContainer
+    parameters::ParametersContainer
+    initial_conditions::InitialConditions
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
@@ -18,12 +20,15 @@ mutable struct OptimizationContainer
     function OptimizationContainer(
         sys::PSY.System,
         settings::Settings,
-        jump_model::Union{Nothing, JuMP.AbstractModel},
+        jump_model::Union{Nothing, JuMP.Model},
     )
         resolution = PSY.get_time_series_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
+        use_parameters = get_use_parameters(settings)
+
         new(
-            jump_model,
+            jump_model === nothing ? _make_jump_model(settings) :
+            _prepare_external_jump_model!(jump_model, settings),
             1:1,
             resolution,
             settings,
@@ -33,8 +38,8 @@ mutable struct OptimizationContainer
             Dict{Symbol, AbstractArray}(),
             zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
-            nothing,
-            nothing,
+            ParametersContainer(),
+            InitialConditions(use_parameters = use_parameters),
             nothing,
             PSY.get_base_power(sys),
             Dict{Symbol, Any}(),
@@ -42,10 +47,7 @@ mutable struct OptimizationContainer
     end
 end
 
-function _validate_warm_start_support(
-    JuMPmodel::JuMP.AbstractModel,
-    warm_start_enabled::Bool,
-)
+function _validate_warm_start_support(JuMPmodel::JuMP.Model, warm_start_enabled::Bool)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =
         MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -56,48 +58,58 @@ function _validate_warm_start_support(
     return solver_supports_warm_start
 end
 
-function _make_jump_model!(optimization_container::OptimizationContainer)
-    settings = optimization_container.settings
-    parameters = get_use_parameters(settings)
-    optimizer = get_optimizer(settings)
-    if !(optimization_container.JuMPmodel === nothing)
-        if parameters
-            if !haskey(optimization_container.JuMPmodel.ext, :ParameterJuMP)
-                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
-                PJ.enable_parameters(optimization_container.JuMPmodel)
-                warm_start_enabled = get_warm_start(settings)
-                solver_supports_warm_start = _validate_warm_start_support(
-                    optimization_container.JuMPmodel,
-                    warm_start_enabled,
-                )
-                set_warm_start!(settings, solver_supports_warm_start)
-            end
-        end
-        return
-    end
-    @debug "Instantiating the JuMP model"
-    if !(optimizer === nothing)
-        JuMPmodel = JuMP.Model(optimizer)
-        warm_start_enabled = get_warm_start(settings)
-        solver_supports_warm_start =
-            _validate_warm_start_support(JuMPmodel, warm_start_enabled)
-        set_warm_start!(settings, solver_supports_warm_start)
-        parameters && PJ.enable_parameters(JuMPmodel)
-        optimization_container.JuMPmodel = JuMPmodel
-    else
-        @debug "The optimization model has no optimizer attached"
-        JuMPmodel = JuMP.Model()
-        parameters && PJ.enable_parameters(JuMPmodel)
-        optimization_container.JuMPmodel = JuMPmodel
-    end
+function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
+    warm_start_enabled = get_warm_start(settings)
+    solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
+    set_warm_start!(settings, solver_supports_warm_start)
+
     if get_optimizer_log_print(settings)
-        JuMP.unset_silent(optimization_container.JuMPmodel)
+        JuMP.unset_silent(JuMPmodel)
         @debug "optimizer unset to silent"
     else
-        JuMP.set_silent(optimization_container.JuMPmodel)
+        JuMP.set_silent(JuMPmodel)
         @debug "optimizer set to silent"
     end
-    return
+end
+
+function _prepare_external_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
+    parameters = get_use_parameters(settings)
+    optimizer = get_optimizer(settings)
+    if get_direct_mode_optimizer(settings)
+        throw(
+            IS.ConflictingInputsError(
+                "Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model",
+            ),
+        )
+    end
+
+    if parameters
+        if !haskey(JuMPmodel.ext, :ParameterJuMP)
+            @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+            PJ.enable_parameters(JuMPmodel)
+            JuMP.set_optimizer(JuMPmodel, optimizer)
+        end
+    end
+    _finalize_jump_model!(JuMPmodel, settings)
+    return JuMPmodel
+end
+
+function _make_jump_model(settings::Settings)
+    @debug "Instantiating the JuMP model"
+    parameters = get_use_parameters(settings)
+    optimizer = get_optimizer(settings)
+    if get_direct_mode_optimizer(settings)
+        JuMPmodel = JuMP.direct_model(MOI.instantiate(optimizer))
+    elseif optimizer === nothing
+        JuMPmodel = JuMP.Model()
+        @debug "The optimization model has no optimizer attached"
+    else
+        JuMPmodel = JuMP.Model(optimizer)
+    end
+    parameters && PJ.enable_parameters(JuMPmodel)
+    _finalize_jump_model!(JuMPmodel, settings)
+
+    return JuMPmodel
 end
 
 function _make_container_array(parameters::Bool, ax...)
@@ -146,22 +158,22 @@ function optimization_container_init!(
     ::Type{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
+    @assert !(optimization_container.JuMPmodel === nothing)
     PSY.set_units_base_system!(sys, "SYSTEM_BASE")
     # The order of operations matter
-    settings = optimization_container.settings
-    _make_jump_model!(optimization_container)
-    @assert !(optimization_container.JuMPmodel === nothing)
+    settings = get_settings(optimization_container)
     use_parameters = get_use_parameters(settings)
-    if use_parameters
-        optimization_container.parameters = ParametersContainer()
-    end
     use_forecasts = get_use_forecast_data(settings)
-    if use_parameters && !use_forecasts
-        throw(
-            IS.ConflictingInputsError(
-                "enabling parameters without forecasts is not supported",
-            ),
-        )
+
+    if use_parameters
+        if !use_forecasts
+            throw(
+                IS.ConflictingInputsError(
+                    "enabling parameters without forecasts is not supported",
+                ),
+            )
+        end
+        set_use_parameters!(get_initial_conditions(optimization_container), use_parameters)
     end
 
     if get_initial_time(settings) == UNSET_INI_TIME
@@ -188,8 +200,6 @@ function optimization_container_init!(
         set_horizon!(settings, 1)
     end
 
-    ini_cond_container = InitialConditions(use_parameters = use_parameters)
-    optimization_container.initial_conditions = ini_cond_container
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
     _make_expressions_dict!(optimization_container, bus_numbers, T)
     return
@@ -481,7 +491,10 @@ function get_parameter_container(
     optimization_container::OptimizationContainer,
     ref::UpdateRef,
 )
-    return get_parameter_container(optimization_container, ref.access_ref)
+    name = ref.access_ref
+    dl = ref.data_label !== nothing ? ref.data_label : ""
+    name = Symbol("$name" * "_" * dl)
+    return get_parameter_container(optimization_container, name)
 end
 
 function get_parameter_array(optimization_container::OptimizationContainer, ref)
@@ -494,9 +507,8 @@ function assign_parameter!(
 )
     @debug "assign_parameter" container.update_ref
     name = container.update_ref.access_ref
-    if name isa AbstractString
-        name = Symbol(name)
-    end
+    dl = container.update_ref.data_label !== nothing ? container.update_ref.data_label : ""
+    name = Symbol(strip("$name" * "_" * dl))
 
     if haskey(optimization_container.parameters, name)
         @error "parameter $name is already stored" sort!(

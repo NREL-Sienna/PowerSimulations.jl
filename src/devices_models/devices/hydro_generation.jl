@@ -733,15 +733,13 @@ function NodalExpressionSpec(
 end
 
 ##################################### Water/Energy Budget Constraint ############################
-function energy_budget_constraints!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::IntegralLimitFF,
-) where {H <: PSY.HydroGen}
-    return
-end
+energy_budget_constraints!(
+    ::OptimizationContainer,
+    ::IS.FlattenIteratorWrapper{<:PSY.HydroGen},
+    ::DeviceModel{<:PSY.HydroGen, <:AbstractHydroFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    ::IntegralLimitFF,
+) = nothing
 
 """
 This function define the budget constraint for the
@@ -752,9 +750,9 @@ active power budget formulation.
 function energy_budget_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    ::DeviceModel{H, <:AbstractHydroFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen}
     forecast_label = "hydro_budget"
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))

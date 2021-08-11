@@ -144,6 +144,20 @@ function branch_rate_constraints!(
     return
 end
 
+function _branch_flow_constraint!(
+    jump_model::JuMP.Model,
+    ptdf_col::Vector{Float64},
+    nodal_balance_expressions,
+    flow_variables,
+    t::Int,
+)
+    return JuMP.@constraint(
+        jump_model,
+        sum(ptdf_col[i] * nodal_balance_expressions[i, t] for i in 1:length(ptdf_col)) -
+        flow_variables[t] == 0.0
+    )
+end
+
 function branch_flow_values!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
@@ -159,12 +173,19 @@ function branch_flow_values!(
     nodal_balance_expressions = optimization_container.expressions[:nodal_balance_active]
     flow_variables = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
     jump_model = get_jump_model(optimization_container)
-    for t in time_steps, br in devices
+    for br in devices
         name = PSY.get_name(br)
-        branch_flow[name, t] = JuMP.@constraint(
-            jump_model,
-            sum(ptdf[name, i] * nodal_balance_expressions[i, t] for i in ptdf.axes[2]) == flow_variables[name, t]
-        )
+        ptdf_col = ptdf[name, :]
+        flow_variables_ = flow_variables[name, :]
+        for t in time_steps
+            branch_flow[name, t] = _branch_flow_constraint!(
+                jump_model,
+                ptdf_col,
+                nodal_balance_expressions.data,
+                flow_variables_,
+                t,
+            )
+        end
     end
 end
 

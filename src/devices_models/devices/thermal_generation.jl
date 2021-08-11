@@ -150,7 +150,7 @@ end
 
 function custom_active_power_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    ::IS.FlattenIteratorWrapper{T},
     ::Type{<:ThermalDispatchNoMin},
 ) where {T <: PSY.ThermalGen}
     var_key = make_variable_name(ActivePowerVariable, T)
@@ -568,10 +568,10 @@ function calculate_aux_variable_value!(
             for (t, v) in enumerate(on_var)
                 if v < 0.99 # Unit turn off
                     time_value = 0.0
-                elseif isapprox(v, 1.0) # Unit is on
+                elseif isapprox(v, 1.0; atol = ABSOLUTE_TOLERANCE) # Unit is on
                     time_value = previous_condition + 1.0
                 else
-                    @assert false
+                    error("Binary condition returned $v")
                 end
                 previous_condition = aux_var_container.data[ix, t] = time_value
             end
@@ -610,8 +610,10 @@ function calculate_aux_variable_value!(
             for (t, v) in enumerate(on_var)
                 if v < 0.99 # Unit turn off
                     time_value = previous_condition + 1.0
-                elseif isapprox(v, 1.0) # Unit is on
+                elseif isapprox(v, 1.0; atol = ABSOLUTE_TOLERANCE) # Unit is on
                     time_value = 0.0
+                else
+                    error("Binary condition returned $v")
                 end
                 previous_condition = aux_var_container.data[ix, t] = time_value
             end
@@ -705,7 +707,7 @@ end
 
 function ramp_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    ::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
@@ -734,12 +736,11 @@ end
 
 function ramp_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    ::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
-    time_steps = model_time_steps(optimization_container)
     data = _get_data_for_rocc(optimization_container, PSY.ThermalMultiStart)
 
     # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
@@ -999,7 +1000,7 @@ This function creates the contraints for different types of starts based on gene
 function startup_time_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    ::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
@@ -1034,7 +1035,7 @@ This function creates constraints to select a single type of startup based on of
 function startup_type_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    ::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
@@ -1093,8 +1094,8 @@ This function creates the initial conditions for multi-start devices
 """
 function startup_initial_condition_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    ::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    ::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
@@ -1123,7 +1124,7 @@ This function creates constraints that keep must run devices online
 function must_run_constraints!(
     optimization_container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    ::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
@@ -1194,8 +1195,8 @@ end
 
 function time_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, D},
+    ::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, D},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
@@ -1245,8 +1246,8 @@ end
 
 function time_constraints!(
     optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, ThermalMultiStartUnitCommitment},
+    ::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, ThermalMultiStartUnitCommitment},
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
@@ -1468,7 +1469,8 @@ function cost_function!(
         variable_cost = PSY.get_variable,
         fixed_cost = PSY.get_fixed,
     )
-
+    resolution = model_resolution(optimization_container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for g in devices
         component_name = PSY.get_name(g)
         op_cost = PSY.get_operation_cost(g)
@@ -1496,12 +1498,16 @@ function cost_function!(
             end
             time_steps = model_time_steps(optimization_container)
             for t in time_steps
-                pwl_gencost_linear!(
+                gen_cost = pwl_gencost_linear!(
                     optimization_container,
                     no_min_spec,
                     component_name,
                     cost_function_data,
                     t,
+                )
+                add_to_cost_expression!(
+                    optimization_container,
+                    no_min_spec.multiplier * gen_cost * dt,
                 )
             end
         else

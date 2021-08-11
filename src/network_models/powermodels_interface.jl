@@ -14,7 +14,7 @@ end
 ""
 # replicates PM.build_mn_opf
 function instantiate_nip_expr(pm::PM.AbstractPowerModel)
-    for (n, network) in PM.nws(pm)
+    for n in eachindex(PM.nws(pm))
         @assert !PM.ismulticonductor(pm, nw = n)
         PM.variable_bus_voltage(pm, nw = n)
         PM.variable_branch_power(pm, nw = n; bounded = false)
@@ -63,7 +63,7 @@ end
 ""
 # replicates PM.build_opf_ptdf
 function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
-    for (n, network) in PM.nws(pm)
+    for n in eachindex(PM.nws(pm))
         @assert !PM.ismulticonductor(pm, nw = n)
 
         #PM.variable_gen_power(pm) #connect P__* with these
@@ -108,7 +108,7 @@ end
 ""
 # replicates PM.build_mn_opf_bf_strg
 function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
-    for (n, network) in PM.nws(pm)
+    for n in eachindex(PM.nws(pm))
         @assert !PM.ismulticonductor(pm, nw = n)
         PM.variable_bus_voltage(pm, nw = n)
         PM.variable_branch_power(pm, nw = n; bounded = false)
@@ -159,7 +159,6 @@ function constraint_power_balance_ni_expr(
         PM.con(pm, nw)[:power_balance_q] = Dict{Int, JuMP.ConstraintRef}()
     end
 
-    bus = PM.ref(pm, nw, :bus, i)
     bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
     bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
 
@@ -219,7 +218,6 @@ function constraint_current_balance_ni_expr(
         PM.con(pm, nw)[:kcl_ci] = Dict{Int, JuMP.ConstraintRef}()
     end
 
-    bus = PM.ref(pm, nw, :bus, i)
     bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
     bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
 
@@ -279,7 +277,7 @@ function constraint_power_balance_ni_expr(
     bus_arcs,
     bus_arcs_dc,
     inj_p_expr,
-    inj_q_expr,
+    _,
 )
     p = PM.var(pm, n, :p)
     p_dc = PM.var(pm, n, :p_dc)
@@ -359,7 +357,7 @@ end
 
 #### PM accessor functions ########
 
-function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractDCPModel}
+function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA)
@@ -371,7 +369,7 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractDCPModel}
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerModel}
+function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA)
@@ -386,7 +384,7 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowe
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{PTDFPowerModel})
+function PMvarmap(::Type{PTDFPowerModel})
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict()
@@ -396,7 +394,7 @@ function PMvarmap(system_formulation::Type{PTDFPowerModel})
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel}
+function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA, :vm => VM)
@@ -421,14 +419,14 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
     return pm_var_map
 end
 
-function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerModel}
+function PMconmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
     pm_con_map = Dict{Type, Dict{Symbol, String}}()
 
     pm_con_map[PSY.Bus] = Dict(:power_balance_p => NODAL_BALANCE_ACTIVE)
     return pm_con_map
 end
 
-function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel}
+function PMconmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_con_map = Dict{Type, Dict{Symbol, String}}()
 
     pm_con_map[PSY.Bus] = Dict(
@@ -438,7 +436,7 @@ function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
     return pm_con_map
 end
 
-function PMexprmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel}
+function PMexprmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_expr_map = Dict{
         Type,
         NamedTuple{
@@ -450,7 +448,7 @@ function PMexprmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerMode
     return pm_expr_map
 end
 
-function PMexprmap(system_formulation::Type{PTDFPowerModel})
+function PMexprmap(::Type{PTDFPowerModel})
     pm_expr_map = Dict{
         Type,
         NamedTuple{
@@ -470,7 +468,7 @@ end
 function add_pm_var_refs!(
     optimization_container::OptimizationContainer,
     system_formulation::Type{S},
-    sys::PSY.System,
+    ::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
     bus_dict = optimization_container.pm.ext[:PMmap].bus
@@ -558,7 +556,7 @@ end
 function add_pm_con_refs!(
     optimization_container::OptimizationContainer,
     system_formulation::Type{S},
-    sys::PSY.System,
+    ::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
     bus_dict = optimization_container.pm.ext[:PMmap].bus
@@ -588,7 +586,7 @@ end
 function add_pm_expr_refs!(
     optimization_container::OptimizationContainer,
     system_formulation::Type{S},
-    sys::PSY.System,
+    ::PSY.System,
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(optimization_container)
 

@@ -67,7 +67,7 @@ function construct_service!(
     names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(optimization_container)
-        container = add_param_container!(
+        add_param_container!(
             optimization_container,
             UpdateRef{SR}("service_requirement", "requirement"),
             names,
@@ -86,8 +86,10 @@ function construct_service!(
         contributing_devices =
             services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
         if !isempty(incompatible_device_types)
-            contributing_devices =
-                [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
+            contributing_devices = [
+                d for d in contributing_devices if
+                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+            ]
         end
         # Services without contributing devices should have been filtered out in the validation
         @assert !isempty(contributing_devices)
@@ -106,6 +108,11 @@ function construct_service!(
         # Cost Function
         cost_function!(optimization_container, service, model)
     end
+
+    if get_feedforward(model) !== nothing
+        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+    end
+
     return
 end
 
@@ -141,8 +148,10 @@ function construct_service!(
                 name = PSY.get_name(service),
             )].contributing_devices
         if !isempty(incompatible_device_types)
-            contributing_devices =
-                [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
+            contributing_devices = [
+                d for d in contributing_devices if
+                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+            ]
         end
         # Variables
         add_variables!(
@@ -155,10 +164,14 @@ function construct_service!(
         # Constraints
         service_requirement_constraint!(optimization_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
-
         # Cost Function
         cost_function!(optimization_container, service, model)
     end
+
+    if get_feedforward(model) !== nothing
+        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+    end
+
     return
 end
 
@@ -171,9 +184,9 @@ function construct_service!(
     ::Vector{<:DataType},
 ) where {T <: AbstractAGCFormulation}
     # Order is important in the addition of these variables
-    for device_model in devices_template
-        # TODO: make a check for the devices' models
-    end
+    # for device_model in devices_template
+    # TODO: make a check for the devices' models
+    #end
     agc_areas = [PSY.get_area(agc) for agc in services]
     areas = PSY.get_components(PSY.Area, sys)
     for area in areas
@@ -214,7 +227,7 @@ function construct_service!(
     names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(optimization_container)
-        container = add_param_container!(
+        add_param_container!(
             optimization_container,
             UpdateRef{SR}("service_requirement", "requirement"),
             names,
@@ -258,7 +271,7 @@ function construct_service!(
     names = [PSY.get_name(s) for s in services]
 
     if model_has_parameters(optimization_container)
-        container = add_param_container!(
+        add_param_container!(
             optimization_container,
             UpdateRef{SR}("service_requirement", "requirement"),
             names,
@@ -280,8 +293,10 @@ function construct_service!(
                 name = PSY.get_name(service),
             )].contributing_devices
         if !isempty(incompatible_device_types)
-            contributing_devices =
-                [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
+            contributing_devices = [
+                d for d in contributing_devices if
+                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+            ]
         end
         # Variables
         add_variables!(

@@ -3,7 +3,7 @@ struct ICKey{IC <: InitialConditionType, D <: PSY.Component} <: OptimizationCont
     device_type::Type{D}
 end
 
-struct InitialConditions
+mutable struct InitialConditions
     use_parameters::Bool
     data::Dict{ICKey, Vector{InitialCondition}}
 end
@@ -16,6 +16,7 @@ function InitialConditions(;
 end
 
 get_use_parameters(container::InitialConditions) = container.use_parameters
+set_use_parameters!(ini_cond::InitialConditions, val::Bool) = ini_cond.use_parameters = val
 
 function has_initial_conditions(container::InitialConditions, key::ICKey)
     return key in keys(container.data)

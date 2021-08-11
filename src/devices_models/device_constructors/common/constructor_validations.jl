@@ -26,8 +26,10 @@ function validate_services!(
     for s in services_
         contributing_devices_ =
             services_mapping[(type = S, name = PSY.get_name(s))].contributing_devices
-        contributing_devices =
-            [d for d in contributing_devices_ if typeof(d) ∉ incompatible_device_types]
+        contributing_devices = [
+            d for d in contributing_devices_ if
+            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+        ]
         if isempty(contributing_devices)
             @warn(
                 "The contributing devices for service $(PSY.get_name(s)) is empty, consider removing the service from the system"
