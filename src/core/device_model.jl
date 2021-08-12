@@ -44,7 +44,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         use_slacks = false,
         duals = Vector{DataType}(),
         time_series_labels = initialize_timeseries_labels(D, B),
-        attributes = initialize_attributes(D, B)
+        attributes = initialize_attributes(D, B),
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)

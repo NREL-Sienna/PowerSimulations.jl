@@ -169,7 +169,11 @@ end
 #########################################
 
 @testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStorage Formulations" begin
-    device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage; attributes = Dict{String, Any}("reservation" => false,))
+    device_model = DeviceModel(
+        HydroPumpedStorage,
+        HydroDispatchPumpedStorage;
+        attributes = Dict{String, Any}("reservation" => false),
+    )
     c_sys5_phes_ed = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
 
     # No Parameters Testing
