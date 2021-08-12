@@ -54,10 +54,9 @@ export HydroCommitmentRunOfRiver
 export HydroCommitmentReservoirBudget
 export HydroCommitmentReservoirStorage
 export HydroDispatchPumpedStorage
-export HydroDispatchPumpedStoragewReservation
+
 ######## Renewable Formulations ########
 export BookKeeping
-export BookKeepingwReservation
 export BatteryAncillaryServices
 export EnergyTarget
 
