@@ -32,18 +32,14 @@ function initialize_attributes(
     ::Type{T},
     ::Type{D},
 ) where {T <: PSY.HydroGen, D <: AbstractHydroFormulation}
-    return Dict{String, Any}(
-        "reservation" => false,
-    )
+    return Dict{String, Any}("reservation" => false)
 end
 
 function initialize_attributes(
     ::Type{PSY.HydroPumpedStorage},
     ::Type{HydroDispatchPumpedStorage},
 )
-    return Dict{String, Any}(
-        "reservation" => true,
-    )
+    return Dict{String, Any}("reservation" => true)
 end
 
 """

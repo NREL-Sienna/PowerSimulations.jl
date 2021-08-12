@@ -229,7 +229,6 @@ function add_reserve_range_constraints!(
     end
 end
 
-
 function add_reserve_range_constraints!(
     container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
@@ -287,7 +286,6 @@ function add_reserve_range_constraints!(
         )
     end
 end
-
 
 @doc raw"""
 Constructs min/max range constraint from device variable and on/off decision variable.

@@ -227,7 +227,6 @@ function get_min_max_limits(
     PSY.get_active_power_limits_pump(x)
 end
 
-
 ######################## RoR constraints ############################
 
 """
