@@ -464,42 +464,41 @@ end
 end
 
 ################################ Thermal Compact UC Testing ################################
-# TODO SD: to look into why tests are failing (possible that old tests are bad)
-# @testset "Thermal Standard with Compact UC and DC - PF" begin
-#     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
-#     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-#     mock_construct_device!(model, device_model)
-#     moi_tests(model, false, 480, 0, 595, 115, 120, true)
-#     psi_checkobjfun_test(model, GAEVF)
-# end
-#
-# @testset "Thermal MultiStart with Compact UC and DC - PF" begin
-#     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
-#     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
-#     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
-#     mock_construct_device!(model, device_model)
-#     moi_tests(model, false, 384, 0, 286, 46, 96, true)
-#     psi_checkobjfun_test(model, GAEVF)
-# end
-#
-# @testset "Thermal Standard with Compact UC and AC - PF" begin
-#     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
-#     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
-#     mock_construct_device!(model, device_model)
-#     moi_tests(model, false, 600, 0, 715, 235, 120, true)
-#     psi_checkobjfun_test(model, GAEVF)
-# end
-#
-# @testset "Thermal MultiStart with Compact UC and AC - PF" begin
-#     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
-#     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
-#     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
-#     mock_construct_device!(model, device_model)
-#     moi_tests(model, false, 432, 0, 334, 94, 96, true)
-#     psi_checkobjfun_test(model, GAEVF)
-# end
+@testset "Thermal Standard with Compact UC and DC - PF" begin
+    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 480, 0, 480, 120, 120, true)
+    psi_checkobjfun_test(model, GAEVF)
+end
+
+@testset "Thermal MultiStart with Compact UC and DC - PF" begin
+    device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
+    c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 384, 0, 240, 48, 96, true)
+    psi_checkobjfun_test(model, GAEVF)
+end
+
+@testset "Thermal Standard with Compact UC and AC - PF" begin
+    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactUnitCommitment)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 600, 0, 600, 240, 120, true)
+    psi_checkobjfun_test(model, GAEVF)
+end
+
+@testset "Thermal MultiStart with Compact UC and AC - PF" begin
+    device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactUnitCommitment)
+    c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 432, 0, 288, 96, 96, true)
+    psi_checkobjfun_test(model, GAEVF)
+end
 
 ############################ Thermal Compact Dispatch Testing ##############################
 
@@ -559,19 +558,18 @@ end
 end
 
 # Testing Duration Constraints
-# TODO: SD: to resolve why test is infeasible
-# @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
-#     template = get_thermal_standard_uc_template()
-#     UC = DecisionModel(
-#         UnitCommitmentProblem,
-#         template,
-#         PSB.build_system(PSITestSystems, "c_duration_test");
-#         optimizer = Cbc_optimizer,
-#     )
-#     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-#     moi_tests(UC, false, 56, 0, 56, 14, 21, true)
-#     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
-# end
+@testset "Solving UC with CopperPlate for testing Duration Constraints" begin
+    template = get_thermal_standard_uc_template()
+    UC = DecisionModel(
+        UnitCommitmentProblem,
+        template,
+        PSB.build_system(PSITestSystems, "c_duration_test");
+        optimizer = Cbc_optimizer,
+    )
+    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(UC, false, 56, 0, 56, 14, 21, true)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
+end
 
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Convex PWL" begin
