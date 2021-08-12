@@ -169,6 +169,23 @@ function add_semicontinuous_range_constraints!(
     end
 end
 
+@doc raw"""
+Constructs min/max range constraint from device variable and reservation decision variable.
+
+# Constraints
+
+``` varcts[name, t] <= limits.max * (1 - varbin[name, t]) ```
+
+``` varcts[name, t] >= limits.min * (1 - varbin[name, t]) ```
+
+where limits in constraint_infos.
+
+# LaTeX
+
+`` 0 \leq x^{cts} \leq limits^{max} (1 - x^{bin}), \text{ for } limits^{min} = 0 ``
+
+`` limits^{min} (1 - x^{bin}) \leq x^{cts} \leq limits^{max} (1 - x^{bin}), \text{ otherwise } ``
+"""
 function add_reserve_range_constraints!(
     container::OptimizationContainer,
     T::Type{InputActivePowerVariableLimitsConstraint},
@@ -229,6 +246,21 @@ function add_reserve_range_constraints!(
     end
 end
 
+@doc raw"""
+Constructs min/max range constraint from device variable and reservation decision variable.
+
+# Constraints
+
+``` varcts[name, t] <= limits.max * varbin[name, t] ```
+
+``` varcts[name, t] >= limits.min * varbin[name, t] ```
+
+where limits in constraint_infos.
+
+# LaTeX
+
+`` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin},``
+"""
 function add_reserve_range_constraints!(
     container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
