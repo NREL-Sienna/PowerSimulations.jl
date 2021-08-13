@@ -913,7 +913,7 @@ function construct_device!(
     add_variables!(container, EnergyVariableUp, devices, HydroDispatchPumpedStorage())
     add_variables!(container, EnergyVariableDown, devices, HydroDispatchPumpedStorage())
     add_variables!(container, WaterSpillageVariable, devices, HydroDispatchPumpedStorage())
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_variables!(
             container,
             ReservationVariable,
