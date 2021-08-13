@@ -187,7 +187,26 @@ function add_constraints!(
 end
 
 """
-Add power variable limits constraints for hydro dispatch formulation
+Add input power variable limits constraints for hydro dispatch formulation
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{InputActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
+    if get_attribute(model, "reservation")
+        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+    else
+        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    end
+end
+
+"""
+Add output power variable limits constraints for hydro dispatch formulation
 """
 function add_constraints!(
     container::OptimizationContainer,
@@ -198,7 +217,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
     else
         add_range_constraints!(container, T, U, devices, model, X, feedforward)

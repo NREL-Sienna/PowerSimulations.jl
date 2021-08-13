@@ -31,7 +31,7 @@ function construct_device!(
     add_variables!(container, ActivePowerOutVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, EnergyVariable, devices, D())
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, D())
     end
     # Initial Conditions
@@ -101,7 +101,7 @@ function construct_device!(
     add_variables!(container, ActivePowerInVariable, devices, D())
     add_variables!(container, ActivePowerOutVariable, devices, D())
     add_variables!(container, EnergyVariable, devices, D())
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, D())
     end
     # Initial Conditions
@@ -161,7 +161,7 @@ function construct_device!(
     add_variables!(container, EnergyVariable, devices, EnergyTarget())
     add_variables!(container, EnergyShortageVariable, devices, EnergyTarget())
     add_variables!(container, EnergySurplusVariable, devices, EnergyTarget())
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, EnergyTarget())
     end
 
@@ -244,7 +244,7 @@ function construct_device!(
     add_variables!(container, EnergyVariable, devices, EnergyTarget())
     add_variables!(container, EnergyShortageVariable, devices, EnergyTarget())
     add_variables!(container, EnergySurplusVariable, devices, EnergyTarget())
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, EnergyTarget())
     end
 
@@ -317,7 +317,7 @@ function construct_device!(
     add_variables!(container, ActivePowerOutVariable, devices, BatteryAncillaryServices())
     add_variables!(container, ReactivePowerVariable, devices, BatteryAncillaryServices())
     add_variables!(container, EnergyVariable, devices, BatteryAncillaryServices())
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, BatteryAncillaryServices())
     end
     # Initial Conditions
@@ -384,7 +384,7 @@ function construct_device!(
     add_variables!(container, ActivePowerInVariable, devices, BatteryAncillaryServices())
     add_variables!(container, ActivePowerOutVariable, devices, BatteryAncillaryServices())
     add_variables!(container, EnergyVariable, devices, BatteryAncillaryServices())
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, BatteryAncillaryServices())
     end
     # Initial Conditions

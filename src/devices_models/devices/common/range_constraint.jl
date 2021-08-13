@@ -263,13 +263,18 @@ where limits in constraint_infos.
 """
 function add_reserve_range_constraints!(
     container::OptimizationContainer,
-    T::Type{<:PowerVariableLimitsConstraint},
+    T::Type{Z},
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+) where {
+    V <: PSY.Component,
+    W <: AbstractDeviceFormulation,
+    Z <:
+    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+}
     use_parameters = built_for_simulation(container)
     constraint = T()
     variable = U()

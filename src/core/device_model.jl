@@ -72,6 +72,7 @@ get_use_slacks(m::DeviceModel) = m.use_slacks
 get_duals(m::DeviceModel) = m.duals
 get_time_series_labels(m::DeviceModel) = m.time_series_labels
 get_attributes(m::DeviceModel) = m.attributes
+get_attribute(m::DeviceModel, key::String) = get(m.attributes, key, nothing)
 DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
 
 function _set_model!(
@@ -97,8 +98,4 @@ function initialize_attributes(
     ::Type{T},
 ) where {D <: PSY.Device, T <: AbstractDeviceFormulation}
     return Dict{String, Any}()
-end
-
-function apply_reservations(model::DeviceModel)
-    return get(get_attributes(model), "reservation", false)
 end

@@ -102,7 +102,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
-    if apply_reservations(model)
+    if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
     else
         add_range_constraints!(container, T, U, devices, model, X, feedforward)
