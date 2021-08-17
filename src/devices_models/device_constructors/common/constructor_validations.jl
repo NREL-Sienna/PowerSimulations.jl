@@ -1,7 +1,11 @@
-function validate_available_devices(device::Type{D}, devices) where {D <: PSY.Device}
+function validate_available_devices(
+    device::DeviceModel{T, U},
+    system,
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
+    devices = get_available_components(T, system)
     if isempty(devices)
         @warn(
-            "The data doesn't include devices of type $(device), consider changing the device models"
+            "The data doesn't include devices of type $(T), consider changing the device models"
         )
         return false
     end

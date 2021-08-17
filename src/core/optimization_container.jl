@@ -289,6 +289,10 @@ function get_problem_size(container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
+abstract type ConstructStage end
+struct ArgumentConstructStage end
+struct ConstraintConstructStage end
+
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
@@ -303,11 +307,36 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         #  TODO: Add dual variable container for services
     end
     for device_model in values(template.devices)
-        @debug "Building $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"
+        @debug "Building Arguments for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
-            construct_device!(container, sys, device_model, transmission)
+            if validate_available_devices(device_model, sys)
+                construct_device!(
+                    ArgumentConstructStage(),
+                    container,
+                    sys,
+                    device_model,
+                    transmission,
+                )
+            end
             @debug get_problem_size(container)
             add_dual_variable!(container, sys, device_model)
+        end
+    end
+
+    for device_model in values(template.devices)
+        @debug "Building Constraints for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
+            if validate_available_devices(device_model, sys)
+                construct_device!(
+                    ConstraintConstructStage(),
+                    container,
+                    sys,
+                    device_model,
+                    transmission,
+                )
+            end
+            @debug get_problem_size(container)
+            # add_dual_variable!(container, sys, device_model)
         end
     end
 
@@ -319,11 +348,36 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     end
 
     for branch_model in values(template.branches)
-        @debug "Building $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation"
+        @debug "Building Arguments for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation"
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
-            construct_device!(container, sys, branch_model, transmission_model)
+            if validate_available_devices(branch_model, sys)
+                construct_device!(
+                    ArgumentConstructStage(),
+                    container,
+                    sys,
+                    branch_model,
+                    transmission_model,
+                )
+            end
             @debug get_problem_size(container)
             add_dual_variable!(container, sys, branch_model)
+        end
+    end
+
+    for branch_model in values(template.branches)
+        @debug "Building Constraints for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
+            if validate_available_devices(branch_model, sys)
+                construct_device!(
+                    ConstraintConstructStage(),
+                    container,
+                    sys,
+                    branch_model,
+                    transmission_model,
+                )
+            end
+            # @debug get_problem_size(container)
+            # add_dual_variable!(container, sys, branch_model)
         end
     end
 

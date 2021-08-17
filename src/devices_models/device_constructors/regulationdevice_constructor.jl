@@ -2,20 +2,19 @@
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
+    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
     ::Type{S},
 ) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
+
+    # TODO: why not dispatch on AreaBalancePowerModel instead?
     if S != AreaBalancePowerModel
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
 
     devices = get_available_components(get_component_type(model), sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(
@@ -42,7 +41,23 @@ function construct_device!(
         devices,
         DeviceLimitedRegulation(),
     )
+end
 
+"""
+This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    ::ConstraintConstructStage,
+    container::OptimizationContainer,
+    sys::PSY.System,
+    model::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
+    ::Type{S},
+) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
+    if S != AreaBalancePowerModel
+        throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
+    end
+
+    devices = get_available_components(get_component_type(model), sys)
     # Constraints
     nodal_expression!(
         container,
@@ -78,6 +93,7 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
+    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
@@ -86,12 +102,7 @@ function construct_device!(
     if S != AreaBalancePowerModel
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
-
     devices = get_available_components(get_component_type(model), sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(
@@ -118,7 +129,23 @@ function construct_device!(
         devices,
         ReserveLimitedRegulation(),
     )
+end
 
+"""
+This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    ::ConstraintConstructStage,
+    container::OptimizationContainer,
+    sys::PSY.System,
+    model::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
+    ::Type{S},
+) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
+    if S != AreaBalancePowerModel
+        throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
+    end
+
+    devices = get_available_components(get_component_type(model), sys)
     # Constraints
     nodal_expression!(
         container,
@@ -153,6 +180,18 @@ end
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
+    ::ArgumentConstructStage,
+    container::OptimizationContainer,
+    sys::PSY.System,
+    model::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
+    ::Type{S},
+) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel} end
+
+"""
+This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
@@ -163,9 +202,6 @@ function construct_device!(
     end
 
     devices = get_available_components(get_component_type(model), sys)
-    if !validate_available_devices(T, devices)
-        return
-    end
     nodal_expression!(
         container,
         devices,
