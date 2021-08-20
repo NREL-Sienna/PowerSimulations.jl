@@ -169,7 +169,11 @@ end
 #########################################
 
 @testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStorage Formulations" begin
-    device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
+    device_model = DeviceModel(
+        HydroPumpedStorage,
+        HydroDispatchPumpedStorage;
+        attributes = Dict{String, Any}("reservation" => false),
+    )
     c_sys5_phes_ed = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
 
     # No Parameters Testing
@@ -179,8 +183,8 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
-@testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStoragewReservation Formulations" begin
-    device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStoragewReservation)
+@testset "Hydro DCPLossLess HydroPumpedStorage with HydroDispatchPumpedStorage with Reservation Formulations" begin
+    device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
     c_sys5_phes_ed = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
 
     # No Parameters Testing

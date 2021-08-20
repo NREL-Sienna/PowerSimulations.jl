@@ -8,7 +8,6 @@ struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 struct HydroDispatchReservoirBudget <: AbstractHydroReservoirFormulation end
 struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
 struct HydroDispatchPumpedStorage <: AbstractHydroReservoirFormulation end
-struct HydroDispatchPumpedStoragewReservation <: AbstractHydroReservoirFormulation end
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
@@ -107,42 +106,13 @@ get_multiplier_value(::InflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHyd
 get_multiplier_value(::OutflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_outflow(d) * PSY.get_conversion_factor(d)
 #! format: on
 
-function _initialize_timeseries_labels(
-    ::Type{PSY.HydroEnergyReservoir},
-    ::Type{T},
-) where {T <: Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}}
-    return Dict{Type{<:TimeSeriesParameter}, String}(
-        EnergyBudgetTimeSeriesParameter => "hydro_budget",
-    )
-end
-
-function _initialize_timeseries_labels(
-    ::Type{PSY.HydroEnergyReservoir},
-    ::Type{T},
-) where {T <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
-    return Dict{Type{<:TimeSeriesParameter}, String}(
-        EnergyTargetTimeSeriesParameter => "storage_target",
-        InflowTimeSeriesParameter => "inflow",
-    )
-end
-
-function _initialize_timeseries_labels(
-    ::Type{PSY.HydroPumpedStorage},
-    ::Type{T},
-) where {T <: Union{HydroDispatchPumpedStorage, HydroDispatchPumpedStoragewReservation}}
-    return Dict{Type{<:TimeSeriesParameter}, String}(
-        InflowTimeSeriesParameter => "inflow",
-        OutflowTimeSeriesParameter => "outflow",
-    )
-end
-
 # TODO: Jose to refactor based time series
 """
 Time series constraints
 """
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{<:ActivePowerVariableLimitsConstraint},
+    T::Type{ActivePowerVariableLimitsConstraint},
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
@@ -217,29 +187,41 @@ function add_constraints!(
 end
 
 """
-This function define the range constraint specs for the
-active power for dispatch Run of River formulations.
+Add input power variable limits constraints for hydro dispatch formulation
 """
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractHydroDispatchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{InputActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.HydroGen}
-    return DeviceRangeConstraintSpec(;
-        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
-            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
-            multiplier_func = x -> PSY.get_max_active_power(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub! :
-                              device_timeseries_ub!,
-            component_type = T,
-        ),
-    )
+) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
+    if get_attribute(model, "reservation")
+        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+    else
+        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    end
+end
+
+"""
+Add output power variable limits constraints for hydro dispatch formulation
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
+    if get_attribute(model, "reservation")
+        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+    else
+        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    end
 end
 
 """
@@ -260,28 +242,6 @@ function get_min_max_limits(
     x::PSY.HydroGen,
     ::Type{<:InputActivePowerVariableLimitsConstraint},
     ::Type{HydroDispatchPumpedStorage},
-)
-    PSY.get_active_power_limits_pump(x)
-end
-
-"""
-Min and max output active power variable limits for hydro dispatch pumped storage with reservation
-"""
-function get_min_max_limits(
-    x::PSY.HydroGen,
-    ::Type{<:OutputActivePowerVariableLimitsConstraint},
-    ::Type{HydroDispatchPumpedStoragewReservation},
-)
-    PSY.get_active_power_limits(x)
-end
-
-"""
-Min and max input active power variable limits for hydro dispatch pumped storage with reservation
-"""
-function get_min_max_limits(
-    x::PSY.HydroGen,
-    ::Type{<:InputActivePowerVariableLimitsConstraint},
-    ::Type{HydroDispatchPumpedStoragewReservation},
 )
     PSY.get_active_power_limits_pump(x)
 end

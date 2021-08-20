@@ -35,6 +35,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     duals::Vector{DataType}
     services::Vector{ServiceModel}
     time_series_labels::Dict{Type{<:TimeSeriesParameter}, String}
+    attributes::Dict{String, Any}
 
     function DeviceModel(
         ::Type{D},
@@ -42,7 +43,8 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         feedforward = nothing,
         use_slacks = false,
         duals = Vector{DataType}(),
-        time_series_labels = _initialize_timeseries_labels(D, B),
+        time_series_labels = initialize_timeseries_labels(D, B),
+        attributes = initialize_attributes(D, B),
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)
@@ -52,6 +54,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
             duals,
             Vector{ServiceModel}(),
             time_series_labels,
+            attributes,
         )
     end
 end
@@ -68,7 +71,8 @@ get_services(::Nothing) = nothing
 get_use_slacks(m::DeviceModel) = m.use_slacks
 get_duals(m::DeviceModel) = m.duals
 get_time_series_labels(m::DeviceModel) = m.time_series_labels
-
+get_attributes(m::DeviceModel) = m.attributes
+get_attribute(m::DeviceModel, key::String) = get(m.attributes, key, nothing)
 DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
 
 function _set_model!(
@@ -82,9 +86,16 @@ function _set_model!(
     dict[key] = model
 end
 
-function _initialize_timeseries_labels(
+function initialize_timeseries_labels(
     ::Type{D},
     ::Type{T},
 ) where {D <: PSY.Device, T <: AbstractDeviceFormulation}
     return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
+function initialize_attributes(
+    ::Type{D},
+    ::Type{T},
+) where {D <: PSY.Device, T <: AbstractDeviceFormulation}
+    return Dict{String, Any}()
 end

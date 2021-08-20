@@ -17,7 +17,11 @@
 end
 
 @testset "Storage Basic Storage With DC - PF" begin
-    device_model = DeviceModel(GenericBattery, BookKeeping)
+    device_model = DeviceModel(
+        GenericBattery,
+        BookKeeping;
+        attributes = Dict{String, Any}("reservation" => false),
+    )
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
@@ -26,7 +30,11 @@ end
 end
 
 @testset "Storage Basic Storage With AC - PF" begin
-    device_model = DeviceModel(GenericBattery, BookKeeping)
+    device_model = DeviceModel(
+        GenericBattery,
+        BookKeeping;
+        attributes = Dict{String, Any}("reservation" => false),
+    )
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
@@ -34,8 +42,8 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
-@testset "Storage with Reservation DC - PF" begin
-    device_model = DeviceModel(GenericBattery, BookKeepingwReservation)
+@testset "Storage with Reservation  & DC - PF" begin
+    device_model = DeviceModel(GenericBattery, BookKeeping)
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
@@ -43,8 +51,8 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
-@testset "Storage with Reservation With AC - PF" begin
-    device_model = DeviceModel(GenericBattery, BookKeepingwReservation)
+@testset "Storage with Reservation  & AC - PF" begin
+    device_model = DeviceModel(GenericBattery, BookKeeping)
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)

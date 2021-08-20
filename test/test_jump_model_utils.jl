@@ -54,7 +54,7 @@ end
     valid_model_bounds = Dict(
         :StopVariable_ThermalStandard => (min = 0.0, max = 1.0),
         :StartVariable_ThermalStandard => (min = 0.0, max = 1.0),
-        :ActivePowerVariable_ThermalStandard => (min = 0.2, max = 6.0),
+        :ActivePowerVariable_ThermalStandard => (min = 0.4, max = 6.0),
         :OnVariable_ThermalStandard => (min = 0.0, max = 1.0),
     )
     for (variable_key, variable_bounds) in model_bounds

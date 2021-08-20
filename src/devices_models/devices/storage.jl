@@ -3,7 +3,6 @@
 abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
-struct BookKeepingwReservation <: AbstractStorageFormulation end
 struct BatteryAncillaryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
 
@@ -96,66 +95,6 @@ get_min_max_limits(
 
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{InputActivePowerVariableLimitsConstraint},
-    U::Type{<:VariableType},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
-    use_parameters = built_for_simulation(container)
-    constraint = T()
-    variable = U()
-    component_type = V
-    time_steps = get_time_steps(container)
-    jump_variable = get_variable(container, variable, component_type)
-    names = [PSY.get_name(d) for d in devices]
-    binary_variables = [ReservationVariable()]
-
-    @assert length(binary_variables) == 1
-    varbin = get_variable(container, only(binary_variables), component_type)
-
-    names = [PSY.get_name(x) for x in devices]
-    # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
-    # In the future this can be updated
-    con_ub = add_cons_container!(
-        container,
-        constraint,
-        component_type,
-        names,
-        time_steps,
-        meta = "ub",
-    )
-    con_lb = add_cons_container!(
-        container,
-        constraint,
-        component_type,
-        names,
-        time_steps,
-        meta = "lb",
-    )
-
-    for device in devices, t in time_steps
-        ci_name = PSY.get_name(device)
-        limits = get_min_max_limits(device, T, W)
-        if JuMP.has_lower_bound(jump_variable[ci_name, t])
-            JuMP.set_lower_bound(jump_variable[ci_name, t], 0.0)
-        end
-        expression_ub = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
-        expression_lb = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
-        con_ub[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_ub <= limits.max * (1 - varbin[ci_name, t])
-        )
-        con_lb[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_lb >= limits.min * (1 - varbin[ci_name, t])
-        )
-    end
-end
-
-function add_constraints!(
-    container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
@@ -163,86 +102,11 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
-    use_parameters = built_for_simulation(container)
-    constraint = T()
-    variable = U()
-    component_type = V
-    time_steps = get_time_steps(container)
-    jump_variable = get_variable(container, variable, component_type)
-    names = [PSY.get_name(d) for d in devices]
-    binary_variables = [ReservationVariable()]
-
-    con_ub = add_cons_container!(
-        container,
-        constraint,
-        component_type,
-        names,
-        time_steps,
-        meta = "ub",
-    )
-    con_lb = add_cons_container!(
-        container,
-        constraint,
-        component_type,
-        names,
-        time_steps,
-        meta = "lb",
-    )
-
-    @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
-    varbin = get_variable(container, only(binary_variables), component_type)
-
-    for (i, device) in enumerate(devices), t in time_steps
-        ci_name = PSY.get_name(device)
-        # TODO: deal with additional expressions terms for services
-        expression_ub = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
-        expression_lb = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
-        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
-        con_ub[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_ub <= limits.max * varbin[ci_name, t]
-        )
-        con_lb[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_lb >= limits.min * varbin[ci_name, t]
-        )
+    if get_attribute(model, "reservation")
+        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+    else
+        add_range_constraints!(container, T, U, devices, model, X, feedforward)
     end
-end
-
-function add_constraints!(
-    container::OptimizationContainer,
-    T::Type{<:OutputActivePowerVariableLimitsConstraint},
-    U::Type{<:VariableType},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.Storage, W <: BookKeeping}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
-end
-
-function add_constraints!(
-    container::OptimizationContainer,
-    T::Type{ReactivePowerVariableLimitsConstraint},
-    U::Type{<:VariableType},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.Storage, W <: BookKeeping}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
-end
-
-function add_constraints!(
-    container::OptimizationContainer,
-    T::Type{InputActivePowerVariableLimitsConstraint},
-    U::Type{<:VariableType},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.Storage, W <: BookKeeping}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
 end
 
 ########################## Make initial Conditions for a Model #############################
