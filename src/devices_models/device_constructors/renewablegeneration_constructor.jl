@@ -1,7 +1,7 @@
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{R, D},
     ::Type{S},
 ) where {
@@ -17,9 +17,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{R, D},
     ::Type{S},
 ) where {
@@ -56,9 +56,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{R, D},
     ::Type{S},
 ) where {
@@ -73,9 +73,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{R, D},
     ::Type{S},
 ) where {
@@ -104,17 +104,17 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
@@ -135,17 +135,17 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}

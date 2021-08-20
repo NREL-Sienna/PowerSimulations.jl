@@ -46,17 +46,17 @@ end
 Construct model for HydroGen with FixedOutput Formulation
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     ::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
@@ -77,17 +77,17 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     ::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
@@ -106,9 +106,9 @@ end
 Construct model for HydroGen with RunOfRiver Dispatch Formulation
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -124,9 +124,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -168,9 +168,9 @@ Construct model for HydroGen with RunOfRiver Dispatch Formulation
 with only Active Power.
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -185,9 +185,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -219,9 +219,9 @@ end
 Construct model for HydroGen with ReservoirBudget Dispatch Formulation
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
@@ -241,9 +241,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
@@ -292,9 +292,9 @@ Construct model for HydroGen with ReservoirBudget Dispatch Formulation
 with only Active Power.
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
@@ -308,9 +308,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
@@ -349,9 +349,9 @@ end
 Construct model for HydroGen with ReservoirStorage Dispatch Formulation
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
@@ -391,9 +391,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
@@ -456,9 +456,9 @@ Construct model for HydroGen with ReservoirStorage Dispatch Formulation
 with only Active Power
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
@@ -493,9 +493,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
@@ -549,9 +549,9 @@ end
 Construct model for HydroGen with RunOfRiver Commitment Formulation
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
@@ -564,9 +564,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
@@ -604,9 +604,9 @@ Construct model for HydroGen with RunOfRiver Commitment Formulation
 with only Active Power.
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -622,9 +622,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -656,9 +656,9 @@ end
 Construct model for HydroGen with ReservoirBudget Commitment Formulation
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
@@ -674,9 +674,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
@@ -724,9 +724,9 @@ Construct model for HydroGen with ReservoirBudget Commitment Formulation
 with only Active Power.
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -745,9 +745,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -789,9 +789,9 @@ end
 Construct model for HydroGen with ReservoirStorage Commitment Formulation
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
@@ -837,9 +837,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
@@ -903,9 +903,9 @@ Construct model for HydroGen with ReservoirStorage Dispatch Formulation
 with only Active Power
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
@@ -945,9 +945,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
@@ -1003,9 +1003,9 @@ Construct model for HydroPumpedStorage with PumpedStorage Dispatch Formulation
 with only Active Power
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchPumpedStorage},
     ::Type{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
@@ -1032,9 +1032,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, HydroDispatchPumpedStorage},
     ::Type{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
@@ -1106,9 +1106,9 @@ Construct model for HydroPumpedStorage with PumpedStorage Dispatch Formulation w
 reservation constraint with only Active Power
 """
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchPumpedStoragewReservation},
     ::Type{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
@@ -1158,9 +1158,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{H, HydroDispatchPumpedStoragewReservation},
     ::Type{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}

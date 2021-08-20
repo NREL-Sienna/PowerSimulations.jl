@@ -43,16 +43,16 @@ function mock_construct_device!(problem::PSI.DecisionModel{MockOperationProblem}
     )
     if PSI.validate_available_devices(model, PSI.get_system(problem))
         PSI.construct_device!(
-            PSI.ArgumentConstructStage(),
             PSI.get_optimization_container(problem),
             PSI.get_system(problem),
+            PSI.ArgumentConstructStage(),
             model,
             PSI.get_network_formulation(template),
         )
         PSI.construct_device!(
-            PSI.ConstraintConstructStage(),
             PSI.get_optimization_container(problem),
             PSI.get_system(problem),
+            PSI.ConstraintConstructStage(),
             model,
             PSI.get_network_formulation(template),
         )

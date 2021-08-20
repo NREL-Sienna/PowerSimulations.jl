@@ -1,7 +1,7 @@
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -17,9 +17,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -57,9 +57,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -74,9 +74,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -105,9 +105,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, InterruptiblePowerLoad},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
@@ -120,9 +120,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{L, InterruptiblePowerLoad},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
@@ -156,9 +156,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, InterruptiblePowerLoad},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
@@ -170,9 +170,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{L, InterruptiblePowerLoad},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
@@ -197,17 +197,17 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
@@ -228,17 +228,17 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
@@ -254,9 +254,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -266,9 +266,9 @@ function construct_device!(
 } end
 
 function construct_device!(
-    ccs::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ccs::ConstraintConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -282,6 +282,6 @@ function construct_device!(
         )
     end
 
-    construct_device!(ccs, container, sys, DeviceModel(L, StaticPowerLoad), S)
+    construct_device!(container, sys, ccs, DeviceModel(L, StaticPowerLoad), S)
     return
 end

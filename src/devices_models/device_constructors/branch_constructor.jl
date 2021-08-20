@@ -1,98 +1,98 @@
 # These 3 methods are defined on concrete formulations of the branches to avoid ambiguity
 construct_device!(
-    ::ArgumentConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{<:PSY.ACBranch, StaticBranch},
     ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    ::ConstraintConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ConstraintConstructStage,
     ::DeviceModel{<:PSY.ACBranch, StaticBranch},
     ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    ::ArgumentConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{<:PSY.ACBranch, StaticBranchBounds},
     ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    ::ConstraintConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ConstraintConstructStage,
     ::DeviceModel{<:PSY.ACBranch, StaticBranchBounds},
     ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    ::ArgumentConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},
     ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    ::ConstraintConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ConstraintConstructStage,
     ::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},
     ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    ::ArgumentConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{<:PSY.DCBranch, <:AbstractDCLineFormulation},
     ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
     ::ConstraintConstructStage,
-    ::OptimizationContainer,
-    ::PSY.System,
     ::DeviceModel{<:PSY.DCBranch, <:AbstractDCLineFormulation},
     ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
-    ::ArgumentConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) = nothing
 
 construct_device!(
-    ::ConstraintConstructStage,
     ::OptimizationContainer,
     ::PSY.System,
+    ::ConstraintConstructStage,
     ::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) = nothing
 
 # For DC Power only. Implements constraints
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel} end
 
 # For DC Power only. Implements constraints
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
@@ -105,9 +105,9 @@ end
 
 # For DC Power only
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranch},
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
@@ -117,9 +117,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, StaticBranch},
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
@@ -139,9 +139,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranchBounds},
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
@@ -150,9 +150,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, StaticBranchBounds},
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
@@ -172,9 +172,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranchUnbounded},
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
@@ -183,9 +183,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, StaticBranchUnbounded},
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
@@ -204,17 +204,17 @@ end
 
 # For AC Power only. Implements Bounds on the active power and rating constraints on the aparent power
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
@@ -241,17 +241,17 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranchBounds},
     ::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, StaticBranchBounds},
     ::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
@@ -261,17 +261,17 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, <:AbstractDCLineFormulation},
     ::NetworkModel{S},
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel} end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, <:AbstractDCLineFormulation},
     ::NetworkModel{S},
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
@@ -281,9 +281,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, U},
     ::NetworkModel{S},
 ) where {
@@ -298,9 +298,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, U},
     ::NetworkModel{S},
 ) where {
@@ -315,9 +315,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{B, U},
     ::NetworkModel{S},
 ) where {
@@ -331,9 +331,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{B, U},
     ::NetworkModel{S},
 ) where {

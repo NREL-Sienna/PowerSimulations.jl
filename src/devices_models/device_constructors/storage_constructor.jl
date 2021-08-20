@@ -15,9 +15,9 @@ function initialize_attributes(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, D},
     ::Type{S},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
@@ -36,9 +36,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{St, D},
     ::Type{S},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
@@ -89,9 +89,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, D},
     ::Type{S},
 ) where {
@@ -113,9 +113,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{St, D},
     ::Type{S},
 ) where {
@@ -160,9 +160,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, BookKeepingwReservation},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
@@ -180,9 +180,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{St, BookKeepingwReservation},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
@@ -232,9 +232,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, BookKeepingwReservation},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
@@ -251,9 +251,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{St, BookKeepingwReservation},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
@@ -295,9 +295,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
@@ -322,9 +322,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
@@ -386,9 +386,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
@@ -412,9 +412,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
@@ -467,9 +467,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
@@ -488,9 +488,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
@@ -542,9 +542,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ArgumentConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
@@ -562,9 +562,9 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::ConstraintConstructStage,
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ConstraintConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
