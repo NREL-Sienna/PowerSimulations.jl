@@ -263,22 +263,22 @@ where limits in constraint_infos.
 """
 function add_reserve_range_constraints!(
     container::OptimizationContainer,
-    T::Type{Z},
-    U::Type{<:VariableType},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
+    T::Type{U},
+    V::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{W},
+    model::DeviceModel{W, X},
+    Y::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
-    V <: PSY.Component,
-    W <: AbstractDeviceFormulation,
-    Z <:
+    U <:
     Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    W <: PSY.Component,
+    X <: AbstractDeviceFormulation,
 }
     use_parameters = built_for_simulation(container)
     constraint = T()
-    variable = U()
-    component_type = V
+    variable = V()
+    component_type = W
     time_steps = get_time_steps(container)
     jump_variable = get_variable(container, variable, component_type)
     names = [PSY.get_name(d) for d in devices]
@@ -312,7 +312,7 @@ function add_reserve_range_constraints!(
         end
         expression_ub = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
         expression_lb = JuMP.AffExpr(0.0, jump_variable[ci_name, t] => 1.0)
-        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        limits = get_min_max_limits(device, T, X) # depends on constraint type and formulation type
         con_ub[ci_name, t] = JuMP.@constraint(
             container.JuMPmodel,
             expression_ub <= limits.max * varbin[ci_name, t]
