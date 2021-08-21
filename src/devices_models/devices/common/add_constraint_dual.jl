@@ -1,4 +1,4 @@
-function add_dual_variable!(
+function add_constraint_dual!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
@@ -12,7 +12,7 @@ function add_dual_variable!(
     return
 end
 
-function add_dual_variable!(
+function add_constraint_dual!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::NetworkModel{T},
@@ -26,7 +26,7 @@ function add_dual_variable!(
     return
 end
 
-function add_dual_variable!(
+function add_constraint_dual!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::NetworkModel{T},
@@ -39,7 +39,7 @@ function add_dual_variable!(
     return
 end
 
-function add_dual_variable!(
+function add_constraint_dual!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::ServiceModel{T, D},

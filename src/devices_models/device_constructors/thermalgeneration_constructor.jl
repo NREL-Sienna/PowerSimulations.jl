@@ -1,30 +1,27 @@
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ModelConstructStage,
     ::DeviceModel{T, FixedOutput},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     nodal_expression!(
         container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 """
-This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+This function creates the arguments for the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
 ) where {
@@ -33,10 +30,6 @@ function construct_device!(
     S <: PM.AbstractPowerModel,
 }
     devices = get_available_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
@@ -51,7 +44,23 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, D())
+end
 
+"""
+This function creates the constraints for the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, D},
+    ::Type{S},
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractStandardUnitCommitment,
+    S <: PM.AbstractPowerModel,
+}
+    devices = get_available_components(T, sys)
     # Constraints
     # TODO DT: why aren't these passing variable and constraint instances?
     add_constraints!(
@@ -79,16 +88,16 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 """
-This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+This function creates the arguments model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
 ) where {
@@ -97,10 +106,6 @@ function construct_device!(
     S <: PM.AbstractActivePowerModel,
 }
     devices = get_available_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
@@ -114,7 +119,23 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, D())
+end
 
+"""
+This function creates the constraints for the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, D},
+    ::Type{S},
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractStandardUnitCommitment,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(T, sys)
     # Constraints
     add_constraints!(
         container,
@@ -132,8 +153,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 """
@@ -142,14 +162,11 @@ This function creates the model for a full thermal dispatch formulation dependin
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, ThermalBasicUnitCommitment())
@@ -160,6 +177,19 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
+end
+
+"""
+This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalBasicUnitCommitment},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    devices = get_available_components(T, sys)
 
     # Constraints
     # TODO: active_power_constraints
@@ -187,24 +217,20 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 """
-This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+This function creates the arguments for the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, ThermalBasicUnitCommitment())
@@ -214,6 +240,19 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
+end
+
+"""
+This function creates the constraints for the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalBasicUnitCommitment},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(T, sys)
 
     # Constraints
     add_constraints!(
@@ -230,8 +269,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 """
@@ -240,14 +278,11 @@ This function creates the model for a full thermal dispatch formulation dependin
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalRampLimited},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, ThermalRampLimited())
@@ -255,6 +290,19 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalRampLimited())
+end
+
+"""
+This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalRampLimited},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    devices = get_available_components(T, sys)
 
     # Constraints
     add_constraints!(
@@ -280,30 +328,39 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 """
-This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+This function creates the arguments for the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalRampLimited},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, ThermalRampLimited())
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalRampLimited())
+end
+
+"""
+This function creates the constraints for the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalRampLimited},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(T, sys)
 
     # Constraints
     add_constraints!(
@@ -320,13 +377,13 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
 ) where {
@@ -336,15 +393,23 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    if !validate_available_devices(T, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+end
 
-    # Initial Conditions
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, D},
+    ::Type{S},
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalDispatchFormulation,
+    S <: PM.AbstractPowerModel,
+}
+    devices = get_available_components(T, sys)
 
     # Constraints
     add_constraints!(
@@ -369,13 +434,13 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
 ) where {
@@ -385,14 +450,22 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    if !validate_available_devices(T, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+end
 
-    # Initial Conditions
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, D},
+    ::Type{S},
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalDispatchFormulation,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(T, sys)
 
     # Constraints
     add_constraints!(
@@ -408,23 +481,18 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
-    if !validate_available_devices(PSY.ThermalMultiStart, devices)
-        return
-    end
-
     # Variables
     add_variables!(
         container,
@@ -451,6 +519,17 @@ function construct_device!(
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
     # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    ::Type{S};
+    kwargs...,
+) where {S <: PM.AbstractPowerModel}
+    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
     # Constraints
     add_constraints!(
@@ -488,22 +567,18 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
-    if !validate_available_devices(PSY.ThermalMultiStart, devices)
-        return
-    end
-
     # Variables
     add_variables!(
         container,
@@ -522,6 +597,16 @@ function construct_device!(
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+    ::Type{S},
+) where {S <: PM.AbstractActivePowerModel}
+    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
@@ -553,21 +638,17 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(
@@ -593,7 +674,16 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
+end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalCompactUnitCommitment},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    devices = PSY.get_components(T, sys)
     # Constraints
     add_constraints!(
         container,
@@ -620,21 +710,17 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(
@@ -654,7 +740,16 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
+end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalCompactUnitCommitment},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = PSY.get_components(T, sys)
     # Constraints
     add_constraints!(
         container,
@@ -671,21 +766,17 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
@@ -696,6 +787,16 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalCompactDispatch},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    devices = PSY.get_components(T, sys)
 
     # Constraints
     add_constraints!(
@@ -720,21 +821,17 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
-
-    if !validate_available_devices(T, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
@@ -744,6 +841,16 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalCompactDispatch},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = PSY.get_components(T, sys)
 
     # Constraints
     add_constraints!(
@@ -759,6 +866,5 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
-
-    return
+    add_constraint_dual!(container, sys, model)
 end

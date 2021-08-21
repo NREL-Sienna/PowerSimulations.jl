@@ -77,7 +77,7 @@ function add_variables!(container::OptimizationContainer, ::Type{T}) where {T <:
     variable = add_var_container!(container, T(), PSY.Area, time_steps)
     for t in time_steps
         variable[t] = JuMP.@variable(container.JuMPmodel,
-        # base_name ="ΔF_{$(t)}"
+        base_name ="ΔF_{$(t)}"
         )
     end
 end
@@ -109,13 +109,13 @@ function balancing_auxiliary_variables!(container, sys)
     for t in time_steps, a in area_names
         R_up_emergency[a, t] = JuMP.@variable(
             container.JuMPmodel,
-            # base_name ="Re_up_{$(a),$(t)}",
+            base_name ="Re_up_{$(a),$(t)}",
             lower_bound = 0.0
         )
         emergency_up[a, t] = R_up_emergency[a, t] + 0.0
         R_dn_emergency[a, t] = JuMP.@variable(
             container.JuMPmodel,
-            # base_name ="Re_dn_{$(a),$(t)}",
+            base_name ="Re_dn_{$(a),$(t)}",
             lower_bound = 0.0
         )
         emergency_dn[a, t] = R_dn_emergency[a, t] + 0.0
@@ -215,7 +215,7 @@ function smooth_ace_pid!(container::OptimizationContainer, services::Vector{PSY.
             RAW_ACE[a, t] = -10 * B * Δf[t] + 0.0
             SACE[a, t] =
                 JuMP.@variable(container.JuMPmodel,
-                # base_name ="SACE_{$(a),$(t)}"
+                base_name ="SACE_{$(a),$(t)}"
                 )
             if t == 1
                 SACE_ini =

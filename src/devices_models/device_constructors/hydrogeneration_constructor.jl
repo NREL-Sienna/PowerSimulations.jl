@@ -48,14 +48,19 @@ Construct model for HydroGen with FixedOutput Formulation
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{H, FixedOutput},
+    ::Type{S},
+) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel} end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     nodal_expression!(
         container,
@@ -67,6 +72,7 @@ function construct_device!(
         devices,
         ReactivePowerTimeSeriesParameter("max_active_power"),
     )
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -74,20 +80,26 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     ::DeviceModel{H, FixedOutput},
+    ::Type{S},
+) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel} end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     nodal_expression!(
         container,
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -98,6 +110,7 @@ Construct model for HydroGen with RunOfRiver Dispatch Formulation
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -107,13 +120,23 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    if !validate_available_devices(H, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, D},
+    ::Type{S},
+) where {
+    H <: PSY.HydroGen,
+    D <: AbstractHydroDispatchFormulation,
+    S <: PM.AbstractPowerModel,
+}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -138,6 +161,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -149,6 +173,7 @@ with only Active Power.
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -158,12 +183,22 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    if !validate_available_devices(H, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, D},
+    ::Type{S},
+) where {
+    H <: PSY.HydroGen,
+    D <: AbstractHydroDispatchFormulation,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -180,6 +215,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -189,14 +225,11 @@ Construct model for HydroGen with ReservoirBudget Dispatch Formulation
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
@@ -209,6 +242,16 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, HydroDispatchReservoirBudget},
+    ::Type{S},
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -245,6 +288,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -255,20 +299,27 @@ with only Active Power.
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, HydroDispatchReservoirBudget},
+    ::Type{S},
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -295,6 +346,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -305,14 +357,11 @@ Construct model for HydroGen with ReservoirStorage Dispatch Formulation
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirStorage())
@@ -345,7 +394,16 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, HydroDispatchReservoirStorage},
+    ::Type{S},
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
+    devices = get_available_components(H, sys)
     # Constraints
     add_constraints!(
         container,
@@ -396,6 +454,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -406,14 +465,11 @@ with only Active Power
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     # Variables
 
@@ -441,6 +497,16 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, HydroDispatchReservoirStorage},
+    ::Type{S},
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -482,6 +548,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -492,20 +559,26 @@ Construct model for HydroGen with RunOfRiver Commitment Formulation
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    if !validate_available_devices(H, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
+end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, D},
+    ::Type{S},
+) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
+    devices = get_available_components(H, sys)
     # Constraints
     add_constraints!(
         container,
@@ -531,6 +604,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -541,6 +615,7 @@ with only Active Power.
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -550,14 +625,23 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    if !validate_available_devices(H, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
+end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, D},
+    ::Type{S},
+) where {
+    H <: PSY.HydroGen,
+    D <: HydroCommitmentRunOfRiver,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(H, sys)
     # Constraints
     add_constraints!(
         container,
@@ -574,6 +658,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -583,14 +668,11 @@ Construct model for HydroGen with ReservoirBudget Commitment Formulation
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
@@ -599,6 +681,16 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, D},
+    ::Type{S},
+) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -633,6 +725,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -644,6 +737,7 @@ with only Active Power.
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, D},
     ::Type{S},
 ) where {
@@ -653,16 +747,26 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    if !validate_available_devices(H, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, D},
+    ::Type{S},
+) where {
+    H <: PSY.HydroGen,
+    D <: HydroCommitmentReservoirBudget,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -689,6 +793,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -698,14 +803,11 @@ Construct model for HydroGen with ReservoirStorage Commitment Formulation
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     # Variables
     add_variables!(
@@ -744,6 +846,16 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, HydroCommitmentReservoirStorage},
+    ::Type{S},
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -794,6 +906,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -805,14 +918,11 @@ with only Active Power
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     # Variables
     add_variables!(
@@ -845,6 +955,16 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, HydroCommitmentReservoirStorage},
+    ::Type{S},
+) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -887,6 +1007,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -898,14 +1019,11 @@ with only Active Power
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchPumpedStorage},
     ::Type{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
-
-    if !validate_available_devices(H, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerInVariable, devices, HydroDispatchPumpedStorage())
@@ -925,6 +1043,16 @@ function construct_device!(
     # Parameters
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
     add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{H, HydroDispatchPumpedStorage},
+    ::Type{S},
+) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(H, sys)
 
     # Constraints
     add_constraints!(
@@ -984,5 +1112,6 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end

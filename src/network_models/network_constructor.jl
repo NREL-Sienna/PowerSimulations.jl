@@ -10,6 +10,8 @@ function construct_network!(
     get_use_slacks(model) && add_slacks!(container, CopperPlatePowerModel)
 
     copper_plate(container, :nodal_balance_active, bus_count)
+
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -30,6 +32,7 @@ function construct_network!(
     end
 
     area_balance(container, :nodal_balance_active, area_mapping, branches)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -49,6 +52,7 @@ function construct_network!(
     get_use_slacks(model) && add_slacks!(container, StandardPTDFModel)
 
     copper_plate(container, :nodal_balance_active, length(buses))
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -68,6 +72,7 @@ function construct_network!(
 
     add_pm_expr_refs!(container, T, sys)
     copper_plate(container, :nodal_balance_active, length(PSY.get_components(PSY.Bus, sys)))
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -94,6 +99,7 @@ function construct_network!(
     add_pm_var_refs!(container, T, sys)
     add_pm_con_refs!(container, T, sys)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -118,6 +124,7 @@ function construct_network!(
     powermodels_network!(container, T, sys, template, instantiate_model)
     add_pm_var_refs!(container, T, sys)
     add_pm_con_refs!(container, T, sys)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -142,5 +149,6 @@ function construct_network!(
     powermodels_network!(container, T, sys, template, instantiate_model)
     add_pm_var_refs!(container, T, sys)
     add_pm_con_refs!(container, T, sys)
+    add_constraint_dual!(container, sys, model)
     return
 end
