@@ -307,19 +307,31 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         #  TODO: Add dual variable container for services
     end
 
-    for stage in [ArgumentConstructStage(), ModelConstructStage()]
-        for device_model in values(template.devices)
-            @debug "Building $stage for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
-                :ConstructGroup
-            TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
-                if validate_available_devices(device_model, sys)
-                    construct_device!(container, sys, stage, device_model, transmission)
-                end
-                @debug get_problem_size(container)
-                if stage == ArgumentConstructStage()
-                    add_dual_variable!(container, sys, device_model)
-                end
+    for device_model in values(template.devices)
+        @debug "Building $stage for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
+            :ConstructGroup
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
+            if validate_available_devices(device_model, sys)
+                construct_device!(container, sys, ArgumentConstructStage(), device_model, transmission)
             end
+            @debug get_problem_size(container)
+        end
+    end
+
+    for branch_model in values(template.branches)
+        @debug "Building Arguments for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
+            :ConstructGroup
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
+            if validate_available_devices(branch_model, sys)
+                construct_device!(
+                    container,
+                    sys,
+                    stage,
+                    branch_model,
+                    transmission_model,
+                )
+            end
+            @debug get_problem_size(container)
         end
     end
 
@@ -327,28 +339,36 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         @debug "Building $(transmission) network formulation"
         construct_network!(container, sys, transmission_model, template)
         @debug get_problem_size(container)
-        add_dual_variable!(container, sys, transmission_model)
     end
 
-    for stage in [ArgumentConstructStage(), ModelConstructStage()]
-        for branch_model in values(template.branches)
-            @debug "Building $stage for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
-                :ConstructGroup
-            TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
-                if validate_available_devices(branch_model, sys)
-                    construct_device!(
-                        container,
-                        sys,
-                        stage,
-                        branch_model,
-                        transmission_model,
-                    )
-                end
-                @debug get_problem_size(container)
-                if stage == ArgumentConstructStage()
-                    add_dual_variable!(container, sys, branch_model)
-                end
+
+    for device_model in values(template.devices)
+        @debug "Building Model for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
+            :ConstructGroup
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
+            if validate_available_devices(device_model, sys)
+                construct_device!(container, sys, ModelConstructStage(), device_model, transmission)
             end
+            @debug get_problem_size(container)
+            add_constraint_dual!(container, sys, device_model)
+        end
+    end
+
+    for branch_model in values(template.branches)
+        @debug "Building Model for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
+            :ConstructGroup
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
+            if validate_available_devices(branch_model, sys)
+                construct_device!(
+                    container,
+                    sys,
+                    ModelConstructStage(),
+                    branch_model,
+                    transmission_model,
+                )
+            end
+            @debug get_problem_size(container)
+            add_constraint_dual!(container, sys, branch_model)
         end
     end
 
