@@ -308,7 +308,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     end
 
     for device_model in values(template.devices)
-        @debug "Building $stage for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
+        @debug "Building Arguments for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
             :ConstructGroup
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             if validate_available_devices(device_model, sys)
@@ -329,7 +329,13 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             :ConstructGroup
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
             if validate_available_devices(branch_model, sys)
-                construct_device!(container, sys, stage, branch_model, transmission_model)
+                construct_device!(
+                    container,
+                    sys,
+                    ArgumentConstructStage(),
+                    branch_model,
+                    transmission_model,
+                )
             end
             @debug get_problem_size(container)
         end
