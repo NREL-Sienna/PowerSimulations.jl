@@ -365,7 +365,6 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         @debug get_problem_size(container)
     end
 
-
     for branch_model in values(template.branches)
         @debug "Building Model for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
             :ConstructGroup
