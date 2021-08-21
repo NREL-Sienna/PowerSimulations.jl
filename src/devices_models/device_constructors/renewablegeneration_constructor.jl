@@ -118,7 +118,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    ::DeviceModel{R, FixedOutput},
+    model::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(R, sys)
@@ -150,7 +150,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    ::DeviceModel{R, FixedOutput},
+    model::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(R, sys)
