@@ -1,6 +1,7 @@
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -10,13 +11,23 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    if !validate_available_devices(L, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{L, D},
+    ::Type{S},
+) where {
+    L <: PSY.ControllableLoad,
+    D <: AbstractControllablePowerLoadFormulation,
+    S <: PM.AbstractPowerModel,
+}
+    devices = get_available_components(L, sys)
 
     # Constraints
     add_constraints!(
@@ -42,12 +53,14 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -57,12 +70,22 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    if !validate_available_devices(L, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{L, D},
+    ::Type{S},
+) where {
+    L <: PSY.ControllableLoad,
+    D <: AbstractControllablePowerLoadFormulation,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(L, sys)
 
     # Constraints
     add_constraints!(
@@ -79,25 +102,33 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, InterruptiblePowerLoad},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
-    if !validate_available_devices(L, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{L, InterruptiblePowerLoad},
+    ::Type{S},
+) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
+    devices = get_available_components(L, sys)
 
     # Constraints
     add_constraints!(
@@ -123,24 +154,32 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, InterruptiblePowerLoad},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
-    if !validate_available_devices(L, devices)
-        return
-    end
-
     # Variables
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{L, InterruptiblePowerLoad},
+    ::Type{S},
+) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(L, sys)
 
     # Constraints
     add_constraints!(
@@ -157,20 +196,26 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{L, StaticPowerLoad},
+    ::Type{S},
+) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel} end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
-
-    if !validate_available_devices(L, devices)
-        return
-    end
 
     nodal_expression!(
         container,
@@ -183,20 +228,26 @@ function construct_device!(
         ReactivePowerTimeSeriesParameter("max_active_power"),
     )
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{L, StaticPowerLoad},
+    ::Type{S},
+) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel} end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
-
-    if !validate_available_devices(L, devices)
-        return
-    end
 
     nodal_expression!(
         container,
@@ -210,6 +261,19 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{L, D},
+    ::Type{S},
+) where {
+    L <: PSY.StaticLoad,
+    D <: AbstractControllablePowerLoadFormulation,
+    S <: PM.AbstractPowerModel,
+} end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ccs::ModelConstructStage,
     model::DeviceModel{L, D},
     ::Type{S},
 ) where {
@@ -223,6 +287,6 @@ function construct_device!(
         )
     end
 
-    construct_device!(container, sys, DeviceModel(L, StaticPowerLoad), S)
+    construct_device!(container, sys, ccs, DeviceModel(L, StaticPowerLoad), S)
     return
 end

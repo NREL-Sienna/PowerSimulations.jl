@@ -83,7 +83,7 @@ function add_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             container.JuMPmodel,
-            # base_name ="$(encode_symbol(D, T))_{$(name), $(t)}",
+            base_name = "$(variable_type)_$(D)_$(T)_{$(name), $(t)}",
             binary = binary
         )
 
@@ -142,7 +142,7 @@ function add_service_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             container.JuMPmodel,
-            # base_name ="$(var_key)_{$(name), $(t)}",
+            base_name = "$(variable_type)_$(D)_$(T)_{$(name), $(t)}",
             binary = binary
         )
 

@@ -1,3 +1,4 @@
+using JuliaFormatter
 main_paths = ["."]
 for main_path in main_paths
     format(

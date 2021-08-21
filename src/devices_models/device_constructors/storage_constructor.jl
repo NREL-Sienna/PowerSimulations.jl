@@ -17,14 +17,11 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, D},
     ::Type{S},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
-
-    if !validate_available_devices(St, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerInVariable, devices, D())
@@ -36,6 +33,16 @@ function construct_device!(
     end
     # Initial Conditions
     initial_conditions!(container, devices, D())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, D},
+    ::Type{S},
+) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
+    devices = get_available_components(St, sys)
 
     # Constraints
     add_constraints!(
@@ -78,12 +85,14 @@ function construct_device!(
         get_feedforward(model),
     )
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, D},
     ::Type{S},
 ) where {
@@ -92,10 +101,6 @@ function construct_device!(
     S <: PM.AbstractActivePowerModel,
 }
     devices = get_available_components(St, sys)
-
-    if !validate_available_devices(St, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerInVariable, devices, D())
@@ -106,7 +111,20 @@ function construct_device!(
     end
     # Initial Conditions
     initial_conditions!(container, devices, D())
+end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, D},
+    ::Type{S},
+) where {
+    St <: PSY.Storage,
+    D <: AbstractStorageFormulation,
+    S <: PM.AbstractActivePowerModel,
+}
+    devices = get_available_components(St, sys)
     # Constraints
     add_constraints!(
         container,
@@ -139,20 +157,18 @@ function construct_device!(
         get_feedforward(model),
     )
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
-
-    if !validate_available_devices(St, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerInVariable, devices, EnergyTarget())
@@ -170,6 +186,16 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, EnergyTarget},
+    ::Type{S},
+) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
+    devices = get_available_components(St, sys)
 
     # Constraints
     add_constraints!(
@@ -222,6 +248,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -229,14 +256,11 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
-
-    if !validate_available_devices(St, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerInVariable, devices, EnergyTarget())
@@ -253,6 +277,16 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, EnergyTarget},
+    ::Type{S},
+) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(St, sys)
 
     # Constraints
     add_constraints!(
@@ -297,20 +331,18 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
-
-    if !validate_available_devices(St, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerInVariable, devices, BatteryAncillaryServices())
@@ -322,6 +354,16 @@ function construct_device!(
     end
     # Initial Conditions
     initial_conditions!(container, devices, BatteryAncillaryServices())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, BatteryAncillaryServices},
+    ::Type{S},
+) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
+    devices = get_available_components(St, sys)
 
     # Constraints
     add_constraints!(
@@ -364,6 +406,7 @@ function construct_device!(
         get_feedforward(model),
     )
     reserve_contribution_constraint!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -371,14 +414,11 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
-
-    if !validate_available_devices(St, devices)
-        return
-    end
 
     # Variables
     add_variables!(container, ActivePowerInVariable, devices, BatteryAncillaryServices())
@@ -389,6 +429,16 @@ function construct_device!(
     end
     # Initial Conditions
     initial_conditions!(container, devices, BatteryAncillaryServices())
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, BatteryAncillaryServices},
+    ::Type{S},
+) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(St, sys)
 
     # Constraints
     add_constraints!(
@@ -423,5 +473,6 @@ function construct_device!(
     )
     reserve_contribution_constraint!(container, devices, model, S, get_feedforward(model))
 
+    add_constraint_dual!(container, sys, model)
     return
 end
