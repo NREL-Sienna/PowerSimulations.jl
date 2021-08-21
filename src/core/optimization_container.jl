@@ -341,12 +341,6 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         end
     end
 
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
-        @debug "Building $(transmission) network formulation"
-        construct_network!(container, sys, transmission_model, template)
-        @debug get_problem_size(container)
-    end
-
     for device_model in values(template.devices)
         @debug "Building Model for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
             :ConstructGroup
@@ -363,6 +357,14 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             @debug get_problem_size(container)
         end
     end
+
+    # This function should be called after construct_device ModelConstructStage
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
+        @debug "Building $(transmission) network formulation"
+        construct_network!(container, sys, transmission_model, template)
+        @debug get_problem_size(container)
+    end
+
 
     for branch_model in values(template.branches)
         @debug "Building Model for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =

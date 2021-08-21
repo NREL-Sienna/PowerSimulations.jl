@@ -255,7 +255,6 @@ function construct_device!(
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
 
-    add_constraint_dual!(container, sys, model)
     return
 end
 
