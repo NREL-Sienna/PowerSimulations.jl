@@ -236,7 +236,7 @@ function pwl_gencost_sos!(
     for i in 1:length(cost_data)
         pwlvars[i] = JuMP.@variable(
             container.JuMPmodel,
-            # base_name ="{$(variable)}_{sos}",
+            base_name = "{$(variable)}_{sos}",
             start = 0.0,
             lower_bound = 0.0,
             upper_bound = 1.0
@@ -304,7 +304,7 @@ function pwl_gencost_linear!(
     for i in 1:length(cost_data)
         pwlvar = JuMP.@variable(
             container.JuMPmodel,
-            # base_name ="{$(variable)}_{pwl_$(i)}",
+            base_name = "{$(variable)}_{pwl_$(i)}",
             lower_bound = 0.0,
             upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i] / base_power
         )

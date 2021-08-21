@@ -14,7 +14,7 @@ function reserve_slacks(
     for jx in time_steps
         variable[jx] = JuMP.@variable(
             container.JuMPmodel,
-            # base_name ="$slacks_{$(jx)}",
+            base_name = "$slacks_{$(jx)}",
             lower_bound = 0.0
         )
         JuMP.add_to_expression!(container.cost_function, variable[jx] * SERVICES_SLACK_COST)
