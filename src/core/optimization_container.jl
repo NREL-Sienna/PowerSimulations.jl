@@ -372,7 +372,6 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
                 )
             end
             @debug get_problem_size(container)
-            add_constraint_dual!(container, sys, branch_model)
         end
     end
 
