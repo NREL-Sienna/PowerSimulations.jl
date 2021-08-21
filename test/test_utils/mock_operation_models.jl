@@ -52,7 +52,7 @@ function mock_construct_device!(problem::PSI.DecisionModel{MockOperationProblem}
         PSI.construct_device!(
             PSI.get_optimization_container(problem),
             PSI.get_system(problem),
-            PSI.ConstraintConstructStage(),
+            PSI.ModelConstructStage(),
             model,
             PSI.get_network_formulation(template),
         )

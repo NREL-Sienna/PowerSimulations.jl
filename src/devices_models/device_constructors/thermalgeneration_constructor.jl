@@ -1,7 +1,7 @@
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     ::DeviceModel{T, FixedOutput},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
@@ -51,7 +51,7 @@ This function creates the constraints for the model for a full thermal dispatch 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
 ) where {
@@ -125,7 +125,7 @@ This function creates the constraints for the model for a full thermal dispatch 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
 ) where {
@@ -182,7 +182,7 @@ This function creates the model for a full thermal dispatch formulation dependin
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
@@ -244,7 +244,7 @@ This function creates the constraints for the model for a full thermal dispatch 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
@@ -293,7 +293,7 @@ This function creates the model for a full thermal dispatch formulation dependin
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, ThermalRampLimited},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
@@ -350,7 +350,7 @@ This function creates the constraints for the model for a full thermal dispatch 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, ThermalRampLimited},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
@@ -394,7 +394,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
 ) where {
@@ -449,7 +449,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
 ) where {
@@ -516,7 +516,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S};
     kwargs...,
@@ -593,7 +593,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
@@ -669,7 +669,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
@@ -734,7 +734,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
@@ -780,7 +780,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
@@ -833,7 +833,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}

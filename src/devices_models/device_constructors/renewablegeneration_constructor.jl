@@ -19,7 +19,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{R, D},
     ::Type{S},
 ) where {
@@ -75,7 +75,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{R, D},
     ::Type{S},
 ) where {
@@ -114,7 +114,7 @@ function construct_device!(
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
@@ -145,7 +145,7 @@ function construct_device!(
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}

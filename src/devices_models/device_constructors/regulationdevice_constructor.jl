@@ -49,7 +49,7 @@ This function creates the model for a full thermal dispatch formulation dependin
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
     ::Type{S},
 ) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
@@ -137,7 +137,7 @@ This function creates the model for a full thermal dispatch formulation dependin
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
     ::Type{S},
 ) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
@@ -193,7 +193,7 @@ This function creates the model for a full thermal dispatch formulation dependin
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ConstraintConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
     ::Type{S},
 ) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}

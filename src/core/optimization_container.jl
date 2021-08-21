@@ -291,7 +291,7 @@ end
 
 abstract type ConstructStage end
 struct ArgumentConstructStage end
-struct ConstraintConstructStage end
+struct ModelConstructStage end
 
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
@@ -307,7 +307,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         #  TODO: Add dual variable container for services
     end
 
-    for stage in [ArgumentConstructStage(), ConstraintConstructStage()]
+    for stage in [ArgumentConstructStage(), ModelConstructStage()]
         for device_model in values(template.devices)
             @debug "Building $stage for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
                 :ConstructGroup
@@ -330,7 +330,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         add_dual_variable!(container, sys, transmission_model)
     end
 
-    for stage in [ArgumentConstructStage(), ConstraintConstructStage()]
+    for stage in [ArgumentConstructStage(), ModelConstructStage()]
         for branch_model in values(template.branches)
             @debug "Building $stage for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
                 :ConstructGroup
