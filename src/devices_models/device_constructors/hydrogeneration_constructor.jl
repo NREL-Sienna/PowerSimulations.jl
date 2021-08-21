@@ -72,6 +72,7 @@ function construct_device!(
         devices,
         ReactivePowerTimeSeriesParameter("max_active_power"),
     )
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -98,6 +99,7 @@ function construct_device!(
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -159,6 +161,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -212,6 +215,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -284,6 +288,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -341,6 +346,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -448,6 +454,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -541,6 +548,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -596,6 +604,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -649,6 +658,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -715,6 +725,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -782,6 +793,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -894,6 +906,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -994,6 +1007,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -1098,130 +1112,6 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
 
-    return
-end
-
-"""
-Construct model for HydroPumpedStorage with PumpedStorage Dispatch Formulation with
-reservation constraint with only Active Power
-"""
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::DeviceModel{H, HydroDispatchPumpedStoragewReservation},
-    ::Type{S},
-) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
-
-    # Variables
-    add_variables!(
-        container,
-        ActivePowerInVariable,
-        devices,
-        HydroDispatchPumpedStoragewReservation(),
-    )
-    add_variables!(
-        container,
-        ActivePowerOutVariable,
-        devices,
-        HydroDispatchPumpedStoragewReservation(),
-    )
-    add_variables!(
-        container,
-        EnergyVariableUp,
-        devices,
-        HydroDispatchPumpedStoragewReservation(),
-    )
-    add_variables!(
-        container,
-        EnergyVariableDown,
-        devices,
-        HydroDispatchPumpedStoragewReservation(),
-    )
-    add_variables!(
-        container,
-        WaterSpillageVariable,
-        devices,
-        HydroDispatchPumpedStoragewReservation(),
-    )
-    add_variables!(
-        container,
-        ReservationVariable,
-        devices,
-        HydroDispatchPumpedStoragewReservation(),
-    )
-
-    # Parameters
-    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
-    add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
-end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{H, HydroDispatchPumpedStoragewReservation},
-    ::Type{S},
-) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
-
-    # Constraints
-    add_constraints!(
-        container,
-        OutputActivePowerVariableLimitsConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        InputActivePowerVariableLimitsConstraint,
-        ActivePowerInVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-
-    # Initial Conditions
-    add_initial_condition!(
-        container,
-        devices,
-        HydroDispatchPumpedStoragewReservation(),
-        InitialEnergyLevelUp,
-        EnergyVariableUp,
-    )
-    add_initial_condition!(
-        container,
-        devices,
-        HydroDispatchPumpedStoragewReservation(),
-        InitialEnergyLevelDown,
-        EnergyVariableDown,
-    )
-    # Energy Balanace limits
-    add_constraints!(
-        container,
-        EnergyCapacityUpConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        EnergyCapacityDownConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
-
-    # Cost Function
-    cost_function!(container, devices, model, S, nothing)
-
+    add_constraint_dual!(container, sys, model)
     return
 end

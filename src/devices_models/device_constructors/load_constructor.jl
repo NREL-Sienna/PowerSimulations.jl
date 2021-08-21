@@ -53,6 +53,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -101,6 +102,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -152,6 +154,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -193,6 +196,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -224,6 +228,7 @@ function construct_device!(
         ReactivePowerTimeSeriesParameter("max_active_power"),
     )
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -250,6 +255,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 

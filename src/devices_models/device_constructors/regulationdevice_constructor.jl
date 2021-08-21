@@ -86,6 +86,7 @@ function construct_device!(
     ramp_constraints!(container, devices, model, S, get_feedforward(model))
     participation_assignment!(container, devices, model, S, nothing)
     regulation_cost!(container, devices, model)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -173,6 +174,7 @@ function construct_device!(
     )
     participation_assignment!(container, devices, model, S, nothing)
     regulation_cost!(container, devices, model)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -207,5 +209,6 @@ function construct_device!(
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
+    add_constraint_dual!(container, sys, model)
     return
 end

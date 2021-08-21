@@ -100,6 +100,7 @@ function construct_device!(
 
     devices = get_available_components(B, sys)
     branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -135,6 +136,7 @@ function construct_device!(
     )
 
     branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -168,6 +170,7 @@ function construct_device!(
     )
 
     branch_rate_bounds!(container, devices, model, S)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -199,6 +202,7 @@ function construct_device!(
         network_model,
         get_feedforward(model),
     )
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -237,6 +241,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -257,6 +262,7 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     branch_rate_bounds!(container, devices, model, S)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -277,6 +283,7 @@ function construct_device!(
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    add_constraint_dual!(container, sys, model)
     return
 end
 

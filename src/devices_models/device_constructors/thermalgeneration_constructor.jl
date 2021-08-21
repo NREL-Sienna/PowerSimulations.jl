@@ -12,6 +12,7 @@ function construct_device!(
         devices,
         ActivePowerTimeSeriesParameter("max_active_power"),
     )
+    add_constraint_dual!(container, sys, model)
 end
 
 """
@@ -87,6 +88,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 """
@@ -151,6 +153,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 """
@@ -214,6 +217,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 """
@@ -265,6 +269,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 """
@@ -323,6 +328,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 """
@@ -371,6 +377,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
@@ -427,6 +434,7 @@ function construct_device!(
 
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
@@ -559,6 +567,7 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
@@ -629,6 +638,7 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
@@ -700,6 +710,7 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
@@ -755,6 +766,7 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
@@ -809,6 +821,7 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
 
 function construct_device!(
@@ -853,4 +866,5 @@ function construct_device!(
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
+    add_constraint_dual!(container, sys, model)
 end
