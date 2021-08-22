@@ -57,16 +57,16 @@ end
 function SimulationResultsExport(data::AbstractDict, params::SimulationStoreParams)
     problems = Vector{ProblemResultsExport}()
     for problem in get(data, "problems", [])
-        if !haskey(problem, "name")
+        if !haskey(model, "name")
             throw(IS.InvalidValue("problem data does not define 'name'"))
         end
 
         problem_export = ProblemResultsExport(
             problem["name"],
-            Set(Symbol(x) for x in get(problem, "duals", Set{String}())),
-            Set(Symbol(x) for x in get(problem, "parameters", Set{String}())),
-            Set(Symbol(x) for x in get(problem, "variables", Set{String}())),
-            get(problem, "optimizer_stats", false),
+            Set(Symbol(x) for x in get(model, "duals", Set{String}())),
+            Set(Symbol(x) for x in get(model, "parameters", Set{String}())),
+            Set(Symbol(x) for x in get(model, "variables", Set{String}())),
+            get(model, "optimizer_stats", false),
         )
         push!(problems, problem_export)
     end
@@ -113,19 +113,19 @@ function should_export(exports::SimulationResultsExport, tstamp::Dates.DateTime)
     return tstamp >= exports.start_time && tstamp <= exports.end_time
 end
 
-function should_export_dual(exports::SimulationResultsExport, tstamp, problem, name)
-    return _should_export(exports, tstamp, problem, :duals, name)
+function should_export_dual(exports::SimulationResultsExport, tstamp, model, name)
+    return _should_export(exports, tstamp, model, :duals, name)
 end
 
-function should_export_parameter(exports::SimulationResultsExport, tstamp, problem, name)
-    return _should_export(exports, tstamp, problem, :parameters, name)
+function should_export_parameter(exports::SimulationResultsExport, tstamp, model, name)
+    return _should_export(exports, tstamp, model, :parameters, name)
 end
 
-function should_export_variable(exports::SimulationResultsExport, tstamp, problem, name)
-    return _should_export(exports, tstamp, problem, :variables, name)
+function should_export_variable(exports::SimulationResultsExport, tstamp, model, name)
+    return _should_export(exports, tstamp, model, :variables, name)
 end
 
-function _should_export(exports::SimulationResultsExport, tstamp, problem, field_name, name)
+function _should_export(exports::SimulationResultsExport, tstamp, model, field_name, name)
     if tstamp < exports.start_time || tstamp >= exports.end_time
         return false
     end

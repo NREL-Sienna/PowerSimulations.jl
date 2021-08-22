@@ -68,7 +68,7 @@ end
     @test build_out == PSI.BuildStatus.BUILT
 
     for (_, problem) in PSI.get_problems(sim)
-        @test PSI.get_initial_time(problem) == second_day
+        @test PSI.get_initial_time(model) == second_day
     end
 end
 
@@ -166,9 +166,9 @@ end
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
 
     problems = SimulationProblems(
-        MD = DecisionProblem(template, sys_md, system_to_file = false),
-        UC = DecisionProblem(template, sys_uc, system_to_file = false),
-        ED = DecisionProblem(template, sys_ed, system_to_file = false),
+        MD = DecisionModel(template, sys_md, system_to_file = false),
+        UC = DecisionModel(template, sys_uc, system_to_file = false),
+        ED = DecisionModel(template, sys_ed, system_to_file = false),
     )
 
     feedforward_chronologies = Dict(

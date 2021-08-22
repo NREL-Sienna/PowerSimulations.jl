@@ -37,7 +37,10 @@ struct MyCustomFormulation <: PSI.AbstractDeviceFormulation
 """
 abstract type AbstractDeviceFormulation end
 
-abstract type OperationsProblem end
+"""
+Abstract type for Decision Model and Emulation Model. OperationModel structs are parametrized with DecisionProblem or Emulation Problem structs
+"""
+abstract type OperationsModel end
 
 #TODO: Document the required interfaces for custom types
 """
@@ -47,15 +50,10 @@ Abstract type for Decision Problems
 ```julia
 import PowerSimulations
 const PSI = PowerSimulations
-struct MyCustomProblem <: PSI.AbstractDecisionProblem
+struct MyCustomProblem <: PSI.DecisionProblem
 ```
 """
-abstract type AbstractDecisionProblem end
-
-"""
-Abstract type for Decision Problems that use PowerSimulations Interfaces
-"""
-abstract type PowerSimulationsDecisionProblem <: AbstractDecisionProblem end
+abstract type DecisionProblem end
 
 """
 Abstract type for Emulation Problems
@@ -64,15 +62,10 @@ Abstract type for Emulation Problems
 ```julia
 import PowerSimulations
 const PSI = PowerSimulations
-struct MyCustomEmulator <: PSI.AbstractEmulationProblem
+struct MyCustomEmulator <: PSI.EmulationProblem
 ```
 """
-abstract type AbstractEmulationProblem end
-
-"""
-Abstract type for Emulation Problems that use PowerSimulations Interfaces
-"""
-abstract type PowerSimulationsEmulationProblem <: AbstractDecisionProblem end
+abstract type EmulationProblem end
 
 abstract type PSIResults <: IS.Results end
 

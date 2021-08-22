@@ -40,17 +40,17 @@ function _display_model(
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", op_problem::DecisionProblem)
+    Base.show(io::IO, ::MIME"text/plain", op_model::DecisionModel)
 
-This function goes through the fields in DecisionProblem and then in ProblemTemplate,
+This function goes through the fields in DecisionModel and then in ProblemTemplate,
 if the field contains a Device model dictionary, it calls organize_device_model() &
 prints the data by field, key, value. If the field is not a Device model dictionary,
 and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, m::MIME"text/plain", op_problem::DecisionProblem)
-    show(io, m, op_problem.template)
+function Base.show(io::IO, m::MIME"text/plain", op_model::DecisionModel)
+    show(io, m, model.template)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
@@ -178,8 +178,8 @@ function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     end
 end
 
-function Base.show(io::IO, stage::DecisionProblem)
-    println(io, "DecisionProblem()")
+function Base.show(io::IO, stage::DecisionModel)
+    println(io, "DecisionModel()")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)

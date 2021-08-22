@@ -122,10 +122,10 @@ end
 
 function _add_initial_condition_caches(
     sim::SimulationInternal,
-    problem::DecisionProblem,
+    model::DecisionModel,
     caches::Union{Nothing, Vector{<:AbstractCache}},
 )
-    initial_conditions = problem.internal.container.initial_conditions
+    initial_conditions = model.internal.container.initial_conditions
     for (ic_key, init_conds) in initial_conditions.data
         _create_cache(ic_key, caches)
     end
@@ -174,12 +174,12 @@ end
 
 function _set_internal_caches(
     internal::SimulationInternal,
-    problem::DecisionProblem,
+    model::DecisionModel,
     caches::Vector{<:AbstractCache},
 )
     for c in caches
         cache_key = CacheKey(c)
-        caches = get_caches(problem)
+        caches = get_caches(model)
         push!(caches, cache_key)
         if !haskey(internal.simulation_cache, cache_key)
             @debug "Cache $(cache_key) added to the simulation"
@@ -213,7 +213,7 @@ end
 # TODO: Add DocString
 @doc raw"""
     Simulation(steps::Int
-                problems::Dict{String, DecisionProblem{<:AbstractDecisionProblem}}
+                problems::Dict{String, DecisionModel{<:DecisionProblem}}
                 sequence::Union{Nothing, SimulationSequence}
                 simulation_folder::String
                 name::String
@@ -306,7 +306,7 @@ get_problems_dir(sim::Simulation) = sim.internal.models_dir
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
     for (name, problem) in get_problems(sim)
-        base_powers[name] = PSY.get_base_power(get_system(problem))
+        base_powers[name] = PSY.get_base_power(get_system(model))
     end
     return base_powers
 end
@@ -428,8 +428,8 @@ end
 function _check_forecasts_sequence(sim::Simulation)
     for (problem_number, (problem_name, problem)) in enumerate(sim.problems)
         sequence = get_sequence(sim)
-        resolution = get_resolution(problem)
-        horizon = get_horizon(problem)
+        resolution = get_resolution(model)
+        horizon = get_horizon(model)
         # JDNOTE: To be refactored when fixing interval in sequence
         interval = get_interval(sequence, problem_name)
         horizon_time = resolution * horizon
@@ -473,7 +473,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     problem_initial_times = Dict{Int, Vector{Dates.DateTime}}()
     sim_ini_time = get_initial_time(sim)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        problem_system = get_system(problem)
+        problem_system = get_system(model)
         system_interval = PSY.get_forecast_interval(problem_system)
         problem_interval = get_interval(get_sequence(sim), problem_name)
         if system_interval != problem_interval
@@ -483,7 +483,7 @@ function _get_simulation_initial_times!(sim::Simulation)
                 ),
             )
         end
-        problem_horizon = get_horizon(problem)
+        problem_horizon = get_horizon(model)
         system_horizon = PSY.get_forecast_horizon(problem_system)
         if problem_horizon > system_horizon
             throw(
@@ -545,7 +545,7 @@ function _check_steps(
     sequence = get_sequence(sim)
     execution_order = get_execution_order(sequence)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        execution_counts = get_executions(problem)
+        execution_counts = get_executions(model)
         # Checks the consistency between two methods of calculating the number of executions
         total_problem_executions =
             length(findall(x -> x == problem_number, execution_order))
@@ -556,7 +556,7 @@ function _check_steps(
             throw(
                 IS.ConflictingInputsError(
                     "The number of available time series ($(forecast_count)) is not enough to perform the
-desired amount of simulation steps ($(sim.steps*get_execution_count(problem))).",
+desired amount of simulation steps ($(sim.steps*get_execution_count(model))).",
                 ),
             )
         end
@@ -566,7 +566,7 @@ end
 
 function _check_required_ini_cond_caches(sim::Simulation)
     for (problem_name, problem) in get_problems(sim)
-        optimization_container = get_optimization_container(problem)
+        container = get_optimization_container(model)
         for (k, v) in iterate_initial_conditions(container)
             # No cache needed for the initial condition -> continue
             v[1].cache_type === nothing && continue
@@ -588,8 +588,8 @@ function _populate_caches!(sim::Simulation, problem_name::Symbol)
     caches = get_problem_cache_definition(sim, problem_name)
     problem = get_problems(sim)[problem_name]
     # JDNOTES: Why passing here the internal and not the simulation cache ?
-    _add_initial_condition_caches(sim.internal, problem, caches)
-    _set_internal_caches(sim.internal, problem, caches)
+    _add_initial_condition_caches(sim.internal, model, caches)
+    _set_internal_caches(sim.internal, model, caches)
     return
 end
 
@@ -610,11 +610,11 @@ function _build_problems!(sim::Simulation, serialize)
         problem_chronology =
             get_problem_interval_chronology(get_sequence(sim), problem_name)
         initial_time = get_initial_time(sim)
-        set_initial_time!(problem, initial_time)
+        set_initial_time!(model, initial_time)
         output_dir = joinpath(get_problems_dir(sim))
-        set_output_dir!(problem, output_dir)
-        initialize_simulation_info!(problem, problem_chronology)
-        problem_build_status = _build!(problem, serialize)
+        set_output_dir!(model, output_dir)
+        initialize_simulation_info!(model, problem_chronology)
+        problem_build_status = _build!(model, serialize)
         if problem_build_status != BuildStatus.BUILT
             error("Problem $(problem_name) failed to build succesfully")
         end
@@ -635,10 +635,10 @@ function _build!(sim::Simulation, serialize::Bool)
             # Note to devs: Here we are setting the number of operations problem executions we
             # will see for every step of the simulation
             if ix == 1
-                set_executions!(problem, 1)
+                set_executions!(model, 1)
             else
                 step_resolution = get_step_resolution(sequence)
-                set_executions!(problem, Int(step_resolution / problem_interval))
+                set_executions!(model, Int(step_resolution / problem_interval))
             end
             _attach_feedforward!(sim, problem_name)
         end
@@ -731,7 +731,7 @@ end
 
 """ Updates the initial conditions of the problem"""
 function initial_condition_update!(
-    problem::DecisionProblem,
+    model::DecisionModel,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
     ::IntraProblemChronology,
@@ -744,7 +744,7 @@ function initial_condition_update!(
     for ic in initial_conditions
         name = get_device_name(ic)
         interval_chronology =
-            get_problem_interval_chronology(sim.sequence, get_name(problem))
+            get_problem_interval_chronology(sim.sequence, get_name(model))
         var_value = get_problem_variable(
             interval_chronology,
             (problem => problem),
@@ -758,7 +758,7 @@ function initial_condition_update!(
             ic,
             var_value,
             simulation_cache,
-            get_resolution(problem),
+            get_resolution(model),
         )
         previous_value = get_condition(ic)
         PJ.set_value(ic.value, quantity)
@@ -768,14 +768,14 @@ function initial_condition_update!(
             ic,
             quantity,
             previous_value,
-            get_simulation_number(problem),
+            get_simulation_number(model),
         )
     end
 end
 
 """ Updates the initial conditions of the problem"""
 function initial_condition_update!(
-    problem::DecisionProblem,
+    model::DecisionModel,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
     ::InterProblemChronology,
@@ -784,7 +784,8 @@ function initial_condition_update!(
     # TODO: Replace this convoluted way to get information with access to data store
     simulation_cache = sim.internal.simulation_cache
     execution_index = get_execution_order(sim)
-    problem_name = get_name(problem)
+    execution_count = get_execution_count(model)
+    problem_name = get_name(model)
     sequence = get_sequence(sim)
     interval = get_interval(sequence, problem_name)
     for ic in initial_conditions
@@ -795,10 +796,10 @@ function initial_condition_update!(
         source_problem_name = get_name(source_problem)
 
         # If the problem that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
-        if get_simulation_number(source_problem) >= get_simulation_number(problem)
+        if get_simulation_number(source_problem) >= get_simulation_number(model)
             interval_chronology =
                 get_problem_interval_chronology(sequence, source_problem_name)
-        elseif get_simulation_number(source_problem) < get_simulation_number(problem)
+        elseif get_simulation_number(source_problem) < get_simulation_number(model)
             interval_chronology = RecedingHorizon()
         end
         var_value = get_problem_variable(
@@ -817,14 +818,14 @@ function initial_condition_update!(
             ic,
             quantity,
             previous_value,
-            get_simulation_number(problem),
+            get_simulation_number(model),
         )
     end
     return
 end
 
-function _update_caches!(sim::Simulation, problem::DecisionProblem)
-    for cache in get_caches(problem)
+function _update_caches!(sim::Simulation, model::DecisionModel)
+    for cache in get_caches(model)
         update_cache!(sim, cache, problem)
     end
     return
@@ -836,13 +837,13 @@ end
 function update_cache!(
     sim::Simulation,
     ::CacheKey{TimeStatusChange, D},
-    problem::DecisionProblem,
+    model::DecisionModel,
 ) where {D <: PSY.Device}
     # TODO: Remove debug statements and use recorder here
     c = get_cache(sim, TimeStatusChange, D)
-    increment = get_increment(sim, problem, c)
-    variable = get_variable(problem.internal.container, c.ref)
-    t_range = 1:get_end_of_interval_step(problem)
+    increment = get_increment(sim, model, c)
+    variable = get_variable(model.internal.container, c.ref)
+    t_range = 1:get_end_of_interval_step(model)
     for name in variable.axes[1]
         # Store the initial condition
         c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
@@ -871,9 +872,9 @@ function update_cache!(
     return
 end
 
-function get_increment(sim::Simulation, problem::DecisionProblem, cache::TimeStatusChange)
+function get_increment(sim::Simulation, model::DecisionModel, cache::TimeStatusChange)
     units = cache.units
-    problem_name = get_name(problem)
+    problem_name = get_name(model)
     sequence = get_sequence(sim)
     problem_interval = get_interval(sequence, problem_name)
     problem_resolution = problem_interval / units
@@ -883,11 +884,11 @@ end
 function update_cache!(
     sim::Simulation,
     ::CacheKey{StoredEnergy, D},
-    problem::DecisionProblem,
+    model::DecisionModel,
 ) where {D <: PSY.Device}
     c = get_cache(sim, StoredEnergy, D)
-    variable = get_variable(problem.internal.container, c.ref)
-    t = get_end_of_interval_step(problem)
+    variable = get_variable(model.internal.container, c.ref)
+    t = get_end_of_interval_step(model)
     for name in variable.axes[1]
         device_energy = JuMP.value(variable[name, t])
         @debug name, device_energy
@@ -902,13 +903,13 @@ end
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    problem::DecisionProblem,
+    model::DecisionModel,
     sim::Simulation,
 ) where {T <: PSY.Component}
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
         components = get_available_components(T, problem.sys)
-        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-        horizon = length(get_time_steps(problem.internal.container))
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(model))
+        horizon = length(get_time_steps(model.internal.container))
         for d in components
             ts_vector = get_time_series_values!(
                 PSY.Deterministic,
@@ -933,13 +934,13 @@ end
 function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    problem::DecisionProblem,
+    model::DecisionModel,
     sim::Simulation,
 ) where {T <: PSY.Service}
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
         components = get_available_components(T, problem.sys)
-        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-        horizon = length(get_time_steps(problem.internal.container))
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(model))
+        horizon = length(get_time_steps(model.internal.container))
         param_array = get_parameter_array(container)
         for ix in axes(param_array)[1]
             service = PSY.get_component(T, problem.sys, ix)
@@ -965,11 +966,11 @@ end
 function update_parameter!(
     param_reference::UpdateRef{JuMP.VariableRef},
     container::ParameterContainer,
-    problem::DecisionProblem,
+    model::DecisionModel,
     sim::Simulation,
 )
     param_array = get_parameter_array(container)
-    simulation_info = get_simulation_info(problem)
+    simulation_info = get_simulation_info(model)
     for (k, chronology) in simulation_info.chronolgy_dict
         source_problem = get_problem(sim, k)
         feedforward_update!(
@@ -985,25 +986,25 @@ function update_parameter!(
     return
 end
 
-function _update_initial_conditions!(problem::DecisionProblem, sim::Simulation)
+function _update_initial_conditions!(model::DecisionModel, sim::Simulation)
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
-    optimization_containter = get_optimization_container(problem)
+    optimization_containter = get_optimization_container(model)
     for (k, v) in iterate_initial_conditions(optimization_containter)
-        initial_condition_update!(problem, k, v, ini_cond_chronology, sim)
+        initial_condition_update!(model, k, v, ini_cond_chronology, sim)
     end
     return
 end
 
-function _update_parameters(problem::DecisionProblem, sim::Simulation)
-    optimization_container = get_optimization_container(problem)
+function _update_parameters(model::DecisionModel, sim::Simulation)
+    container = get_optimization_container(model)
     for container in iterate_parameter_containers(container)
-        update_parameter!(container.update_ref, container, problem, sim)
+        update_parameter!(container.update_ref, container, model, sim)
     end
     return
 end
 
-function _apply_warm_start!(problem::DecisionProblem)
-    optimization_container = get_optimization_container(problem)
+function _apply_warm_start!(model::DecisionModel)
+    container = get_optimization_container(model)
     jump_model = get_jump_model(container)
     all_vars = JuMP.all_variables(jump_model)
     JuMP.set_start_value.(all_vars, JuMP.value.(all_vars))
@@ -1011,9 +1012,9 @@ function _apply_warm_start!(problem::DecisionProblem)
 end
 
 """ Required update problem function call"""
-function _update_problem!(problem::DecisionProblem, sim::Simulation)
-    _update_parameters(problem, sim)
-    _update_initial_conditions!(problem, sim)
+function _update_problem!(model::DecisionModel, sim::Simulation)
+    _update_parameters(model, sim)
+    _update_initial_conditions!(model, sim)
     return
 end
 
@@ -1021,10 +1022,10 @@ end
 ## These are the functions that the user will have to implement to update a custom problem ###
 """ Generic problem update function for most problems with no customization"""
 function update_problem!(
-    problem::DecisionProblem{M},
+    model::DecisionModel{M},
     sim::Simulation,
-) where {M <: PowerSimulationsDecisionProblem}
-    _update_problem!(problem, sim)
+) where {M <: DecisionProblem}
+    _update_problem!(model, sim)
     return
 end
 
@@ -1139,7 +1140,7 @@ function _execute!(
                 problem_name = get_problem_names(problems)[problem_number]
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(problem_name)" begin
                     problem = problems[problem_name]
-                    if !is_built(problem)
+                    if !is_built(model)
                         error("$(problem_name) status is not BuildStatus.BUILT")
                     end
                     problem_interval = get_interval(sequence, problem_name)
@@ -1147,10 +1148,10 @@ function _execute!(
                     sequence.current_execution_index = ix
                     # Is first run of first problem? Yes -> don't update problem
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update $(problem_name)" begin
-                        !(step == 1 && ix == 1) && update_problem!(problem, sim)
+                        !(step == 1 && ix == 1) && update_problem!(model, sim)
                     end
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run $(problem_name)" begin
-                        settings = get_settings(problem)
+                        settings = get_settings(model)
                         status = solve!(
                             step,
                             problem,
@@ -1178,8 +1179,8 @@ function _execute!(
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(problem_number)" begin
                         _update_caches!(sim, problem)
                     end
-                    if warm_start_enabled(problem)
-                        _apply_warm_start!(problem)
+                    if warm_start_enabled(model)
+                        _apply_warm_start!(model)
                     end
                     IS.@record :simulation_status ProblemExecutionEvent(
                         get_current_time(sim),
@@ -1226,8 +1227,8 @@ function _initialize_problem_storage!(
     )
     for (problem_name, problem) in get_problems(sim)
         num_executions = executions_by_problem[problem_name]
-        horizon = get_horizon(problem)
-        optimization_container = get_optimization_container(problem)
+        horizon = get_horizon(model)
+        container = get_optimization_container(model)
         duals = get_constraint_duals(get_settings(container))
         parameters = get_parameters(container)
         variables = get_variables(container)
@@ -1235,9 +1236,9 @@ function _initialize_problem_storage!(
         num_rows = num_executions * get_steps(sim)
 
         interval = intervals[problem_name][1]
-        resolution = get_resolution(problem)
-        end_of_interval_step = get_end_of_interval_step(problem)
-        system = get_system(problem)
+        resolution = get_resolution(model)
+        end_of_interval_step = get_end_of_interval_step(model)
+        system = get_system(model)
         base_power = PSY.get_base_power(system)
         sys_uuid = IS.get_uuid(system)
         problem_params = SimulationStoreProblemParams(
@@ -1369,7 +1370,7 @@ function _empty_problem_caches!(sim::Simulation)
     problems = get_problems(sim)
     for problem_name in get_problem_names(problems)
         problem = problems[problem_name]
-        empty_time_series_cache!(problem)
+        empty_time_series_cache!(model)
     end
 end
 
@@ -1441,7 +1442,7 @@ function deserialize_model(
             )
         end
 
-        problems = Dict{Symbol, DecisionProblem{<:AbstractDecisionProblem}}()
+        problems = Dict{Symbol, DecisionModel{<:DecisionProblem}}()
         for name in obj.problems
             problem =
                 deserialize_problem(DecisionProblem, joinpath("problems", "$(name).bin"))

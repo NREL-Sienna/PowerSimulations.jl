@@ -1,9 +1,9 @@
 @testset "Simulation Sequence Correct Execution Order" begin
     problems = SimulationProblems(
-        DAUC = DecisionProblem(MockOperationProblem; horizon = 48),
-        HAUC = DecisionProblem(MockOperationProblem; horizon = 24),
-        ED = DecisionProblem(MockOperationProblem; horizon = 12),
-        AGC = DecisionProblem(MockOperationProblem; horizon = 6),
+        DAUC = DecisionModel(MockOperationProblem; horizon = 48),
+        HAUC = DecisionModel(MockOperationProblem; horizon = 24),
+        ED = DecisionModel(MockOperationProblem; horizon = 12),
+        AGC = DecisionModel(MockOperationProblem; horizon = 6),
     )
 
     # Test RH sequences
@@ -38,7 +38,7 @@
     # Test single stage sequence
     test_sequence = SimulationSequence(
         problems = SimulationProblems(
-            DAUC = DecisionProblem(MockOperationProblem; horizon = 48),
+            DAUC = DecisionModel(MockOperationProblem; horizon = 48),
         ),
         intervals = Dict("DAUC" => (Hour(24), Consecutive())),
         ini_cond_chronology = InterProblemChronology(),
@@ -49,11 +49,11 @@
 
     # Test synchronized sequence
     problems = SimulationProblems(
-        MD = DecisionProblem(MockOperationProblem; horizon = 3),
-        DAUC = DecisionProblem(MockOperationProblem; horizon = 48),
-        HAUC = DecisionProblem(MockOperationProblem; horizon = 24),
-        ED = DecisionProblem(MockOperationProblem; horizon = 12),
-        AGC = DecisionProblem(MockOperationProblem; horizon = 6),
+        MD = DecisionModel(MockOperationProblem; horizon = 3),
+        DAUC = DecisionModel(MockOperationProblem; horizon = 48),
+        HAUC = DecisionModel(MockOperationProblem; horizon = 24),
+        ED = DecisionModel(MockOperationProblem; horizon = 12),
+        AGC = DecisionModel(MockOperationProblem; horizon = 6),
     )
 
     feedforward_chronologies = Dict(

@@ -15,12 +15,12 @@ _SIMULATION_FIELDS = Set((:simulation_step, :execution_index))
 _BASE_FIELDS = setdiff(fieldnames(OptimizerStats), _SIMULATION_FIELDS)
 
 """
-Construct OptimizerStats when the DecisionProblem is part of a simulation.
+Construct OptimizerStats when the DecisionModel is part of a simulation.
 """
-function OptimizerStats(problem, simulation_step)
-    timed_log = get_solve_timed_log(problem)
-    execution_index = get_execution_count(problem)
-    model = get_jump_model(problem)
+function OptimizerStats(model, simulation_step)
+    timed_log = get_solve_timed_log(model)
+    execution_index = get_execution_count(model)
+    model = get_jump_model(model)
 
     return OptimizerStats(
         simulation_step,
@@ -37,11 +37,11 @@ function OptimizerStats(problem, simulation_step)
 end
 
 """
-Construct OptimizerStats when the DecisionProblem is not part of a simulation.
+Construct OptimizerStats when the DecisionModel is not part of a simulation.
 """
-function OptimizerStats(problem)
-    timed_log = get_solve_timed_log(problem)
-    model = get_jump_model(problem)
+function OptimizerStats(model)
+    timed_log = get_solve_timed_log(model)
+    model = get_jump_model(model)
 
     return OptimizerStats(
         0,

@@ -30,13 +30,13 @@ function EconomicDispatchProblem(system::PSY.System; kwargs...)
     kwargs, problem_kwargs = _filter_kwargs(kwargs)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_economic_dispatch(; kwargs...)
-    op_problem =
-        DecisionProblem(EconomicDispatchProblem, template, system; problem_kwargs...)
-    res = build!(op_problem; output_dir = output_dir)
+    model =
+        DecisionModel(EconomicDispatchProblem, template, system; problem_kwargs...)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build succesfully")
     end
-    return op_problem
+    return model
 end
 
 """
@@ -60,12 +60,12 @@ function UnitCommitmentProblem(system::PSY.System; kwargs...)
     kwargs, problem_kwargs = _filter_kwargs(kwargs)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_unit_commitment(; kwargs...)
-    op_problem = DecisionProblem(UnitCommitmentProblem, template, system; problem_kwargs...)
-    res = build!(op_problem; output_dir = output_dir)
+    model = DecisionModel(UnitCommitmentProblem, template, system; problem_kwargs...)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build succesfully")
     end
-    return op_problem
+    return model
 end
 
 """
@@ -86,12 +86,12 @@ function AGCReserveDeployment(system::PSY.System; kwargs...)
     kwargs, problem_kwargs = _filter_kwargs(kwargs)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_agc_reserve_deployment(; kwargs...)
-    op_problem = DecisionProblem(UnitCommitmentProblem, template, system; problem_kwargs...)
-    res = build!(op_problem; output_dir = output_dir)
+    model = DecisionModel(UnitCommitmentProblem, template, system; problem_kwargs...)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build succesfully")
     end
-    return op_problem
+    return model
 end
 
 """
@@ -115,8 +115,8 @@ results = run_unit_commitment(system; optimizer = optimizer)
 """
 
 function run_unit_commitment(sys::PSY.System; kwargs...)
-    op_problem = UnitCommitmentProblem(sys; kwargs...)
-    solve_status = solve!(op_problem)
+    model = UnitCommitmentProblem(sys; kwargs...)
+    solve_status = solve!(model)
     return solve_status
 end
 
@@ -140,7 +140,7 @@ results = run_economic_dispatch(system; optimizer = optimizer)
 - Key word arguments supported by `DecisionProblem`
 """
 function run_economic_dispatch(sys::PSY.System; kwargs...)
-    op_problem = EconomicDispatchProblem(sys; kwargs...)
-    solve_status = solve!(op_problem)
+    model = EconomicDispatchProblem(sys; kwargs...)
+    solve_status = solve!(model)
     return solve_status
 end

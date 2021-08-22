@@ -97,7 +97,7 @@ function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
                 problem_params,
                 sim_params,
                 execution_path,
-                system = get_system(problem),
+                system = get_system(model),
             )
             problem_results[name] = problem_result
         end
