@@ -96,7 +96,8 @@ end
             "ED" => (Hour(1), Consecutive()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
+            "ED" => SemiContinuousFF(
+                device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -113,7 +114,8 @@ end
             "ED" => (Hour(3), RecedingHorizon()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
+            "ED" => SemiContinuousFF(
+                device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -132,7 +134,8 @@ end
             "ED" => (Minute(5), RecedingHorizon()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
+            "ED" => SemiContinuousFF(
+                device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -148,7 +151,8 @@ end
             "ED" => (Minute(5), RecedingHorizon()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
+            "ED" => SemiContinuousFF(
+                device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -164,25 +168,9 @@ end
             "ED" => (Minute(5), RecedingHorizon()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
+            "ED" => SemiContinuousFF(
+                device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
-                affected_variables = [ActivePowerVariable],
-            ),
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-
-    sequence_5 = SimulationSequence(
-        problems = mock_uc_ed_simulation_problems(24, 12),
-        feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 2)),
-        intervals = Dict(
-            "UC" => (Hour(1), RecedingHorizon()),
-            "ED" => (Minute(5), RecedingHorizon()),
-        ),
-        feedforward = Dict(
-            ("ED", :devices, :Generators) => RangeFF(
-                variable_source_problem_ub = OnVariable,
-                variable_source_problem_lb = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
         ),
@@ -197,19 +185,20 @@ end
             "ED" => (Minute(5), RecedingHorizon()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
+            "ED" => SemiContinuousFF(
+                device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
     )
-    list = [sequence_2, sequence_3, sequence_4, sequence_5, sequence_13]
+    list = [sequence_2, sequence_3, sequence_4, sequence_13]
     _test_plain_print_methods(list)
-    stage_1 = FakeStagesStruct(Dict(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6)) # testing 5 stages
-    stage_3 = FakeStagesStruct(Dict(1 => 1, 2 => 100)) #testing 3 digits
-    stage_4 = FakeStagesStruct(Dict(1 => 1, 2 => 1000)) #testing 4 digits
-    stage_12 = FakeStagesStruct(Dict(1 => 1, 2 => 12, 3 => 5, 4 => 6))
+    stage_1 = MockStagesStruct(Dict(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6)) # testing 5 stages
+    stage_3 = MockStagesStruct(Dict(1 => 1, 2 => 100)) #testing 3 digits
+    stage_4 = MockStagesStruct(Dict(1 => 1, 2 => 1000)) #testing 4 digits
+    stage_12 = MockStagesStruct(Dict(1 => 1, 2 => 12, 3 => 5, 4 => 6))
     list = [stage_1, stage_3, stage_4, stage_12]
     _test_plain_print_methods(list)
 end

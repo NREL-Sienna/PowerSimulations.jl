@@ -29,7 +29,7 @@ end
 
 function TimeStatusChange(
     ::Type{T},
-    var::U = OnVariable(),
+    var::Type{U} = OnVariable,
 ) where {T <: PSY.Device, U <: VariableType}
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}}(undef, 1)
     return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, var))
