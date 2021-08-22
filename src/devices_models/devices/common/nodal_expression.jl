@@ -2,7 +2,7 @@ struct NodalExpressionSpec
     forecast_label::String
     # TODO: Remove this hack when updating simulation execution. For now is needed
     # to store parameters from String.
-    parameter_name::Union{String, Symbol}
+    parameter_name::Union{String, Symbol, OptimizationContainerKey}
     peak_value_function::Function
     multiplier::Float64
     update_ref::Type

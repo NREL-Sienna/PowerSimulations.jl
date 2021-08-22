@@ -554,7 +554,7 @@ make_variable_name(::Type{OnVariable}, ::Type{T}) where {T <: PSY.Device} =
 make_variable_name(::Type{ReactivePowerVariable}, ::Type{T}) where {T <: PSY.Device} =
     encode_symbol(T, "Q")
 
-make_variable_name(::Type{ReserveVariable}, ::Type{T}) where {T <: PSY.Device} =
+make_variable_name(::Type{ReservationVariable}, ::Type{T}) where {T <: PSY.Device} =
     encode_symbol(T, "R")
 
 make_variable_name(

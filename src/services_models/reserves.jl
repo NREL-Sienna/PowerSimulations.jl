@@ -6,7 +6,7 @@ struct RampReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables #########################################
 
 get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
-############################### ActiveServiceVariable, Reserve #########################################
+############################### ActivePowerReserveVariable, Reserve #########################################
 
 get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
 get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, d::PSY.Component, _) = PSY.get_max_active_power(d)
@@ -33,18 +33,19 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint =
         get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(optimization_container, name, SR)
+    reserve_variable =
+        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_services_slack_variables(optimization_container.settings)
 
     ts_vector = get_time_series(optimization_container, service, "requirement")
 
-    use_slacks && (slack_vars = reserve_slacks(optimization_container, T))
+    use_slacks && (slack_vars = reserve_slacks(optimization_container, service))
 
     requirement = PSY.get_requirement(service)
     if parameters
         container = get_parameter_container(
             optimization_container,
-            UpdateRef{SR}(SERVICE_REQUIREMENT, "requirement"),
+            UpdateRef{SR}("service_requirement", "requirement"),
         )
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
@@ -83,10 +84,11 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint =
         get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(optimization_container, name, SR)
+    reserve_variable =
+        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_services_slack_variables(optimization_container.settings)
 
-    use_slacks && (slack_vars = reserve_slacks(optimization_container, T))
+    use_slacks && (slack_vars = reserve_slacks(optimization_container, service))
 
     requirement = PSY.get_requirement(service)
     for t in time_steps
@@ -109,7 +111,12 @@ function cost_function!(
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
-    reserve = get_variable(optimization_container, PSY.get_name(service), SR)
+    reserve = get_variable(
+        optimization_container,
+        ActivePowerReserveVariable(),
+        SR,
+        PSY.get_name(service),
+    )
     for r in reserve
         JuMP.add_to_expression!(
             optimization_container.cost_function,
@@ -131,8 +138,10 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint =
         get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
-    reserve_variable = get_variable(optimization_container, name, SR)
-    requirement_variable = get_variable(optimization_container, SERVICE_REQUIREMENT, SR)
+    reserve_variable =
+        get_variable(optimization_container, ActivePowerReserveVariable(), SR, name)
+    requirement_variable =
+        get_variable(optimization_container, ServiceRequirementVariable(), SR)
 
     for t in time_steps
         constraint[name, t] = JuMP.@constraint(
@@ -210,7 +219,7 @@ function ramp_constraints!(
             optimization_container,
             data,
             make_constraint_name(RAMP, SR),
-            VariableKey(ReserveVariable, SR, service_name),
+            VariableKey(ActivePowerReserveVariable, SR, service_name),
             service_name,
         )
     else
@@ -238,7 +247,7 @@ function ramp_constraints!(
             optimization_container,
             data,
             make_constraint_name(RAMP, SR),
-            VariableKey(ReserveVariable, SR, service_name),
+            VariableKey(ActivePowerReserveVariable, SR, service_name),
             service_name,
         )
     else
@@ -328,10 +337,10 @@ function include_service!(
     T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     SR <: PSY.Reserve{PSY.ReserveUp},
 }
-    for (ix, service) in enumerate(services)
+    for service in services
         push!(
             constraint_info.additional_terms_ub,
-            make_constraint_name(PSY.get_name(service), SR),
+            VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service)),
         )
     end
     return
@@ -345,10 +354,10 @@ function include_service!(
     T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
     SR <: PSY.Reserve{PSY.ReserveDown},
 }
-    for (ix, service) in enumerate(services)
+    for service in services
         push!(
             constraint_info.additional_terms_lb,
-            make_constraint_name(PSY.get_name(service), SR),
+            VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service)),
         )
     end
     return
@@ -367,7 +376,7 @@ function include_service!(
     services,
     ::ServiceModel{SR, RampReserve},
 ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
-    for (ix, service) in enumerate(services)
+    for service in services
         # Should this be make_variable_key ?
         name = make_constraint_name(PSY.get_name(service), SR)
         push!(constraint_info.additional_terms_up, name)
@@ -381,11 +390,10 @@ function include_service!(
     services,
     ::ServiceModel{SR, RampReserve},
 ) where {SR <: PSY.Reserve{PSY.ReserveDown}}
-    for (ix, service) in enumerate(services)
-        # Should this be make_variable_key ?
-        name = make_constraint_name(PSY.get_name(service), SR)
-        push!(constraint_info.additional_terms_dn, name)
-        set_time_frame!(constraint_info, (name => PSY.get_time_frame(service)))
+    for service in services
+        key = VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service))
+        push!(constraint_info.additional_terms_dn, key)
+        set_time_frame!(constraint_info, (key => PSY.get_time_frame(service)))
     end
     return
 end

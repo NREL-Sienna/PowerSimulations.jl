@@ -269,7 +269,8 @@ function get_variable(optimization_container::OptimizationContainer, key::Variab
     var = get(optimization_container.variables, key, nothing)
     if var === nothing
         name = encode_key(key)
-        @error "$name is not stored" sort!(get_variable_keys(optimization_container))
+        keys = encode_key.(get_variable_keys(optimization_container))
+        @error "$name is not stored" sort!(keys)
         throw(IS.InvalidValue("variable $name is not stored"))
     end
     return var
@@ -323,6 +324,24 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: PSY.Component}
     var_key = VariableKey(T, U)
+    if sparse
+        container = sparse_container_spec(JuMP.VariableRef, axs...)
+    else
+        container = container_spec(JuMP.VariableRef, axs...)
+    end
+    _assign_container!(optimization_container.variables, var_key, container)
+    return container
+end
+
+function add_var_container!(
+    optimization_container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta::String,
+    axs...;
+    sparse = false,
+) where {T <: VariableType, U <: PSY.Component}
+    var_key = VariableKey(T, U, meta)
     if sparse
         container = sparse_container_spec(JuMP.VariableRef, axs...)
     else

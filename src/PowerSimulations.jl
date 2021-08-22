@@ -190,8 +190,8 @@ export EnergySurplusVariable
 export LiftVariable
 export OnVariable
 export ReactivePowerVariable
-export ReserveVariable
-export ActiveServiceVariable
+export ReservationVariable
+export ActivePowerReserveVariable
 export ServiceRequirementVariable
 export WaterSpillageVariable
 export StartVariable
