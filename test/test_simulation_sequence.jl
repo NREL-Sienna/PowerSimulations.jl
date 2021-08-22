@@ -1,9 +1,9 @@
 @testset "Simulation Sequence Correct Execution Order" begin
-    problems = SimulationProblems(
-        DAUC = DecisionModel(MockOperationProblem; horizon = 48),
-        HAUC = DecisionModel(MockOperationProblem; horizon = 24),
-        ED = DecisionModel(MockOperationProblem; horizon = 12),
-        AGC = DecisionModel(MockOperationProblem; horizon = 6),
+    models = SimulationModels(
+        DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC"),
+        DecisionModel(MockOperationProblem; horizon = 24, name = "HAUC"),
+        DecisionModel(MockOperationProblem; horizon = 12, name = "ED"),
+        DecisionModel(MockOperationProblem; horizon = 6, name = "AGC"),
     )
 
     # Test RH sequences
@@ -20,7 +20,7 @@
         "AGC" => (Minute(1), Consecutive()),
     )
     test_sequence = SimulationSequence(
-        problems = problems,
+        models = models,
         feedforward_chronologies = feedforward_chronologies,
         intervals = intervals,
         ini_cond_chronology = ini_cond_chronology,
@@ -31,15 +31,15 @@
     @test length(findall(x -> x == 2, test_sequence.execution_order)) == 24
     @test length(findall(x -> x == 1, test_sequence.execution_order)) == 1
 
-    for name in PSI.get_problem_names(problems)
-        @test problems[name].internal.simulation_info.sequence_uuid == test_sequence.uuid
+    for model in models
+        @test model.internal.simulation_info.sequence_uuid == test_sequence.uuid
     end
 
     # Test single stage sequence
     test_sequence = SimulationSequence(
-        problems = SimulationProblems(
-            DAUC = DecisionModel(MockOperationProblem; horizon = 48),
-        ),
+        models = SimulationModels(
+        # TODO DT: support passing one model without making a vector
+        [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC")]),
         intervals = Dict("DAUC" => (Hour(24), Consecutive())),
         ini_cond_chronology = InterProblemChronology(),
     )
@@ -48,12 +48,12 @@
     @test test_sequence.execution_order == [1]
 
     # Test synchronized sequence
-    problems = SimulationProblems(
-        MD = DecisionModel(MockOperationProblem; horizon = 3),
-        DAUC = DecisionModel(MockOperationProblem; horizon = 48),
-        HAUC = DecisionModel(MockOperationProblem; horizon = 24),
-        ED = DecisionModel(MockOperationProblem; horizon = 12),
-        AGC = DecisionModel(MockOperationProblem; horizon = 6),
+    models = SimulationModels(
+        DecisionModel(MockOperationProblem; horizon = 3, name = "MD"),
+        DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC"),
+        DecisionModel(MockOperationProblem; horizon = 24, name = "HAUC"),
+        DecisionModel(MockOperationProblem; horizon = 12, name = "ED"),
+        DecisionModel(MockOperationProblem; horizon = 6, name = "AGC"),
     )
 
     feedforward_chronologies = Dict(
@@ -71,7 +71,7 @@
         "AGC" => (Minute(1), Consecutive()),
     )
     test_sequence = SimulationSequence(
-        problems = problems,
+        models = models,
         feedforward_chronologies = feedforward_chronologies,
         intervals = intervals,
         ini_cond_chronology = ini_cond_chronology,
@@ -83,8 +83,8 @@
     @test length(findall(x -> x == 2, test_sequence.execution_order)) == 2
     @test length(findall(x -> x == 1, test_sequence.execution_order)) == 1
 
-    for name in PSI.get_problem_names(problems)
-        @test problems[name].internal.simulation_info.sequence_uuid == test_sequence.uuid
+    for model in models
+        @test model.internal.simulation_info.sequence_uuid == test_sequence.uuid
     end
 end
 
@@ -107,7 +107,7 @@ end
     )
 
     @test_throws IS.ConflictingInputsError SimulationSequence(
-        problems = mock_uc_ed_simulation_problems(24, 12),
+        models = mock_uc_ed_simulation_problems(24, 12),
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         intervals = Dict(
             "UC" => (Hour(2), Consecutive()),
@@ -127,7 +127,7 @@ end
 
 @testset "Test print methods of sequence ascii art" begin
     sequence_2 = SimulationSequence(
-        problems = mock_uc_ed_simulation_problems(24, 12),
+        models = mock_uc_ed_simulation_problems(24, 12),
         feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 2)),
         intervals = Dict(
             "UC" => (Hour(1), RecedingHorizon()),
@@ -144,7 +144,7 @@ end
     )
 
     sequence_4 = SimulationSequence(
-        problems = mock_uc_ed_simulation_problems(24, 12),
+        models = mock_uc_ed_simulation_problems(24, 12),
         feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 4)),
         intervals = Dict(
             "UC" => (Hour(1), RecedingHorizon()),
@@ -161,7 +161,7 @@ end
     )
 
     sequence_3 = SimulationSequence(
-        problems = mock_uc_ed_simulation_problems(24, 12),
+        models = mock_uc_ed_simulation_problems(24, 12),
         feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 3)),
         intervals = Dict(
             "UC" => (Hour(1), RecedingHorizon()),
@@ -178,7 +178,7 @@ end
     )
 
     sequence_13 = SimulationSequence(
-        problems = mock_uc_ed_simulation_problems(24, 12),
+        models = mock_uc_ed_simulation_problems(24, 12),
         feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 13)),
         intervals = Dict(
             "UC" => (Hour(1), RecedingHorizon()),

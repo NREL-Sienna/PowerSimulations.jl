@@ -35,7 +35,7 @@ get_binary_source_problem_key(p::SemiContinuousFF) =
     VariableKey(p.binary_source_problem, p.device_type)
 
 function get_affected_variables(p::AbstractAffectFeedForward)
-    return [VariableKey(p.device_type, a) for a in p.affected_variables]
+    return [VariableKey(a, p.device_type) for a in p.affected_variables]
 end
 
 struct IntegralLimitFF <: AbstractAffectFeedForward

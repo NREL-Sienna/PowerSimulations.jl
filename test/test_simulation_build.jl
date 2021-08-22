@@ -165,7 +165,7 @@ end
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
 
-    problems = SimulationProblems(
+    problems = SimulationModels(
         MD = DecisionModel(template, sys_md, system_to_file = false),
         UC = DecisionModel(template, sys_uc, system_to_file = false),
         ED = DecisionModel(template, sys_ed, system_to_file = false),

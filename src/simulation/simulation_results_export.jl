@@ -2,7 +2,7 @@
 const _SUPPORTED_FORMATS = ("csv",)
 
 mutable struct SimulationResultsExport
-    problems::Dict{String, ProblemResultsExport}
+    models::Dict{Symbol, ProblemResultsExport}
     start_time::Dates.DateTime
     end_time::Dates.DateTime
     path::Union{Nothing, String}
@@ -10,7 +10,7 @@ mutable struct SimulationResultsExport
 end
 
 function SimulationResultsExport(
-    problems::Vector{ProblemResultsExport},
+    models::Vector{ProblemResultsExport},
     params::SimulationStoreParams;
     start_time = nothing,
     end_time = nothing,
@@ -38,7 +38,7 @@ function SimulationResultsExport(
     end
 
     return SimulationResultsExport(
-        Dict(x.name => x for x in problems),
+        Dict(x.name => x for x in models),
         start_time,
         end_time,
         path,
@@ -55,20 +55,36 @@ function SimulationResultsExport(filename::AbstractString, params::SimulationSto
 end
 
 function SimulationResultsExport(data::AbstractDict, params::SimulationStoreParams)
-    problems = Vector{ProblemResultsExport}()
-    for problem in get(data, "problems", [])
+    models = Vector{ProblemResultsExport}()
+    for model in get(data, "models", [])
         if !haskey(model, "name")
-            throw(IS.InvalidValue("problem data does not define 'name'"))
+            throw(IS.InvalidValue("model data does not define 'name'"))
         end
 
-        problem_export = ProblemResultsExport(
-            problem["name"],
-            Set(Symbol(x) for x in get(model, "duals", Set{String}())),
-            Set(Symbol(x) for x in get(model, "parameters", Set{String}())),
-            Set(Symbol(x) for x in get(model, "variables", Set{String}())),
-            get(model, "optimizer_stats", false),
+        problem_params = params.problems[Symbol(model["name"])]
+        duals = Set(
+            deserialize_key(problem_params, x) for
+            x in get(model, "duals", Set{ConstraintKey}())
         )
-        push!(problems, problem_export)
+        parameters = Set(
+            deserialize_key(problem_params, x) for
+            x in get(model, "parameters", Set{ParameterKey}())
+        )
+        variables = Set(
+            deserialize_key(problem_params, x) for
+            x in get(model, "variables", Set{VariableKey}())
+        )
+        problem_export = ProblemResultsExport(
+            model["name"],
+            duals = duals,
+            parameters = parameters,
+            variables = variables,
+            optimizer_stats = get(model, "optimizer_stats", false),
+            store_all_duals = get(model, "store_all_duals", false),
+            store_all_parameters = get(model, "store_all_parameters", false),
+            store_all_variables = get(model, "store_all_variables", false),
+        )
+        push!(models, problem_export)
     end
 
     start_time = get(data, "start_time", nothing)
@@ -82,7 +98,7 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
     end
 
     return SimulationResultsExport(
-        problems,
+        models,
         params;
         start_time = start_time,
         end_time = end_time,
@@ -91,12 +107,13 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
     )
 end
 
-function get_problem_exports(x::SimulationResultsExport, problem_name)
-    if !haskey(x.problems, problem_name)
-        throw(IS.InvalidValue("problem $problem_name is not stored"))
+function get_problem_exports(x::SimulationResultsExport, model_name)
+    if !haskey(x.models, model_name)
+        @error keys(x.models) model_name typeof(model_name)
+        throw(IS.InvalidValue("model $model_name is not stored"))
     end
 
-    return x.problems[problem_name]
+    return x.models[model_name]
 end
 
 function get_export_file_type(exports::SimulationResultsExport)
@@ -130,6 +147,6 @@ function _should_export(exports::SimulationResultsExport, tstamp, model, field_n
         return false
     end
 
-    problem_exports = get_problem_exports(exports, problem)
+    problem_exports = get_problem_exports(exports, model)
     return _should_export(problem_exports, field_name, name)
 end

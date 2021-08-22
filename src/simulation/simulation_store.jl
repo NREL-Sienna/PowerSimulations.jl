@@ -5,16 +5,16 @@ const STORE_CONTAINERS =
     Set((STORE_CONTAINER_DUALS, STORE_CONTAINER_PARAMETERS, STORE_CONTAINER_VARIABLES))
 
 struct SimulationStoreProblemRequirements
-    duals::Dict{Symbol, Dict{String, Any}}
-    parameters::Dict{Symbol, Dict{String, Any}}
-    variables::Dict{Symbol, Dict{String, Any}}
+    duals::Dict{ConstraintKey, Dict{String, Any}}
+    parameters::Dict{ParameterKey, Dict{String, Any}}
+    variables::Dict{VariableKey, Dict{String, Any}}
 end
 
 function SimulationStoreProblemRequirements()
     return SimulationStoreProblemRequirements(
-        Dict{Symbol, Dict{String, Any}}(),
-        Dict{Symbol, Dict{String, Any}}(),
-        Dict{Symbol, Dict{String, Any}}(),
+        Dict{ConstraintKey, Dict{String, Any}}(),
+        Dict{ParameterKey, Dict{String, Any}}(),
+        Dict{VariableKey, Dict{String, Any}}(),
     )
 end
 
@@ -26,6 +26,7 @@ struct SimulationStoreProblemParams
     end_of_interval_step::Int
     base_power::Float64
     system_uuid::Base.UUID
+    container_metadata::OptimizationContainerMetadata
 
     function SimulationStoreProblemParams(
         num_executions,
@@ -35,6 +36,7 @@ struct SimulationStoreProblemParams
         end_of_interval_step,
         base_power,
         system_uuid,
+        container_metadata = OptimizationContainerMetadata(),
     )
         new(
             num_executions,
@@ -44,6 +46,7 @@ struct SimulationStoreProblemParams
             end_of_interval_step,
             base_power,
             system_uuid,
+            container_metadata,
         )
     end
 end
@@ -55,6 +58,8 @@ get_resolution(params::SimulationStoreProblemParams) = params.resolution
 get_end_of_interval_step(params::SimulationStoreProblemParams) = params.end_of_interval_step
 get_base_power(params::SimulationStoreProblemParams) = params.base_power
 get_system_uuid(params::SimulationStoreProblemParams) = params.system_uuid
+deserialize_key(params::SimulationStoreProblemParams, name) =
+    deserialize_key(params.container_metadata, name)
 
 struct SimulationStoreParams
     initial_time::Dates.DateTime

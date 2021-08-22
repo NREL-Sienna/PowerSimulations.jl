@@ -1,6 +1,7 @@
-const ParamCacheKey = NamedTuple{(:problem, :type, :name), NTuple{3, Symbol}}
+const ParamCacheKey =
+    NamedTuple{(:model, :type, :name), Tuple{Symbol, Symbol, OptimizationContainerKey}}
 
-make_cache_key(model, type, name) = (problem = problem, type = type, name = name)
+make_cache_key(model, type, name) = (model = model, type = type, name = name)
 
 # Priority for keeping data in cache to serve reads. Currently unused.
 IS.@scoped_enum(CachePriority, LOW = 1, MEDIUM = 2, HIGH = 3,)
@@ -27,8 +28,15 @@ function CacheFlushRules(; max_size = GiB, min_flush_size = MIN_CACHE_FLUSH_SIZE
     return CacheFlushRules(Dict{ParamCacheKey, CacheFlushRule}(), min_flush_size, max_size)
 end
 
-function add_rule!(rules::CacheFlushRules, model, type, name, keep_in_cache, priority)
-    key = make_cache_key(model, type, name)
+function add_rule!(
+    rules::CacheFlushRules,
+    model,
+    type,
+    container_key,
+    keep_in_cache,
+    priority,
+)
+    key = make_cache_key(model, type, container_key)
     rules.data[key] = CacheFlushRule(keep_in_cache, priority)
 end
 

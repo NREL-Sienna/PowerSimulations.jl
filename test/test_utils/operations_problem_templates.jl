@@ -53,7 +53,7 @@ function get_template_hydro_st_uc(network = CopperPlatePowerModel)
     return template
 end
 
-function get_template_hydro_st_ed(network = CopperPlatePowerModel)
+function get_template_hydro_st_ed(network = CopperPlatePowerModel, duals = [])
     template = ProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalDispatch)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)

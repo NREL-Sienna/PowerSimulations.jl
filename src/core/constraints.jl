@@ -75,7 +75,7 @@ function ConstraintKey(
     ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}  # TODO DT: IS.InfrastructureType instead?
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     check_meta_chars(meta)
     return ConstraintKey{T, U}(meta)
 end

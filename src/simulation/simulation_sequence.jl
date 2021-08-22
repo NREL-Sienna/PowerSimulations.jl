@@ -94,8 +94,8 @@ function _check_feedforward(
 end
 
 function _check_chronology_consistency(
-    problems::SimulationProblems,
-    feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology},
+    problems::SimulationModels,
+    feedforward_chronologies::Dict{Pair{Symbol, Symbol}, <:FeedForwardChronology},
     ini_cond_chronology::InitialConditionChronology,
 )
     if isempty(feedforward_chronologies)
@@ -126,7 +126,7 @@ function _check_cache_definition(cache::Dict{<:Tuple, <:AbstractCache})
 end
 
 function _get_num_executions_by_problem(problems, execution_order)
-    problem_names = get_problem_names(problems)
+    problem_names = get_model_names(problems)
     executions_by_problem = Dict(x => 0 for x in problem_names)
     for problem_number in execution_order
         executions_by_problem[problem_names[problem_number]] += 1
@@ -135,21 +135,21 @@ function _get_num_executions_by_problem(problems, execution_order)
 end
 
 @doc raw"""
-    SimulationSequence(horizons::Dict{String, Int}
+    SimulationSequence(horizons::Dict{Symbol, Int}
                         step_resolution::Dates.TimePeriod
-                        intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
-                        order::Dict{Int, String}
-                        feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
-                        feedforward::Dict{String, <:AbstractAffectFeedForward}
-                        ini_cond_chronology::Dict{String, <:FeedForwardChronology}
-                        cache::Dict{String, AbstractCache}
+                        intervals::Dict{Symbol, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
+                        order::Dict{Int, Symbol}
+                        feedforward_chronologies::Dict{Pair{Symbol, Symbol}, <:FeedForwardChronology}
+                        feedforward::Dict{Symbol, <:AbstractAffectFeedForward}
+                        ini_cond_chronology::Dict{Symbol, <:FeedForwardChronology}
+                        cache::Dict{Symbol, AbstractCache}
                         )
 """
 mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Int}
     # JDNOTE: This field might be able to go away.
     step_resolution::Dates.TimePeriod
-    # The string here is the name of the problem
+    # The Symbol here is the name of the problem
     intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
     feedforward::Dict{<:Tuple, <:AbstractAffectFeedForward}
@@ -161,40 +161,47 @@ mutable struct SimulationSequence
     uuid::Base.UUID
 
     function SimulationSequence(;
-        problems::SimulationProblems,
+        models::SimulationModels,
         # JDNOTE: We could remove interval here later
-        intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
-        feedforward_chronologies = Dict{Pair{String, String}, FeedForwardChronology}(),
-        feedforward = Dict{String, AbstractAffectFeedForward}(),
+        intervals::Dict,
+        feedforward_chronologies = Dict{Pair{Symbol, Symbol}, FeedForwardChronology}(),
+        feedforward = Dict{Symbol, AbstractAffectFeedForward}(),
         ini_cond_chronology = InterProblemChronology(),
         cache = Dict{Tuple, AbstractCache}(),
     )
-        horizons = determine_horizons!(problems)
+        # Allow strings or symbols as keys; convert to symbols.
+        intervals = Dict(Symbol(k) => v for (k, v) in intervals)
+        if eltype(feedforward_chronologies).parameters[1] != Pair{Symbol, Symbol}
+            feedforward_chronologies = Dict(
+                Pair(Symbol(k.first), Symbol(k.second)) => v for
+                (k, v) in feedforward_chronologies
+            )
+        end
+        if eltype(feedforward).parameters[1] != Symbol
+            feedforward = Dict(Symbol(k) => v for (k, v) in feedforward)
+        end
+        horizons = determine_horizons!(models)
         _intervals =
             OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}()
-        for k in get_problem_names(problems)
+        for name in get_model_names(models)
             # JDNOTE: Temporary conversion while we re-define how to do this
-            k_ = string(k)
-            if !(k_ in keys(intervals))
-                throw(IS.ConflictingInputsError("Interval not defined for problem $(k_)"))
+            if !(name in keys(intervals))
+                throw(IS.ConflictingInputsError("Interval not defined for problem $name"))
             end
-            _intervals[k] = (IS.time_period_conversion(intervals[k_][1]), intervals[k_][2])
+            _intervals[name] =
+                (IS.time_period_conversion(intervals[name][1]), intervals[name][2])
         end
         step_resolution = determine_step_resolution(_intervals)
         _check_feedforward(feedforward, feedforward_chronologies)
-        _check_chronology_consistency(
-            problems,
-            feedforward_chronologies,
-            ini_cond_chronology,
-        )
+        _check_chronology_consistency(models, feedforward_chronologies, ini_cond_chronology)
         _check_cache_definition(cache)
-        if length(problems) == 1
+        if length(models) == 1
             ini_cond_chronology = IntraProblemChronology()
         end
         execution_order = _get_execution_order_vector(_intervals)
-        executions_by_problem = _get_num_executions_by_problem(problems, execution_order)
+        executions_by_problem = _get_num_executions_by_problem(models, execution_order)
         sequence_uuid = IS.make_uuid()
-        initialize_simulation_internals!(problems, sequence_uuid)
+        initialize_simulation_internals!(models, sequence_uuid)
         new(
             horizons,
             step_resolution,
@@ -214,15 +221,15 @@ end
 get_step_resolution(sequence::SimulationSequence) = sequence.step_resolution
 
 function get_problem_interval_chronology(sequence::SimulationSequence, problem)
-    return sequence.intervals[Symbol(model)][2]
+    return sequence.intervals[problem][2]
 end
 
 function get_interval(sequence::SimulationSequence, problem::Symbol)
     return sequence.intervals[problem][1]
 end
 
-function get_interval(sequence::SimulationSequence, problem)
-    return sequence.intervals[Symbol(model)][1]
+function get_interval(sequence::SimulationSequence, model)
+    return sequence.intervals[model][1]
 end
 
 get_execution_order(sequence::SimulationSequence) = sequence.execution_order

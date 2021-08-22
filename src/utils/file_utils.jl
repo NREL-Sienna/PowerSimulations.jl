@@ -109,3 +109,5 @@ function check_file_integrity(path::String)
 end
 
 to_namedtuple(val) = (; (x => getfield(val, x) for x in fieldnames(typeof(val)))...)
+
+convert_for_path(x::Dates.DateTime) = replace(string(x), ":" => "-")

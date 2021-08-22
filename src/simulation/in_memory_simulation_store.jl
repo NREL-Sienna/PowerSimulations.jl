@@ -2,16 +2,16 @@
 Stores simulation data for one problem.
 """
 mutable struct ProblemData
-    duals::Dict{Symbol, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    parameters::Dict{Symbol, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    variables::Dict{Symbol, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
 end
 
 function ProblemData()
     return ProblemData(
-        Dict{Symbol, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
-        Dict{Symbol, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
-        Dict{Symbol, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
+        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
+        Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
+        Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
     )
 end
 
@@ -77,7 +77,7 @@ end
 
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
-    problem,
+    model,
     stats::OptimizerStats,
     timestamp,
 )
@@ -132,7 +132,7 @@ function write_result!(
     array,
     columns = nothing,
 )
-    container = getfield(store.data[Symbol(problem_name)], container_type)
+    container = getfield(store.data[problem_name], container_type)
     container[name][timestamp] = axis_array_to_dataframe(array, columns)
     return
 end

@@ -100,12 +100,12 @@ function Base.show(io::IO, ::MIME"text/plain", results::SimulationProblemResults
     println(io, "\n")
     println(io, "Variables")
     println(io, "=========\n")
-    for v in get_existing_variables(results)
+    for v in list_variable_names(results)
         println(io, "$(v)")
     end
     println(io, "\n")
-    parameters = get_existing_parameters(results)
-    duals = get_existing_duals(results)
+    parameters = list_parameter_names(results)
+    duals = list_dual_names(results)
     for val in [("Parameters", parameters), ("Duals", duals)]
         if !isempty(val[2])
             println(io, "$(val[1])")
@@ -223,8 +223,9 @@ end
 function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
     for (keys, sync) in feed_forward
         period = sync.periods
-        stage1 = keys[1]
-        stage2 = keys[2]
+        # TODO DT: this is incorrect
+        stage1 = string(keys[1])
+        stage2 = stage1
         spaces = " "^(length(stage2) + 2)
         dashes = "-"^(length(stage2) + 2)
         if period <= 12

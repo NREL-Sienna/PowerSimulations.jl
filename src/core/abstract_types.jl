@@ -12,6 +12,10 @@ abstract type InitialConditionType end
 
 const _DELIMITER = "_"
 
+function make_key(::Type{T}, args...) where {T <: OptimizationContainerKey}
+    return T(args...)
+end
+
 function get_entry_type_module(key::OptimizationContainerKey)
     return parentmodule(get_entry_type(key))
 end
@@ -23,6 +27,9 @@ end
 function encode_key(key::OptimizationContainerKey)
     return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
 end
+
+encode_key_as_string(key::OptimizationContainerKey) = string(encode_key(key))
+encode_keys_as_strings(container_keys) = [encode_key_as_string(k) for k in container_keys]
 
 function encode_symbol(
     ::Type{T},
@@ -107,6 +114,8 @@ abstract type SimulationStore end
 # - read_problem_optimizer_stats
 
 abstract type AbstractAffectFeedForward end
+
+get_device_type(x::AbstractAffectFeedForward) = x.device_type
 
 abstract type AbstractCache end
 abstract type FeedForwardChronology end
