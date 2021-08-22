@@ -413,6 +413,7 @@ function feedforward!(
     parameter_ref_lb =
         UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_lb, "lb")
     for var_name in get_affected_variables(ff_model)
+        # TODO: This function isn't implemented correctly needs review to use keys
         range_ff(
             optimization_container,
             Symbol("RANGE_FF_" * "$var_name"),
