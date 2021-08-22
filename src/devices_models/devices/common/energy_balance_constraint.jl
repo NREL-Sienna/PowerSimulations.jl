@@ -107,8 +107,8 @@ function _apply_energy_balance_constraint_spec!(
         device = ic.device
         dev_name = PSY.get_name(device)
         if !isnothing(spec.parameter)
-            forecast_label = get_label(spec.parameter)
-            ts_vector = get_time_series(optimization_container, device, forecast_label)
+            forecast_name = get_label(spec.parameter)
+            ts_vector = get_time_series(optimization_container, device, forecast_name)
             multiplier = spec.multiplier_func(device)
             constraint_info = EnergyBalanceConstraintInfo(
                 dev_name,

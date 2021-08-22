@@ -719,10 +719,10 @@ function energy_budget_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     ::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen}
-    forecast_label = "hydro_budget"
+    forecast_name = "hydro_budget"
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, forecast_label)
+        ts_vector = get_time_series(optimization_container, d, forecast_name)
         @debug "time_series" ts_vector
         constraint_d =
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)

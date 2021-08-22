@@ -324,12 +324,12 @@ function energy_target_constraint!(
     parameters = model_has_parameters(optimization_container)
     use_forecast_data = model_uses_forecasts(optimization_container)
     time_steps = model_time_steps(optimization_container)
-    target_forecast_label = "storage_target"
+    target_forecast_name = "storage_target"
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     if use_forecast_data
         for (ix, d) in enumerate(devices)
             ts_vector_target =
-                get_time_series(optimization_container, d, target_forecast_label)
+                get_time_series(optimization_container, d, target_forecast_name)
             constraint_info_target =
                 DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector_target)
             constraint_infos_target[ix] = constraint_info_target
@@ -351,7 +351,7 @@ function energy_target_constraint!(
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
-            EnergyTargetTimeSeriesParameter(target_forecast_label),
+            EnergyTargetTimeSeriesParameter(target_forecast_name),
             T,
         )
     else
