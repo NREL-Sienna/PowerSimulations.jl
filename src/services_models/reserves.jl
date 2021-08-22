@@ -8,10 +8,10 @@ struct RampReserve <: AbstractReservesFormulation end
 get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
 ############################### ActivePowerReserveVariable, Reserve #########################################
 
-get_variable_binary(::ActiveServiceVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
-get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, d::PSY.Component, _) = PSY.get_max_active_power(d)
-get_variable_upper_bound(::ActiveServiceVariable, ::PSY.Reserve, d::PSY.Storage, _) =  PSY.get_output_active_power_limits(d).max
-get_variable_lower_bound(::ActiveServiceVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
+get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
+get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.Reserve, d::PSY.Component, _) = PSY.get_max_active_power(d)
+get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.Reserve, d::PSY.Storage, _) =  PSY.get_output_active_power_limits(d).max
+get_variable_lower_bound(::ActivePowerReserveVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
 
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 

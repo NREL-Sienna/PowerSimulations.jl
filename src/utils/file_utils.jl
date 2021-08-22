@@ -65,19 +65,6 @@ function find_var_length(es::Dict, e_list::Array)
     return size(es[Symbol(splitext(e_list[1])[1])], 1)
 end
 
-function compute_file_hash(path::String, files::Vector{String})
-    data = Dict("files" => [])
-    for file in files
-        file_path = joinpath(path, file)
-        file_info = Dict("filename" => file_path, "hash" => compute_sha256(file_path))
-        push!(data["files"], file_info)
-    end
-
-    open(joinpath(path, HASH_FILENAME), "w") do io
-        write(io, JSON.json(data))
-    end
-end
-
 """
     check_file_integrity(path::String)
 
