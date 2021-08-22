@@ -210,7 +210,7 @@ function ramp_constraints!(
             optimization_container,
             data,
             make_constraint_name(RAMP, SR),
-            make_variable_name(service_name, SR),
+            VariableKey(ReserveVariable, SR, service_name),
             service_name,
         )
     else
@@ -238,7 +238,7 @@ function ramp_constraints!(
             optimization_container,
             data,
             make_constraint_name(RAMP, SR),
-            make_variable_name(service_name, SR),
+            VariableKey(ReserveVariable, SR, service_name),
             service_name,
         )
     else

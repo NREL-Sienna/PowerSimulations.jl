@@ -48,7 +48,6 @@ function add_slacks!(
 )
     _add_system_balance_slacks!(
         optimization_container,
-        ACTIVE_POWER,
         :nodal_balance_active,
         true,
     )
@@ -59,7 +58,7 @@ function add_slacks!(
     optimization_container::OptimizationContainer,
     ::Type{T},
 ) where {T <: PM.AbstractActivePowerModel}
-    _add_system_balance_slacks!(optimization_container, ACTIVE_POWER, :nodal_balance_active)
+    _add_system_balance_slacks!(optimization_container,  :nodal_balance_active)
     return
 end
 
@@ -67,11 +66,8 @@ function add_slacks!(
     optimization_container::OptimizationContainer,
     ::Type{T},
 ) where {T <: PM.AbstractPowerModel}
-    _add_system_balance_slacks!(optimization_container, ACTIVE_POWER, :nodal_balance_active)
-    _add_system_balance_slacks!(
-        optimization_container,
-        REACTIVE_POWER,
-        :nodal_balance_reactive,
-    )
+    _add_system_balance_slacks!(optimization_container, :nodal_balance_active)
+    # TODO: Enable later
+    #_add_system_balance_slacks!(optimization_container, :nodal_balance_reactive)
     return
 end

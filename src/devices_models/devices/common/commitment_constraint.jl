@@ -28,21 +28,21 @@ If t > 1:
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varon'
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
--  : var_names[1] : varstart
--  : var_names[2] : varstop
--  : var_names[3] : varon
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey} : the names of the variables
+-  : var_keys[1] : varstart
+-  : var_keys[2] : varstop
+-  : var_keys[3] : varon
 """
 function device_commitment!(
     optimization_container::OptimizationContainer,
     initial_conditions::Vector{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
-    varstart = get_variable(optimization_container, var_names[1])
-    varstop = get_variable(optimization_container, var_names[2])
-    varon = get_variable(optimization_container, var_names[3])
+    varstart = get_variable(optimization_container, var_keys[1])
+    varstop = get_variable(optimization_container, var_keys[2])
+    varon = get_variable(optimization_container, var_keys[3])
     varstart_names = axes(varstart, 1)
     constraint =
         add_cons_container!(optimization_container, cons_name, varstart_names, time_steps)

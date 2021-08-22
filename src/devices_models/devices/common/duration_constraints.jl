@@ -33,23 +33,23 @@ for i in the set of time steps.
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
-- : var_names[1] : varon
-- : var_names[2] : varstart
-- : var_names[3] : varstop
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+- : var_keys[1] : varon
+- : var_keys[2] : varstart
+- : var_keys[3] : varstop
 """
 function device_duration_retrospective!(
     optimization_container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
 
-    varon = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    varon = get_variable(optimization_container, var_keys[1])
+    varstart = get_variable(optimization_container, var_keys[2])
+    varstop = get_variable(optimization_container, var_keys[3])
 
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
@@ -132,22 +132,22 @@ for i in the set of time steps.
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
-- : var_names[1] : varon
-- : var_names[2] : varstart
-- : var_names[3] : varstop
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+- : var_keys[1] : varon
+- : var_keys[2] : varstart
+- : var_keys[3] : varstop
 """
 function device_duration_look_ahead!(
     optimization_container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
-    varon = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    varon = get_variable(optimization_container, var_keys[1])
+    varstart = get_variable(optimization_container, var_keys[2])
+    varstop = get_variable(optimization_container, var_keys[3])
 
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
@@ -232,23 +232,23 @@ for i in the set of time steps.
 * initial_duration_on::Vector{InitialCondition} : gives initial number of time steps variable is up
 * initial_duration_off::Vector{InitialCondition} : gives initial number of time steps variable is down
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
-- : var_names[1] : varon
-- : var_names[2] : varstart
-- : var_names[3] : varstop
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+- : var_keys[1] : varon
+- : var_keys[2] : varstart
+- : var_keys[3] : varstop
 """
 function device_duration_parameters!(
     optimization_container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
 
-    varon = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    varon = get_variable(optimization_container, var_keys[1])
+    varstart = get_variable(optimization_container, var_keys[2])
+    varstop = get_variable(optimization_container, var_keys[3])
 
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
@@ -340,23 +340,23 @@ for i in the set of time steps.
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
-- : var_names[1] : varon
-- : var_names[2] : varstart
-- : var_names[3] : varstop
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+- : var_keys[1] : varon
+- : var_keys[2] : varstart
+- : var_keys[3] : varstop
 """
 function device_duration_compact_retrospective!(
     optimization_container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
 )
     time_steps = model_time_steps(optimization_container)
 
-    varon = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    varon = get_variable(optimization_container, var_keys[1])
+    varstart = get_variable(optimization_container, var_keys[2])
+    varstop = get_variable(optimization_container, var_keys[3])
 
     name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")

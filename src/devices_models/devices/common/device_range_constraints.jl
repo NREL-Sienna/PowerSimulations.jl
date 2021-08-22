@@ -1,7 +1,7 @@
 struct RangeConstraintSpec
     constraint_name::Symbol
-    variable_name::Symbol
-    bin_variable_names::Vector{Symbol}
+    variable_name::VariableKey
+    bin_variable_names::Vector{VariableKey}
     limits_func::Function
     constraint_func::Function
     constraint_struct::Type{<:AbstractRangeConstraintInfo}
@@ -11,7 +11,7 @@ end
 function RangeConstraintSpec(;
     constraint_name,
     variable_name,
-    bin_variable_names = Vector{Symbol}(),
+    bin_variable_names = Vector{VariableKey}(),
     limits_func,
     constraint_func,
     constraint_struct,
@@ -30,8 +30,8 @@ end
 
 struct TimeSeriesConstraintSpec
     constraint_name::Symbol
-    variable_name::Symbol
-    bin_variable_name::Union{Nothing, Symbol}
+    variable_name::VariableKey
+    bin_variable_name::Union{Nothing, VariableKey}
     parameter_name::Union{Nothing, String}
     forecast_label::Union{Nothing, String}
     multiplier_func::Union{Nothing, Function}

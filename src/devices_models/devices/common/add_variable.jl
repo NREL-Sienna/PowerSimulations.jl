@@ -81,7 +81,7 @@ function add_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(make_variable_name(T, D))_{$(name), $(t)}",
+            base_name = "$(VariableKey(T, D))_{$(name), $(t)}",
             binary = binary
         )
 
@@ -125,7 +125,7 @@ function add_variable!(
     @assert !isempty(devices)
     time_steps = model_time_steps(optimization_container)
 
-    var_name = make_variable_name(PSY.get_name(service), T)
+    var_name = VariableKey(PSY.get_name(service), T)
     binary = get_variable_binary(variable_type, T, formulation)
     expression_name = get_variable_expression_name(variable_type, T)
     sign = get_variable_sign(variable_type, T, formulation)

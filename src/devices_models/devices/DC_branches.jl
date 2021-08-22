@@ -41,7 +41,7 @@ function add_variable_to_expression!(
     ::Type{S},
 ) where {B <: PSY.DCBranch, S <: Union{StandardPTDFModel, PTDFPowerModel}}
     time_steps = model_time_steps(optimization_container)
-    var = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
+    var = get_variable(optimization_container, FlowActivePowerVariable(), B)
 
     for d in devices
         for t in time_steps
@@ -72,11 +72,11 @@ function branch_rate_constraints!(
     ::Type{<:PM.AbstractDCPModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
-    var = get_variable(optimization_container, FLOW_ACTIVE_POWER, B)
+    var = get_variable(optimization_container, FlowActivePowerVariable(), B)
     time_steps = model_time_steps(optimization_container)
     constraint_val =
         JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
-    assign_constraint!(optimization_container, FLOW_ACTIVE_POWER, B, constraint_val)
+    assign_constraint!(optimization_container, FlowActivePowerVariable(), B, constraint_val)
     for t in time_steps, d in devices
         min_rate = max(
             PSY.get_active_power_limits_from(d).min,
@@ -111,7 +111,7 @@ function branch_rate_constraints!(
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(optimization_container)
     for (var_type, cons_type) in
-        zip((FLOW_ACTIVE_POWER, FLOW_ACTIVE_POWER), (RATE_LIMIT_FT, RATE_LIMIT_TF))
+        zip((FlowActivePowerVariable(), FlowActivePowerVariable()), (RATE_LIMIT_FT, RATE_LIMIT_TF))
         var = get_variable(optimization_container, var_type, B)
         constraint_val =
             JuMPConstraintArray(undef, [PSY.get_name(d) for d in devices], time_steps)
