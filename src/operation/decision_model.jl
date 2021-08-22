@@ -316,20 +316,6 @@ function build_pre_step!(model::DecisionModel)
     return
 end
 
-function initialize_simulation_info!(model::DecisionModel, ::FeedForwardChronology)
-    @assert built_for_simulation(model)
-    system = get_system(model)
-    resolution = get_resolution(model)
-    interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
-    end_of_interval_step = Int(interval / resolution)
-    get_simulation_info(model).end_of_interval_step = end_of_interval_step
-end
-
-function initialize_simulation_info!(model::DecisionModel, ::RecedingHorizon)
-    @assert built_for_simulation(model)
-    get_simulation_info(model).end_of_interval_step = 1
-end
-
 function _build!(model::DecisionModel{<:DecisionProblem}, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
