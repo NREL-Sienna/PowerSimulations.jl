@@ -500,7 +500,7 @@ function energy_target_constraint!(
         energy_target!(
             optimization_container,
             constraint_infos_target,
-            EnergyTargetConstraint(),
+            EnergyTargetTimeSeriesParameter("storage_target"),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
             T,
         )

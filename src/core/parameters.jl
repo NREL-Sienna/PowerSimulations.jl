@@ -52,19 +52,11 @@ struct RequirementTimeSeriesParameter <: TimeSeriesParameter
     label::String
 end
 
-struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter
+struct EnergyTargetTimeSeriesParameterParameter <: TimeSeriesParameter
     label::String
 end
 
 struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter
-    label::String
-end
-
-struct InflowTimeSeriesParameter <: TimeSeriesParameter
-    label::String
-end
-
-struct OutflowTimeSeriesParameter <: TimeSeriesParameter
     label::String
 end
 
