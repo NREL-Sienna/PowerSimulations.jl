@@ -29,7 +29,7 @@ function determine_horizons!(problems::SimulationProblems)
     horizons = OrderedDict{Symbol, Int}()
     for (name, problem) in problems.op_problems
         optimization_container = get_optimization_container(problem)
-        settings = get_settings(optimization_container)
+        settings = get_settings(container)
         horizon = get_horizon(settings)
         if horizon == UNSET_HORIZON
             sys = get_system(problem)
@@ -60,7 +60,5 @@ function initialize_simulation_internals!(problems::SimulationProblems, uuid::Ba
             uuid,
         )
         set_simulation_info!(problem, info)
-        settings = get_settings(problem)
-        set_use_parameters!(settings, true)
     end
 end

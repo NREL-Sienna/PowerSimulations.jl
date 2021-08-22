@@ -7,7 +7,6 @@ function make_reactive_power_constraints_inputs(
     ::Type{V},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
-    use_forecasts::Bool,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
     error(
         "make_reactive_power_constraints_inputs is not implemented for types $T / $U / $V",
@@ -22,14 +21,13 @@ Users of this function must implement a method for
 Users may also implement custom reactive_power_constraints! methods.
 """
 function reactive_power_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
-    use_parameters = model_has_parameters(optimization_container)
-    use_forecasts = model_uses_forecasts(optimization_container)
+    use_parameters = built_for_simulation(container)
     @assert !(use_parameters && !use_forecasts)
     inputs = make_reactive_power_constraints_inputs(
         T,
@@ -37,7 +35,6 @@ function reactive_power_constraints!(
         PM.AbstractPowerModel,
         feedforward,
         use_parameters,
-        use_forecasts,
     )
-    device_range_constraints!(optimization_container, devices, model, feedforward, inputs)
+    device_range_constraints!(container, devices, model, feedforward, inputs)
 end

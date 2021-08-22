@@ -4,12 +4,12 @@ struct GroupReserve <: AbstractReservesFormulation end
 This function checks if the variables for reserves were created
 """
 function check_activeservice_variables(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     contributing_services::Vector{T},
 ) where {T <: PSY.Service}
     for service in contributing_services
         get_variable(
-            optimization_container,
+            container,
             ActivePowerReserveVariable(),
             typeof(service),
             PSY.get_name(service),
@@ -23,24 +23,19 @@ end
 This function creates the requirement constraint that will be attained by the apropriate services
 """
 function service_requirement_constraint!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
 ) where {SR <: PSY.StaticReserveGroup}
-    initial_time = get_initial_time(optimization_container)
+    initial_time = get_initial_time(container)
     @debug initial_time
-    time_steps = get_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
-    use_slacks = get_services_slack_variables(optimization_container.settings)
+    constraint = get_constraint(container, RequirementConstraint(), SR)
+    use_slacks = get_services_slack_variables(container.settings)
     reserve_variables = [
-        get_variable(
-            optimization_container,
-            ActivePowerReserveVariable(),
-            typeof(r),
-            PSY.get_name(r),
-        ) for r in contributing_services
+        get_variable(container, ActivePowerReserveVariable(), typeof(r), PSY.get_name(r)) for r in contributing_services
     ]
 
     requirement = PSY.get_requirement(service)
@@ -52,10 +47,8 @@ function service_requirement_constraint!(
         if use_slacks
             resource_expression += slack_vars[t]
         end
-        constraint[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            resource_expression >= requirement
-        )
+        constraint[name, t] =
+            JuMP.@constraint(container.JuMPmodel, resource_expression >= requirement)
     end
 
     return

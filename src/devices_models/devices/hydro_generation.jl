@@ -350,27 +350,24 @@ reactive power for Commitment Run of River formulation.
     `` P <= multiplier * P_max ``
 """
 function commit_hydro_active_power_ub!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices,
     model::DeviceModel{V, W},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
-    use_parameters = model_has_parameters(optimization_container)
-    use_forecasts = model_uses_forecasts(optimization_container)
-    if use_parameters || use_forecasts
-        spec = DeviceRangeConstraintSpec(;
-            timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-                constraint_type = CommitmentConstraint(),
-                variable_type = ActivePowerVariable(),
-                parameter = ActivePowerTimeSeriesParameter("max_active_power"),
-                multiplier_func = x -> PSY.get_max_active_power(x),
-                constraint_func = use_parameters ? device_timeseries_param_ub! :
-                                  device_timeseries_ub!,
-                component_type = V,
-            ),
-        )
-        device_range_constraints!(optimization_container, devices, model, feedforward, spec)
-    end
+    use_parameters = built_for_simulation(container)
+    spec = DeviceRangeConstraintSpec(;
+        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
+            constraint_type = CommitmentConstraint(),
+            variable_type = ActivePowerVariable(),
+            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
+            multiplier_func = x -> PSY.get_max_active_power(x),
+            constraint_func = use_parameters ? device_timeseries_param_ub! :
+                              device_timeseries_ub!,
+            component_type = V,
+        ),
+    )
+    device_range_constraints!(container, devices, model, feedforward, spec)
 end
 
 ######################## Energy balance constraints ############################
@@ -452,44 +449,30 @@ function DeviceEnergyBalanceConstraintSpec(
 end
 
 function energy_target_constraint!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, S},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.HydroGen, S <: AbstractHydroFormulation}
     key = ICKey(InitialEnergyLevel, T)
-    parameters = model_has_parameters(optimization_container)
-    use_forecast_data = model_uses_forecasts(optimization_container)
-    time_steps = get_time_steps(optimization_container)
+    parameters = built_for_simulation(container)
+
+    time_steps = get_time_steps(container)
     constraint_infos_target = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    if use_forecast_data
-        for (ix, d) in enumerate(devices)
-            ts_vector_target = get_time_series(optimization_container, d, "storage_target")
-            constraint_info_target = DeviceTimeSeriesConstraintInfo(
-                d,
-                x -> PSY.get_storage_capacity(x),
-                ts_vector_target,
-            )
-            constraint_infos_target[ix] = constraint_info_target
-        end
-    else
-        for (ix, d) in enumerate(devices)
-            ts_vector_target =
-                length(time_steps) == 1 ? [PSY.get_storage_target(d)] :
-                vcat(zeros(time_steps[end - 1]), PSY.get_storage_target(d))
-            constraint_info_target = DeviceTimeSeriesConstraintInfo(
-                d,
-                x -> PSY.get_storage_capacity(x),
-                ts_vector_target,
-            )
-            constraint_infos_target[ix] = constraint_info_target
-        end
+    for (ix, d) in enumerate(devices)
+        ts_vector_target = get_time_series(container, d, "storage_target")
+        constraint_info_target = DeviceTimeSeriesConstraintInfo(
+            d,
+            x -> PSY.get_storage_capacity(x),
+            ts_vector_target,
+        )
+        constraint_infos_target[ix] = constraint_info_target
     end
 
-    if parameters
+    if built_for_simulation(container)
         energy_target_param!(
-            optimization_container,
+            container,
             constraint_infos_target,
             EnergyTargetConstraint(),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
@@ -498,7 +481,7 @@ function energy_target_constraint!(
         )
     else
         energy_target!(
-            optimization_container,
+            container,
             constraint_infos_target,
             EnergyTargetTimeSeriesParameter("storage_target"),
             (EnergyVariable(), EnergyShortageVariable(), EnergySurplusVariable()),
@@ -521,7 +504,7 @@ function energy_target_constraint!(
     end
     if !isempty(constraint_infos)
         device_range!(
-            optimization_container,
+            container,
             RangeConstraintSpecInternal(
                 constraint_infos,
                 EnergyShortageVariableLimitsConstraint(),
@@ -537,47 +520,31 @@ end
 
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::AbstractHydroUnitCommitment,
 ) where {H <: PSY.HydroGen}
+    add_initial_condition!(container, devices, formulation, DeviceStatus, OnVariable)
     add_initial_condition!(
-        optimization_container,
-        devices,
-        formulation,
-        DeviceStatus,
-        OnVariable,
-    )
-    add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         formulation,
         DevicePower,
         ActivePowerVariable,
     )
-    add_initial_condition!(
-        optimization_container,
-        devices,
-        formulation,
-        InitialTimeDurationOn,
-    )
-    add_initial_condition!(
-        optimization_container,
-        devices,
-        formulation,
-        InitialTimeDurationOff,
-    )
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
 
     return
 end
 
 function initial_conditions!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::AbstractHydroDispatchFormulation,
 ) where {H <: PSY.HydroGen}
     add_initial_condition!(
-        optimization_container,
+        container,
         devices,
         formulation,
         DevicePower,
@@ -631,7 +598,7 @@ active power budget formulation.
 `` sum(P[t]) <= Budget ``
 """
 function energy_budget_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
     ::DeviceModel{H, <:AbstractHydroFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -640,16 +607,16 @@ function energy_budget_constraints!(
     forecast_name = "hydro_budget"
     constraint_data = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, forecast_name)
+        ts_vector = get_time_series(container, d, forecast_name)
         @debug "time_series" ts_vector
         constraint_d =
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)
         constraint_data[ix] = constraint_d
     end
 
-    if model_has_parameters(optimization_container)
+    if built_for_simulation(container)
         device_energy_budget_param_ub(
-            optimization_container,
+            container,
             constraint_data,
             EnergyBudgetConstraint(),
             EnergyBudgetTimeSeriesParameter("hydro_budget"),
@@ -658,7 +625,7 @@ function energy_budget_constraints!(
         )
     else
         device_energy_budget_ub(
-            optimization_container,
+            container,
             constraint_data,
             EnergyBudgetConstraint(),
             ActivePowerVariable(),
@@ -672,34 +639,31 @@ This function define the budget constraint (using params)
 for the active power budget formulation.
 """
 function device_energy_budget_param_ub(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     energy_budget_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_type::ConstraintType,
     param_type::TimeSeriesParameter,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = get_time_steps(optimization_container)
-    resolution = get_resolution(optimization_container)
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
-    variable_out = get_variable(optimization_container, var_type, T)
+    variable_out = get_variable(container, var_type, T)
     set_name = [get_component_name(r) for r in energy_budget_data]
-    constraint = add_cons_container!(optimization_container, cons_type, T, set_name)
-    container =
-        add_param_container!(optimization_container, param_type, T, set_name, time_steps)
+    constraint = add_cons_container!(container, cons_type, T, set_name)
+    container = add_param_container!(container, param_type, T, set_name, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     for constraint_info in energy_budget_data
         name = get_component_name(constraint_info)
         for t in time_steps
             multiplier[name, t] = constraint_info.multiplier * inv_dt
-            param[name, t] = add_parameter(
-                optimization_container.JuMPmodel,
-                constraint_info.timeseries[t],
-            )
+            param[name, t] =
+                add_parameter(container.JuMPmodel, constraint_info.timeseries[t])
         end
         constraint[name] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             sum([variable_out[name, t] for t in time_steps]) <= sum([multiplier[name, t] * param[name, t] for t in time_steps])
         )
     end
@@ -712,25 +676,25 @@ This function define the budget constraint
 for the active power budget formulation.
 """
 function device_energy_budget_ub(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     energy_budget_constraints::Vector{DeviceTimeSeriesConstraintInfo},
     cons_type::ConstraintType,
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    time_steps = get_time_steps(optimization_container)
-    variable_out = get_variable(optimization_container, var_type, T)
+    time_steps = get_time_steps(container)
+    variable_out = get_variable(container, var_type, T)
     names = [get_component_name(x) for x in energy_budget_constraints]
-    constraint = add_cons_container!(optimization_container, cons_type, T, names)
+    constraint = add_cons_container!(container, cons_type, T, names)
 
     for constraint_info in energy_budget_constraints
         name = get_component_name(constraint_info)
-        resolution = get_resolution(optimization_container)
+        resolution = get_resolution(container)
         inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
         forecast = constraint_info.timeseries
         multiplier = constraint_info.multiplier * inv_dt
         constraint[name] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             sum([variable_out[name, t] for t in time_steps]) <= multiplier * sum(forecast)
         )
     end

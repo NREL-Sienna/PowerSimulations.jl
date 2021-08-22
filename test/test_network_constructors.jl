@@ -28,9 +28,8 @@
         ps_model = DecisionProblem(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        @test !isnothing(ps_model.internal.optimization_container.pm)
-        @test :nodal_balance_active in
-              keys(ps_model.internal.optimization_container.expressions)
+        @test !isnothing(ps_model.internal.container.pm)
+        @test :nodal_balance_active in keys(ps_model.internal.container.expressions)
     end
 end
 
@@ -399,7 +398,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test !isnothing(ps_model.internal.optimization_container.pm)
+        @test !isnothing(ps_model.internal.container.pm)
     end
 end
 
@@ -446,7 +445,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test !isnothing(ps_model.internal.optimization_container.pm)
+        @test !isnothing(ps_model.internal.container.pm)
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],

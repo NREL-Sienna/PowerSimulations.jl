@@ -28,7 +28,7 @@ get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.Regulat
 #! format: on
 
 function add_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{DeltaActivePowerUpVariableLimitsConstraint},
     ::Type{DeltaActivePowerUpVariable},
     devices::IS.FlattenIteratorWrapper{T},
@@ -36,24 +36,19 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    parameters = model_has_parameters(optimization_container)
-    var_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), T)
+    parameters = built_for_simulation(container)
+    var_up = get_variable(container, DeltaActivePowerUpVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
-    time_steps = get_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
 
     # TODO DT: should "up" be specified in meta instead of the constraint type?
-    container_up = add_cons_container!(
-        optimization_container,
-        RegulationLimitsUpConstraint(),
-        U,
-        names,
-        time_steps,
-    )
+    container_up =
+        add_cons_container!(container, RegulationLimitsUpConstraint(), U, names, time_steps)
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, "max_active_power")
+        ts_vector = get_time_series(container, d, "max_active_power")
         constraint_info = DeviceTimeSeriesConstraintInfo(
             d,
             x -> PSY.get_max_active_power(x),
@@ -64,8 +59,7 @@ function add_constraints!(
     end
 
     if parameters
-        base_points_param =
-            get_parameter(optimization_container, VariableKey(ActivePowerVariable, U))
+        base_points_param = get_parameter(container, VariableKey(ActivePowerVariable, U))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -77,7 +71,7 @@ function add_constraints!(
             rating = parameters ? multiplier[name, t] : d.multiplier
             base_point = parameters ? base_points[name, t] : get_timeseries(d)[t]
             container_up[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 var_up[name, t] <= limits.max - base_point * rating
             )
         end
@@ -86,7 +80,7 @@ function add_constraints!(
 end
 
 function add_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{DeltaActivePowerDownVariableLimitsConstraint},
     ::Type{DeltaActivePowerDownVariable},
     devices::IS.FlattenIteratorWrapper{T},
@@ -94,14 +88,14 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    parameters = model_has_parameters(optimization_container)
-    var_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), T)
+    parameters = built_for_simulation(container)
+    var_dn = get_variable(container, DeltaActivePowerDownVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
-    time_steps = get_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
 
     container_dn = add_cons_container!(
-        optimization_container,
+        container,
         RegulationLimitsDownConstraint(),
         U,
         names,
@@ -110,7 +104,7 @@ function add_constraints!(
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(optimization_container, d, "max_active_power")
+        ts_vector = get_time_series(container, d, "max_active_power")
         constraint_info = DeviceTimeSeriesConstraintInfo(
             d,
             x -> PSY.get_max_active_power(x),
@@ -121,8 +115,7 @@ function add_constraints!(
     end
 
     if parameters
-        base_points_param =
-            get_parameter(optimization_container, VariableKey(ActivePowerVariable, T))
+        base_points_param = get_parameter(container, VariableKey(ActivePowerVariable, T))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -134,7 +127,7 @@ function add_constraints!(
             rating = parameters ? multiplier[name, t] : d.multiplier
             base_point = parameters ? base_points[name, t] : get_timeseries(d)[t]
             container_dn[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 var_dn[name, t] <= base_point * rating - limits.min
             )
         end
@@ -143,7 +136,7 @@ function add_constraints!(
 end
 
 function add_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{DeltaActivePowerUpVariableLimitsConstraint},
     ::Type{DeltaActivePowerUpVariable},
     devices::IS.FlattenIteratorWrapper{T},
@@ -151,34 +144,27 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    var_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), T)
+    var_up = get_variable(container, DeltaActivePowerUpVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
-    time_steps = get_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
 
-    container_up = add_cons_container!(
-        optimization_container,
-        RegulationLimitsUpConstraint(),
-        U,
-        names,
-        time_steps,
-    )
+    container_up =
+        add_cons_container!(container, RegulationLimitsUpConstraint(), U, names, time_steps)
 
     for d in devices
         name = PSY.get_name(d)
         limit_up = PSY.get_reserve_limit_up(d)
         for t in time_steps
-            container_up[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                var_up[name, t] <= limit_up
-            )
+            container_up[name, t] =
+                JuMP.@constraint(container.JuMPmodel, var_up[name, t] <= limit_up)
         end
     end
     return
 end
 
 function add_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{DeltaActivePowerDownVariableLimitsConstraint},
     ::Type{DeltaActivePowerDownVariable},
     devices::IS.FlattenIteratorWrapper{T},
@@ -186,13 +172,13 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    var_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), T)
+    var_dn = get_variable(container, DeltaActivePowerDownVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
-    time_steps = get_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
 
     container_dn = add_cons_container!(
-        optimization_container,
+        container,
         RegulationLimitsDownConstraint(),
         U,
         names,
@@ -203,33 +189,31 @@ function add_constraints!(
         name = PSY.get_name(d)
         limit_up = PSY.get_reserve_limit_dn(d)
         for t in time_steps
-            container_dn[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                var_dn[name, t] <= limit_up
-            )
+            container_dn[name, t] =
+                JuMP.@constraint(container.JuMPmodel, var_dn[name, t] <= limit_up)
         end
     end
     return
 end
 
 function ramp_constraints!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    R_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), T)
-    R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), T)
+    R_up = get_variable(container, DeltaActivePowerUpVariable(), T)
+    R_dn = get_variable(container, DeltaActivePowerDownVariable(), T)
 
-    resolution = Dates.value(Dates.Second(get_resolution(optimization_container)))
+    resolution = Dates.value(Dates.Second(get_resolution(container)))
     names = [PSY.get_name(g) for g in devices]
-    time_steps = get_time_steps(optimization_container)
+    time_steps = get_time_steps(container)
 
     # TODO DT: appropriate use of meta?
     # TODO DT: is component_type correct?
     container_up = add_cons_container!(
-        optimization_container,
+        container,
         RampLimitConstraint(),
         U,
         names,
@@ -237,7 +221,7 @@ function ramp_constraints!(
         meta = "up",
     )
     container_dn = add_cons_container!(
-        optimization_container,
+        container,
         RampLimitConstraint(),
         U,
         names,
@@ -252,11 +236,11 @@ function ramp_constraints!(
         name = PSY.get_name(d)
         for t in time_steps
             container_up[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 R_up[name, t] <= ramp_limits.up * scaling_factor
             )
             container_dn[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 R_dn[name, t] <= ramp_limits.down * scaling_factor
             )
         end
@@ -265,29 +249,25 @@ function ramp_constraints!(
 end
 
 function participation_assignment!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractRegulationFormulation},
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    time_steps = get_time_steps(optimization_container)
-    R_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), T)
-    R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), T)
-    R_up_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), T)
-    R_dn_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), T)
-    area_reserve_up =
-        get_variable(optimization_container, DeltaActivePowerUpVariable(), PSY.Area)
-    area_reserve_dn =
-        get_variable(optimization_container, DeltaActivePowerDownVariable(), PSY.Area)
+    time_steps = get_time_steps(container)
+    R_up = get_variable(container, DeltaActivePowerUpVariable(), T)
+    R_dn = get_variable(container, DeltaActivePowerDownVariable(), T)
+    R_up_emergency = get_variable(container, AdditionalDeltaActivePowerUpVariable(), T)
+    R_dn_emergency = get_variable(container, AdditionalDeltaActivePowerUpVariable(), T)
+    area_reserve_up = get_variable(container, DeltaActivePowerUpVariable(), PSY.Area)
+    area_reserve_dn = get_variable(container, DeltaActivePowerDownVariable(), PSY.Area)
 
     component_names = [PSY.get_name(d) for d in devices]
 
     # TODO DT: appropriate use of meta?
     participation_assignment_up = add_cons_container!(
-        optimization_container,
+        container,
         ParticipationAssignmentConstraint(),
         T,
         component_names,
@@ -295,7 +275,7 @@ function participation_assignment!(
         meta = "up",
     )
     participation_assignment_dn = add_cons_container!(
-        optimization_container,
+        container,
         ParticipationAssignmentConstraint(),
         T,
         component_names,
@@ -303,8 +283,8 @@ function participation_assignment!(
         meta = "dn",
     )
 
-    expr_up = get_expression(optimization_container, :emergency_up)
-    expr_dn = get_expression(optimization_container, :emergency_dn)
+    expr_up = get_expression(container, :emergency_up)
+    expr_dn = get_expression(container, :emergency_dn)
     for d in devices
         name = PSY.get_name(d)
         services = PSY.get_services(d)
@@ -318,12 +298,12 @@ function participation_assignment!(
         p_factor = PSY.get_participation_factor(d)
         for t in time_steps
             participation_assignment_up[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 R_up[name, t] ==
                 (p_factor.up * area_reserve_up[area_name, t]) + R_up_emergency[name, t]
             )
             participation_assignment_dn[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 R_dn[name, t] ==
                 (p_factor.dn * area_reserve_dn[area_name, t]) + R_dn_emergency[name, t]
             )
@@ -336,15 +316,13 @@ function participation_assignment!(
 end
 
 function regulation_cost!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractRegulationFormulation},
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    time_steps = get_time_steps(optimization_container)
-    R_up_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), T)
-    R_dn_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), T)
+    time_steps = get_time_steps(container)
+    R_up_emergency = get_variable(container, AdditionalDeltaActivePowerUpVariable(), T)
+    R_dn_emergency = get_variable(container, AdditionalDeltaActivePowerUpVariable(), T)
 
     for d in devices
         p_factor = PSY.get_participation_factor(d)
@@ -354,12 +332,12 @@ function regulation_cost!(
             isapprox(p_factor.dn, 0.0; atol = 1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.dn
         for t in time_steps
             JuMP.add_to_expression!(
-                optimization_container.cost_function,
+                container.cost_function,
                 R_up_emergency[PSY.get_name(d), t],
                 up_cost,
             )
             JuMP.add_to_expression!(
-                optimization_container.cost_function,
+                container.cost_function,
                 R_dn_emergency[PSY.get_name(d), t],
                 dn_cost,
             )

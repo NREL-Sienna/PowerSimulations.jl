@@ -74,8 +74,8 @@ function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
     println(io, "============================================")
 end
 
-function Base.show(io::IO, optimization_container::OptimizationContainer)
-    show(io, get_jump_model(optimization_container))
+function Base.show(io::IO, container::OptimizationContainer)
+    show(io, get_jump_model(container))
 end
 
 function Base.show(io::IO, sim::Simulation)

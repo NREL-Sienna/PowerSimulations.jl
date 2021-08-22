@@ -1,6 +1,4 @@
-function _check_pm_formulation(
-    ::Type{T},
-) where {T <: PM.AbstractPowerModel}
+function _check_pm_formulation(::Type{T}) where {T <: PM.AbstractPowerModel}
     if !isconcretetype(T)
         throw(
             ArgumentError(
@@ -35,7 +33,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         ::Type{T};
         use_slacks = false,
         PTDF = nothing,
-        duals = Vector{ConstraintType}()
+        duals = Vector{ConstraintType}(),
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(use_slacks, PTDF, duals)
@@ -44,4 +42,4 @@ end
 
 get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF(m::NetworkModel) = m.PTDF
-get_network_formulation(::NetworkModel{T}) where T <: PM.AbstractPowerModel = T
+get_network_formulation(::NetworkModel{T}) where {T <: PM.AbstractPowerModel} = T

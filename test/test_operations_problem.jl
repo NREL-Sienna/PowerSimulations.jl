@@ -30,7 +30,7 @@
     )
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
-e
+    e
 
     #"Test passing custom JuMP model"
     my_model = JuMP.Model()
@@ -77,11 +77,11 @@ end
     @test build!(op_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     optimization_container = PSI.get_optimization_container(op_problem)
-    MOIU.attach_optimizer(optimization_container.JuMPmodel)
+    MOIU.attach_optimizer(container.JuMPmodel)
     constraint_indices = get_all_constraint_index(op_problem)
     for (key, index, moi_index) in constraint_indices
         val1 = get_con_index(op_problem, moi_index)
-        val2 = optimization_container.constraints[key].data[index]
+        val2 = container.constraints[key].data[index]
         @test val1 == val2
     end
     @test isnothing(get_con_index(op_problem, length(constraint_indices) + 1))
@@ -94,7 +94,7 @@ end
         @test index_tuple[2] == index
         @test index_tuple[3] == moi_index
         val1 = get_var_index(op_problem, moi_index)
-        val2 = optimization_container.variables[key].data[index]
+        val2 = container.variables[key].data[index]
         @test val1 == val2
     end
     @test isnothing(get_var_index(op_problem, length(var_index) + 1))
@@ -110,7 +110,7 @@ end
 #         optimizer = GLPK_optimizer,
 #         use_parameters = true,
 #     )
-#     list = [template, op_problem, op_problem.optimization_container, services]
+#     list = [template, op_problem, op_problem.container, services]
 #     _test_plain_print_methods(list)
 #     list = [services]
 #     _test_html_print_methods(list)
@@ -203,19 +203,18 @@ end
     @test solve!(op_problem) == RunStatus.SUCCESSFUL
 
     optimization_container = PSI.get_optimization_container(op_problem)
-    constraints = PSI.get_constraints(optimization_container)[PSI.ConstraintKey(
+    constraints = PSI.get_constraints(container)[PSI.ConstraintKey(
         CopperPlateBalanceConstraint,
         PSY.System,
     )]
-    dual_results = read_duals(optimization_container, [:CopperPlateBalance])
+    dual_results = read_duals(container, [:CopperPlateBalance])
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
         @test isapprox(dual, dual_results[:CopperPlateBalance][i, 1])
     end
 
     system = PSI.get_system(op_problem)
-    params =
-        PSI.get_parameters(optimization_container)[:P__max_active_power__PowerLoad_max_active_power]
+    params = PSI.get_parameters(container)[:P__max_active_power__PowerLoad]
     param_vals = PSI.axis_array_to_dataframe(params.parameter_array)
     param_mult = PSI.axis_array_to_dataframe(params.multiplier_array)
     for load in get_components(PowerLoad, system)

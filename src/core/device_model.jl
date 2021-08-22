@@ -40,7 +40,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         ::Type{B};
         feedforward = nothing,
         use_slacks = false,
-        duals = Vector{ConstraintType}()
+        duals = Vector{ConstraintType}(),
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)

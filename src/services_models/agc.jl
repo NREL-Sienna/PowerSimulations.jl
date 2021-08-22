@@ -34,7 +34,7 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractA
 # function AddVariableSpec(
 #     ::Type{AdditionalDeltaActivePowerUpVariable},
 #     ::Type{U},
-#     optimization_container::OptimizationContainer,
+#     container::OptimizationContainer,
 # ) where {U <: PSY.Area}
 #     return AddVariableSpec(;
 #          variable_key = VariableKey(AdditionalDeltaActivePowerUpVariable, U),
@@ -50,7 +50,7 @@ get_variable_lower_bound(::DeltaActivePowerDownVariable, ::PSY.Area, ::AbstractA
 # function AddVariableSpec(
 #     ::Type{AdditionalDeltaActivePowerDownVariable},
 #     ::Type{U},
-#     optimization_container::OptimizationContainer,
+#     container::OptimizationContainer,
 # ) where {U <: PSY.Area}
 #     return AddVariableSpec(;
 #          variable_key = VariableKey(AdditionalDeltaActivePowerDownVariable, U),
@@ -72,11 +72,11 @@ get_variable_lower_bound(::LiftVariable, ::PSY.Area, ::AbstractAGCFormulation) =
 """
 Steady State deviation of the frequency
 """
-function add_variables!(optimization_container::OptimizationContainer, ::Type{T}) where {T <: SteadyStateFrequencyDeviation}
-    time_steps = get_time_steps(optimization_container)
-    variable = add_var_container!(optimization_container, T(), PSY.Area, time_steps)
+function add_variables!(container::OptimizationContainer, ::Type{T}) where {T <: SteadyStateFrequencyDeviation}
+    time_steps = get_time_steps(container)
+    variable = add_var_container!(container, T(), PSY.Area, time_steps)
     for t in time_steps
-        variable[t] = JuMP.@variable(optimization_container.JuMPmodel,
+        variable[t] = JuMP.@variable(container.JuMPmodel,
         # base_name ="ΔF_{$(t)}"
         )
     end
@@ -96,25 +96,25 @@ end
 ########################## , ###########################
 
 
-function balancing_auxiliary_variables!(optimization_container, sys)
+function balancing_auxiliary_variables!(container, sys)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
-    time_steps = get_time_steps(optimization_container)
-    R_up_emergency = add_var_container!(optimization_container, AdditionalDeltaActivePowerUpVariable(),  PSY.Area, area_names, time_steps)
-    R_dn_emergency = add_var_container!(optimization_container, AdditionalDeltaActivePowerDownVariable(),  PSY.Area, area_names, time_steps)
+    time_steps = get_time_steps(container)
+    R_up_emergency = add_var_container!(container, AdditionalDeltaActivePowerUpVariable(),  PSY.Area, area_names, time_steps)
+    R_dn_emergency = add_var_container!(container, AdditionalDeltaActivePowerDownVariable(),  PSY.Area, area_names, time_steps)
 
     emergency_up =
-        add_expression_container!(optimization_container, :emergency_up, area_names, time_steps)
+        add_expression_container!(container, :emergency_up, area_names, time_steps)
     emergency_dn =
-        add_expression_container!(optimization_container, :emergency_dn, area_names, time_steps)
+        add_expression_container!(container, :emergency_dn, area_names, time_steps)
     for t in time_steps, a in area_names
         R_up_emergency[a, t] = JuMP.@variable(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             # base_name ="Re_up_{$(a),$(t)}",
             lower_bound = 0.0
         )
         emergency_up[a, t] = R_up_emergency[a, t] + 0.0
         R_dn_emergency[a, t] = JuMP.@variable(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             # base_name ="Re_dn_{$(a),$(t)}",
             lower_bound = 0.0
         )
@@ -124,15 +124,15 @@ function balancing_auxiliary_variables!(optimization_container, sys)
     return
 end
 
-function absolute_value_lift(optimization_container::OptimizationContainer, areas)
-    time_steps = get_time_steps(optimization_container)
+function absolute_value_lift(container::OptimizationContainer, areas)
+    time_steps = get_time_steps(container)
     area_names = [PSY.get_name(a) for a in areas]
     # TODO DT: correct component type and meta?
-    container_lb = add_cons_container!(optimization_container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "lb")
-    container_ub = add_cons_container!(optimization_container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "ub")
-    mismatch = get_variable(optimization_container, AreaMismatchVariable(), PSY.Area)
-    z = get_variable(optimization_container, LiftVariable(), PSY.Area)
-    jump_model = get_jump_model(optimization_container)
+    container_lb = add_cons_container!(container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "lb")
+    container_ub = add_cons_container!(container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "ub")
+    mismatch = get_variable(container, AreaMismatchVariable(), PSY.Area)
+    z = get_variable(container, LiftVariable(), PSY.Area)
+    jump_model = get_jump_model(container)
 
     for t in time_steps, a in area_names
         container_lb[a, t] = JuMP.@constraint(jump_model, mismatch[a, t] <= z[a, t])
@@ -140,7 +140,7 @@ function absolute_value_lift(optimization_container::OptimizationContainer, area
     end
 
     JuMP.add_to_expression!(
-        optimization_container.cost_function,
+        container.cost_function,
         sum(z[a, t] for t in time_steps, a in area_names) * SERVICES_SLACK_COST,
     )
     return
@@ -149,8 +149,8 @@ end
 """
 Expression for the power deviation given deviation in the frequency. This expression allows updating the response of the frequency depending on commitment decisions
 """
-function frequency_response_constraint!(optimization_container::OptimizationContainer, sys::PSY.System)
-    time_steps = get_time_steps(optimization_container)
+function frequency_response_constraint!(container::OptimizationContainer, sys::PSY.System)
+    time_steps = get_time_steps(container)
     services = PSY.get_components(PSY.AGC, sys)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
     frequency_response = 0.0
@@ -166,16 +166,16 @@ function frequency_response_constraint!(optimization_container::OptimizationCont
     @assert frequency_response >= 0.0
     # This value is the one updated later in simulation based on the UC result
     inv_frequency_reponse = 1 / frequency_response
-    area_balance = get_variable(optimization_container, ActivePowerVariable(), PSY.Area)
-    frequency = get_variable(optimization_container, SteadyStateFrequencyDeviation(), PSY.Area)
-    R_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), PSY.Area)
-    R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), PSY.Area)
+    area_balance = get_variable(container, ActivePowerVariable(), PSY.Area)
+    frequency = get_variable(container, SteadyStateFrequencyDeviation(), PSY.Area)
+    R_up = get_variable(container, DeltaActivePowerUpVariable(), PSY.Area)
+    R_dn = get_variable(container, DeltaActivePowerDownVariable(), PSY.Area)
     R_up_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
+        get_variable(container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
     R_dn_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
+        get_variable(container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
 
-    container = add_cons_container!(optimization_container, FrequencyResponseConstraint(), PSY.System, time_steps)
+    container = add_cons_container!(container, FrequencyResponseConstraint(), PSY.System, time_steps)
 
     for s in services, t in time_steps
         system_balance = sum(area_balance.data[:, t])
@@ -187,46 +187,46 @@ function frequency_response_constraint!(optimization_container::OptimizationCont
             JuMP.add_to_expression!(total_reg, -1 * R_dn_emergency[a, t])
         end
         container[t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             frequency[t] == -inv_frequency_reponse * (system_balance + total_reg)
         )
     end
     return
 end
 
-function smooth_ace_pid!(optimization_container::OptimizationContainer, services::Vector{PSY.AGC})
-    time_steps = get_time_steps(optimization_container)
+function smooth_ace_pid!(container::OptimizationContainer, services::Vector{PSY.AGC})
+    time_steps = get_time_steps(container)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
-    RAW_ACE = add_expression_container!(optimization_container, :RAW_ACE, area_names, time_steps)
-    SACE = get_variable(optimization_container, SmoothACE(), PSY.Area)
-    SACE_pid = add_cons_container!(optimization_container, SACEPidAreaConstraint(), PSY.Area, area_names, time_steps)
+    RAW_ACE = add_expression_container!(container, :RAW_ACE, area_names, time_steps)
+    SACE = get_variable(container, SmoothACE(), PSY.Area)
+    SACE_pid = add_cons_container!(container, SACEPidAreaConstraint(), PSY.Area, area_names, time_steps)
 
-    Δf = get_variable(optimization_container, SteadyStateFrequencyDeviation(), PSY.Area)
+    Δf = get_variable(container, SteadyStateFrequencyDeviation(), PSY.Area)
 
     for (ix, service) in enumerate(services)
         kp = PSY.get_K_p(service)
         ki = PSY.get_K_i(service)
         kd = PSY.get_K_d(service)
         B = PSY.get_bias(service)
-        Δt = convert(Dates.Second, optimization_container.resolution).value
+        Δt = convert(Dates.Second, container.resolution).value
         a = PSY.get_name(PSY.get_area(service))
         for t in time_steps
             # Todo: Add initial Frequency Deviation
             RAW_ACE[a, t] = -10 * B * Δf[t] + 0.0
             SACE[a, t] =
-                JuMP.@variable(optimization_container.JuMPmodel,
+                JuMP.@variable(container.JuMPmodel,
                 # base_name ="SACE_{$(a),$(t)}"
                 )
             if t == 1
                 SACE_ini =
-                    get_initial_conditions(optimization_container, ICKey(AreaControlError, PSY.AGC))[ix]
+                    get_initial_conditions(container, ICKey(AreaControlError, PSY.AGC))[ix]
                 sace_exp = SACE_ini.value + kp * ((1 + Δt / (kp / ki)) * (RAW_ACE[a, t]))
                 SACE_pid[a, t] =
-                    JuMP.@constraint(optimization_container.JuMPmodel, SACE[a, t] == sace_exp)
+                    JuMP.@constraint(container.JuMPmodel, SACE[a, t] == sace_exp)
                 continue
             end
             SACE_pid[a, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 SACE[a, t] ==
                 SACE[a, t - 1] +
                 kp * (
@@ -239,22 +239,22 @@ function smooth_ace_pid!(optimization_container::OptimizationContainer, services
     return
 end
 
-function aux_constraints!(optimization_container::OptimizationContainer, sys::PSY.System)
-    time_steps = get_time_steps(optimization_container)
+function aux_constraints!(container::OptimizationContainer, sys::PSY.System)
+    time_steps = get_time_steps(container)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
-    aux_equation = add_cons_container!(optimization_container, BalanceAuxConstraint(), PSY.System, area_names, time_steps)
-    area_mismatch = get_variable(optimization_container,  AreaMismatchVariable(), PSY.Area)
-    SACE = get_variable(optimization_container, SmoothACE(), PSY.Area)
-    R_up = get_variable(optimization_container, DeltaActivePowerUpVariable(), PSY.Area)
-    R_dn = get_variable(optimization_container, DeltaActivePowerDownVariable(), PSY.Area)
+    aux_equation = add_cons_container!(container, BalanceAuxConstraint(), PSY.System, area_names, time_steps)
+    area_mismatch = get_variable(container,  AreaMismatchVariable(), PSY.Area)
+    SACE = get_variable(container, SmoothACE(), PSY.Area)
+    R_up = get_variable(container, DeltaActivePowerUpVariable(), PSY.Area)
+    R_dn = get_variable(container, DeltaActivePowerDownVariable(), PSY.Area)
     R_up_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
+        get_variable(container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
     R_dn_emergency =
-        get_variable(optimization_container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
+        get_variable(container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
 
     for t in time_steps, a in area_names
         aux_equation[a, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
+            container.JuMPmodel,
             -1 * SACE[a, t] ==
             (R_up[a, t] - R_dn[a, t]) +
             (R_up_emergency[a, t] - R_dn_emergency[a, t]) +

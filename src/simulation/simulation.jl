@@ -125,7 +125,7 @@ function _add_initial_condition_caches(
     problem::DecisionProblem,
     caches::Union{Nothing, Vector{<:AbstractCache}},
 )
-    initial_conditions = problem.internal.optimization_container.initial_conditions
+    initial_conditions = problem.internal.container.initial_conditions
     for (ic_key, init_conds) in initial_conditions.data
         _create_cache(ic_key, caches)
     end
@@ -567,7 +567,7 @@ end
 function _check_required_ini_cond_caches(sim::Simulation)
     for (problem_name, problem) in get_problems(sim)
         optimization_container = get_optimization_container(problem)
-        for (k, v) in iterate_initial_conditions(optimization_container)
+        for (k, v) in iterate_initial_conditions(container)
             # No cache needed for the initial condition -> continue
             v[1].cache_type === nothing && continue
             c = get_cache(sim, v[1].cache_type, get_component_type(k))
@@ -841,7 +841,7 @@ function update_cache!(
     # TODO: Remove debug statements and use recorder here
     c = get_cache(sim, TimeStatusChange, D)
     increment = get_increment(sim, problem, c)
-    variable = get_variable(problem.internal.optimization_container, c.ref)
+    variable = get_variable(problem.internal.container, c.ref)
     t_range = 1:get_end_of_interval_step(problem)
     for name in variable.axes[1]
         # Store the initial condition
@@ -886,7 +886,7 @@ function update_cache!(
     problem::DecisionProblem,
 ) where {D <: PSY.Device}
     c = get_cache(sim, StoredEnergy, D)
-    variable = get_variable(problem.internal.optimization_container, c.ref)
+    variable = get_variable(problem.internal.container, c.ref)
     t = get_end_of_interval_step(problem)
     for name in variable.axes[1]
         device_energy = JuMP.value(variable[name, t])
@@ -908,7 +908,7 @@ function update_parameter!(
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
         components = get_available_components(T, problem.sys)
         initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-        horizon = length(get_time_steps(problem.internal.optimization_container))
+        horizon = length(get_time_steps(problem.internal.container))
         for d in components
             ts_vector = get_time_series_values!(
                 PSY.Deterministic,
@@ -939,7 +939,7 @@ function update_parameter!(
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
         components = get_available_components(T, problem.sys)
         initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
-        horizon = length(get_time_steps(problem.internal.optimization_container))
+        horizon = length(get_time_steps(problem.internal.container))
         param_array = get_parameter_array(container)
         for ix in axes(param_array)[1]
             service = PSY.get_component(T, problem.sys, ix)
@@ -996,7 +996,7 @@ end
 
 function _update_parameters(problem::DecisionProblem, sim::Simulation)
     optimization_container = get_optimization_container(problem)
-    for container in iterate_parameter_containers(optimization_container)
+    for container in iterate_parameter_containers(container)
         update_parameter!(container.update_ref, container, problem, sim)
     end
     return
@@ -1004,7 +1004,7 @@ end
 
 function _apply_warm_start!(problem::DecisionProblem)
     optimization_container = get_optimization_container(problem)
-    jump_model = get_jump_model(optimization_container)
+    jump_model = get_jump_model(container)
     all_vars = JuMP.all_variables(jump_model)
     JuMP.set_start_value.(all_vars, JuMP.value.(all_vars))
     return
@@ -1228,10 +1228,10 @@ function _initialize_problem_storage!(
         num_executions = executions_by_problem[problem_name]
         horizon = get_horizon(problem)
         optimization_container = get_optimization_container(problem)
-        duals = get_constraint_duals(get_settings(optimization_container))
-        parameters = get_parameters(optimization_container)
-        variables = get_variables(optimization_container)
-        aux_variables = get_aux_variables(optimization_container)
+        duals = get_constraint_duals(get_settings(container))
+        parameters = get_parameters(container)
+        variables = get_variables(container)
+        aux_variables = get_aux_variables(container)
         num_rows = num_executions * get_steps(sim)
 
         interval = intervals[problem_name][1]
@@ -1254,7 +1254,7 @@ function _initialize_problem_storage!(
         # TODO: configuration of keep_in_cache and priority are not correct
         problem_sym = Symbol(problem_name)
         for name in duals
-            array = get_constraint(optimization_container, name)
+            array = get_constraint(container, name)
             reqs.duals[Symbol(name)] = _calc_dimensions(array, name, num_rows, horizon)
             add_rule!(
                 rules,

@@ -283,7 +283,7 @@ function reset!(problem::DecisionProblem{T}) where {T <: AbstractDecisionProblem
         set_execution_count!(problem, 0)
     end
     container = OptimizationContainer(get_system(problem), get_settings(problem), nothing)
-    problem.internal.optimization_container = container
+    problem.internal.container = container
     empty_time_series_cache!(problem)
     set_status!(problem, BuildStatus.EMPTY)
     return
@@ -424,7 +424,7 @@ function serialize_problem(op_problem::DecisionProblem{<:PowerSimulationsDecisio
     obj = DecisionProblemSerializationWrapper(
         op_problem.template,
         sys_filename,
-        optimization_container.settings_copy,
+        container.settings_copy,
         typeof(op_problem),
     )
     bin_file_name = "$problem_name.bin"
@@ -459,9 +459,9 @@ end
 function calculate_aux_variables!(problem::DecisionProblem)
     optimization_container = get_optimization_container(problem)
     system = get_system(problem)
-    aux_vars = get_aux_variables(optimization_container)
+    aux_vars = get_aux_variables(container)
     for key in keys(aux_vars)
-        calculate_aux_variable_value!(optimization_container, key, system)
+        calculate_aux_variable_value!(container, key, system)
     end
     return
 end
@@ -585,46 +585,16 @@ function write_model_results!(store, problem, timestamp; exports = nothing)
     if is_milp(get_optimization_container(problem))
         @warn "Problem $(get_simulation_info(problem).name) is a MILP, duals can't be exported"
     else
-        _write_model_dual_results!(
-            store,
-            optimization_container,
-            problem,
-            timestamp,
-            export_params,
-        )
+        _write_model_dual_results!(store, container, problem, timestamp, export_params)
     end
 
-    _write_model_parameter_results!(
-        store,
-        optimization_container,
-        problem,
-        timestamp,
-        export_params,
-    )
-    _write_model_variable_results!(
-        store,
-        optimization_container,
-        problem,
-        timestamp,
-        export_params,
-    )
-    _write_model_aux_variable_results!(
-        store,
-        optimization_container,
-        problem,
-        timestamp,
-        export_params,
-    )
+    _write_model_parameter_results!(store, container, problem, timestamp, export_params)
+    _write_model_variable_results!(store, container, problem, timestamp, export_params)
+    _write_model_aux_variable_results!(store, container, problem, timestamp, export_params)
     return
 end
 
-function _write_model_dual_results!(
-    store,
-    optimization_container,
-    problem,
-    timestamp,
-    exports,
-)
+function _write_model_dual_results!(store, container, problem, timestamp, exports)
     problem_name_str = get_name(problem)
     problem_name = Symbol(problem_name_str)
     if exports !== nothing
@@ -632,8 +602,8 @@ function _write_model_dual_results!(
         mkpath(exports_path)
     end
 
-    for name in get_constraint_duals(optimization_container.settings)
-        constraint = get_constraint(optimization_container, name)
+    for name in get_constraint_duals(container.settings)
+        constraint = get_constraint(container, name)
         write_result!(
             store,
             problem_name,
@@ -657,13 +627,7 @@ function _write_model_dual_results!(
     end
 end
 
-function _write_model_parameter_results!(
-    store,
-    optimization_container,
-    problem,
-    timestamp,
-    exports,
-)
+function _write_model_parameter_results!(store, container, problem, timestamp, exports)
     problem_name_str = get_name(problem)
     problem_name = Symbol(problem_name_str)
     if exports !== nothing
@@ -671,7 +635,7 @@ function _write_model_parameter_results!(
         mkpath(exports_path)
     end
 
-    parameters = get_parameters(optimization_container)
+    parameters = get_parameters(container)
     (isnothing(parameters) || isempty(parameters)) && return
     horizon = get_horizon(get_settings(problem))
 
@@ -710,13 +674,7 @@ function _write_model_parameter_results!(
     end
 end
 
-function _write_model_variable_results!(
-    store,
-    optimization_container,
-    problem,
-    timestamp,
-    exports,
-)
+function _write_model_variable_results!(store, container, problem, timestamp, exports)
     problem_name_str = get_name(problem)
     problem_name = Symbol(problem_name_str)
     if exports !== nothing
@@ -724,7 +682,7 @@ function _write_model_variable_results!(
         mkpath(exports_path)
     end
 
-    for (name, variable) in get_variables(optimization_container)
+    for (name, variable) in get_variables(container)
         write_result!(
             store,
             problem_name,
@@ -747,13 +705,7 @@ function _write_model_variable_results!(
     end
 end
 
-function _write_model_aux_variable_results!(
-    store,
-    optimization_container,
-    problem,
-    timestamp,
-    exports,
-)
+function _write_model_aux_variable_results!(store, container, problem, timestamp, exports)
     problem_name_str = get_name(problem)
     problem_name = Symbol(problem_name_str)
     if exports !== nothing
@@ -762,7 +714,7 @@ function _write_model_aux_variable_results!(
         mkpath(exports_path)
     end
 
-    for (key, variable) in get_aux_variables(optimization_container)
+    for (key, variable) in get_aux_variables(container)
         name = encode_key(key)
         write_result!(
             store,
@@ -877,7 +829,7 @@ Each Tuple corresponds to (con_name, internal_index, moi_index)
 function get_all_constraint_index(problem::DecisionProblem)
     con_index = Vector{Tuple{ConstraintKey, Int, Int}}()
     optimization_container = get_optimization_container(problem)
-    for (key, value) in get_constraints(optimization_container)
+    for (key, value) in get_constraints(container)
         for (idx, constraint) in enumerate(value)
             moi_index = JuMP.optimizer_index(constraint)
             push!(con_index, (key, idx, moi_index.value))
@@ -897,7 +849,7 @@ end
 function get_all_var_keys(problem::DecisionProblem)
     var_index = Vector{Tuple{VariableKey, Int, Int}}()
     optimization_container = get_optimization_container(problem)
-    for (key, value) in get_variables(optimization_container)
+    for (key, value) in get_variables(container)
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)
             push!(var_index, (key, idx, moi_index.value))
@@ -908,7 +860,7 @@ end
 
 function get_con_index(problem::DecisionProblem, index::Int)
     optimization_container = get_optimization_container(problem)
-    constraints = get_constraints(optimization_container)
+    constraints = get_constraints(container)
     for i in get_all_constraint_index(problem::DecisionProblem)
         if i[3] == index
             return constraints[i[1]].data[i[2]]
@@ -920,7 +872,7 @@ end
 
 function get_var_index(problem::DecisionProblem, index::Int)
     optimization_container = get_optimization_container(problem)
-    variables = get_variables(optimization_container)
+    variables = get_variables(container)
     for i in get_all_var_keys(problem)
         if i[3] == index
             return variables[i[1]].data[i[2]]
