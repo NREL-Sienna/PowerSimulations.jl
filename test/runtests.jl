@@ -53,7 +53,7 @@ include("test_utils/operations_problem_templates.jl")
 const LOG_FILE = "power-simulations-test.log"
 
 const DISABLED_TEST_FILES = [
-    "test_operation_problem.jl",
+    "test_simulation_sequence.jl",
     "test_simulation_build.jl",
     "test_simulation_execute.jl",
     "test_simulation_store.jl",

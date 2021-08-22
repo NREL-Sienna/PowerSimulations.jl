@@ -78,7 +78,7 @@ end
 
 function _check_feedforward(
     feedforward,
-    feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology},
+    feedforward_chronologies,
 )
     isempty(feedforward) && return
     for problem_key in keys(feedforward)
@@ -95,7 +95,7 @@ end
 
 function _check_chronology_consistency(
     problems::SimulationModels,
-    feedforward_chronologies::Dict{Pair{Symbol, Symbol}, <:FeedForwardChronology},
+    feedforward_chronologies,
     ini_cond_chronology::InitialConditionChronology,
 )
     if isempty(feedforward_chronologies)
