@@ -60,6 +60,14 @@ struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter
     name::String
 end
 
+struct InflowTimeSeriesParameter <: TimeSeriesParameter
+    name::String
+end
+
+struct OutflowTimeSeriesParameter <: TimeSeriesParameter
+    name::String
+end
+
 get_name(key::TimeSeriesParameter) = key.name
 
 abstract type VariableValueParameter <: RightHandSideParameter end
