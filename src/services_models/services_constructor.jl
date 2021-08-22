@@ -77,7 +77,8 @@ function construct_service!(
 
     add_cons_container!(
         optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
+        RequirementConstraint(),
+        SR,
         names,
         time_steps,
     )
@@ -136,7 +137,8 @@ function construct_service!(
     )
     add_cons_container!(
         optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
+        RequirementConstraint(),
+        SR,
         names,
         time_steps,
     )
@@ -237,7 +239,8 @@ function construct_service!(
 
     add_cons_container!(
         optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
+        RequirementConstraint(),
+        SR,
         names,
         time_steps,
     )
@@ -281,7 +284,8 @@ function construct_service!(
 
     add_cons_container!(
         optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
+        RequirementConstraint(),
+        SR,
         names,
         time_steps,
     )

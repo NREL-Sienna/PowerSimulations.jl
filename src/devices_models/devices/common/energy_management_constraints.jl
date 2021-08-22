@@ -13,17 +13,18 @@ Constructs constraint energy target data, and variable
 function energy_target!(
     optimization_container::OptimizationContainer,
     target_data::Vector{T},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
-) where {T <: DeviceTimeSeriesConstraintInfo}
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{U},
+) where {T <: DeviceTimeSeriesConstraintInfo, U <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
     name_index = [get_component_name(d) for d in target_data]
-    varenergy = get_variable(optimization_container, var_keys[1])
-    varslack_up = get_variable(optimization_container, var_keys[2])
-    varslack_dn = get_variable(optimization_container, var_keys[3])
+    varenergy = get_variable(optimization_container, var_types[1], U)
+    varslack_up = get_variable(optimization_container, var_types[2], U)
+    varslack_dn = get_variable(optimization_container, var_types[3], U)
 
     target_constraint =
-        add_cons_container!(optimization_container, cons_name, name_index, time_steps)
+        add_cons_container!(optimization_container, cons_type, U, name_index, time_steps)
 
     for data in target_data, t in time_steps
         name = get_component_name(data)
@@ -50,18 +51,20 @@ Constructs constraint energy target data, and variable
 * var_names::Symbol : the name of the energy variable
 * param_reference::UpdateRef : UpdateRef to access the target parameter
 """
+# TODO DT: fix all docstrings that are now invalid
 function energy_target_param!(
     optimization_container::OptimizationContainer,
     target_data::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
     param_reference::UpdateRef,
-)
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
     name_index = [get_component_name(d) for d in target_data]
-    varenergy = get_variable(optimization_container, var_keys[1])
-    varslack_up = get_variable(optimization_container, var_keys[2])
-    varslack_dn = get_variable(optimization_container, var_keys[3])
+    varenergy = get_variable(optimization_container, var_types[1], T)
+    varslack_up = get_variable(optimization_container, var_types[2], T)
+    varslack_dn = get_variable(optimization_container, var_types[3], T)
 
     container_target = add_param_container!(
         optimization_container,
@@ -72,7 +75,7 @@ function energy_target_param!(
     param_target = get_parameter_array(container_target)
     multiplier_target = get_multiplier_array(container_target)
     target_constraint =
-        add_cons_container!(optimization_container, cons_name, name_index, time_steps)
+        add_cons_container!(optimization_container, cons_type, T, name_index, time_steps)
 
     for d in target_data, t in time_steps
         name = get_component_name(d)

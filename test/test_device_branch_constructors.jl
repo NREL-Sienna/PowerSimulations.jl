@@ -85,11 +85,11 @@ end
 end
 
 @testset "DC Power Flow Models for HVDCLine with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
-    ratelimit_constraint_names = [
-        :RateLimit_ub__Transformer2W,
-        :RateLimit_lb__Transformer2W,
-        :RateLimit_ub__TapTransformer,
-        :RateLimit_lb__TapTransformer,
+    ratelimit_constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -127,7 +127,7 @@ end
         )
         @test check_variable_unbounded(op_problem_m, FlowActivePowerVariable, Transformer2W)
 
-        psi_constraint_test(op_problem_m, ratelimit_constraint_names)
+        psi_constraint_test(op_problem_m, ratelimit_constraint_keys)
 
         @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 
@@ -232,13 +232,13 @@ end
 end
 
 @testset "AC Power Flow Models for HVDCLine Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
-    ratelimit_constraint_names = [
-        :RateLimitFT__Transformer2W,
-        :RateLimitTF__Transformer2W,
-        :RateLimitFT__TapTransformer,
-        :RateLimitTF__TapTransformer,
-        :FlowActivePowerVariable_HVDCLine__FlowRateConstraintFT,
-        :FlowActivePowerVariable_HVDCLine__FlowRateConstraintTF,
+    ratelimit_constraint_keys = [
+        PSI.ConstraintKey(RateLimitFTConstraint, Transformer2W),
+        PSI.ConstraintKey(RateLimitTFConstraint, Transformer2W),
+        PSI.ConstraintKey(RateLimitFTConstraint, TapTransformer),
+        PSI.ConstraintKey(RateLimitTFConstraint, TapTransformer),
+        PSI.ConstraintKey(FlowRateConstraintFT, HVDCLine),
+        PSI.ConstraintKey(FlowRateConstraintTF, HVDCLine),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -280,7 +280,7 @@ end
         Transformer2W,
     )
 
-    psi_constraint_test(op_problem_m, ratelimit_constraint_names)
+    psi_constraint_test(op_problem_m, ratelimit_constraint_keys)
 
     @test solve!(op_problem_m) == RunStatus.SUCCESSFUL
 

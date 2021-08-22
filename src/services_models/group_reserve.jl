@@ -32,8 +32,7 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(optimization_container)
     name = PSY.get_name(service)
-    constraint =
-        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
+    constraint = get_constraint(optimization_container, RequirementConstraint(), SR)
     use_slacks = get_services_slack_variables(optimization_container.settings)
     reserve_variables = [
         get_variable(

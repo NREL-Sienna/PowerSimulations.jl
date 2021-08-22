@@ -25,7 +25,7 @@ get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}
 
 ####################################### Reactive Power constraint_infos #########################
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ReactivePowerVariableLimitsConstraint},
     ::Type{ReactivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractDeviceFormulation},
@@ -36,21 +36,18 @@ function DeviceRangeConstraintSpec(
 ) where {T <: PSY.RenewableGen}
     return DeviceRangeConstraintSpec(;
         range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(
-                RangeConstraint,
-                ReactivePowerVariable,
-                T,
-            ),
-            variable_key = VariableKey(ReactivePowerVariable, T),
+            constraint_type = ReactivePowerVariableLimitsConstraint(),
+            variable_type = ReactivePowerVariable(),
             limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_range!,
             constraint_struct = DeviceRangeConstraintInfo,
+            component_type = T,
         ),
     )
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ReactivePowerVariableLimitsConstraint},
     ::Type{ReactivePowerVariable},
     ::Type{T},
     ::Type{<:RenewableConstantPowerFactor},
@@ -77,7 +74,6 @@ function custom_reactive_power_constraints!(
     constraint = add_cons_container!(
         optimization_container,
         EqualityConstraint(),
-        ReactivePowerVariable(),
         T,
         names,
         time_steps,
@@ -92,7 +88,7 @@ function custom_reactive_power_constraints!(
 end
 
 function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
+    ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{ActivePowerVariable},
     ::Type{T},
     ::Type{<:AbstractRenewableDispatchFormulation},
@@ -104,28 +100,26 @@ function DeviceRangeConstraintSpec(
     if !use_parameters && !use_forecasts
         return DeviceRangeConstraintSpec(;
             range_constraint_spec = RangeConstraintSpec(;
-                constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariable,
-                    T,
-                ),
-                variable_key = VariableKey(ActivePowerVariable, T),
+                constraint_type = ActivePowerVariableLimitsConstraint(),
+                variable_type = ActivePowerVariable(),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range!,
                 constraint_struct = DeviceRangeConstraintInfo,
+                component_type = T,
             ),
         )
     end
 
     return DeviceRangeConstraintSpec(;
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(;
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_key = VariableKey(ActivePowerVariable, T),
+            constraint_type = ActivePowerVariableLimitsConstraint(),
+            variable_type = ActivePowerVariable(),
             parameter_name = use_parameters ? "P" : nothing,
             forecast_label = "max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
+            component_type = T,
         ),
     )
 end

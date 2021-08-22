@@ -1,2 +1,4 @@
 
+LOG_GROUP_COST_FUNCTIONS = :CostFunctions
+LOG_GROUP_INITIAL_CONDITIONS = :InitialConditions
 LOG_GROUP_OPTIMZATION_CONTAINER = :OptimizationContainer

@@ -26,10 +26,10 @@ end
 
 function psi_constraint_test(
     op_problem::OperationsProblem,
-    constraint_names::Vector{Symbol},
+    constraint_keys::Vector{<:PSI.ConstraintKey},
 )
     constraints = PSI.get_constraints(op_problem)
-    for con in constraint_names
+    for con in constraint_keys
         @test !isnothing(get(constraints, con, nothing))
     end
     return
@@ -66,8 +66,12 @@ function psi_checkobjfun_test(op_problem::OperationsProblem, exp_type)
     return
 end
 
-function moi_lbvalue_test(op_problem::OperationsProblem, con_name::Symbol, value::Number)
-    for con in PSI.get_constraints(op_problem)[con_name]
+function moi_lbvalue_test(
+    op_problem::OperationsProblem,
+    con_key::PSI.ConstraintKey,
+    value::Number,
+)
+    for con in PSI.get_constraints(op_problem)[con_key]
         @test JuMP.constraint_object(con).set.lower == value
     end
     return

@@ -348,12 +348,6 @@ function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     return JuMP.Containers.SparseAxisArray(contents)
 end
 
-function middle_rename(original::Symbol, split_char::String, addition::String)
-    parts = split(String(original), split_char)
-    parts[1] = parts[1] * "_" * addition
-    return Symbol(join(parts, split_char))
-end
-
 "Replaces the string in `char` with the string`replacement`"
 function replace_chars(s::String, char::String, replacement::String)
     return replace(s, Regex("[$char]") => replacement)

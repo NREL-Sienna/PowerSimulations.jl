@@ -420,18 +420,18 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
 end
 
 function PMconmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
-    pm_con_map = Dict{Type, Dict{Symbol, String}}()
+    pm_con_map = Dict{Type, Dict{Symbol, <:ConstraintType}}()
 
-    pm_con_map[PSY.Bus] = Dict(:power_balance_p => NODAL_BALANCE_ACTIVE)
+    pm_con_map[PSY.Bus] = Dict(:power_balance_p => NodalBalanceActiveConstraint())
     return pm_con_map
 end
 
 function PMconmap(::Type{S}) where {S <: PM.AbstractPowerModel}
-    pm_con_map = Dict{Type, Dict{Symbol, String}}()
+    pm_con_map = Dict{Type, Dict{Symbol, ConstraintType}}()
 
     pm_con_map[PSY.Bus] = Dict(
-        :power_balance_p => NODAL_BALANCE_ACTIVE,
-        :power_balance_q => NODAL_BALANCE_REACTIVE,
+        :power_balance_p => NodalBalanceActiveConstraint(),
+        :power_balance_q => NodalBalanceReactiveConstraint(),
     )
     return pm_con_map
 end
@@ -453,13 +453,13 @@ function PMexprmap(::Type{PTDFPowerModel})
         Type,
         NamedTuple{
             (:pm_expr, :psi_con),
-            Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, Symbol},
+            Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, ConstraintType},
         },
     }()
 
     pm_expr_map[PSY.ACBranch] = (
         pm_expr = Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing)),
-        psi_con = Symbol(NETWORK_FLOW),
+        psi_con = NetworkFlowConstraint(),
     )
 
     return pm_expr_map
@@ -569,7 +569,8 @@ function add_pm_con_refs!(
         if pm_v in pm_con_names
             container = PSI.add_cons_container!(
                 optimization_container,
-                make_constraint_name(ps_v, PSY.Bus),
+                ps_v,
+                PSY.Bus,
                 [PSY.get_name(b) for b in values(bus_dict)],
                 time_steps,
             )
@@ -646,10 +647,11 @@ function add_pm_expr_refs!(
                     psi_var_container =
                         get_variable(optimization_container, var_type, d_type)
 
-                    con_name = make_constraint_name(pm_expr_map[d_class].psi_con, d_type)
+                    con_type = pm_expr_map[d_class].psi_con
                     psi_con_container = add_cons_container!(
                         optimization_container,
-                        con_name,
+                        con_type,
+                        d_type,
                         mapped_ps_device_names,
                         time_steps,
                     )

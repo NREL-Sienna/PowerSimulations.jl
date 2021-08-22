@@ -8,7 +8,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     settings_copy::Settings
     variables::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
-    constraints::Dict{Symbol, AbstractArray}
+    constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::DenseAxisArrayContainer
     parameters::ParametersContainer
@@ -297,6 +297,8 @@ function _assign_container!(container::Dict, key, value)
         throw(IS.InvalidValue("$key is already stored"))
     end
     container[key] = value
+    @debug "Added container entry $(typeof(key)) $(encode_key(key))" _group =
+        LOG_GROUP_OPTIMZATION_CONTAINER
 end
 
 function add_aux_var_container!(
@@ -353,67 +355,50 @@ end
 
 function get_constraint(
     optimization_container::OptimizationContainer,
-    constraint_type::AbstractString,
-    ::Type{T},
-) where {T <: PSY.Component}
-    return get_constraint(optimization_container, make_constraint_name(constraint_type, T))
+    constraint_type::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: PSY.Component}
+    return get_constraint(optimization_container, ConstraintKey(T, U, meta))
 end
 
 function get_constraint(
     optimization_container::OptimizationContainer,
-    constraint_type::AbstractString,
+    constraint_type::ConstraintType,
+    meta = CONTAINER_KEY_EMPTY_META,
 )
-    return get_constraint(optimization_container, make_constraint_name(constraint_type))
+    return get_constraint(optimization_container, ConstraintKey(constraint_type, meta))
 end
 
-function get_constraint(optimization_container::OptimizationContainer, name::Symbol)
-    var = get(optimization_container.constraints, name, nothing)
+function get_constraint(optimization_container::OptimizationContainer, key::ConstraintKey)
+    var = get(optimization_container.constraints, key, nothing)
     if var === nothing
-        @error "$name is not stored" sort!(get_constraint_names(optimization_container))
-        throw(IS.InvalidValue("constraint $name is not stored"))
+        @error "$name is not stored" sort!(get_constraint_keys(optimization_container))
+        throw(IS.InvalidValue("constraint $key is not stored"))
     end
 
     return var
 end
 
-function get_constraint_names(optimization_container::OptimizationContainer)
+function get_constraint_keys(optimization_container::OptimizationContainer)
     return collect(keys(optimization_container.constraints))
 end
 
-# This is a temporary method while refactoring variable container
 function add_cons_container!(
     optimization_container::OptimizationContainer,
-    cons_type::ConstraintType,
-    var_key::VariableKey,
-    axs...;
-    sparse = false,
-)
-    return add_cons_container!(
-        optimization_container,
-        cons_type,
-        variable_type(var_key)(),
-        component(var_key),
-        axs...;
-        sparse = sparse,
-    )
-end
-
-# This is a temporary method while refactoring variable container
-function add_cons_container!(
-    optimization_container::OptimizationContainer,
-    cons_type::ConstraintType,
-    ::T,
+    constaint_type::T,
     ::Type{U},
     axs...;
     sparse = false,
-) where {T <: VariableType, U <: PSY.Component}
-    cons_key = make_constraint_name(cons_type, T, U)
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    cons_key = ConstraintKey(T, U, meta)
     return add_cons_container!(optimization_container, cons_key, axs...; sparse = sparse)
 end
 
 function add_cons_container!(
     optimization_container::OptimizationContainer,
-    cons_key::Symbol,
+    cons_key::ConstraintKey,
     axs...;
     sparse = false,
 )

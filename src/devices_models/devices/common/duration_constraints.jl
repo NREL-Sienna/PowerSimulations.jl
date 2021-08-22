@@ -42,21 +42,33 @@ function device_duration_retrospective!(
     optimization_container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
-)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
 
-    varon = get_variable(optimization_container, var_keys[1])
-    varstart = get_variable(optimization_container, var_keys[2])
-    varstop = get_variable(optimization_container, var_keys[3])
-
-    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    varon = get_variable(optimization_container, var_types[1], T)
+    varstart = get_variable(optimization_container, var_types[2], T)
+    varstop = get_variable(optimization_container, var_types[3], T)
 
     set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
-    con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+    )
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -141,20 +153,21 @@ function device_duration_look_ahead!(
     optimization_container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
-)
+    cons_type_up::ConstraintType,
+    cons_type_down::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    varon = get_variable(optimization_container, var_keys[1])
-    varstart = get_variable(optimization_container, var_keys[2])
-    varstop = get_variable(optimization_container, var_keys[3])
-
-    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    varon = get_variable(optimization_container, var_types[1], T)
+    varstart = get_variable(optimization_container, var_types[2], T)
+    varstop = get_variable(optimization_container, var_types[3], T)
 
     set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
-    con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
+    con_up =
+        add_cons_container!(optimization_container, cons_type_up, set_names, time_steps)
+    con_down =
+        add_cons_container!(optimization_container, cons_type_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -241,21 +254,33 @@ function device_duration_parameters!(
     optimization_container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
-)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
 
-    varon = get_variable(optimization_container, var_keys[1])
-    varstart = get_variable(optimization_container, var_keys[2])
-    varstop = get_variable(optimization_container, var_keys[3])
-
-    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    varon = get_variable(optimization_container, var_types[1], T)
+    varstart = get_variable(optimization_container, var_types[2], T)
+    varstop = get_variable(optimization_container, var_types[3], T)
 
     set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
-    con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+    )
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -349,21 +374,33 @@ function device_duration_compact_retrospective!(
     optimization_container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey, VariableKey},
-)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
 
-    varon = get_variable(optimization_container, var_keys[1])
-    varstart = get_variable(optimization_container, var_keys[2])
-    varstop = get_variable(optimization_container, var_keys[3])
-
-    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    varon = get_variable(optimization_container, var_types[1], T)
+    varstart = get_variable(optimization_container, var_types[2], T)
+    varstop = get_variable(optimization_container, var_types[3], T)
 
     set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
-    con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+    )
     total_time_steps = length(time_steps)
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])

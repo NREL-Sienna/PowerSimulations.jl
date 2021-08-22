@@ -1,21 +1,23 @@
 struct RangeConstraintSpecInternal
     constraint_infos::Vector{<:AbstractRangeConstraintInfo}
-    constraint_name::Symbol
-    variable_key::VariableKey
-    bin_variable_keys::Vector{<:VariableKey}
+    constraint_type::ConstraintType
+    variable_type::VariableType
+    bin_variable_types::Vector{<:VariableType}
+    component_type::Type{<:PSY.Component}
 end
 
 function RangeConstraintSpecInternal(
     constraint_infos::Vector{DeviceRangeConstraintInfo},
-    constraint_name::Symbol,
-    ::T,
-    ::Type{U},
-) where {T <: VariableType, U <: PSY.Component}
+    constraint_type::ConstraintType,
+    variable_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
     return RangeConstraintSpecInternal(
         constraint_infos,
-        constraint_name,
-        VariableKey(T, U),
-        Vector{VariableKey}(),
+        constraint_type,
+        variable_type,
+        Vector{VariableType}(),
+        T,
     )
 end
 
@@ -44,12 +46,25 @@ function device_range!(
     inputs::RangeConstraintSpecInternal,
 )
     time_steps = model_time_steps(optimization_container)
-    variable = get_variable(optimization_container, inputs.variable_key)
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    variable =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    con_ub = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+    con_lb = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
 
     for constraint_info in inputs.constraint_infos, t in time_steps
         ci_name = get_component_name(constraint_info)
@@ -110,16 +125,33 @@ function device_semicontinuousrange!(
     inputs::RangeConstraintSpecInternal,
 )
     time_steps = model_time_steps(optimization_container)
-    varcts = get_variable(optimization_container, inputs.variable_key)
-    @assert length(inputs.bin_variable_keys) == 1
-    varbin = get_variable(optimization_container, inputs.bin_variable_keys[1])
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    varcts =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    @assert length(inputs.bin_variable_types) == 1
+    varbin = get_variable(
+        optimization_container,
+        inputs.bin_variable_types[1],
+        inputs.component_type,
+    )
     names = [get_component_name(x) for x in inputs.constraint_infos]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    con_ub = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+    con_lb = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
 
     for constraint_info in inputs.constraint_infos, t in time_steps
         ci_name = get_component_name(constraint_info)
@@ -184,17 +216,34 @@ function reserve_device_semicontinuousrange!(
     inputs::RangeConstraintSpecInternal,
 )
     time_steps = model_time_steps(optimization_container)
-    varcts = get_variable(optimization_container, inputs.variable_key)
-    @assert length(inputs.bin_variable_keys) == 1
-    varbin = get_variable(optimization_container, inputs.bin_variable_keys[1])
+    varcts =
+        get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    @assert length(inputs.bin_variable_types) == 1
+    varbin = get_variable(
+        optimization_container,
+        inputs.bin_variable_types[1],
+        inputs.component_type,
+    )
 
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     names = [get_component_name(x) for x in inputs.constraint_infos]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    con_ub = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+    con_lb = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
 
     for constraint_info in inputs.constraint_infos, t in time_steps
         ci_name = get_component_name(constraint_info)
@@ -252,7 +301,7 @@ where limits and lag_ramp_limits is in range_data.
 * optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
-* var_key::VariableKey : the name of the continuous variable
+* var_type::VariableType : the name of the continuous variable
 * binvar_names::Symbol : the names of the binary variables
 """
 function device_multistart_range!(
@@ -260,20 +309,49 @@ function device_multistart_range!(
     inputs::RangeConstraintSpecInternal,
 )
     time_steps = model_time_steps(optimization_container)
-    varp = get_variable(optimization_container, inputs.variable_key)
-    @assert length(inputs.bin_variable_keys) == 3
-    varstatus = get_variable(optimization_container, inputs.bin_variable_keys[1])
-    varon = get_variable(optimization_container, inputs.bin_variable_keys[2])
-    varoff = get_variable(optimization_container, inputs.bin_variable_keys[3])
-
-    on_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "on")
-    off_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "off")
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    varp = get_variable(optimization_container, inputs.variable_type, inputs.component_type)
+    @assert length(inputs.bin_variable_types) == 3
+    varstatus = get_variable(
+        optimization_container,
+        inputs.bin_variable_types[1],
+        inputs.component_type,
+    )
+    varon = get_variable(
+        optimization_container,
+        inputs.bin_variable_types[2],
+        inputs.component_type,
+    )
+    varoff = get_variable(
+        optimization_container,
+        inputs.bin_variable_types[3],
+        inputs.component_type,
+    )
 
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_on = add_cons_container!(optimization_container, on_name, names, time_steps)
-    con_off = add_cons_container!(optimization_container, off_name, names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    con_on = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "on",
+    )
+    con_off = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "off",
+    )
+    con_lb = add_cons_container!(
+        optimization_container,
+        inputs.constraint_type,
+        inputs.component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
 
     for constraint_info in inputs.constraint_infos, t in time_steps
         name = get_component_name(constraint_info)
@@ -339,19 +417,20 @@ where limits in range_data.
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
 * initial_conditions::Matrix{InitialCondition} :
 * cons_name::Symbol : name of the constraint
-* var_key::VariableKey : name of the shutdown variable
+* var_type::VariableType : name of the shutdown variable
 """
 function device_multistart_range_ic!(
     optimization_container::OptimizationContainer,
     range_data::Vector{DeviceMultiStartRangeConstraintsInfo},
     initial_conditions::Matrix{InitialCondition},## 1 is initial power, 2 is initial status
-    cons_name::Symbol,
-    var_key::VariableKey,
-)
-    varstop = get_variable(optimization_container, var_key)
+    cons_type::ConstraintType,
+    var_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
+    varstop = get_variable(optimization_container, var_type, T)
 
     set_name = [get_device_name(ic) for ic in initial_conditions[:, 1]]
-    con = add_cons_container!(optimization_container, cons_name, set_name)
+    con = add_cons_container!(optimization_container, cons_type, T, set_name)
 
     for (ix, ic) in enumerate(initial_conditions[:, 1])
         name = get_device_name(ic)
@@ -371,17 +450,30 @@ function reserve_power_ub!(
     optimization_container::OptimizationContainer,
     charging_range_data::Vector{DeviceRangeConstraintInfo},
     discharging_range_data::Vector{DeviceRangeConstraintInfo},
-    cons_name::Symbol,
-    var_keys::Tuple{VariableKey, VariableKey},
-)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    var_in = get_variable(optimization_container, var_keys[1])
-    var_out = get_variable(optimization_container, var_keys[2])
-    rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    var_in = get_variable(optimization_container, var_types[1], T)
+    var_out = get_variable(optimization_container, var_types[2], T)
     names = [get_component_name(x) for x in charging_range_data]
-    con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
-    con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        names,
+        time_steps,
+        meta = "up",
+    )
+    con_dn = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        names,
+        time_steps,
+        meta = "dn",
+    )
 
     for (up_info, dn_info) in zip(charging_range_data, discharging_range_data),
         t in time_steps
@@ -418,16 +510,29 @@ end
 function reserve_energy_ub!(
     optimization_container::OptimizationContainer,
     constraint_infos::Vector{ReserveRangeConstraintInfo},
-    cons_name::Symbol,
-    var_key::VariableKey,
-)
+    cons_type::ConstraintType,
+    var_type::VariableType,
+    ::Type{T},
+) where {T <: PSY.Component}
     time_steps = model_time_steps(optimization_container)
-    var_e = get_variable(optimization_container, var_key)
-    rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    var_e = get_variable(optimization_container, var_type, T)
     names = [get_component_name(x) for x in constraint_infos]
-    con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
-    con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
+    con_up = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        names,
+        time_steps,
+        meta = "up",
+    )
+    con_dn = add_cons_container!(
+        optimization_container,
+        cons_type,
+        T,
+        names,
+        time_steps,
+        meta = "dn",
+    )
 
     for const_info in constraint_infos, t in time_steps
         name = get_component_name(const_info)
