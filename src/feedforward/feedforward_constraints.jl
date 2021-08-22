@@ -139,6 +139,14 @@ function range_ff(
         multiplier_ub[name] = 1.0
         multiplier_lb[name] = 1.0
         for t in time_steps
+            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            for val in constraint_info.additional_terms_ub
+                JuMP.add_to_expression!(expression_ub, variable[name, t])
+            end
+            expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            for val in constraint_info.additional_terms_lb
+                JuMP.add_to_expression!(expression_lb, variable[name, t], -1.0)
+            end
             con_ub[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 expression_ub <= param_ub[name] * multiplier_ub[name]
