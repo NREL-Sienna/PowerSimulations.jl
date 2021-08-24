@@ -407,7 +407,6 @@ include("initial_conditions/initial_conditions.jl")
 include("initial_conditions/initial_condition.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
 
-# TODO: Clean the Initial Condition relationship with the Optimization Container
 include("core/optimization_container.jl")
 include("initial_conditions/update_initial_conditions.jl")
 
@@ -415,8 +414,13 @@ include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
 include("operation/problem_internal.jl")
 include("operation/decision_model.jl")
+include("operation/emulation_model.jl")
 include("operation/problem_results_export.jl")
 include("operation/problem_results.jl")
+include("operation/time_series_interface.jl")
+include("operation/operation_model_serialization.jl")
+include("operation/model_cache.jl")
+include("operation/optimization_debugging.jl")
 
 include("feedforward/feedforward_chronologies.jl")
 include("feedforward/feedforward_structs.jl")
