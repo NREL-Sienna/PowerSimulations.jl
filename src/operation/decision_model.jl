@@ -255,7 +255,7 @@ function problem_build!(model::DecisionModel)
 end
 
 function serialize_optimization_model(model::DecisionModel{<:DecisionProblem})
-    problem_name = "$(get_name(model))_OptimizationModel"
+    problem_name = "$(get_name(model))_DecisionModel"
     json_file_name = "$(problem_name).json"
     json_file_name = joinpath(get_output_dir(model), json_file_name)
     serialize_optimization_model(get_optimization_container(model), json_file_name)
