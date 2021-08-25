@@ -14,10 +14,7 @@ function initialize_timeseries_labels(
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
-function initialize_attributes(
-    ::Type{<:PSY.Service},
-    ::Type{<:AbstractServiceFormulation},
-)
+function initialize_attributes(::Type{<:PSY.Service}, ::Type{<:AbstractServiceFormulation})
     return Dict{String, Any}()
 end
 
@@ -54,7 +51,8 @@ function construct_services!(
             groupservice = key
             continue
         end
-        validate_service!(service_model, incompatible_device_types, sys) ? nothing : continue
+        validate_service!(service_model, incompatible_device_types, sys) ? nothing :
+        continue
         construct_service!(
             container,
             sys,
@@ -64,7 +62,14 @@ function construct_services!(
             incompatible_device_types,
         )
     end
-    groupservice === nothing || construct_service!(container,sys,stage,services_template[groupservice],devices_template,incompatible_device_types,)
+    groupservice === nothing || construct_service!(
+        container,
+        sys,
+        stage,
+        services_template[groupservice],
+        devices_template,
+        incompatible_device_types,
+    )
     return
 end
 
@@ -84,7 +89,8 @@ function construct_services!(
             groupservice = key
             continue
         end
-        validate_service!(service_model, incompatible_device_types, sys) ? nothing : continue
+        validate_service!(service_model, incompatible_device_types, sys) ? nothing :
+        continue
         construct_service!(
             container,
             sys,
@@ -94,10 +100,16 @@ function construct_services!(
             incompatible_device_types,
         )
     end
-    groupservice === nothing || construct_service!(container,sys,stage,services_template[groupservice],devices_template,incompatible_device_types,)
+    groupservice === nothing || construct_service!(
+        container,
+        sys,
+        stage,
+        services_template[groupservice],
+        devices_template,
+        incompatible_device_types,
+    )
     return
 end
-
 
 function construct_service!(
     container::OptimizationContainer,
@@ -107,17 +119,12 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    add_parameters!(
-        container,
-        RequirementTimeSeriesParameter,
-        service,
-        model,
-    )
-    contributing_devices = services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+    contributing_devices =
+        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
     if !isempty(incompatible_device_types)
         contributing_devices = [
             d for d in contributing_devices if
@@ -145,7 +152,6 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
@@ -178,11 +184,11 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserve}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    contributing_devices = services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
+    contributing_devices =
+        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
     if !isempty(incompatible_device_types)
         contributing_devices = [
             d for d in contributing_devices if
@@ -210,7 +216,6 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserve}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
@@ -243,16 +248,15 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
     add_variable!(container, ServiceRequirementVariable(), [service], StepwiseCostReserve())
     contributing_devices =
-    services_mapping[(
-        type = typeof(service),
-        name = PSY.get_name(service),
-    )].contributing_devices
+        services_mapping[(
+            type = typeof(service),
+            name = PSY.get_name(service),
+        )].contributing_devices
     if !isempty(incompatible_device_types)
         contributing_devices = [
             d for d in contributing_devices if
@@ -276,15 +280,14 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
     contributing_devices =
-    services_mapping[(
-        type = typeof(service),
-        name = PSY.get_name(service),
-    )].contributing_devices
+        services_mapping[(
+            type = typeof(service),
+            name = PSY.get_name(service),
+        )].contributing_devices
     if !isempty(incompatible_device_types)
         contributing_devices = [
             d for d in contributing_devices if
@@ -300,7 +303,6 @@ function construct_service!(
     if get_feedforward(model) !== nothing
         feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
     end
-
 end
 
 function construct_service!(
@@ -311,7 +313,6 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
-
     name = get_service_name(model)
     service = PSY.get_component(S, sys, name)
     agc_area = PSY.get_area(service)
@@ -344,7 +345,6 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
-
     name = get_service_name(model)
     service = PSY.get_component(S, sys, name)
     agc_area = PSY.get_area(service)
@@ -374,7 +374,6 @@ function construct_service!(
     ::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_services = PSY.get_contributing_services(service)
@@ -392,7 +391,6 @@ function construct_service!(
     ::Dict{Symbol, DeviceModel},
     ::Vector{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_services = PSY.get_contributing_services(service)
@@ -410,21 +408,15 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    add_parameters!(
-        container,
-        RequirementTimeSeriesParameter,
-        service,
-        model,
-    )
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
     contributing_devices =
-    services_mapping[(
-        type = typeof(service),
-        name = PSY.get_name(service),
-    )].contributing_devices
+        services_mapping[(
+            type = typeof(service),
+            name = PSY.get_name(service),
+        )].contributing_devices
     if !isempty(incompatible_device_types)
         contributing_devices = [
             d for d in contributing_devices if
@@ -451,16 +443,15 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Vector{<:DataType},
 ) where {SR <: PSY.Reserve}
-
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
 
     contributing_devices =
-    services_mapping[(
-        type = typeof(service),
-        name = PSY.get_name(service),
-    )].contributing_devices
+        services_mapping[(
+            type = typeof(service),
+            name = PSY.get_name(service),
+        )].contributing_devices
     if !isempty(incompatible_device_types)
         contributing_devices = [
             d for d in contributing_devices if

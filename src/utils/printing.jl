@@ -16,7 +16,6 @@ function _display_model(
         )
 
         println(io, "\tName specific Model\n")
-
     end
 end
 

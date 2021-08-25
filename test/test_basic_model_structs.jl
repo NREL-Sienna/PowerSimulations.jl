@@ -13,7 +13,7 @@ end
     @test_throws ArgumentError ServiceModel(
         VariableReserve{PSY.ReserveUp},
         PSI.AbstractServiceFormulation,
-        "TestName2"
+        "TestName2",
     )
 end
 

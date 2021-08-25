@@ -1,8 +1,17 @@
 @testset "Test Reserves from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"))
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"),
+    )
     set_service_model!(
         template,
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
@@ -30,9 +39,18 @@ end
 
 @testset "Test Ramp Reserves from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RampReserve, "Reserve1"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RampReserve, "Reserve11"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RampReserve, "Reserve2"))
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RampReserve, "Reserve1"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RampReserve, "Reserve11"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RampReserve, "Reserve2"),
+    )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     model = DecisionModel(template, c_sys5_uc)
@@ -55,9 +73,18 @@ end
 
 @testset "Test Reserves from Thermal Standard UC" begin
     template = get_thermal_standard_uc_template()
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"))
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"),
+    )
     set_service_model!(
         template,
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
@@ -73,7 +100,10 @@ end
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve3"))
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve3"),
+    )
     set_service_model!(
         template,
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
@@ -87,10 +117,23 @@ end
 
 @testset "Test Reserves from Storage" begin
     template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
-    set_device_model!(template, DeviceModel(GenericBattery, BookKeeping; attributes = Dict{String, Any}("reservation" => false),))
+    set_device_model!(
+        template,
+        DeviceModel(
+            GenericBattery,
+            BookKeeping;
+            attributes = Dict{String, Any}("reservation" => false),
+        ),
+    )
     set_device_model!(template, RenewableDispatch, FixedOutput)
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve3"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve4"))
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve3"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve4"),
+    )
     set_service_model!(
         template,
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
@@ -106,8 +149,14 @@ end
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve5"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve6"))
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve5"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve6"),
+    )
     set_service_model!(
         template,
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
@@ -123,9 +172,33 @@ end
     template = get_thermal_dispatch_template_network(
         NetworkModel(CopperPlatePowerModel; use_slacks = true),
     )
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"; use_slacks = true))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"; use_slacks = true))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"; use_slacks = true))
+    set_service_model!(
+        template,
+        ServiceModel(
+            VariableReserve{ReserveUp},
+            RangeReserve,
+            "Reserve1";
+            use_slacks = true,
+        ),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(
+            VariableReserve{ReserveUp},
+            RangeReserve,
+            "Reserve11";
+            use_slacks = true,
+        ),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(
+            VariableReserve{ReserveDown},
+            RangeReserve,
+            "Reserve2";
+            use_slacks = true,
+        ),
+    )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     model = DecisionModel(template, c_sys5_uc;)
@@ -148,9 +221,18 @@ end
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network()
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"))
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"))
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"),
+    )
     set_service_model!(
         template,
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
@@ -226,7 +308,10 @@ end
 
 @testset "Test StaticReserve" begin
     template = get_thermal_dispatch_template_network()
-    set_service_model!(template, ServiceModel(StaticReserve{ReserveUp}, RangeReserve, "Reserve3"))
+    set_service_model!(
+        template,
+        ServiceModel(StaticReserve{ReserveUp}, RangeReserve, "Reserve3"),
+    )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)

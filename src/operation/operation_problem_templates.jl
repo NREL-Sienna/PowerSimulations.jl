@@ -29,9 +29,9 @@ function _default_services()
     return [
     # TODO: Since service models now requires service name, 
     # setting the template is not possible with system.
-        # ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
-        # ServiceModel(PSY.VariableReserve{PSY.ReserveDown}, RangeReserve),
-    ]
+    # ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
+    # ServiceModel(PSY.VariableReserve{PSY.ReserveDown}, RangeReserve),
+]
 end
 
 """

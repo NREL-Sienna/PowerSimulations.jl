@@ -61,7 +61,14 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)
-        new{D, B}(feedforward, service_name, use_slacks, duals, time_series_labels, attributes)
+        new{D, B}(
+            feedforward,
+            service_name,
+            use_slacks,
+            duals,
+            time_series_labels,
+            attributes,
+        )
     end
 end
 

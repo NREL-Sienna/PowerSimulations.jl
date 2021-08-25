@@ -31,20 +31,16 @@ function add_parameters!(
     parameter_type::Type{T},
     service::U,
     model::ServiceModel{U, V},
-) where {
-    T <: TimeSeriesParameter,
-    U <: PSY.Service,
-    V <: AbstractReservesFormulation,
-}
-
+) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     @debug "adding" parameter_type
-    parameter_container = add_param_container!(container, T(), U, [name], time_steps; meta = name)
+    parameter_container =
+        add_param_container!(container, T(), U, [name], time_steps; meta = name)
     param = get_parameter_array(parameter_container)
     mult = get_multiplier_array(parameter_container)
     label = get(get_time_series_labels(model), parameter_type, nothing)
-    
+
     if !isnothing(label)
         ts_vector = get_time_series(container, service, label)
         for t in time_steps
