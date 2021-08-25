@@ -143,7 +143,7 @@ function EmulationModel(
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
 )
-    return EmulationModel{GenericOpProblem}(template, sys, jump_model; kwargs...)
+    return EmulationModel{GenericEmulationProblem}(template, sys, jump_model; kwargs...)
 end
 
 # """
@@ -179,7 +179,7 @@ end
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
-            @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
+            @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
         # Initial time are set here because the information is specified in the
