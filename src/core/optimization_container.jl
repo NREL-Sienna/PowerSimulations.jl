@@ -45,6 +45,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     solve_timed_log::Dict{Symbol, Any}
     built_for_simulation::Bool
     metadata::OptimizationContainerMetadata
+    model_type::Type{<:Union{DecisionModel, EmulationModel}}
 end
 
 function OptimizationContainer(
@@ -73,6 +74,7 @@ function OptimizationContainer(
         Dict{Symbol, Any}(),
         false,
         OptimizationContainerMetadata(),
+        PSY.Deterministic,
     )
 end
 
@@ -97,25 +99,28 @@ function OptimizationContainer(filename::AbstractString)
         PSY.get_base_power(sys),
         Dict{Symbol, Any}(),
         false,
+        PSY.Deterministic,
     )
 end
 
-get_time_steps(container::OptimizationContainer) = container.time_steps
-get_resolution(container::OptimizationContainer) = container.resolution
-get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
-# Internal Variables, Constraints and Parameters accessors
-get_variables(container::OptimizationContainer) = container.variables
+built_for_simulation(container::OptimizationContainer) = container.built_for_simulation
+
 get_aux_variables(container::OptimizationContainer) = container.aux_variables
-get_duals(container::OptimizationContainer) = container.duals
+get_base_power(container::OptimizationContainer) = container.base_power
 get_constraints(container::OptimizationContainer) = container.constraints
-get_parameters(container::OptimizationContainer) = container.parameters
+get_default_time_series_type(container::OptimizationContainer) =
+    container.default_time_serie_type
+get_duals(container::OptimizationContainer) = container.duals
 get_expression(container::OptimizationContainer, name::Symbol) = container.expressions[name]
 get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
-get_settings(container::OptimizationContainer) = container.settings
+get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
 get_jump_model(container::OptimizationContainer) = container.JuMPmodel
-get_base_power(container::OptimizationContainer) = container.base_power
 get_metadata(container::OptimizationContainer) = container.metadata
-built_for_simulation(container::OptimizationContainer) = container.built_for_simulation
+get_parameters(container::OptimizationContainer) = container.parameters
+get_resolution(container::OptimizationContainer) = container.resolution
+get_settings(container::OptimizationContainer) = container.settings
+get_time_steps(container::OptimizationContainer) = container.time_steps
+get_variables(container::OptimizationContainer) = container.variables
 
 function is_milp(container::OptimizationContainer)
     type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)

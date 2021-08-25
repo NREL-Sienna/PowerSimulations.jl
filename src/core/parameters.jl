@@ -38,11 +38,11 @@ Parameters implemented through ParameterJuMP
 abstract type RightHandSideParameter <: ParameterType end
 abstract type ObjectiveFunctionParameter <: ParameterType end
 
-struct TimeSeriesAttributes{T<PSY.TimeSeriesType}
+struct TimeSeriesAttributes{T < PSY.TimeSeriesType}
     attributes::TimeSeriesAttributes
 end
 
-get_time_series_type(::TimeSeriesAttributes{T}) where T <: PSY.TimeSeriesData = T
+get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 
 function get_time_series_type(param::TimeSeriesParameter)
     return get_time_series_type(param.common)
@@ -54,7 +54,7 @@ struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter
     attributes::TimeSeriesAttributes
 end
 
-function ActivePowerTimeSeriesParameter(::Type{T}, name) where T <: PSY.TimeSeriesData
+function ActivePowerTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
     return ActivePowerTimeSeriesParameter(TimeSeriesAttributes{T}(name))
 end
 
@@ -62,7 +62,7 @@ struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
     attributes::TimeSeriesAttributes
 end
 
-function ReactivePowerTimeSeriesParameter(::Type{T}, name) where T <: PSY.TimeSeriesData
+function ReactivePowerTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
     return RectivePowerTimeSeriesParameter(TimeSeriesAttributes{T}(name))
 end
 
@@ -70,7 +70,7 @@ struct RequirementTimeSeriesParameter <: TimeSeriesParameter
     attributes::TimeSeriesAttributes
 end
 
-function RequirementTimeSeriesParameter(::Type{T}, name) where T <: PSY.TimeSeriesData
+function RequirementTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
     return RequirementTimeSeriesParameter(TimeSeriesAttributes{T}(name))
 end
 
@@ -78,7 +78,7 @@ struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter
     attributes::TimeSeriesAttributes
 end
 
-function EnergyTargetTimeSeriesParameter(::Type{T}, name) where T <: PSY.TimeSeriesData
+function EnergyTargetTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
     return EnergyTargetTimeSeriesParameter(TimeSeriesAttributes{T}(name))
 end
 
@@ -86,7 +86,7 @@ struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter
     attributes::TimeSeriesAttributes
 end
 
-function EnergyBudgetTimeSeriesParameter(::Type{T}, name) where T <: PSY.TimeSeriesData
+function EnergyBudgetTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
     EnergyBudgetTimeSeriesParameter(TimeSeriesAttributes{T}(name))
 end
 
@@ -94,7 +94,7 @@ struct InflowTimeSeriesParameter <: TimeSeriesParameter
     attributes::TimeSeriesAttributes
 end
 
-function InflowTimeSeriesParameter(::Type{T}, name) where T <: PSY.TimeSeriesData
+function InflowTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
     InflowTimeSeriesParameter(TimeSeriesAttributes{T}(name))
 end
 
@@ -102,7 +102,7 @@ struct OutflowTimeSeriesParameter <: TimeSeriesParameter
     attributes::TimeSeriesAttributes
 end
 
-function OutflowTimeSeriesParameter(::Type{T}, name) where T <: PSY.TimeSeriesData
+function OutflowTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
     OutflowTimeSeriesParameter(TimeSeriesAttributes{T}(name))
 end
 
