@@ -89,31 +89,8 @@ end
 
 function _set_model!(
     dict::Dict,
-    service_name::String,
     model::ServiceModel{D, B},
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
-    # if !model.service_name
-    #     throw(
-    #         IS.ConflictingInputsError(
-    #             "The model provided has use_service_name false. This method can't be used",
-    #         ),
-    #     )
-    # end
-    _set_model!(dict, (service_name, Symbol(D)), model)
-    return
-end
-
-function _set_model!(
-    dict::Dict,
-    model::ServiceModel{D, B},
-) where {D <: PSY.Service, B <: AbstractServiceFormulation}
-    # if model.service_name
-    #     throw(
-    #         IS.ConflictingInputsError(
-    #             "The model provided has use_service_name set to true and no service name was provided. This method can't be used",
-    #         ),
-    #     )
-    # end
     _set_model!(dict, (get_service_name(model), Symbol(D)), model)
     return
 end

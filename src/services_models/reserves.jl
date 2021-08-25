@@ -31,7 +31,8 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint = get_constraint(container, RequirementConstraint(), SR)
+    add_cons_container!(container, RequirementConstraint(), SR, [name], time_steps; meta = name)
+    constraint = get_constraint(container, RequirementConstraint(), SR, name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
 
@@ -42,12 +43,10 @@ function service_requirement_constraint!(
     requirement = PSY.get_requirement(service)
     if parameters
         container =
-            get_parameter(container, RequirementTimeSeriesParameter("requirement"), SR)
+            get_parameter(container, RequirementTimeSeriesParameter("requirement"), SR; meta = name)
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps
-            param[name, t] = add_parameter(optimization_container.JuMPmodel, ts_vector[t])
-            multiplier[name, t] = requirement
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
             else
@@ -60,9 +59,14 @@ function service_requirement_constraint!(
         end
     else
         for t in time_steps
+            if use_slacks
+                resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
+            else
+                resource_expression = sum(reserve_variable[:, t])
+            end
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
-                sum(reserve_variable[:, t]) >= ts_vector[t] * requirement
+                resource_expression >= ts_vector[t] * requirement
             )
         end
     end
@@ -78,7 +82,8 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint = get_constraint(container, RequirementConstraint(), SR)
+    add_cons_container!(container, RequirementConstraint(), SR, [name], time_steps; meta = name)
+    constraint = get_constraint(container, RequirementConstraint(), SR, name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
     use_slacks && (slack_vars = reserve_slacks(container, service))
@@ -119,7 +124,8 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint = get_constraint(container, RequirementConstraint(), SR)
+    add_cons_container!(container, RequirementConstraint(), SR, [name], time_steps; meta = name)
+    constraint = get_constraint(container, RequirementConstraint(), SR, name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
 

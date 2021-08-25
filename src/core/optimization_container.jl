@@ -301,6 +301,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         construct_services!(
             container,
             sys,
+            ArgumentConstructStage(),
             get_service_models(template),
             get_device_models(template),
         )
@@ -339,6 +340,16 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             end
             @debug get_problem_size(container)
         end
+    end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
+        construct_services!(
+            container,
+            sys,
+            ModelConstructStage(),
+            get_service_models(template),
+            get_device_models(template),
+        )
     end
 
     for device_model in values(template.devices)
