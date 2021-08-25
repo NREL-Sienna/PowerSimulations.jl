@@ -14,9 +14,9 @@ function _display_model(
             io,
             "\tType: $(get_component_type(ix))\n \tFormulation: $(get_formulation(ix))\n",
         )
-        # if ix.service_name
-            println(io, "\tName specific Model\n")
-        # end
+
+        println(io, "\tName specific Model\n")
+
     end
 end
 

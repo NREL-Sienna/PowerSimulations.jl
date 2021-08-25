@@ -66,7 +66,7 @@ function add_constraints!(
 
     for d in constraint_infos
         name = get_component_name(d)
-        limits = get_min_max_limits(d)
+        limits = get_limits(d)
         for t in time_steps
             rating = parameters ? multiplier[name, t] : d.multiplier
             base_point = parameters ? base_points[name, t] : get_timeseries(d)[t]
@@ -122,7 +122,7 @@ function add_constraints!(
 
     for d in constraint_infos
         name = get_component_name(d)
-        limits = get_min_max_limits(d)
+        limits = get_limits(d)
         for t in time_steps
             rating = parameters ? multiplier[name, t] : d.multiplier
             base_point = parameters ? base_points[name, t] : get_timeseries(d)[t]
