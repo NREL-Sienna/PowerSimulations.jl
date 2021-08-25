@@ -29,7 +29,7 @@ end
     uc_template = template_unit_commitment(network = DCPPowerModel)
     @test get_network_formulation(uc_template) == DCPPowerModel
     @test !isempty(uc_template.branches)
-    @test !isempty(uc_template.services)
+    # @test !isempty(uc_template.services)
 
     ed_template = template_economic_dispatch()
     @test !isempty(ed_template.devices)
@@ -37,5 +37,5 @@ end
     ed_template = template_economic_dispatch(network = ACPPowerModel)
     @test get_network_formulation(ed_template) == ACPPowerModel
     @test !isempty(ed_template.branches)
-    @test !isempty(ed_template.services)
+    # @test !isempty(ed_template.services)
 end

@@ -9,10 +9,11 @@ end
 end
 
 @testset "ServiceModel Tests" begin
-    @test_throws ArgumentError ServiceModel(AGC, PSI.AbstractServiceFormulation)
+    @test_throws ArgumentError ServiceModel(AGC, PSI.AbstractServiceFormulation, "TestName")
     @test_throws ArgumentError ServiceModel(
         VariableReserve{PSY.ReserveUp},
         PSI.AbstractServiceFormulation,
+        "TestName2"
     )
 end
 

@@ -43,7 +43,7 @@ end
 @testset "Set optimizer at solve call" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
+    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"))
     UC = DecisionModel(template, c_sys5)
     output_dir = mktempdir(cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
@@ -62,7 +62,7 @@ end
 @testset "Test optimization debugging functions" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
+    set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"))
     model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     container = PSI.get_optimization_container(model)
