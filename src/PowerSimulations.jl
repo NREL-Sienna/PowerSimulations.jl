@@ -7,6 +7,7 @@ module PowerSimulations
 # Base Models
 export Simulation
 export DecisionModel
+export EmulationModel
 export ProblemResults
 export ProblemTemplate
 export InitialCondition
