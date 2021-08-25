@@ -297,6 +297,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
     # Order is required
+    populate_aggregated_service_model!(template, sys)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
         construct_services!(
             container,

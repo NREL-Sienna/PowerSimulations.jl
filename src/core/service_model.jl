@@ -86,6 +86,49 @@ get_time_series_labels(m::ServiceModel) = m.time_series_labels
 get_attributes(m::ServiceModel) = m.attributes
 get_attribute(m::ServiceModel, key::String) = get(m.attributes, key, nothing)
 
+function ServiceModel(
+    service_type::Type{D},
+    formulation_type::Type{B};
+    use_slacks = false,
+    feedforward = nothing,
+    duals = Vector{DataType}(),
+    time_series_labels = initialize_timeseries_labels(D, B),
+    attributes = initialize_attributes(D, B),
+) where {D <: PSY.Service, B <: AbstractServiceFormulation}
+    if !haskey(attributes, "aggregated_service_model")
+        push!(attributes, "aggregated_service_model" => true)
+    end
+    return ServiceModel(
+        service_type,
+        formulation_type,
+        NO_SERVICE_NAME_PROVIDED;
+        use_slacks,
+        feedforward,
+        duals,
+        time_series_labels,
+        attributes,
+    )
+end
+
+function populate_aggregated_service_model!(template, sys::PSY.System)
+    services_template = get_service_models(template)
+    for (key, service_model) in services_template
+        attributes = get_attributes(service_model)
+        if get(attributes, "aggregated_service_model", false)
+            delete!(services_template, key)
+            D = get_component_type(service_model)
+            B = get_formulation(service_model)
+            for service in PSY.get_components(D, sys)
+                new_key = (PSY.get_name(service), Symbol(D))
+                if !haskey(services_template, new_key)
+                    set_service_model!(template, ServiceModel(D, B, PSY.get_name(service)))
+                end
+            end
+        end
+    end
+    return
+end
+
 function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)
     if haskey(dict, key)
         @info("Overwriting $(key) existing model")

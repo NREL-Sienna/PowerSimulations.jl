@@ -27,11 +27,9 @@ end
 
 function _default_services()
     return [
-    # TODO: Since service models now requires service name, 
-    # setting the template is not possible with system.
-    # ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
-    # ServiceModel(PSY.VariableReserve{PSY.ReserveDown}, RangeReserve),
-]
+        ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
+        ServiceModel(PSY.VariableReserve{PSY.ReserveDown}, RangeReserve),
+    ]
 end
 
 """
@@ -129,8 +127,6 @@ function template_agc_reserve_deployment(; kwargs...)
             ReserveLimitedRegulation,
         ),
     )
-    #TODO: Since service models now requires service name, 
-    # setting the template is not possible with system.
-    # set_service_model!(template, ServiceModel(PSY.AGC, PIDSmoothACE))
+    set_service_model!(template, ServiceModel(PSY.AGC, PIDSmoothACE))
     return template
 end
