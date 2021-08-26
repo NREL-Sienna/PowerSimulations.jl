@@ -70,7 +70,7 @@ function add_to_expression!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     parameter::ParameterType,
-    ::Type{S}
+    ::Type{S},
 ) where {T <: SystemBalanceExpressions, U <: PSY.Device, S <: PM.AbstractActivePowerModel}
     parameter_array = get_parameter_array(container, parameter, U)
     multiplier = get_parameter_multiplier_array(container, parameter, U)
@@ -96,8 +96,13 @@ function add_to_expression!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     variable::V,
-    ::Type{W}
-) where {T <: SystemBalanceExpressions, U <: PSY.Device, V <: VariableType, W <: PM.AbstractPowerModel}
+    ::Type{W},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: PSY.Device,
+    V <: VariableType,
+    W <: PM.AbstractPowerModel,
+}
     variable = get_variable(container, V(), U)
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
