@@ -18,6 +18,15 @@ function initialize_attributes(::Type{<:PSY.Service}, ::Type{<:AbstractServiceFo
     return Dict{String, Any}()
 end
 
+function filter_contributing_devices!(contributing_devices, incompatible_device_types)
+    _contributing_devices = filter(x -> PSY.get_available(x), contributing_devices)
+    if !isempty(incompatible_device_types)
+        _contributing_devices =
+            [d for d in _contributing_devices if typeof(d) ∉ incompatible_device_types]
+    end
+    return _contributing_devices
+end
+
 function get_incompatible_devices(devices_template::Dict)
     incompatible_device_types = Vector{DataType}()
     for model in values(devices_template)
@@ -31,8 +40,6 @@ function get_incompatible_devices(devices_template::Dict)
     end
     return incompatible_device_types
 end
-
-# function filter_contributing_devices!()
 
 function construct_services!(
     container::OptimizationContainer,
@@ -51,8 +58,7 @@ function construct_services!(
             groupservice = key
             continue
         end
-        validate_service!(service_model, incompatible_device_types, sys) ? nothing :
-        continue
+        !validate_service!(service_model, incompatible_device_types, sys) && continue
         construct_service!(
             container,
             sys,
@@ -89,8 +95,7 @@ function construct_services!(
             groupservice = key
             continue
         end
-        validate_service!(service_model, incompatible_device_types, sys) ? nothing :
-        continue
+        !validate_service!(service_model, incompatible_device_types, sys) && continue
         construct_service!(
             container,
             sys,
@@ -123,14 +128,9 @@ function construct_service!(
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
-    contributing_devices =
+    _devices =
         services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    if !isempty(incompatible_device_types)
-        contributing_devices = [
-            d for d in contributing_devices if
-            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-        ]
-    end
+    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
 
     # Variables
     add_variables!(
@@ -155,13 +155,9 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    contributing_devices = services_mapping[(type = SR, name = name)].contributing_devices
-    if !isempty(incompatible_device_types)
-        contributing_devices = [
-            d for d in contributing_devices if
-            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-        ]
-    end
+    _devices =
+        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
+    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
     # Constraints
     service_requirement_constraint!(container, service, model)
     modify_device_model!(devices_template, model, contributing_devices)
@@ -187,14 +183,9 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    contributing_devices =
+    _devices =
         services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    if !isempty(incompatible_device_types)
-        contributing_devices = [
-            d for d in contributing_devices if
-            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-        ]
-    end
+    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
 
     # Variables
     add_variables!(
@@ -219,13 +210,9 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    contributing_devices = services_mapping[(type = SR, name = name)].contributing_devices
-    if !isempty(incompatible_device_types)
-        contributing_devices = [
-            d for d in contributing_devices if
-            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-        ]
-    end
+    _devices =
+        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
+    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
     # Constraints
     service_requirement_constraint!(container, service, model)
     modify_device_model!(devices_template, model, contributing_devices)
@@ -252,17 +239,9 @@ function construct_service!(
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
     add_variable!(container, ServiceRequirementVariable(), [service], StepwiseCostReserve())
-    contributing_devices =
-        services_mapping[(
-            type = typeof(service),
-            name = PSY.get_name(service),
-        )].contributing_devices
-    if !isempty(incompatible_device_types)
-        contributing_devices = [
-            d for d in contributing_devices if
-            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-        ]
-    end
+    _devices =
+        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
+    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
     add_variables!(
         container,
         ActivePowerReserveVariable,
@@ -283,17 +262,9 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
-    contributing_devices =
-        services_mapping[(
-            type = typeof(service),
-            name = PSY.get_name(service),
-        )].contributing_devices
-    if !isempty(incompatible_device_types)
-        contributing_devices = [
-            d for d in contributing_devices if
-            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-        ]
-    end
+    _devices =
+        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
+    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
     # Constraints
     service_requirement_constraint!(container, service, model)
     modify_device_model!(devices_template, model, contributing_devices)
@@ -318,7 +289,7 @@ function construct_service!(
     agc_area = PSY.get_area(service)
     areas = PSY.get_components(PSY.Area, sys)
     for area in areas
-        if area ∉ [agc_area]
+        if area != agc_area
             #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
         end
     end
@@ -412,17 +383,9 @@ function construct_service!(
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
-    contributing_devices =
-        services_mapping[(
-            type = typeof(service),
-            name = PSY.get_name(service),
-        )].contributing_devices
-    if !isempty(incompatible_device_types)
-        contributing_devices = [
-            d for d in contributing_devices if
-            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-        ]
-    end
+    _devices =
+        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
+    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
     # Variables
     add_variables!(
         container,
@@ -447,17 +410,9 @@ function construct_service!(
     service = PSY.get_component(SR, sys, name)
     services_mapping = PSY.get_contributing_device_mapping(sys)
 
-    contributing_devices =
-        services_mapping[(
-            type = typeof(service),
-            name = PSY.get_name(service),
-        )].contributing_devices
-    if !isempty(incompatible_device_types)
-        contributing_devices = [
-            d for d in contributing_devices if
-            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-        ]
-    end
+    _devices =
+        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
+    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
     # Constraints
     service_requirement_constraint!(container, service, model)
     ramp_constraints!(container, service, contributing_devices, model)
