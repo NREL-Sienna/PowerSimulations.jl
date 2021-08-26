@@ -14,6 +14,7 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+    # Parameters
     add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
@@ -73,6 +74,7 @@ function construct_device!(
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+    # Parameters
     add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
@@ -121,6 +123,8 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+
+    # Parameters
     add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
@@ -173,6 +177,7 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+    # Parameters
     add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
@@ -212,6 +217,7 @@ function construct_device!(
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
+    # Parameters
     add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
     add_parameter!(container, ReactivePowerTimeSeriesParameter, devices, D())
 end
@@ -246,6 +252,7 @@ function construct_device!(
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
+    # Parameters
     add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
@@ -279,6 +286,7 @@ function construct_device!(
     S <: PM.AbstractPowerModel,
 }
     devices = get_available_components(L, sys)
+    # Parameters
     add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
     add_parameter!(container, ReactivePowerTimeSeriesParameter, devices, D())
 end
