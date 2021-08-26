@@ -37,7 +37,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::DenseAxisArrayContainer
+    expressions::Dict{ExpressionKey, JuMP.Containers.DenseAxisArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     initial_conditions::Dict{ICKey, Vector{InitialCondition}}
     pm::Union{Nothing, PM.AbstractPowerModel}
@@ -66,7 +66,7 @@ function OptimizationContainer(
         Dict{ConstraintKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
         zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
-        DenseAxisArrayContainer(),
+        Dict{ExpressionKey, AbstractArray}(),
         Dict{ParameterKey, ParameterContainer}(),
         Dict{ICKey, Vector{InitialCondition}}(),
         nothing,
@@ -92,7 +92,7 @@ function OptimizationContainer(filename::AbstractString)
         Dict{ConstraintKey, AbstractArray}(),
         Dict{String, OptimizationContainerKey}(),
         zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
-        DenseAxisArrayContainer(),
+        Dict{ExpressionKey, AbstractArray}(),
         Dict{ParameterKey, ParameterContainer}(),
         Dict{ICKey, Vector{InitialCondition}}(),
         nothing,
@@ -111,7 +111,7 @@ get_constraints(container::OptimizationContainer) = container.constraints
 get_default_time_series_type(container::OptimizationContainer) =
     container.default_time_serie_type
 get_duals(container::OptimizationContainer) = container.duals
-get_expression(container::OptimizationContainer, name::Symbol) = container.expressions[name]
+get_expressions(container::OptimizationContainer) = container.expressions
 get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
 get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
 get_jump_model(container::OptimizationContainer) = container.JuMPmodel
@@ -194,9 +194,9 @@ function _make_container_array(parameters::Bool, ax...)
     else
         return JuMP.Containers.DenseAxisArray{GAE}(undef, ax...)
     end
-    return
 end
 
+# TODO: Move the expression instantiation to the build_impl call
 function _make_expressions_dict!(
     container::OptimizationContainer,
     bus_numbers::Vector{Int},
@@ -205,10 +205,10 @@ function _make_expressions_dict!(
     settings = container.settings
     parameters = false
     time_steps = 1:get_horizon(settings)
-    container.expressions = DenseAxisArrayContainer(
-        :nodal_balance_active =>
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(parameters, bus_numbers, time_steps),
-        :nodal_balance_reactive =>
+        ExpressionKey(ReactivePowerBalance, PSY.Bus) =>
             _make_container_array(parameters, bus_numbers, time_steps),
     )
     return
@@ -222,9 +222,24 @@ function _make_expressions_dict!(
     settings = container.settings
     parameters = false
     time_steps = 1:get_horizon(settings)
-    container.expressions = DenseAxisArrayContainer(
-        :nodal_balance_active =>
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(parameters, bus_numbers, time_steps),
+    )
+    return
+end
+
+function _make_expressions_dict!(
+    container::OptimizationContainer,
+    ::Vector{Int},
+    ::Type{CopperPlatePowerModel},
+)
+    settings = container.settings
+    parameters = false
+    time_steps = 1:get_horizon(settings)
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
+            _make_container_array(parameters, ["System"], time_steps),
     )
     return
 end
@@ -636,7 +651,7 @@ end
 
 function add_cons_container!(
     container::OptimizationContainer,
-    constaint_type::T,
+    ::T,
     ::Type{U},
     axs...;
     sparse = false,
@@ -648,10 +663,6 @@ end
 
 function get_constraint_keys(container::OptimizationContainer)
     return collect(keys(container.constraints))
-end
-
-function get_initial_conditions_keys(container::OptimizationContainer)
-    return collect(keys(container.initial_conditions))
 end
 
 function get_constraint(container::OptimizationContainer, key::ConstraintKey)
@@ -776,20 +787,62 @@ function read_parameters(container::OptimizationContainer)
 end
 
 ##################################### Expression Container #################################
-function assign_expression!(container::OptimizationContainer, name::Symbol, value)
-    @debug "set_expression" name
-    container.expressions[name] = value
-    return
+function _add_expression_container!(
+    container::OptimizationContainer,
+    expr_key::ExpressionKey,
+    axs...;
+    sparse = false,
+)
+    if sparse
+        expr_container = sparse_container_spec(JuMP.AbstractJuMPScalar, axs...)
+    else
+        expr_container = container_spec(JuMP.ConstraintRef, axs...)
+    end
+    _assign_container!(container.constraints, expr_key, expr_container)
+    return cons_container
 end
 
 function add_expression_container!(
     container::OptimizationContainer,
-    exp_name::Symbol,
-    axs...,
+    ::T,
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    return _add_expression_container!(container, expr_key, axs...; sparse = sparse)
+end
+
+function get_expression_keys(container::OptimizationContainer)
+    return collect(keys(container.expressions))
+end
+
+function get_expression(container::OptimizationContainer, key::ExpressionKey)
+    var = get(container.constraints, key, nothing)
+    if var === nothing
+        @error "$key is not stored" (get_expression_keys(container))
+        throw(IS.InvalidValue("constraint $key is not stored"))
+    end
+
+    return var
+end
+
+function get_expression(
+    container::OptimizationContainer,
+    constraint_type::ExpressionType,
+    meta = CONTAINER_KEY_EMPTY_META,
 )
-    exp_container = JuMP.Containers.DenseAxisArray{JuMP.GenericAffExpr}(undef, axs...)
-    assign_expression!(container, exp_name, exp_container)
-    return exp_container
+    return get_expression(container, ExpressionKey(constraint_type, meta))
+end
+
+function get_expression(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ExpressionType, U <: PSY.Component}
+    return get_expression(container, ExpressionKey(T, U, meta))
 end
 
 ###################################Initial Conditions Containers############################
@@ -816,6 +869,10 @@ function get_initial_conditions(container::OptimizationContainer, key::ICKey)
         throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
     end
     return initial_conditions
+end
+
+function get_initial_conditions_keys(container::OptimizationContainer)
+    return collect(keys(container.initial_conditions))
 end
 
 function set_initial_conditions!(container::OptimizationContainer, key::ICKey, value)
