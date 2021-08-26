@@ -11,16 +11,17 @@ function add_parameters!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     label = get_time_series_labels(model)[T]
-    parameter = T(get_default_time_series_type(container), label)
-    @debug "adding" parameter
-    parameter_container = add_param_container!(container, parameter, D, names, time_steps)
+    ts_type = get_default_time_series_type(container)
+    @debug "adding" T label ts_type
+    parameter_container =
+        add_param_container!(container, T(), D, ts_type, names, time_steps; meta = label)
     param = get_parameter_array(parameter_container)
     mult = get_multiplier_array(parameter_container)
 
     if !isnothing(label)
         for d in devices, t in time_steps
             name = PSY.get_name(d)
-            ts_vector = get_time_series(container, d, parameter)
+            ts_vector = get_time_series(container, d, T(), label)
             mult[name, t] = get_multiplier_value(parameter, d, W())
             param[name, t] = add_parameter(container.JuMPmodel, ts_vector[t])
         end

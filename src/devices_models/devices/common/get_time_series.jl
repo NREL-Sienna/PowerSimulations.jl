@@ -25,10 +25,12 @@ end
 
 function get_time_series(
     container::OptimizationContainer,
-    component::PSY.Component,
+    component::T,
     parameter::TimeSeriesParameter,
-)
-    return _get_time_series(container, component, parameter.attributes)
+    label::String,
+) where {T <: PSY.Component}
+    parameter_container = get_parameter(container, parameter, T, label)
+    return _get_time_series(container, component, parameter_container.attributes)
 end
 
 # This is just for temporary compatibility with current code. Needs to be eliminated once the time series

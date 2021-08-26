@@ -22,9 +22,25 @@ end
 get_entry_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = T
 get_component_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = U
 
+abstract type ParameterAttributes end
+
+struct NoAttributes end
+
+struct TimeSeriesAttributes{T <: PSY.TimeSeriesData} <: ParameterAttributes
+    name::String
+end
+
+get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
+get_name(attr::TimeSeriesAttributes) = attr.name
+
 struct ParameterContainer
+    attributes::ParameterAttributes
     parameter_array::JuMP.Containers.DenseAxisArray
     multiplier_array::JuMP.Containers.DenseAxisArray
+end
+
+function ParameterContainer(parameter_array, multiplier_array)
+    return ParamterContainer(NoAttributes(), parameter_array, multiplier_array)
 end
 
 get_parameter_array(c::ParameterContainer) = c.parameter_array
@@ -40,74 +56,19 @@ abstract type ObjectiveFunctionParameter <: ParameterType end
 
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
-struct TimeSeriesAttributes{T <: PSY.TimeSeriesData}
-    name::String
-end
+struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
-get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
-get_name(attr::TimeSeriesAttributes) = attr.name
+struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
-function get_time_series_type(param::TimeSeriesParameter)
-    return get_time_series_type(param.common)
-end
+struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
-struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter
-    attributes::TimeSeriesAttributes
-end
+struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter end
 
-function ActivePowerTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
-    return ActivePowerTimeSeriesParameter(TimeSeriesAttributes{T}(name))
-end
+struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter end
 
-struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
-    attributes::TimeSeriesAttributes
-end
+struct InflowTimeSeriesParameter <: TimeSeriesParameter end
 
-function ReactivePowerTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
-    return ReactivePowerTimeSeriesParameter(TimeSeriesAttributes{T}(name))
-end
-
-struct RequirementTimeSeriesParameter <: TimeSeriesParameter
-    attributes::TimeSeriesAttributes
-end
-
-function RequirementTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
-    return RequirementTimeSeriesParameter(TimeSeriesAttributes{T}(name))
-end
-
-struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter
-    attributes::TimeSeriesAttributes
-end
-
-function EnergyTargetTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
-    return EnergyTargetTimeSeriesParameter(TimeSeriesAttributes{T}(name))
-end
-
-struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter
-    attributes::TimeSeriesAttributes
-end
-
-function EnergyBudgetTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
-    EnergyBudgetTimeSeriesParameter(TimeSeriesAttributes{T}(name))
-end
-
-struct InflowTimeSeriesParameter <: TimeSeriesParameter
-    attributes::TimeSeriesAttributes
-end
-
-function InflowTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
-    InflowTimeSeriesParameter(TimeSeriesAttributes{T}(name))
-end
-
-struct OutflowTimeSeriesParameter <: TimeSeriesParameter
-    attributes::TimeSeriesAttributes
-end
-
-function OutflowTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
-    OutflowTimeSeriesParameter(TimeSeriesAttributes{T}(name))
-end
-
-get_name(key::TimeSeriesParameter) = key.attributes.name
+struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 
