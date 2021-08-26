@@ -62,7 +62,7 @@ function construct_device!(
     nodal_expression!(
         container,
         devices,
-        ActivePowerTimeSeriesParameter("max_active_power"),
+        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
     )
 
     add_constraints!(
@@ -151,7 +151,7 @@ function construct_device!(
     nodal_expression!(
         container,
         devices,
-        ActivePowerTimeSeriesParameter("max_active_power"),
+        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
     )
 
     add_constraints!(
@@ -207,7 +207,7 @@ function construct_device!(
     nodal_expression!(
         container,
         devices,
-        ActivePowerTimeSeriesParameter("max_active_power"),
+        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
     )
     add_constraint_dual!(container, sys, model)
     return

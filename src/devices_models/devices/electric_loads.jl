@@ -78,7 +78,7 @@ function DeviceRangeConstraintSpec(
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = ActivePowerVariableLimitsConstraint(),
             variable_type = ActivePowerVariable(),
-            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
+            parameter = ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -101,7 +101,7 @@ function DeviceRangeConstraintSpec(
             constraint_type = ActivePowerVariableLimitsConstraint(),
             variable_type = ActivePowerVariable(),
             bin_variable_type = OnVariable(),
-            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
+            parameter = ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_ub_bigM! :
                               device_timeseries_ub_bin!,
