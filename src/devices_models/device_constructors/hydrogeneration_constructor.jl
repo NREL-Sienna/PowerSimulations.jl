@@ -1057,8 +1057,8 @@ function construct_device!(
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
     add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
 
-    add_to_expression!(container, ActivePowerInBalance, devices, ActivePowerInVariable, S)
-    add_to_expression!(container, ActivePowerOutBalance, devices, ActivePowerOutVariable, S)
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
 end
 
 function construct_device!(
