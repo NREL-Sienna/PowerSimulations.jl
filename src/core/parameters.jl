@@ -38,17 +38,18 @@ Parameters implemented through ParameterJuMP
 abstract type RightHandSideParameter <: ParameterType end
 abstract type ObjectiveFunctionParameter <: ParameterType end
 
-struct TimeSeriesAttributes{T < PSY.TimeSeriesType}
-    attributes::TimeSeriesAttributes
+abstract type TimeSeriesParameter <: RightHandSideParameter end
+
+struct TimeSeriesAttributes{T <: PSY.TimeSeriesData}
+    name::String
 end
 
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
+get_name(attr::TimeSeriesAttributes) = attr.name
 
 function get_time_series_type(param::TimeSeriesParameter)
     return get_time_series_type(param.common)
 end
-
-abstract type TimeSeriesParameter <: RightHandSideParameter end
 
 struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter
     attributes::TimeSeriesAttributes

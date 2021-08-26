@@ -45,7 +45,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     solve_timed_log::Dict{Symbol, Any}
     built_for_simulation::Bool
     metadata::OptimizationContainerMetadata
-    model_type::Type{<:Union{DecisionModel, EmulationModel}}
+    model_type::Type{<:PSY.TimeSeriesData}
 end
 
 function OptimizationContainer(
