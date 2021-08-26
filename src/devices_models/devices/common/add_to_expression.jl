@@ -63,43 +63,50 @@ function _add_to_expression!(
 end
 
 """
-Default implementation to add nodal expressions for parameters
+Default implementation to add parameters to SystemBalanceExpressions
 """
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     parameter::ParameterType,
-) where {T <: ExpressionType, U <: PSY.Device}
+    ::Type{S}
+) where {T <: SystemBalanceExpressions, U <: PSY.Device, S <: PM.AbstractActivePowerModel}
+    parameter_array = get_parameter_array(container, parameter, U)
+    multiplier = get_parameter_multiplier_array(container, parameter, U)
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
+        name = get_name(d)
         _add_to_expression!(
-            get_expression(container, expression_name),
+            get_expression(container, T(), S),
             bus_number,
             t,
-            variable[name, t],
+            parameter_array[name, t],
+            multiplier[name, t],
         )
     end
     return
 end
 
 """
-Default implementation to add_to_expression for variables
+Default implementation to add variables to SystemBalanceExpressions
 """
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    variable::VariableType,
-) where {T <: ExpressionType, U <: PSY.Device}
+    variable::V,
+    ::Type{W}
+) where {T <: SystemBalanceExpressions, U <: PSY.Device, V <: VariableType, W <: PM.AbstractPowerModel}
+    variable = get_variable(container, V(), U)
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
         _add_to_expression!(
-            get_expression(container, expression_name),
+            get_expression(container, T, S),
             bus_number,
             t,
             variable[name, t],
-            get_variable_sign(variable_type, eltype(devices), formulation),
+            get_variable_sign(variable, U, formulation),
         )
     end
     return
