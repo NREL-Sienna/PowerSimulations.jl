@@ -115,7 +115,6 @@ function add_service_variable!(
     time_steps = get_time_steps(container)
 
     binary = get_variable_binary(variable_type, T, formulation)
-    expression_name = get_variable_expression_name(variable_type, T)
 
     variable = add_var_container!(
         container,
@@ -143,16 +142,6 @@ function add_service_variable!(
         init = get_variable_initial_value(variable_type, d, container.settings)
         !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
 
-        if !((expression_name === nothing))
-            bus_number = PSY.get_number(PSY.get_bus(d))
-            add_to_expression!(
-                get_expression(container, expression_name),
-                bus_number,
-                t,
-                variable[name, t],
-                get_variable_sign(variable_type, eltype(devices), formulation),
-            )
-        end
     end
 
     return

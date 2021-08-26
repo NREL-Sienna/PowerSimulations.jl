@@ -10,16 +10,12 @@ get_variable_sign(_, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation)
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false
 
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}) = nothing
-
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
 
 ########################### ReactivePowerVariable, RenewableGen #################################
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false
-
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = nothing
 
 #! format: on
 
