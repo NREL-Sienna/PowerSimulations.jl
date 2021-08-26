@@ -44,6 +44,9 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, D())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 """
@@ -133,6 +136,9 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, D())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 """
@@ -205,6 +211,9 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 """
@@ -275,6 +284,9 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 """
@@ -332,6 +344,9 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalRampLimited())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 """
@@ -390,6 +405,8 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalRampLimited())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
 end
 
 """
@@ -438,6 +455,9 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 function construct_device!(
@@ -494,6 +514,8 @@ function construct_device!(
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
 end
 
 function construct_device!(

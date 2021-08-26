@@ -124,7 +124,7 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
         _add_to_expression!(
-            get_expression(container, T(), S),
+            get_expression(container, T(), U),
             bus_number,
             t,
             variable[name, t],
