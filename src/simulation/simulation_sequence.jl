@@ -76,10 +76,7 @@ function _get_execution_order_vector(
     return execution_order_vector
 end
 
-function _check_feedforward(
-    feedforward,
-    feedforward_chronologies,
-)
+function _check_feedforward(feedforward, feedforward_chronologies)
     isempty(feedforward) && return
     for problem_key in keys(feedforward)
         if problem_key ∉ [k.second for k in keys(feedforward_chronologies)]

@@ -411,7 +411,7 @@ end
     constraint_keys = [
         PSI.ConstraintKey(ActiveRangeICConstraint, PSY.ThermalMultiStart),
         PSI.ConstraintKey(StartTypeConstraint, PSY.ThermalMultiStart),
-        PSI.ConstraintKey(MustRunConstraint, PSY.ThermalMultiStart, "lb"),
+        PSI.ConstraintKey(MustRunConstraint, PSY.ThermalMultiStart),
         PSI.ConstraintKey(
             StartupTimeLimitTemperatureConstraint,
             PSY.ThermalMultiStart,
@@ -430,7 +430,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 528, 0, no_less_than[false], 106, 144, true)
+    moi_tests(model, false, 528, 0, no_less_than[false], 58, 144, true)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -439,7 +439,7 @@ end
     constraint_keys = [
         PSI.ConstraintKey(ActiveRangeICConstraint, PSY.ThermalMultiStart),
         PSI.ConstraintKey(StartTypeConstraint, PSY.ThermalMultiStart),
-        PSI.ConstraintKey(MustRunConstraint, PSY.ThermalMultiStart, "lb"),
+        PSI.ConstraintKey(MustRunConstraint, PSY.ThermalMultiStart),
         PSI.ConstraintKey(
             StartupTimeLimitTemperatureConstraint,
             PSY.ThermalMultiStart,
@@ -458,7 +458,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 576, 0, no_less_than[false], 154, 144, true)
+    moi_tests(model, false, 576, 0, no_less_than[false], 106, 144, true)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -612,7 +612,7 @@ end
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     # changed from 18 to 16 as built_for_simulation/use_parameters is set to false, different duration constraint is used
-    moi_tests(UC, false, 38, 0, 16, 9, 13, true)
+    moi_tests(UC, false, 38, 0, 16, 7, 13, true)
 end
 
 @testset "Operation ModelThermalDispatchNoMin - and PWL Non Convex" begin

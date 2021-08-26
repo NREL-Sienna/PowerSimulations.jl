@@ -81,9 +81,23 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(container, devices, model, S, get_feedforward(model))
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
-    time_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        CommitmentConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        DurationConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -146,9 +160,23 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(container, devices, model, S, get_feedforward(model))
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
-    time_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        CommitmentConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        DurationConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -212,7 +240,14 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        CommitmentConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -264,7 +299,14 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        CommitmentConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -323,7 +365,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -372,7 +414,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -550,20 +592,63 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(container, devices, model, S, get_feedforward(model))
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
-    time_constraints!(container, devices, model, S, get_feedforward(model))
-    startup_time_constraints!(container, devices, model, S, get_feedforward(model))
-    startup_type_constraints!(container, devices, model, S, get_feedforward(model))
-    startup_initial_condition_constraints!(
+    add_constraints!(
         container,
+        CommitmentConstraint,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-    must_run_constraints!(container, devices, model, S, get_feedforward(model))
-    initial_range_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        DurationConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        StartupTimeLimitTemperatureConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        StartTypeConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        StartupInitialConditionConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        MustRunConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        ActiveRangeICConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
@@ -621,20 +706,63 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(container, devices, model, S, get_feedforward(model))
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
-    time_constraints!(container, devices, model, S, get_feedforward(model))
-    startup_time_constraints!(container, devices, model, S, get_feedforward(model))
-    startup_type_constraints!(container, devices, model, S, get_feedforward(model))
-    startup_initial_condition_constraints!(
+    add_constraints!(
         container,
+        CommitmentConstraint,
         devices,
         model,
         S,
         get_feedforward(model),
     )
-    must_run_constraints!(container, devices, model, S, get_feedforward(model))
-    initial_range_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        DurationConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        StartupTimeLimitTemperatureConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        StartTypeConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        StartupInitialConditionConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        MustRunConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        ActiveRangeICConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
@@ -703,9 +831,23 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(container, devices, model, S, get_feedforward(model))
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
-    time_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        CommitmentConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        DurationConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
 
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
@@ -760,9 +902,23 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commitment_constraints!(container, devices, model, S, get_feedforward(model))
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
-    time_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        CommitmentConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        DurationConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
@@ -817,7 +973,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
@@ -862,7 +1018,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
     feedforward!(container, devices, model, get_feedforward(model))
     # Cost Function
     cost_function!(container, devices, model, S, get_feedforward(model))
