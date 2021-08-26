@@ -309,10 +309,8 @@ function add_constraints!(
 
     constraint =
         add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
-    label = get_time_series_labels(model)[InflowTimeSeriesParameter]
-    parameter = InflowTimeSeriesParameter(get_default_time_series_type(container), label)
-    param = get_parameter_array(container, parameter, V)
-    multiplier = get_parameter_multiplier_array(container, parameter, V)
+    param = get_parameter_array(container, InflowTimeSeriesParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
         device = ic.device
@@ -367,10 +365,8 @@ function add_constraints!(
 
     constraint =
         add_cons_container!(container, EnergyCapacityUpConstraint(), V, names, time_steps)
-    label = get_time_series_labels(model)[InflowTimeSeriesParameter]
-    parameter = InflowTimeSeriesParameter(get_default_time_series_type(container), label)
-    param = get_parameter_array(container, parameter, V)
-    multiplier = get_parameter_multiplier_array(container, parameter, V)
+    param = get_parameter_array(container, InflowTimeSeriesParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
         device = ic.device
@@ -429,10 +425,9 @@ function add_constraints!(
 
     constraint =
         add_cons_container!(container, EnergyCapacityDownConstraint(), V, names, time_steps)
-    label = get_time_series_labels(model)[OutflowTimeSeriesParameter]
-    parameter = OutflowTimeSeriesParameter(get_default_time_series_type(container), label)
-    param = get_parameter_array(container, parameter, V)
-    multiplier = get_parameter_multiplier_array(container, parameter, V)
+
+    param = get_parameter_array(container, OutflowTimeSeriesParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, OutflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
         device = ic.device

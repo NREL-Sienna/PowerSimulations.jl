@@ -274,12 +274,13 @@ function construct_device!(
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
-
-    label = get_time_series_labels(model)[ActivePowerTimeSeriesParameter]
-    parameter =
-        ActivePowerTimeSeriesParameter(get_default_time_series_type(container), label)
-    add_to_expression!(container, ActivePowerBalance, devices, parameter, S)
-
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        devices,
+        ActivePowerTimeSeriesParameter(),
+        S,
+    )
     return
 end
 

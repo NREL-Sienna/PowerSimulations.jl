@@ -699,8 +699,23 @@ function read_duals(container::OptimizationContainer)
 end
 
 ##################################### Parameter Container ##################################
-function add_param_container!(container::OptimizationContainer, key::ParameterKey, axs...)
+function _add_param_container!(container::OptimizationContainer, key::ParameterKey, axs...)
     param_container = ParameterContainer(
+        JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
+        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
+    )
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::TimeSeriesAttributes{V},
+    axs...,
+) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
+    param_container = ParameterContainer(
+        attribute,
         JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
         fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
@@ -716,7 +731,20 @@ function add_param_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
     param_key = ParameterKey(T, U, meta)
-    return add_param_container!(container, param_key, axs...)
+    return _add_param_container!(container, param_key, axs...)
+end
+
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    ::Type{V},
+    axs...;
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
+    param_key = ParameterKey(T, U, meta)
+    attributes = TimeSeriesAttributes{V}(meta)
+    return _add_param_container!(container, param_key, attributes, axs...)
 end
 
 function get_parameter_names(container::OptimizationContainer)
