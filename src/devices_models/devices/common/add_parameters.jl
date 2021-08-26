@@ -1,6 +1,6 @@
 function add_parameters!(
     container::OptimizationContainer,
-    parameter_type::Type{T},
+    ::Type{T},
     devices::U,
     model::DeviceModel{D, W},
 ) where {
@@ -10,8 +10,8 @@ function add_parameters!(
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    label = get_time_series_labels(model)[parameter_type]
-    parameter = T(label, get_default_time_series_type(container))
+    label = get_time_series_labels(model)[T]
+    parameter = T(get_default_time_series_type(container), label)
     @debug "adding" parameter
     parameter_container = add_param_container!(container, parameter, D, names, time_steps)
     param = get_parameter_array(parameter_container)

@@ -303,9 +303,10 @@ function add_constraints!(
 
     constraint =
         add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
-    parameter_container = get_parameter(container, InflowTimeSeriesParameter(), V)
-    param = get_parameter_array(parameter_container)
-    multiplier = get_multiplier_array(parameter_container)
+    label = get_time_series_labels(model)[InflowTimeSeriesParameter]
+    parameter = InflowTimeSeriesParameter(get_default_time_series_type(container), label)
+    param = get_parameter_array(container, parameter, V)
+    multiplier = get_parameter_multiplier_array(container, parameter, V)
 
     for ic in initial_conditions
         device = ic.device
@@ -360,9 +361,10 @@ function add_constraints!(
 
     constraint =
         add_cons_container!(container, EnergyCapacityUpConstraint(), V, names, time_steps)
-    parameter_container = get_parameter(container, InflowTimeSeriesParameter(PSY.Deterministic, "inflow"), V)
-    param = get_parameter_array(parameter_container)
-    multiplier = get_multiplier_array(parameter_container)
+    label = get_time_series_labels(model)[InflowTimeSeriesParameter]
+    parameter = InflowTimeSeriesParameter(get_default_time_series_type(container), label)
+    param = get_parameter_array(container, parameter, V)
+    multiplier = get_parameter_multiplier_array(container, parameter, V)
 
     for ic in initial_conditions
         device = ic.device
@@ -421,9 +423,11 @@ function add_constraints!(
 
     constraint =
         add_cons_container!(container, EnergyCapacityDownConstraint(), V, names, time_steps)
-    parameter_container = get_parameter(container, OutflowTimeSeriesParameter(), V)
-    param = get_parameter_array(parameter_container)
-    multiplier = get_multiplier_array(parameter_container)
+        label = get_time_series_labels(model)[OutflowTimeSeriesParameter]
+    parameter = OutflowTimeSeriesParameter(get_default_time_series_type(container), label)
+    param = get_parameter_array(container, parameter, V)
+    multiplier = get_parameter_multiplier_array(container, parameter, V)
+
 
     for ic in initial_conditions
         device = ic.device
@@ -476,9 +480,10 @@ function add_constraints!(
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
-    parameter_container = get_parameter(container, EnergyTargetTimeSeriesParameter(), V)
-    param = get_parameter_array(parameter_container)
-    multiplier = get_multiplier_array(parameter_container)
+    label = get_time_series_labels(model)[EnergyTargetTimeSeriesParameter]
+    parameter = EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), label)
+    param = get_parameter_array(container, parameter, V)
+    multiplier = get_parameter_multiplier_array(container, parameter, V)
 
     for d in devices
         name = PSY.get_name(d)
@@ -586,9 +591,10 @@ function add_constraints!(
     constraint = add_cons_container!(container, EnergyBudgetConstraint(), V, set_name)
 
     variable_out = get_variable(container, ActivePowerVariable(), V)
-    parameter_container = get_parameter(container, EnergyBudgetTimeSeriesParameter(), V)
-    param = get_parameter_array(parameter_container)
-    multiplier = get_multiplier_array(parameter_container)
+    label = get_time_series_labels(model)[EnergyBudgetTimeSeriesParameter]
+    parameter = EnergyBudgetTimeSeriesParameter(get_default_time_series_type(container), label)
+    param = get_parameter_array(container, parameter, V)
+    multiplier = get_parameter_multiplier_array(container, parameter, V)
 
     for d in devices
         name = PSY.get_name(d)

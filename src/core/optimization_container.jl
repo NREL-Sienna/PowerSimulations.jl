@@ -734,6 +734,20 @@ function get_parameter_array(container::OptimizationContainer, key)
     return get_parameter_array(get_parameter(container, key))
 end
 
+function get_parameter_array(container::OptimizationContainer, ::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+    ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_parameter_array(get_parameter(container, ParameterKey(T, U, meta)))
+end
+
+function get_parameter_multiplier_array(container::OptimizationContainer, ::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+    ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_multiplier_array(get_parameter(container, ParameterKey(T, U, meta)))
+end
+
 function iterate_parameter_containers(container::OptimizationContainer)
     Channel() do channel
         for param_container in values(container.parameters)
