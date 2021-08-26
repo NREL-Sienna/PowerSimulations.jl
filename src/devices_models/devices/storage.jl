@@ -281,7 +281,8 @@ function add_constraints!(
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
     label = get_time_series_labels(model)[EnergyTargetTimeSeriesParameter]
-    parameter = EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), label)
+    parameter =
+        EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), label)
     param = get_parameter_array(container, parameter, V)
     multiplier = get_parameter_multiplier_array(container, parameter, V)
 
