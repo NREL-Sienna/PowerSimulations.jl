@@ -48,6 +48,37 @@ get_multiplier_array(c::ParameterContainer) = c.multiplier_array
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
+function _set_parameter!(
+    array::AbstractArray{Float64},
+    ::JuMP.Model,
+    value::Float64,
+    ixs...,
+)
+    array[ixs] = value
+    return
+end
+
+function _set_parameter!(
+    array::AbstractArray{PJ.ParameterRef},
+    model::JuMP.Model,
+    value::Float64,
+    ixs...,
+)
+    array[ixs] = add_jump_parameter(model, value)
+    return
+end
+
+function set_parameter!(
+    container::ParameterContainer,
+    parameter::Float64,
+    multiplier::Float64,
+    ixs...,
+)
+    get_multiplier_array(container)[ixs] = multiplier
+    param_array = get_parameter_array(container)
+    _set_parameter!(param_array, get_jump_model(container), parameter, ixs...)
+end
+
 """
 Parameters implemented through ParameterJuMP
 """

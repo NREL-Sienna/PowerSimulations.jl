@@ -190,6 +190,9 @@ function build_pre_step!(model::EmulationModel)
             get_network_formulation(get_template(model)),
             get_system(model),
         )
+        # Temporary while are able to switch from PJ to POI
+        get_optimization_container(model).built_for_simulation = true
+
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
