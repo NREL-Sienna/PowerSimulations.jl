@@ -1,3 +1,13 @@
+function initialize_timeseries_labels(
+    ::Type{<:PSY.ElectricLoad},
+    ::Type{<:AbstractLoadFormulation},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+        ReactivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -15,7 +25,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     # Parameters
-    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -75,7 +85,7 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     # Parameters
-    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -120,12 +130,12 @@ function construct_device!(
     devices = get_available_components(L, sys)
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
-    add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoad())
-    add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+    add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoamodel())
+    add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoamodel())
+    add_variables!(container, OnVariable, devices, InterruptiblePowerLoamodel())
 
     # Parameters
-    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -178,7 +188,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
     # Parameters
-    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -218,8 +228,8 @@ function construct_device!(
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
     # Parameters
-    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
-    add_parameter!(container, ReactivePowerTimeSeriesParameter, devices, D())
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -253,7 +263,7 @@ function construct_device!(
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
     # Parameters
-    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -265,11 +275,9 @@ function construct_device!(
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
-    nodal_expression!(
-        container,
-        devices,
-        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
-    )
+    label = get_time_series_labels(model)[ActivePowerTimeSeriesParameter]
+    parameter = ActivePowerTimeSeriesParameter(get_default_time_series_type(container), label)
+    add_to_expression!(container, ActivePowerBalance, devices, parameter, S)
 
     return
 end
@@ -287,8 +295,8 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
     # Parameters
-    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
-    add_parameter!(container, ReactivePowerTimeSeriesParameter, devices, D())
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(

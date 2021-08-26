@@ -13,9 +13,6 @@ get_variable_sign(_, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = -1
 ########################### ActivePowerVariable, ElectricLoad ####################################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
-
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = ExpressionKey(ActivePowerBalance, PSY.Bus)
-
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_active_power(d)
 
@@ -31,6 +28,9 @@ get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, ::Abstrac
 ########################### ReactivePowerVariable, ElectricLoad ####################################
 
 get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = true
+
+get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLoad) = -1*PSY.get_max_active_power(d)
+get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = PSY.get_max_active_power(d)
 
 #! format: on
 
@@ -64,84 +64,6 @@ function add_constraints!(
         constraint[name, t] = JuMP.@constraint(jump_model, reactive == real)
     end
 end
-
-# function DeviceRangeConstraintSpec(
-#     ::Type{<:ActivePowerVariableLimitsConstraint},
-#     ::Type{ActivePowerVariable},
-#     ::Type{T},
-#     ::Type{<:DispatchablePowerLoad},
-#     ::Type{<:PM.AbstractPowerModel},
-#     feedforward::Union{Nothing, AbstractAffectFeedForward},
-#     use_parameters::Bool,
-# ) where {T <: PSY.ElectricLoad}
-#     return DeviceRangeConstraintSpec(;
-#         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-#             constraint_type = ActivePowerVariableLimitsConstraint(),
-#             variable_type = ActivePowerVariable(),
-#             parameter = ActivePowerTimeSeriesParameter(
-#                 PSY.Deterministic,
-#                 "max_active_power",
-#             ),
-#             multiplier_func = x -> PSY.get_max_active_power(x),
-#             constraint_func = use_parameters ? device_timeseries_param_ub! :
-#                               device_timeseries_ub!,
-#             component_type = T,
-#         ),
-#     )
-# end
-
-# function DeviceRangeConstraintSpec(
-#     ::Type{<:ActivePowerVariableLimitsConstraint},
-#     ::Type{ActivePowerVariable},
-#     ::Type{T},
-#     ::Type{<:InterruptiblePowerLoad},
-#     ::Type{<:PM.AbstractPowerModel},
-#     feedforward::Union{Nothing, AbstractAffectFeedForward},
-#     use_parameters::Bool,
-# ) where {T <: PSY.ElectricLoad}
-#     return DeviceRangeConstraintSpec(;
-#         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-#             constraint_type = ActivePowerVariableLimitsConstraint(),
-#             variable_type = ActivePowerVariable(),
-#             bin_variable_type = OnVariable(),
-#             parameter = ActivePowerTimeSeriesParameter(
-#                 PSY.Deterministic,
-#                 "max_active_power",
-#             ),
-#             multiplier_func = x -> PSY.get_max_active_power(x),
-#             constraint_func = use_parameters ? device_timeseries_ub_bigM! :
-#                               device_timeseries_ub_bin!,
-#             component_type = T,
-#         ),
-#     )
-# end
-
-########################## Addition to the nodal balances ##################################
-# function NodalExpressionSpec(
-#     ::Type{T},
-#     parameter::ReactivePowerTimeSeriesParameter,
-# ) where {T <: PSY.ElectricLoad}
-#     return NodalExpressionSpec(
-#         parameter,
-#         T,
-#         x -> PSY.get_max_reactive_power(x),
-#         -1.0,
-#         ExpressionKey(ReactivePowerBalance, PSY.Bus),
-#     )
-# end
-
-# function NodalExpressionSpec(
-#     ::Type{T},
-#     parameter::ActivePowerTimeSeriesParameter,
-# ) where {T <: PSY.ElectricLoad}
-#     return NodalExpressionSpec(
-#         parameter,
-#         T,
-#         x -> PSY.get_max_active_power(x),
-#         -1.0,
-#         ExpressionKey(ActivePowerBalance, PSY.Bus),
-#     )
-# end
 
 ############################## FormulationControllable Load Cost ###########################
 function AddCostSpec(
