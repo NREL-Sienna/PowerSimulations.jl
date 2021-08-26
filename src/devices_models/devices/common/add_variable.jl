@@ -69,7 +69,6 @@ function add_variable!(
     time_steps = get_time_steps(container)
     settings = get_settings(container)
     binary = get_variable_binary(variable_type, D, formulation)
-    expression_name = get_variable_expression_name(variable_type, D)
 
     variable = add_var_container!(
         container,
@@ -96,17 +95,6 @@ function add_variable!(
         if get_warm_start(settings)
             init = get_variable_initial_value(variable_type, d, formulation)
             !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
-        end
-
-        if !((expression_name === nothing))
-            bus_number = PSY.get_number(PSY.get_bus(d))
-            add_to_expression!(
-                get_expression(container, expression_name),
-                bus_number,
-                t,
-                variable[name, t],
-                get_variable_sign(variable_type, eltype(devices), formulation),
-            )
         end
     end
 

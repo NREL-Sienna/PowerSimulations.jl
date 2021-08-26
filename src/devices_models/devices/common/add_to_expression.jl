@@ -63,61 +63,44 @@ function _add_to_expression!(
 end
 
 """
-Default implementation to add nodal expressions.
-
-Users of this function must implement a method for [`NodalExpressionSpec`](@ref)
-for their specific types.
-Users may also implement custom add_to_expression! methods.
+Default implementation to add nodal expressions for parameters
 """
 function add_to_expression!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    parameter::TimeSeriesParameter,
-) where {T <: PSY.Device}
-    # Run the Active Power Loop.
-    spec = NodalExpressionSpec(T, parameter)
-    _add_to_expression!(container, devices, spec)
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    parameter::ParameterType,
+) where {T <: ExpressionType, U <: PSY.Device}
+    for d in devices, t in get_time_steps(container)
+        bus_number = PSY.get_number(PSY.get_bus(d))
+        _add_to_expression!(
+            get_expression(container, expression_name),
+            bus_number,
+            t,
+            variable[name, t],
+        )
+    end
     return
 end
 
-function _add_to_expression!(
+"""
+Default implementation to add_to_expression for variables
+"""
+function add_to_expression!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    spec,
-) where {T <: PSY.Device}
-    parameters = built_for_simulation(container)
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    forecast_name = get_name(spec.parameter)
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(container, d, forecast_name)
-        @debug "building constraint info" get_name(d), summary(ts_vector)
-        constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, spec.peak_value_function, ts_vector)
-        constraint_infos[ix] = constraint_info
-    end
-    if parameters
-        @debug spec.parameter_name forecast_name
-        include_parameters!(
-            container,
-            constraint_infos,
-            spec.parameter,
-            T,
-            spec.expression,
-            spec.multiplier,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    variable::VariableType,
+) where {T <: ExpressionType, U <: PSY.Device}
+    for d in devices, t in get_time_steps(container)
+        bus_number = PSY.get_number(PSY.get_bus(d))
+        _add_to_expression!(
+            get_expression(container, expression_name),
+            bus_number,
+            t,
+            variable[name, t],
+            get_variable_sign(variable_type, eltype(devices), formulation),
         )
-        return
-    else
-        for constraint_info in constraint_infos
-            for t in get_time_steps(container)
-                add_to_expression!(
-                    container.expressions[spec.expression],
-                    constraint_info.bus_number,
-                    t,
-                    spec.multiplier *
-                    constraint_info.multiplier *
-                    constraint_info.timeseries[t],
-                )
-            end
-        end
     end
+    return
 end
