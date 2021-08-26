@@ -19,7 +19,8 @@ struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
-get_variable_sign(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
+get_variable_multiplier(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
+get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
 ############## ActivePowerVariable, ThermalGen ####################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_binary(::PowerAboveMinimumVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
@@ -369,9 +370,6 @@ function get_min_max_limits(
 )
     PSY.get_reactive_power_limits(device)
 end
-
-# Constraints for Thermal Generation without commitment variables
-# Commitment Status constraint when there are CommitmentVariables
 
 function add_constraints!(
     container::OptimizationContainer,
@@ -1072,6 +1070,7 @@ function add_constraints!(
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
     parameters = built_for_simulation(container)
     resolution = get_resolution(container)
+    # Use getter functions that don't require creating the keys here
     initial_conditions_on =
         get_initial_conditions(container, ICKey(InitialTimeDurationOn, U))
     initial_conditions_off =
@@ -1114,6 +1113,7 @@ function add_constraints!(
 ) where {U <: PSY.ThermalGen}
     parameters = built_for_simulation(container)
     resolution = get_resolution(container)
+    # Use getter functions that don't require creating the keys here
     initial_conditions_on =
         get_initial_conditions(container, ICKey(InitialTimeDurationOn, U))
     initial_conditions_off =

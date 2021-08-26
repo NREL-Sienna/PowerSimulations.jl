@@ -1,18 +1,38 @@
+function initialize_timeseries_names(::Type{<:PSY.RenewableGen}, ::Type{FixedOutput})
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+        ReactivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ModelConstructStage,
+    ::ArgumentConstructStage,
     ::DeviceModel{T, FixedOutput},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
-
-    nodal_expression!(
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_to_expression!(
         container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
         devices,
-        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+        model,
+        S,
     )
-    add_constraint_dual!(container, sys, model)
+end
+
+function construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
+    ::ModelConstructStage,
+    ::DeviceModel{T, FixedOutput},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    # FixedOutput doesn't add any constraints to the model. This function covers
+    # AbstractPowerModel and AbtractActivePowerModel
 end
 
 """
@@ -45,8 +65,22 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, D())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 """
@@ -137,8 +171,14 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, D())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 """
@@ -212,8 +252,22 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 """
@@ -285,8 +339,14 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 """
@@ -345,8 +405,22 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, ThermalRampLimited())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 """
@@ -406,7 +480,14 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, ThermalRampLimited())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 """
@@ -456,8 +537,22 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -515,7 +610,14 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -583,6 +685,24 @@ function construct_device!(
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
     # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -704,6 +824,16 @@ function construct_device!(
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
 end
 
 function construct_device!(
@@ -824,6 +954,16 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
 end
 
 function construct_device!(
@@ -904,6 +1044,16 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
 end
 
 function construct_device!(
@@ -965,6 +1115,17 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
+
+    # This isn't working properly since it isn't adding to the nodal expression the min power
+    # we need to add an extra term to the expressions with the mins
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -1016,6 +1177,17 @@ function construct_device!(
 
     # Aux Variables
     add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+
+    # This isn't working properly since it isn't adding to the nodal expression the min power
+    # we need to add an extra term to the expressions with the mins
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
