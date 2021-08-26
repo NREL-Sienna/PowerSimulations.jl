@@ -27,9 +27,8 @@ function get_time_series(
     container::OptimizationContainer,
     component::T,
     parameter::TimeSeriesParameter,
-    name::String,
 ) where {T <: PSY.Component}
-    parameter_container = get_parameter(container, parameter, T, name)
+    parameter_container = get_parameter(container, parameter, T)
     return _get_time_series(container, component, parameter_container.attributes)
 end
 
