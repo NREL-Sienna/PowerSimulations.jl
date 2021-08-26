@@ -47,14 +47,14 @@ function add_variable_to_expression!(
         for t in time_steps
             flow_variable = var[PSY.get_name(d), t]
             add_to_expression!(
-                container.expressions[:nodal_balance_active],
+                container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)],
                 PSY.get_number(PSY.get_arc(d).from),
                 t,
                 flow_variable,
                 -1.0,
             )
             add_to_expression!(
-                container.expressions[:nodal_balance_active],
+                container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)],
                 PSY.get_number(PSY.get_arc(d).to),
                 t,
                 flow_variable,
@@ -130,7 +130,7 @@ function branch_rate_constraints!(
                 min_rate <= var[PSY.get_name(d), t] <= max_rate
             )
             add_to_expression!(
-                container.expressions[:nodal_balance_active],
+                container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)],
                 PSY.get_number(PSY.get_arc(d).to),
                 t,
                 var[PSY.get_name(d), t],

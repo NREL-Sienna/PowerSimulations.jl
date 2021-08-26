@@ -302,14 +302,17 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
-    remove_undef!(container.expressions[:nodal_balance_active])
-    remove_undef!(container.expressions[:nodal_balance_reactive])
+    remove_undef!(container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)])
+    remove_undef!(container.expressions[ExpressionKey(ReactivePowerBalance, PSY.Bus)])
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_p"] =
-            container.expressions[:nodal_balance_active][bus.number, t]
+            container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)][bus.number, t]
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] =
-            container.expressions[:nodal_balance_reactive][bus.number, t]
+            container.expressions[ExpressionKey(ReactivePowerBalance, PSY.Bus)][
+                bus.number,
+                t,
+            ]
     end
 
     container.pm =
@@ -331,11 +334,14 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
-    remove_undef!(container.expressions[:nodal_balance_active])
+    remove_undef!(container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)])
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["inj_p"] =
-            container.expressions[:nodal_balance_active][PSY.get_number(bus), t]
+            container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)][
+                PSY.get_number(bus),
+                t,
+            ]
         # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] = 0.0
     end
 
