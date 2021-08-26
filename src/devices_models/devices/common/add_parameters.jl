@@ -9,7 +9,7 @@ function add_parameters!(
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
     ts_type = get_default_time_series_type(container)
-    if !isa(ts_type, PSY.AbstractDeterministic) || !isa(ts_type, PSY.StaticTimeSeries)
+    if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
     time_steps = get_time_steps(container)
