@@ -11,6 +11,7 @@ function add_parameters!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     name = get_time_series_names(model)[T]
+    # TODO: add a block of some sort to block other than deterministic or single time series
     ts_type = get_default_time_series_type(container)
     @debug "adding" T name ts_type
     parameter_container =
@@ -18,65 +19,11 @@ function add_parameters!(
     param = get_parameter_array(parameter_container)
     mult = get_multiplier_array(parameter_container)
 
-    if !isnothing(name)
-        for d in devices, t in time_steps
-            name = PSY.get_name(d)
-            ts_vector = get_time_series(container, d, T(), name)
-            mult[name, t] = get_multiplier_value(parameter, d, W())
-            param[name, t] = add_parameter(container.JuMPmodel, ts_vector[t])
-        end
+    for d in devices, t in time_steps
+        name = PSY.get_name(d)
+        ts_vector = get_time_series(container, d, T(), name)
+        mult[name, t] = get_multiplier_value(parameter, d, W())
+        param[name, t] = add_parameter(container.JuMPmodel, ts_vector[t])
     end
     return
-end
-
-function include_parameters!(
-    container::OptimizationContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    parameter::RightHandSideParameter,
-    ::Type{T},
-    expression_name::Symbol,
-    multiplier::Float64 = 1.0,
-) where {T <: PSY.Device}
-    @assert built_for_simulation(container)
-    time_steps = get_time_steps(container)
-    names = [get_component_name(r) for r in constraint_infos]
-    @debug "adding" parameter
-    container = add_param_container!(container, parameter, T, names, time_steps)
-    param = get_parameter_array(container)
-    mult = get_multiplier_array(container)
-    expr = get_expression(container, expression_name)
-    for t in time_steps, r in constraint_infos
-        param[get_component_name(r), t] =
-            add_parameter(container.JuMPmodel, r.timeseries[t])
-        mult[get_component_name(r), t] = r.multiplier * multiplier
-        add_to_expression!(
-            expr,
-            r.bus_number,
-            t,
-            param[get_component_name(r), t],
-            r.multiplier * multiplier,
-        )
-    end
-    return container
-end
-
-function include_parameters!(
-    container::OptimizationContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    parameter::RightHandSideParameter,
-    ::Type{T},
-    multiplier::Float64 = 1.0,
-) where {T <: PSY.Device}
-    @assert built_for_simulation(container)
-    time_steps = get_time_steps(container)
-    names = [get_component_name(r) for r in constraint_infos]
-    container = add_param_container!(container, parameter, T, names, time_steps)
-    param = get_parameter_array(container)
-    mult = get_multiplier_array(container)
-    for t in time_steps, r in constraint_infos
-        param[get_component_name(r), t] =
-            add_parameter(container.JuMPmodel, r.timeseries[t])
-        mult[get_component_name(r), t] = r.multiplier * multiplier
-    end
-    return container
 end
