@@ -8,11 +8,13 @@ function add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
+    ts_type = get_default_time_series_type(container)
+    if !isa(ts_type, PSY.AbstractDeterministic) || !isa(ts_type, PSY.StaticTimeSeries)
+        error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
+    end
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     ts_name = get_time_series_names(model)[T]
-    # TODO: add a block of some sort to block other than deterministic or single time series
-    ts_type = get_default_time_series_type(container)
     @debug "adding" T name ts_type
     parameter_container =
         add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
