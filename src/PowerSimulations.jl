@@ -451,7 +451,6 @@ include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/commitment_constraint.jl")
 include("devices_models/devices/common/timeseries_constraint.jl")
-include("devices_models/devices/common/expressionarray_algebra.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
 include("feedforward/feedforward_constraints.jl")
