@@ -25,9 +25,14 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
+    # Add vars to expressions
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
+
 end
 
 function construct_device!(
@@ -85,6 +90,10 @@ function construct_device!(
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+
+    # add vars to expressions
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
