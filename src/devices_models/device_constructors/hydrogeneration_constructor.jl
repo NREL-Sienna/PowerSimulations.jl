@@ -123,6 +123,9 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 function construct_device!(
@@ -185,6 +188,8 @@ function construct_device!(
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
 end
 
 function construct_device!(
@@ -242,6 +247,9 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 function construct_device!(
@@ -310,6 +318,8 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
 end
 
 function construct_device!(
@@ -394,6 +404,9 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
 end
 
 function construct_device!(
@@ -1043,6 +1056,9 @@ function construct_device!(
     # Parameters
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
     add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
+
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
+    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
 end
 
 function construct_device!(
