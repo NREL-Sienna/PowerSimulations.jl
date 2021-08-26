@@ -305,7 +305,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ccs::ModelConstructStage,
-    model::DeviceModel{L, D},
+    ::DeviceModel{L, D},
     ::Type{S},
 ) where {
     L <: PSY.StaticLoad,
