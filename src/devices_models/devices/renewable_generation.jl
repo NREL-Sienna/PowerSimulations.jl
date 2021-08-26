@@ -21,6 +21,8 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::Abstr
 
 get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = ExpressionKey(ReactivePowerBalance, PSY.Bus)
 
+get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::FixedOutput) = PSY.get_max_active_power(d)
+
 #! format: on
 
 ####################################### Reactive Power constraint_infos #########################
