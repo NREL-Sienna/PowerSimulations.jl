@@ -851,7 +851,7 @@ function get_expression(
     ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: SystemBalanceExpressions, U <:PM.AbstractActivePowerModel}
+) where {T <: SystemBalanceExpressions, U <: PM.AbstractActivePowerModel}
     return get_expression(container, ExpressionKey(T, PSY.Bus, meta))
 end
 
@@ -863,7 +863,6 @@ function get_expression(
 ) where {T <: SystemBalanceExpressions}
     return get_expression(container, ExpressionKey(T, PSY.System, meta))
 end
-
 
 ###################################Initial Conditions Containers############################
 function has_initial_conditions(container::OptimizationContainer, key::ICKey)
