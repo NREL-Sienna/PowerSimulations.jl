@@ -335,11 +335,11 @@ function write_problem_results!(
     store::SimulationStore,
     exports,
 )
-# This needs a new implementation that might be similar to DecisionModel
-#    stats = OptimizerStats(model, step)
-#    write_optimizer_stats!(store, get_name(model), stats, start_time)
-#    write_model_results!(store, model, start_time; exports = exports)
-#    return
+    # This needs a new implementation that might be similar to DecisionModel
+    #    stats = OptimizerStats(model, step)
+    #    write_optimizer_stats!(store, get_name(model), stats, start_time)
+    #    write_model_results!(store, model, start_time; exports = exports)
+    #    return
 end
 
 """
@@ -371,31 +371,31 @@ function solve!(
 end
 
 function write_model_results!(store, model::EmulationModel, timestamp; exports = nothing)
-# This needs a new implementation that might be similar to DecisionModel
-#     if exports !== nothing
-#         export_params = Dict{Symbol, Any}(
-#             :exports => exports,
-#             :exports_path => joinpath(exports.path, string(get_name(model))),
-#             :file_type => get_export_file_type(exports),
-#             :resolution => get_resolution(model),
-#             :horizon => get_horizon(get_settings(model)),
-#         )
-#     else
-#         export_params = nothing
-#     end
-#
-#     container = get_optimization_container(model)
-#     # This line should only be called if the problem is exporting duals. Otherwise ignore.
-#     if is_milp(container)
-#         @warn "Problem $(get_simulation_info(model).name) is a MILP, duals can't be exported"
-#     else
-#         _write_model_dual_results!(store, container, model, timestamp, export_params)
-#     end
-#
-#     _write_model_parameter_results!(store, container, model, timestamp, export_params)
-#     _write_model_variable_results!(store, container, model, timestamp, export_params)
-#     _write_model_aux_variable_results!(store, container, model, timestamp, export_params)
-#     return
+    # This needs a new implementation that might be similar to DecisionModel
+    #     if exports !== nothing
+    #         export_params = Dict{Symbol, Any}(
+    #             :exports => exports,
+    #             :exports_path => joinpath(exports.path, string(get_name(model))),
+    #             :file_type => get_export_file_type(exports),
+    #             :resolution => get_resolution(model),
+    #             :horizon => get_horizon(get_settings(model)),
+    #         )
+    #     else
+    #         export_params = nothing
+    #     end
+    #
+    #     container = get_optimization_container(model)
+    #     # This line should only be called if the problem is exporting duals. Otherwise ignore.
+    #     if is_milp(container)
+    #         @warn "Problem $(get_simulation_info(model).name) is a MILP, duals can't be exported"
+    #     else
+    #         _write_model_dual_results!(store, container, model, timestamp, export_params)
+    #     end
+    #
+    #     _write_model_parameter_results!(store, container, model, timestamp, export_params)
+    #     _write_model_variable_results!(store, container, model, timestamp, export_params)
+    #     _write_model_aux_variable_results!(store, container, model, timestamp, export_params)
+    #     return
 end
 
 function _write_model_dual_results!(
@@ -405,35 +405,35 @@ function _write_model_dual_results!(
     timestamp,
     exports,
 )
-# This needs a new implementation that might be similar to DecisionModel
-#     problem_name = get_name(model)
-#     if exports !== nothing
-#         exports_path = joinpath(exports[:exports_path], "duals")
-#         mkpath(exports_path)
-#     end
-#
-#     for (key, constraint) in get_duals(container)
-#         write_result!(
-#             store,
-#             problem_name,
-#             STORE_CONTAINER_DUALS,
-#             key,
-#             timestamp,
-#             constraint,
-#             [encode_key(key)],  # TODO DT: this doesn't seem right
-#         )
-#
-#         if exports !== nothing &&
-#            should_export_dual(exports[:exports], timestamp, problem_name, key)
-#             horizon = exports[:horizon]
-#             resolution = exports[:resolution]
-#             file_type = exports[:file_type]
-#             df = axis_array_to_dataframe(constraint, [name])
-#             time_col = range(timestamp, length = horizon, step = resolution)
-#             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-#             export_result(file_type, exports_path, key, timestamp, df)
-#         end
-#     end
+    # This needs a new implementation that might be similar to DecisionModel
+    #     problem_name = get_name(model)
+    #     if exports !== nothing
+    #         exports_path = joinpath(exports[:exports_path], "duals")
+    #         mkpath(exports_path)
+    #     end
+    #
+    #     for (key, constraint) in get_duals(container)
+    #         write_result!(
+    #             store,
+    #             problem_name,
+    #             STORE_CONTAINER_DUALS,
+    #             key,
+    #             timestamp,
+    #             constraint,
+    #             [encode_key(key)],  # TODO DT: this doesn't seem right
+    #         )
+    #
+    #         if exports !== nothing &&
+    #            should_export_dual(exports[:exports], timestamp, problem_name, key)
+    #             horizon = exports[:horizon]
+    #             resolution = exports[:resolution]
+    #             file_type = exports[:file_type]
+    #             df = axis_array_to_dataframe(constraint, [name])
+    #             time_col = range(timestamp, length = horizon, step = resolution)
+    #             DataFrames.insertcols!(df, 1, :DateTime => time_col)
+    #             export_result(file_type, exports_path, key, timestamp, df)
+    #         end
+    #     end
 end
 
 function _write_model_parameter_results!(
@@ -443,51 +443,51 @@ function _write_model_parameter_results!(
     timestamp,
     exports,
 )
-# This needs a new implementation that might be similar to DecisionModel
-#    problem_name = get_name(model)
-#    if exports !== nothing
-#        exports_path = joinpath(exports[:exports_path], "parameters")
-#        mkpath(exports_path)
-#    end
-#
-#    parameters = get_parameters(container)
-#    (isnothing(parameters) || isempty(parameters)) && return
-#    horizon = get_horizon(get_settings(model))
-#
-#    for (key, container) in parameters
-#        name = encode_key(key)  # TODO DT
-#        !isa(container.update_ref, UpdateRef{<:PSY.Component}) && continue
-#        param_array = get_parameter_array(container)
-#        multiplier_array = get_multiplier_array(container)
-#        @assert_op length(axes(param_array)) == 2
-#        num_columns = size(param_array)[1]
-#        data = Array{Float64}(undef, horizon, num_columns)
-#        for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
-#            val1 = _jump_value(param_array[name, r_ix])
-#            val2 = multiplier_array[name, r_ix]
-#            data[r_ix, c_ix] = val1 * val2
-#        end
-#
-#        write_result!(
-#            store,
-#            problem_name,
-#            STORE_CONTAINER_PARAMETERS,
-#            key,
-#            timestamp,
-#            data,
-#            param_array.axes[1],
-#        )
-#
-#        if exports !== nothing &&
-#           should_export_parameter(exports[:exports], timestamp, problem_name, key)
-#            resolution = exports[:resolution]
-#            file_type = exports[:file_type]
-#            df = DataFrames.DataFrame(data, param_array.axes[1])
-#            time_col = range(timestamp, length = horizon, step = resolution)
-#            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-#            export_result(file_type, exports_path, key, timestamp, df)
-#        end
-#    end
+    # This needs a new implementation that might be similar to DecisionModel
+    #    problem_name = get_name(model)
+    #    if exports !== nothing
+    #        exports_path = joinpath(exports[:exports_path], "parameters")
+    #        mkpath(exports_path)
+    #    end
+    #
+    #    parameters = get_parameters(container)
+    #    (isnothing(parameters) || isempty(parameters)) && return
+    #    horizon = get_horizon(get_settings(model))
+    #
+    #    for (key, container) in parameters
+    #        name = encode_key(key)  # TODO DT
+    #        !isa(container.update_ref, UpdateRef{<:PSY.Component}) && continue
+    #        param_array = get_parameter_array(container)
+    #        multiplier_array = get_multiplier_array(container)
+    #        @assert_op length(axes(param_array)) == 2
+    #        num_columns = size(param_array)[1]
+    #        data = Array{Float64}(undef, horizon, num_columns)
+    #        for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
+    #            val1 = _jump_value(param_array[name, r_ix])
+    #            val2 = multiplier_array[name, r_ix]
+    #            data[r_ix, c_ix] = val1 * val2
+    #        end
+    #
+    #        write_result!(
+    #            store,
+    #            problem_name,
+    #            STORE_CONTAINER_PARAMETERS,
+    #            key,
+    #            timestamp,
+    #            data,
+    #            param_array.axes[1],
+    #        )
+    #
+    #        if exports !== nothing &&
+    #           should_export_parameter(exports[:exports], timestamp, problem_name, key)
+    #            resolution = exports[:resolution]
+    #            file_type = exports[:file_type]
+    #            df = DataFrames.DataFrame(data, param_array.axes[1])
+    #            time_col = range(timestamp, length = horizon, step = resolution)
+    #            DataFrames.insertcols!(df, 1, :DateTime => time_col)
+    #            export_result(file_type, exports_path, key, timestamp, df)
+    #        end
+    #    end
 end
 
 function _write_model_variable_results!(
@@ -497,34 +497,34 @@ function _write_model_variable_results!(
     timestamp,
     exports,
 )
-# This needs a new implementation that might be similar to DecisionModel
-#     problem_name = get_name(model)
-#     if exports !== nothing
-#         exports_path = joinpath(exports[:exports_path], "variables")
-#         mkpath(exports_path)
-#     end
-#
-#     for (key, variable) in get_variables(container)
-#         write_result!(
-#             store,
-#             problem_name,
-#             STORE_CONTAINER_VARIABLES,
-#             key,
-#             timestamp,
-#             variable,
-#         )
-#
-#         if exports !== nothing &&
-#            should_export_variable(exports[:exports], timestamp, problem_name, key)
-#             horizon = exports[:horizon]
-#             resolution = exports[:resolution]
-#             file_type = exports[:file_type]
-#             df = axis_array_to_dataframe(variable)
-#             time_col = range(timestamp, length = horizon, step = resolution)
-#             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-#             export_result(file_type, exports_path, key, timestamp, df)
-#         end
-#     end
+    # This needs a new implementation that might be similar to DecisionModel
+    #     problem_name = get_name(model)
+    #     if exports !== nothing
+    #         exports_path = joinpath(exports[:exports_path], "variables")
+    #         mkpath(exports_path)
+    #     end
+    #
+    #     for (key, variable) in get_variables(container)
+    #         write_result!(
+    #             store,
+    #             problem_name,
+    #             STORE_CONTAINER_VARIABLES,
+    #             key,
+    #             timestamp,
+    #             variable,
+    #         )
+    #
+    #         if exports !== nothing &&
+    #            should_export_variable(exports[:exports], timestamp, problem_name, key)
+    #             horizon = exports[:horizon]
+    #             resolution = exports[:resolution]
+    #             file_type = exports[:file_type]
+    #             df = axis_array_to_dataframe(variable)
+    #             time_col = range(timestamp, length = horizon, step = resolution)
+    #             DataFrames.insertcols!(df, 1, :DateTime => time_col)
+    #             export_result(file_type, exports_path, key, timestamp, df)
+    #         end
+    #     end
 end
 
 function _write_model_aux_variable_results!(
@@ -534,32 +534,32 @@ function _write_model_aux_variable_results!(
     timestamp,
     exports,
 )
-# This needs a new implementation that might be similar to DecisionModel
-#     problem_name = get_name(model)
-#     if exports !== nothing
-#         exports_path = joinpath(exports[:exports_path], "variables")
-#         mkpath(exports_path)
-#     end
-#
-#     for (key, variable) in get_aux_variables(container)
-#         write_result!(
-#             store,
-#             problem_name,
-#             STORE_CONTAINER_VARIABLES,
-#             key,
-#             timestamp,
-#             variable,
-#         )
-#
-#         if exports !== nothing &&
-#            should_export_variable(exports[:exports], timestamp, problem_name, key)
-#             horizon = exports[:horizon]
-#             resolution = exports[:resolution]
-#             file_type = exports[:file_type]
-#             df = axis_array_to_dataframe(variable)
-#             time_col = range(timestamp, length = horizon, step = resolution)
-#             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-#             export_result(file_type, exports_path, key, timestamp, df)
-#         end
-#     end
+    # This needs a new implementation that might be similar to DecisionModel
+    #     problem_name = get_name(model)
+    #     if exports !== nothing
+    #         exports_path = joinpath(exports[:exports_path], "variables")
+    #         mkpath(exports_path)
+    #     end
+    #
+    #     for (key, variable) in get_aux_variables(container)
+    #         write_result!(
+    #             store,
+    #             problem_name,
+    #             STORE_CONTAINER_VARIABLES,
+    #             key,
+    #             timestamp,
+    #             variable,
+    #         )
+    #
+    #         if exports !== nothing &&
+    #            should_export_variable(exports[:exports], timestamp, problem_name, key)
+    #             horizon = exports[:horizon]
+    #             resolution = exports[:resolution]
+    #             file_type = exports[:file_type]
+    #             df = axis_array_to_dataframe(variable)
+    #             time_col = range(timestamp, length = horizon, step = resolution)
+    #             DataFrames.insertcols!(df, 1, :DateTime => time_col)
+    #             export_result(file_type, exports_path, key, timestamp, df)
+    #         end
+    #     end
 end
