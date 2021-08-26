@@ -24,7 +24,7 @@ function make_time_series_cache(
     ignore_scaling_factors = true,
 )
     return IS.ForecastCache(
-        IS.AbstractDeterministic,
+        PSY.AbstractDeterministic,
         component,
         name,
         start_time = initial_time,
@@ -42,7 +42,7 @@ function make_time_series_cache(
     ignore_scaling_factors = true,
 )
     return IS.ForecastCache(
-        IS.AbstractDeterministic,
+        PSY.AbstractDeterministic,
         component,
         name,
         start_time = initial_time,
