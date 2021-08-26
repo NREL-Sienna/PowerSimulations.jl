@@ -64,7 +64,7 @@ struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
 end
 
 function ReactivePowerTimeSeriesParameter(::Type{T}, name) where {T <: PSY.TimeSeriesData}
-    return RectivePowerTimeSeriesParameter(TimeSeriesAttributes{T}(name))
+    return ReactivePowerTimeSeriesParameter(TimeSeriesAttributes{T}(name))
 end
 
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter
