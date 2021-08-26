@@ -14,6 +14,7 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
 function construct_device!(
@@ -72,6 +73,7 @@ function construct_device!(
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
 function construct_device!(
@@ -119,6 +121,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
 function construct_device!(
@@ -170,6 +173,7 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
 end
 
 function construct_device!(
@@ -206,7 +210,11 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
-) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel} end
+) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
+    devices = get_available_components(L, sys)
+    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
+    add_parameter!(container, ReactivePowerTimeSeriesParameter, devices, D())
+end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -215,8 +223,6 @@ function construct_device!(
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
-    devices = get_available_components(L, sys)
-
     nodal_expression!(
         container,
         devices,
@@ -238,7 +244,10 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
-) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel} end
+) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(L, sys)
+    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
+end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -268,7 +277,11 @@ function construct_device!(
     L <: PSY.StaticLoad,
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractPowerModel,
-} end
+}
+    devices = get_available_components(L, sys)
+    add_parameter!(container, ActivePowerTimeSeriesParameter, devices, D())
+    add_parameter!(container, ReactivePowerTimeSeriesParameter, devices, D())
+end
 
 function construct_device!(
     container::OptimizationContainer,
