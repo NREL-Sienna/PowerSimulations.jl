@@ -124,7 +124,7 @@ function add_constraints!(
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = T(),
             variable_type = U(),
-            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
+            parameter = ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -264,7 +264,7 @@ function commit_hydro_active_power_ub!(
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = CommitmentConstraint(),
             variable_type = ActivePowerVariable(),
-            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
+            parameter = ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -360,7 +360,7 @@ function add_constraints!(
 
     constraint =
         add_cons_container!(container, EnergyCapacityUpConstraint(), V, names, time_steps)
-    parameter_container = get_parameter(container, InflowTimeSeriesParameter("inflow"), V)
+    parameter_container = get_parameter(container, InflowTimeSeriesParameter(PSY.Deterministic, "inflow"), V)
     param = get_parameter_array(parameter_container)
     multiplier = get_multiplier_array(parameter_container)
 
