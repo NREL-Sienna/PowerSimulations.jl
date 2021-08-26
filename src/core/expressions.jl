@@ -29,3 +29,5 @@ Base.convert(::Type{ExpressionKey}, name::Symbol) = ExpressionKey(decode_symbol(
 abstract type SystemBalanceExpressions <: ExpressionType end
 struct ActivePowerBalance <: SystemBalanceExpressions end
 struct ReactivePowerBalance <: SystemBalanceExpressions end
+struct ActivePowerInBalance <: SystemBalanceExpressions end
+struct ActivePowerOutBalance <: SystemBalanceExpressions end
