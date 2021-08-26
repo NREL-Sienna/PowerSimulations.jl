@@ -30,8 +30,22 @@ function construct_device!(
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
     # Expression
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(

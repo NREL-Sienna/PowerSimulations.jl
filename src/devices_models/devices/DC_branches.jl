@@ -33,37 +33,6 @@ get_variable_upper_bound(
 ) = min(PSY.get_active_power_limits_from(d).max, PSY.get_active_power_limits_to(d).max)
 #! format: on
 
-#################################### Flow Variable Bounds ##################################################
-function add_variable_to_expression!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, <:AbstractDCLineFormulation},
-    ::Type{S},
-) where {B <: PSY.DCBranch, S <: Union{StandardPTDFModel, PTDFPowerModel}}
-    time_steps = get_time_steps(container)
-    var = get_variable(container, FlowActivePowerVariable(), B)
-
-    for d in devices
-        for t in time_steps
-            flow_variable = var[PSY.get_name(d), t]
-            add_to_expression!(
-                container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)],
-                PSY.get_number(PSY.get_arc(d).from),
-                t,
-                flow_variable,
-                -1.0,
-            )
-            add_to_expression!(
-                container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)],
-                PSY.get_number(PSY.get_arc(d).to),
-                t,
-                flow_variable,
-                1.0,
-            )
-        end
-    end
-end
-
 #################################### Rate Limits Constraints ##################################################
 function branch_rate_constraints!(
     container::OptimizationContainer,
@@ -129,14 +98,15 @@ function branch_rate_constraints!(
                 container.JuMPmodel,
                 min_rate <= var[PSY.get_name(d), t] <= max_rate
             )
-            add_to_expression!(
-                container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)],
-                PSY.get_number(PSY.get_arc(d).to),
-                t,
-                var[PSY.get_name(d), t],
-                -PSY.get_loss(d).l1,
-                -PSY.get_loss(d).l0,
-            )
+            # Needs refactoring. This add to expression model doesn't work anymore
+            # add_to_expression!(
+            #     container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)],
+            #     PSY.get_number(PSY.get_arc(d).to),
+            #     t,
+            #     var[PSY.get_name(d), t],
+            #     -PSY.get_loss(d).l1,
+            #     -PSY.get_loss(d).l0,
+            # )
         end
     end
     return

@@ -95,7 +95,8 @@ struct VoltageAngle <: VariableType end
 """Struct to dispatch the creation of Flow Active Power Variables"""
 struct FlowActivePowerVariable <: VariableType end
 
-struct FlowReactivePowerVariable <: VariableType end
+# This Variable Type doesn't make sense since there are no lossless NetworkModels with ReactivePower.
+# struct FlowReactivePowerVariable <: VariableType end
 
 struct FlowActivePowerFromToVariable <: VariableType end
 

@@ -138,3 +138,43 @@ function add_to_expression!(
     end
     return
 end
+
+"""
+Implementation of add_to_expression! for lossless branch/network models
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::T,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerVariable,
+    V <: PSY.Branch,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractActivePowerModel,
+}
+    var = get_variable(container, U(), B)
+    expression = get_expression(container, T(), X)
+    for d in devices
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_expression!(
+                expression,
+                PSY.get_number(PSY.get_arc(d).from),
+                t,
+                flow_variable,
+                -1.0,
+            )
+            _add_to_expression!(
+                expression,
+                PSY.get_number(PSY.get_arc(d).to),
+                t,
+                flow_variable,
+                1.0,
+            )
+        end
+    end
+end
