@@ -15,7 +15,7 @@ struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 get_variable_sign(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.HydroGen}) = ExpressionKey(ActivePowerBalance, PSY.Bus)
 
 get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 
@@ -27,7 +27,7 @@ get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::HydroDispatch
 
 ############## ReactivePowerVariable, HydroGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_reactive
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}) = ExpressionKey(ReactivePowerBalance, PSY.Bus)
 get_variable_initial_value(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).max
@@ -59,7 +59,7 @@ get_variable_upper_bound(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroF
 ########################### ActivePowerInVariable, HydroGen #################################
 
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}) = ExpressionKey(ActivePowerBalance, PSY.Bus)
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = nothing
@@ -68,7 +68,7 @@ get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.HydroGen}, ::AbstractHy
 ########################### ActivePowerOutVariable, HydroGen #################################
 
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}) = ExpressionKey(ActivePowerBalance, PSY.Bus)
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = nothing
@@ -557,7 +557,7 @@ function NodalExpressionSpec(
         T,
         x -> PSY.get_max_reactive_power(x),
         1.0,
-        :nodal_balance_reactive,
+        ExpressionKey(ReactivePowerBalance, PSY.Bus),
     )
 end
 
@@ -570,7 +570,7 @@ function NodalExpressionSpec(
         T,
         x -> PSY.get_max_active_power(x),
         1.0,
-        :nodal_balance_active,
+        ExpressionKey(ActivePowerBalance, PSY.Bus),
     )
 end
 

@@ -355,6 +355,6 @@ function NodalExpressionSpec(
         T,
         x -> PSY.get_max_active_power(x),
         1.0,
-        :nodal_balance_active,
+        ExpressionKey(ActivePowerBalance, PSY.Bus),
     )
 end

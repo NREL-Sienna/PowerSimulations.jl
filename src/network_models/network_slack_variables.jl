@@ -32,8 +32,8 @@ function _add_system_balance_slacks!(
             base_name = "SystemBalanceSlackDown_{$(ix), $(jx)}",
             lower_bound = 0.0
         )
-        add_to_expression!(expression_array, ix, jx, variable_up[ix, jx], 1.0)
-        add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
+        _add_to_expression!(expression_array, ix, jx, variable_up[ix, jx], 1.0)
+        _add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
         JuMP.add_to_expression!(
             container.cost_function,
             (variable_dn[ix, jx] + variable_up[ix, jx]) * BALANCE_SLACK_COST,
@@ -43,7 +43,7 @@ function _add_system_balance_slacks!(
 end
 
 function add_slacks!(container::OptimizationContainer, ::Type{CopperPlatePowerModel})
-    _add_system_balance_slacks!(container, :nodal_balance_active, true)
+    _add_system_balance_slacks!(container, ExpressionKey(ActivePowerBalance, PSY.Bus), true)
     return
 end
 
@@ -51,7 +51,7 @@ function add_slacks!(
     container::OptimizationContainer,
     ::Type{T},
 ) where {T <: PM.AbstractActivePowerModel}
-    _add_system_balance_slacks!(container, :nodal_balance_active)
+    _add_system_balance_slacks!(container, ExpressionKey(ActivePowerBalance, PSY.Bus))
     return
 end
 
@@ -59,8 +59,8 @@ function add_slacks!(
     container::OptimizationContainer,
     ::Type{T},
 ) where {T <: PM.AbstractPowerModel}
-    _add_system_balance_slacks!(container, :nodal_balance_active)
+    _add_system_balance_slacks!(container, ExpressionKey(ActivePowerBalance, PSY.Bus))
     # TODO: Enable later
-    #_add_system_balance_slacks!(container, :nodal_balance_reactive)
+    #_add_system_balance_slacks!(container, ExpressionKey(ReactivePowerBalance, PSY.Bus))
     return
 end

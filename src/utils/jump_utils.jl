@@ -94,3 +94,17 @@ function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     contents = Dict{eltype(indexes), Any}(indexes .=> 0)
     return JuMP.Containers.SparseAxisArray(contents)
 end
+
+function remove_undef!(expression_array::AbstractArray)
+    for j in 1:size(expression_array)[2]
+        for i in 1:size(expression_array)[1]
+            if !isassigned(expression_array, i, j)
+                expression_array[i, j] = zero(eltype(expression_array))
+            else
+                continue
+            end
+        end
+    end
+
+    return
+end

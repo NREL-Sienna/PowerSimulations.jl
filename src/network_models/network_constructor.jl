@@ -9,7 +9,8 @@ function construct_network!(
 
     get_use_slacks(model) && add_slacks!(container, CopperPlatePowerModel)
 
-    copper_plate(container, :nodal_balance_active, bus_count)
+    # TODO: Needs some re-implementation
+    copper_plate(container, ExpressionKey(ActivePowerBalance, PSY.System), bus_count)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -31,7 +32,12 @@ function construct_network!(
         )
     end
 
-    area_balance(container, :nodal_balance_active, area_mapping, branches)
+    area_balance(
+        container,
+        ExpressionKey(ActivePowerBalance, PSY.Bus),
+        area_mapping,
+        branches,
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -51,7 +57,7 @@ function construct_network!(
 
     get_use_slacks(model) && add_slacks!(container, StandardPTDFModel)
 
-    copper_plate(container, :nodal_balance_active, length(buses))
+    copper_plate(container, ExpressionKey(ActivePowerBalance, PSY.Bus), length(buses))
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -71,7 +77,11 @@ function construct_network!(
     )
 
     add_pm_expr_refs!(container, T, sys)
-    copper_plate(container, :nodal_balance_active, length(PSY.get_components(PSY.Bus, sys)))
+    copper_plate(
+        container,
+        ExpressionKey(ActivePowerBalance, PSY.Bus),
+        length(PSY.get_components(PSY.Bus, sys)),
+    )
     add_constraint_dual!(container, sys, model)
 
     return

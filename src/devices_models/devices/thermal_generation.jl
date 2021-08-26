@@ -23,7 +23,7 @@ get_variable_sign(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1
 ############## ActivePowerVariable, ThermalGen ####################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_binary(::PowerAboveMinimumVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_active
+get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}) = ExpressionKey(ActivePowerBalance, PSY.Bus)
 get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
 get_variable_initial_value(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
@@ -34,7 +34,7 @@ get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::Abstr
 
 ############## ReactivePowerVariable, ThermalGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}) = :nodal_balance_reactive
+get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}) = ExpressionKey(ReactivePowerBalance, PSY.Bus)
 
 get_variable_initial_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power(d)
 
