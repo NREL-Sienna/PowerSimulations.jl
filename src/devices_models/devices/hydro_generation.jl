@@ -124,7 +124,10 @@ function add_constraints!(
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = T(),
             variable_type = U(),
-            parameter = ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+            parameter = ActivePowerTimeSeriesParameter(
+                PSY.Deterministic,
+                "max_active_power",
+            ),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -264,7 +267,10 @@ function commit_hydro_active_power_ub!(
         timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
             constraint_type = CommitmentConstraint(),
             variable_type = ActivePowerVariable(),
-            parameter = ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+            parameter = ActivePowerTimeSeriesParameter(
+                PSY.Deterministic,
+                "max_active_power",
+            ),
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
@@ -423,11 +429,10 @@ function add_constraints!(
 
     constraint =
         add_cons_container!(container, EnergyCapacityDownConstraint(), V, names, time_steps)
-        label = get_time_series_labels(model)[OutflowTimeSeriesParameter]
+    label = get_time_series_labels(model)[OutflowTimeSeriesParameter]
     parameter = OutflowTimeSeriesParameter(get_default_time_series_type(container), label)
     param = get_parameter_array(container, parameter, V)
     multiplier = get_parameter_multiplier_array(container, parameter, V)
-
 
     for ic in initial_conditions
         device = ic.device
@@ -481,7 +486,8 @@ function add_constraints!(
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
     label = get_time_series_labels(model)[EnergyTargetTimeSeriesParameter]
-    parameter = EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), label)
+    parameter =
+        EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), label)
     param = get_parameter_array(container, parameter, V)
     multiplier = get_parameter_multiplier_array(container, parameter, V)
 
@@ -592,7 +598,8 @@ function add_constraints!(
 
     variable_out = get_variable(container, ActivePowerVariable(), V)
     label = get_time_series_labels(model)[EnergyBudgetTimeSeriesParameter]
-    parameter = EnergyBudgetTimeSeriesParameter(get_default_time_series_type(container), label)
+    parameter =
+        EnergyBudgetTimeSeriesParameter(get_default_time_series_type(container), label)
     param = get_parameter_array(container, parameter, V)
     multiplier = get_parameter_multiplier_array(container, parameter, V)
 

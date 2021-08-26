@@ -41,8 +41,11 @@ function service_requirement_constraint!(
 
     requirement = PSY.get_requirement(service)
     if parameters
-        container =
-            get_parameter(container, RequirementTimeSeriesParameter(PSY.Deterministic, "requirement"), SR)
+        container = get_parameter(
+            container,
+            RequirementTimeSeriesParameter(PSY.Deterministic, "requirement"),
+            SR,
+        )
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps
