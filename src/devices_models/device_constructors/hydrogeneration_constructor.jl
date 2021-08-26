@@ -77,14 +77,14 @@ function construct_device!(
 end
 
 function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
+    ::OptimizationContainer,
+    ::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{H, FixedOutput},
+    ::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     # FixedOutput doesn't add any constraints to the model. This function covers
-    # AbstractPowerModel and AbtractActivePowerMode
+    # AbstractPowerModel and AbtractActivePowerModel
     return
 end
 

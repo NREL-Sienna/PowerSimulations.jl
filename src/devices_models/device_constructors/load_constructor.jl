@@ -28,7 +28,7 @@ function construct_device!(
     # Add Variables to expressions
     add_to_expression!(
         container,
-        ActivePowerBalance(),
+        ActivePowerBalance,
         ActivePowerVariable(),
         devices,
         model,
@@ -108,7 +108,7 @@ function construct_device!(
     # Add Variables to expressions
     add_to_expression!(
         container,
-        ActivePowerBalance(),
+        ActivePowerBalance,
         ActivePowerVariable(),
         devices,
         model,
@@ -167,7 +167,7 @@ function construct_device!(
     # Add Variables to expressions
     add_to_expression!(
         container,
-        ActivePowerBalance(),
+        ActivePowerBalance,
         ActivePowerVariable(),
         devices,
         model,
@@ -240,7 +240,7 @@ function construct_device!(
     # Add Variables to expressions
     add_to_expression!(
         container,
-        ActivePowerBalance(),
+        ActivePowerBalance,
         ActivePowerVariable(),
         devices,
         model,
@@ -293,8 +293,8 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalance(),
-        ActivePowerTimeSeriesParameter(),
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
         devices,
         model,
         S,
@@ -302,7 +302,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ReactivePowerBalance(),
-        ReactivePowerTimeSeriesParameter(),
+        ReactivePowerTimeSeriesParameter,
         devices,
         model,
         S,
@@ -322,8 +322,8 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalance(),
-        ActivePowerTimeSeriesParameter(),
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
         devices,
         model,
         S,
@@ -359,8 +359,8 @@ function construct_device!(
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
-        ActivePowerBalance(),
-        ActivePowerTimeSeriesParameter(),
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
         devices,
         model,
         S,
@@ -368,7 +368,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ReactivePowerBalance(),
-        ReactivePowerTimeSeriesParameter(),
+        ReactivePowerTimeSeriesParameter,
         devices,
         model,
         S,
@@ -392,8 +392,8 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
-        ActivePowerBalance(),
-        ActivePowerTimeSeriesParameter(),
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
         devices,
         model,
         S,

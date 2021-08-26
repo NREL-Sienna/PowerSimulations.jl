@@ -8,14 +8,14 @@ struct HVDCDispatch <: AbstractDCLineFormulation end
 #################################### Branch Variables ##################################################
 get_variable_binary(_, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = false
 
-get_variable_sign(::FlowActivePowerVariable, ::Type{<:PSY.DCBranch}, _) = NaN
+get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.DCBranch}, _) = NaN
 
-get_variable_sign(
+get_variable_multiplier(
     ::FlowActivePowerFromToVariable,
     ::Type{<:PSY.DCBranch},
     ::AbstractDCLineFormulation,
 ) = -1.0
-get_variable_sign(
+get_variable_multiplier(
     ::FlowActivePowerToFromVariable,
     ::Type{<:PSY.DCBranch},
     ::AbstractDCLineFormulation,

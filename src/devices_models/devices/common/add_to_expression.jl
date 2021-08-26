@@ -79,8 +79,8 @@ Default implementation to add parameters to SystemBalanceExpressions
 """
 function add_to_expression!(
     container::OptimizationContainer,
-    ::T,
-    ::U,
+    ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     ::Type{X},
@@ -112,8 +112,8 @@ Default implementation to add variables to SystemBalanceExpressions
 """
 function add_to_expression!(
     container::OptimizationContainer,
-    ::T,
-    ::U,
+    ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     ::Type{X},
@@ -133,7 +133,7 @@ function add_to_expression!(
             bus_number,
             t,
             variable[name, t],
-            get_variable_sign(U(), V, W()),
+            get_variable_multiplier(U(), V, W()),
         )
     end
     return
@@ -144,8 +144,8 @@ Implementation of add_to_expression! for lossless branch/network models
 """
 function add_to_expression!(
     container::OptimizationContainer,
-    ::T,
-    ::U,
+    ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     ::Type{X},
