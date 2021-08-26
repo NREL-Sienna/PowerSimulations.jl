@@ -45,7 +45,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     solve_timed_log::Dict{Symbol, Any}
     built_for_simulation::Bool
     metadata::OptimizationContainerMetadata
-    default_time_serie_type::Type{<:PSY.TimeSeriesData}
+    default_time_series_type::Type{<:PSY.TimeSeriesData}
 end
 
 function OptimizationContainer(
@@ -109,7 +109,7 @@ get_aux_variables(container::OptimizationContainer) = container.aux_variables
 get_base_power(container::OptimizationContainer) = container.base_power
 get_constraints(container::OptimizationContainer) = container.constraints
 get_default_time_series_type(container::OptimizationContainer) =
-    container.default_time_serie_type
+    container.default_time_series_type
 get_duals(container::OptimizationContainer) = container.duals
 get_expressions(container::OptimizationContainer) = container.expressions
 get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
@@ -819,7 +819,7 @@ function get_expression_keys(container::OptimizationContainer)
 end
 
 function get_expression(container::OptimizationContainer, key::ExpressionKey)
-    var = get(container.constraints, key, nothing)
+    var = get(container.expressions, key, nothing)
     if var === nothing
         @error "$key is not stored" (get_expression_keys(container))
         throw(IS.InvalidValue("constraint $key is not stored"))
@@ -844,6 +844,26 @@ function get_expression(
 ) where {T <: ExpressionType, U <: PSY.Component}
     return get_expression(container, ExpressionKey(T, U, meta))
 end
+
+# Special getter functions to handle system balance expressions
+function get_expression(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: SystemBalanceExpressions, U <:PM.AbstractActivePowerModel}
+    return get_expression(container, ExpressionKey(T, PSY.Bus, meta))
+end
+
+function get_expression(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{CopperPlatePowerModel},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: SystemBalanceExpressions}
+    return get_expression(container, ExpressionKey(T, PSY.System, meta))
+end
+
 
 ###################################Initial Conditions Containers############################
 function has_initial_conditions(container::OptimizationContainer, key::ICKey)
