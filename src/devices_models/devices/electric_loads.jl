@@ -57,7 +57,7 @@ function add_constraints!(
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
-        reactive = get_variable(container, U, V)[name, t]
+        reactive = get_variable(container, U(), V)[name, t]
         real = get_variable(container, ActivePowerVariable(), V)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(jump_model, reactive == real)
     end

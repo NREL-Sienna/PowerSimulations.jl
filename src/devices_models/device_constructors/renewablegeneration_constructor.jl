@@ -92,7 +92,14 @@ function construct_device!(
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     # Expression
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance(),
+        ActivePowerVariable(),
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -135,36 +142,28 @@ function construct_device!(
     ::DeviceModel{R, FixedOutput},
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
+    devices = get_available_components(R, sys)
+
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
-end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{R, FixedOutput},
-    ::Type{S},
-) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
-    devices = get_available_components(R, sys)
 
     add_to_expression!(
         container,
         ActivePowerBalance(),
-        devices,
         ActivePowerTimeSeriesParameter(),
+        devices,
+        model,
         S,
     )
     add_to_expression!(
         container,
         ReactivePowerBalance(),
-        devices,
         ReactivePowerTimeSeriesParameter(),
+        devices,
+        model,
         S,
     )
-
-    return
 end
 
 function construct_device!(
@@ -177,6 +176,15 @@ function construct_device!(
     devices = get_available_components(R, sys)
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance(),
+        ActivePowerTimeSeriesParameter(),
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -185,15 +193,8 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{R, FixedOutput},
     ::Type{S},
-) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(R, sys)
-    add_to_expression!(
-        container,
-        ActivePowerBalance(),
-        devices,
-        ActivePowerTimeSeriesParameter(),
-        S,
-    )
-
+) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
+    # FixedOutput doesn't add any constraints to the model. This function covers
+    # AbstractPowerModel and AbtractActivePowerModel
     return
 end
