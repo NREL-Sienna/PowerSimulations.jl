@@ -316,7 +316,7 @@ function initialize_system_expressions!(
     ::Type{T},
     system::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
+    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, system)])
     _make_system_expressions!(container, bus_numbers, T)
     return
 end
@@ -713,7 +713,7 @@ end
 function _add_param_container!(container::OptimizationContainer, key::ParameterKey, axs...)
     param_container = ParameterContainer(
         JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
-        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
+        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), 1.0),
     )
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -893,7 +893,7 @@ function get_expression(
     ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: SystemBalanceExpressions, U <: PM.AbstractActivePowerModel}
+) where {T <: SystemBalanceExpressions, U <: PM.AbstractPowerModel}
     return get_expression(container, ExpressionKey(T, PSY.Bus, meta))
 end
 

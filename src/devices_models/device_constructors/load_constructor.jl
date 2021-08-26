@@ -130,9 +130,9 @@ function construct_device!(
     devices = get_available_components(L, sys)
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoamodel())
-    add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoamodel())
-    add_variables!(container, OnVariable, devices, InterruptiblePowerLoamodel())
+    add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
+    add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoad())
+    add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
 
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -239,18 +239,21 @@ function construct_device!(
     model::DeviceModel{L, StaticPowerLoad},
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
-    nodal_expression!(
+    devices = get_available_components(L, sys)
+    add_to_expression!(
         container,
+        ActivePowerBalance(),
         devices,
-        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+        ActivePowerTimeSeriesParameter(),
+        S,
     )
-    nodal_expression!(
+    add_to_expression!(
         container,
+        ReactivePowerBalance(),
         devices,
-        ReactivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+        ReactivePowerTimeSeriesParameter(),
+        S,
     )
-
-    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -276,7 +279,7 @@ function construct_device!(
     devices = get_available_components(L, sys)
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalance(),
         devices,
         ActivePowerTimeSeriesParameter(),
         S,

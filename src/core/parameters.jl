@@ -52,9 +52,9 @@ function _set_parameter!(
     array::AbstractArray{Float64},
     ::JuMP.Model,
     value::Float64,
-    ixs...,
+    ixs::Tuple,
 )
-    array[ixs] = value
+    array[ixs...] = value
     return
 end
 
@@ -62,21 +62,22 @@ function _set_parameter!(
     array::AbstractArray{PJ.ParameterRef},
     model::JuMP.Model,
     value::Float64,
-    ixs...,
+    ixs::Tuple,
 )
-    array[ixs] = add_jump_parameter(model, value)
+    array[ixs...] = add_jump_parameter(model, value)
     return
 end
 
 function set_parameter!(
     container::ParameterContainer,
+    jump_model::JuMP.Model,
     parameter::Float64,
     multiplier::Float64,
     ixs...,
 )
-    get_multiplier_array(container)[ixs] = multiplier
+    get_multiplier_array(container)[ixs...] = multiplier
     param_array = get_parameter_array(container)
-    _set_parameter!(param_array, get_jump_model(container), parameter, ixs...)
+    _set_parameter!(param_array, jump_model, parameter, ixs)
 end
 
 """
