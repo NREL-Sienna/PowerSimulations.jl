@@ -480,9 +480,9 @@ function add_constraints!(
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
-    label = get_time_series_labels(model)[EnergyTargetTimeSeriesParameter]
+    name = get_time_series_names(model)[EnergyTargetTimeSeriesParameter]
     parameter =
-        EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), label)
+        EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), name)
     param = get_parameter_array(container, parameter, V)
     multiplier = get_parameter_multiplier_array(container, parameter, V)
 
@@ -592,9 +592,9 @@ function add_constraints!(
     constraint = add_cons_container!(container, EnergyBudgetConstraint(), V, set_name)
 
     variable_out = get_variable(container, ActivePowerVariable(), V)
-    label = get_time_series_labels(model)[EnergyBudgetTimeSeriesParameter]
+    name = get_time_series_names(model)[EnergyBudgetTimeSeriesParameter]
     parameter =
-        EnergyBudgetTimeSeriesParameter(get_default_time_series_type(container), label)
+        EnergyBudgetTimeSeriesParameter(get_default_time_series_type(container), name)
     param = get_parameter_array(container, parameter, V)
     multiplier = get_parameter_multiplier_array(container, parameter, V)
 

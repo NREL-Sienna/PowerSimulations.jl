@@ -1,5 +1,5 @@
 
-function initialize_timeseries_labels(
+function initialize_timeseries_names(
     ::Type{PSY.HydroEnergyReservoir},
     ::Type{T},
 ) where {T <: Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}}
@@ -8,7 +8,7 @@ function initialize_timeseries_labels(
     )
 end
 
-function initialize_timeseries_labels(
+function initialize_timeseries_names(
     ::Type{PSY.HydroEnergyReservoir},
     ::Type{T},
 ) where {T <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
@@ -18,7 +18,7 @@ function initialize_timeseries_labels(
     )
 end
 
-function initialize_timeseries_labels(
+function initialize_timeseries_names(
     ::Type{PSY.HydroPumpedStorage},
     ::Type{T},
 ) where {T <: HydroDispatchPumpedStorage}
