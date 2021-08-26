@@ -1,19 +1,65 @@
-struct NodalExpressionSpec
-    parameter::RightHandSideParameter
-    device_type::Type{<:Union{PSY.Component, PSY.Device}}
-    peak_value_function::Function
-    multiplier::Float64
-    expression::Symbol
+function _add_to_expression!(
+    expression_array::T,
+    ix::Int,
+    jx::Int,
+    var::JV,
+    multiplier::Float64,
+) where {T, JV <: JuMP.AbstractVariableRef}
+    if isassigned(expression_array, ix, jx)
+        JuMP.add_to_expression!(expression_array[ix, jx], multiplier, var)
+    else
+        expression_array[ix, jx] = multiplier * var
+    end
+
+    return
 end
 
-"""
-Construct NodalExpressionSpec for specific types.
-"""
-function NodalExpressionSpec(
-    ::T,
-    ::Type{U},
-) where {T <: PSY.Device, U <: TimeSeriesParameter}
-    error("NodalExpressionSpec is not implemented for type $T $U")
+function _add_to_expression!(
+    expression_array::T,
+    ix::Int,
+    jx::Int,
+    var::JV,
+    multiplier::Float64,
+    constant::Float64,
+) where {T, JV <: JuMP.AbstractVariableRef}
+    if isassigned(expression_array, ix, jx)
+        JuMP.add_to_expression!(expression_array[ix, jx], multiplier, var)
+        JuMP.add_to_expression!(expression_array[ix, jx], constant)
+    else
+        expression_array[ix, jx] = multiplier * var + constant
+    end
+
+    return
+end
+
+function _add_to_expression!(
+    expression_array::T,
+    ix::Int,
+    jx::Int,
+    value::Float64,
+) where {T}
+    if isassigned(expression_array, ix, jx)
+        expression_array[ix, jx].constant += value
+    else
+        expression_array[ix, jx] = zero(eltype(expression_array)) + value
+    end
+
+    return
+end
+
+function _add_to_expression!(
+    expression_array::T,
+    ix::Int,
+    jx::Int,
+    parameter::PJ.ParameterRef,
+) where {T}
+    if isassigned(expression_array, ix, jx)
+        JuMP.add_to_expression!(expression_array[ix, jx], 1.0, parameter)
+    else
+        expression_array[ix, jx] = zero(eltype(expression_array)) + parameter
+    end
+
+    return
 end
 
 """
@@ -21,23 +67,23 @@ Default implementation to add nodal expressions.
 
 Users of this function must implement a method for [`NodalExpressionSpec`](@ref)
 for their specific types.
-Users may also implement custom nodal_expression! methods.
+Users may also implement custom add_to_expression! methods.
 """
-function nodal_expression!(
+function add_to_expression!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     parameter::TimeSeriesParameter,
 ) where {T <: PSY.Device}
     # Run the Active Power Loop.
     spec = NodalExpressionSpec(T, parameter)
-    _nodal_expression!(container, devices, spec)
+    _add_to_expression!(container, devices, spec)
     return
 end
 
-function _nodal_expression!(
+function _add_to_expression!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    spec::NodalExpressionSpec,
+    spec,
 ) where {T <: PSY.Device}
     parameters = built_for_simulation(container)
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
