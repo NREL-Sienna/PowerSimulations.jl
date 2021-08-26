@@ -80,22 +80,24 @@ Default implementation to add parameters to SystemBalanceExpressions
 function add_to_expression!(
     container::OptimizationContainer,
     ::T,
-    devices::IS.FlattenIteratorWrapper{U},
-    ::V,
-    ::Type{W},
+    ::U,
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
 ) where {
     T <: SystemBalanceExpressions,
-    U <: PSY.Device,
-    V <: TimeSeriesParameter,
-    W <: PM.AbstractPowerModel,
+    U <: TimeSeriesParameter,
+    V <: PSY.Device,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
 }
-    parameter = get_parameter_array(container, V(), U)
-    multiplier = get_parameter_multiplier_array(container, V(), U)
+    parameter = get_parameter_array(container, U(), V)
+    multiplier = get_parameter_multiplier_array(container, U(), V)
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
         name = get_name(d)
         _add_to_expression!(
-            get_expression(container, T(), W),
+            get_expression(container, T(), X),
             bus_number,
             t,
             parameter[name, t],
@@ -111,24 +113,27 @@ Default implementation to add variables to SystemBalanceExpressions
 function add_to_expression!(
     container::OptimizationContainer,
     ::T,
-    devices::IS.FlattenIteratorWrapper{U},
-    ::V,
-    ::Type{W},
+    ::U,
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
 ) where {
     T <: SystemBalanceExpressions,
-    U <: PSY.Device,
-    V <: VariableType,
-    W <: PM.AbstractPowerModel,
+    U <: VariableType,
+    V <: PSY.Device,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
 }
-    variable = get_variable(container, V(), U)
+    variable = get_variable(container, U(), V)
     for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))
         _add_to_expression!(
-            get_expression(container, T(), U),
+            get_expression(container, T(), X),
             bus_number,
             t,
             variable[name, t],
-            get_variable_sign(V(), U, formulation),
+            get_variable_sign(U(), V, W()),
         )
     end
     return
