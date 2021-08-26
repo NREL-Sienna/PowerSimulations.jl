@@ -1,5 +1,5 @@
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
-function add_parameter(model::JuMP.Model, val::Number)
+function add_jump_parameter(model::JuMP.Model, val::Number)
     param = JuMP.@variable(model, variable_type = PJ.Param())
     PJ.set_value(param, val)
     return param

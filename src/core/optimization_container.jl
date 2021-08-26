@@ -188,62 +188,6 @@ function _make_jump_model(settings::Settings)
     return JuMPmodel
 end
 
-function _make_container_array(parameters::Bool, ax...)
-    if parameters
-        return JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...)
-    else
-        return JuMP.Containers.DenseAxisArray{GAE}(undef, ax...)
-    end
-end
-
-# TODO: Move the expression instantiation to the build_impl call
-function _make_expressions_dict!(
-    container::OptimizationContainer,
-    bus_numbers::Vector{Int},
-    ::Type{<:PM.AbstractPowerModel},
-)
-    settings = container.settings
-    parameters = false
-    time_steps = 1:get_horizon(settings)
-    container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameters, bus_numbers, time_steps),
-        ExpressionKey(ReactivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameters, bus_numbers, time_steps),
-    )
-    return
-end
-
-function _make_expressions_dict!(
-    container::OptimizationContainer,
-    bus_numbers::Vector{Int},
-    ::Type{<:PM.AbstractActivePowerModel},
-)
-    settings = container.settings
-    parameters = false
-    time_steps = 1:get_horizon(settings)
-    container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameters, bus_numbers, time_steps),
-    )
-    return
-end
-
-function _make_expressions_dict!(
-    container::OptimizationContainer,
-    ::Vector{Int},
-    ::Type{CopperPlatePowerModel},
-)
-    settings = container.settings
-    parameters = false
-    time_steps = 1:get_horizon(settings)
-    container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(parameters, ["System"], time_steps),
-    )
-    return
-end
-
 function optimization_container_init!(
     container::OptimizationContainer,
     ::Type{T},
@@ -261,20 +205,21 @@ function optimization_container_init!(
     if get_horizon(settings) == UNSET_HORIZON
         set_horizon!(settings, PSY.get_forecast_horizon(sys))
     end
+
     total_number_of_devices = length(get_available_components(PSY.Device, sys))
     container.time_steps = 1:get_horizon(settings)
+
     # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
     # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
     # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
     variable_count_estimate = length(container.time_steps) * total_number_of_devices
+
     if variable_count_estimate > 10e6
         @warn(
             "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
         )
     end
 
-    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
-    _make_expressions_dict!(container, bus_numbers, T)
     return
 end
 
@@ -313,9 +258,75 @@ abstract type ConstructStage end
 struct ArgumentConstructStage end
 struct ModelConstructStage end
 
+# This function is necessary while we switch from ParameterJuMP to POI
+function _make_container_array(parameter_jump::Bool, ax...)
+    if parameter_jump
+        return JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...)
+    else
+        return JuMP.Containers.DenseAxisArray{GAE}(undef, ax...)
+    end
+end
+
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    bus_numbers::Vector{Int},
+    ::Type{<:PM.AbstractPowerModel},
+)
+    parameter_jump = built_for_simulation(container)
+    time_steps = get_time_steps(container)
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
+            _make_container_array(parameter_jump, bus_numbers, time_steps),
+        ExpressionKey(ReactivePowerBalance, PSY.Bus) =>
+            _make_container_array(parameter_jump, bus_numbers, time_steps),
+    )
+    return
+end
+
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    bus_numbers::Vector{Int},
+    ::Type{<:PM.AbstractActivePowerModel},
+)
+    parameter_jump = built_for_simulation(container)
+    time_steps = get_time_steps(container)
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
+            _make_container_array(parameter_jump, bus_numbers, time_steps),
+    )
+    return
+end
+
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    ::Vector{Int},
+    ::Type{CopperPlatePowerModel},
+)
+    parameter_jump = built_for_simulation(container)
+    time_steps = get_time_steps(container)
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
+            _make_container_array(parameter_jump, ["System"], time_steps),
+    )
+    return
+end
+
+function initialize_system_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    system::PSY.System,
+) where {T <: PM.AbstractPowerModel}
+    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
+    _make_system_expressions!(container, bus_numbers, T)
+    return
+end
+
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
+
+    initialize_system_expressions!(container, transmission, sys)
+
     # Order is required
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
         construct_services!(
@@ -714,9 +725,11 @@ function _add_param_container!(
     attribute::TimeSeriesAttributes{V},
     axs...,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
+    # Temporary while we change to POI vs PJ
+    param_type = built_for_simulation(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
         attribute,
-        JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
+        JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),
         fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
     _assign_container!(container.parameters, key, param_container)
@@ -739,11 +752,12 @@ function add_param_container!(
     ::T,
     ::Type{U},
     ::Type{V},
+    name::String,
     axs...;
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     param_key = ParameterKey(T, U, meta)
-    attributes = TimeSeriesAttributes{V}(meta)
+    attributes = TimeSeriesAttributes{V}(name)
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
