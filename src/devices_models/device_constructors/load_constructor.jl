@@ -1,4 +1,4 @@
-function initialize_timeseries_labels(
+function initialize_timeseries_names(
     ::Type{<:PSY.ElectricLoad},
     ::Type{<:AbstractLoadFormulation},
 )

@@ -62,7 +62,7 @@ get_multiplier_value(
     ::AbstractStorageFormulation,
 ) = PSY.get_rating(d)
 
-function _initialize_timeseries_labels(
+function _initialize_timeseries_names(
     ::Type{D},
     ::Type{EnergyTarget},
 ) where {D <: PSY.Storage}
@@ -280,9 +280,9 @@ function add_constraints!(
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
-    label = get_time_series_labels(model)[EnergyTargetTimeSeriesParameter]
+    name = get_time_series_names(model)[EnergyTargetTimeSeriesParameter]
     parameter =
-        EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), label)
+        EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), name)
     param = get_parameter_array(container, parameter, V)
     multiplier = get_parameter_multiplier_array(container, parameter, V)
 

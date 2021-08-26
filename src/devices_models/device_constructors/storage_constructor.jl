@@ -1,4 +1,4 @@
-function initialize_timeseries_labels(
+function initialize_timeseries_names(
     ::Type{D},
     ::Type{EnergyTarget},
 ) where {D <: PSY.Storage}
