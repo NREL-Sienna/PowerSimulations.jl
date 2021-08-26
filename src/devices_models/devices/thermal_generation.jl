@@ -383,14 +383,14 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
-
     time_steps = get_time_steps(container)
     varstart = get_variable(container, StartVariable(), U)
     varstop = get_variable(container, StopVariable(), U)
     varon = get_variable(container, OnVariable(), U)
     names = axes(varstart, 1)
     initial_conditions = get_initial_conditions(container, ICKey(DeviceStatus, U))
-    constraint = add_cons_container!(container, CommitmentConstraint(), U, names, time_steps)
+    constraint =
+        add_cons_container!(container, CommitmentConstraint(), U, names, time_steps)
     aux_constraint = add_cons_container!(
         container,
         CommitmentConstraint(),
@@ -657,7 +657,6 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
-
     data = _get_data_for_rocc(container, U)
     if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
@@ -685,7 +684,6 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractCompactUnitCommitment}
-
     data = _get_data_for_rocc(container, U)
     if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
@@ -713,7 +711,6 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen}
-
     data = _get_data_for_rocc(container, U)
     if !isempty(data)
         for r in data
@@ -733,7 +730,6 @@ function add_constraints!(
     return
 end
 
-
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{RampConstraint},
@@ -742,7 +738,6 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalDispatchFormulation}
-
     data = _get_data_for_rocc(container, U)
     if !isempty(data)
         for r in data
@@ -802,7 +797,6 @@ function _convert_hours_to_timesteps(
     )
     start_times_ts = StartUpStages(_start_times_ts)
     return start_times_ts
-
 end
 
 @doc raw"""
@@ -825,7 +819,6 @@ function add_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalMultiStart}
-
     resolution = get_resolution(container)
     time_steps = get_time_steps(container)
     start_vars = [
@@ -899,7 +892,6 @@ function add_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalMultiStart}
-
     time_steps = get_time_steps(container)
     varstart = get_variable(container, StartVariable(), T)
     start_vars = [
@@ -921,7 +913,6 @@ function add_constraints!(
     end
     return
 end
-
 
 @doc raw"""
 Constructs contraints that restricts devices to one type of start at a time
@@ -947,7 +938,6 @@ function add_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalMultiStart}
-
     resolution = get_resolution(container)
     key_off = ICKey(InitialTimeDurationOff, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(container, key_off)
@@ -955,8 +945,10 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     set_name = [get_device_name(ic) for ic in initial_conditions_offtime]
     varbin = get_variable(container, OnVariable(), T)
-    varstarts =
-        [get_variable(container, HotStartVariable(), T), get_variable(container, WarmStartVariable(), T)]
+    varstarts = [
+        get_variable(container, HotStartVariable(), T),
+        get_variable(container, WarmStartVariable(), T),
+    ]
 
     con_ub = add_cons_container!(
         container,
@@ -982,7 +974,8 @@ function add_constraints!(
     for t in time_steps, (ix, ic) in enumerate(initial_conditions_offtime)
         name = PSY.get_name(ic.device)
         startup_types = PSY.get_start_types(ic.device)
-        time_limits = _convert_hours_to_timesteps(PSY.get_start_time_limits(ic.device), resolution) 
+        time_limits =
+            _convert_hours_to_timesteps(PSY.get_start_time_limits(ic.device), resolution)
         ic = initial_conditions_offtime[ix]
         for st in 1:(startup_types - 1)
             var = varstarts[st]
@@ -1016,21 +1009,16 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: AbstractThermalUnitCommitment}
-
     time_steps = get_time_steps(container)
     varon = get_variable(container, OnVariable(), T)
     names = [PSY.get_name(d) for d in devices if PSY.get_must_run(d)]
     constraint = add_cons_container!(container, MustRunConstraint(), T, names, time_steps)
 
     for name in names, t in time_steps
-        constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            varon[name, t] >= 1.0
-        )
+        constraint[name, t] = JuMP.@constraint(container.JuMPmodel, varon[name, t] >= 1.0)
     end
     return
 end
-
 
 ########################### time duration constraints ######################################
 """
@@ -1084,7 +1072,6 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
-
     parameters = built_for_simulation(container)
     resolution = get_resolution(container)
     initial_conditions_on =
@@ -1127,7 +1114,6 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen}
-
     parameters = built_for_simulation(container)
     resolution = get_resolution(container)
     initial_conditions_on =
