@@ -29,7 +29,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerVariable(),
+        ActivePowerVariable,
         devices,
         model,
         S,
@@ -37,8 +37,8 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ReactivePowerBalance(),
-        ReactivePowerVariable(),
+        ReactivePowerBalance,
+        ReactivePowerVariable,
         devices,
         model,
         S,
@@ -109,7 +109,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerVariable(),
+        ActivePowerVariable,
         devices,
         model,
         S,
@@ -168,7 +168,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerVariable(),
+        ActivePowerVariable,
         devices,
         model,
         S,
@@ -176,8 +176,8 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ReactivePowerBalance(),
-        ReactivePowerVariable(),
+        ReactivePowerBalance,
+        ReactivePowerVariable,
         devices,
         model,
         S,
@@ -241,7 +241,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerVariable(),
+        ActivePowerVariable,
         devices,
         model,
         S,
