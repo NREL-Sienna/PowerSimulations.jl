@@ -1,4 +1,4 @@
-function _add_to_expression!(
+function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     ix::Int,
     jx::Int,
@@ -14,7 +14,7 @@ function _add_to_expression!(
     return
 end
 
-function _add_to_expression!(
+function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     ix::Int,
     jx::Int,
@@ -32,7 +32,7 @@ function _add_to_expression!(
     return
 end
 
-function _add_to_expression!(
+function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     ix::Int,
     jx::Int,
@@ -47,7 +47,7 @@ function _add_to_expression!(
     return
 end
 
-function _add_to_expression!(
+function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     ix::Int,
     jx::Int,
@@ -63,14 +63,14 @@ function _add_to_expression!(
     return
 end
 
-function _add_to_expression!(
+function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     ix::Int,
     jx::Int,
     parameter::Float64,
     multiplier::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
-    _add_to_expression!(expression_array, ix, jx, parameter * multiplier)
+    add_to_jump_expression!(expression_array, ix, jx, parameter * multiplier)
     return
 end
 
@@ -94,9 +94,9 @@ function add_to_expression!(
     parameter = get_parameter_array(container, U(), V)
     multiplier = get_parameter_multiplier_array(container, U(), V)
     for d in devices, t in get_time_steps(container)
-        bus_number = PSY.get_number(PSY.get_bus(d))
+        bus_number = X <: CopperPlatePowerModel ? 1 : PSY.get_number(PSY.get_bus(d))
         name = get_name(d)
-        _add_to_expression!(
+        add_to_jump_expression!(
             get_expression(container, T(), X),
             bus_number,
             t,
@@ -125,11 +125,12 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
+     expression = get_expression(container, T(), X)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        bus_number = PSY.get_number(PSY.get_bus(d))
-        _add_to_expression!(
-            get_expression(container, T(), X),
+        bus_number = X <: CopperPlatePowerModel ? 1 : PSY.get_number(PSY.get_bus(d))
+        add_to_jump_expression!(
+            expression,
             bus_number,
             t,
             variable[name, t],
@@ -156,19 +157,20 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractActivePowerModel,
 }
+    @assert !(X <: CopperPlatePowerModel)
     var = get_variable(container, U(), B)
     expression = get_expression(container, T(), X)
     for d in devices
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
-            _add_to_expression!(
+            add_to_jump_expression!(
                 expression,
                 PSY.get_number(PSY.get_arc(d).from),
                 t,
                 flow_variable,
                 -1.0,
             )
-            _add_to_expression!(
+            add_to_jump_expression!(
                 expression,
                 PSY.get_number(PSY.get_arc(d).to),
                 t,
