@@ -695,8 +695,10 @@ end
 function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     var = get(container.constraints, key, nothing)
     if var === nothing
-        @error "$key is not stored" (get_constraint_keys(container))
-        throw(IS.InvalidValue("constraint $key is not stored"))
+        name = encode_key(key)
+        keys = encode_key.(get_constraint_keys(container))
+        @error "$name is not stored" (keys)
+        throw(IS.InvalidValue("constraint $name is not stored"))
     end
 
     return var
@@ -777,14 +779,16 @@ function add_param_container!(
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
-function get_parameter_names(container::OptimizationContainer)
+function get_parameter_keys(container::OptimizationContainer)
     return collect(keys(container.parameters))
 end
 
 function get_parameter(container::OptimizationContainer, key::ParameterKey)
     param_container = get(container.parameters, key, nothing)
     if param_container === nothing
-        @error "$name is not stored" sort!(get_parameter_names(container))
+        name = encode_key(key)
+        keys = encode_key.(get_parameter_keys(container))
+        @error "$name is not stored" keys
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
     return param_container

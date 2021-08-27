@@ -149,7 +149,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 24, 0, 25, 24, 0, false)
+    moi_tests(model, false, 24, 0, 25, 24, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -160,7 +160,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 48, 0, 49, 48, 0, false)
+    moi_tests(model, false, 48, 0, 49, 48, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -179,7 +179,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_phes_ed)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 60, 0, 24, 24, 24, false)
+    moi_tests(model, false, 60, 0, 24, 24, 24, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -190,7 +190,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_phes_ed)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 72, 0, 24, 24, 24, true)
+    moi_tests(model, false, 72, 0, 24, 24, 24, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -205,7 +205,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 48, 0, 25, 24, 0, true)
+    moi_tests(model, false, 48, 0, 25, 24, 0, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -216,7 +216,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 72, 0, 49, 48, 0, true)
+    moi_tests(model, false, 72, 0, 49, 48, 0, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -231,7 +231,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 120, 0, 24, 24, 48, false)
+    moi_tests(model, false, 120, 0, 24, 24, 48, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -242,7 +242,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 144, 0, 48, 48, 48, false)
+    moi_tests(model, false, 144, 0, 48, 48, 48, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -257,7 +257,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hyd)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 144, 0, 24, 24, 48, true)
+    moi_tests(model, false, 144, 0, 24, 24, 48, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -268,7 +268,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_hyd)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 168, 0, 48, 48, 48, true)
+    moi_tests(model, false, 168, 0, 48, 48, 48, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -399,7 +399,7 @@ end
         optimizer = Cbc_optimizer,
     )
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 15, 0, 3, 3, 9, false)
+    moi_tests(model, false, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], 5621.0, 10.0)
 end
 
@@ -416,7 +416,7 @@ end
         optimizer = Cbc_optimizer,
     )
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 15, 0, 3, 3, 9, false)
+    moi_tests(model, false, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], 21.0)
 end
 
@@ -433,7 +433,7 @@ end
         optimizer = Cbc_optimizer,
     )
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 15, 0, 3, 3, 9, false)
+    moi_tests(model, false, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], -5429.0, 10.0)
 end
 
@@ -450,7 +450,7 @@ end
         optimizer = Cbc_optimizer,
     )
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 15, 0, 3, 3, 9, false)
+    moi_tests(model, false, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], 21.0, 10.0)
 end
 
@@ -467,6 +467,6 @@ end
         optimizer = Cbc_optimizer,
     )
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 15, 0, 3, 3, 9, false)
+    moi_tests(model, false, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], -17179.0)
 end

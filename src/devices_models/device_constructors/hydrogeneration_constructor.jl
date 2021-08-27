@@ -1,3 +1,12 @@
+function initialize_timeseries_names(
+    ::Type{<:PSY.HydroGen},
+    ::Type{<:Union{FixedOutput, HydroDispatchRunOfRiver}},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+        ReactivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
 
 function initialize_timeseries_names(
     ::Type{PSY.HydroEnergyReservoir},
@@ -92,7 +101,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{H, FixedOutput},
+    model::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
@@ -103,7 +112,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerVariable,
+        ActivePowerTimeSeriesParameter,
         devices,
         model,
         S,
