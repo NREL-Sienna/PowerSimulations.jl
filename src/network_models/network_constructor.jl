@@ -85,7 +85,7 @@ function construct_network!(
             SystemBalanceSlackUp,
             sys,
             model,
-            CopperPlatePowerModel,
+            StandardPTDFModel,
         )
         add_to_expression!(
             container,
@@ -93,7 +93,7 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            CopperPlatePowerModel,
+            StandardPTDFModel,
         )
         cost_function(container, PSY.System, model, CopperPlatePowerModel)
     end
