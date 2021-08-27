@@ -306,7 +306,7 @@ function _make_system_expressions!(
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(parameter_jump, ["System"], time_steps),
+            _make_container_array(parameter_jump, time_steps),
     )
     return
 end
@@ -872,14 +872,6 @@ end
 
 function get_expression(
     container::OptimizationContainer,
-    constraint_type::ExpressionType,
-    meta = CONTAINER_KEY_EMPTY_META,
-)
-    return get_expression(container, ExpressionKey(constraint_type, meta))
-end
-
-function get_expression(
-    container::OptimizationContainer,
     ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
@@ -939,6 +931,10 @@ end
 function set_initial_conditions!(container::OptimizationContainer, key::ICKey, value)
     @debug "set_initial_condition_container" key
     container.initial_conditions[key] = value
+end
+
+function add_to_objective_function!(container::OptimizationContainer, expr)
+    JuMP.add_to_expression!(container.cost_function, expr)
 end
 
 function deserialize_key(container::OptimizationContainer, name::AbstractString)

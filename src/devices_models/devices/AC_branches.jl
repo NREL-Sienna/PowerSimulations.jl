@@ -1,6 +1,3 @@
-# Generic Branch Models
-abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
-
 # Abstract Line Models
 """ Branch type to add unbounded flow variables and use flow constraints"""
 struct StaticBranch <: AbstractBranchFormulation end
@@ -41,7 +38,7 @@ get_variable_binary(
     ::AbstractBranchFormulation,
 ) = false
 
-get_variable_sign(_, ::Type{<:PSY.ACBranch}, _) = NaN
+get_variable_multiplier(_, ::Type{<:PSY.ACBranch}, _) = NaN
 #################################### Flow Variable Bounds ##################################################
 function _get_constraint_data(
     devices::IS.FlattenIteratorWrapper{B},
@@ -197,7 +194,7 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     branch_flow =
         add_cons_container!(container, NetworkFlowConstraint(), B, branches, time_steps)
-    nodal_balance_expressions = get_expression(container, ActivePowerBalance(), S)
+    nodal_balance_expressions = get_expression(container, ActivePowerBalance, S)
 
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(container)

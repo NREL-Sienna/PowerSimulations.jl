@@ -12,7 +12,7 @@ struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
-get_variable_sign(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
+get_variable_multiplier(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 
@@ -60,7 +60,7 @@ get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}, ::AbstractH
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = nothing
-get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = -1.0
+get_variable_multiplier(::ActivePowerInVariable, d::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = -1.0
 
 ########################### ActivePowerOutVariable, HydroGen #################################
 
@@ -68,7 +68,7 @@ get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}, ::Abstract
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = nothing
-get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
+get_variable_multiplier(::ActivePowerOutVariable, d::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 
 ############## OnVariable, HydroGen ####################
 

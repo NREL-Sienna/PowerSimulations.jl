@@ -51,29 +51,40 @@ function construct_device!(
     ::ArgumentConstructStage,
     ::DeviceModel{H, FixedOutput},
     ::Type{S},
-) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel} end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{H, FixedOutput},
-    ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
+    # Parameters
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
-    nodal_expression!(
+    # Expression
+    add_to_expression!(
         container,
+        ActivePowerBalance,
+        ActivePowerVariable,
         devices,
-        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+        model,
+        S,
     )
-    nodal_expression!(
+    add_to_expression!(
         container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
         devices,
-        ReactivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+        model,
+        S,
     )
-    add_constraint_dual!(container, sys, model)
+end
 
+function construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
+    ::ModelConstructStage,
+    ::DeviceModel{H, FixedOutput},
+    ::Type{S},
+) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
+    # FixedOutput doesn't add any constraints to the model. This function covers
+    # AbstractPowerModel and AbtractActivePowerModel
     return
 end
 
@@ -83,24 +94,20 @@ function construct_device!(
     ::ArgumentConstructStage,
     ::DeviceModel{H, FixedOutput},
     ::Type{S},
-) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel} end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{H, FixedOutput},
-    ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
+    # Parameters
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
-    nodal_expression!(
+    # Expression
+    add_to_expression!(
         container,
+        ActivePowerBalance,
+        ActivePowerVariable,
         devices,
-        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+        model,
+        S,
     )
-    add_constraint_dual!(container, sys, model)
-
     return
 end
 
@@ -124,8 +131,22 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -189,7 +210,14 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -248,8 +276,22 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -319,7 +361,14 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -405,8 +454,22 @@ function construct_device!(
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -507,6 +570,15 @@ function construct_device!(
         HydroDispatchReservoirStorage(),
     )
 
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
@@ -582,6 +654,15 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -641,6 +722,15 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -691,6 +781,23 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
@@ -763,6 +870,15 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
@@ -856,6 +972,23 @@ function construct_device!(
         HydroCommitmentReservoirStorage(),
     )
 
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
@@ -963,6 +1096,15 @@ function construct_device!(
         EnergySurplusVariable,
         devices,
         HydroCommitmentReservoirStorage(),
+    )
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
     )
 
     # Parameters
@@ -1057,8 +1199,22 @@ function construct_device!(
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
     add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(

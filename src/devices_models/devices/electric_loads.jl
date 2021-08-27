@@ -8,7 +8,7 @@ struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### ElectricLoad ####################################
 
-get_variable_sign(_, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = -1.0
+get_variable_multiplier(_, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = -1.0
 
 ########################### ActivePowerVariable, ElectricLoad ####################################
 

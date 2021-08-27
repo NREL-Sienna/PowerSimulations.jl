@@ -1,18 +1,20 @@
-function copper_plate(container::OptimizationContainer, expression::Symbol, bus_count::Int)
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    sys::U,
+    ::NetworkModel{V},
+    S::Type{V},
+) where {
+    T <: CopperPlateBalanceConstraint,
+    U <: PSY.System,
+    V <: Union{CopperPlatePowerModel, StandardPTDFModel},
+}
     time_steps = get_time_steps(container)
-    expressions = get_expression(container, expression)
-    remove_undef!(container.expressions[expression])
-    constraint = add_cons_container!(
-        container,
-        CopperPlateBalanceConstraint(),
-        PSY.System,
-        time_steps,
-    )
+    expressions = get_expression(container, ActivePowerBalance(), V)
+    remove_undef!(expressions)
+    constraint = add_cons_container!(container, T(), U, time_steps)
     for t in time_steps
-        constraint[t] = JuMP.@constraint(
-            container.JuMPmodel,
-            sum(expressions.data[i, t] for i in 1:bus_count) == 0
-        )
+        constraint[t] = JuMP.@constraint(container.JuMPmodel, expressions[t] == 0)
     end
 
     return
