@@ -194,7 +194,7 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     branch_flow =
         add_cons_container!(container, NetworkFlowConstraint(), B, branches, time_steps)
-    nodal_balance_expressions = get_expression(container, ActivePowerBalance, S)
+    nodal_balance_expressions = get_expression(container, ActivePowerBalance(), S)
 
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(container)

@@ -311,6 +311,22 @@ function _make_system_expressions!(
     return
 end
 
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    bus_numbers::Vector{Int},
+    ::Type{StandardPTDFModel},
+)
+    parameter_jump = built_for_simulation(container)
+    time_steps = get_time_steps(container)
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
+            _make_container_array(parameter_jump, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
+            _make_container_array(parameter_jump, bus_numbers, time_steps),
+    )
+    return
+end
+
 function initialize_system_expressions!(
     container::OptimizationContainer,
     ::Type{T},
@@ -875,7 +891,7 @@ function get_expression(
     ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ExpressionType, U <: PSY.Component}
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     return get_expression(container, ExpressionKey(T, U, meta))
 end
 
