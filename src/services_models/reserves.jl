@@ -5,7 +5,7 @@ struct RampReserve <: AbstractReservesFormulation end
 
 ############################### Reserve Variables #########################################
 
-get_variable_sign(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
+get_variable_multiplier(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
 ############################### ActivePowerReserveVariable, Reserve #########################################
 
 get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
@@ -41,8 +41,11 @@ function service_requirement_constraint!(
 
     requirement = PSY.get_requirement(service)
     if parameters
-        container =
-            get_parameter(container, RequirementTimeSeriesParameter("requirement"), SR)
+        container = get_parameter(
+            container,
+            RequirementTimeSeriesParameter(PSY.Deterministic, "requirement"),
+            SR,
+        )
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps

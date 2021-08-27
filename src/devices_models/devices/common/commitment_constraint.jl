@@ -54,7 +54,6 @@ function device_commitment!(
         time_steps,
         meta = "aux",
     )
-
     for ic in initial_conditions
         name = PSY.get_name(ic.device)
         constraint[name, 1] = JuMP.@constraint(

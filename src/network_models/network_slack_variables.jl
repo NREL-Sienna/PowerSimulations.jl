@@ -1,66 +1,65 @@
-function _add_system_balance_slacks!(
+get_variable_multiplier(::SystemBalanceSlackUp, ::PSY.System, _) = 1.0
+get_variable_multiplier(::SystemBalanceSlackDown, ::PSY.System, _) = -1.0
+
+function add_variables!(
     container::OptimizationContainer,
-    expression::Symbol,
-    single_first_axes::Bool = false,
-)
+    ::Type{T},
+    ::PSY.System,
+    ::Type{U},
+) where {
+    T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    U <: Union{CopperPlatePowerModel, StandardPTDFModel},
+}
     time_steps = get_time_steps(container)
-    expression_array = get_expression(container, expression)
-    single_first_axes && (first_index = [axes(expression_array)[1][1]])
-    !single_first_axes && (first_index = axes(expression_array)[1])
-    variable_up = add_var_container!(
-        container,
-        SystemBalanceSlackUp(),
-        PSY.StaticInjection,
-        first_index,
-        time_steps,
-    )
-    variable_dn = add_var_container!(
-        container,
-        SystemBalanceSlackDown(),
-        PSY.StaticInjection,
-        first_index,
-        time_steps,
-    )
-    for ix in first_index, jx in time_steps
-        variable_up[ix, jx] = JuMP.@variable(
-            container.JuMPmodel,
-            base_name = "SystemBalanceSlackUp_{$(ix), $(jx)}",
-            lower_bound = 0.0
-        )
-        variable_dn[ix, jx] = JuMP.@variable(
-            container.JuMPmodel,
-            base_name = "SystemBalanceSlackDown_{$(ix), $(jx)}",
-            lower_bound = 0.0
-        )
-        add_to_expression!(expression_array, ix, jx, variable_up[ix, jx], 1.0)
-        add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
-        JuMP.add_to_expression!(
-            container.cost_function,
-            (variable_dn[ix, jx] + variable_up[ix, jx]) * BALANCE_SLACK_COST,
+    variable = add_var_container!(container, T(), PSY.StaticInjection, time_steps)
+
+    for t in time_steps
+        variable[t] =
+            JuMP.@variable(container.JuMPmodel, base_name = "$(T)_{$t}", lower_bound = 0.0)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    ::PSY.System,
+    ::NetworkModel{W},
+    ::Type{W},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    W <: Union{CopperPlatePowerModel, StandardPTDFModel},
+}
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), PSY.System)
+    for t in get_time_steps(container)
+        add_to_jump_expression!(
+            expression,
+            1.0,
+            t,
+            variable[t],
+            get_variable_multiplier(U(), PSY.System, W()),
         )
     end
     return
 end
 
-function add_slacks!(container::OptimizationContainer, ::Type{CopperPlatePowerModel})
-    _add_system_balance_slacks!(container, :nodal_balance_active, true)
-    return
-end
+function cost_function!(
+    container,
+    ::PSY.System,
+    model::NetworkModel{T},
+    S::Type{T},
+) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
+    variable_up = get_variable(container, SystemBalanceSlackUp())
+    variable_dn = get_variable(container, SystemBalanceSlackDown())
 
-function add_slacks!(
-    container::OptimizationContainer,
-    ::Type{T},
-) where {T <: PM.AbstractActivePowerModel}
-    _add_system_balance_slacks!(container, :nodal_balance_active)
-    return
-end
-
-function add_slacks!(
-    container::OptimizationContainer,
-    ::Type{T},
-) where {T <: PM.AbstractPowerModel}
-    _add_system_balance_slacks!(container, :nodal_balance_active)
-    # TODO: Enable later
-    #_add_system_balance_slacks!(container, :nodal_balance_reactive)
+    for t in get_time_steps(container)
+        add_to_cost_function!(
+            container,
+            (variable_dn[t] + variable_up[t]) * BALANCE_SLACK_COST,
+        )
+    end
     return
 end

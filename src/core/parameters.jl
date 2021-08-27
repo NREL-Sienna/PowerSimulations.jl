@@ -22,15 +22,63 @@ end
 get_entry_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = T
 get_component_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = U
 
+abstract type ParameterAttributes end
+
+struct NoAttributes end
+
+struct TimeSeriesAttributes{T <: PSY.TimeSeriesData} <: ParameterAttributes
+    name::String
+end
+
+get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
+get_name(attr::TimeSeriesAttributes) = attr.name
+
 struct ParameterContainer
+    attributes::ParameterAttributes
     parameter_array::JuMP.Containers.DenseAxisArray
     multiplier_array::JuMP.Containers.DenseAxisArray
+end
+
+function ParameterContainer(parameter_array, multiplier_array)
+    return ParamterContainer(NoAttributes(), parameter_array, multiplier_array)
 end
 
 get_parameter_array(c::ParameterContainer) = c.parameter_array
 get_multiplier_array(c::ParameterContainer) = c.multiplier_array
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
+
+function _set_parameter!(
+    array::AbstractArray{Float64},
+    ::JuMP.Model,
+    value::Float64,
+    ixs::Tuple,
+)
+    array[ixs...] = value
+    return
+end
+
+function _set_parameter!(
+    array::AbstractArray{PJ.ParameterRef},
+    model::JuMP.Model,
+    value::Float64,
+    ixs::Tuple,
+)
+    array[ixs...] = add_jump_parameter(model, value)
+    return
+end
+
+function set_parameter!(
+    container::ParameterContainer,
+    jump_model::JuMP.Model,
+    parameter::Float64,
+    multiplier::Float64,
+    ixs...,
+)
+    get_multiplier_array(container)[ixs...] = multiplier
+    param_array = get_parameter_array(container)
+    _set_parameter!(param_array, jump_model, parameter, ixs)
+end
 
 """
 Parameters implemented through ParameterJuMP
@@ -40,63 +88,19 @@ abstract type ObjectiveFunctionParameter <: ParameterType end
 
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
-struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter
-    name::String
-end
+struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
-function ActivePowerTimeSeriesParameter()
-    ActivePowerTimeSeriesParameter("max_active_power")
-end
+struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
-struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter
-    name::String
-end
+struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
-function ReactivePowerTimeSeriesParameter()
-    ReactivePowerTimeSeriesParameter("max_active_power")
-end
+struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter end
 
-struct RequirementTimeSeriesParameter <: TimeSeriesParameter
-    name::String
-end
+struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter end
 
-function RequirementTimeSeriesParameter()
-    RequirementTimeSeriesParameter("requirement")
-end
+struct InflowTimeSeriesParameter <: TimeSeriesParameter end
 
-struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter
-    name::String
-end
-
-function EnergyTargetTimeSeriesParameter()
-    EnergyTargetTimeSeriesParameter("storage_target")
-end
-
-struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter
-    name::String
-end
-
-function EnergyBudgetTimeSeriesParameter()
-    EnergyBudgetTimeSeriesParameter("hydro_budget")
-end
-
-struct InflowTimeSeriesParameter <: TimeSeriesParameter
-    name::String
-end
-
-function InflowTimeSeriesParameter()
-    InflowTimeSeriesParameter("inflow")
-end
-
-struct OutflowTimeSeriesParameter <: TimeSeriesParameter
-    name::String
-end
-
-function OutflowTimeSeriesParameter()
-    OutflowTimeSeriesParameter("outflow")
-end
-
-get_name(key::TimeSeriesParameter) = key.name
+struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 

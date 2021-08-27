@@ -301,7 +301,14 @@ function construct_device!(
     devices = get_available_components(B, sys)
 
     add_variables!(container, FlowActivePowerVariable, devices, U())
-    add_variable_to_expression!(container, devices, model, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -336,6 +343,8 @@ function construct_device!(
     devices = get_available_components(B, sys)
 
     add_variables!(container, FlowActivePowerVariable, devices, U())
+    # Note: Don't add the flow variables to the expressions for PTDF Models in this constructor
+    # otherwise the flow calculation will include the flow variables as part of the nodal balances
 end
 
 function construct_device!(

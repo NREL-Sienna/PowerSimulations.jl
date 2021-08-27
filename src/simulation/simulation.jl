@@ -655,7 +655,7 @@ Build the Simulation, problems and the related folder structure
 - `console_level = Logging.Error`:
 - `file_level = Logging.Info`:
 
-Throws an exception if label is passed and the directory already exists.
+Throws an exception if name is passed and the directory already exists.
 """
 function build!(
     sim::Simulation;
@@ -896,7 +896,7 @@ function update_parameter!(
                 PSY.Deterministic,
                 model,
                 d,
-                get_data_label(param_reference),
+                get_data_name(param_reference),
                 initial_forecast_time,
                 horizon,
                 ignore_scaling_factors = true,
@@ -929,7 +929,7 @@ function update_parameter!(
                 PSY.Deterministic,
                 model,
                 service,
-                get_data_label(param_reference),
+                get_data_name(param_reference),
                 initial_forecast_time,
                 horizon,
                 ignore_scaling_factors = true,

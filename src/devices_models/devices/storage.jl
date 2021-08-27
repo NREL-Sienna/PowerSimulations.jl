@@ -6,29 +6,26 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BatteryAncillaryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
 
-get_variable_sign(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
+get_variable_multiplier(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
 ########################### ActivePowerInVariable, Storage #################################
 
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-get_variable_expression_name(::ActivePowerInVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
 
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_input_active_power_limits(d).max
-get_variable_sign(::ActivePowerInVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = -1.0
+get_variable_multiplier(::ActivePowerInVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = -1.0
 
 ########################### ActivePowerOutVariable, Storage #################################
 
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-get_variable_expression_name(::ActivePowerOutVariable, ::Type{<:PSY.Storage}) = :nodal_balance_active
 
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_output_active_power_limits(d).max
-get_variable_sign(::ActivePowerOutVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
+get_variable_multiplier(::ActivePowerOutVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
 
 ############## ReactivePowerVariable, Storage ####################
-get_variable_sign(::PowerSimulations.ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
+get_variable_multiplier(::PowerSimulations.ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.Storage}) = :nodal_balance_reactive
 
 ############## EnergyVariable, Storage ####################
 
@@ -62,7 +59,7 @@ get_multiplier_value(
     ::AbstractStorageFormulation,
 ) = PSY.get_rating(d)
 
-function _initialize_timeseries_labels(
+function _initialize_timeseries_names(
     ::Type{D},
     ::Type{EnergyTarget},
 ) where {D <: PSY.Storage}
@@ -280,9 +277,9 @@ function add_constraints!(
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
-    parameter_container = get_parameter(container, EnergyTargetTimeSeriesParameter(), V)
-    param = get_parameter_array(parameter_container)
-    multiplier = get_multiplier_array(parameter_container)
+    param = get_parameter_array(container, EnergyTargetTimeSeriesParameter(), V)
+    multiplier =
+        get_parameter_multiplier_array(container, EnergyTargetTimeSeriesParameter(), V)
 
     constraint =
         add_cons_container!(container, EnergyTargetConstraint(), V, name_index, time_steps)
