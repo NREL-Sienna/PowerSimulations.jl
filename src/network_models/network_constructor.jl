@@ -85,7 +85,7 @@ function construct_network!(
             SystemBalanceSlackUp,
             sys,
             model,
-            CopperPlatePowerModel,
+            StandardPTDFModel,
         )
         add_to_expression!(
             container,
@@ -93,7 +93,7 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            CopperPlatePowerModel,
+            StandardPTDFModel,
         )
         cost_function(container, PSY.System, model, CopperPlatePowerModel)
     end
@@ -119,11 +119,8 @@ function construct_network!(
     )
 
     add_pm_expr_refs!(container, T, sys)
-    copper_plate(
-        container,
-        ExpressionKey(ActivePowerBalance, PSY.Bus),
-        length(PSY.get_components(PSY.Bus, sys)),
-    )
+
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model, PTDFPowerModel)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -144,7 +141,7 @@ function construct_network!(
         )
     end
 
-    get_use_slacks(model) && add_slacks!(container, T)
+    # get_use_slacks(model) && add_slacks!(container, T)
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(container, T, sys, template, instantiate_model)

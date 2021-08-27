@@ -311,6 +311,22 @@ function _make_system_expressions!(
     return
 end
 
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    bus_numbers::Vector{Int},
+    ::Type{StandardPTDFModel},
+)
+    parameter_jump = built_for_simulation(container)
+    time_steps = get_time_steps(container)
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
+            _make_container_array(parameter_jump, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
+            _make_container_array(parameter_jump, bus_numbers, time_steps),
+    )
+    return
+end
+
 function initialize_system_expressions!(
     container::OptimizationContainer,
     ::Type{T},
@@ -679,8 +695,10 @@ end
 function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     var = get(container.constraints, key, nothing)
     if var === nothing
-        @error "$key is not stored" (get_constraint_keys(container))
-        throw(IS.InvalidValue("constraint $key is not stored"))
+        name = encode_key(key)
+        keys = encode_key.(get_constraint_keys(container))
+        @error "$name is not stored" (keys)
+        throw(IS.InvalidValue("constraint $name is not stored"))
     end
 
     return var
@@ -761,14 +779,16 @@ function add_param_container!(
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
-function get_parameter_names(container::OptimizationContainer)
+function get_parameter_keys(container::OptimizationContainer)
     return collect(keys(container.parameters))
 end
 
 function get_parameter(container::OptimizationContainer, key::ParameterKey)
     param_container = get(container.parameters, key, nothing)
     if param_container === nothing
-        @error "$name is not stored" sort!(get_parameter_names(container))
+        name = encode_key(key)
+        keys = encode_key.(get_parameter_keys(container))
+        @error "$name is not stored" keys
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
     return param_container
@@ -875,7 +895,7 @@ function get_expression(
     ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ExpressionType, U <: PSY.Component}
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     return get_expression(container, ExpressionKey(T, U, meta))
 end
 

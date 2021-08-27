@@ -277,11 +277,9 @@ function add_constraints!(
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
-    name = get_time_series_names(model)[EnergyTargetTimeSeriesParameter]
-    parameter =
-        EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), name)
-    param = get_parameter_array(container, parameter, V)
-    multiplier = get_parameter_multiplier_array(container, parameter, V)
+    param = get_parameter_array(container, EnergyTargetTimeSeriesParameter(), V)
+    multiplier =
+        get_parameter_multiplier_array(container, EnergyTargetTimeSeriesParameter(), V)
 
     constraint =
         add_cons_container!(container, EnergyTargetConstraint(), V, name_index, time_steps)

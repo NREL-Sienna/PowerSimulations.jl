@@ -150,7 +150,7 @@ function add_to_expression!(
     U <: TimeSeriesParameter,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: Union{CopperPlatePowerModel, StandardPTDFModel},
+    X <: CopperPlatePowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
     multiplier = get_parameter_multiplier_array(container, U(), V)
@@ -181,7 +181,7 @@ function add_to_expression!(
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: Union{CopperPlatePowerModel, StandardPTDFModel},
+    X <: CopperPlatePowerModel,
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), X)
@@ -191,6 +191,81 @@ function add_to_expression!(
             expression,
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
+            t,
+        )
+    end
+    return
+end
+
+"""
+Default implementation to add parameters to SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: TimeSeriesParameter,
+    V <: PSY.StaticInjection,
+    W <: AbstractDeviceFormulation,
+    X <: StandardPTDFModel,
+}
+    parameter = get_parameter_array(container, U(), V)
+    multiplier = get_parameter_multiplier_array(container, U(), V)
+    for d in devices, t in get_time_steps(container)
+        name = get_name(d)
+        add_to_jump_expression!(
+            get_expression(container, T(), PSY.System),
+            parameter[name, t],
+            multiplier[name, t],
+            t,
+        )
+        add_to_jump_expression!(
+            get_expression(container, T(), PSY.Bus),
+            parameter[name, t],
+            multiplier[name, t],
+            PSY.get_number(PSY.get_bus(d)),
+            t,
+        )
+    end
+    return
+end
+
+"""
+Default implementation to add variables to SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: VariableType,
+    V <: PSY.StaticInjection,
+    W <: AbstractDeviceFormulation,
+    X <: StandardPTDFModel,
+}
+    variable = get_variable(container, U(), V)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        add_to_jump_expression!(
+            get_expression(container, T(), PSY.System),
+            variable[name, t],
+            get_variable_multiplier(U(), V, W()),
+            t,
+        )
+        add_to_jump_expression!(
+            get_expression(container, T(), PSY.Bus),
+            variable[name, t],
+            get_variable_multiplier(U(), V, W()),
+            PSY.get_number(PSY.get_bus(d)),
             t,
         )
     end
@@ -214,7 +289,7 @@ function add_to_expression!(
     W <: AbstractBranchFormulation,
     X <: PM.AbstractActivePowerModel,
 }
-    var = get_variable(container, U(), B)
+    var = get_variable(container, U(), V)
     expression = get_expression(container, T(), X)
     for d in devices
         for t in get_time_steps(container)

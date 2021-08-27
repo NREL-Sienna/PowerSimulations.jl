@@ -635,12 +635,11 @@ end
 @testset "Solving UC Models with Linear Networks" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
-    parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
     PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
 
-    for net in networks, p in parameters_value, sys in systems
+    for net in networks, sys in systems
         template =
             get_thermal_dispatch_template_network(NetworkModel(net, PTDF = PTDF_ref[sys]))
         set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)

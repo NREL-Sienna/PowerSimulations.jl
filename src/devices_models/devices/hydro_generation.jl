@@ -102,7 +102,6 @@ get_multiplier_value(::InflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHyd
 get_multiplier_value(::OutflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_outflow(d) * PSY.get_conversion_factor(d)
 #! format: on
 
-# TODO: Jose to refactor based time series
 """
 Time series constraints
 """
@@ -115,22 +114,8 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
-    use_parameters = built_for_simulation(container)
-    spec = DeviceRangeConstraintSpec(;
-        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_type = T(),
-            variable_type = U(),
-            parameter = ActivePowerTimeSeriesParameter(
-                PSY.Deterministic,
-                "max_active_power",
-            ),
-            multiplier_func = x -> PSY.get_max_active_power(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub! :
-                              device_timeseries_ub!,
-            component_type = V,
-        ),
-    )
-    device_range_constraints!(container, devices, model, feedforward, spec)
+    # Use parameters here
+    # device_range_constraints!(container, devices, model, feedforward, spec)
 end
 
 """
@@ -258,22 +243,8 @@ function commit_hydro_active_power_ub!(
     model::DeviceModel{V, W},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
-    use_parameters = built_for_simulation(container)
-    spec = DeviceRangeConstraintSpec(;
-        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_type = CommitmentConstraint(),
-            variable_type = ActivePowerVariable(),
-            parameter = ActivePowerTimeSeriesParameter(
-                PSY.Deterministic,
-                "max_active_power",
-            ),
-            multiplier_func = x -> PSY.get_max_active_power(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub! :
-                              device_timeseries_ub!,
-            component_type = V,
-        ),
-    )
-    device_range_constraints!(container, devices, model, feedforward, spec)
+    # Use Parameters Here
+    # device_range_constraints!(container, devices, model, feedforward, spec)
 end
 
 ######################## Energy balance constraints ############################
@@ -475,12 +446,9 @@ function add_constraints!(
     e_var = get_variable(container, EnergyVariable(), V)
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
-
-    name = get_time_series_names(model)[EnergyTargetTimeSeriesParameter]
-    parameter =
-        EnergyTargetTimeSeriesParameter(get_default_time_series_type(container), name)
-    param = get_parameter_array(container, parameter, V)
-    multiplier = get_parameter_multiplier_array(container, parameter, V)
+    param = get_parameter_array(container, EnergyTargetTimeSeriesParameter(), V)
+    multiplier =
+        get_parameter_multiplier_array(container, EnergyTargetTimeSeriesParameter(), V)
 
     for d in devices
         name = PSY.get_name(d)
@@ -538,33 +506,6 @@ function initial_conditions!(
     return
 end
 
-########################## Addition to the nodal balances #################################
-function NodalExpressionSpec(
-    ::Type{T},
-    parameter::ReactivePowerTimeSeriesParameter,
-) where {T <: PSY.HydroGen}
-    return NodalExpressionSpec(
-        parameter,
-        T,
-        x -> PSY.get_max_reactive_power(x),
-        1.0,
-        ExpressionKey(ReactivePowerBalance, PSY.Bus),
-    )
-end
-
-function NodalExpressionSpec(
-    ::Type{T},
-    parameter::ActivePowerTimeSeriesParameter,
-) where {T <: PSY.HydroGen}
-    return NodalExpressionSpec(
-        parameter,
-        T,
-        x -> PSY.get_max_active_power(x),
-        1.0,
-        ExpressionKey(ActivePowerBalance, PSY.Bus),
-    )
-end
-
 ##################################### Water/Energy Budget Constraint ############################
 """
 This function define the budget constraint for the
@@ -575,7 +516,7 @@ active power budget formulation.
 
 function add_constraints!(
     container::OptimizationContainer,
-    constraint_type::Type{EnergyBudgetConstraint},
+    ::Type{EnergyBudgetConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
@@ -583,16 +524,15 @@ function add_constraints!(
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
+    # Variable not used. Check if needed Sourabh
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
     constraint = add_cons_container!(container, EnergyBudgetConstraint(), V, set_name)
 
     variable_out = get_variable(container, ActivePowerVariable(), V)
-    name = get_time_series_names(model)[EnergyBudgetTimeSeriesParameter]
-    parameter =
-        EnergyBudgetTimeSeriesParameter(get_default_time_series_type(container), name)
-    param = get_parameter_array(container, parameter, V)
-    multiplier = get_parameter_multiplier_array(container, parameter, V)
+    param = get_parameter_array(container, EnergyBudgetTimeSeriesParameter(), V)
+    multiplier =
+        get_parameter_multiplier_array(container, EnergyBudgetTimeSeriesParameter(), V)
 
     for d in devices
         name = PSY.get_name(d)

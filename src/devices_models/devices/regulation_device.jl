@@ -345,16 +345,3 @@ function regulation_cost!(
     end
     return
 end
-
-function NodalExpressionSpec(
-    ::Type{<:PSY.RegulationDevice{T}},
-    parameter::ActivePowerTimeSeriesParameter,
-) where {T <: PSY.StaticInjection}
-    return NodalExpressionSpec(
-        parameter,
-        T,
-        x -> PSY.get_max_active_power(x),
-        1.0,
-        ExpressionKey(ActivePowerBalance, PSY.Bus),
-    )
-end

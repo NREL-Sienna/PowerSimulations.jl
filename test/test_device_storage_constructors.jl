@@ -83,7 +83,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 144, 0, 72, 72, 48, true)
+    moi_tests(model, false, 144, 0, 72, 72, 48, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -92,7 +92,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, true, 168, 0, 96, 96, 48, true)
+    moi_tests(model, false, 168, 0, 96, 96, 48, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -105,7 +105,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer = Cbc_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 21, 0, 12, 9, 9, true)
+    moi_tests(model, false, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], 5811.0, 10.0)
 end
 
@@ -119,7 +119,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer = Cbc_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 21, 0, 12, 9, 9, true)
+    moi_tests(model, false, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], -63.0, 10.0)
 end
 
@@ -133,7 +133,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer = Cbc_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 28, 0, 16, 12, 12, true)
+    moi_tests(model, false, 28, 0, 16, 12, 12, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], -11118.0, 10.0)
 end
 
@@ -146,7 +146,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer = Cbc_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 21, 0, 12, 9, 9, true)
+    moi_tests(model, false, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], 5547.0, 10.0)
 end
 
@@ -160,6 +160,6 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer = Cbc_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, true, 21, 0, 12, 9, 9, true)
+    moi_tests(model, false, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], -1825.0, 10.0)
 end

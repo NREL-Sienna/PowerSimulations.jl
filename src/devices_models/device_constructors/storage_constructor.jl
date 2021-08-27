@@ -34,9 +34,30 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, D())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -116,8 +137,22 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, D())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -194,9 +229,30 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -289,8 +345,22 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -369,9 +439,30 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, BatteryAncillaryServices())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
-    add_to_expression!(container, ReactivePowerBalance, devices, ReactivePowerVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -448,8 +539,22 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, BatteryAncillaryServices())
 
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerInVariable, S)
-    add_to_expression!(container, ActivePowerBalance, devices, ActivePowerOutVariable, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
