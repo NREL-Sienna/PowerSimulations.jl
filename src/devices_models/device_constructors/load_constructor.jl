@@ -301,7 +301,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ReactivePowerBalance(),
+        ReactivePowerBalance,
         ReactivePowerTimeSeriesParameter,
         devices,
         model,
@@ -367,7 +367,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ReactivePowerBalance(),
+        ReactivePowerBalance,
         ReactivePowerTimeSeriesParameter,
         devices,
         model,

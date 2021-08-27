@@ -172,7 +172,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ReactivePowerBalance(),
+        ReactivePowerBalance,
         ReactivePowerTimeSeriesParameter,
         devices,
         model,
@@ -190,7 +190,6 @@ function construct_device!(
     devices = get_available_components(R, sys)
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
-
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -200,6 +199,7 @@ function construct_device!(
         S,
     )
 end
+
 
 function construct_device!(
     container::OptimizationContainer,
