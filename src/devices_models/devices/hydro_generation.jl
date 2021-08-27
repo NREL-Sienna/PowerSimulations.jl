@@ -506,33 +506,6 @@ function initial_conditions!(
     return
 end
 
-########################## Addition to the nodal balances #################################
-function NodalExpressionSpec(
-    ::Type{T},
-    parameter::ReactivePowerTimeSeriesParameter,
-) where {T <: PSY.HydroGen}
-    return NodalExpressionSpec(
-        parameter,
-        T,
-        x -> PSY.get_max_reactive_power(x),
-        1.0,
-        ExpressionKey(ReactivePowerBalance, PSY.Bus),
-    )
-end
-
-function NodalExpressionSpec(
-    ::Type{T},
-    parameter::ActivePowerTimeSeriesParameter,
-) where {T <: PSY.HydroGen}
-    return NodalExpressionSpec(
-        parameter,
-        T,
-        x -> PSY.get_max_active_power(x),
-        1.0,
-        ExpressionKey(ActivePowerBalance, PSY.Bus),
-    )
-end
-
 ##################################### Water/Energy Budget Constraint ############################
 """
 This function define the budget constraint for the
