@@ -144,7 +144,7 @@ function construct_network!(
         )
     end
 
-    get_use_slacks(model) && add_slacks!(container, T)
+    # get_use_slacks(model) && add_slacks!(container, T)
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(container, T, sys, template, instantiate_model)
