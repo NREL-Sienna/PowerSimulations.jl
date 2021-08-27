@@ -17,7 +17,8 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractR
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false
 
-get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::FixedOutput) = PSY.get_max_active_power(d)
+get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::FixedOutput) = PSY.get_max_active_power(d)
+get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
 
 #! format: on
 
@@ -66,6 +67,27 @@ function add_constraints!(
         constraint[name, t] =
             JuMP.@constraint(jump_model, q_var[name, t] == p_var[name, t] * pf)
     end
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.RenewableGen, W <: AbstractRenewableDispatchFormulation}
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
 end
 
 ##################################### renewable generation cost ############################

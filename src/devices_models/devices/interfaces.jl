@@ -6,4 +6,5 @@ get_variable_binary(pv, t::Type{<:PSY.Component}, _) =
 get_variable_initial_value(_, ::PSY.Component, __) = nothing
 get_variable_lower_bound(_, ::PSY.Component, __) = nothing
 get_variable_upper_bound(_, ::PSY.Component, __) = nothing
-get_multiplier_value(_, ::PSY.Component, __) = NaN
+get_multiplier_value(x, y::PSY.Component, z) =
+    error("Unable to get parameter $x for device $y for formulation $z")

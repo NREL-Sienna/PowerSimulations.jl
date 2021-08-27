@@ -100,6 +100,11 @@ get_multiplier_value(::EnergyBudgetTimeSeriesParameter, d::PSY.HydroGen, ::Abstr
 get_multiplier_value(::EnergyTargetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 get_multiplier_value(::InflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_inflow(d) * PSY.get_conversion_factor(d)
 get_multiplier_value(::OutflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_outflow(d) * PSY.get_conversion_factor(d)
+
+get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_max_active_power(d)
+
+get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::FixedOutput) = PSY.get_max_active_power(d)
+
 #! format: on
 
 """
@@ -114,8 +119,16 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
-    # Use parameters here
-    # device_range_constraints!(container, devices, model, feedforward, spec)
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
 end
 
 """
@@ -123,14 +136,24 @@ Add semicontinuous range constraints for Hydro Unit Commitment formulation
 """
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{<:PowerVariableLimitsConstraint},
+    T::Type{ActivePowerVariableLimitsConstraint},
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
+) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
 end
 
 """
@@ -237,14 +260,16 @@ This function define the range constraint specs for the
 reactive power for Commitment Run of River formulation.
     `` P <= multiplier * P_max ``
 """
-function commit_hydro_active_power_ub!(
+function add_constraints!(
     container::OptimizationContainer,
-    devices,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
-    # Use Parameters Here
-    # device_range_constraints!(container, devices, model, feedforward, spec)
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
 end
 
 ######################## Energy balance constraints ############################

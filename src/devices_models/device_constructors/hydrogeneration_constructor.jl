@@ -1,5 +1,15 @@
 function initialize_timeseries_names(
     ::Type{<:PSY.HydroGen},
+    ::Type{<:Union{HydroCommitmentRunOfRiver}},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+        ReactivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
+function initialize_timeseries_names(
+    ::Type{<:PSY.HydroGen},
     ::Type{<:Union{FixedOutput, HydroDispatchRunOfRiver}},
 )
     return Dict{Type{<:TimeSeriesParameter}, String}(
@@ -156,6 +166,8 @@ function construct_device!(
         model,
         S,
     )
+
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -227,6 +239,8 @@ function construct_device!(
         model,
         S,
     )
+
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -672,6 +686,8 @@ function construct_device!(
         model,
         S,
     )
+
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -701,7 +717,10 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
+
+    # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do
+    # commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
+
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -740,6 +759,8 @@ function construct_device!(
         model,
         S,
     )
+
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end
 
 function construct_device!(
@@ -764,7 +785,8 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
+    # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do
+    # commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
