@@ -279,8 +279,7 @@ end
     test_results = Dict{Any, Float64}(ACPPowerModel => 177526.0, DCPPowerModel => 175521.0)
 
     for net in networks
-        @info("Test solve HydroRoR ED with $(net) network")
-        @testset "HydroRoR ED model $(net) and use_parameters = true" begin
+        @testset "HydroRoR ED model $(net)" begin
             template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
             ED = DecisionModel(
@@ -308,7 +307,7 @@ end
     template = get_thermal_dispatch_template_network(net)
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
 
-    @testset "HydroRoR ED model $(net) and use_parameters = true" begin
+    @testset "HydroRoR ED model $(net)" begin
         ED = DecisionModel(UnitCommitmentProblem, template, sys; optimizer = GLPK_optimizer)
         @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 175521.0, 1000)
@@ -330,7 +329,7 @@ end
     )
 
     for net in networks, (mod, sys) in zip(models, systems)
-        @testset "$(mod) ED model on $(net) and use_parameters = true" begin
+        @testset "$(mod) ED model on $(net)" begin
             template = get_thermal_dispatch_template_network(net)
             set_device_model!(template, HydroEnergyReservoir, mod)
 

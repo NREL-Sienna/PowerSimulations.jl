@@ -138,12 +138,11 @@ end
 @testset "Test Locational Marginal Prices between DC lossless with PowerModels vs StandardPTDFModel" begin
     networks = [DCPPowerModel, StandardPTDFModel]
     sys = PSB.build_system(PSITestSystems, "c_sys5")
-    parameters = [true, false]
     ptdf = PTDF(sys)
     # These are the duals of interest for the test
     dual_constraint = [[NodalBalanceActiveConstraint], [CopperPlateBalanceConstraint]]
     LMPs = []
-    for (ix, network) in enumerate(networks), p in parameters
+    for (ix, network) in enumerate(networks)
         template = get_template_dispatch_with_network(
             NetworkModel(network; PTDF = ptdf, duals = dual_constraint[ix]),
         )
