@@ -119,11 +119,8 @@ function construct_network!(
     )
 
     add_pm_expr_refs!(container, T, sys)
-    copper_plate(
-        container,
-        ExpressionKey(ActivePowerBalance, PSY.Bus),
-        length(PSY.get_components(PSY.Bus, sys)),
-    )
+
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model, PTDFPowerModel)
     add_constraint_dual!(container, sys, model)
 
     return

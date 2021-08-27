@@ -40,7 +40,7 @@ function add_to_expression!(
             1.0,
             t,
             variable[t],
-            get_variable_multiplier(U(), V, W()),
+            get_variable_multiplier(U(), PSY.System, W()),
         )
     end
     return
