@@ -1,6 +1,3 @@
-# Generic Branch Models
-abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
-
 # Abstract Line Models
 """ Branch type to add unbounded flow variables and use flow constraints"""
 struct StaticBranch <: AbstractBranchFormulation end

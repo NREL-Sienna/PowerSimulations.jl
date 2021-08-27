@@ -33,7 +33,7 @@ function add_to_expression!(
     W <: Union{CopperPlatePowerModel, StandardPTDFModel},
 }
     variable = get_variable(container, U(), V)
-     expression = get_expression(container, T(), PSY.System)
+    expression = get_expression(container, T(), PSY.System)
     for t in get_time_steps(container)
         add_to_jump_expression!(
             expression,

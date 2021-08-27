@@ -16,10 +16,23 @@ Abstract type for Device Formulations (a.k.a Models)
 ```julia
 import PowerSimulations
 const PSI = PowerSimulations
-struct MyCustomFormulation <: PSI.AbstractDeviceFormulation
+struct MyCustomDeviceFormulation <: PSI.AbstractDeviceFormulation
 ```
 """
 abstract type AbstractDeviceFormulation end
+
+"""
+Abstract type for Branch Formulations (a.k.a Models)
+
+# Example
+```julia
+import PowerSimulations
+const PSI = PowerSimulations
+struct MyCustomBranchFormulation <: PSI.AbstractDeviceFormulation
+```
+"""
+# Generic Branch Models
+abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
 
 """
 Abstract type for Decision Model and Emulation Model. OperationModel structs are parameterized with DecisionProblem or Emulation Problem structs

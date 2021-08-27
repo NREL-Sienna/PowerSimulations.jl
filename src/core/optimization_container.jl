@@ -306,7 +306,7 @@ function _make_system_expressions!(
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(parameter_jump, 1, time_steps),
+            _make_container_array(parameter_jump, time_steps),
     )
     return
 end
@@ -868,14 +868,6 @@ function get_expression(container::OptimizationContainer, key::ExpressionKey)
     end
 
     return var
-end
-
-function get_expression(
-    container::OptimizationContainer,
-    constraint_type::ExpressionType,
-    meta = CONTAINER_KEY_EMPTY_META,
-)
-    return get_expression(container, ExpressionKey(constraint_type, meta))
 end
 
 function get_expression(
