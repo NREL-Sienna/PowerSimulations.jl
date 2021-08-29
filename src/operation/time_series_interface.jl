@@ -1,3 +1,9 @@
+struct TimeSeriesCacheKey
+    component_uuid::Base.UUID
+    time_series_type::Type{<:IS.TimeSeriesData}
+    name::String
+end
+
 function make_time_series_cache(
     ::Type{PSY.StaticTimeSeries},
     component,
