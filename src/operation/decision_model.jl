@@ -48,7 +48,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, ProblemInternal}
+    internal::Union{Nothing, ModelInternal}
     ext::Dict{String, Any}
 
     function DecisionModel{M}(
@@ -70,7 +70,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
                 "The system does not contain forecast data. A DecisionModel can't be built.",
             )
         end
-        internal = ProblemInternal(
+        internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
         )
         new{M}(name, template, sys, internal, Dict{String, Any}())

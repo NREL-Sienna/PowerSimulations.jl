@@ -17,7 +17,7 @@ struct TimeSeriesCacheKey
     name::String
 end
 
-mutable struct ProblemInternal
+mutable struct ModelInternal
     container::OptimizationContainer
     status::BuildStatus
     run_status::RunStatus
@@ -30,8 +30,8 @@ mutable struct ProblemInternal
     file_level::Base.CoreLogging.LogLevel
 end
 
-function ProblemInternal(container::OptimizationContainer; ext = Dict{String, Any}())
-    return ProblemInternal(
+function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}())
+    return ModelInternal(
         container,
         BuildStatus.EMPTY,
         RunStatus.READY,
@@ -45,7 +45,7 @@ function ProblemInternal(container::OptimizationContainer; ext = Dict{String, An
     )
 end
 
-function configure_logging(internal::ProblemInternal, file_mode)
+function configure_logging(internal::ModelInternal, file_mode)
     return IS.configure_logging(
         console = true,
         console_stream = stderr,
