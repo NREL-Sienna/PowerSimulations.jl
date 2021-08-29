@@ -118,7 +118,7 @@ function has_on_parameter(
     if !built_for_simulation(container)
         return false
     end
-    return haskey(container.parameters, encode_symbol(OnVariable, string(T)))
+    return haskey(container.parameters, ParameterKey(OnStatusParameter, T))
 end
 
 # TODO: Function is broken
