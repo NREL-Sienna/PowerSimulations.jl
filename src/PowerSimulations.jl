@@ -413,7 +413,7 @@ include("initial_conditions/update_initial_conditions.jl")
 
 include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
-include("operation/problem_internal.jl")
+include("operation/model_internal.jl")
 include("operation/decision_model.jl")
 include("operation/emulation_model.jl")
 include("operation/problem_results_export.jl")
