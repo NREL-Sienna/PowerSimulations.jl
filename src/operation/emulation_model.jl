@@ -1,4 +1,4 @@
-"""Default PowerSimulations Operation Problem Type"""
+"""Default PowerSimulations Emulation Problem Type"""
 struct GenericEmulationProblem <: EmulationProblem end
 
 """
@@ -13,7 +13,7 @@ This builds the optimization problem of type M with the specific system and temp
 
 # Arguments
 
-- `::Type{M} where M<:EmulationProblem`: The abstract operation model type
+- `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
 - `template::ProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
@@ -21,20 +21,20 @@ This builds the optimization problem of type M with the specific system and temp
 
 # Output
 
-- `model::EmulationModel`: The operation model containing the model type, built JuMP model, Power
+- `model::EmulationModel`: The Emulation model containing the model type, built JuMP model, Power
 Systems system.
 
 # Example
 
 ```julia
 template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = EmulationModel(MockOperationProblem, template, system)
+OpModel = EmulationModel(MockEmulationProblem, template, system)
 ```
 
 # Accepted Key Words
 
 - `optimizer`: The optimizer that will be used in the optimization model.
-- `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+- `warm_start::Bool`: True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
 - `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default to false.
 - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
@@ -43,11 +43,11 @@ OpModel = EmulationModel(MockOperationProblem, template, system)
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
-mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
+mutable struct EmulationModel{M <: EmulationProblem} <: EmulationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, ProblemInternal}
+    internal::Union{Nothing, ModelInternal}
     ext::Dict{String, Any}
 
     function EmulationModel{M}(
@@ -68,7 +68,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
                 "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
             )
         end
-        internal = ProblemInternal(
+        internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
         new{M}(name, template, sys, internal, Dict{String, Any}())
@@ -115,13 +115,13 @@ end
     kwargs...) where {M <: EmulationProblem}
 This builds the optimization problem of type M with the specific system and template
 # Arguments
-- `::Type{M} where M<:EmulationProblem`: The abstract operation model type
+- `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
 - `template::ProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
 - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
 # Output
-- `Stage::EmulationProblem`: The operation model containing the model type, unbuilt JuMP model, Power
+- `Stage::EmulationProblem`: The Emulation model containing the model type, unbuilt JuMP model, Power
 Systems system.
 # Example
 ```julia
@@ -130,7 +130,7 @@ problem = EmulationModel(MyOpProblemType template, system, optimizer)
 ```
 # Accepted Key Words
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
-- `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+- `warm_start::Bool` True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 - `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
 - `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
 - `optimizer_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
@@ -226,7 +226,7 @@ function _build!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
         catch e
             set_status!(model, BuildStatus.FAILED)
             bt = catch_backtrace()
-            @error "Operation Problem Build Failed" exception = e, bt
+            @error "Emulation Problem Build Failed" exception = e, bt
         end
     end
     return get_status(model)
@@ -307,10 +307,10 @@ function calculate_dual_variables!(model::EmulationModel)
     return
 end
 
-function solve_impl(model::EmulationModel; optimizer = nothing)
+function execute_impl(model::EmulationModel; optimizer = nothing)
     if !is_built(model)
         error(
-            "Operations Problem Build status is $(get_status(model)). Solve can't continue",
+            "Emulations Problem Build status is $(get_status(model)). Solve can't continue",
         )
     end
     jump_model = get_jump_model(model)
@@ -318,7 +318,7 @@ function solve_impl(model::EmulationModel; optimizer = nothing)
         JuMP.set_optimizer(jump_model, optimizer)
     end
     if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
-        @error("No Optimizer has been defined, can't solve the operational problem")
+        @error("No Optimizer has been defined, can't solve the Emulation problem")
         return RunStatus.FAILED
     end
     @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
@@ -338,21 +338,21 @@ function solve_impl(model::EmulationModel; optimizer = nothing)
 end
 
 """
-Default solve method the operational model for a single instance. Solves problems
+Default solve method the Emulation model for a single instance. Solves problems
     that conform to the requirements of EmulationModel{<: EmulationProblem}
 # Arguments
-- `model::OperationModel = model`: operation model
+- `model::EmulationModel = model`: Emulation model
 # Examples
 ```julia
-results = solve!(OpModel)
+results = run!(OpModel)
 ```
 # Accepted Key Words
 - `output_dir::String`: If a file path is provided the results
 automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
-function solve!(model::EmulationModel{<:EmulationProblem}; kwargs...)
-    status = solve_impl(model; kwargs...)
+function run!(model::EmulationModel{<:EmulationProblem}; kwargs...)
+    status = run_impl(model; kwargs...)
     set_run_status!(model, status)
     return status
 end
@@ -372,25 +372,25 @@ function write_problem_results!(
 end
 
 """
-Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of EmulationModel{<: EmulationProblem}
+Default solve method for an Emulation model used inside of a Simulation. Solves problems that conform to the requirements of EmulationModel{<: EmulationProblem}
 
 # Arguments
 - `step::Int`: Simulation Step
-- `model::OperationModel`: operation model
+- `model::EmulationModel`: Emulation model
 - `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
 - `store::SimulationStore`: Simulation output store
 
 # Accepted Key Words
 - `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
 """
-function solve!(
+function run!(
     step::Int,
     model::EmulationModel{<:EmulationProblem},
     start_time::Dates.DateTime,
     store::SimulationStore;
     exports = nothing,
 )
-    solve_status = solve!(model)
+    solve_status = run!(model)
     if solve_status == RunStatus.SUCCESSFUL
         write_problem_results!(step, model, start_time, store, exports)
         advance_execution_count!(model)
