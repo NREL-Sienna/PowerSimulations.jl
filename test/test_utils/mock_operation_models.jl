@@ -63,6 +63,8 @@ function mock_construct_device!(problem::PSI.DecisionModel{MockOperationProblem}
         )
     end
 
+    PSI.check_optimization_container(PSI.get_optimization_container(problem))
+
     JuMP.@objective(
         PSI.get_jump_model(problem),
         MOI.MIN_SENSE,

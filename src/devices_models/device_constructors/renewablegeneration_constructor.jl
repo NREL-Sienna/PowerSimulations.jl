@@ -27,7 +27,6 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
-    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
     # Expression
     add_to_expression!(

@@ -231,15 +231,11 @@ function add_to_setting_ext!(container::OptimizationContainer, key::String, valu
 end
 
 function check_optimization_container(container::OptimizationContainer)
-    valid = true
-    # Check for parameter invalid values
-    if built_for_simulation(container)
-        for param_array in values(container.parameters)
-            valid = !all(isnan.(param_array.multiplier_array.data))
+    for (k, param_container) in container.parameters
+        valid = !all(isnan.(param_container.multiplier_array.data))
+        if !valid
+            error("The model container has invalid values in $(encode_key_as_string(k))")
         end
-    end
-    if !valid
-        error("The model container has invalid values")
     end
     return
 end
