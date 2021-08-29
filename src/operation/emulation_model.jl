@@ -263,6 +263,22 @@ function problem_build!(model::EmulationModel{<:EmulationProblem})
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end
 
+function reset!(model::OperationModel)
+    if built_for_simulation(model)
+        set_execution_count!(model, 0)
+    end
+    container = OptimizationContainer(
+        get_system(model),
+        get_settings(model),
+        nothing,
+        PSY.StaticTimeSeries,
+    )
+    model.internal.container = container
+    empty_time_series_cache!(model)
+    set_status!(model, BuildStatus.EMPTY)
+    return
+end
+
 function serialize_optimization_model(model::EmulationModel{<:EmulationProblem})
     problem_name = "$(get_name(model))_EmulationModel"
     json_file_name = "$(problem_name).json"
