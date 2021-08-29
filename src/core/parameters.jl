@@ -107,6 +107,9 @@ abstract type VariableValueParameter <: RightHandSideParameter end
 struct BinaryValueParameter <: VariableValueParameter end
 struct UpperBoundValueParameter <: VariableValueParameter end
 
+# Used for the semicontinuousrange_ff
+struct OnStatusParameter <: VariableValueParameter end
+
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
 struct EnergyTargetParameter <: AuxVariableValueParameter end
