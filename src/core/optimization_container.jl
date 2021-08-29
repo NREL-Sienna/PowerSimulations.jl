@@ -52,7 +52,8 @@ function OptimizationContainer(
     sys::PSY.System,
     settings::Settings,
     jump_model::Union{Nothing, JuMP.Model},
-)
+    ::Type{T}
+) where T <: PSY.TimeSeriesData
     resolution = PSY.get_time_series_resolution(sys)
     return OptimizationContainer(
         jump_model === nothing ? _make_jump_model(settings) :
@@ -74,34 +75,35 @@ function OptimizationContainer(
         Dict{Symbol, Any}(),
         false,
         OptimizationContainerMetadata(),
-        PSY.Deterministic,
+        T,
     )
 end
 
-function OptimizationContainer(filename::AbstractString)
-    return OptimizationContainer(
-        jump_model === nothing ? _make_jump_model(settings) :
-        _finalize_jump_model!(jump_model, settings),
-        1:1,
-        IS.time_period_conversion(resolution),
-        settings,
-        copy_for_serialization(settings),
-        Dict{VariableKey, AbstractArray}(),
-        Dict{AuxVarKey, AbstractArray}(),
-        Dict{ConstraintKey, AbstractArray}(),
-        Dict{ConstraintKey, AbstractArray}(),
-        Dict{String, OptimizationContainerKey}(),
-        zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
-        Dict{ExpressionKey, AbstractArray}(),
-        Dict{ParameterKey, ParameterContainer}(),
-        Dict{ICKey, Vector{InitialCondition}}(),
-        nothing,
-        PSY.get_base_power(sys),
-        Dict{Symbol, Any}(),
-        false,
-        PSY.Deterministic,
-    )
-end
+# This is broken with the addition of the default_time_series field
+# function OptimizationContainer(filename::AbstractString)
+#     return OptimizationContainer(
+#         jump_model === nothing ? _make_jump_model(settings) :
+#         _finalize_jump_model!(jump_model, settings),
+#         1:1,
+#         IS.time_period_conversion(resolution),
+#         settings,
+#         copy_for_serialization(settings),
+#         Dict{VariableKey, AbstractArray}(),
+#         Dict{AuxVarKey, AbstractArray}(),
+#         Dict{ConstraintKey, AbstractArray}(),
+#         Dict{ConstraintKey, AbstractArray}(),
+#         Dict{String, OptimizationContainerKey}(),
+#         zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
+#         Dict{ExpressionKey, AbstractArray}(),
+#         Dict{ParameterKey, ParameterContainer}(),
+#         Dict{ICKey, Vector{InitialCondition}}(),
+#         nothing,
+#         PSY.get_base_power(sys),
+#         Dict{Symbol, Any}(),
+#         false,
+#         PSY.Deterministic,
+#     )
+# end
 
 built_for_simulation(container::OptimizationContainer) = container.built_for_simulation
 
