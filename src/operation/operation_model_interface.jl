@@ -78,16 +78,6 @@ end
 set_output_dir!(model::OperationModel, path::AbstractString) =
     get_internal(model).output_dir = path
 
-function reset!(model::OperationModel)
-    if built_for_simulation(model)
-        set_execution_count!(model, 0)
-    end
-    container = OptimizationContainer(get_system(model), get_settings(model), nothing)
-    model.internal.container = container
-    empty_time_series_cache!(model)
-    set_status!(model, BuildStatus.EMPTY)
-    return
-end
 
 serialize_optimization_model(::OperationModel) = nothing
 serialize_problem(::OperationModel) = nothing
