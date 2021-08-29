@@ -63,7 +63,16 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
+        # TODO in PSY 1.12 to implement as a PSY function
+        _, ts_count, forecast_count = IS.get_time_series_counts(sys.data)
+        if forecast_count < 1
+            error(
+                "The system does not contain forecast data. A DecisionModel can't be built.",
+            )
+        end
+        internal = ProblemInternal(
+            OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
+        )
         new{M}(name, template, sys, internal, Dict{String, Any}())
     end
 end
@@ -185,9 +194,11 @@ function build_pre_step!(model::DecisionModel)
             @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
+        system = get_system(model)
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
-        @info "Initializing Optimization Container"
+
+        @info "Initializing Optimization Container For a DecisionModel"
         optimization_container_init!(
             get_optimization_container(model),
             get_network_formulation(get_template(model)),

@@ -62,7 +62,15 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
+        _, ts_count, forecast_count = IS.get_time_series_counts(sys.data)
+        if ts_count < 1
+            error(
+                "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
+            )
+        end
+        internal = ProblemInternal(
+            OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
+        )
         new{M}(name, template, sys, internal, Dict{String, Any}())
     end
 end
@@ -184,7 +192,8 @@ function build_pre_step!(model::EmulationModel)
         end
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
-        @info "Initializing Optimization Container"
+        @info "Initializing Optimization Container for EmulationModel"
+
         optimization_container_init!(
             get_optimization_container(model),
             get_network_formulation(get_template(model)),
