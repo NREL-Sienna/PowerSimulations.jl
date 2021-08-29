@@ -78,7 +78,6 @@ end
 set_output_dir!(model::OperationModel, path::AbstractString) =
     get_internal(model).output_dir = path
 
-
 serialize_optimization_model(::OperationModel) = nothing
 serialize_problem(::OperationModel) = nothing
 
