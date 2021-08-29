@@ -52,8 +52,8 @@ function OptimizationContainer(
     sys::PSY.System,
     settings::Settings,
     jump_model::Union{Nothing, JuMP.Model},
-    ::Type{T}
-) where T <: PSY.TimeSeriesData
+    ::Type{T},
+) where {T <: PSY.TimeSeriesData}
     resolution = PSY.get_time_series_resolution(sys)
     return OptimizationContainer(
         jump_model === nothing ? _make_jump_model(settings) :
@@ -105,7 +105,8 @@ end
 #     )
 # end
 
-built_for_recurrent_solves(container::OptimizationContainer) = container.built_for_recurrent_solves
+built_for_recurrent_solves(container::OptimizationContainer) =
+    container.built_for_recurrent_solves
 
 get_aux_variables(container::OptimizationContainer) = container.aux_variables
 get_base_power(container::OptimizationContainer) = container.base_power
