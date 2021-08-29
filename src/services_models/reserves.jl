@@ -26,7 +26,7 @@ function service_requirement_constraint!(
     service::SR,
     model::ServiceModel{SR, T},
 ) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
-    parameters = built_for_simulation(container)
+    parameters = built_for_recurrent_solves(container)
     initial_time = get_initial_time(container)
     @debug initial_time
     time_steps = get_time_steps(container)

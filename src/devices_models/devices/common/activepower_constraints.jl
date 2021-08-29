@@ -30,7 +30,7 @@ function active_power_constraints!(
         U,
         V,
         feedforward,
-        built_for_simulation(container),
+        built_for_recurrent_solves(container),
     )
     device_range_constraints!(container, devices, model, feedforward, inputs)
 end

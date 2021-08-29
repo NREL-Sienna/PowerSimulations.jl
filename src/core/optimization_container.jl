@@ -43,7 +43,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
-    built_for_simulation::Bool
+    built_for_recurrent_solves::Bool
     metadata::OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
 end
@@ -105,7 +105,7 @@ end
 #     )
 # end
 
-built_for_simulation(container::OptimizationContainer) = container.built_for_simulation
+built_for_recurrent_solves(container::OptimizationContainer) = container.built_for_recurrent_solves
 
 get_aux_variables(container::OptimizationContainer) = container.aux_variables
 get_base_power(container::OptimizationContainer) = container.base_power
@@ -270,7 +270,7 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
-    parameter_jump = built_for_simulation(container)
+    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
@@ -286,7 +286,7 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
 )
-    parameter_jump = built_for_simulation(container)
+    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
@@ -300,7 +300,7 @@ function _make_system_expressions!(
     ::Vector{Int},
     ::Type{CopperPlatePowerModel},
 )
-    parameter_jump = built_for_simulation(container)
+    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
@@ -314,7 +314,7 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{StandardPTDFModel},
 )
-    parameter_jump = built_for_simulation(container)
+    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
@@ -742,7 +742,7 @@ function _add_param_container!(
     axs...,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     # Temporary while we change to POI vs PJ
-    param_type = built_for_simulation(container) ? PJ.ParameterRef : Float64
+    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
         attribute,
         JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),

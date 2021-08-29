@@ -101,6 +101,7 @@ function EmulationModel{M}(
         allow_fails = allow_fails,
         optimizer_log_print = optimizer_log_print,
         direct_mode_optimizer = direct_mode_optimizer,
+        horizon = 1,
     )
     return EmulationModel{M}(template, sys, settings, jump_model, name = name)
 end
@@ -200,7 +201,7 @@ function build_pre_step!(model::EmulationModel)
             get_system(model),
         )
         # Temporary while are able to switch from PJ to POI
-        get_optimization_container(model).built_for_simulation = true
+        get_optimization_container(model).built_for_recurrent_solves = true
 
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
@@ -221,7 +222,7 @@ function _build!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
             )
             set_status!(model, BuildStatus.BUILT)
             log_values(get_settings(model))
-            !built_for_simulation(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
+            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
         catch e
             set_status!(model, BuildStatus.FAILED)
             bt = catch_backtrace()
@@ -263,15 +264,15 @@ function problem_build!(model::EmulationModel{<:EmulationProblem})
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end
 
-function reset!(model::OperationModel)
-    if built_for_simulation(model)
+function reset!(model::EmulationModel{<:EmulationProblem})
+    if built_for_recurrent_solves(model)
         set_execution_count!(model, 0)
     end
     container = OptimizationContainer(
         get_system(model),
         get_settings(model),
         nothing,
-        PSY.StaticTimeSeries,
+        PSY.SingleTimeSeries,
     )
     model.internal.container = container
     empty_time_series_cache!(model)

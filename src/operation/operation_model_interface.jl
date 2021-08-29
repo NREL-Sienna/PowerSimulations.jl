@@ -3,9 +3,9 @@ is_built(model::OperationModel) = model.internal.status == BuildStatus.BUILT
 is_empty(model::OperationModel) = model.internal.status == BuildStatus.EMPTY
 warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
-built_for_simulation(model::OperationModel) = get_simulation_info(model) !== nothing
+built_for_recurrent_solves(model::OperationModel) = get_simulation_info(model) !== nothing
 get_caches(x::OperationModel) =
-    built_for_simulation(x) ? get_simulation_info(x).caches : nothing
+    built_for_recurrent_solves(x) ? get_simulation_info(x).caches : nothing
 get_constraints(model::OperationModel) = get_internal(model).container.constraints
 get_end_of_interval_step(model::OperationModel) =
     get_simulation_info(model).end_of_interval_step

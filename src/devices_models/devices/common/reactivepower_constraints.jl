@@ -27,7 +27,7 @@ function reactive_power_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
-    use_parameters = built_for_simulation(container)
+    use_parameters = built_for_recurrent_solves(container)
     # TODO: this function does not define use_forecasts
     @assert !(use_parameters && !use_forecasts)
     inputs = make_reactive_power_constraints_inputs(
