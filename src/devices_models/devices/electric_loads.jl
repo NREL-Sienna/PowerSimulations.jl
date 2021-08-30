@@ -94,7 +94,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ControllableLoad, W <: InterruptiblePowerLoad}
-    add_parameterized_upper_bound_bigM_range_constraints(
+    add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,
         U,

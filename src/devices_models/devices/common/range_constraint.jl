@@ -530,7 +530,7 @@ function add_parameterized_upper_bound_range_constraints(
         component_type,
         names,
         time_steps,
-        meta = "lb",
+        meta = "ub",
     )
 
     parameter = get_parameter_array(container, P(), V)
