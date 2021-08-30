@@ -209,6 +209,8 @@ function build_pre_step!(model::DecisionModel)
     return
 end
 
+get_horizon(model::DecisionModel) = get_horizon(get_settings(model))
+
 function _build!(model::DecisionModel{<:DecisionProblem}, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
@@ -309,21 +311,7 @@ function calculate_dual_variables!(model::DecisionModel)
 end
 
 function solve_impl(model::DecisionModel; optimizer = nothing)
-    if !is_built(model)
-        error(
-            "Operations Problem Build status is $(get_status(model)). Solve can't continue",
-        )
-    end
-    jump_model = get_jump_model(model)
-    if optimizer !== nothing
-        JuMP.set_optimizer(jump_model, optimizer)
-    end
-    if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
-        @error("No Optimizer has been defined, can't solve the operational problem")
-        return RunStatus.FAILED
-    end
-    @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
-    status = RunStatus.RUNNING
+    status = _pre_solve_model_checks(model, optimizer)
     timed_log = get_solve_timed_log(model)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(jump_model)
@@ -349,7 +337,7 @@ results = solve!(OpModel)
 ```
 # Accepted Key Words
 - `output_dir::String`: If a file path is provided the results
-automatically get written to feather files
+automatically get written to file
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
 function solve!(model::DecisionModel{<:DecisionProblem}; kwargs...)
