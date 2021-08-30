@@ -212,7 +212,7 @@ function add_to_expression!(
     U <: TimeSeriesParameter,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: StandardPTDFModel,
+    X <: Union{PTDFPowerModel, StandardPTDFModel},
 }
     parameter = get_parameter_array(container, U(), V)
     multiplier = get_parameter_multiplier_array(container, U(), V)
@@ -250,7 +250,7 @@ function add_to_expression!(
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: StandardPTDFModel,
+    X <: Union{PTDFPowerModel, StandardPTDFModel},
 }
     variable = get_variable(container, U(), V)
     for d in devices, t in get_time_steps(container)

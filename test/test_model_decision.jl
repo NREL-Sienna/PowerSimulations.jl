@@ -166,7 +166,7 @@ end
             push!(LMPs, duals[!, sort(propertynames(duals))])
         end
     end
-    @test isapprox(LMPs[1], LMPs[3], atol = 100.0)
+    @test isapprox(LMPs[1], LMPs[2], atol = 100.0)
 end
 
 @testset "Test ProblemResults interfaces" begin
