@@ -60,6 +60,8 @@ const POWER_BALANCE_OUTFLOW = "power_balance_outflow"
 const INVERTOR_LIMIT = "invertor_limit"
 const BATTERY_COUPLING = "battery_coupling"
 const NETWORK_FLOW = "network_flow"
+const FEEDFORWARD_ENERGY_TARGET = "FF_energy_target"
+const ENERGY_CONSTRAINT = "energy_constraint"
 
 abstract type ConstraintType end
 

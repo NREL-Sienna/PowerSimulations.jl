@@ -32,6 +32,7 @@ const ON = "On"
 const REACTIVE_POWER = "Q"
 const SUBCOMPONENT_REACTIVE_POWER = "Q_SubComponent"
 const RESERVE = "R"
+const SUBCOMPONENT_RESERVE = "R_SubComponent"
 const SERVICE_REQUIREMENT = "service_requirement"
 const SLACK_DN = "γ⁻"
 const SLACK_UP = "γ⁺"
@@ -124,6 +125,8 @@ struct SubComponentActivePowerInVariable <: SubComponentVariableType end
 struct SubComponentActivePowerOutVariable <: SubComponentVariableType end
 
 struct SubComponentEnergyVariable <: SubComponentVariableType end
+
+struct SubComponentReserveVariable <: SubComponentVariableType end
 
 """Struct to dispatch the creation of Flow Active Power Variables"""
 struct FlowActivePowerVariable <: VariableType end
@@ -224,6 +227,8 @@ make_variable_name(::Type{SubComponentActivePowerInVariable}, ::Type{T}) where {
 make_variable_name(::Type{SubComponentActivePowerOutVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Pout_SubComponent")
 
 make_variable_name(::Type{SubComponentEnergyVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "E_SubComponent")
+
+make_variable_name(::Type{SubComponentReserveVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "R_SubComponent")
 
 make_variable_name(::Type{SubComponentReactivePowerVariable}, ::Type{T}) where {T <: PSY.Component} = encode_symbol(T, "Q_SubComponent")
 

@@ -938,6 +938,38 @@ function update_parameter!(
     return
 end
 
+# TODO : this is a hack that only allows RE time series to be updated.
+function update_parameter!(
+    param_reference::UpdateRef{T},
+    container::ParameterContainer,
+    problem::OperationsProblem,
+    sim::Simulation,
+) where {T <: PSY.HybridSystem}
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
+        components = get_available_components(T, problem.sys)
+        initial_forecast_time = get_simulation_time(sim, get_simulation_number(problem))
+        horizon = length(model_time_steps(problem.internal.optimization_container))
+        for d in components
+            ts_vector = get_time_series_values!(
+                PSY.Deterministic,
+                problem,
+                PSY.get_renewable_unit(d),
+                get_data_label(param_reference),
+                initial_forecast_time,
+                horizon,
+                ignore_scaling_factors = true,
+            )
+            component_name = PSY.get_name(d)
+            for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
+                value = ts_vector[ix]
+                JuMP.set_value(val, value)
+            end
+        end
+    end
+
+    return
+end
+
 """Updates the forecast parameter value"""
 function update_parameter!(
     param_reference::UpdateRef{JuMP.VariableRef},

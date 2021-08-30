@@ -194,6 +194,46 @@ end
 
 get_variable_source_problem(p::PowerCommitmentFF) = p.variable_source_problem
 
+struct EnergyTargetFF <: PSI.AbstractAffectFeedForward
+    variable_source_problem::Symbol
+    affected_variables::Vector{Symbol}
+    target_period::Int
+    penalty_cost::Float64
+    cache::Union{Nothing, Type{<:PSI.AbstractCache}}
+    function EnergyTargetFF(
+        variable_source_problem::AbstractString,
+        affected_variables::Vector{<:AbstractString},
+        target_period::Int,
+        penalty_cost::Float64,
+        cache::Union{Nothing, Type{<:PSI.AbstractCache}},
+    )
+        new(
+            Symbol(variable_source_problem),
+            Symbol.(affected_variables),
+            target_period,
+            penalty_cost,
+            cache,
+        )
+    end
+end
+
+function EnergyTargetFF(;
+    variable_source_problem,
+    affected_variables,
+    target_period,
+    penalty_cost,
+)
+    return EnergyTargetFF(
+        variable_source_problem,
+        affected_variables,
+        target_period,
+        penalty_cost,
+        nothing,
+    )
+end
+
+PSI.get_variable_source_problem(p::EnergyTargetFF) = p.variable_source_problem
+
 struct ParameterFF <: AbstractAffectFeedForward
     variable_source_problem::Symbol
     affected_parameters::Any
@@ -540,13 +580,55 @@ function power_commitment_ff(
         multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            sum(variable[name, t] for t in 1:affected_time_periods) /
-            length(affected_time_periods) + varslack[name, 1] >=
+            sum(variable[name, t] + varslack[name, t] for t in 1:affected_time_periods) /
+            affected_time_periods == param_ub[name] * multiplier_ub[name]
+        )
+        for t in 1:affected_time_periods
+            add_to_cost_expression!(
+                optimization_container,
+                varslack[name, t] * FEEDFORWARD_SLACK_COST,
+            )
+        end
+    end
+end
+
+@doc raw"""
+
+"""
+function energy_target_ff(
+    optimization_container::PSI.OptimizationContainer,
+    cons_name::Symbol,
+    devices::IS.FlattenIteratorWrapper{T},
+    param_reference::PSI.UpdateRef,
+    var_name::Tuple{Symbol, Symbol},
+    target_period::Int,
+    penalty_cost::Float64,
+) where {T <: PSY.StaticInjection}
+    time_steps = model_time_steps(optimization_container)
+    variable = get_variable(optimization_container, var_name[1])
+    varslack = get_variable(optimization_container, var_name[2])
+    set_name = [PSY.get_name(d) for d in devices if !isnothing(PSY.get_storage(d))]
+
+    container_ub = add_param_container!(optimization_container, param_reference, set_name)
+    param_ub = get_parameter_array(container_ub)
+    multiplier_ub = get_multiplier_array(container_ub)
+    con_ub = add_cons_container!(optimization_container, cons_name, set_name)
+
+    for d in devices
+        name = PSY.get_name(d)
+        idx = get_index(name, target_period, PSY.Storage)
+        value = PSY.get_rating(PSY.get_storage(d))
+        param_ub[name] = add_parameter(optimization_container.JuMPmodel, value)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
+        con_ub[name] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            variable[idx] + varslack[name, target_period] >=
             param_ub[name] * multiplier_ub[name]
         )
         add_to_cost_expression!(
             optimization_container,
-            varslack[name, 1] * FEEDFORWARD_SLACK_COST,
+            varslack[name, target_period] * penalty_cost,
         )
     end
 end
@@ -646,19 +728,16 @@ function feedforward!(
         devices,
         D(),
     )
+    time_steps = model_time_steps(optimization_container)
     slack_var_name = make_variable_name(ActivePowerShortageVariable, T)
-    slack_variable = add_var_container!(
-        optimization_container,
-        slack_var_name,
-        [PSY.get_name(d) for d in devices],
-    )
-    for d in devices
+    slack_variable = get_variable(optimization_container, slack_var_name)
+    for d in devices, t in time_steps
         name = PSY.get_name(d)
-        slack_variable[name] = JuMP.@variable(
+        slack_variable[name, t] = JuMP.@variable(
             optimization_container.JuMPmodel,
-            base_name = "$(slack_var_name)_{$(name)}",
+            base_name = "$(slack_var_name)_{$(name), $(t)}",
         )
-        JuMP.set_lower_bound(slack_variable[name], 0.0)
+        JuMP.set_lower_bound(slack_variable[name, t], 0.0)
     end
     for prefix in get_affected_variables(ff_model)
         var_name = make_variable_name(prefix, T)
@@ -674,6 +753,30 @@ function feedforward!(
     end
 end
 
+function PSI.feedforward!(
+    optimization_container::PSI.OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::PSI.DeviceModel{T, D},
+    ff_model::EnergyTargetFF,
+) where {T <: PSY.StaticInjection, D <: PSI.AbstractDeviceFormulation}
+    PSI.add_variables!(optimization_container, PSI.EnergyShortageVariable, devices, D())
+    for prefix in PSI.get_affected_variables(ff_model)
+        var_name = PSI.make_variable_name(prefix, T)
+        varslack_name = PSI.make_variable_name(PSI.ENERGY_SHORTAGE, T)
+        source_var_name =
+            PSI.make_variable_name(PSI.get_variable_source_problem(ff_model), T)
+        parameter_ref = PSI.UpdateRef{JuMP.VariableRef}(source_var_name)
+        energy_target_ff(
+            optimization_container,
+            PSI.make_constraint_name(FEEDFORWARD_ENERGY_TARGET, T),
+            devices,
+            parameter_ref,
+            (var_name, varslack_name),
+            ff_model.target_period,
+            ff_model.penalty_cost,
+        )
+    end
+end
 
 function feedforward!(
     optimization_container::OptimizationContainer,

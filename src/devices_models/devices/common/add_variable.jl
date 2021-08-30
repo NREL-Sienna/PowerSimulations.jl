@@ -328,6 +328,7 @@ get_subcomponent_var_types(::SubComponentActivePowerVariable) =
 get_subcomponent_var_types(::SubComponentReactivePowerVariable) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad, PSY.Storage]
 get_subcomponent_var_types(::SubComponentEnergyVariable) = [PSY.Storage]
+get_subcomponent_var_types(::SubComponentReserveVariable) = [PSY.Storage]
 
 check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) =
     isnothing(PSY.get_thermal_unit(v)) ? false : true

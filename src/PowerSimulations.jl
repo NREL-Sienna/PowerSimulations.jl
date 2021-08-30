@@ -95,6 +95,7 @@ export RangeFF
 export IntegralLimitFF
 export ParameterFF
 export PowerCommitmentFF
+export EnergyTargetFF
 
 # InitialConditions chrons
 export InterProblemChronology

@@ -616,6 +616,7 @@ function add_to_cost!(
                 for t in time_steps
                     linear_gen_cost!(
                         optimization_container,
+                        spec,
                         var_name,
                         component_name,
                         start_cost_data[st] * spec.multiplier,
