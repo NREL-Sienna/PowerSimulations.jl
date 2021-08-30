@@ -925,7 +925,7 @@ end
 
 function get_initial_conditions(
     container::OptimizationContainer,
-    ::Type{T},
+    ::T,
     ::Type{D},
 ) where {T <: InitialConditionType, D <: PSY.Device}
     return get_initial_conditions(container, ICKey(T, D))
@@ -946,7 +946,7 @@ end
 
 function set_initial_conditions!(
     container::OptimizationContainer,
-    ::Type{T},
+    ::T,
     ::Type{D},
     value,
 ) where {T <: InitialConditionType, D <: PSY.Device}
