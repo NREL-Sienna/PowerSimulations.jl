@@ -156,13 +156,13 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
         )
     end
 
-    if get_optimizer_log_print(settings)
-        JuMP.unset_silent(JuMPmodel)
-        @debug "optimizer unset to silent"
-    else
-        JuMP.set_silent(JuMPmodel)
-        @debug "optimizer set to silent"
-    end
+    #if get_optimizer_log_print(settings)
+    #    JuMP.unset_silent(JuMPmodel)
+    #    @debug "optimizer unset to silent"
+    #else
+    #    JuMP.set_silent(JuMPmodel)
+    #    @debug "optimizer set to silent"
+    #end
     return JuMPmodel
 end
 

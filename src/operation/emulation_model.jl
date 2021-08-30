@@ -43,7 +43,7 @@ OpModel = EmulationModel(MockEmulationProblem, template, system)
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
-mutable struct EmulationModel{M <: EmulationProblem} <: EmulationModel
+mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
@@ -213,8 +213,8 @@ function _build!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
         try
             build_pre_step!(model)
             problem_build!(model)
-            serialize && serialize_problem(model)
-            serialize && serialize_optimization_model(model)
+            # serialize && serialize_problem(model)
+            # serialize && serialize_optimization_model(model)
             serialize_metadata!(
                 get_optimization_container(model),
                 get_output_dir(model),
@@ -307,49 +307,75 @@ function calculate_dual_variables!(model::EmulationModel)
     return
 end
 
-function execute_impl(model::EmulationModel; optimizer = nothing)
-    if !is_built(model)
-        error(
-            "Emulations Problem Build status is $(get_status(model)). Solve can't continue",
-        )
-    end
+"""
+The one step solution method for the emulation model. Custom EmulationModel need to reimplement
+this method. This method is called by run! and execute!.
+"""
+function one_step_solve!(model::EmulationModel)
     jump_model = get_jump_model(model)
-    if optimizer !== nothing
-        JuMP.set_optimizer(jump_model, optimizer)
-    end
-    if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
-        @error("No Optimizer has been defined, can't solve the Emulation problem")
-        return RunStatus.FAILED
-    end
-    @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
-    status = RunStatus.RUNNING
-    timed_log = get_solve_timed_log(model)
-    _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
-        @timed JuMP.optimize!(jump_model)
+    JuMP.optimize!(jump_model)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        return RunStatus.FAILED
+        return error("Optimizer returned $model_status")
     else
         calculate_aux_variables!(model)
         calculate_dual_variables!(model)
-        status = RunStatus.SUCCESSFUL
     end
-    return status
+end
+
+function run_impl(
+    model::EmulationModel;
+    executions = 1,
+    optimizer = nothing,
+    enable_progress_bar = _PROGRESS_METER_ENABLED,
+)
+    set_run_status!(model, _pre_solve_model_checks(model, optimizer))
+    JuMP.unset_silent(get_jump_model(model))
+    internal = get_internal(model)
+    # Temporary check. Needs better way to manage re-runs of the same model
+    if internal.execution_count > 0
+        error("Call build! again")
+    end
+    internal.executions = executions
+    try
+        prog_bar = ProgressMeter.Progress(executions; enabled = enable_progress_bar)
+        for execution in 1:executions
+            advance_execution_count!(model)
+            # timed_log = get_solve_timed_log(model)
+            # _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] = @timed
+            one_step_solve!(model)
+            # update_model!(model)
+            # write_results(model)
+            ProgressMeter.update!(
+                prog_bar,
+                get_execution_count(model);
+                showvalues = [(:Execution, execution)],
+            )
+        end
+    catch e
+        @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
+        set_run_status!(model, RunStatus.FAILED)
+    finally
+        set_run_status!(model, RunStatus.SUCCESSFUL)
+    end
+    return get_run_status(model)
 end
 
 """
-Default solve method the Emulation model for a single instance. Solves problems
+Default run method the Emulation model for a single instance. Solves problems
     that conform to the requirements of EmulationModel{<: EmulationProblem}
 # Arguments
 - `model::EmulationModel = model`: Emulation model
+
+# Accepted Key Words
+- `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
+- `executions::Int`: Number of executions for the emulator run
+- `enable_progress_bar::Bool`: Enables/Disable progress bar printing
+
 # Examples
 ```julia
-results = run!(OpModel)
+status = run!(model; optimizer = GLPK.Optimizer, executions = 10)
 ```
-# Accepted Key Words
-- `output_dir::String`: If a file path is provided the results
-automatically get written to feather files
-- `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
 function run!(model::EmulationModel{<:EmulationProblem}; kwargs...)
     status = run_impl(model; kwargs...)

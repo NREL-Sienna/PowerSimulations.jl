@@ -13,7 +13,7 @@
     model = EmulationModel(
         template,
         c_sys5;
-        optimizer = GLPK_optimizer,
+        optimizer = Cbc_optimizer,
         initial_time = DateTime("2024-01-01T00:00:00"),
     )
     @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
