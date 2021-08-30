@@ -310,8 +310,8 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     bus_numbers::Vector{Int},
-    ::Type{StandardPTDFModel},
-)
+    ::Type{T},
+) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     parameter_jump = built_for_simulation(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
@@ -524,7 +524,7 @@ function _add_var_container!(
     var_key::VariableKey{T, U},
     sparse::Bool,
     axs...,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     if sparse
         var_container = sparse_container_spec(JuMP.VariableRef, axs...)
     else
@@ -540,7 +540,7 @@ function add_var_container!(
     ::Type{U},
     axs...;
     sparse = false,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     var_key = VariableKey(T, U)
     return _add_var_container!(container, var_key, sparse, axs...)
 end
@@ -552,7 +552,7 @@ function add_var_container!(
     meta::String,
     axs...;
     sparse = false,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     var_key = VariableKey(T, U, meta)
     return _add_var_container!(container, var_key, sparse, axs...)
 end
@@ -577,7 +577,7 @@ function get_variable(
     ::T,
     ::Type{U},
     meta::String = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     return get_variable(container, VariableKey(T, U, meta))
 end
 
@@ -836,7 +836,7 @@ function read_parameters(container::OptimizationContainer)
     parameters = get_parameters(container)
     (isnothing(parameters) || isempty(parameters)) && return params_dict
     for (k, v) in parameters
-        !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
+        !isa(get_component_type(k), PSY.Component) && continue
         param_array = axis_array_to_dataframe(get_parameter_array(v))
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
         params_dict[k] = param_array .* multiplier_array
