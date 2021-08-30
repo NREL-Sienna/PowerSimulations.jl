@@ -13,12 +13,7 @@ function construct_device!(
     # Variables
     add_variables!(psi_container, ActivePowerInVariable, devices, PhysicalCoupling())
     add_variables!(psi_container, ActivePowerOutVariable, devices, PhysicalCoupling())
-    add_variables!(
-        psi_container,
-        SubComponentReserveVariable,
-        devices,
-        PhysicalCoupling(),
-    )
+    add_variables!(psi_container, SubComponentReserveVariable, devices, PhysicalCoupling())
     add_variables!(
         psi_container,
         SubComponentActivePowerInVariable,
@@ -143,12 +138,7 @@ function construct_device!(
     add_variables!(psi_container, ActivePowerInVariable, devices, PhysicalCoupling())
     add_variables!(psi_container, ActivePowerOutVariable, devices, PhysicalCoupling())
     add_variables!(psi_container, ReactivePowerVariable, devices, PhysicalCoupling())
-    add_variables!(
-        psi_container,
-        SubComponentReserveVariable,
-        devices,
-        PhysicalCoupling(),
-    )
+    add_variables!(psi_container, SubComponentReserveVariable, devices, PhysicalCoupling())
     add_variables!(
         psi_container,
         SubComponentActivePowerInVariable,
@@ -328,12 +318,7 @@ function construct_device!(
     # Variables
     add_variables!(psi_container, ActivePowerInVariable, devices, FinancialCoupling())
     add_variables!(psi_container, ActivePowerOutVariable, devices, FinancialCoupling())
-    add_variables!(
-        psi_container,
-        SubComponentReserveVariable,
-        devices,
-        FinancialCoupling(),
-    )
+    add_variables!(psi_container, SubComponentReserveVariable, devices, FinancialCoupling())
     add_variables!(
         psi_container,
         SubComponentActivePowerInVariable,
@@ -440,12 +425,7 @@ function construct_device!(
     add_variables!(psi_container, ActivePowerInVariable, devices, FinancialCoupling())
     add_variables!(psi_container, ActivePowerOutVariable, devices, FinancialCoupling())
     add_variables!(psi_container, ReactivePowerVariable, devices, FinancialCoupling())
-    add_variables!(
-        psi_container,
-        SubComponentReserveVariable,
-        devices,
-        FinancialCoupling(),
-    )
+    add_variables!(psi_container, SubComponentReserveVariable, devices, FinancialCoupling())
     add_variables!(
         psi_container,
         SubComponentActivePowerInVariable,
