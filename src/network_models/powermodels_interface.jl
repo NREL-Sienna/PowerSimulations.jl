@@ -352,32 +352,6 @@ function powermodels_network!(
     return
 end
 
-function powermodels_network!(
-    container::OptimizationContainer,
-    system_formulation::Type{S},
-    sys::PSY.System,
-    template::ProblemTemplate,
-    instantiate_model = instantiate_nip_expr_model,
-) where {S <: PTDFPowerModel}
-    time_steps = get_time_steps(container)
-    pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
-    buses = PSY.get_components(PSY.Bus, sys)
-
-    remove_undef!(container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)])
-
-    for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["inj_p"] =
-            container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)][t,]
-        # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] = 0.0
-    end
-
-    container.pm =
-        instantiate_model(pm_data, system_formulation, jump_model = container.JuMPmodel)
-    container.pm.ext[:PMmap] = PM_map
-
-    return
-end
-
 #### PM accessor functions ########
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
