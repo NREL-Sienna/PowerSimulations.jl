@@ -1,3 +1,9 @@
+struct TimeSeriesCacheKey
+    component_uuid::Base.UUID
+    time_series_type::Type{<:IS.TimeSeriesData}
+    name::String
+end
+
 # JDNOTE: This might be merged with the structs in simulation_store
 mutable struct SimulationInfo
     number::Int
