@@ -549,47 +549,47 @@ function add_parameterized_upper_bound_range_constraints(
     end
 end
 
-# function add_parameterized_upper_bound_bigM_range_constraints(
-#     container::OptimizationContainer,
-#     T::Type{<:ConstraintType},
-#     U::Type{<:VariableType},
-#     P::Type{<:ParameterType},
-#     devices::IS.FlattenIteratorWrapper{V},
-#     model::DeviceModel{V, W},
-#     X::Type{<:PM.AbstractPowerModel},
-#     feedforward::Union{Nothing, AbstractAffectFeedForward},
-# ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-#
-#     # TODO: the following is incorrect implementation of bigM constraints
-#
-#     time_steps = get_time_steps(container)
-#     constraint_type = T
-#     constraint = T()
-#     variable = U()
-#     component_type = V
-#     jump_variable = get_variable(container, variable, component_type)
-#     names = [PSY.get_name(d) for d in devices]
-#
-#     constraint = add_cons_container!(
-#         container,
-#         constraint,
-#         component_type,
-#         names,
-#         time_steps,
-#         meta = "lb",
-#     )
-#
-#     parameter = get_parameter_array(container, P(), V)
-#     multiplier = get_parameter_multiplier_array(container, P(), V)
-#     for (i, device) in enumerate(devices), t in time_steps
-#         name = PSY.get_name(device)
-#         expression_ub = JuMP.AffExpr(0.0, jump_variable[name, t] => 1.0)
-#
-#         # TODO: deal with additional terms
-#
-#         constraint[name, t] = JuMP.@constraint(
-#             container.JuMPmodel,
-#             expression_ub <= multiplier[name, t] * parameter[name, t]
-#         )
-#     end
-# end
+function add_parameterized_upper_bound_bigM_range_constraints(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+
+    # TODO: the following is incorrect implementation of bigM constraints
+
+    time_steps = get_time_steps(container)
+    constraint_type = T
+    constraint = T()
+    variable = U()
+    component_type = V
+    jump_variable = get_variable(container, variable, component_type)
+    names = [PSY.get_name(d) for d in devices]
+
+    constraint = add_cons_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
+
+    parameter = get_parameter_array(container, P(), V)
+    multiplier = get_parameter_multiplier_array(container, P(), V)
+    for (i, device) in enumerate(devices), t in time_steps
+        name = PSY.get_name(device)
+        expression_ub = JuMP.AffExpr(0.0, jump_variable[name, t] => 1.0)
+
+        # TODO: deal with additional terms
+
+        constraint[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_ub <= multiplier[name, t] * parameter[name, t]
+        )
+    end
+end

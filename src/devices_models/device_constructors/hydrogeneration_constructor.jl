@@ -686,6 +686,15 @@ function construct_device!(
         model,
         S,
     )
+    
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 end

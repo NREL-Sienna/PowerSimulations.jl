@@ -179,6 +179,22 @@ function get_min_max_limits(
 end
 
 """
+Add power variable limits constraints for hydro unit commitment formulation
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+end
+
+
+"""
 Add power variable limits constraints for hydro dispatch formulation
 """
 function add_constraints!(
