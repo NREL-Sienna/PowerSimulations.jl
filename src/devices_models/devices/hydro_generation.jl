@@ -309,7 +309,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevel, V)
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevel(), V)
     energy_var = get_variable(container, EnergyVariable(), V)
     power_var = get_variable(container, ActivePowerVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
@@ -363,7 +363,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevelUp, V)
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevelUp(), V)
 
     energy_var = get_variable(container, EnergyVariableUp(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
@@ -423,7 +423,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevelDown, V)
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevelDown(), V)
 
     energy_var = get_variable(container, EnergyVariableDown(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)

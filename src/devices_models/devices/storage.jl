@@ -173,7 +173,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevel, V)
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevel(), V)
     energy_var = get_variable(container, EnergyVariable(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
