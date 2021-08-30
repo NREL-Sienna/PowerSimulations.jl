@@ -193,7 +193,6 @@ function add_constraints!(
     add_range_constraints!(container, T, U, devices, model, X, feedforward)
 end
 
-
 """
 Add power variable limits constraints for hydro dispatch formulation
 """

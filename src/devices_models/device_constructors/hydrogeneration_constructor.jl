@@ -686,7 +686,7 @@ function construct_device!(
         model,
         S,
     )
-    
+
     add_to_expression!(
         container,
         ReactivePowerBalance,

@@ -933,7 +933,8 @@ function add_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalMultiStart}
     resolution = get_resolution(container)
-    initial_conditions_offtime = get_initial_conditions(container, InitialTimeDurationOff, PSY.ThermalMultiStart)
+    initial_conditions_offtime =
+        get_initial_conditions(container, InitialTimeDurationOff, PSY.ThermalMultiStart)
 
     time_steps = get_time_steps(container)
     set_name = [get_device_name(ic) for ic in initial_conditions_offtime]
@@ -1068,10 +1069,8 @@ function add_constraints!(
     parameters = built_for_simulation(container)
     resolution = get_resolution(container)
     # Use getter functions that don't require creating the keys here
-    initial_conditions_on =
-        get_initial_conditions(container, InitialTimeDurationOn, U)
-    initial_conditions_off =
-        get_initial_conditions(container, InitialTimeDurationOff, U)
+    initial_conditions_on = get_initial_conditions(container, InitialTimeDurationOn, U)
+    initial_conditions_off = get_initial_conditions(container, InitialTimeDurationOff, U)
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))
@@ -1111,10 +1110,8 @@ function add_constraints!(
     parameters = built_for_simulation(container)
     resolution = get_resolution(container)
     # Use getter functions that don't require creating the keys here
-    initial_conditions_on =
-        get_initial_conditions(container, InitialTimeDurationOn, U)
-    initial_conditions_off =
-        get_initial_conditions(container, InitialTimeDurationOff, U)
+    initial_conditions_on = get_initial_conditions(container, InitialTimeDurationOn, U)
+    initial_conditions_off = get_initial_conditions(container, InitialTimeDurationOff, U)
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))

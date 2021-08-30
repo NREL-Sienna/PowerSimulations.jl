@@ -944,10 +944,11 @@ function get_initial_conditions_keys(container::OptimizationContainer)
     return collect(keys(container.initial_conditions))
 end
 
-function set_initial_conditions!(container::OptimizationContainer,
+function set_initial_conditions!(
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{D},
-    value
+    value,
 ) where {T <: InitialConditionType, D <: PSY.Device}
     set_initial_conditions!(container, ICKey(T, D), value)
 end
