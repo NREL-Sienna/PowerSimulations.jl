@@ -323,6 +323,10 @@ function one_step_solve!(model::EmulationModel)
     end
 end
 
+function update_model!(model::EmulationModel)
+
+end
+
 function run_impl(
     model::EmulationModel;
     executions = 1,
@@ -344,7 +348,7 @@ function run_impl(
             # timed_log = get_solve_timed_log(model)
             # _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] = @timed
             one_step_solve!(model)
-            # update_model!(model)
+            update_model!(model)
             # write_results(model)
             ProgressMeter.update!(
                 prog_bar,
