@@ -23,7 +23,7 @@ function construct_network!(
             model,
             CopperPlatePowerModel,
         )
-        cost_function(container, PSY.System, model, CopperPlatePowerModel)
+        cost_function!(container, PSY.System, model, CopperPlatePowerModel)
     end
 
     add_constraints!(
@@ -95,7 +95,7 @@ function construct_network!(
             model,
             StandardPTDFModel,
         )
-        cost_function(container, PSY.System, model, CopperPlatePowerModel)
+        cost_function!(container, PSY.System, model, StandardPTDFModel)
     end
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model, StandardPTDFModel)

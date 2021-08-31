@@ -1,4 +1,5 @@
-struct VariableKey{T <: VariableType, U <: PSY.Component} <: OptimizationContainerKey
+struct VariableKey{T <: VariableType, U <: Union{PSY.Component, PSY.System}} <:
+       OptimizationContainerKey
     meta::String
 end
 
@@ -6,7 +7,7 @@ function VariableKey(
     ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     check_meta_chars(meta)
     return VariableKey{T, U}(meta)
 end
@@ -19,8 +20,12 @@ function VariableKey(::Type{T}, meta::String) where {T <: VariableType}
     return VariableKey(T, PSY.Component, meta)
 end
 
-get_entry_type(::VariableKey{T, U}) where {T <: VariableType, U <: PSY.Component} = T
-get_component_type(::VariableKey{T, U}) where {T <: VariableType, U <: PSY.Component} = U
+get_entry_type(
+    ::VariableKey{T, U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = T
+get_component_type(
+    ::VariableKey{T, U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = U
 
 """Struct to dispatch the creation of Active Power Variables"""
 struct ActivePowerVariable <: VariableType end

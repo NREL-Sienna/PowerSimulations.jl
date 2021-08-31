@@ -179,6 +179,21 @@ function get_min_max_limits(
 end
 
 """
+Add power variable limits constraints for hydro unit commitment formulation
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
+    add_semicontinuous_range_constraints!(container, T, U, devices, model, X, feedforward)
+end
+
+"""
 Add power variable limits constraints for hydro dispatch formulation
 """
 function add_constraints!(
@@ -294,7 +309,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevel, V)
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevel(), V)
     energy_var = get_variable(container, EnergyVariable(), V)
     power_var = get_variable(container, ActivePowerVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
@@ -348,7 +363,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevelUp, V)
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevelUp(), V)
 
     energy_var = get_variable(container, EnergyVariableUp(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
@@ -408,7 +423,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevelDown, V)
+    initial_conditions = get_initial_conditions(container, InitialEnergyLevelDown(), V)
 
     energy_var = get_variable(container, EnergyVariableDown(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)

@@ -8,13 +8,13 @@ end
 function get_initial_cache(cache::TimeStatusChange, model::OperationModel)
     ini_cond_on = get_initial_conditions(
         get_optimization_container(model),
-        InitialTimeDurationOn,
+        InitialTimeDurationOn(),
         cache.device_type,
     )
 
     ini_cond_off = get_initial_conditions(
         get_optimization_container(model),
-        InitialTimeDurationOff,
+        InitialTimeDurationOff(),
         cache.device_type,
     )
 
@@ -49,7 +49,7 @@ end
 function get_initial_cache(cache::StoredEnergy, model::OperationModel)
     ini_cond_level = get_initial_conditions(
         get_optimization_container(model),
-        InitialEnergyLevel,
+        InitialEnergyLevel(),
         cache.device_type,
     )
 
