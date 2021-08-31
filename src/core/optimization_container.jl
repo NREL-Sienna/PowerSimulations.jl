@@ -854,9 +854,9 @@ function _add_expression_container!(
     if sparse
         expr_container = sparse_container_spec(JuMP.AbstractJuMPScalar, axs...)
     else
-        expr_container = container_spec(JuMP.ConstraintRef, axs...)
+        expr_container = container_spec(JuMP.AbstractJuMPScalar, axs...)
     end
-    _assign_container!(container.constraints, expr_key, expr_container)
+    _assign_container!(container.expressions, expr_key, expr_container)
     return cons_container
 end
 
