@@ -33,7 +33,7 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    add_cons_container!(
+    constraint = add_cons_container!(
         container,
         RequirementConstraint(),
         SR,
@@ -41,7 +41,6 @@ function service_requirement_constraint!(
         time_steps;
         meta = name,
     )
-    constraint = get_constraint(container, RequirementConstraint(), SR, name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
 
@@ -51,12 +50,8 @@ function service_requirement_constraint!(
 
     requirement = PSY.get_requirement(service)
     if parameters
-        container = get_parameter(
-            container,
-            RequirementTimeSeriesParameter(PSY.Deterministic, "requirement"),
-            SR;
-            meta = name,
-        )
+        container =
+            get_parameter(container, RequirementTimeSeriesParameter(), SR; meta = name)
         param = get_parameter_array(container)
         multiplier = get_multiplier_array(container)
         for t in time_steps
@@ -95,7 +90,7 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    add_cons_container!(
+    constraint = add_cons_container!(
         container,
         RequirementConstraint(),
         SR,
@@ -103,7 +98,6 @@ function service_requirement_constraint!(
         time_steps;
         meta = name,
     )
-    constraint = get_constraint(container, RequirementConstraint(), SR, name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
     use_slacks && (slack_vars = reserve_slacks(container, service))
@@ -144,7 +138,7 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    add_cons_container!(
+    constraint = add_cons_container!(
         container,
         RequirementConstraint(),
         SR,
@@ -152,7 +146,6 @@ function service_requirement_constraint!(
         time_steps;
         meta = name,
     )
-    constraint = get_constraint(container, RequirementConstraint(), SR, name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
 

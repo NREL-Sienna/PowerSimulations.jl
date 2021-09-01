@@ -46,7 +46,7 @@ function validate_services!(
     ::Vector{<:DataType},
     sys::PSY.System,
 ) where {S <: PSY.StaticReserveGroup}
-    service = PSY.get_components(S, sys, get_service_name(model))
+    service = PSY.get_component(S, sys, get_service_name(model))
     if isnothing(service)
         @warn "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
             :ConstructGroup

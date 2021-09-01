@@ -184,7 +184,7 @@ function get_min_max_limits(
     ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{HydroDispatchRunOfRiver},
 )
-    return (min = 0.0, max = PSY.get_active_power_limits(x).max)
+    return (min = 0.0, max = PSY.get_max_active_power(x))
 end
 
 """
