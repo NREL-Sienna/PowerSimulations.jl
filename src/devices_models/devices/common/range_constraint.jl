@@ -540,12 +540,10 @@ function add_parameterized_upper_bound_range_constraints(
         expression_ub = JuMP.AffExpr(0.0, jump_variable[name, t] => 1.0)
 
         # TODO: deal with additional terms
-        if multiplier[name, t] !== NaN
-            constraint[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
-                expression_ub <= multiplier[name, t] * parameter[name, t]
-            )
-        end
+        constraint[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_ub <= multiplier[name, t] * parameter[name, t]
+        )
     end
 end
 
