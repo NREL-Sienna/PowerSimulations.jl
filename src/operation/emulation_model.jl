@@ -335,6 +335,9 @@ function update_model!(model::EmulationModel)
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key)
     end
+    #for key in keys(get_initial_constraints(model))
+    #    update_initial_conditions!(model, key)
+    #end
     return
 end
 
@@ -357,9 +360,9 @@ function run_impl(
             # timed_log = get_solve_timed_log(model)
             # _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] = @timed
             PSI.one_step_solve!(model)
+            # write_results(model)
             PSI.advance_execution_count!(model)
             PSI.update_model!(model)
-            # write_results(model)
             ProgressMeter.update!(
                 prog_bar,
                 get_execution_count(model);
@@ -369,6 +372,7 @@ function run_impl(
     catch e
         @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
         set_run_status!(model, RunStatus.FAILED)
+        return get_run_status(model)
     finally
         set_run_status!(model, RunStatus.SUCCESSFUL)
     end
@@ -397,6 +401,7 @@ function run!(model::EmulationModel{<:EmulationProblem}; kwargs...)
     return status
 end
 
+# Write results to the store
 function write_problem_results!(
     step::Int,
     model::EmulationModel{<:EmulationProblem},
@@ -430,6 +435,7 @@ function run!(
     store::SimulationStore;
     exports = nothing,
 )
+    # Initialize the InMemorySimulationStore
     solve_status = run!(model)
     if solve_status == RunStatus.SUCCESSFUL
         write_problem_results!(step, model, start_time, store, exports)
