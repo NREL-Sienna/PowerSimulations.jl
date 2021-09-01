@@ -19,6 +19,8 @@ get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurv
 get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, d::PSY.Component, ::AbstractReservesFormulation) = PSY.get_max_active_power(d)
 get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, ::AbstractReservesFormulation) = 0.0
 
+get_multiplier_value(::RequirementTimeSeriesParameter, d::PSY.Reserve, ::AbstractReservesFormulation) = PSY.get_requirement(d)
+
 #! format: on
 ################################## Reserve Requirement Constraint ##########################
 function service_requirement_constraint!(

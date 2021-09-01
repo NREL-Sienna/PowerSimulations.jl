@@ -65,7 +65,7 @@ const DISABLED_TEST_FILES = [
     # "test_problem_template.jl",
     # "test_model_emulation.jl",
     # "test_network_constructors.jl",
-    "test_services_constructor.jl",
+    # "test_services_constructor.jl",
     "test_simulation_build.jl",
     "test_simulation_execute.jl",
     "test_simulation_results.jl",

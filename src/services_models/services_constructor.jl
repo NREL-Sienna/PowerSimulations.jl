@@ -1,5 +1,5 @@
-function initialize_timeseries_labels(
-    ::Type{<:PSY.Service},
+function initialize_timeseries_names(
+    ::Type{<:PSY.Reserve},
     ::Type{T},
 ) where {T <: Union{RangeReserve, RampReserve}}
     return Dict{Type{<:TimeSeriesParameter}, String}(
@@ -7,7 +7,7 @@ function initialize_timeseries_labels(
     )
 end
 
-function initialize_timeseries_labels(
+function initialize_timeseries_names(
     ::Type{<:PSY.Service},
     ::Type{<:AbstractServiceFormulation},
 )

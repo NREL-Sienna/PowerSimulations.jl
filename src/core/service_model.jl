@@ -47,7 +47,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     service_name::String
     use_slacks::Bool
     duals::Vector{DataType}
-    time_series_labels::Dict{Type{<:TimeSeriesParameter}, String}
+    time_series_names::Dict{Type{<:TimeSeriesParameter}, String}
     attributes::Dict{String, Any}
     function ServiceModel(
         ::Type{D},
@@ -56,7 +56,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         use_slacks = false,
         feedforward = nothing,
         duals = Vector{DataType}(),
-        time_series_labels = initialize_timeseries_labels(D, B),
+        time_series_names = initialize_timeseries_names(D, B),
         attributes = initialize_attributes(D, B),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
@@ -66,7 +66,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
             service_name,
             use_slacks,
             duals,
-            time_series_labels,
+            time_series_names,
             attributes,
         )
     end
@@ -82,7 +82,7 @@ get_feedforward(m::ServiceModel) = m.feedforward
 get_service_name(m::ServiceModel) = m.service_name
 get_use_slacks(m::ServiceModel) = m.use_slacks
 get_duals(m::ServiceModel) = m.duals
-get_time_series_labels(m::ServiceModel) = m.time_series_labels
+get_time_series_names(m::ServiceModel) = m.time_series_names
 get_attributes(m::ServiceModel) = m.attributes
 get_attribute(m::ServiceModel, key::String) = get(m.attributes, key, nothing)
 
@@ -92,7 +92,7 @@ function ServiceModel(
     use_slacks = false,
     feedforward = nothing,
     duals = Vector{DataType}(),
-    time_series_labels = initialize_timeseries_labels(D, B),
+    time_series_names = initialize_timeseries_names(D, B),
     attributes = initialize_attributes(D, B),
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
     if !haskey(attributes, "aggregated_service_model")
@@ -105,7 +105,7 @@ function ServiceModel(
         use_slacks,
         feedforward,
         duals,
-        time_series_labels,
+        time_series_names,
         attributes,
     )
 end
