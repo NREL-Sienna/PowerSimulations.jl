@@ -43,7 +43,7 @@ OpModel = EmulationModel(MockEmulationProblem, template, system)
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
-mutable struct EmulationModel{M <: EmulationProblem} <: EmulationModel
+mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
