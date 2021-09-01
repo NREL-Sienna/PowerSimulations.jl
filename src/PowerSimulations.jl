@@ -423,6 +423,9 @@ include("operation/model_cache.jl")
 include("operation/time_series_interface.jl")
 include("operation/optimization_debugging.jl")
 
+include("parameters/add_parameters.jl")
+include("parameters/update_parameters.jl")
+
 include("feedforward/feedforward_chronologies.jl")
 include("feedforward/feedforward_structs.jl")
 
@@ -444,7 +447,6 @@ include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
 include("devices_models/devices/common/add_auxiliary_variable.jl")
 include("devices_models/devices/common/add_constraint_dual.jl")
-include("devices_models/devices/common/add_parameters.jl")
 include("devices_models/devices/common/rating_constraints.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
