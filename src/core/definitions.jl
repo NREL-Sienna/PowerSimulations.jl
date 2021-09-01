@@ -101,3 +101,10 @@ end
 Base.convert(::Type{BuildStatus}, val::String) = get_enum_value(BuildStatus, val)
 Base.convert(::Type{RunStatus}, val::String) = get_enum_value(RunStatus, val)
 Base.convert(::Type{SOSStatusVariable}, x::String) = get_enum_value(SOSStatusVariable, x)
+
+# Store const definitions
+const STORE_CONTAINER_DUALS = :duals
+const STORE_CONTAINER_PARAMETERS = :parameters
+const STORE_CONTAINER_VARIABLES = :variables
+const STORE_CONTAINERS =
+    Set((STORE_CONTAINER_DUALS, STORE_CONTAINER_PARAMETERS, STORE_CONTAINER_VARIABLES))

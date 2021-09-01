@@ -63,7 +63,6 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        # TODO in PSY 1.12 to implement as a PSY function
         _, ts_count, forecast_count = PSY.get_time_series_counts(sys)
         if forecast_count < 1
             error(
@@ -192,8 +191,29 @@ end
 function get_current_time(model::DecisionModel)
     execution_count = get_model_internal(model).execution_count
     initial_time = get_initial_time(model)
-    # interval = USE GETTER FROM STORE PARAMS
+    interval = get_interval(model.internal.store_parameters)
     return initial_time + interval * execution_count
+end
+
+function model_store_init(model::DecisionModel)
+    num_executions = get_executions(model)
+    horizon = get_horizon(model)
+    system = get_system(model)
+    interval = PSY.get_time_series_interval(system)
+    resolution = PSY.get_time_series_resolution(system)
+    end_of_interval_step = get_end_of_interval_step(get_internal(model))
+    base_power = PSY.get_base_power(system)
+    sys_uuid = IS.get_uuid(system)
+    return StoreModelParams(
+        num_executions,
+        horizon,
+        interval,
+        resolution,
+        end_of_interval_step,
+        base_power,
+        sys_uuid,
+        get_metadata(get_optimization_container(model)),
+    )
 end
 
 function build_pre_step!(model::DecisionModel)
@@ -212,6 +232,8 @@ function build_pre_step!(model::DecisionModel)
             get_network_formulation(get_template(model)),
             get_system(model),
         )
+        @info "Initializing ModelStoreParams"
+        model_store_init!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
