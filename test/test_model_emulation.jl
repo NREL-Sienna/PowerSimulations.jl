@@ -10,11 +10,7 @@
     # c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_uc_re"; add_single_time_series = true)
 
     # The initial time kwarg can be removed when
-    model = EmulationModel(
-        template,
-        c_sys5;
-        optimizer = Cbc_optimizer,
-        initial_time = DateTime("2024-01-01T00:00:00"),
-    )
+    model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
+    @test run!(model; executions = 10) == RunStatus.SUCCESSFUL
 end
