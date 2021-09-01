@@ -1,5 +1,5 @@
 function initialize_simulation_info!(model::DecisionModel, ::FeedForwardChronology)
-    @assert built_for_simulation(model)
+    @assert built_for_recurrent_solves(model)
     system = get_system(model)
     resolution = get_resolution(model)
     interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
@@ -8,7 +8,7 @@ function initialize_simulation_info!(model::DecisionModel, ::FeedForwardChronolo
 end
 
 function initialize_simulation_info!(model::DecisionModel, ::RecedingHorizon)
-    @assert built_for_simulation(model)
+    @assert built_for_recurrent_solves(model)
     get_simulation_info(model).end_of_interval_step = 1
 end
 

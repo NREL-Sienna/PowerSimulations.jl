@@ -204,7 +204,7 @@ function _make_initial_conditions!(
     cache = nothing,
 ) where {T <: PSY.Component}
     length_devices = length(devices)
-    parameters = built_for_simulation(container)
+    parameters = built_for_recurrent_solves(container)
     ic_container = get_initial_conditions(container)
     if !haskey(ic_container, key)
         @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data" _group =

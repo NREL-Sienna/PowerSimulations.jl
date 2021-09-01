@@ -223,7 +223,7 @@ function _build!(model::DecisionModel{<:DecisionProblem}, serialize::Bool)
             )
             set_status!(model, BuildStatus.BUILT)
             log_values(get_settings(model))
-            !built_for_simulation(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
+            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
         catch e
             set_status!(model, BuildStatus.FAILED)
             bt = catch_backtrace()
@@ -266,7 +266,7 @@ function problem_build!(model::DecisionModel)
 end
 
 function reset!(model::OperationModel)
-    if built_for_simulation(model)
+    if built_for_recurrent_solves(model)
         set_execution_count!(model, 0)
     end
     container = OptimizationContainer(

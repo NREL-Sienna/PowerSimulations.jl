@@ -239,7 +239,7 @@ mutable struct Simulation
     )
         for model in models
             model_name = get_name(model)
-            if !built_for_simulation(model)
+            if !built_for_recurrent_solves(model)
                 throw(
                     IS.ConflictingInputsError(
                         "model $(model_name) is not part of any Simulation",
