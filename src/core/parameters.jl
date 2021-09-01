@@ -40,7 +40,7 @@ struct ParameterContainer
 end
 
 function ParameterContainer(parameter_array, multiplier_array)
-    return ParamterContainer(NoAttributes(), parameter_array, multiplier_array)
+    return ParameterContainer(NoAttributes(), parameter_array, multiplier_array)
 end
 
 get_parameter_array(c::ParameterContainer) = c.parameter_array
