@@ -869,7 +869,7 @@ function _add_expression_container!(
         expr_container = container_spec(JuMP.AbstractJuMPScalar, axs...)
     end
     _assign_container!(container.expressions, expr_key, expr_container)
-    return cons_container
+    return expr_container
 end
 
 function add_expression_container!(
@@ -939,7 +939,7 @@ function get_initial_conditions(
     container::OptimizationContainer,
     ::T,
     ::Type{D},
-) where {T <: InitialConditionType, D <: PSY.Device}
+) where {T <: InitialConditionType, D <: PSY.Component}
     return get_initial_conditions(container, ICKey(T, D))
 end
 

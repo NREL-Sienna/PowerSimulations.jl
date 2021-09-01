@@ -546,6 +546,7 @@ function add_parameterized_upper_bound_range_constraints(
                 expression_ub <= multiplier[name, t] * parameter[name, t]
             )
         end
+        # TODO: implement somthing similar to lazy_lb! to add a lower incase of downwards reserves
     end
 end
 
