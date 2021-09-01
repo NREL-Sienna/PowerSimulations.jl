@@ -72,6 +72,7 @@ const DISABLED_TEST_FILES = [
     "test_simulation_results_export.jl",
     "test_simulation_sequence.jl",
     "test_simulation_store.jl",
+    "test_simulation_results.jl",
 ]
 
 LOG_LEVELS = Dict(
