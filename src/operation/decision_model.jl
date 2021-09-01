@@ -179,138 +179,6 @@ function DecisionModel(
     )
 end
 
-get_name(model::DecisionModel) = model.name
-
-function get_time_series_values!(
-    time_series_type::Type{<:IS.TimeSeriesData},
-    model::DecisionModel,
-    component,
-    name,
-    initial_time,
-    horizon;
-    ignore_scaling_factors = true,
-)
-    if !use_time_series_cache(get_settings(model))
-        return IS.get_time_series_values(
-            time_series_type,
-            component,
-            name,
-            start_time = initial_time,
-            len = horizon,
-            ignore_scaling_factors = true,
-        )
-    end
-
-    cache = get_time_series_cache(model)
-    key = TimeSeriesCacheKey(IS.get_uuid(component), time_series_type, name)
-    if haskey(cache, key)
-        ts_cache = cache[key]
-    else
-        ts_cache = make_time_series_cache(
-            time_series_type,
-            component,
-            name,
-            initial_time,
-            horizon,
-            ignore_scaling_factors = true,
-        )
-        cache[key] = ts_cache
-    end
-
-    ts = IS.get_time_series_array!(ts_cache, initial_time)
-    return TimeSeries.values(ts)
-end
-
-function make_time_series_cache(
-    time_series_type::Type{T},
-    component,
-    name,
-    initial_time,
-    horizon;
-    ignore_scaling_factors = true,
-) where {T <: IS.TimeSeriesData}
-    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name)
-    if T <: IS.SingleTimeSeries
-        cache = IS.StaticTimeSeriesCache(
-            PSY.SingleTimeSeries,
-            component,
-            name,
-            start_time = initial_time,
-            ignore_scaling_factors = ignore_scaling_factors,
-        )
-    elseif T <: IS.Deterministic
-        cache = IS.ForecastCache(
-            IS.AbstractDeterministic,
-            component,
-            name,
-            start_time = initial_time,
-            horizon = horizon,
-            ignore_scaling_factors = ignore_scaling_factors,
-        )
-    elseif T <: IS.Probabilistic
-        cache = IS.ForecastCache(
-            IS.Probabilistic,
-            component,
-            name,
-            start_time = initial_time,
-            horizon = horizon,
-            ignore_scaling_factors = ignore_scaling_factors,
-        )
-    else
-        error("not supported yet: $T")
-    end
-
-    @debug "Made time series cache for $(summary(component))" name initial_time
-    return cache
-end
-
-function get_initial_conditions(
-    model::DecisionModel,
-    ic::InitialConditionType,
-    device::PSY.Device,
-)
-    key = ICKey(ic, device)
-    return get_initial_conditions(get_optimization_container(model), key)
-end
-
-set_console_level!(model::DecisionModel, val) = get_internal(model).console_level = val
-set_file_level!(model::DecisionModel, val) = get_internal(model).file_level = val
-set_executions!(model::DecisionModel, val::Int) =
-    model.internal.simulation_info.executions = val
-set_execution_count!(model::DecisionModel, val::Int) =
-    get_simulation_info(model).execution_count = val
-set_initial_time!(model::DecisionModel, val::Dates.DateTime) =
-    set_initial_time!(get_settings(model), val)
-set_simulation_info!(model::DecisionModel, info::SimulationInfo) =
-    model.internal.simulation_info = info
-function set_status!(model::DecisionModel, status::BuildStatus)
-    model.internal.status = status
-    return
-end
-set_output_dir!(model::DecisionModel, path::AbstractString) =
-    get_internal(model).output_dir = path
-
-function reset!(model::DecisionModel{T}) where {T <: DecisionProblem}
-    if built_for_simulation(model::DecisionModel)
-        set_execution_count!(model, 0)
-    end
-    container = OptimizationContainer(get_system(model), get_settings(model), nothing)
-    model.internal.container = container
-    empty_time_series_cache!(model)
-    set_status!(model, BuildStatus.EMPTY)
-    return
-end
-
-function advance_execution_count!(model::DecisionModel)
-    info = get_simulation_info(model)
-    info.execution_count += 1
-    # Reset execution count at the end of step
-    if get_execution_count(model) == get_executions(model)
-        info.execution_count = 0
-    end
-    return
-end
-
 function build_pre_step!(model::DecisionModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
@@ -380,84 +248,17 @@ function build!(
 end
 
 """
-Default implementation of build method for Operational Problems for models conforming with  DecisionProblem specification. Overload this function to implement a custom build method
+Default implementation of build method for Operational Problems for models conforming with DecisionProblem specification. Overload this function to implement a custom build method
 """
-function problem_build!(model::DecisionModel{<:DecisionProblem})
+function problem_build!(model::DecisionModel)
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end
 
-serialize_optimization_model(::DecisionProblem) = nothing
-serialize_problem(::DecisionProblem) = nothing
-
 function serialize_optimization_model(model::DecisionModel{<:DecisionProblem})
-    problem_name = "$(get_name(model))_OptimizationModel"
+    problem_name = "$(get_name(model))_DecisionModel"
     json_file_name = "$(problem_name).json"
     json_file_name = joinpath(get_output_dir(model), json_file_name)
     serialize_optimization_model(get_optimization_container(model), json_file_name)
-end
-
-struct DecisionModelSerializationWrapper
-    template::ProblemTemplate
-    sys::Union{Nothing, String}
-    settings::Settings
-    model_type::DataType
-    name::String
-end
-
-function serialize_problem(model::DecisionModel{<:DecisionProblem})
-    # A PowerSystem cannot be serialized in this format because of how it stores
-    # time series data. Use its specialized serialization method instead.
-    problem_name = get_name(model)
-    sys_to_file = get_system_to_file(get_settings(model))
-    if sys_to_file
-        sys = get_system(model)
-        sys_filename = joinpath(get_output_dir(model), make_system_filename(sys))
-        # Skip serialization if the system is already in the folder
-        !ispath(sys_filename) && PSY.to_json(sys, sys_filename)
-    else
-        sys_filename = nothing
-    end
-    container = get_optimization_container(model)
-    obj = DecisionModelSerializationWrapper(
-        model.template,
-        sys_filename,
-        container.settings_copy,
-        typeof(model),
-        string(get_name(model)),
-    )
-    bin_file_name = "$problem_name.bin"
-    bin_file_name = joinpath(get_output_dir(model), bin_file_name)
-    Serialization.serialize(bin_file_name, obj)
-    @info "Serialized DecisionModel to" bin_file_name
-end
-
-function deserialize_problem(::Type{DecisionModel}, filename::AbstractString; kwargs...)
-    obj = Serialization.deserialize(filename)
-    if !(obj isa DecisionModelSerializationWrapper)
-        throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
-    end
-    sys = get(kwargs, :system, nothing)
-    settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
-    if sys === nothing
-        if obj.sys === nothing && !settings[:sys_to_file]
-            throw(
-                IS.DataFormatError(
-                    "Operations Problem System was not serialized and a System has not been specified.",
-                ),
-            )
-        elseif !ispath(obj.sys)
-            throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
-        end
-        sys = PSY.System(obj.sys)
-    end
-
-    return obj.model_type(
-        obj.template,
-        sys,
-        kwargs[:jump_model];
-        name = obj.name,
-        settings...,
-    )
 end
 
 function calculate_aux_variables!(model::DecisionModel)
@@ -571,7 +372,7 @@ function solve!(
     return solve_status
 end
 
-function write_model_results!(store, model, timestamp; exports = nothing)
+function write_model_results!(store, model::DecisionModel, timestamp; exports = nothing)
     if exports !== nothing
         export_params = Dict{Symbol, Any}(
             :exports => exports,
@@ -598,7 +399,13 @@ function write_model_results!(store, model, timestamp; exports = nothing)
     return
 end
 
-function _write_model_dual_results!(store, container, model, timestamp, exports)
+function _write_model_dual_results!(
+    store,
+    container,
+    model::DecisionModel,
+    timestamp,
+    exports,
+)
     problem_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "duals")
@@ -629,7 +436,13 @@ function _write_model_dual_results!(store, container, model, timestamp, exports)
     end
 end
 
-function _write_model_parameter_results!(store, container, model, timestamp, exports)
+function _write_model_parameter_results!(
+    store,
+    container,
+    model::DecisionModel,
+    timestamp,
+    exports,
+)
     problem_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "parameters")
@@ -676,7 +489,13 @@ function _write_model_parameter_results!(store, container, model, timestamp, exp
     end
 end
 
-function _write_model_variable_results!(store, container, model, timestamp, exports)
+function _write_model_variable_results!(
+    store,
+    container,
+    model::DecisionModel,
+    timestamp,
+    exports,
+)
     problem_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "variables")
@@ -706,10 +525,15 @@ function _write_model_variable_results!(store, container, model, timestamp, expo
     end
 end
 
-function _write_model_aux_variable_results!(store, container, model, timestamp, exports)
+function _write_model_aux_variable_results!(
+    store,
+    container,
+    model::DecisionModel,
+    timestamp,
+    exports,
+)
     problem_name = get_name(model)
     if exports !== nothing
-        # TODO: Should the export go to a folder aux_variables
         exports_path = joinpath(exports[:exports_path], "variables")
         mkpath(exports_path)
     end
@@ -735,148 +559,4 @@ function _write_model_aux_variable_results!(store, container, model, timestamp, 
             export_result(file_type, exports_path, key, timestamp, df)
         end
     end
-end
-
-# Here because requires the problem to be defined
-# This is a method a user defining a custom cache will have to define. This is the definition
-# in PSI for the building the TimeStatusChange
-function get_initial_cache(cache::AbstractCache, ::DecisionModel)
-    throw(ArgumentError("Initialization method for cache $(typeof(cache)) not defined"))
-end
-
-function get_initial_cache(cache::TimeStatusChange, model::DecisionModel)
-    ini_cond_on = get_initial_conditions(
-        get_optimization_container(model),
-        InitialTimeDurationOn,
-        cache.device_type,
-    )
-
-    ini_cond_off = get_initial_conditions(
-        get_optimization_container(model),
-        InitialTimeDurationOff,
-        cache.device_type,
-    )
-
-    device_axes = Set((
-        PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
-    ),)
-    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}}(undef, device_axes)
-
-    for ic in ini_cond_on
-        device_name = PSY.get_name(ic.device)
-        condition = get_condition(ic)
-        status = (condition > 0.0) ? 1.0 : 0.0
-        value_array[device_name] = Dict(:count => condition, :status => status)
-    end
-
-    for ic in ini_cond_off
-        device_name = PSY.get_name(ic.device)
-        condition = get_condition(ic)
-        status = (condition > 0.0) ? 0.0 : 1.0
-        if value_array[device_name][:status] != status
-            throw(
-                IS.ConflictingInputsError(
-                    "Initial Conditions for $(device_name) are not compatible. The values provided are invalid",
-                ),
-            )
-        end
-    end
-
-    return value_array
-end
-
-function get_initial_cache(cache::StoredEnergy, model::DecisionModel)
-    ini_cond_level = get_initial_conditions(
-        get_optimization_container(model),
-        InitialEnergyLevel,
-        cache.device_type,
-    )
-
-    device_axes = Set([PSY.get_name(ic.device) for ic in ini_cond_level],)
-    value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)
-    for ic in ini_cond_level
-        device_name = PSY.get_name(ic.device)
-        condition = get_condition(ic)
-        value_array[device_name] = condition
-    end
-    return value_array
-end
-
-function get_timestamps(model::DecisionModel)
-    start_time = get_initial_time(get_optimization_container(model))
-    resolution = get_resolution(model)
-    horizon = get_horizon(model)
-    return range(start_time, length = horizon, step = resolution)
-end
-
-function write_data(model::DecisionModel, output_dir::AbstractString; kwargs...)
-    write_data(get_optimization_container(model), output_dir; kwargs...)
-    return
-end
-
-struct ProblemSerializationWrapper
-    template::ProblemTemplate
-    sys::String
-    settings::Settings
-    problem_type::DataType
-end
-
-################ Functions to debug optimization models#####################################
-"""
-Each Tuple corresponds to (con_name, internal_index, moi_index)
-"""
-function get_all_constraint_index(model::DecisionModel)
-    con_index = Vector{Tuple{ConstraintKey, Int, Int}}()
-    container = get_optimization_container(model)
-    for (key, value) in get_constraints(container)
-        for (idx, constraint) in enumerate(value)
-            moi_index = JuMP.optimizer_index(constraint)
-            push!(con_index, (key, idx, moi_index.value))
-        end
-    end
-    return con_index
-end
-
-"""
-Each Tuple corresponds to (con_name, internal_index, moi_index)
-"""
-function get_all_var_index(model::DecisionModel)
-    var_keys = get_all_var_keys(model)
-    return [(encode_key(v[1]), v[2], v[3]) for v in var_keys]
-end
-
-function get_all_var_keys(model::DecisionModel)
-    var_index = Vector{Tuple{VariableKey, Int, Int}}()
-    container = get_optimization_container(model)
-    for (key, value) in get_variables(container)
-        for (idx, variable) in enumerate(value)
-            moi_index = JuMP.optimizer_index(variable)
-            push!(var_index, (key, idx, moi_index.value))
-        end
-    end
-    return var_index
-end
-
-function get_con_index(model::DecisionModel, index::Int)
-    container = get_optimization_container(model)
-    constraints = get_constraints(container)
-    for i in get_all_constraint_index(model::DecisionModel)
-        if i[3] == index
-            return constraints[i[1]].data[i[2]]
-        end
-    end
-    @info "Index not found"
-    return
-end
-
-function get_var_index(model::DecisionModel, index::Int)
-    container = get_optimization_container(model)
-    variables = get_variables(container)
-    for i in get_all_var_keys(model)
-        if i[3] == index
-            return variables[i[1]].data[i[2]]
-        end
-    end
-    @info "Index not found"
-    return
 end

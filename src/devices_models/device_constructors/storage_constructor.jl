@@ -1,4 +1,4 @@
-function initialize_timeseries_labels(
+function initialize_timeseries_names(
     ::Type{D},
     ::Type{EnergyTarget},
 ) where {D <: PSY.Storage}
@@ -33,6 +33,31 @@ function construct_device!(
     end
     # Initial Conditions
     initial_conditions!(container, devices, D())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -111,6 +136,23 @@ function construct_device!(
     end
     # Initial Conditions
     initial_conditions!(container, devices, D())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -186,6 +228,31 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -277,6 +344,23 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -354,6 +438,31 @@ function construct_device!(
     end
     # Initial Conditions
     initial_conditions!(container, devices, BatteryAncillaryServices())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
@@ -429,6 +538,23 @@ function construct_device!(
     end
     # Initial Conditions
     initial_conditions!(container, devices, BatteryAncillaryServices())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(

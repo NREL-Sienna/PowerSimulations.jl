@@ -7,6 +7,7 @@ module PowerSimulations
 # Base Models
 export Simulation
 export DecisionModel
+export EmulationModel
 export ProblemResults
 export ProblemTemplate
 export InitialCondition
@@ -208,7 +209,6 @@ export ReserveRequirementSlack
 export VoltageMagnitude
 export VoltageAngle
 export FlowActivePowerVariable
-export FlowReactivePowerVariable
 export FlowActivePowerFromToVariable
 export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable
@@ -398,6 +398,7 @@ include("core/device_model.jl")
 include("core/variables.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
+include("core/expressions.jl")
 include("core/cache.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
@@ -407,7 +408,6 @@ include("initial_conditions/initial_conditions.jl")
 include("initial_conditions/initial_condition.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
 
-# TODO: Clean the Initial Condition relationship with the Optimization Container
 include("core/optimization_container.jl")
 include("initial_conditions/update_initial_conditions.jl")
 
@@ -415,8 +415,13 @@ include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
 include("operation/problem_internal.jl")
 include("operation/decision_model.jl")
+include("operation/emulation_model.jl")
 include("operation/problem_results_export.jl")
 include("operation/problem_results.jl")
+include("operation/time_series_interface.jl")
+include("operation/operation_model_serialization.jl")
+include("operation/model_cache.jl")
+include("operation/optimization_debugging.jl")
 
 include("feedforward/feedforward_chronologies.jl")
 include("feedforward/feedforward_structs.jl")
@@ -445,7 +450,6 @@ include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/commitment_constraint.jl")
 include("devices_models/devices/common/timeseries_constraint.jl")
-include("devices_models/devices/common/expressionarray_algebra.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
 include("feedforward/feedforward_constraints.jl")
@@ -453,7 +457,7 @@ include("feedforward/feedforward_constraints.jl")
 # Device Modeling components
 include("devices_models/devices/interfaces.jl")
 include("devices_models/devices/common/device_range_constraints.jl")
-include("devices_models/devices/common/nodal_expression.jl")
+include("devices_models/devices/common/add_to_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")

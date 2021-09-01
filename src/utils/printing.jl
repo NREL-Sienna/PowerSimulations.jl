@@ -48,7 +48,7 @@ and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, m::MIME"text/plain", model::DecisionModel)
+function Base.show(io::IO, m::MIME"text/plain", model::OperationModel)
     show(io, m, model.template)
 end
 

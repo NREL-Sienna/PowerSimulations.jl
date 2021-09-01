@@ -1,15 +1,15 @@
-function get_time_series(
+function _get_time_series(
     container::OptimizationContainer,
     component::PSY.Component,
-    forecast_name::String,
-)
+    parameter_attributes::TimeSeriesAttributes{T},
+) where {T <: PSY.TimeSeriesData}
     initial_time = get_initial_time(container)
     @debug initial_time
     time_steps = get_time_steps(container)
     forecast = PSY.get_time_series(
-        PSY.Deterministic,
+        T,
         component,
-        forecast_name;
+        get_name(parameter_attributes);
         start_time = initial_time,
         count = 1,
     )
@@ -21,4 +21,27 @@ function get_time_series(
         ignore_scaling_factors = true,
     )
     return ts_vector
+end
+
+function get_time_series(
+    container::OptimizationContainer,
+    component::T,
+    parameter::TimeSeriesParameter,
+) where {T <: PSY.Component}
+    parameter_container = get_parameter(container, parameter, T)
+    return _get_time_series(container, component, parameter_container.attributes)
+end
+
+# This is just for temporary compatibility with current code. Needs to be eliminated once the time series
+# refactor is done.
+function get_time_series(
+    container::OptimizationContainer,
+    component::PSY.Component,
+    forecast_name::String,
+)
+    return _get_time_series(
+        container,
+        component,
+        TimeSeriesAttributes{PSY.Deterministic}(forecast_name),
+    )
 end

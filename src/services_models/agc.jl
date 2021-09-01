@@ -3,7 +3,7 @@
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 struct PIDSmoothACE <: AbstractAGCFormulation end
 
-get_variable_sign(_, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = NaN
+get_variable_multiplier(_, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = NaN
 ########################## ActivePowerVariable, Area ###########################
 
 ########################## SteadyStateFrequencyDeviation ##################################
@@ -219,7 +219,7 @@ function smooth_ace_pid!(container::OptimizationContainer, services::Vector{PSY.
                 )
             if t == 1
                 SACE_ini =
-                    get_initial_conditions(container, ICKey(AreaControlError, PSY.AGC))[ix]
+                    get_initial_conditions(container, AreaControlError(), PSY.AGC)[ix]
                 sace_exp = SACE_ini.value + kp * ((1 + Δt / (kp / ki)) * (RAW_ACE[a, t]))
                 SACE_pid[a, t] =
                     JuMP.@constraint(container.JuMPmodel, SACE[a, t] == sace_exp)

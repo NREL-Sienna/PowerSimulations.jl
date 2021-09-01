@@ -1,5 +1,5 @@
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
-function add_parameter(model::JuMP.Model, val::Number)
+function add_jump_parameter(model::JuMP.Model, val::Number)
     param = JuMP.@variable(model, variable_type = PJ.Param())
     PJ.set_value(param, val)
     return param
@@ -93,4 +93,16 @@ function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> 0)
     return JuMP.Containers.SparseAxisArray(contents)
+end
+
+function remove_undef!(expression_array::AbstractArray)
+    # iteration is deliberately unsupported for CartesianIndex
+    # Makes this code a bit hacky to be able to use isassigned with an array of arbitrary size.
+    for i in CartesianIndices(expression_array.data)
+        if !isassigned(expression_array.data, i.I...)
+            expression_array.data[i] = zero(eltype(expression_array))
+        end
+    end
+
+    return
 end

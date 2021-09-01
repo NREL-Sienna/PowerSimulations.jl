@@ -8,14 +8,11 @@ struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### ElectricLoad ####################################
 
-get_variable_sign(_, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = -1.0
+get_variable_multiplier(_, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = -1.0
 
 ########################### ActivePowerVariable, ElectricLoad ####################################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
-
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_active
-
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_active_power(d)
 
@@ -23,14 +20,16 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractL
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
 
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}) = :nodal_balance_reactive
-
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_reactive_power(d)
 
 ########################### ReactivePowerVariable, ElectricLoad ####################################
 
 get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = true
+
+get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLoad) = -1*PSY.get_max_active_power(d)
+get_multiplier_value(::ReactivePowerTimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLoad) = -1*PSY.get_max_reactive_power(d)
+get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = PSY.get_max_active_power(d)
 
 #! format: on
 
@@ -43,14 +42,14 @@ function add_constraints!(
     T::Type{<:ReactivePowerVariableLimitsConstraint},
     U::Type{<:ReactivePowerVariable},
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
+    ::DeviceModel{V, W},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ElectricLoad, W <: AbstractControllablePowerLoadFormulation}
     time_steps = get_time_steps(container)
     constraint = add_cons_container!(
         container,
-        EqualityConstraint(),
+        T(),
         V,
         [PSY.get_name(d) for d in devices],
         time_steps,
@@ -59,81 +58,51 @@ function add_constraints!(
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
-        reactive = get_variable(container, ActivePowerVariable(), V)[name, t]
+        reactive = get_variable(container, U(), V)[name, t]
         real = get_variable(container, ActivePowerVariable(), V)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(jump_model, reactive == real)
     end
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
-    ::Type{<:DispatchablePowerLoad},
-    ::Type{<:PM.AbstractPowerModel},
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.ElectricLoad}
-    return DeviceRangeConstraintSpec(;
-        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
-            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
-            multiplier_func = x -> PSY.get_max_active_power(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub! :
-                              device_timeseries_ub!,
-            component_type = T,
-        ),
+) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+        feedforward,
     )
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:ActivePowerVariableLimitsConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
-    ::Type{<:InterruptiblePowerLoad},
-    ::Type{<:PM.AbstractPowerModel},
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-) where {T <: PSY.ElectricLoad}
-    return DeviceRangeConstraintSpec(;
-        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
-            constraint_type = ActivePowerVariableLimitsConstraint(),
-            variable_type = ActivePowerVariable(),
-            bin_variable_type = OnVariable(),
-            parameter = ActivePowerTimeSeriesParameter("max_active_power"),
-            multiplier_func = x -> PSY.get_max_active_power(x),
-            constraint_func = use_parameters ? device_timeseries_ub_bigM! :
-                              device_timeseries_ub_bin!,
-            component_type = T,
-        ),
-    )
-end
-
-########################## Addition to the nodal balances ##################################
-function NodalExpressionSpec(
-    ::Type{T},
-    parameter::ReactivePowerTimeSeriesParameter,
-) where {T <: PSY.ElectricLoad}
-    return NodalExpressionSpec(
-        parameter,
-        T,
-        x -> PSY.get_max_reactive_power(x),
-        -1.0,
-        :nodal_balance_reactive,
-    )
-end
-
-function NodalExpressionSpec(
-    ::Type{T},
-    parameter::ActivePowerTimeSeriesParameter,
-) where {T <: PSY.ElectricLoad}
-    return NodalExpressionSpec(
-        parameter,
-        T,
-        x -> PSY.get_max_active_power(x),
-        -1.0,
-        :nodal_balance_active,
+) where {V <: PSY.ControllableLoad, W <: InterruptiblePowerLoad}
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+        feedforward,
     )
 end
 

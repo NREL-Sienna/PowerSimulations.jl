@@ -1,5 +1,5 @@
 # TODO: Make more tests with Settings
-@testset "Operation Model kwargs" begin
+@testset "Decision Model kwargs" begin
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
@@ -99,7 +99,7 @@ end
 #     template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 #     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
 #     model = DecisionModel(
-#         MockOperationProblem,
+#         MockDecisionProblem,
 #         template,
 #         c_sys5;
 #         optimizer = GLPK_optimizer,
@@ -111,7 +111,7 @@ end
 #     _test_html_print_methods(list)
 # end
 
-@testset "Operation Model Solve with Slacks" begin
+@testset "Decision Model Solve with Slacks" begin
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
     for network in networks
@@ -124,7 +124,7 @@ end
     end
 end
 
-@testset "Default Operations Constructors" begin
+@testset "Default Decisions Constructors" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model_ed = EconomicDispatchProblem(c_sys5; output_dir = mktempdir())
     moi_tests(model_ed, false, 120, 0, 120, 120, 24, false)
@@ -144,12 +144,11 @@ end
 @testset "Test Locational Marginal Prices between DC lossless with PowerModels vs StandardPTDFModel" begin
     networks = [DCPPowerModel, StandardPTDFModel]
     sys = PSB.build_system(PSITestSystems, "c_sys5")
-    parameters = [true, false]
     ptdf = PTDF(sys)
     # These are the duals of interest for the test
     dual_constraint = [[NodalBalanceActiveConstraint], [CopperPlateBalanceConstraint]]
     LMPs = []
-    for (ix, network) in enumerate(networks), p in parameters
+    for (ix, network) in enumerate(networks)
         template = get_template_dispatch_with_network(
             NetworkModel(network; PTDF = ptdf, duals = dual_constraint[ix]),
         )
@@ -173,7 +172,7 @@ end
             push!(LMPs, duals[!, sort(propertynames(duals))])
         end
     end
-    @test isapprox(LMPs[1], LMPs[3], atol = 100.0)
+    @test isapprox(LMPs[1], LMPs[2], atol = 100.0)
 end
 
 @testset "Test ProblemResults interfaces" begin
@@ -232,7 +231,7 @@ end
 
     file_list = sort!(collect(readdir(path)))
     model_name = PSI.get_name(model)
-    expected_json = "$(model_name)_OptimizationModel.json"
+    expected_json = "$(model_name)_DecisionModel.json"
     @test expected_json in file_list
     expected_bin = "$(model_name).bin"
     @test expected_bin in file_list

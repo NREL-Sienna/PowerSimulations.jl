@@ -68,6 +68,7 @@ struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint
 struct OutputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 
 struct ConstraintKey{T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} <:
        OptimizationContainerKey
