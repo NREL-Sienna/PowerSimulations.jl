@@ -48,7 +48,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, ProblemInternal}
+    internal::Union{Nothing, ModelInternal}
     ext::Dict{String, Any}
 
     function DecisionModel{M}(
@@ -63,7 +63,16 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        internal = ProblemInternal(OptimizationContainer(sys, settings, jump_model))
+        # TODO in PSY 1.12 to implement as a PSY function
+        _, ts_count, forecast_count = PSY.get_time_series_counts(sys)
+        if forecast_count < 1
+            error(
+                "The system does not contain forecast data. A DecisionModel can't be built.",
+            )
+        end
+        internal = ModelInternal(
+            OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
+        )
         new{M}(name, template, sys, internal, Dict{String, Any}())
     end
 end
@@ -179,15 +188,25 @@ function DecisionModel(
     )
 end
 
+# Probably could be more efficient by storing the info in the internal
+function get_current_time(model::DecisionModel)
+    execution_count = get_model_internal(model).execution_count
+    initial_time = get_initial_time(model)
+    # interval = USE GETTER FROM STORE PARAMS
+    return initial_time + interval * execution_count
+end
+
 function build_pre_step!(model::DecisionModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
             @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
+        system = get_system(model)
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
-        @info "Initializing Optimization Container"
+
+        @info "Initializing Optimization Container For a DecisionModel"
         optimization_container_init!(
             get_optimization_container(model),
             get_network_formulation(get_template(model)),
@@ -197,6 +216,8 @@ function build_pre_step!(model::DecisionModel)
     end
     return
 end
+
+get_horizon(model::DecisionModel) = get_horizon(get_settings(model))
 
 function _build!(model::DecisionModel{<:DecisionProblem}, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
@@ -212,7 +233,7 @@ function _build!(model::DecisionModel{<:DecisionProblem}, serialize::Bool)
             )
             set_status!(model, BuildStatus.BUILT)
             log_values(get_settings(model))
-            !built_for_simulation(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
+            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
         catch e
             set_status!(model, BuildStatus.FAILED)
             bt = catch_backtrace()
@@ -254,6 +275,22 @@ function problem_build!(model::DecisionModel)
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end
 
+function reset!(model::OperationModel)
+    if built_for_recurrent_solves(model)
+        set_execution_count!(model, 0)
+    end
+    container = OptimizationContainer(
+        get_system(model),
+        get_settings(model),
+        nothing,
+        PSY.Deterministic,
+    )
+    model.internal.container = container
+    empty_time_series_cache!(model)
+    set_status!(model, BuildStatus.EMPTY)
+    return
+end
+
 function serialize_optimization_model(model::DecisionModel{<:DecisionProblem})
     problem_name = "$(get_name(model))_DecisionModel"
     json_file_name = "$(problem_name).json"
@@ -282,21 +319,7 @@ function calculate_dual_variables!(model::DecisionModel)
 end
 
 function solve_impl(model::DecisionModel; optimizer = nothing)
-    if !is_built(model)
-        error(
-            "Operations Problem Build status is $(get_status(model)). Solve can't continue",
-        )
-    end
-    jump_model = get_jump_model(model)
-    if optimizer !== nothing
-        JuMP.set_optimizer(jump_model, optimizer)
-    end
-    if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
-        @error("No Optimizer has been defined, can't solve the operational problem")
-        return RunStatus.FAILED
-    end
-    @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
-    status = RunStatus.RUNNING
+    status = _pre_solve_model_checks(model, optimizer)
     timed_log = get_solve_timed_log(model)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(jump_model)
@@ -322,7 +345,7 @@ results = solve!(OpModel)
 ```
 # Accepted Key Words
 - `output_dir::String`: If a file path is provided the results
-automatically get written to feather files
+automatically get written to file
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
 function solve!(model::DecisionModel{<:DecisionProblem}; kwargs...)

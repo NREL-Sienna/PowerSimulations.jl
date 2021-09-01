@@ -1066,7 +1066,7 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
-    parameters = built_for_simulation(container)
+    parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)
     # Use getter functions that don't require creating the keys here
     initial_conditions_on = get_initial_conditions(container, InitialTimeDurationOn(), U)
@@ -1107,7 +1107,7 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen}
-    parameters = built_for_simulation(container)
+    parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)
     initial_conditions_on = get_initial_conditions(container, InitialTimeDurationOn(), U)
     initial_conditions_off = get_initial_conditions(container, InitialTimeDurationOff(), U)

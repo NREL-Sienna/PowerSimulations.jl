@@ -611,7 +611,7 @@ end
         optimizer = Cbc_optimizer,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
-    # changed from 18 to 16 as built_for_simulation/use_parameters is set to false, different duration constraint is used
+    # changed from 18 to 16 as built_for_recurrent_solves/use_parameters is set to false, different duration constraint is used
     moi_tests(UC, false, 38, 0, 16, 7, 13, true)
 end
 

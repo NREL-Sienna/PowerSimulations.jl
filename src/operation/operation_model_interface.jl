@@ -3,16 +3,14 @@ is_built(model::OperationModel) = model.internal.status == BuildStatus.BUILT
 is_empty(model::OperationModel) = model.internal.status == BuildStatus.EMPTY
 warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
-built_for_simulation(model::OperationModel) = get_simulation_info(model) !== nothing
-get_caches(x::OperationModel) =
-    built_for_simulation(x) ? get_simulation_info(x).caches : nothing
+built_for_recurrent_solves(model::OperationModel) =
+    get_optimization_container(model).built_for_recurrent_solves
+#get_caches(x::OperationModel) =
+#    built_for_recurrent_solves(x) ? get_simulation_info(x).caches : nothing
 get_constraints(model::OperationModel) = get_internal(model).container.constraints
-get_end_of_interval_step(model::OperationModel) =
-    get_simulation_info(model).end_of_interval_step
-get_execution_count(model::OperationModel) = get_simulation_info(model).execution_count
-get_executions(model::OperationModel) = get_simulation_info(model).executions
+get_execution_count(model::OperationModel) = get_internal(model).execution_count
+get_executions(model::OperationModel) = get_internal(model).executions
 get_initial_time(model::OperationModel) = get_initial_time(get_settings(model))
-get_horizon(model::OperationModel) = get_horizon(get_settings(model))
 get_internal(model::OperationModel) = model.internal
 get_jump_model(model::OperationModel) = get_internal(model).container.JuMPmodel
 get_name(model::OperationModel) = model.name
@@ -67,7 +65,7 @@ set_file_level!(model::OperationModel, val) = get_internal(model).file_level = v
 set_executions!(model::OperationModel, val::Int) =
     model.internal.simulation_info.executions = val
 set_execution_count!(model::OperationModel, val::Int) =
-    get_simulation_info(model).execution_count = val
+    get_internal(model).execution_count = val
 set_initial_time!(model::OperationModel, val::Dates.DateTime) =
     set_initial_time!(get_settings(model), val)
 set_simulation_info!(model::OperationModel, info) = model.internal.simulation_info = info
@@ -78,17 +76,6 @@ end
 set_output_dir!(model::OperationModel, path::AbstractString) =
     get_internal(model).output_dir = path
 
-function reset!(model::OperationModel)
-    if built_for_simulation(model)
-        set_execution_count!(model, 0)
-    end
-    container = OptimizationContainer(get_system(model), get_settings(model), nothing)
-    model.internal.container = container
-    empty_time_series_cache!(model)
-    set_status!(model, BuildStatus.EMPTY)
-    return
-end
-
 serialize_optimization_model(::OperationModel) = nothing
 serialize_problem(::OperationModel) = nothing
 
@@ -97,11 +84,29 @@ function problem_build!(::T) where {T <: OperationModel}
 end
 
 function advance_execution_count!(model::OperationModel)
-    info = get_simulation_info(model)
-    info.execution_count += 1
+    internal = get_internal(model)
+    internal.execution_count += 1
     # Reset execution count at the end of step
-    if get_execution_count(model) == get_executions(model)
-        info.execution_count = 0
-    end
+    #if get_execution_count(model) == get_executions(model)
+    #    internal.execution_count = 0
+    #end
     return
+end
+
+function _pre_solve_model_checks(model::OperationModel, optimizer)
+    if !is_built(model)
+        error(
+            "Operations Problem Build status is $(get_status(model)). Solve can't continue",
+        )
+    end
+    jump_model = get_jump_model(model)
+    if optimizer !== nothing
+        JuMP.set_optimizer(jump_model, optimizer)
+    end
+    if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
+        @error("No Optimizer has been defined, can't solve the operational problem")
+        return RunStatus.FAILED
+    end
+    @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
+    return RunStatus.RUNNING
 end

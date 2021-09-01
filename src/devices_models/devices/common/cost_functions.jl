@@ -115,10 +115,10 @@ function has_on_parameter(
     container::OptimizationContainer,
     ::Type{T},
 ) where {T <: PSY.Component}
-    if !built_for_simulation(container)
+    if !built_for_recurrent_solves(container)
         return false
     end
-    return haskey(container.parameters, encode_symbol(OnVariable, string(T)))
+    return haskey(container.parameters, ParameterKey(OnStatusParameter, T))
 end
 
 # TODO: Function is broken

@@ -109,13 +109,16 @@ export EconomicDispatchProblem
 # export OptimalPowerFlow
 
 # Functions
+export build!
 ## Op Model Exports
-export solve!
 export get_initial_conditions
 export serialize_problem
 export serialize_optimization_model
+## Decision Model Export
+export solve!
+## Emulation Model Exports
+export run!
 ## Sim Model Exports
-export build!
 export execute!
 ## Template Exports
 export template_economic_dispatch
@@ -297,9 +300,6 @@ export EnergyBudgetTimeSeriesParameter
 export BinaryValueParameter
 export UpperBoundValueParameter
 
-#export register_types!
-#export empty_registrations!
-
 #################################################################################
 # Imports
 import DataStructures: OrderedDict, Deque, SortedDict
@@ -413,15 +413,18 @@ include("initial_conditions/update_initial_conditions.jl")
 
 include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
-include("operation/problem_internal.jl")
+include("operation/model_internal.jl")
 include("operation/decision_model.jl")
 include("operation/emulation_model.jl")
 include("operation/problem_results_export.jl")
 include("operation/problem_results.jl")
-include("operation/time_series_interface.jl")
 include("operation/operation_model_serialization.jl")
 include("operation/model_cache.jl")
+include("operation/time_series_interface.jl")
 include("operation/optimization_debugging.jl")
+
+include("parameters/add_parameters.jl")
+include("parameters/update_parameters.jl")
 
 include("feedforward/feedforward_chronologies.jl")
 include("feedforward/feedforward_structs.jl")
@@ -444,7 +447,6 @@ include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
 include("devices_models/devices/common/add_auxiliary_variable.jl")
 include("devices_models/devices/common/add_constraint_dual.jl")
-include("devices_models/devices/common/add_parameters.jl")
 include("devices_models/devices/common/rating_constraints.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
