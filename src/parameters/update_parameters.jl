@@ -1,74 +1,124 @@
+function update_parameter_values!(
+    ::AbstractArray{T},
+    ::NoAttributes,
+    args...,
+) where {T <: Union{Float64, PJ.ParameterRef}} end
+
+function update_parameter_values!(
+    param_array::AbstractArray{PJ.ParameterRef},
+    attributes::TimeSeriesAttributes{T},
+    ::Type{U},
+    model::DecisionModel,
+) where {T <: PSY.AbstractDeterministic, U <: PSY.Device}
+    initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
+    horizon = get_time_steps(get_container(model))[end]
+    # TODO: Can we avoid calling get_available_components ?
+    components = get_available_components(U, get_system(model))
+    for component in components
+        ts_vector = get_time_series_values!(
+            T,
+            model,
+            component,
+            get_name(attributes),
+            initial_forecast_time,
+            horizon,
+        )
+        for (ix, parameter) in enumerate(param_array[PSY.get_name(component), :])
+            JuMP.set_value(parameter, ts_vector[ix])
+        end
+    end
+end
+
+function update_parameter_values(
+    param_array::AbstractArray{Float64},
+    attributes::TimeSeriesAttributes{T},
+    ::Type{U},
+    model::DecisionModel,
+) where {T <: PSY.AbstractDeterministic, U <: PSY.Device}
+    initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
+    horizon = get_time_steps(get_container(model))[end]
+    # TODO: Can we avoid calling get_available_components ?
+    components = get_available_components(U, get_system(model))
+    for component in components
+        ts_vector = get_time_series_values!(
+            T,
+            model,
+            component,
+            get_name(attributes),
+            initial_forecast_time,
+            horizon,
+        )
+        param_array[PSY.get_name(component), :] .= ts_vector
+    end
+    return
+end
+
+function update_parameter_values!(
+    param_array::AbstractArray{PJ.ParameterRef},
+    attributes::TimeSeriesAttributes{T},
+    ::Type{U},
+    model::EmulationModel,
+) where {T <: PSY.SingleTimeSeries, U <: PSY.Device}
+    initial_forecast_time = get_current_time(model)
+    # TODO: Can we avoid calling get_available_components ?
+    components = get_available_components(U, get_system(model))
+    for component in components
+        # Note: This interface reads one single value per component at a time.
+        ts_vector = get_time_series_values!(
+            T,
+            model,
+            component,
+            get_name(attributes),
+            initial_forecast_time,
+        )
+        JuMP.set_value(param_array[PSY.get_name(component), 1], ts_vector[1])
+    end
+    return
+end
+
+function update_parameter_values(
+    param_array::AbstractArray{Float64},
+    attributes::TimeSeriesAttributes{T},
+    ::Type{U},
+    model::EmulationModel,
+) where {T <: PSY.SingleTimeSeries, U <: PSY.Device}
+    initial_forecast_time = get_current_time(model)
+    # TODO: Can we avoid calling get_available_components ?
+    components = get_available_components(U, get_system(model))
+    for component in components
+        # Note: This interface reads one single value per component at a time.
+        ts_vector = get_time_series_values!(
+            T,
+            model,
+            component,
+            get_name(attributes),
+            initial_forecast_time,
+        )
+        param_array[PSY.get_name(component), 1] = ts_vector[1]
+    end
+    return
+end
+
 """
 Update parameter function for TimeSeriesParameters in an OperationModel
 """
-function update_parameter_values!(model::OperationModel, ::T, ::Type{U}) where {T <: TimeSeriesParameter, U <: PSY.Device}
-
-end
-
-
-
-######################### TimeSeries Data Updating###########################################
-function update_parameter!(
-    container::ParameterContainer,
-    model::DecisionModel,
-    sim::Simulation,
-) where {T <: PSY.Component}
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
-        components = get_available_components(T, model.sys)
-        initial_forecast_time = get_simulation_time(sim, get_simulation_number(model))
-        horizon = length(get_time_steps(model.internal.container))
-        for d in components
-            ts_vector = get_time_series_values!(
-                PSY.Deterministic,
-                model,
-                d,
-                get_data_name(param_reference),
-                initial_forecast_time,
-                horizon,
-                ignore_scaling_factors = true,
-            )
-            component_name = PSY.get_name(d)
-            for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
-                value = ts_vector[ix]
-                JuMP.set_value(val, value)
-            end
-        end
+function update_parameter_values!(
+    model::OperationModel,
+    ::ParameterKey{T, U},
+) where {T <: TimeSeriesParameter, U <: PSY.Device}
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+        # TODO: Add recorder here for parameter update
+        optimization_container = PSI.get_optimization_container(model)
+        parameter_array = PSI.get_parameter_array(optimization_container, T(), U)
+        parameter_attributes = PSI.get_parameter_attributes(optimization_container, T(), U)
+        system = PSI.get_system(model)
+        update_parameter_values!(parameter_array, parameter_attributes, U, model)
     end
-
     return
 end
 
-function update_parameter!(
-    param_reference::UpdateRef{T},
-    container::ParameterContainer,
-    model::DecisionModel,
-    sim::Simulation,
-) where {T <: PSY.Service}
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
-        components = get_available_components(T, model.sys)
-        initial_forecast_time = get_simulation_time(sim, get_simulation_number(model))
-        horizon = length(get_time_steps(model.internal.container))
-        param_array = get_parameter_array(container)
-        for ix in axes(param_array)[1]
-            service = PSY.get_component(T, model.sys, ix)
-            ts_vector = get_time_series_values!(
-                PSY.Deterministic,
-                model,
-                service,
-                get_data_name(param_reference),
-                initial_forecast_time,
-                horizon,
-                ignore_scaling_factors = true,
-            )
-            for (jx, value) in enumerate(ts_vector)
-                JuMP.set_value(get_parameter_array(container)[ix, jx], value)
-            end
-        end
-    end
-
-    return
-end
-
+# Old update parameter code for reference
+#=
 """Updates the forecast parameter value"""
 function update_parameter!(
     param_reference::UpdateRef{JuMP.VariableRef},
@@ -92,3 +142,4 @@ function update_parameter!(
 
     return
 end
+=#
