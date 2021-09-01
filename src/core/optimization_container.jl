@@ -340,10 +340,12 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     initialize_system_expressions!(container, transmission, sys)
 
     # Order is required
+    populate_aggregated_service_model!(template, sys)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
         construct_services!(
             container,
             sys,
+            ArgumentConstructStage(),
             get_service_models(template),
             get_device_models(template),
         )
@@ -382,6 +384,16 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             end
             @debug get_problem_size(container)
         end
+    end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
+        construct_services!(
+            container,
+            sys,
+            ModelConstructStage(),
+            get_service_models(template),
+            get_device_models(template),
+        )
     end
 
     for device_model in values(template.devices)
@@ -857,7 +869,7 @@ function _add_expression_container!(
         expr_container = container_spec(JuMP.AbstractJuMPScalar, axs...)
     end
     _assign_container!(container.expressions, expr_key, expr_container)
-    return cons_container
+    return expr_container
 end
 
 function add_expression_container!(
@@ -927,7 +939,7 @@ function get_initial_conditions(
     container::OptimizationContainer,
     ::T,
     ::Type{D},
-) where {T <: InitialConditionType, D <: PSY.Device}
+) where {T <: InitialConditionType, D <: PSY.Component}
     return get_initial_conditions(container, ICKey(T, D))
 end
 
