@@ -44,20 +44,31 @@ reserves = ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve)
 """
 mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     feedforward::Union{Nothing, AbstractAffectFeedForward}
-    use_service_name::Bool
+    service_name::String
     use_slacks::Bool
     duals::Vector{DataType}
+    time_series_names::Dict{Type{<:TimeSeriesParameter}, String}
+    attributes::Dict{String, Any}
     function ServiceModel(
         ::Type{D},
-        ::Type{B};
+        ::Type{B},
+        service_name::String;
         use_slacks = false,
         feedforward = nothing,
-        use_service_name::Bool = false,
         duals = Vector{DataType}(),
+        time_series_names = initialize_timeseries_names(D, B),
+        attributes = initialize_attributes(D, B),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)
-        new{D, B}(feedforward, use_service_name, use_slacks, duals)
+        new{D, B}(
+            feedforward,
+            service_name,
+            use_slacks,
+            duals,
+            time_series_names,
+            attributes,
+        )
     end
 end
 
@@ -68,8 +79,55 @@ get_formulation(
     ::ServiceModel{D, B},
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation} = B
 get_feedforward(m::ServiceModel) = m.feedforward
+get_service_name(m::ServiceModel) = m.service_name
 get_use_slacks(m::ServiceModel) = m.use_slacks
 get_duals(m::ServiceModel) = m.duals
+get_time_series_names(m::ServiceModel) = m.time_series_names
+get_attributes(m::ServiceModel) = m.attributes
+get_attribute(m::ServiceModel, key::String) = get(m.attributes, key, nothing)
+
+function ServiceModel(
+    service_type::Type{D},
+    formulation_type::Type{B};
+    use_slacks = false,
+    feedforward = nothing,
+    duals = Vector{DataType}(),
+    time_series_names = initialize_timeseries_names(D, B),
+    attributes = initialize_attributes(D, B),
+) where {D <: PSY.Service, B <: AbstractServiceFormulation}
+    if !haskey(attributes, "aggregated_service_model")
+        push!(attributes, "aggregated_service_model" => true)
+    end
+    return ServiceModel(
+        service_type,
+        formulation_type,
+        NO_SERVICE_NAME_PROVIDED;
+        use_slacks,
+        feedforward,
+        duals,
+        time_series_names,
+        attributes,
+    )
+end
+
+function populate_aggregated_service_model!(template, sys::PSY.System)
+    services_template = get_service_models(template)
+    for (key, service_model) in services_template
+        attributes = get_attributes(service_model)
+        if get(attributes, "aggregated_service_model", false)
+            delete!(services_template, key)
+            D = get_component_type(service_model)
+            B = get_formulation(service_model)
+            for service in PSY.get_components(D, sys)
+                new_key = (PSY.get_name(service), Symbol(D))
+                if !haskey(services_template, new_key)
+                    set_service_model!(template, ServiceModel(D, B, PSY.get_name(service)))
+                end
+            end
+        end
+    end
+    return
+end
 
 function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)
     if haskey(dict, key)
@@ -81,31 +139,8 @@ end
 
 function _set_model!(
     dict::Dict,
-    service_name::String,
     model::ServiceModel{D, B},
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
-    if !model.use_service_name
-        throw(
-            IS.ConflictingInputsError(
-                "The model provided has use_service_name false. This method can't be used",
-            ),
-        )
-    end
-    _set_model!(dict, (service_name, Symbol(D)), model)
-    return
-end
-
-function _set_model!(
-    dict::Dict,
-    model::ServiceModel{D, B},
-) where {D <: PSY.Service, B <: AbstractServiceFormulation}
-    if model.use_service_name
-        throw(
-            IS.ConflictingInputsError(
-                "The model provided has use_service_name set to true and no service name was provided. This method can't be used",
-            ),
-        )
-    end
-    _set_model!(dict, (NO_SERVICE_NAME_PROVIDED, Symbol(D)), model)
+    _set_model!(dict, (get_service_name(model), Symbol(D)), model)
     return
 end

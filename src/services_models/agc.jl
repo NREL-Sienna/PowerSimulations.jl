@@ -103,9 +103,9 @@ function balancing_auxiliary_variables!(container, sys)
     R_dn_emergency = add_var_container!(container, AdditionalDeltaActivePowerDownVariable(),  PSY.Area, area_names, time_steps)
 
     emergency_up =
-        add_expression_container!(container, :emergency_up, area_names, time_steps)
+        add_expression_container!(container, EmergencyUp(), PSY.Area, area_names, time_steps)
     emergency_dn =
-        add_expression_container!(container, :emergency_dn, area_names, time_steps)
+        add_expression_container!(container, EmergencyDown(), PSY.Area, area_names, time_steps)
     for t in time_steps, a in area_names
         R_up_emergency[a, t] = JuMP.@variable(
             container.JuMPmodel,
@@ -197,7 +197,7 @@ end
 function smooth_ace_pid!(container::OptimizationContainer, services::Vector{PSY.AGC})
     time_steps = get_time_steps(container)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
-    RAW_ACE = add_expression_container!(container, :RAW_ACE, area_names, time_steps)
+    RAW_ACE = add_expression_container!(container, RawACE(), PSY.Area, area_names, time_steps)
     SACE = get_variable(container, SmoothACE(), PSY.Area)
     SACE_pid = add_cons_container!(container, SACEPidAreaConstraint(), PSY.Area, area_names, time_steps)
 

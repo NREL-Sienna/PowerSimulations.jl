@@ -1,12 +1,13 @@
 function area_balance(
     container::OptimizationContainer,
-    expression::Symbol,
+    expression::ExpressionKey,
     area_mapping::Dict{String, Array{PSY.Bus, 1}},
     branches,
 )
     time_steps = get_time_steps(container)
-    remove_undef!(container.expressions[expression])
-    nodal_net_balance = container.expressions[expression]
+    nodal_net_balance = get_expression(container, expression)
+    remove_undef!(nodal_net_balance)
+
     constraint = add_cons_container!(
         container,
         AreaDispatchBalanceConstraint(),
@@ -26,8 +27,8 @@ function area_balance(
         end
     end
 
-    expr_up = get_expression(container, :emergency_up)
-    expr_dn = get_expression(container, :emergency_dn)
+    expr_up = get_expression(container, EmergencyUp(), PSY.Area)
+    expr_dn = get_expression(container, EmergencyDown(), PSY.Area)
 
     participation_assignment_up = add_cons_container!(
         container,

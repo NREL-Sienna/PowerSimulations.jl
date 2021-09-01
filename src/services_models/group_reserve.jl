@@ -32,7 +32,15 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint = get_constraint(container, RequirementConstraint(), SR)
+    add_cons_container!(
+        container,
+        RequirementConstraint(),
+        SR,
+        [name],
+        time_steps;
+        meta = name,
+    )
+    constraint = get_constraint(container, RequirementConstraint(), SR, name)
     use_slacks = get_use_slacks(model)
     reserve_variables = [
         get_variable(container, ActivePowerReserveVariable(), typeof(r), PSY.get_name(r)) for r in contributing_services
