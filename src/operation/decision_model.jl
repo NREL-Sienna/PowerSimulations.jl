@@ -64,7 +64,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
             name = Symbol(name)
         end
         # TODO in PSY 1.12 to implement as a PSY function
-        _, ts_count, forecast_count = IS.get_time_series_counts(sys.data)
+        _, ts_count, forecast_count = PSY.get_time_series_counts(sys)
         if forecast_count < 1
             error(
                 "The system does not contain forecast data. A DecisionModel can't be built.",
@@ -186,6 +186,14 @@ function DecisionModel(
         optimizer = optimizer,
         system = system,
     )
+end
+
+# Probably could be more efficient by storing the info in the internal
+function get_current_time(model::DecisionModel)
+    execution_count = get_model_internal(model).execution_count
+    initial_time = get_initial_time(model)
+    # interval = USE GETTER FROM STORE PARAMS
+    return initial_time + interval * execution_count
 end
 
 function build_pre_step!(model::DecisionModel)
