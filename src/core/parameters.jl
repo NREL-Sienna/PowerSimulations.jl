@@ -45,6 +45,7 @@ end
 
 get_parameter_array(c::ParameterContainer) = c.parameter_array
 get_multiplier_array(c::ParameterContainer) = c.multiplier_array
+get_attributes(c::ParameterContainer) = c.attributes
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
