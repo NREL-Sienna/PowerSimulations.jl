@@ -324,7 +324,7 @@ function one_step_solve!(model::EmulationModel)
     JuMP.optimize!(jump_model)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        return error("Optimizer returned $model_status")
+        error("Optimizer returned $model_status")
     else
         calculate_aux_variables!(model)
         calculate_dual_variables!(model)
