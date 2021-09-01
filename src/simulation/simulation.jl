@@ -1112,7 +1112,7 @@ function _initialize_problem_storage!(
     executions_by_problem = sequence.executions_by_problem
     intervals = sequence.intervals
 
-    problems = OrderedDict{Symbol, SimulationStoreProblemParams}()
+    problems = OrderedDict{Symbol, StoreModelParams}()
     problem_reqs = Dict{Symbol, SimulationStoreProblemRequirements}()
     num_param_containers = 0
     rules = CacheFlushRules(
@@ -1121,33 +1121,13 @@ function _initialize_problem_storage!(
     )
     for model in get_models(sim)
         model_name = get_name(model)
-        num_executions = executions_by_problem[model_name]
-        horizon = get_horizon(model)
+        reqs = SimulationStoreProblemRequirements()
         container = get_optimization_container(model)
         duals = get_duals(container)
         parameters = get_parameters(container)
         variables = get_variables(container)
         aux_variables = get_aux_variables(container)
         num_rows = num_executions * get_steps(sim)
-
-        interval = intervals[model_name][1]
-        resolution = get_resolution(model)
-        end_of_interval_step = get_end_of_interval_step(model)
-        system = get_system(model)
-        base_power = PSY.get_base_power(system)
-        sys_uuid = IS.get_uuid(system)
-        problem_params = SimulationStoreProblemParams(
-            num_executions,
-            horizon,
-            interval,
-            resolution,
-            end_of_interval_step,
-            base_power,
-            sys_uuid,
-            get_metadata(get_optimization_container(model)),
-        )
-        reqs = SimulationStoreProblemRequirements()
-
         # TODO: configuration of keep_in_cache and priority are not correct
         for (key, array) in duals
             reqs.duals[model] = _calc_dimensions(array, encode_key(key), num_rows, horizon)

@@ -29,6 +29,8 @@ mutable struct ModelInternal
     ext::Dict{String, Any}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
+    # TODO: Marge all structs (ModelInternal, StoreModelParams and SimulationInternal) to a single Internal Struct
+    store_parameters::Union{Nothing, StoreModelParams}
 end
 
 function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}())
@@ -45,6 +47,7 @@ function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}
         ext,
         Logging.Warn,
         Logging.Info,
+        nothing,
     )
 end
 
