@@ -34,7 +34,7 @@ function device_linear_rateofchange!(
     var_type::VariableType,
     ::Type{T},
 ) where {T <: PSY.Component}
-    parameters = built_for_simulation(container)
+    parameters = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
 
     variable = get_variable(container, var_type, T)
@@ -139,7 +139,7 @@ function device_mixedinteger_rateofchange!(
     var_types::Tuple{VariableType, VariableType, VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
-    parameters = built_for_simulation(container)
+    parameters = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
 
     variable = get_variable(container, var_types[1], T)

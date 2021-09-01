@@ -46,7 +46,7 @@ function add_range_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_simulation(container)
+    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     variable = U()
     component_type = V
@@ -117,7 +117,7 @@ function add_semicontinuous_range_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_simulation(container)
+    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     variable = U()
     component_type = V
@@ -195,7 +195,7 @@ function add_reserve_range_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_simulation(container)
+    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     variable = U()
     component_type = V
@@ -275,7 +275,7 @@ function add_reserve_range_constraints!(
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
 }
-    use_parameters = built_for_simulation(container)
+    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     variable = V()
     component_type = W

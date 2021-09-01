@@ -66,7 +66,7 @@ function construct_service!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in services]
 
-    if built_for_simulation(container)
+    if built_for_recurrent_solves(container)
         add_param_container!(
             container,
             RequirementTimeSeriesParameter(PSY.Deterministic, "requirement"),
@@ -238,7 +238,7 @@ function construct_service!(
     names = [PSY.get_name(s) for s in services]
 
     # Needs to be moved into an add_parameter paradigm
-    if built_for_simulation(container)
+    if built_for_recurrent_solves(container)
         add_param_container!(
             container,
             RequirementTimeSeriesParameter(PSY.Deterministic, "requirement"),
