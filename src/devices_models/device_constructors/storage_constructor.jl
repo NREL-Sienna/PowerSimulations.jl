@@ -514,7 +514,22 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    reserve_contribution_constraint!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        ReserveEnergyConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        RangeLimitConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
 
     return
@@ -597,8 +612,23 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    reserve_contribution_constraint!(container, devices, model, S, get_feedforward(model))
-
+    add_constraints!(
+        container,
+        ReserveEnergyConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        RangeLimitConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
+
     return
 end

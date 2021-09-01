@@ -211,51 +211,98 @@ function add_constraints!(
 end
 
 ############################ reserve constraints ######################################
-
-function reserve_contribution_constraint!(
+function add_constraints!(
     container::OptimizationContainer,
+    ::Type{ReserveEnergyConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
     ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
-    constraint_infos_up = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    constraint_infos_dn = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    constraint_infos_energy = Vector{ReserveRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        up_info = DeviceRangeConstraintInfo(name, PSY.get_output_active_power_limits(d))
-        down_info = DeviceRangeConstraintInfo(name, PSY.get_input_active_power_limits(d))
-        energy_info = ReserveRangeConstraintInfo(
-            name,
-            PSY.get_state_of_charge_limits(d),
-            PSY.get_efficiency(d),
-            T,
-        )
-        add_device_services!(up_info, down_info, d, model)
-        add_device_services!(energy_info, d, model)
-        constraint_infos_energy[ix] = energy_info
-        constraint_infos_up[ix] = up_info
-        constraint_infos_dn[ix] = down_info
-    end
-
-    reserve_power_ub!(
+    time_steps = get_time_steps(container)
+    var_e = get_variable(container, EnergyVariable(), T)
+    names = [PSY.get_name(x) for x in devices]
+    con_up = add_cons_container!(
         container,
-        constraint_infos_up,
-        constraint_infos_dn,
-        RangeLimitConstraint(),
-        (ActivePowerInVariable(), ActivePowerOutVariable()),
-        T,
-    )
-
-    reserve_energy_ub!(
-        container,
-        constraint_infos_energy,
         ReserveEnergyConstraint(),
-        EnergyVariable(),
         T,
+        names,
+        time_steps,
+        meta = "up",
+    )
+    con_dn = add_cons_container!(
+        container,
+        ReserveEnergyConstraint(),
+        T,
+        names,
+        time_steps,
+        meta = "dn",
     )
 
+    for d in devices, t in time_steps
+        name = PSY.get_name(d)
+        expression_up = JuMP.AffExpr(0.0)
+        expression_dn = JuMP.AffExpr(0.0)
+        # TODO: add reserve variables
+        limits = PSY.get_state_of_charge_limits(d)
+        efficiency = PSY.get_efficiency(d)
+        con_up[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_up <= (var_e[name, t] - limits.min) * efficiency.out
+        )
+        con_dn[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_dn <= (limits.max - var_e[name, t]) / efficiency.in
+        )
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{RangeLimitConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, D},
+    ::Type{<:PM.AbstractPowerModel},
+    ::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
+    time_steps = get_time_steps(container)
+    var_in = get_variable(container, ActivePowerInVariable(), T)
+    var_out = get_variable(container, ActivePowerOutVariable(), T)
+    names = [PSY.get_name(x) for x in devices]
+    con_up = add_cons_container!(
+        container,
+        RangeLimitConstraint(),
+        T,
+        names,
+        time_steps,
+        meta = "up",
+    )
+    con_dn = add_cons_container!(
+        container,
+        RangeLimitConstraint(),
+        T,
+        names,
+        time_steps,
+        meta = "dn",
+    )
+
+    for d in devices, t in time_steps
+        name = PSY.get_name(d)
+        expression_up = JuMP.AffExpr(0.0)
+        expression_dn = JuMP.AffExpr(0.0)
+        # TODO: add reserve variables
+        out_limits = PSY.get_output_active_power_limits(d)
+        in_limits = PSY.get_input_active_power_limits(d)
+        con_up[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_up <= var_in[name, t] + (out_limits.max - var_out[name, t])
+        )
+        con_dn[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            expression_dn <= var_out[name, t] + (in_limits.max - var_in[name, t])
+        )
+    end
     return
 end
 
