@@ -119,6 +119,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -176,6 +177,14 @@ function get_min_max_limits(
     ::Type{<:AbstractHydroFormulation},
 )
     PSY.get_active_power_limits(x)
+end
+
+function get_min_max_limits(
+    x::PSY.HydroGen,
+    ::Type{<:ActivePowerVariableLimitsConstraint},
+    ::Type{HydroDispatchRunOfRiver},
+)
+    return (min = 0.0, max = PSY.get_active_power_limits(x).max)
 end
 
 """
