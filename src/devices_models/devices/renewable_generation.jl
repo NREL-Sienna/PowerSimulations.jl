@@ -19,7 +19,6 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::Abstr
 
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::FixedOutput) = PSY.get_max_active_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
-
 #! format: on
 
 ####################################### Reactive Power constraint_infos #########################
