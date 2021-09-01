@@ -62,7 +62,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        _, ts_count, forecast_count = IS.get_time_series_counts(sys.data)
+        _, ts_count, forecast_count = PSY.get_time_series_counts(sys)
         if ts_count < 1
             error(
                 "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
@@ -153,6 +153,14 @@ function EmulationModel(
     kwargs...,
 )
     return EmulationModel{GenericEmulationProblem}(template, sys, jump_model; kwargs...)
+end
+
+# Probably could be more efficient by storing the info in the internal or use something like the store parameters
+function get_current_time(model::EmulationModel)
+    execution_count = get_internal(model).execution_count
+    initial_time = get_initial_time(model)
+    resolution = PSY.get_time_series_resolution(get_system(model))
+    return initial_time + resolution * execution_count
 end
 
 # """
@@ -324,7 +332,10 @@ function one_step_solve!(model::EmulationModel)
 end
 
 function update_model!(model::EmulationModel)
-
+    for key in keys(get_parameters(model))
+        update_parameter_values!(model, key)
+    end
+    return
 end
 
 function run_impl(
@@ -333,8 +344,7 @@ function run_impl(
     optimizer = nothing,
     enable_progress_bar = _PROGRESS_METER_ENABLED,
 )
-    set_run_status!(model, _pre_solve_model_checks(model, optimizer))
-    JuMP.unset_silent(get_jump_model(model))
+    PSI.set_run_status!(model, PSI._pre_solve_model_checks(model, optimizer))
     internal = get_internal(model)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
@@ -344,11 +354,11 @@ function run_impl(
     try
         prog_bar = ProgressMeter.Progress(executions; enabled = enable_progress_bar)
         for execution in 1:executions
-            advance_execution_count!(model)
             # timed_log = get_solve_timed_log(model)
             # _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] = @timed
-            one_step_solve!(model)
-            update_model!(model)
+            PSI.one_step_solve!(model)
+            PSI.advance_execution_count!(model)
+            PSI.update_model!(model)
             # write_results(model)
             ProgressMeter.update!(
                 prog_bar,
