@@ -25,6 +25,7 @@ get_variable_lower_bound(::AdditionalDeltaActivePowerUpVariable, ::PSY.Regulatio
 get_variable_binary(::AdditionalDeltaActivePowerDownVariable, ::Type{<:PSY.RegulationDevice}, ::AbstractRegulationFormulation) = false
 get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.RegulationDevice, ::AbstractRegulationFormulation) = 0.0
 
+get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.RegulationDevice, _)  = PSY.get_max_active_power(d)
 #! format: on
 
 function add_constraints!(
@@ -283,8 +284,8 @@ function participation_assignment!(
         meta = "dn",
     )
 
-    expr_up = get_expression(container, :emergency_up)
-    expr_dn = get_expression(container, :emergency_dn)
+    expr_up = get_expression(container, EmergencyUp(), PSY.Area)
+    expr_dn = get_expression(container, EmergencyDown(), PSY.Area)
     for d in devices
         name = PSY.get_name(d)
         services = PSY.get_services(d)

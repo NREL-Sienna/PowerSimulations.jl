@@ -1,3 +1,12 @@
+function initialize_timeseries_names(
+    ::Type{<:PSY.RegulationDevice{T}},
+    ::Type{<:AbstractRegulationFormulation},
+) where {T <: PSY.StaticInjection}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
 """
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
@@ -15,7 +24,16 @@ function construct_device!(
     end
 
     devices = get_available_components(get_component_type(model), sys)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        S,
+    )
     # Variables
     add_variables!(
         container,
@@ -59,11 +77,11 @@ function construct_device!(
 
     devices = get_available_components(get_component_type(model), sys)
     # Constraints
-    nodal_expression!(
-        container,
-        devices,
-        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
-    )
+    # nodal_expression!(
+    #     container,
+    #     devices,
+    #     ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+    # )
 
     add_constraints!(
         container,
@@ -104,7 +122,16 @@ function construct_device!(
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
     devices = get_available_components(get_component_type(model), sys)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        S,
+    )
     # Variables
     add_variables!(
         container,
@@ -148,11 +175,11 @@ function construct_device!(
 
     devices = get_available_components(get_component_type(model), sys)
     # Constraints
-    nodal_expression!(
-        container,
-        devices,
-        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
-    )
+    # nodal_expression!(
+    #     container,
+    #     devices,
+    #     ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+    # )
 
     add_constraints!(
         container,
@@ -187,7 +214,19 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
     ::Type{S},
-) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel} end
+) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
+    devices = get_available_components(get_component_type(model), sys)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        S,
+    )
+end
 
 """
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
@@ -204,11 +243,11 @@ function construct_device!(
     end
 
     devices = get_available_components(get_component_type(model), sys)
-    nodal_expression!(
-        container,
-        devices,
-        ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
-    )
+    # nodal_expression!(
+    #     container,
+    #     devices,
+    #     ActivePowerTimeSeriesParameter(PSY.Deterministic, "max_active_power"),
+    # )
     add_constraint_dual!(container, sys, model)
     return
 end
