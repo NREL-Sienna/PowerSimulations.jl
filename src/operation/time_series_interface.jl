@@ -57,7 +57,7 @@ function get_time_series_values!(
     component,
     name,
     initial_time,
-    horizon;
+    horizon::Int;
     ignore_scaling_factors = true,
 )
     if !use_time_series_cache(get_settings(model))
@@ -92,7 +92,7 @@ function get_time_series_values!(
 end
 
 function get_time_series_values!(
-    time_series_type::Type{PSY.StaticTimeSeries},
+    time_series_type::Type{PSY.SingleTimeSeries},
     model::EmulationModel,
     component,
     name,

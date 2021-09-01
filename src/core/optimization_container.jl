@@ -202,7 +202,12 @@ function optimization_container_init!(
     settings = get_settings(container)
 
     if get_initial_time(settings) == UNSET_INI_TIME
-        set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
+        if get_default_time_series_type(container) <: PSY.AbstractDeterministic
+            set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
+        elseif get_default_time_series_type(container) <: PSY.SingleTimeSeries
+            ini_time, _ = PSY.check_time_series_consistency(sys, PSY.SingleTimeSeries)
+            set_initial_time!(settings, ini_time)
+        end
     end
 
     if get_horizon(settings) == UNSET_HORIZON
@@ -834,6 +839,15 @@ function get_parameter_multiplier_array(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
     return get_multiplier_array(get_parameter(container, ParameterKey(T, U, meta)))
+end
+
+function get_parameter_attributes(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_attributes(get_parameter(container, ParameterKey(T, U, meta)))
 end
 
 function iterate_parameter_containers(container::OptimizationContainer)
