@@ -356,7 +356,7 @@ function add_reserve_range_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
-    component_type = W
+    component_type = V
     array = get_variable(container, variable, component_type)
     add_reserve_upper_bound_range_constraints_impl!(
         container,
@@ -364,7 +364,7 @@ function add_reserve_range_constraints!(
         array,
         devices,
         model,
-        Y,
+        X,
         feedforward,
     )
     add_reserve_lower_bound_range_constraints_impl!(
@@ -373,7 +373,7 @@ function add_reserve_range_constraints!(
         array,
         devices,
         model,
-        Y,
+        X,
         feedforward,
     )
 end
@@ -396,7 +396,7 @@ function add_reserve_range_constraints!(
         array,
         devices,
         model,
-        Y,
+        X,
         feedforward,
     )
     add_reserve_lower_bound_range_constraints_impl!(
@@ -405,7 +405,7 @@ function add_reserve_range_constraints!(
         array,
         devices,
         model,
-        Y,
+        X,
         feedforward,
     )
 end
@@ -523,7 +523,7 @@ function add_reserve_range_constraints!(
 }
     variable = V()
     component_type = W
-    array = get_expression(container, variable, component_type)
+    array = get_variable(container, variable, component_type)
     add_reserve_upper_bound_range_constraints_impl!(
         container,
         T,
@@ -575,7 +575,7 @@ function add_reserve_range_constraints!(
 }
     expression = V()
     component_type = W
-    array = get_variable(container, expression, component_type)
+    array = get_expression(container, expression, component_type)
     add_reserve_upper_bound_range_constraints_impl!(
         container,
         T,
@@ -653,26 +653,25 @@ function add_reserve_upper_bound_range_constraints_impl!(
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
 }
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = W
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [ReservationVariable()]
 
-    con_lb = add_cons_container!(
+    con_ub = add_cons_container!(
         container,
         constraint,
         component_type,
         names,
         time_steps,
-        meta = "lb",
+        meta = "ub",
     )
 
     @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
     varbin = get_variable(container, only(binary_variables), component_type)
 
-    for (i, device) in enumerate(devices), t in time_steps
+    for device in devices, t in time_steps
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, X) # depends on constraint type and formulation type
         con_ub[ci_name, t] = JuMP.@constraint(
