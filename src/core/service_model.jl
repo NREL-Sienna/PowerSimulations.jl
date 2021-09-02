@@ -89,9 +89,12 @@ get_time_series_names(m::ServiceModel) = m.time_series_names
 get_attributes(m::ServiceModel) = m.attributes
 get_attribute(m::ServiceModel, key::String) = get(m.attributes, key, nothing)
 get_contributing_devices_map(m::ServiceModel) = m.contributing_devices_map
-get_contributing_devices_map(m::ServiceModel, key) = get(m.contributing_devices_map, key, nothing)
-get_contributing_devices(m::ServiceModel) = [z for x in values(m.contributing_devices_map) for z in x]
-add_contributing_devices_map!(m::ServiceModel, key, value) = m.contributing_devices_map[key] = value
+get_contributing_devices_map(m::ServiceModel, key) =
+    get(m.contributing_devices_map, key, nothing)
+get_contributing_devices(m::ServiceModel) =
+    [z for x in values(m.contributing_devices_map) for z in x]
+add_contributing_devices_map!(m::ServiceModel, key, value) =
+    m.contributing_devices_map[key] = value
 
 function ServiceModel(
     service_type::Type{D},
