@@ -4,7 +4,6 @@ struct TimeSeriesCacheKey
     name::String
 end
 
-# JDNOTE: This might be merged with the structs in simulation_store
 mutable struct SimulationInfo
     number::Int
     name::Symbol
@@ -29,6 +28,8 @@ mutable struct ModelInternal
     ext::Dict{String, Any}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
+    # TODO: Marge all structs (ModelInternal, ModelStoreParams and SimulationInternal) to a single Internal Struct
+    store_parameters::Union{Nothing, ModelStoreParams}
 end
 
 function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}())
@@ -45,6 +46,7 @@ function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}
         ext,
         Logging.Warn,
         Logging.Info,
+        nothing,
     )
 end
 

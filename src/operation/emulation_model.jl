@@ -155,14 +155,6 @@ function EmulationModel(
     return EmulationModel{GenericEmulationProblem}(template, sys, jump_model; kwargs...)
 end
 
-# Probably could be more efficient by storing the info in the internal or use something like the store parameters
-function get_current_time(model::EmulationModel)
-    execution_count = get_internal(model).execution_count
-    initial_time = get_initial_time(model)
-    resolution = PSY.get_time_series_resolution(get_system(model))
-    return initial_time + resolution * execution_count
-end
-
 # """
 # EmulationModel(filename::AbstractString)
 #
@@ -193,6 +185,33 @@ end
 #     )
 # end
 
+function get_current_time(model::EmulationModel)
+    execution_count = get_internal(model).execution_count
+    initial_time = get_initial_time(model)
+    resolution = get_resolution(model.internal.store_parameters)
+    return initial_time + resolution * execution_count
+end
+
+function model_store_init!(model::EmulationModel)
+    num_executions = get_executions(model)
+    system = get_system(model)
+    interval = resolution = PSY.get_time_series_resolution(system)
+    # This filed is probably not needed for Emulation
+    # end_of_interval_step = get_end_of_interval_step(get_internal(model))
+    base_power = PSY.get_base_power(system)
+    sys_uuid = IS.get_uuid(system)
+    model.internal.store_parameters = ModelStoreParams(
+        num_executions,
+        1,
+        interval,
+        resolution,
+        -1, #end_of_interval_step
+        base_power,
+        sys_uuid,
+        get_metadata(get_optimization_container(model)),
+    )
+end
+
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
@@ -210,7 +229,8 @@ function build_pre_step!(model::EmulationModel)
         )
         # Temporary while are able to switch from PJ to POI
         get_optimization_container(model).built_for_recurrent_solves = true
-
+        @info "Initializing ModelStoreParams"
+        model_store_init!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return

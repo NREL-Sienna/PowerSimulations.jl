@@ -31,7 +31,7 @@ end
 function SimulationProblemResults(
     store::SimulationStore,
     problem_name::AbstractString,
-    problem_params::SimulationStoreProblemParams,
+    problem_params::ModelStoreParams,
     sim_params::SimulationStoreParams,
     path;
     results_output_path = nothing,
@@ -322,7 +322,7 @@ returned by this function it will return from memory. Otherwise, it will read fr
 ```julia
 julia> read_variables(res, [(ActivePowerVariable, ThermalStandard)])
 julia> read_variables(res, ["ActivePowerVariable_ThermalStandard")])
-``` 
+```
 """
 # TODO DT: the read.*internal functions can likely be deleted.
 function read_variables_internal(
@@ -382,7 +382,7 @@ returned by this function it will return from memory. Otherwise, it will read fr
 ```julia
 julia> read_duals(res, [(CopperPlateBalanceConstraint, PSY.System)])
 julia> read_duals(res, ["CopperPlateBalanceConstraint_System"])
-``` 
+```
 """
 function read_duals_internal(
     res::SimulationProblemResults;
@@ -447,7 +447,7 @@ returned by this function it will return from memory. Otherwise, it will read fr
 ```julia
 julia> read_parameters(res, [(ActivePowerTimeSeriesParameter, ThermalStandard)])
 julia> read_parameters(res, ["ActivePowerTimeSeriesParameter_ThermalStandard"])
-``` 
+```
 """
 function read_parameters_internal(
     res::SimulationProblemResults;
