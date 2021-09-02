@@ -336,12 +336,8 @@ function add_constraints!(
             # add_device_services!(range_data, d, model)
             con[name] = JuMP.@constraint(
                 container.JuMPmodel,
-                container.JuMPmodel,
                 val * varstop[get_component_name(data), 1] <=
-                array[ci_name, t] <=
-                limits.max *
-                varbin[ci_name, t]ini_conds[ix, 2].value *
-                (limits.max - limits.min) - ic.value
+                initial_conditions[ix, 2].value * (limits.max - limits.min) - ic.value
             )
         end
     else
