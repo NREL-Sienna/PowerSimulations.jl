@@ -338,10 +338,12 @@ function add_constraints!(
                 container.JuMPmodel,
                 container.JuMPmodel,
                 val * varstop[get_component_name(data), 1] <=
-                array[ci_name, t] <= limits.max * varbin[ci_name, t]
-                ini_conds[ix, 2].value * (limits.max - limits.min) -
-                ic.value
+                array[ci_name, t] <=
+                limits.max *
+                varbin[ci_name, t]ini_conds[ix, 2].value *
+                (limits.max - limits.min) - ic.value
             )
+        end
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
