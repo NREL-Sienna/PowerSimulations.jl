@@ -104,7 +104,7 @@ end
 function add_lower_bound_range_constraints_impl!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},
-    U::Type{<:VariableType},
+    array,
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
@@ -112,7 +112,6 @@ function add_lower_bound_range_constraints_impl!(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
-    variable = U()
     component_type = V
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
@@ -137,7 +136,7 @@ end
 function add_upper_bound_range_constraints_impl!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},
-    U::Type{<:VariableType},
+    array,
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
@@ -145,7 +144,6 @@ function add_upper_bound_range_constraints_impl!(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
-    variable = U()
     component_type = V
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
