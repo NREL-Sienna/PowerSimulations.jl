@@ -195,13 +195,13 @@ function get_current_time(model::DecisionModel)
     return initial_time + interval * execution_count
 end
 
-function model_store_init(model::DecisionModel)
+function model_store_init!(model::DecisionModel)
     num_executions = get_executions(model)
     horizon = get_horizon(model)
     system = get_system(model)
-    interval = PSY.get_time_series_interval(system)
+    interval = PSY.get_forecast_interval(system)
     resolution = PSY.get_time_series_resolution(system)
-    end_of_interval_step = get_end_of_interval_step(get_internal(model))
+    end_of_interval_step = 1 # get_end_of_interval_step(get_internal(model)) #TODO: to be implemented when simulation is working
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
     return StoreModelParams(

@@ -4,7 +4,6 @@ struct TimeSeriesCacheKey
     name::String
 end
 
-# JDNOTE: This might be merged with the structs in simulation_store
 mutable struct SimulationInfo
     number::Int
     name::Symbol
