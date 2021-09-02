@@ -321,6 +321,7 @@ end
 function solve_impl(model::DecisionModel; optimizer = nothing)
     status = _pre_solve_model_checks(model, optimizer)
     timed_log = get_solve_timed_log(model)
+    jump_model = get_jump_model(model)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(jump_model)
     model_status = JuMP.primal_status(jump_model)
