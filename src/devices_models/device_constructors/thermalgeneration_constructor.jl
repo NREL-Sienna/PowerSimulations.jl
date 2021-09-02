@@ -1,10 +1,3 @@
-function initialize_timeseries_names(::Type{<:PSY.RenewableGen}, ::Type{FixedOutput})
-    return Dict{Type{<:TimeSeriesParameter}, String}(
-        ActivePowerTimeSeriesParameter => "max_active_power",
-        ReactivePowerTimeSeriesParameter => "max_active_power",
-    )
-end
-
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,

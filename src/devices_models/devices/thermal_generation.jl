@@ -60,6 +60,20 @@ get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariab
 
 #! format: on
 
+function initialize_timeseries_names(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.ThermalGen, V <: Union{FixedOutput, AbstractThermalFormulation}}
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
+function initialize_attributes(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.ThermalGen, V <: Union{FixedOutput, AbstractThermalFormulation}}
+    return Dict{String, Any}()
+end
+
 ######## THERMAL GENERATION CONSTRAINTS ############
 
 # active power limits of generators when there are no CommitmentVariables
@@ -320,27 +334,23 @@ function add_constraints!(
     initial_conditions_status = get_initial_conditions(container, DeviceStatus(), T)
     ini_conds = _get_data_for_range_ic(initial_conditions_power, initial_conditions_status)
 
-    constraint_data = Vector{DeviceMultiStartRangeConstraintsInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        limits = PSY.get_active_power_limits(d)
-        name = PSY.get_name(d)
-        @assert name == PSY.get_name(ini_conds[ix, 1].device)
-        startup_shutdown_limits = PSY.get_power_trajectory(d)
-        range_data =
-            DeviceMultiStartRangeConstraintsInfo(name, limits, startup_shutdown_limits)
-        add_device_services!(range_data, d, model)
-        constraint_data[ix] = range_data
-    end
-
     if !isempty(ini_conds)
-        device_multistart_range_ic!(
-            container,
-            constraint_data,
-            ini_conds,
-            ActiveRangeICConstraint(),
-            StopVariable(),
-            T,
-        )
+        varstop = get_variable(container, StopVariable(), T)
+        set_name = [PSY.get_name(d) for d in devices]
+        con = add_cons_container!(container, ActiveRangeICConstraint(), T, set_name)
+
+        for (ix, ic) in enumerate(ini_conds[:, 1])
+            name = get_device_name(ic)
+            device = get_device(ic)
+            limits = PSY.get_active_power_limits(device)
+            lag_ramp_limits = PSY.get_power_trajectory(device)
+            val = max(limits.max - lag_ramp_limits.shutdown, 0)
+            con[name] = JuMP.@constraint(
+                container.JuMPmodel,
+                val * varstop[name, 1] <=
+                ini_conds[ix, 2].value * (limits.max - limits.min) - ic.value
+            )
+        end
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end

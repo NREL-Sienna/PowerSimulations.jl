@@ -1,12 +1,3 @@
-function initialize_timeseries_names(
-    ::Type{<:PSY.RegulationDevice{T}},
-    ::Type{<:AbstractRegulationFormulation},
-) where {T <: PSY.StaticInjection}
-    return Dict{Type{<:TimeSeriesParameter}, String}(
-        ActivePowerTimeSeriesParameter => "max_active_power",
-    )
-end
-
 """
 This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """

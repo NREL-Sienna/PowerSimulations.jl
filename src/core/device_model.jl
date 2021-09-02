@@ -85,17 +85,3 @@ function _set_model!(
     end
     dict[key] = model
 end
-
-function initialize_timeseries_names(
-    ::Type{D},
-    ::Type{T},
-) where {D <: PSY.Device, T <: AbstractDeviceFormulation}
-    return Dict{Type{<:TimeSeriesParameter}, String}()
-end
-
-function initialize_attributes(
-    ::Type{D},
-    ::Type{T},
-) where {D <: PSY.Device, T <: AbstractDeviceFormulation}
-    return Dict{String, Any}()
-end

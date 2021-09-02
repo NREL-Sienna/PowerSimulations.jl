@@ -33,6 +33,23 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractContr
 
 #! format: on
 
+function initialize_timeseries_names(
+    ::Type{<:PSY.ElectricLoad},
+    ::Type{<:Union{FixedOutput, AbstractLoadFormulation}},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+        ReactivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
+function initialize_attributes(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.ElectricLoad, V <: Union{FixedOutput, AbstractLoadFormulation}}
+    return Dict{String, Any}()
+end
+
 ####################################### Reactive Power Constraints #########################
 """
 Reactive Power Constraints on Controllable Loads Assume Constant power_factor

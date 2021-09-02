@@ -22,7 +22,6 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenew
 
 #! format: on
 
-####################################### Reactive Power constraint_infos #########################
 function get_min_max_limits(
     device,
     ::Type{ReactivePowerVariableLimitsConstraint},
@@ -30,6 +29,25 @@ function get_min_max_limits(
 )
     PSY.get_reactive_power_limits(device)
 end
+
+function initialize_timeseries_names(
+    ::Type{<:PSY.RenewableGen},
+    ::Type{<:Union{FixedOutput, AbstractRenewableFormulation}},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+        ReactivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
+function initialize_attributes(
+    ::Type{<:PSY.RenewableGen},
+    ::Type{<:Union{FixedOutput, AbstractRenewableFormulation}},
+)
+    return Dict{String, Any}()
+end
+
+####################################### Reactive Power constraint_infos #########################
 
 function add_constraints!(
     container::OptimizationContainer,

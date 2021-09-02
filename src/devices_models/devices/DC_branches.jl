@@ -33,6 +33,20 @@ get_variable_upper_bound(
 ) = min(PSY.get_active_power_limits_from(d).max, PSY.get_active_power_limits_to(d).max)
 #! format: on
 
+function initialize_timeseries_names(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.DCBranch, V <: AbstractDCLineFormulation}
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
+function initialize_attributes(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.DCBranch, V <: AbstractDCLineFormulation}
+    return Dict{String, Any}()
+end
+
 #################################### Rate Limits Constraints ##################################################
 function branch_rate_constraints!(
     container::OptimizationContainer,

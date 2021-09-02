@@ -59,13 +59,27 @@ get_multiplier_value(
     ::AbstractStorageFormulation,
 ) = PSY.get_rating(d)
 
-function _initialize_timeseries_names(
+function initialize_timeseries_names(
     ::Type{D},
     ::Type{EnergyTarget},
 ) where {D <: PSY.Storage}
     return Dict{Type{<:TimeSeriesParameter}, String}(
         EnergyTargetTimeSeriesParameter => "storage_target",
     )
+end
+
+function initialize_timeseries_names(
+    ::Type{D},
+    ::Type{<:Union{FixedOutput, AbstractStorageFormulation}},
+) where {D <: PSY.Storage}
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
+function initialize_attributes(
+    ::Type{D},
+    ::Type{T},
+) where {D <: PSY.Storage, T <: Union{FixedOutput, AbstractStorageFormulation}}
+    return Dict{String, Any}("reservation" => true)
 end
 
 ################################## output power constraints#################################

@@ -39,6 +39,20 @@ get_variable_binary(
 ) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.ACBranch}, _) = NaN
+
+function initialize_timeseries_names(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.ACBranch, V <: AbstractBranchFormulation}
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
+function initialize_attributes(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.ACBranch, V <: AbstractBranchFormulation}
+    return Dict{String, Any}()
+end
 #################################### Flow Variable Bounds ##################################################
 function _get_constraint_data(
     devices::IS.FlattenIteratorWrapper{B},
