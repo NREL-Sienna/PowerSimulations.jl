@@ -1112,7 +1112,7 @@ function _initialize_problem_storage!(
     executions_by_problem = sequence.executions_by_problem
     intervals = sequence.intervals
 
-    problems = OrderedDict{Symbol, StoreModelParams}()
+    problems = OrderedDict{Symbol, ModelStoreParams}()
     problem_reqs = Dict{Symbol, SimulationStoreProblemRequirements}()
     num_param_containers = 0
     rules = CacheFlushRules(

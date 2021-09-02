@@ -1,7 +1,7 @@
 
 import PowerSimulations:
     SimulationStoreParams,
-    StoreModelParams,
+    ModelStoreParams,
     get_problem_exports,
     should_export_dual,
     should_export_parameter,
@@ -44,9 +44,9 @@ function _make_params()
                 PSI.VariableKey(OnVariable, ThermalStandard),
         ),
     )
-    problems = OrderedDict{Symbol, StoreModelParams}()
+    problems = OrderedDict{Symbol, ModelStoreParams}()
     for problem in keys(problem_defs)
-        problem_params = StoreModelParams(
+        problem_params = ModelStoreParams(
             problem_defs[problem]["execution_count"],
             problem_defs[problem]["horizon"],
             problem_defs[problem]["interval"],

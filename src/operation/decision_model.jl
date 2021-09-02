@@ -204,7 +204,7 @@ function model_store_init!(model::DecisionModel)
     end_of_interval_step = 1 # get_end_of_interval_step(get_internal(model)) #TODO: to be implemented when simulation is working
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    return StoreModelParams(
+    return ModelStoreParams(
         num_executions,
         horizon,
         interval,

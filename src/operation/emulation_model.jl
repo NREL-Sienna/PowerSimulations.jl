@@ -200,7 +200,7 @@ function model_store_init!(model::EmulationModel)
     # end_of_interval_step = get_end_of_interval_step(get_internal(model))
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    model.internal.store_parameters = StoreModelParams(
+    model.internal.store_parameters = ModelStoreParams(
         num_executions,
         1,
         interval,

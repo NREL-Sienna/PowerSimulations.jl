@@ -31,7 +31,7 @@ end
 function SimulationProblemResults(
     store::SimulationStore,
     problem_name::AbstractString,
-    problem_params::StoreModelParams,
+    problem_params::ModelStoreParams,
     sim_params::SimulationStoreParams,
     path;
     results_output_path = nothing,

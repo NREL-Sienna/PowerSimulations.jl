@@ -3,7 +3,7 @@ struct SimulationStoreParams
     step_resolution::Dates.Period
     num_steps::Int
     # The key order is the problem execution order.
-    problems::OrderedDict{Symbol, StoreModelParams}
+    problems::OrderedDict{Symbol, ModelStoreParams}
 
     function SimulationStoreParams(initial_time, step_resolution, num_steps, problems)
         new(initial_time, Dates.Millisecond(step_resolution), num_steps, problems)
@@ -15,7 +15,7 @@ function SimulationStoreParams(initial_time, step_resolution, num_steps)
         initial_time,
         step_resolution,
         num_steps,
-        OrderedDict{Symbol, StoreModelParams}(),
+        OrderedDict{Symbol, ModelStoreParams}(),
     )
 end
 
@@ -24,7 +24,7 @@ function SimulationStoreParams()
         Dates.DateTime("1970-01-01T00:00:00"),
         Dates.Millisecond(0),
         0,
-        OrderedDict{Symbol, StoreModelParams}(),
+        OrderedDict{Symbol, ModelStoreParams}(),
     )
 end
 
