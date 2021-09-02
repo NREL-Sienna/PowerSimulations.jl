@@ -49,6 +49,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     duals::Vector{DataType}
     time_series_names::Dict{Type{<:TimeSeriesParameter}, String}
     attributes::Dict{String, Any}
+    contributing_devices_map::Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}
     function ServiceModel(
         ::Type{D},
         ::Type{B},
@@ -58,6 +59,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         duals = Vector{DataType}(),
         time_series_names = initialize_timeseries_names(D, B),
         attributes = initialize_attributes(D, B),
+        contributing_devices_map = Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)
@@ -68,6 +70,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
             duals,
             time_series_names,
             attributes,
+            contributing_devices_map,
         )
     end
 end
@@ -85,6 +88,10 @@ get_duals(m::ServiceModel) = m.duals
 get_time_series_names(m::ServiceModel) = m.time_series_names
 get_attributes(m::ServiceModel) = m.attributes
 get_attribute(m::ServiceModel, key::String) = get(m.attributes, key, nothing)
+get_contributing_devices_map(m::ServiceModel) = m.contributing_devices_map
+get_contributing_devices_map(m::ServiceModel, key) = get(m.contributing_devices_map, key, nothing)
+get_contributing_devices(m::ServiceModel) = [z for x in values(m.contributing_devices_map) for z in x]
+add_contributing_devices_map!(m::ServiceModel, key, value) = m.contributing_devices_map[key] = value
 
 function ServiceModel(
     service_type::Type{D},

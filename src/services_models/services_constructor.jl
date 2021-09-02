@@ -18,15 +18,6 @@ function initialize_attributes(::Type{<:PSY.Service}, ::Type{<:AbstractServiceFo
     return Dict{String, Any}()
 end
 
-function filter_contributing_devices!(contributing_devices, incompatible_device_types)
-    _contributing_devices = filter(x -> PSY.get_available(x), contributing_devices)
-    if !isempty(incompatible_device_types)
-        _contributing_devices =
-            [d for d in _contributing_devices if typeof(d) ∉ incompatible_device_types]
-    end
-    return _contributing_devices
-end
-
 function get_incompatible_devices(devices_template::Dict)
     incompatible_device_types = Vector{DataType}()
     for model in values(devices_template)
@@ -39,6 +30,54 @@ function get_incompatible_devices(devices_template::Dict)
         end
     end
     return incompatible_device_types
+end
+
+function sort_contributing_devices(contributing_devices)
+    types = unique(typeof.(contributing_devices))
+    device_list = Dict()
+    for t in types
+        _devices = filter(x -> typeof(x) == t, contributing_devices)
+        device_list[t] = _devices
+    end
+    return device_list
+end
+
+function populate_contributing_devices!(
+    container::OptimizationContainer,
+    template,
+    sys::PSY.System,
+)
+    service_models = get_service_models(template)
+    isempty(service_models) && return
+
+    device_models = get_device_models(template)
+    incompatible_device_types = get_incompatible_devices(device_models)
+    services_mapping = PSY.get_contributing_device_mapping(sys)
+    for (service_key, service_model) in service_models
+        S = get_component_type(service_model)
+        service = PSY.get_component(S, sys, get_service_name(service_model))
+        if isnothing(service)
+            @warn "The data doesn't include services of type $(S) and name $(get_service_name(service_model)), consider changing the service models" _group =
+                :ConstructGroup
+            continue
+        end
+        contributing_devices_ =
+            services_mapping[(type = S, name = PSY.get_name(service))].contributing_devices
+        contributing_devices = [
+            d for d in contributing_devices_ if
+            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+        ]
+        if isempty(contributing_devices)
+            @warn "The contributing devices for service $(PSY.get_name(service)) is empty, consider removing the service from the system" _group =
+                :ConstructGroup
+            continue
+        end
+        sorted_contributing_devices = sort_contributing_devices(contributing_devices)
+        for (dtype, list) in sorted_contributing_devices
+            add_contributing_devices_map!(service_model, dtype, list)
+        end
+    end
+    return
 end
 
 function construct_services!(
@@ -58,7 +97,7 @@ function construct_services!(
             groupservice = key
             continue
         end
-        !validate_service!(service_model, incompatible_device_types, sys) && continue
+        isempty(get_contributing_devices(service_model)) && continue
         construct_service!(
             container,
             sys,
@@ -95,7 +134,7 @@ function construct_services!(
             groupservice = key
             continue
         end
-        !validate_service!(service_model, incompatible_device_types, sys) && continue
+        isempty(get_contributing_devices(service_model)) && continue
         construct_service!(
             container,
             sys,
@@ -126,11 +165,8 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
-    _devices =
-        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
+    contributing_devices = get_contributing_devices(model)
 
     # Variables
     add_variables!(
@@ -154,10 +190,8 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
-    _devices =
-        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
+    contributing_devices = get_contributing_devices(model)
+
     # Constraints
     service_requirement_constraint!(container, service, model)
     modify_device_model!(devices_template, model, contributing_devices)
@@ -182,10 +216,7 @@ function construct_service!(
 ) where {SR <: PSY.StaticReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
-    _devices =
-        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
+    contributing_devices = get_contributing_devices(model)
 
     # Variables
     add_variables!(
@@ -209,10 +240,8 @@ function construct_service!(
 ) where {SR <: PSY.StaticReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
-    _devices =
-        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
+    contributing_devices = get_contributing_devices(model)
+
     # Constraints
     service_requirement_constraint!(container, service, model)
     modify_device_model!(devices_template, model, contributing_devices)
@@ -237,11 +266,8 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
+    contributing_devices = get_contributing_devices(model)
     add_variable!(container, ServiceRequirementVariable(), [service], StepwiseCostReserve())
-    _devices =
-        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
     add_variables!(
         container,
         ActivePowerReserveVariable,
@@ -261,10 +287,8 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
-    _devices =
-        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
+    contributing_devices = get_contributing_devices(model)
+
     # Constraints
     service_requirement_constraint!(container, service, model)
     modify_device_model!(devices_template, model, contributing_devices)
@@ -381,11 +405,9 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
+    contributing_devices = get_contributing_devices(model)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
-    _devices =
-        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
+
     # Variables
     add_variables!(
         container,
@@ -408,11 +430,8 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
+    contributing_devices = get_contributing_devices(model)
 
-    _devices =
-        services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-    contributing_devices = filter_contributing_devices!(_devices, incompatible_device_types)
     # Constraints
     service_requirement_constraint!(container, service, model)
     ramp_constraints!(container, service, contributing_devices, model)
