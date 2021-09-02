@@ -128,7 +128,6 @@ function add_lower_bound_range_constraints_impl!(
 
     for (i, device) in enumerate(devices), t in time_steps
         ci_name = PSY.get_name(device)
-        # TODO: deal with additional expressions terms for services
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] =
             JuMP.@constraint(container.JuMPmodel, array[ci_name, t] >= limits.min)
@@ -162,7 +161,6 @@ function add_upper_bound_range_constraints_impl!(
 
     for (i, device) in enumerate(devices), t in time_steps
         ci_name = PSY.get_name(device)
-        # TODO: deal with additional expressions terms for services
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         con_ub[ci_name, t] =
             JuMP.@constraint(container.JuMPmodel, array[ci_name, t] <= limits.max)
@@ -283,14 +281,10 @@ function add_semicontinuous_lower_bound_range_constraints_impl!(
     )
 
     @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
-    # TODO: dispatch the following function to use parameter jump instead based on feedforward
     varbin = get_variable(container, only(binary_variables), component_type)
 
     for (i, device) in enumerate(devices), t in time_steps
         ci_name = PSY.get_name(device)
-        # TODO: deal with additional expressions terms for services
-        # add_services_constraint!(expression_ub, model)
-        # add_services_constraint!(expression_lb, model)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] = JuMP.@constraint(
             container.JuMPmodel,
@@ -325,14 +319,10 @@ function add_semicontinuous_upper_bound_range_constraints_impl!(
     )
 
     @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
-    # TODO: dispatch the following function to use parameter jump instead based on feedforward
     varbin = get_variable(container, only(binary_variables), component_type)
 
     for (i, device) in enumerate(devices), t in time_steps
         ci_name = PSY.get_name(device)
-        # TODO: deal with additional expressions terms for services
-        # add_services_constraint!(expression_ub, model)
-        # add_services_constraint!(expression_lb, model)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] = JuMP.@constraint(
             container.JuMPmodel,
@@ -367,8 +357,7 @@ function add_reserve_range_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    # TODO: remove this function? use the impl for dispatch.
-    variable = V()
+    variable = U()
     component_type = W
     array = get_variable(container, variable, component_type)
     add_reserve_upper_bound_range_constraints_impl!(
@@ -400,9 +389,9 @@ function add_reserve_range_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    variable = V()
+    expression = U()
     component_type = W
-    array = get_expression(container, variable, component_type)
+    array = get_expression(container, expression, component_type)
     add_reserve_upper_bound_range_constraints_impl!(
         container,
         T,
@@ -434,7 +423,6 @@ function add_reserve_lower_bound_range_constraints_impl!(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
-    variable = U()
     component_type = V
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -476,7 +464,6 @@ function add_reserve_upper_bound_range_constraints_impl!(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
-    variable = U()
     component_type = V
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -588,9 +575,9 @@ function add_reserve_range_constraints!(
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
 }
-    variable = V()
+    expression = V()
     component_type = W
-    array = get_variable(container, variable, component_type)
+    array = get_variable(container, expression, component_type)
     add_reserve_upper_bound_range_constraints_impl!(
         container,
         T,
@@ -627,7 +614,6 @@ function add_reserve_lower_bound_range_constraints_impl!(
 }
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
-    variable = V()
     component_type = W
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -647,7 +633,6 @@ function add_reserve_lower_bound_range_constraints_impl!(
 
     for (i, device) in enumerate(devices), t in time_steps
         ci_name = PSY.get_name(device)
-        # TODO: deal with additional expressions terms for services
         limits = get_min_max_limits(device, T, X) # depends on constraint type and formulation type
         con_lb[ci_name, t] = JuMP.@constraint(
             container.JuMPmodel,
@@ -691,7 +676,6 @@ function add_reserve_upper_bound_range_constraints_impl!(
 
     for (i, device) in enumerate(devices), t in time_steps
         ci_name = PSY.get_name(device)
-        # TODO: deal with additional expressions terms for services
         limits = get_min_max_limits(device, T, X) # depends on constraint type and formulation type
         con_ub[ci_name, t] = JuMP.@constraint(
             container.JuMPmodel,
@@ -780,7 +764,6 @@ function add_parameterized_lower_bound_range_constraints_impl!(
     multiplier = get_parameter_multiplier_array(container, P(), V)
     for (i, device) in enumerate(devices), t in time_steps
         name = PSY.get_name(device)
-        # TODO: deal with additional terms
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             array[name, t] >= multiplier[name, t] * parameter[name, t]
@@ -868,7 +851,6 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     multiplier = get_parameter_multiplier_array(container, P(), V)
     for (i, device) in enumerate(devices), t in time_steps
         name = PSY.get_name(device)
-        # TODO: deal with additional terms
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             array[name, t] <= multiplier[name, t] * parameter[name, t]
