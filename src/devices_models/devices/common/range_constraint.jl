@@ -322,9 +322,9 @@ function add_semicontinuous_upper_bound_range_constraints_impl!(
     for (i, device) in enumerate(devices), t in time_steps
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
-        con_lb[ci_name, t] = JuMP.@constraint(
+        con_ub[ci_name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            array[ci_name, t] >= limits.min * varbin[ci_name, t]
+            array[ci_name, t] <= limits.max * varbin[ci_name, t]
         )
     end
 end
