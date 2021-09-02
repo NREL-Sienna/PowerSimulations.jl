@@ -320,27 +320,28 @@ function add_constraints!(
     initial_conditions_status = get_initial_conditions(container, DeviceStatus(), T)
     ini_conds = _get_data_for_range_ic(initial_conditions_power, initial_conditions_status)
 
-    constraint_data = Vector{DeviceMultiStartRangeConstraintsInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        limits = PSY.get_active_power_limits(d)
-        name = PSY.get_name(d)
-        @assert name == PSY.get_name(ini_conds[ix, 1].device)
-        startup_shutdown_limits = PSY.get_power_trajectory(d)
-        range_data =
-            DeviceMultiStartRangeConstraintsInfo(name, limits, startup_shutdown_limits)
-        add_device_services!(range_data, d, model)
-        constraint_data[ix] = range_data
-    end
-
     if !isempty(ini_conds)
-        device_multistart_range_ic!(
-            container,
-            constraint_data,
-            ini_conds,
-            ActiveRangeICConstraint(),
-            StopVariable(),
-            T,
-        )
+        varstop = get_variable(container, StopVariable(), T)
+
+        set_name = [get_device_name(ic) for ic in ini_conds[:, 1]]
+        con = add_cons_container!(container, ActiveRangeICConstraint(), T, set_name)
+
+        for (ix, ic) in enumerate(ini_conds[:, 1])
+            name = get_device_name(ic)
+            d = devices[ix]
+            limits = PSY.get_active_power_limits(d)
+            startup_shutdown_limits = PSY.get_power_trajectory(d)
+            val = max(limits.max - startup_shutdown_limits.shutdown, 0)
+            # TODO: How to do the following?
+            # add_device_services!(range_data, d, model)
+            con[name] = JuMP.@constraint(
+                container.JuMPmodel,
+                container.JuMPmodel,
+                val * varstop[get_component_name(data), 1] <=
+                array[ci_name, t] <= limits.max * varbin[ci_name, t]
+                ini_conds[ix, 2].value * (limits.max - limits.min) -
+                ic.value
+            )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
