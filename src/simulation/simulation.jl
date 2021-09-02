@@ -239,7 +239,7 @@ mutable struct Simulation
     )
         for model in models
             model_name = get_name(model)
-            if !built_for_simulation(model)
+            if !built_for_recurrent_solves(model)
                 throw(
                     IS.ConflictingInputsError(
                         "model $(model_name) is not part of any Simulation",
@@ -880,93 +880,6 @@ function update_cache!(
     return
 end
 
-######################### TimeSeries Data Updating###########################################
-function update_parameter!(
-    param_reference::UpdateRef{T},
-    container::ParameterContainer,
-    model::DecisionModel,
-    sim::Simulation,
-) where {T <: PSY.Component}
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
-        components = get_available_components(T, model.sys)
-        initial_forecast_time = get_simulation_time(sim, get_simulation_number(model))
-        horizon = length(get_time_steps(model.internal.container))
-        for d in components
-            ts_vector = get_time_series_values!(
-                PSY.Deterministic,
-                model,
-                d,
-                get_data_name(param_reference),
-                initial_forecast_time,
-                horizon,
-                ignore_scaling_factors = true,
-            )
-            component_name = PSY.get_name(d)
-            for (ix, val) in enumerate(get_parameter_array(container)[component_name, :])
-                value = ts_vector[ix]
-                JuMP.set_value(val, value)
-            end
-        end
-    end
-
-    return
-end
-
-function update_parameter!(
-    param_reference::UpdateRef{T},
-    container::ParameterContainer,
-    model::DecisionModel,
-    sim::Simulation,
-) where {T <: PSY.Service}
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "ts_update_parameter!" begin
-        components = get_available_components(T, model.sys)
-        initial_forecast_time = get_simulation_time(sim, get_simulation_number(model))
-        horizon = length(get_time_steps(model.internal.container))
-        param_array = get_parameter_array(container)
-        for ix in axes(param_array)[1]
-            service = PSY.get_component(T, model.sys, ix)
-            ts_vector = get_time_series_values!(
-                PSY.Deterministic,
-                model,
-                service,
-                get_data_name(param_reference),
-                initial_forecast_time,
-                horizon,
-                ignore_scaling_factors = true,
-            )
-            for (jx, value) in enumerate(ts_vector)
-                JuMP.set_value(get_parameter_array(container)[ix, jx], value)
-            end
-        end
-    end
-
-    return
-end
-
-"""Updates the forecast parameter value"""
-function update_parameter!(
-    param_reference::UpdateRef{JuMP.VariableRef},
-    container::ParameterContainer,
-    model::DecisionModel,
-    sim::Simulation,
-)
-    param_array = get_parameter_array(container)
-    simulation_info = get_simulation_info(model)
-    for (k, chronology) in simulation_info.chronolgy_dict
-        source_model = get_model(sim, k)
-        feedforward_update!(
-            problem,
-            source_model,
-            chronology,
-            param_reference,
-            param_array,
-            get_current_time(sim),
-        )
-    end
-
-    return
-end
-
 function _update_initial_conditions!(model::DecisionModel, sim::Simulation)
     ini_cond_chronology = get_sequence(sim).ini_cond_chronology
     optimization_containter = get_optimization_container(model)
@@ -1199,7 +1112,7 @@ function _initialize_problem_storage!(
     executions_by_problem = sequence.executions_by_problem
     intervals = sequence.intervals
 
-    problems = OrderedDict{Symbol, SimulationStoreProblemParams}()
+    problems = OrderedDict{Symbol, ModelStoreParams}()
     problem_reqs = Dict{Symbol, SimulationStoreProblemRequirements}()
     num_param_containers = 0
     rules = CacheFlushRules(
@@ -1208,33 +1121,13 @@ function _initialize_problem_storage!(
     )
     for model in get_models(sim)
         model_name = get_name(model)
-        num_executions = executions_by_problem[model_name]
-        horizon = get_horizon(model)
+        reqs = SimulationStoreProblemRequirements()
         container = get_optimization_container(model)
         duals = get_duals(container)
         parameters = get_parameters(container)
         variables = get_variables(container)
         aux_variables = get_aux_variables(container)
         num_rows = num_executions * get_steps(sim)
-
-        interval = intervals[model_name][1]
-        resolution = get_resolution(model)
-        end_of_interval_step = get_end_of_interval_step(model)
-        system = get_system(model)
-        base_power = PSY.get_base_power(system)
-        sys_uuid = IS.get_uuid(system)
-        problem_params = SimulationStoreProblemParams(
-            num_executions,
-            horizon,
-            interval,
-            resolution,
-            end_of_interval_step,
-            base_power,
-            sys_uuid,
-            get_metadata(get_optimization_container(model)),
-        )
-        reqs = SimulationStoreProblemRequirements()
-
         # TODO: configuration of keep_in_cache and priority are not correct
         for (key, array) in duals
             reqs.duals[model] = _calc_dimensions(array, encode_key(key), num_rows, horizon)

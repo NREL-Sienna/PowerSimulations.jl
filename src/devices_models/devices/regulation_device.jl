@@ -53,7 +53,7 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    parameters = built_for_simulation(container)
+    parameters = built_for_recurrent_solves(container)
     var_up = get_variable(container, DeltaActivePowerUpVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]
@@ -105,7 +105,7 @@ function add_constraints!(
     ::Type{AreaBalancePowerModel},
     ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    parameters = built_for_simulation(container)
+    parameters = built_for_recurrent_solves(container)
     var_dn = get_variable(container, DeltaActivePowerDownVariable(), T)
 
     names = [PSY.get_name(g) for g in devices]

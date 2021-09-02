@@ -43,7 +43,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
-    built_for_simulation::Bool
+    built_for_recurrent_solves::Bool
     metadata::OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
 end
@@ -52,7 +52,8 @@ function OptimizationContainer(
     sys::PSY.System,
     settings::Settings,
     jump_model::Union{Nothing, JuMP.Model},
-)
+    ::Type{T},
+) where {T <: PSY.TimeSeriesData}
     resolution = PSY.get_time_series_resolution(sys)
     return OptimizationContainer(
         jump_model === nothing ? _make_jump_model(settings) :
@@ -74,36 +75,38 @@ function OptimizationContainer(
         Dict{Symbol, Any}(),
         false,
         OptimizationContainerMetadata(),
-        PSY.Deterministic,
+        T,
     )
 end
 
-function OptimizationContainer(filename::AbstractString)
-    return OptimizationContainer(
-        jump_model === nothing ? _make_jump_model(settings) :
-        _finalize_jump_model!(jump_model, settings),
-        1:1,
-        IS.time_period_conversion(resolution),
-        settings,
-        copy_for_serialization(settings),
-        Dict{VariableKey, AbstractArray}(),
-        Dict{AuxVarKey, AbstractArray}(),
-        Dict{ConstraintKey, AbstractArray}(),
-        Dict{ConstraintKey, AbstractArray}(),
-        Dict{String, OptimizationContainerKey}(),
-        zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
-        Dict{ExpressionKey, AbstractArray}(),
-        Dict{ParameterKey, ParameterContainer}(),
-        Dict{ICKey, Vector{InitialCondition}}(),
-        nothing,
-        PSY.get_base_power(sys),
-        Dict{Symbol, Any}(),
-        false,
-        PSY.Deterministic,
-    )
-end
+# This is broken with the addition of the default_time_series field
+# function OptimizationContainer(filename::AbstractString)
+#     return OptimizationContainer(
+#         jump_model === nothing ? _make_jump_model(settings) :
+#         _finalize_jump_model!(jump_model, settings),
+#         1:1,
+#         IS.time_period_conversion(resolution),
+#         settings,
+#         copy_for_serialization(settings),
+#         Dict{VariableKey, AbstractArray}(),
+#         Dict{AuxVarKey, AbstractArray}(),
+#         Dict{ConstraintKey, AbstractArray}(),
+#         Dict{ConstraintKey, AbstractArray}(),
+#         Dict{String, OptimizationContainerKey}(),
+#         zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
+#         Dict{ExpressionKey, AbstractArray}(),
+#         Dict{ParameterKey, ParameterContainer}(),
+#         Dict{ICKey, Vector{InitialCondition}}(),
+#         nothing,
+#         PSY.get_base_power(sys),
+#         Dict{Symbol, Any}(),
+#         false,
+#         PSY.Deterministic,
+#     )
+# end
 
-built_for_simulation(container::OptimizationContainer) = container.built_for_simulation
+built_for_recurrent_solves(container::OptimizationContainer) =
+    container.built_for_recurrent_solves
 
 get_aux_variables(container::OptimizationContainer) = container.aux_variables
 get_base_power(container::OptimizationContainer) = container.base_power
@@ -153,13 +156,13 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
         )
     end
 
-    if get_optimizer_log_print(settings)
-        JuMP.unset_silent(JuMPmodel)
-        @debug "optimizer unset to silent"
-    else
-        JuMP.set_silent(JuMPmodel)
-        @debug "optimizer set to silent"
-    end
+    #if get_optimizer_log_print(settings)
+    #    JuMP.unset_silent(JuMPmodel)
+    #    @debug "optimizer unset to silent"
+    #else
+    #    JuMP.set_silent(JuMPmodel)
+    #    @debug "optimizer set to silent"
+    #end
     return JuMPmodel
 end
 
@@ -199,7 +202,12 @@ function optimization_container_init!(
     settings = get_settings(container)
 
     if get_initial_time(settings) == UNSET_INI_TIME
-        set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
+        if get_default_time_series_type(container) <: PSY.AbstractDeterministic
+            set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
+        elseif get_default_time_series_type(container) <: PSY.SingleTimeSeries
+            ini_time, _ = PSY.check_time_series_consistency(sys, PSY.SingleTimeSeries)
+            set_initial_time!(settings, ini_time)
+        end
     end
 
     if get_horizon(settings) == UNSET_HORIZON
@@ -268,7 +276,7 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
-    parameter_jump = built_for_simulation(container)
+    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
@@ -284,7 +292,7 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
 )
-    parameter_jump = built_for_simulation(container)
+    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
@@ -298,7 +306,7 @@ function _make_system_expressions!(
     ::Vector{Int},
     ::Type{CopperPlatePowerModel},
 )
-    parameter_jump = built_for_simulation(container)
+    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
@@ -312,7 +320,7 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
-    parameter_jump = built_for_simulation(container)
+    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
@@ -752,7 +760,7 @@ function _add_param_container!(
     axs...,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     # Temporary while we change to POI vs PJ
-    param_type = built_for_simulation(container) ? PJ.ParameterRef : Float64
+    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
         attribute,
         JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),
@@ -831,6 +839,15 @@ function get_parameter_multiplier_array(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
     return get_multiplier_array(get_parameter(container, ParameterKey(T, U, meta)))
+end
+
+function get_parameter_attributes(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_attributes(get_parameter(container, ParameterKey(T, U, meta)))
 end
 
 function iterate_parameter_containers(container::OptimizationContainer)

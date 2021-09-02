@@ -467,7 +467,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
         problem_name = Symbol(problem)
         container_metadata =
             deserialize_metadata(OptimizationContainerMetadata, problem_path, problem)
-        store.params.problems[problem_name] = SimulationStoreProblemParams(
+        store.params.problems[problem_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
