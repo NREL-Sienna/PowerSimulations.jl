@@ -19,6 +19,7 @@ get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHyd
 get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).min
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroUnitCommitment) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).max
 
 ############## ActivePowerVariable, HydroDispatchRunOfRiver ####################
@@ -106,6 +107,59 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroForm
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::FixedOutput) = PSY.get_max_active_power(d)
 
 #! format: on
+
+function get_default_time_series_names(
+    ::Type{<:PSY.HydroGen},
+    ::Type{<:Union{FixedOutput, HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver}},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+        ReactivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
+function get_default_time_series_names(
+    ::Type{PSY.HydroEnergyReservoir},
+    ::Type{T},
+) where {T <: Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        EnergyBudgetTimeSeriesParameter => "hydro_budget",
+    )
+end
+
+function get_default_time_series_names(
+    ::Type{PSY.HydroEnergyReservoir},
+    ::Type{T},
+) where {T <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        EnergyTargetTimeSeriesParameter => "storage_target",
+        InflowTimeSeriesParameter => "inflow",
+    )
+end
+
+function get_default_time_series_names(
+    ::Type{PSY.HydroPumpedStorage},
+    ::Type{T},
+) where {T <: HydroDispatchPumpedStorage}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        InflowTimeSeriesParameter => "inflow",
+        OutflowTimeSeriesParameter => "outflow",
+    )
+end
+
+function get_default_attributes(
+    ::Type{T},
+    ::Type{D},
+) where {T <: PSY.HydroGen, D <: Union{FixedOutput, AbstractHydroFormulation}}
+    return Dict{String, Any}("reservation" => false)
+end
+
+function get_default_attributes(
+    ::Type{PSY.HydroPumpedStorage},
+    ::Type{HydroDispatchPumpedStorage},
+)
+    return Dict{String, Any}("reservation" => true)
+end
 
 """
 Time series constraints

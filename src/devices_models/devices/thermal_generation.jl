@@ -28,6 +28,7 @@ get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractT
 get_variable_initial_value(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalUnitCommitment) = 0.0
 get_variable_lower_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
 get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = PSY.get_active_power_limits(d).max - PSY.get_active_power_limits(d).min
@@ -59,6 +60,20 @@ get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariab
 
 
 #! format: on
+
+function get_default_time_series_names(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.ThermalGen, V <: Union{FixedOutput, AbstractThermalFormulation}}
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
+function get_default_attributes(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.ThermalGen, V <: Union{FixedOutput, AbstractThermalFormulation}}
+    return Dict{String, Any}()
+end
 
 ######## THERMAL GENERATION CONSTRAINTS ############
 
@@ -322,22 +337,21 @@ function add_constraints!(
 
     if !isempty(ini_conds)
         varstop = get_variable(container, StopVariable(), T)
-
-        set_name = [get_device_name(ic) for ic in ini_conds[:, 1]]
+        set_name = [PSY.get_name(d) for d in devices]
         con = add_cons_container!(container, ActiveRangeICConstraint(), T, set_name)
 
         for (ix, ic) in enumerate(ini_conds[:, 1])
             name = get_device_name(ic)
-            d = devices[ix]
-            limits = PSY.get_active_power_limits(d)
-            startup_shutdown_limits = PSY.get_power_trajectory(d)
-            val = max(limits.max - startup_shutdown_limits.shutdown, 0)
+            device = get_device(ic)
+            limits = PSY.get_active_power_limits(device)
+            lag_ramp_limits = PSY.get_power_trajectory(device)
+            val = max(limits.max - lag_ramp_limits.shutdown, 0)
             # TODO: How to do the following?
             # add_device_services!(range_data, d, model)
             con[name] = JuMP.@constraint(
                 container.JuMPmodel,
-                val * varstop[get_component_name(data), 1] <=
-                initial_conditions[ix, 2].value * (limits.max - limits.min) - ic.value
+                val * varstop[name, 1] <=
+                ini_conds[ix, 2].value * (limits.max - limits.min) - ic.value
             )
         end
     else

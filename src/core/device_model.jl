@@ -43,8 +43,8 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         feedforward = nothing,
         use_slacks = false,
         duals = Vector{DataType}(),
-        time_series_names = initialize_timeseries_names(D, B),
-        attributes = initialize_attributes(D, B),
+        time_series_names = get_default_time_series_names(D, B),
+        attributes = get_default_attributes(D, B),
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)
@@ -84,18 +84,4 @@ function _set_model!(
         @info("Overwriting $(D) existing model")
     end
     dict[key] = model
-end
-
-function initialize_timeseries_names(
-    ::Type{D},
-    ::Type{T},
-) where {D <: PSY.Device, T <: AbstractDeviceFormulation}
-    return Dict{Type{<:TimeSeriesParameter}, String}()
-end
-
-function initialize_attributes(
-    ::Type{D},
-    ::Type{T},
-) where {D <: PSY.Device, T <: AbstractDeviceFormulation}
-    return Dict{String, Any}()
 end

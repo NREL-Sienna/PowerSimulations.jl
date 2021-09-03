@@ -28,6 +28,22 @@ get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.Regulat
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.RegulationDevice, _)  = PSY.get_max_active_power(d)
 #! format: on
 
+function get_default_time_series_names(
+    ::Type{<:PSY.RegulationDevice{T}},
+    ::Type{<:AbstractRegulationFormulation},
+) where {T <: PSY.StaticInjection}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
+function get_default_attributes(
+    ::Type{<:PSY.RegulationDevice{T}},
+    ::Type{<:AbstractRegulationFormulation},
+) where {T <: PSY.StaticInjection}
+    return Dict{String, Any}()
+end
+
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{DeltaActivePowerUpVariableLimitsConstraint},

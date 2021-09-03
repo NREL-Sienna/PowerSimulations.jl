@@ -1,19 +1,3 @@
-function initialize_timeseries_names(
-    ::Type{D},
-    ::Type{EnergyTarget},
-) where {D <: PSY.Storage}
-    return Dict{Type{<:TimeSeriesParameter}, String}(
-        EnergyTargetTimeSeriesParameter => "storage_target",
-    )
-end
-
-function initialize_attributes(
-    ::Type{D},
-    ::Type{T},
-) where {D <: PSY.Storage, T <: AbstractStorageFormulation}
-    return Dict{String, Any}("reservation" => true)
-end
-
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
