@@ -87,6 +87,10 @@ abstract type SimulationStore end
 # - write_optimizer_stats!
 # - read_problem_optimizer_stats
 
+abstract type ModelStoreData end
+
+# Required methods: TBD
+
 abstract type AbstractAffectFeedForward end
 
 get_device_type(x::AbstractAffectFeedForward) = x.device_type
