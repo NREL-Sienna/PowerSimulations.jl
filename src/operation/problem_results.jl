@@ -1,3 +1,4 @@
+# This needs renaming to avoid collision with the DecionModelResults/EmulationModelResults
 struct ProblemResults <: PSIResults
     base_power::Float64
     timestamps::StepRange{Dates.DateTime, Dates.Millisecond}

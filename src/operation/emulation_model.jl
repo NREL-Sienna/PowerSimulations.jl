@@ -47,7 +47,8 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, ModelInternal}
+    internal::ModelInternal
+    store::InMemoryModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
 
     function EmulationModel{M}(
@@ -71,7 +72,14 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
-        new{M}(name, template, sys, internal, Dict{String, Any}())
+        new{M}(
+            name,
+            template,
+            sys,
+            internal,
+            InMemoryModelStore(EmulationModelOptimizerResults),
+            Dict{String, Any}(),
+        )
     end
 end
 
@@ -192,7 +200,7 @@ function get_current_time(model::EmulationModel)
     return initial_time + resolution * execution_count
 end
 
-function model_store_init!(model::EmulationModel)
+function model_store_params_init!(model::EmulationModel)
     num_executions = get_executions(model)
     system = get_system(model)
     interval = resolution = PSY.get_time_series_resolution(system)
@@ -210,6 +218,15 @@ function model_store_init!(model::EmulationModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
+end
+
+function model_store_init!(model::EmulationModel)
+    initialize_model_storage!(
+        model.store,
+        get_optimization_container(model),
+        model.internal.store_parameters,
+    )
+    return
 end
 
 function build_pre_step!(model::EmulationModel)
@@ -230,7 +247,7 @@ function build_pre_step!(model::EmulationModel)
         # Temporary while are able to switch from PJ to POI
         get_optimization_container(model).built_for_recurrent_solves = true
         @info "Initializing ModelStoreParams"
-        model_store_init!(model)
+        model_store_params_init!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
@@ -241,6 +258,7 @@ function _build!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
         try
             build_pre_step!(model)
             problem_build!(model)
+            model_store_init!(model)
             # serialize && serialize_problem(model)
             # serialize && serialize_optimization_model(model)
             serialize_metadata!(
@@ -263,6 +281,7 @@ end
 """Implementation of build for any EmulationProblem"""
 function build!(
     model::EmulationModel{<:EmulationProblem};
+    executions = 1,
     output_dir::String,
     console_level = Logging.Error,
     file_level = Logging.Info,
@@ -278,6 +297,7 @@ function build!(
     logger = configure_logging(model.internal, "w")
     try
         Logging.with_logger(logger) do
+            model.internal.executions = executions
             return _build!(model, serialize)
         end
     finally
@@ -363,26 +383,25 @@ end
 
 function run_impl(
     model::EmulationModel;
-    executions = 1,
     optimizer = nothing,
     enable_progress_bar = _PROGRESS_METER_ENABLED,
 )
-    PSI.set_run_status!(model, PSI._pre_solve_model_checks(model, optimizer))
+    set_run_status!(model, _pre_solve_model_checks(model, optimizer))
     internal = get_internal(model)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
         error("Call build! again")
     end
-    internal.executions = executions
     try
-        prog_bar = ProgressMeter.Progress(executions; enabled = enable_progress_bar)
-        for execution in 1:executions
+        prog_bar =
+            ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+        for execution in 1:(internal.executions)
             # timed_log = get_solve_timed_log(model)
             # _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] = @timed
-            PSI.one_step_solve!(model)
-            # write_results(model)
-            PSI.advance_execution_count!(model)
-            PSI.update_model!(model)
+            one_step_solve!(model)
+            #write_results(model)
+            advance_execution_count!(model)
+            update_model!(model)
             ProgressMeter.update!(
                 prog_bar,
                 get_execution_count(model);
@@ -421,20 +440,20 @@ function run!(model::EmulationModel{<:EmulationProblem}; kwargs...)
     return status
 end
 
-# Write results to the store
-function write_problem_results!(
-    step::Int,
-    model::EmulationModel{<:EmulationProblem},
-    start_time::Dates.DateTime,
-    store::SimulationStore,
-    exports,
-)
-    # This needs a new implementation that might be similar to DecisionModel
-    #    stats = OptimizerStats(model, step)
-    #    write_optimizer_stats!(store, get_name(model), stats, start_time)
-    #    write_model_results!(store, model, start_time; exports = exports)
-    #    return
-end
+# Write results to the store when in sumulation
+#function write_problem_results!(
+#    step::Int,
+#    model::EmulationModel{<:EmulationProblem},
+#    start_time::Dates.DateTime,
+#    store::SimulationStore,
+#    exports,
+# )
+# This needs a new implementation that might be similar to DecisionModel
+#    stats = OptimizerStats(model, step)
+#    write_optimizer_stats!(store, get_name(model), stats, start_time)
+#    write_model_results!(store, model, start_time; exports = exports)
+#    return
+# end
 
 """
 Default solve method for an Emulation model used inside of a Simulation. Solves problems that conform to the requirements of EmulationModel{<: EmulationProblem}
@@ -465,79 +484,42 @@ function run!(
     return solve_status
 end
 
-function write_model_results!(store, model::EmulationModel, timestamp; exports = nothing)
-    # This needs a new implementation that might be similar to DecisionModel
-    #     if exports !== nothing
-    #         export_params = Dict{Symbol, Any}(
-    #             :exports => exports,
-    #             :exports_path => joinpath(exports.path, string(get_name(model))),
-    #             :file_type => get_export_file_type(exports),
-    #             :resolution => get_resolution(model),
-    #             :horizon => get_horizon(get_settings(model)),
-    #         )
-    #     else
-    #         export_params = nothing
-    #     end
-    #
-    #     container = get_optimization_container(model)
-    #     # This line should only be called if the problem is exporting duals. Otherwise ignore.
-    #     if is_milp(container)
-    #         @warn "Problem $(get_simulation_info(model).name) is a MILP, duals can't be exported"
-    #     else
-    #         _write_model_dual_results!(store, container, model, timestamp, export_params)
-    #     end
-    #
-    #     _write_model_parameter_results!(store, container, model, timestamp, export_params)
-    #     _write_model_variable_results!(store, container, model, timestamp, export_params)
-    #     _write_model_aux_variable_results!(store, container, model, timestamp, export_params)
-    #     return
+function write_results!(model::EmulationModel)
+    # substitute with getters
+    store = model.store
+    container = get_container(model)
+
+    _write_model_dual_results!(store, container, execution_count, export_params)
+    _write_model_parameter_results!(store, container, execution_count, export_params)
+    _write_model_variable_results!(store, container, execution_count, export_params)
+    _write_model_aux_variable_results!(store, container, execution_count, export_params)
+    # write_optimizer_stats(model, optimizer_stats)
 end
 
-function _write_model_dual_results!(
-    store,
-    container,
-    model::EmulationModel,
-    timestamp,
-    exports,
-)
-    # This needs a new implementation that might be similar to DecisionModel
-    #     problem_name = get_name(model)
+function _write_model_dual_results!(store, container, execution_count, exports)
+    # This needs a new implementation
     #     if exports !== nothing
     #         exports_path = joinpath(exports[:exports_path], "duals")
     #         mkpath(exports_path)
     #     end
-    #
-    #     for (key, constraint) in get_duals(container)
-    #         write_result!(
-    #             store,
-    #             problem_name,
-    #             STORE_CONTAINER_DUALS,
-    #             key,
-    #             timestamp,
-    #             constraint,
-    #             [encode_key(key)],  # TODO DT: this doesn't seem right
-    #         )
-    #
-    #         if exports !== nothing &&
-    #            should_export_dual(exports[:exports], timestamp, problem_name, key)
-    #             horizon = exports[:horizon]
-    #             resolution = exports[:resolution]
-    #             file_type = exports[:file_type]
-    #             df = axis_array_to_dataframe(constraint, [name])
-    #             time_col = range(timestamp, length = horizon, step = resolution)
-    #             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-    #             export_result(file_type, exports_path, key, timestamp, df)
-    #         end
-    #     end
+
+    for (key, dual) in get_duals(container)
+        write_result!(store, STORE_CONTAINER_DUALS, key, timestamp, constraint)
+
+        #         if exports !== nothing &&
+        #            should_export_dual(exports[:exports], timestamp, problem_name, key)
+        #             horizon = exports[:horizon]
+        #             resolution = exports[:resolution]
+        #             file_type = exports[:file_type]
+        #             df = axis_array_to_dataframe(constraint, [name])
+        #             time_col = range(timestamp, length = horizon, step = resolution)
+        #             DataFrames.insertcols!(df, 1, :DateTime => time_col)
+        #             export_result(file_type, exports_path, key, timestamp, df)
+        #         end
+    end
 end
 
-function _write_model_parameter_results!(
-    store,
-    container,
-    model::EmulationModel,
-    timestamp,
-    exports,
-)
+function _write_model_parameter_results!(store, container, execution_count, exports)
     # This needs a new implementation that might be similar to DecisionModel
     #    problem_name = get_name(model)
     #    if exports !== nothing
@@ -586,10 +568,9 @@ function _write_model_parameter_results!(
 end
 
 function _write_model_variable_results!(
-    store,
-    container,
-    model::EmulationModel,
-    timestamp,
+    store::EmulationModelOptimizerResults,
+    container::OptimizationContainer,
+    execution_count,
     exports,
 )
     # This needs a new implementation that might be similar to DecisionModel
@@ -622,13 +603,7 @@ function _write_model_variable_results!(
     #     end
 end
 
-function _write_model_aux_variable_results!(
-    store,
-    container,
-    model::EmulationModel,
-    timestamp,
-    exports,
-)
+function _write_model_aux_variable_results!(store, container, execution, exports)
     # This needs a new implementation that might be similar to DecisionModel
     #     problem_name = get_name(model)
     #     if exports !== nothing

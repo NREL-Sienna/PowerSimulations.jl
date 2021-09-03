@@ -11,6 +11,7 @@
 
     # The initial time kwarg can be removed when
     model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
-    @test run!(model; executions = 10) == RunStatus.SUCCESSFUL
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    @test run!(model) == RunStatus.SUCCESSFUL
 end
