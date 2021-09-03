@@ -47,7 +47,8 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, ModelInternal}
+    internal::ModelInternal
+    store::InMemoryModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
 
     function EmulationModel{M}(
@@ -71,7 +72,14 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
-        new{M}(name, template, sys, internal, Dict{String, Any}())
+        new{M}(
+            name,
+            template,
+            sys,
+            internal,
+            InMemoryModelStore(EmulationStoreData),
+            Dict{String, Any}(),
+        )
     end
 end
 
@@ -192,7 +200,7 @@ function get_current_time(model::EmulationModel)
     return initial_time + resolution * execution_count
 end
 
-function model_store_init!(model::EmulationModel)
+function model_store_params_init!(model::EmulationModel)
     num_executions = get_executions(model)
     system = get_system(model)
     interval = resolution = PSY.get_time_series_resolution(system)
@@ -210,6 +218,15 @@ function model_store_init!(model::EmulationModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
+end
+
+function model_store_init!(model::EmulationModel)
+    initialize_model_storage!(
+        model.store,
+        get_optimization_container(model),
+        model.internal.store_parameters,
+    )
+    return
 end
 
 function build_pre_step!(model::EmulationModel)
@@ -230,7 +247,7 @@ function build_pre_step!(model::EmulationModel)
         # Temporary while are able to switch from PJ to POI
         get_optimization_container(model).built_for_recurrent_solves = true
         @info "Initializing ModelStoreParams"
-        model_store_init!(model)
+        model_store_params_init!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
@@ -241,6 +258,7 @@ function _build!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
         try
             build_pre_step!(model)
             problem_build!(model)
+            model_store_init!(model)
             # serialize && serialize_problem(model)
             # serialize && serialize_optimization_model(model)
             serialize_metadata!(
@@ -263,6 +281,7 @@ end
 """Implementation of build for any EmulationProblem"""
 function build!(
     model::EmulationModel{<:EmulationProblem};
+    executions = 1,
     output_dir::String,
     console_level = Logging.Error,
     file_level = Logging.Info,
@@ -278,6 +297,7 @@ function build!(
     logger = configure_logging(model.internal, "w")
     try
         Logging.with_logger(logger) do
+            model.internal.executions = executions
             return _build!(model, serialize)
         end
     finally
@@ -363,7 +383,6 @@ end
 
 function run_impl(
     model::EmulationModel;
-    executions = 1,
     optimizer = nothing,
     enable_progress_bar = _PROGRESS_METER_ENABLED,
 )
@@ -373,10 +392,9 @@ function run_impl(
     if internal.execution_count > 0
         error("Call build! again")
     end
-    internal.executions = executions
     try
         prog_bar = ProgressMeter.Progress(executions; enabled = enable_progress_bar)
-        for execution in 1:executions
+        for execution in 1:(internal.executions)
             # timed_log = get_solve_timed_log(model)
             # _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] = @timed
             PSI.one_step_solve!(model)
