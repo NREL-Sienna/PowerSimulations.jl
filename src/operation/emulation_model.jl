@@ -393,7 +393,8 @@ function run_impl(
         error("Call build! again")
     end
     try
-        prog_bar = ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+        prog_bar =
+            ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
         for execution in 1:(internal.executions)
             # timed_log = get_solve_timed_log(model)
             # _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] = @timed
