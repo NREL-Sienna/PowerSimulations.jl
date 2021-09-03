@@ -17,7 +17,7 @@ function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
     service::U,
-    contributing_devices::Union{Vector{V}, Iterators.Flatten{V}},
+    contributing_devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     formulation::AbstractReservesFormulation,
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Component}
     add_service_variable!(container, T(), service, contributing_devices, formulation)
