@@ -22,6 +22,27 @@ get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve,
 get_multiplier_value(::RequirementTimeSeriesParameter, d::PSY.Reserve, ::AbstractReservesFormulation) = PSY.get_requirement(d)
 
 #! format: on
+
+function get_default_time_series_names(
+    ::Type{<:PSY.Reserve},
+    ::Type{T},
+) where {T <: Union{RangeReserve, RampReserve}}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        RequirementTimeSeriesParameter => "requirement",
+    )
+end
+
+function get_default_time_series_names(
+    ::Type{<:PSY.Service},
+    ::Type{<:AbstractServiceFormulation},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
+function get_default_attributes(::Type{<:PSY.Service}, ::Type{<:AbstractServiceFormulation})
+    return Dict{String, Any}()
+end
+
 ################################## Reserve Requirement Constraint ##########################
 function service_requirement_constraint!(
     container::OptimizationContainer,

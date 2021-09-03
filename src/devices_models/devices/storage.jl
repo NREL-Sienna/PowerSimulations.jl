@@ -59,7 +59,7 @@ get_multiplier_value(
     ::AbstractStorageFormulation,
 ) = PSY.get_rating(d)
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{D},
     ::Type{EnergyTarget},
 ) where {D <: PSY.Storage}
@@ -68,14 +68,14 @@ function initialize_timeseries_names(
     )
 end
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{D},
     ::Type{<:Union{FixedOutput, AbstractStorageFormulation}},
 ) where {D <: PSY.Storage}
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
-function initialize_attributes(
+function get_default_attributes(
     ::Type{D},
     ::Type{T},
 ) where {D <: PSY.Storage, T <: Union{FixedOutput, AbstractStorageFormulation}}

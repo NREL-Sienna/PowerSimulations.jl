@@ -29,7 +29,7 @@ function get_min_max_limits(
     PSY.get_reactive_power_limits(device)
 end
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{<:PSY.RenewableGen},
     ::Type{<:Union{FixedOutput, AbstractRenewableFormulation}},
 )
@@ -39,7 +39,7 @@ function initialize_timeseries_names(
     )
 end
 
-function initialize_attributes(
+function get_default_attributes(
     ::Type{<:PSY.RenewableGen},
     ::Type{<:Union{FixedOutput, AbstractRenewableFormulation}},
 )

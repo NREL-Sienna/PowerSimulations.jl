@@ -28,7 +28,7 @@ get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.Regulat
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.RegulationDevice, _)  = PSY.get_max_active_power(d)
 #! format: on
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{<:PSY.RegulationDevice{T}},
     ::Type{<:AbstractRegulationFormulation},
 ) where {T <: PSY.StaticInjection}
@@ -37,7 +37,7 @@ function initialize_timeseries_names(
     )
 end
 
-function initialize_attributes(
+function get_default_attributes(
     ::Type{<:PSY.RegulationDevice{T}},
     ::Type{<:AbstractRegulationFormulation},
 ) where {T <: PSY.StaticInjection}

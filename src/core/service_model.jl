@@ -57,8 +57,8 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         use_slacks = false,
         feedforward = nothing,
         duals = Vector{DataType}(),
-        time_series_names = initialize_timeseries_names(D, B),
-        attributes = initialize_attributes(D, B),
+        time_series_names = get_default_time_series_names(D, B),
+        attributes = get_default_attributes(D, B),
         contributing_devices_map = Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
@@ -102,8 +102,8 @@ function ServiceModel(
     use_slacks = false,
     feedforward = nothing,
     duals = Vector{DataType}(),
-    time_series_names = initialize_timeseries_names(D, B),
-    attributes = initialize_attributes(D, B),
+    time_series_names = get_default_time_series_names(D, B),
+    attributes = get_default_attributes(D, B),
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
     if !haskey(attributes, "aggregated_service_model")
         push!(attributes, "aggregated_service_model" => true)

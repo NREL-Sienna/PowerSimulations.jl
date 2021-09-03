@@ -40,14 +40,14 @@ get_variable_binary(
 
 get_variable_multiplier(_, ::Type{<:PSY.ACBranch}, _) = NaN
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.ACBranch, V <: AbstractBranchFormulation}
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
-function initialize_attributes(
+function get_default_attributes(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.ACBranch, V <: AbstractBranchFormulation}

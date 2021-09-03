@@ -33,7 +33,7 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractContr
 
 #! format: on
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{<:PSY.ElectricLoad},
     ::Type{<:Union{FixedOutput, AbstractLoadFormulation}},
 )
@@ -43,7 +43,7 @@ function initialize_timeseries_names(
     )
 end
 
-function initialize_attributes(
+function get_default_attributes(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.ElectricLoad, V <: Union{FixedOutput, AbstractLoadFormulation}}

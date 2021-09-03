@@ -19,6 +19,7 @@ get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHyd
 get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).min
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroUnitCommitment) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).max
 
 ############## ActivePowerVariable, HydroDispatchRunOfRiver ####################
@@ -107,7 +108,7 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::FixedOutput) = PS
 
 #! format: on
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{<:PSY.HydroGen},
     ::Type{<:Union{FixedOutput, HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver}},
 )
@@ -117,7 +118,7 @@ function initialize_timeseries_names(
     )
 end
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{PSY.HydroEnergyReservoir},
     ::Type{T},
 ) where {T <: Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}}
@@ -126,7 +127,7 @@ function initialize_timeseries_names(
     )
 end
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{PSY.HydroEnergyReservoir},
     ::Type{T},
 ) where {T <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
@@ -136,7 +137,7 @@ function initialize_timeseries_names(
     )
 end
 
-function initialize_timeseries_names(
+function get_default_time_series_names(
     ::Type{PSY.HydroPumpedStorage},
     ::Type{T},
 ) where {T <: HydroDispatchPumpedStorage}
@@ -146,14 +147,14 @@ function initialize_timeseries_names(
     )
 end
 
-function initialize_attributes(
+function get_default_attributes(
     ::Type{T},
     ::Type{D},
 ) where {T <: PSY.HydroGen, D <: Union{FixedOutput, AbstractHydroFormulation}}
     return Dict{String, Any}("reservation" => false)
 end
 
-function initialize_attributes(
+function get_default_attributes(
     ::Type{PSY.HydroPumpedStorage},
     ::Type{HydroDispatchPumpedStorage},
 )
