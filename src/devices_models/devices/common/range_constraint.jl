@@ -230,9 +230,9 @@ function add_semicontinuous_range_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    variable = U()
+    expression = U()
     component_type = V
-    array = get_variable(container, variable, component_type)
+    array = get_expression(container, expression, component_type)
     add_semicontinuous_lower_bound_range_constraints_impl!(
         container,
         T,
