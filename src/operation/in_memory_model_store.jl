@@ -1,16 +1,48 @@
 # So far just the EmulationStore is implemented.
+
 """
 Stores results data for one EmulationModel
 """
-mutable struct EmulationStoreData <: ModelStoreData
+mutable struct DecisionModelOptimizerResults <: AbstractModelOptimizerResults
+    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    parameters::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    variables::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    aux_variables::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+end
+
+function DecisionModelOptimizerResults()
+    return DecisionModelOptimizerResults(
+        Dict{
+            ConstraintKey,
+            Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
+        }(),
+        Dict{
+            ParameterKey,
+            Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
+        }(),
+        Dict{
+            VariableKey,
+            Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
+        }(),
+        Dict{
+            AuxVarKey,
+            Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
+        }(),
+    )
+end
+
+"""
+Stores results data for one EmulationModel
+"""
+mutable struct EmulationModelOptimizerResults <: AbstractModelOptimizerResults
     duals::Dict{ConstraintKey, DataFrames.DataFrame}
     parameters::Dict{ParameterKey, DataFrames.DataFrame}
     variables::Dict{VariableKey, DataFrames.DataFrame}
     aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
 end
 
-function EmulationStoreData()
-    return EmulationStoreData(
+function EmulationModelOptimizerResults()
+    return EmulationModelOptimizerResults(
         Dict{ConstraintKey, DataFrames.DataFrame}(),
         Dict{ParameterKey, DataFrames.DataFrame}(),
         Dict{VariableKey, DataFrames.DataFrame}(),
@@ -21,17 +53,20 @@ end
 """
 Stores simulation data in memory
 """
-mutable struct InMemoryModelStore
-    data::ModelStoreData
+mutable struct InMemoryModelStore{T <: AbstractModelOptimizerResults}
+    data::T
     optimizer_stats::OrderedDict{Dates.DateTime, OptimizerStats}
 end
 
-function InMemoryModelStore(::Type{T}) where {T <: ModelStoreData}
+function InMemoryModelStore(::Type{T}) where {T <: AbstractModelOptimizerResults}
     return InMemoryModelStore(T(), OrderedDict{Dates.DateTime, OptimizerStats}())
 end
 
-function Base.empty!(store::InMemoryModelStore)
-    T = typeof(store.data)
+# TBD: Implementation depending on what the call need is. Needs to make sure it is safe.
+# Possible use case: Call Run on EmulationModel without calling build again
+function Base.empty!(
+    store::InMemoryModelStore{T},
+) where {T <: AbstractModelOptimizerResults}
     store.data = T()
     @debug "Emptied the store with data T"
 end
@@ -112,9 +147,7 @@ end
 
 function write_result!(
     store::InMemoryModelStore,
-    model_name,
     container_type,
-    name,
     timestamp,
     array,
     columns = nothing,
@@ -127,7 +160,6 @@ end
 function read_result(
     ::Type{DataFrames.DataFrame},
     store::InMemoryModelStore,
-    model_name,
     container_type,
     name,
     timestamp::Dates.DateTime,
@@ -144,6 +176,6 @@ function read_result(
 )
     container = getfield(store.data[Symbol(model_name)], container_type)[name]
     _check_timestamp(container, timestamp)
-    # Return a copy because callers may mutate it. SimulationProblemResults adds timestamps.
+    # Return a copy because callers may mutate it. SimulationProblemOptimizerResults adds timestamps.
     return copy(container[timestamp], copycols = true)
 end

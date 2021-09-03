@@ -87,7 +87,7 @@ abstract type SimulationStore end
 # - write_optimizer_stats!
 # - read_problem_optimizer_stats
 
-abstract type ModelStoreData end
+abstract type AbstractModelOptimizerResults end
 
 # Required methods: TBD
 
