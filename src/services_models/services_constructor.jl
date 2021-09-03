@@ -1,23 +1,3 @@
-function initialize_timeseries_names(
-    ::Type{<:PSY.Reserve},
-    ::Type{T},
-) where {T <: Union{RangeReserve, RampReserve}}
-    return Dict{Type{<:TimeSeriesParameter}, String}(
-        RequirementTimeSeriesParameter => "requirement",
-    )
-end
-
-function initialize_timeseries_names(
-    ::Type{<:PSY.Service},
-    ::Type{<:AbstractServiceFormulation},
-)
-    return Dict{Type{<:TimeSeriesParameter}, String}()
-end
-
-function initialize_attributes(::Type{<:PSY.Service}, ::Type{<:AbstractServiceFormulation})
-    return Dict{String, Any}()
-end
-
 function get_incompatible_devices(devices_template::Dict)
     incompatible_device_types = Vector{DataType}()
     for model in values(devices_template)
@@ -32,21 +12,19 @@ function get_incompatible_devices(devices_template::Dict)
     return incompatible_device_types
 end
 
-function sort_contributing_devices(contributing_devices)
+function map_contributing_devices_by_type!(
+    service_model::ServiceModel,
+    contributing_devices,
+)
     types = unique(typeof.(contributing_devices))
-    device_list = Dict()
-    for t in types
-        _devices = filter(x -> typeof(x) == t, contributing_devices)
-        device_list[t] = _devices
+    for S in types
+        _devices = filter(x -> typeof(x) == S, contributing_devices)
+        add_contributing_devices_map!(service_model, S, _devices)
     end
-    return device_list
+    return
 end
 
-function populate_contributing_devices!(
-    container::OptimizationContainer,
-    template,
-    sys::PSY.System,
-)
+function populate_contributing_devices!(template, sys::PSY.System)
     service_models = get_service_models(template)
     isempty(service_models) && return
 
@@ -72,10 +50,7 @@ function populate_contributing_devices!(
                 :ConstructGroup
             continue
         end
-        sorted_contributing_devices = sort_contributing_devices(contributing_devices)
-        for (dtype, list) in sorted_contributing_devices
-            add_contributing_devices_map!(service_model, dtype, list)
-        end
+        map_contributing_devices_by_type!(service_model, contributing_devices)
     end
     return
 end
