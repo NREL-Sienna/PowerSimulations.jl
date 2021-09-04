@@ -60,21 +60,21 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
-@testset "Storage with Reservation DC - PF" begin
+@testset "Storage with BatteryAncillaryServices and Reservation DC - PF" begin
     device_model = DeviceModel(GenericBattery, BatteryAncillaryServices)
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 96, 0, 168, 72, 24, true)
+    moi_tests(model, false, 96, 0, 72, 72, 24, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
-@testset "Storage with Reservation With AC - PF" begin
+@testset "Storage with BatteryAncillaryServices and Reservation With AC - PF" begin
     device_model = DeviceModel(GenericBattery, BatteryAncillaryServices)
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 120, 0, 192, 96, 24, true)
+    moi_tests(model, false, 120, 0, 96, 96, 24, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
