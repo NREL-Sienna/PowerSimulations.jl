@@ -35,6 +35,29 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                R,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -50,10 +73,15 @@ function construct_device!(
 }
     devices = get_available_components(R, sys)
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -103,6 +131,29 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                R,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -119,10 +170,15 @@ function construct_device!(
     devices = get_available_components(R, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,

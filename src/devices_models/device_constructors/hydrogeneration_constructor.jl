@@ -105,6 +105,30 @@ function construct_device!(
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -121,10 +145,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -178,6 +207,30 @@ function construct_device!(
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -194,10 +247,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -252,6 +310,29 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -264,10 +345,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -329,6 +415,29 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -341,10 +450,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -430,6 +544,29 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -441,10 +578,15 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -542,6 +684,30 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -554,10 +720,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -634,6 +805,30 @@ function construct_device!(
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -645,10 +840,15 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -707,6 +907,29 @@ function construct_device!(
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -722,10 +945,15 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -778,6 +1006,29 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -790,10 +1041,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -859,6 +1115,29 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -875,10 +1154,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -969,6 +1253,30 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -981,10 +1289,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -1087,6 +1400,30 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ActivePowerRangeExpression(),
+                H,
+                names,
+                time_steps;
+                meta = meta,
+            )
+            add_to_expression!(
+                container,
+                ActivePowerRangeExpression,
+                ActivePowerVariable,
+                devices,
+                model,
+                S;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -1099,10 +1436,15 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     # Constraints
+    if has_service_model(model)
+        variable = ActivePowerRangeExpression
+    else
+        variable = ActivePowerVariable
+    end
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        variable,
         devices,
         model,
         S,
@@ -1192,6 +1534,20 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ReserveLimitExpression(),
+                St,
+                names,
+                time_steps;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(

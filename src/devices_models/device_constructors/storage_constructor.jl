@@ -447,6 +447,20 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ReserveLimitExpression(),
+                St,
+                names,
+                time_steps;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -498,22 +512,24 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        ReserveEnergyConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        RangeLimitConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    if has_service_model(model)
+        add_constraints!(
+            container,
+            ReserveEnergyConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            RangeLimitConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
     add_constraint_dual!(container, sys, model)
 
     return
@@ -554,6 +570,20 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        time_steps = get_time_steps(container)
+        names = PSY.get_name.(devices)
+        for meta in [LOWER_BOUND, UPPER_BOUND]
+            add_expression_container!(
+                container,
+                ReserveLimitExpression(),
+                St,
+                names,
+                time_steps;
+                meta = meta,
+            )
+        end
+    end
 end
 
 function construct_device!(
@@ -596,22 +626,24 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        ReserveEnergyConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        RangeLimitConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    if has_service_model(model)
+        add_constraints!(
+            container,
+            ReserveEnergyConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            RangeLimitConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
     add_constraint_dual!(container, sys, model)
 
     return
