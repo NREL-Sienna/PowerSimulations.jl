@@ -78,13 +78,14 @@ function add_range_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    variable = U()
+    expression = U()
     component_type = V
-    array = get_expression(container, variable, component_type)
+    array_lb = get_expression(container, expression, component_type, LOWER_BOUND)
+    array_ub = get_expression(container, expression, component_type, UPPER_BOUND)
     add_lower_bound_range_constraints_impl!(
         container,
         T,
-        array,
+        array_lb,
         devices,
         model,
         X,
@@ -93,7 +94,7 @@ function add_range_constraints!(
     add_upper_bound_range_constraints_impl!(
         container,
         T,
-        array,
+        array_ub,
         devices,
         model,
         X,
@@ -232,11 +233,12 @@ function add_semicontinuous_range_constraints!(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
-    array = get_expression(container, expression, component_type)
+    array_lb = get_expression(container, expression, component_type, LOWER_BOUND)
+    array_ub = get_expression(container, expression, component_type, UPPER_BOUND)
     add_semicontinuous_lower_bound_range_constraints_impl!(
         container,
         T,
-        array,
+        array_lb,
         devices,
         model,
         X,
@@ -245,7 +247,7 @@ function add_semicontinuous_range_constraints!(
     add_semicontinuous_upper_bound_range_constraints_impl!(
         container,
         T,
-        array,
+        array_ub,
         devices,
         model,
         X,
@@ -693,7 +695,7 @@ function add_parameterized_lower_bound_range_constraints(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     component_type = V
-    array = get_expression(container, variable, component_type)
+    array = get_expression(container, variable, component_type, LOWER_BOUND)
     add_parameterized_lower_bound_range_constraints_impl!(
         container,
         T,
@@ -781,7 +783,7 @@ function add_parameterized_upper_bound_range_constraints(
     variable = U()
     constraint_type = T
     component_type = V
-    array = get_expression(container, variable, component_type)
+    array = get_expression(container, variable, component_type, UPPER_BOUND)
     add_parameterized_upper_bound_range_constraints_impl!(
         container,
         T,
