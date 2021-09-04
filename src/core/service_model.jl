@@ -120,25 +120,6 @@ function ServiceModel(
     )
 end
 
-function populate_aggregated_service_model!(template, sys::PSY.System)
-    services_template = get_service_models(template)
-    for (key, service_model) in services_template
-        attributes = get_attributes(service_model)
-        if get(attributes, "aggregated_service_model", false)
-            delete!(services_template, key)
-            D = get_component_type(service_model)
-            B = get_formulation(service_model)
-            for service in PSY.get_components(D, sys)
-                new_key = (PSY.get_name(service), Symbol(D))
-                if !haskey(services_template, new_key)
-                    set_service_model!(template, ServiceModel(D, B, PSY.get_name(service)))
-                end
-            end
-        end
-    end
-    return
-end
-
 function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)
     if haskey(dict, key)
         @info("Overwriting $(key) existing model")

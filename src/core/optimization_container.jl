@@ -348,18 +348,6 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     initialize_system_expressions!(container, transmission, sys)
 
     # Order is required
-    populate_aggregated_service_model!(template, sys)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
-        construct_services!(
-            container,
-            sys,
-            ArgumentConstructStage(),
-            get_service_models(template),
-            get_device_models(template),
-        )
-        #  TODO: Add dual variable container for services
-    end
-
     for device_model in values(template.devices)
         @debug "Building Arguments for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
             :ConstructGroup
@@ -375,6 +363,17 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             end
             @debug get_problem_size(container)
         end
+    end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
+        construct_services!(
+            container,
+            sys,
+            ArgumentConstructStage(),
+            get_service_models(template),
+            get_device_models(template),
+        )
+        #  TODO: Add dual variable container for services
     end
 
     for branch_model in values(template.branches)
@@ -881,9 +880,9 @@ function _add_expression_container!(
     sparse = false,
 )
     if sparse
-        expr_container = sparse_container_spec(JuMP.AbstractJuMPScalar, axs...)
+        expr_container = sparse_container_spec(JuMP.GenericAffExpr, axs...)
     else
-        expr_container = container_spec(JuMP.AbstractJuMPScalar, axs...)
+        expr_container = container_spec(JuMP.GenericAffExpr, axs...)
     end
     _assign_container!(container.expressions, expr_key, expr_container)
     return expr_container

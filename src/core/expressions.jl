@@ -27,8 +27,13 @@ end
 Base.convert(::Type{ExpressionKey}, name::Symbol) = ExpressionKey(decode_symbol(name)...)
 
 abstract type SystemBalanceExpressions <: ExpressionType end
+abstract type RangeConstraintExpressions <: ExpressionType end
 struct ActivePowerBalance <: SystemBalanceExpressions end
 struct ReactivePowerBalance <: SystemBalanceExpressions end
-struct EmergencyUp <: SystemBalanceExpressions end
-struct EmergencyDown <: SystemBalanceExpressions end
-struct RawACE <: SystemBalanceExpressions end
+struct EmergencyUp <: ExpressionType end
+struct EmergencyDown <: ExpressionType end
+struct RawACE <: ExpressionType end
+struct ActivePowerRangeExpression <: RangeConstraintExpressions end
+struct ActivePowerInRangeExpression <: RangeConstraintExpressions end
+struct ActivePowerOutRangeExpression <: RangeConstraintExpressions end
+struct ReserveLimitExpression <: ExpressionType end

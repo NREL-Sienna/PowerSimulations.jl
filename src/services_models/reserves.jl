@@ -324,10 +324,23 @@ function cost_function!(
     return
 end
 
+function add_services_to_device_model!(template)
+    service_models = get_service_models(template)
+    devices_template = get_device_models(template)
+    for (service_key, service_model) in service_models
+        S = get_component_type(service_model)
+        (S <: PSY.AGC || S <: PSY.StaticReserveGroup) && continue
+        contributing_devices = get_contributing_devices(service_model)
+        isempty(contributing_devices) && continue
+        modify_device_model!(devices_template, service_model, contributing_devices)
+    end
+    return
+end
+
 function modify_device_model!(
     devices_template::Dict{Symbol, DeviceModel},
     service_model::ServiceModel{<:PSY.Reserve, <:AbstractReservesFormulation},
-    contributing_devices::Vector{<:PSY.Device},
+    contributing_devices::Vector{<:PSY.Component},
 )
     device_types = unique(typeof.(contributing_devices))
     for dt in device_types
