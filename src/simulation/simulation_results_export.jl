@@ -74,6 +74,10 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
             deserialize_key(problem_params, x) for
             x in get(model, "variables", Set{VariableKey}())
         )
+        aux_variables = Set(
+            deserialize_key(problem_params, x) for
+            x in get(model, "variables", Set{AuxVarKey}())
+        )
         problem_export = ProblemResultsExport(
             model["name"],
             duals = duals,
@@ -83,6 +87,7 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
             store_all_duals = get(model, "store_all_duals", false),
             store_all_parameters = get(model, "store_all_parameters", false),
             store_all_variables = get(model, "store_all_variables", false),
+            store_all_aux_variables = get(model, "store_all_aux_variables", false),
         )
         push!(models, problem_export)
     end

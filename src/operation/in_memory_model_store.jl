@@ -5,9 +5,9 @@ Stores results data for one EmulationModel
 """
 mutable struct DecisionModelOptimizerResults <: AbstractModelOptimizerResults
     duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    parameters::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    variables::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    aux_variables::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
 end
 
 function DecisionModelOptimizerResults()
@@ -18,11 +18,11 @@ function DecisionModelOptimizerResults()
         }(),
         Dict{
             ParameterKey,
-            Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
+            Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
         }(),
         Dict{
             VariableKey,
-            Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
+            Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
         }(),
         Dict{
             AuxVarKey,
@@ -55,11 +55,11 @@ Stores simulation data in memory
 """
 mutable struct InMemoryModelStore{T <: AbstractModelOptimizerResults}
     data::T
-    optimizer_stats::OrderedDict{Dates.DateTime, OptimizerStats}
+    optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
 
 function InMemoryModelStore(::Type{T}) where {T <: AbstractModelOptimizerResults}
-    return InMemoryModelStore(T(), OrderedDict{Dates.DateTime, OptimizerStats}())
+    return InMemoryModelStore(T(), OrderedDict{Int, OptimizerStats}())
 end
 
 # TBD: Implementation depending on what the call need is. Needs to make sure it is safe.
@@ -75,30 +75,15 @@ Base.isopen(store::InMemoryModelStore) = true
 Base.close(store::InMemoryModelStore) = nothing
 Base.flush(store::InMemoryModelStore) = nothing
 
-# TODO: Optimizer stats
-# function write_optimizer_stats!(
-#     store::InMemoryModelStore,
-#     model,
-#     stats::OptimizerStats,
-#     timestamp,
-# )
-#     store.optimizer_stats[timestamp] = stats
-#     return
-# end
-#
-# function read_model_optimizer_stats(
-#     store::InMemoryModelStore,
-#     model,
-#     timestamp,
-# )
-#     _check_timestamp(store.optimizer_stats, timestamp)
-#     return store.optimizer_stats[timestamp]
-# end
-#
-# function read_model_optimizer_stats(store::InMemoryModelStore)
-#     stats = [to_namedtuple(x) for x in values(store.optimizer_stats)]
-#     return DataFrames.DataFrame(stats)
-# end
+function write_optimizer_stats!(store::InMemoryModelStore, stats::OptimizerStats, execution)
+    store.optimizer_stats[execution] = stats
+    return
+end
+
+function read_optimizer_stats(store::InMemoryModelStore)
+    stats = [to_namedtuple(x) for x in values(store.optimizer_stats)]
+    return DataFrames.DataFrame(stats)
+end
 
 # Not sure if needed
 # function open_store(
@@ -112,22 +97,26 @@ Base.flush(store::InMemoryModelStore) = nothing
 #     return func(store)
 # end
 
-function initialize_model_storage!(
+function initialize_storage!(
     store::InMemoryModelStore,
     container::OptimizationContainer,
     params::ModelStoreParams,
 )
-    @debug "initialize_model_storage"
+    @debug "initialize_storage"
 
     num_of_executions = get_num_executions(params)
     for type in STORE_CONTAINERS
         field_containers = getfield(container, type)
         store_container = getfield(store.data, type)
-        for (key, container) in field_containers
-            container_axes = axes(container)
+        for (key, field_container) in field_containers
+            container_axes = axes(field_container)
             @debug "Adding $(encode_key_as_string(key)) to InMemoryModelStore"
             if length(container_axes) == 2
-                column_names = string.(axes(container)[1])
+                if type == STORE_CONTAINER_PARAMETERS
+                    column_names = string.(get_parameter_array(field_container).axes[1])
+                else
+                    column_names = string.(axes(field_container)[1])
+                end
                 store_container[key] = DataFrames.DataFrame(
                     Dict(c => fill(NaN, num_of_executions) for c in column_names),
                 )
@@ -145,37 +134,41 @@ function initialize_model_storage!(
     @debug "Initialized optimizer_stats_datasets $(get_name(model))"
 end
 
+function list_keys(store::InMemoryModelStore, container_type)
+    container = getfield(store.data, container_type)
+    return collect(keys(container))
+end
+
 function write_result!(
     store::InMemoryModelStore,
     container_type,
-    timestamp,
+    key,
+    execution,
     array,
     columns = nothing,
 )
-    container = getfield(store.data[model_name], container_type)
-    container[name][timestamp] = axis_array_to_dataframe(array, columns)
+    container = getfield(store.data, container_type)
+    df = axis_array_to_dataframe(array, columns)
+
+    # TODO DT: PERF: names are not in the same order.
+    for name in names(df)
+        container[key][execution, name] = df[1, name]
+    end
+    #container[key][execution, :] = df[1, :]
     return
 end
 
-function read_result(
+function read_results(store::InMemoryModelStore, container_type, key)
+    return read_results(DataFrames.DataFrame, store, container_type, key)
+end
+
+function read_results(
     ::Type{DataFrames.DataFrame},
     store::InMemoryModelStore,
     container_type,
-    name,
-    timestamp::Dates.DateTime,
+    key,
 )
-    return read_result(store, model_name, container_type, name, timestamp)
-end
-
-function read_result(
-    store::InMemoryModelStore,
-    model_name,
-    container_type,
-    name,
-    timestamp::Dates.DateTime,
-)
-    container = getfield(store.data[Symbol(model_name)], container_type)[name]
-    _check_timestamp(container, timestamp)
-    # Return a copy because callers may mutate it. SimulationProblemOptimizerResults adds timestamps.
-    return copy(container[timestamp], copycols = true)
+    container = getfield(store.data, container_type)
+    # Return a copy because callers may mutate it.
+    return copy(container[key], copycols = true)
 end

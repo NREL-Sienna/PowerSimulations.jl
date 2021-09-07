@@ -14,8 +14,9 @@ get_initial_time(model::OperationModel) = get_initial_time(get_settings(model))
 get_internal(model::OperationModel) = model.internal
 get_jump_model(model::OperationModel) = get_internal(model).container.JuMPmodel
 get_name(model::OperationModel) = model.name
+get_store(model::OperationModel) = model.store
 
-get_optimization_container(model::OperationModel) = model.internal.container
+get_optimization_container(model::OperationModel) = get_internal(model).container
 function get_resolution(model::OperationModel)
     resolution = PSY.get_time_series_resolution(get_system(model))
     return IS.time_period_conversion(resolution)
@@ -62,8 +63,7 @@ end
 
 set_console_level!(model::OperationModel, val) = get_internal(model).console_level = val
 set_file_level!(model::OperationModel, val) = get_internal(model).file_level = val
-set_executions!(model::OperationModel, val::Int) =
-    model.internal.simulation_info.executions = val
+set_executions!(model::OperationModel, val::Int) = model.internal.executions = val
 set_execution_count!(model::OperationModel, val::Int) =
     get_internal(model).execution_count = val
 set_initial_time!(model::OperationModel, val::Dates.DateTime) =
