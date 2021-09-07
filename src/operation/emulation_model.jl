@@ -200,7 +200,7 @@ function get_current_time(model::EmulationModel)
     return initial_time + resolution * execution_count
 end
 
-function model_store_params_init!(model::EmulationModel)
+function init_model_store_params!(model::EmulationModel)
     num_executions = get_executions(model)
     system = get_system(model)
     interval = resolution = PSY.get_time_series_resolution(system)
@@ -220,9 +220,8 @@ function model_store_params_init!(model::EmulationModel)
     )
 end
 
-function model_store_init!(model::EmulationModel)
-    # TODO DT: style of function names: verb_noun or noun_verb?
-    model_store_params_init!(model)
+function init_model_store!(model::EmulationModel)
+    init_model_store_params!(model)
     initialize_storage!(
         model.store,
         get_optimization_container(model),
@@ -242,15 +241,12 @@ function build_pre_step!(model::EmulationModel)
     return
 end
 
-# TODO DT: should this be called build_impl!
-# Note that run! calls run_impl!
-function _build!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
+function build_impl!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
             build_pre_step!(model)
-            # TODO DT: Why is this called problem build?
-            problem_build!(model)
-            model_store_init!(model)
+            build_problem!(model)
+            init_model_store!(model)
             # serialize && serialize_problem(model)
             # serialize && serialize_optimization_model(model)
             serialize_metadata!(
@@ -290,7 +286,7 @@ function build!(
     try
         Logging.with_logger(logger) do
             set_executions!(model, executions)
-            return _build!(model, serialize)
+            return build_impl!(model, serialize)
         end
     finally
         close(logger)
@@ -300,12 +296,12 @@ end
 """
 Default implementation of build method for Emulation Problems for models conforming with  DecisionProblem specification. Overload this function to implement a custom build method
 """
-function problem_build!(model::EmulationModel{<:EmulationProblem})
+function build_problem!(model::EmulationModel{<:EmulationProblem})
     @info "Initializing Optimization Container for EmulationModel"
 
     container = get_optimization_container(model)
     system = get_system(model)
-    optimization_container_init!(
+    init_optimization_container!(
         container,
         get_network_formulation(get_template(model)),
         system,
@@ -364,14 +360,17 @@ needs to reimplement this method. This method is called by run! and execute!.
 """
 function one_step_solve!(model::EmulationModel)
     jump_model = get_jump_model(model)
-    JuMP.optimize!(jump_model)
+    log = get_solve_timed_log(model)
+    _, log[:timed_solve_time], log[:solve_bytes_alloc], log[:sec_in_gc] =
+        @timed JuMP.optimize!(jump_model)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Optimizer returned $model_status")
-    else
-        calculate_aux_variables!(model)
-        calculate_dual_variables!(model)
     end
+
+    _, log[:timed_calculate_aux_variables] = @timed calculate_aux_variables!(model)
+    _, log[:timed_calculate_dual_variables] = @timed calculate_dual_variables!(model)
+    return
 end
 
 function update_model!(model::EmulationModel)
@@ -400,11 +399,7 @@ function run_impl(
         prog_bar =
             ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
         for execution in 1:(internal.executions)
-            timed_log = get_solve_timed_log(model)
-            _,
-            timed_log[:timed_solve_time],
-            timed_log[:solve_bytes_alloc],
-            timed_log[:sec_in_gc] = @timed one_step_solve!(model)
+            one_step_solve!(model)
             write_results!(model, execution)
             advance_execution_count!(model)
             update_model!(model)
@@ -470,20 +465,6 @@ function run!(
     return solve_status
 end
 
-list_aux_variable_keys(x::EmulationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
-list_aux_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
-list_variable_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
-list_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
-list_parameter_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
-list_parameter_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
-list_dual_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
-list_dual_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_DUALS)
-
-function _list_names(model::EmulationModel, container_type)
-    return encode_keys_as_strings(list_keys(get_store(model), container_type))
-end
-
 function write_results!(model::EmulationModel, execution)
     store = get_store(model)
     container = get_optimization_container(model)
@@ -493,22 +474,6 @@ function write_results!(model::EmulationModel, execution)
     _write_model_variable_results!(store, container, execution)
     _write_model_aux_variable_results!(store, container, execution)
     write_optimizer_stats!(store, OptimizerStats(model, 1), execution)
-end
-
-function read_dual(model::EmulationModel, key::ConstraintKey)
-    return read_results(get_store(model), STORE_CONTAINER_DUALS, key)
-end
-
-function read_parameter(model::EmulationModel, key::ParameterKey)
-    return read_results(get_store(model), STORE_CONTAINER_PARAMETERS, key)
-end
-
-function read_aux_variable(model::EmulationModel, key::VariableKey)
-    return read_results(get_store(model), STORE_CONTAINER_AUX_VARIABLES, key)
-end
-
-function read_variable(model::EmulationModel, key::VariableKey)
-    return read_results(get_store(model), STORE_CONTAINER_VARIABLES, key)
 end
 
 function _write_model_dual_results!(store, container, execution)
@@ -557,5 +522,3 @@ function _write_model_aux_variable_results!(store, container, execution)
         write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, execution, variable)
     end
 end
-
-read_optimizer_stats(model::EmulationModel) = read_optimizer_stats(get_store(model))

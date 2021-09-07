@@ -195,7 +195,7 @@ function get_current_time(model::DecisionModel)
     return initial_time + interval * execution_count
 end
 
-function model_store_init!(model::DecisionModel)
+function init_model_store!(model::DecisionModel)
     num_executions = get_executions(model)
     horizon = get_horizon(model)
     system = get_system(model)
@@ -227,13 +227,13 @@ function build_pre_step!(model::DecisionModel)
         # Simulation Sequence object and not at the problem creation.
 
         @info "Initializing Optimization Container For a DecisionModel"
-        optimization_container_init!(
+        init_optimization_container!(
             get_optimization_container(model),
             get_network_formulation(get_template(model)),
             get_system(model),
         )
         @info "Initializing ModelStoreParams"
-        model_store_init!(model)
+        init_model_store!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
@@ -245,7 +245,7 @@ function _build!(model::DecisionModel{<:DecisionProblem}, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
             build_pre_step!(model)
-            problem_build!(model)
+            build_problem!(model)
             serialize && serialize_problem(model)
             serialize && serialize_optimization_model(model)
             serialize_metadata!(
@@ -293,7 +293,7 @@ end
 """
 Default implementation of build method for Operational Problems for models conforming with DecisionProblem specification. Overload this function to implement a custom build method
 """
-function problem_build!(model::DecisionModel)
+function build_problem!(model::DecisionModel)
     populate_contributing_devices!(get_template(model), get_system(model))
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end

@@ -1,5 +1,3 @@
-import DataFrames: DataFrame
-
 @testset "Emulation Model Build" begin
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(

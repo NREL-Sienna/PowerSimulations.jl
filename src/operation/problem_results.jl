@@ -9,6 +9,7 @@ struct ProblemResults <: PSIResults
     parameter_values::Dict{ParameterKey, DataFrames.DataFrame}
     optimizer_stats::DataFrames.DataFrame
     container::OptimizationContainer
+    model_type::String
     output_dir::String
 end
 
@@ -61,6 +62,7 @@ function ProblemResults(model::DecisionModel)
         parameters,
         optimizer_stats,
         container,
+        IS.strip_module_name(typeof(model)),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end
@@ -88,6 +90,7 @@ function ProblemResults(model::EmulationModel)
         parameters,
         optimizer_stats,
         container,
+        IS.strip_module_name(typeof(model)),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end

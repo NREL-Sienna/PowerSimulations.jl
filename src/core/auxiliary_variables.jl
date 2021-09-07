@@ -1,4 +1,3 @@
-# TODO DT: Should tis be called AuxVariableKey?
 struct AuxVarKey{T <: AuxVariableType, U <: PSY.Component} <: OptimizationContainerKey
     meta::String
 end

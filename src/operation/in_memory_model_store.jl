@@ -118,7 +118,7 @@ function initialize_storage!(
                     column_names = string.(axes(field_container)[1])
                 end
                 store_container[key] = DataFrames.DataFrame(
-                    Dict(c => fill(NaN, num_of_executions) for c in column_names),
+                    OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
                 )
             elseif length(container_axes) == 1
                 store_container[key] = DataFrames.DataFrame(
@@ -149,12 +149,7 @@ function write_result!(
 )
     container = getfield(store.data, container_type)
     df = axis_array_to_dataframe(array, columns)
-
-    # TODO DT: PERF: names are not in the same order.
-    for name in names(df)
-        container[key][execution, name] = df[1, name]
-    end
-    #container[key][execution, :] = df[1, :]
+    container[key][execution, :] = df[1, :]
     return
 end
 
