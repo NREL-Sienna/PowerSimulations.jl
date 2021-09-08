@@ -146,8 +146,13 @@ export get_problem_results
 export get_system
 export get_system!
 export set_system!
+export list_dual_keys
 export list_dual_names
+export list_parameter_keys
 export list_parameter_names
+export list_aux_variable_keys
+export list_aux_variable_names
+export list_variable_keys
 export list_variable_names
 export list_problems
 export list_supported_formats

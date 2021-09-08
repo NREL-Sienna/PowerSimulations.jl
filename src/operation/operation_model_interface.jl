@@ -14,8 +14,9 @@ get_initial_time(model::OperationModel) = get_initial_time(get_settings(model))
 get_internal(model::OperationModel) = model.internal
 get_jump_model(model::OperationModel) = get_internal(model).container.JuMPmodel
 get_name(model::OperationModel) = model.name
+get_store(model::OperationModel) = model.store
 
-get_optimization_container(model::OperationModel) = model.internal.container
+get_optimization_container(model::OperationModel) = get_internal(model).container
 function get_resolution(model::OperationModel)
     resolution = PSY.get_time_series_resolution(get_system(model))
     return IS.time_period_conversion(resolution)
@@ -62,8 +63,7 @@ end
 
 set_console_level!(model::OperationModel, val) = get_internal(model).console_level = val
 set_file_level!(model::OperationModel, val) = get_internal(model).file_level = val
-set_executions!(model::OperationModel, val::Int) =
-    model.internal.simulation_info.executions = val
+set_executions!(model::OperationModel, val::Int) = model.internal.executions = val
 set_execution_count!(model::OperationModel, val::Int) =
     get_internal(model).execution_count = val
 set_initial_time!(model::OperationModel, val::Dates.DateTime) =
@@ -78,10 +78,6 @@ set_output_dir!(model::OperationModel, path::AbstractString) =
 
 serialize_optimization_model(::OperationModel) = nothing
 serialize_problem(::OperationModel) = nothing
-
-function problem_build!(::T) where {T <: OperationModel}
-    error("The method problem_build! isn't implemented for models $T")
-end
 
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
@@ -110,3 +106,38 @@ function _pre_solve_model_checks(model::OperationModel, optimizer)
     @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
     return RunStatus.RUNNING
 end
+
+# TODO v015: DecisionModel needs to implement a store and the method get_store
+# in order for the methods below to work.
+
+list_aux_variable_keys(x::OperationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
+list_aux_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
+list_variable_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
+list_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
+list_parameter_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
+list_parameter_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
+list_dual_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
+list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
+
+function _list_names(model::OperationModel, container_type)
+    return encode_keys_as_strings(list_keys(get_store(model), container_type))
+end
+
+function read_dual(model::OperationModel, key::ConstraintKey)
+    return read_results(get_store(model), STORE_CONTAINER_DUALS, key)
+end
+
+function read_parameter(model::OperationModel, key::ParameterKey)
+    return read_results(get_store(model), STORE_CONTAINER_PARAMETERS, key)
+end
+
+function read_aux_variable(model::OperationModel, key::AuxVarKey)
+    return read_results(get_store(model), STORE_CONTAINER_AUX_VARIABLES, key)
+end
+
+function read_variable(model::OperationModel, key::VariableKey)
+    return read_results(get_store(model), STORE_CONTAINER_VARIABLES, key)
+end
+
+read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))

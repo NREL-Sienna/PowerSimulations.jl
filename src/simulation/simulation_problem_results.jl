@@ -168,7 +168,7 @@ function set_system!(results::SimulationProblemResults, system::PSY.System)
 end
 
 function _deserialize_key(
-    ::Type{VariableKey},
+    ::Type{<:OptimizationContainerKey},
     results::SimulationProblemResults,
     name::AbstractString,
 )

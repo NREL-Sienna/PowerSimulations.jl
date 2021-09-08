@@ -28,6 +28,7 @@ mutable struct ProblemDatasets
     duals::Dict{ConstraintKey, Dataset}
     parameters::Dict{ParameterKey, Dataset}
     variables::Dict{VariableKey, Dataset}
+    # TODO v015: aux_variables?
 end
 
 function ProblemDatasets()
