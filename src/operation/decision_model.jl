@@ -294,7 +294,7 @@ end
 Default implementation of build method for Operational Problems for models conforming with DecisionProblem specification. Overload this function to implement a custom build method
 """
 
-function problem_build!(model::DecisionModel)
+function build_problem!(model::DecisionModel)
     populate_aggregated_service_model!(get_template(model), get_system(model))
     populate_contributing_devices!(get_template(model), get_system(model))
     add_services_to_device_model!(get_template(model))
