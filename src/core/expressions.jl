@@ -36,4 +36,4 @@ struct RawACE <: ExpressionType end
 struct ActivePowerRangeExpression <: RangeConstraintExpressions end
 struct ActivePowerInRangeExpression <: RangeConstraintExpressions end
 struct ActivePowerOutRangeExpression <: RangeConstraintExpressions end
-struct ReserveLimitExpression <: ExpressionType end
+struct ReserveRangeExpression <: RangeConstraintExpressions end

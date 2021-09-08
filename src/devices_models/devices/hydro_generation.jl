@@ -14,7 +14,7 @@ struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
 get_variable_multiplier(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = ActivePowerRangeExpression
-get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroPumpedStorage}, ::AbstractHydroFormulation) = ReserveLimitExpression
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroPumpedStorage}, ::AbstractHydroFormulation) = ReserveRangeExpression
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 
