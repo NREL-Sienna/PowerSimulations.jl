@@ -1,22 +1,30 @@
+# This needs renaming to avoid collision with the DecionModelResults/EmulationModelResults
 struct ProblemResults <: PSIResults
     base_power::Float64
     timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     system::Union{Nothing, PSY.System}
+    aux_variable_values::Dict{AuxVarKey, DataFrames.DataFrame}
     variable_values::Dict{VariableKey, DataFrames.DataFrame}
     dual_values::Dict{ConstraintKey, DataFrames.DataFrame}
     parameter_values::Dict{ParameterKey, DataFrames.DataFrame}
-    optimizer_stats::OptimizerStats
+    optimizer_stats::DataFrames.DataFrame
     container::OptimizationContainer
+    model_type::String
     output_dir::String
 end
 
+list_aux_variable_keys(res::ProblemResults) = collect(keys(res.aux_variable_values))
+list_aux_variable_names(res::ProblemResults) =
+    encode_keys_as_strings(keys(res.aux_variable_values))
+list_variable_keys(res::ProblemResults) = collect(keys(res.variable_values))
 list_variable_names(res::ProblemResults) = encode_keys_as_strings(keys(res.variable_values))
+list_parameter_keys(res::ProblemResults) = collect(keys(res.parameter_values))
 list_parameter_names(res::ProblemResults) =
     encode_keys_as_strings(keys(res.parameter_values))
+list_dual_keys(res::ProblemResults) = collect(keys(res.dual_values))
 list_dual_names(res::ProblemResults) = encode_keys_as_strings(keys(res.dual_values))
 get_timestamps(res::ProblemResults) = res.timestamps
 get_model_base_power(res::ProblemResults) = res.base_power
-get_objective_value(res::ProblemResults) = res.optimizer_stats.objective_value
 get_dual_values(res::ProblemResults) = res.dual_values
 get_variable_values(res::ProblemResults) = res.variable_values
 IS.get_total_cost(res::ProblemResults) = get_objective_value(res)
@@ -24,6 +32,10 @@ IS.get_optimizer_stats(res::ProblemResults) = res.optimizer_stats
 get_parameter_values(res::ProblemResults) = res.parameter_values
 IS.get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
+
+function get_objective_value(res::ProblemResults, execution = 1)
+    res.optimizer_stats[execution, :objective_value]
+end
 
 function ProblemResults(model::DecisionModel)
     status = get_run_status(model)
@@ -34,7 +46,7 @@ function ProblemResults(model::DecisionModel)
     duals = read_duals(container)
     parameters = read_parameters(container)
     timestamps = get_timestamps(model)
-    optimizer_stats = OptimizerStats(model)
+    optimizer_stats = to_dataframe(OptimizerStats(model))
 
     for df in Iterators.flatten(((values(variables), values(duals), values(parameters))))
         DataFrames.insertcols!(df, 1, :DateTime => timestamps)
@@ -44,11 +56,41 @@ function ProblemResults(model::DecisionModel)
         get_problem_base_power(model),
         timestamps,
         model.sys,
+        Dict{VariableKey, DataFrames.DataFrame}(),
         variables,
         duals,
         parameters,
         optimizer_stats,
         container,
+        IS.strip_module_name(typeof(model)),
+        mkpath(joinpath(get_output_dir(model), "results")),
+    )
+end
+
+function ProblemResults(model::EmulationModel)
+    status = get_run_status(model)
+    status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
+
+    aux_variables =
+        Dict(x => read_aux_variable(model, x) for x in list_aux_variable_keys(model))
+    variables = Dict(x => read_variable(model, x) for x in list_variable_keys(model))
+    duals = Dict(x => read_dual(model, x) for x in list_dual_keys(model))
+    parameters = Dict(x => read_parameter(model, x) for x in list_parameter_keys(model))
+    optimizer_stats = read_optimizer_stats(model)
+    initial_time = get_initial_time(model)
+    container = get_optimization_container(model)
+
+    return ProblemResults(
+        get_problem_base_power(model),
+        StepRange(initial_time, get_resolution(model), initial_time),
+        model.sys,
+        aux_variables,
+        variables,
+        duals,
+        parameters,
+        optimizer_stats,
+        container,
+        IS.strip_module_name(typeof(model)),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end
@@ -58,10 +100,11 @@ Exports all results from the operations problem.
 """
 function export_results(results::ProblemResults; kwargs...)
     exports = ProblemResultsExport(
-        "DecisionProblem",
+        "Problem",
         store_all_duals = true,
         store_all_parameters = true,
         store_all_variables = true,
+        store_all_aux_variables = true,
     )
     export_results(results, exports; kwargs...)
 end
@@ -75,6 +118,13 @@ function export_results(
     export_path = mkpath(joinpath(results.output_dir, "variables"))
     for (key, df) in results.variable_values
         if should_export_variable(exports, key)
+            export_result(file_type, export_path, key, df)
+        end
+    end
+
+    export_path = mkpath(joinpath(results.output_dir, "aux_variables"))
+    for (key, df) in results.aux_variable_values
+        if should_export_aux_variable(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end
@@ -94,36 +144,73 @@ function export_results(
     end
 
     if exports.optimizer_stats
-        df = to_dataframe(results.optimizer_stats)
-        export_result(file_type, joinpath(results.output_dir, "optimizer_stats.csv"), df)
+        export_result(
+            file_type,
+            joinpath(results.output_dir, "optimizer_stats.csv"),
+            results.optimizer_stats,
+        )
     end
 
     @info "Exported ProblemResults to $(results.output_dir)"
 end
 
-function read_variable(res::ProblemResults, args...)
-    key = VariableKey(args...)
-    !haskey(res.variable_values, key) && error("$args is not stored")
+function _deserialize_key(
+    ::Type{<:OptimizationContainerKey},
+    results::ProblemResults,
+    name::AbstractString,
+)
+    return deserialize_key(results.container.metadata, name)
+end
+
+function _deserialize_key(
+    ::Type{T},
+    ::ProblemResults,
+    args...,
+) where {T <: OptimizationContainerKey}
+    return make_key(T, args...)
+end
+
+function read_aux_variable(res::ProblemResults, key::AuxVarKey)
+    !haskey(res.aux_variable_values, key) && error("$key is not stored")
     return res.variable_values[key]
 end
 
-function read_parameter(res::ProblemResults, args...)
-    key = ParameterKey(args...)
-    !haskey(res.parameter_values, key) && error("$args is not stored")
+function read_aux_variable(res::ProblemResults, args...)
+    key = _deserialize_key(AuxVarKey, res, args...)
+    return read_aux_variable(res, key)
+end
+
+function read_variable(res::ProblemResults, key::VariableKey)
+    !haskey(res.variable_values, key) && error("$key is not stored")
+    return res.variable_values[key]
+end
+
+function read_variable(res::ProblemResults, args...)
+    key = _deserialize_key(VariableKey, res, args...)
+    return read_variable(res, key)
+end
+
+function read_parameter(res::ProblemResults, key::ParameterKey)
+    !haskey(res.parameter_values, key) && error("$key is not stored")
     return res.parameter_values[key]
 end
 
-function read_dual(res::ProblemResults, args...)
-    key = ConstraintKey(args...)
-    !haskey(res.dual_values, key) && error("$args is not stored")
+function read_parameter(res::ProblemResults, args...)
+    key = _deserialize_key(ParameterKey, res, args...)
+    return read_parameter(res, key)
+end
+
+function read_dual(res::ProblemResults, key::ConstraintKey)
+    !haskey(res.dual_values, key) && error("$key is not stored")
     return res.dual_values[key]
 end
 
-function read_optimizer_stats(res::ProblemResults)
-    data = get_optimizer_stats(res)
-    stats = [to_namedtuple(data)]
-    return DataFrames.DataFrame(stats)
+function read_dual(res::ProblemResults, args...)
+    key = _deserialize_key(ConstraintKey, res, args...)
+    return read_dual(res, key)
 end
+
+read_optimizer_stats(res::ProblemResults) = res.optimizer_stats
 
 # TODO:
 # - Handle PER-UNIT conversion of variables according to type
@@ -162,6 +249,7 @@ function write_optimizer_stats(res::ProblemResults, directory::AbstractString)
     JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(data))
 end
 
+# TODO: These are not likely needed for v015.
 _get_keys(::Type{ConstraintKey}, res, ::Nothing) = collect(keys(res.dual_values))
 _get_keys(::Type{ParameterKey}, res, ::Nothing) = collect(keys(res.parameter_values))
 _get_keys(::Type{VariableKey}, res, ::Nothing) = collect(keys(res.variable_values))

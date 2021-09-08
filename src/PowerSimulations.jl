@@ -146,8 +146,13 @@ export get_problem_results
 export get_system
 export get_system!
 export set_system!
+export list_dual_keys
 export list_dual_names
+export list_parameter_keys
 export list_parameter_names
+export list_aux_variable_keys
+export list_aux_variable_names
+export list_variable_keys
 export list_variable_names
 export list_problems
 export list_supported_formats
@@ -414,6 +419,7 @@ include("initial_conditions/update_initial_conditions.jl")
 include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
 include("operation/model_store_params.jl")
+include("operation/in_memory_model_store.jl")
 include("operation/model_internal.jl")
 include("operation/decision_model.jl")
 include("operation/emulation_model.jl")

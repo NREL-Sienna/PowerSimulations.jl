@@ -191,7 +191,7 @@ function _make_jump_model(settings::Settings)
     return JuMPmodel
 end
 
-function optimization_container_init!(
+function init_optimization_container!(
     container::OptimizationContainer,
     ::Type{T},
     sys::PSY.System,

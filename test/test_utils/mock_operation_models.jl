@@ -36,7 +36,7 @@ end
 function mock_construct_device!(problem::PSI.DecisionModel{MockOperationProblem}, model)
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
-    PSI.optimization_container_init!(
+    PSI.init_optimization_container!(
         PSI.get_optimization_container(problem),
         PSI.get_network_formulation(template),
         PSI.get_system(problem),

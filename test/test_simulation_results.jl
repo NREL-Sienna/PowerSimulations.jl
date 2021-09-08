@@ -17,6 +17,9 @@ function verify_export_results(results, export_path)
             for name in list_variable_names(problem_results)
                 compare_results(rpath, export_path, model, "variables", name, timestamp)
             end
+            for name in list_aux_variable_names(problem_results)
+                compare_results(rpath, export_path, model, "aux_variables", name, timestamp)
+            end
         end
 
         # This file is not currently exported during the simulation.
@@ -43,6 +46,7 @@ function make_export_all(problems)
             x,
             store_all_duals = true,
             store_all_variables = true,
+            store_all_aux_variables = true,
             store_all_parameters = true,
         ) for x in problems
     ]

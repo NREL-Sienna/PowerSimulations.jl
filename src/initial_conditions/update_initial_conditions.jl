@@ -213,7 +213,7 @@ function _make_initial_conditions!(
         set_initial_conditions!(container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
             val_ = get_val_func(dev, key, device_formulation, variable_type)
-            val = parameters ? add_parameter(container.JuMPmodel, val_) : val_
+            val = parameters ? add_jump_parameter(container.JuMPmodel, val_) : val_
             ic = InitialCondition(key, dev, val, cache)
             ini_conds[ix] = ic
             @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_

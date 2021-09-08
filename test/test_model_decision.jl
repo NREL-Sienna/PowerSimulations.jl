@@ -211,7 +211,7 @@ end
     @test isa(get_objective_value(res), Float64)
     @test isa(get_variable_values(res), Dict{PSI.VariableKey, DataFrames.DataFrame})
     @test isa(get_total_cost(res), Float64)
-    @test isa(get_optimizer_stats(res), PSI.OptimizerStats)
+    @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
     @test isa(get_dual_values(res), Dict{PSI.ConstraintKey, DataFrames.DataFrame})
     @test isa(get_parameter_values(res), Dict{PSI.ParameterKey, DataFrames.DataFrame})
     @test isa(get_resolution(res), Dates.TimePeriod)
