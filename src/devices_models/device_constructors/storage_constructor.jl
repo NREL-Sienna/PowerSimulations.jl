@@ -448,18 +448,8 @@ function construct_device!(
         S,
     )
     if has_service_model(model)
-        time_steps = get_time_steps(container)
-        names = PSY.get_name.(devices)
-        for meta in [LOWER_BOUND, UPPER_BOUND]
-            add_expression_container!(
-                container,
-                ReserveLimitExpression(),
-                St,
-                names,
-                time_steps;
-                meta = meta,
-            )
-        end
+        add_expressions!(container, ReserveRangeExpression, devices, model, LOWER_BOUND)
+        add_expressions!(container, ReserveRangeExpression, devices, model, UPPER_BOUND)
     end
 end
 
@@ -571,18 +561,8 @@ function construct_device!(
         S,
     )
     if has_service_model(model)
-        time_steps = get_time_steps(container)
-        names = PSY.get_name.(devices)
-        for meta in [LOWER_BOUND, UPPER_BOUND]
-            add_expression_container!(
-                container,
-                ReserveLimitExpression(),
-                St,
-                names,
-                time_steps;
-                meta = meta,
-            )
-        end
+        add_expressions!(container, ReserveRangeExpression, devices, model, LOWER_BOUND)
+        add_expressions!(container, ReserveRangeExpression, devices, model, UPPER_BOUND)
     end
 end
 
