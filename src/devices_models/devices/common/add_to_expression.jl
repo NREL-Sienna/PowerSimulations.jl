@@ -1,3 +1,20 @@
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
+    model::DeviceModel{D, W},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {
+    T <: ExpressionType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    add_expression_container!(container, T(), D, names, time_steps; meta = meta)
+    return
+end
+
 function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     var::JV,
@@ -332,7 +349,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    model::DeviceModel{V, W},
     ::Type{X};
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {
@@ -343,6 +360,9 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
+    if !has_expression(container, T(), V, meta)
+        add_expressions!(container, T, devices, model, meta)
+    end
     expression = get_expression(container, T(), V, meta)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
@@ -366,6 +386,9 @@ function add_to_expression!(
 }
     service_name = get_service_name(model)
     variable = get_variable(container, U(), X, service_name)
+    if !has_expression(container, T(), V, UPPER_BOUND)
+        add_expressions!(container, T, devices, model, UPPER_BOUND)
+    end
     expression = get_expression(container, T(), V, UPPER_BOUND)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
@@ -389,6 +412,9 @@ function add_to_expression!(
 }
     service_name = get_service_name(model)
     variable = get_variable(container, U(), X, service_name)
+    if !has_expression(container, T(), V, UPPER_BOUND)
+        add_expressions!(container, T, devices, model, LOWER_BOUND)
+    end
     expression = get_expression(container, T(), V, LOWER_BOUND)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
