@@ -880,9 +880,9 @@ function _add_expression_container!(
     sparse = false,
 )
     if sparse
-        expr_container = sparse_container_spec(JuMP.GenericAffExpr, axs...)
+        expr_container = sparse_container_spec(JuMP.AbstractJuMPScalar, axs...)
     else
-        expr_container = container_spec(JuMP.GenericAffExpr, axs...)
+        expr_container = container_spec(JuMP.AbstractJuMPScalar, axs...)
     end
     _assign_container!(container.expressions, expr_key, expr_container)
     return expr_container
@@ -921,6 +921,20 @@ function get_expression(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     return get_expression(container, ExpressionKey(T, U, meta))
+end
+
+function has_expression(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    key = ExpressionKey(T, U, meta)
+    var = get(container.expressions, key, nothing)
+    if var === nothing
+        return false
+    end
+    return true
 end
 
 # Special getter functions to handle system balance expressions
