@@ -24,8 +24,8 @@ get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormul
 ############## ActivePowerVariable, ThermalGen ####################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_binary(::PowerAboveMinimumVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
-get_variable_initial_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
-get_variable_initial_value(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
+get_variable_warm_start_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
+get_variable_warm_start_value(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalUnitCommitment) = 0.0
@@ -36,14 +36,14 @@ get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::Abstr
 ############## ReactivePowerVariable, ThermalGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 
-get_variable_initial_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power(d)
+get_variable_warm_start_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power(d)
 
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
 
 ############## OnVariable, ThermalGen ####################
 get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
-get_variable_initial_value(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
+get_variable_warm_start_value(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
 
 ############## StopVariable, ThermalGen ####################
 get_variable_binary(::StopVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
@@ -58,8 +58,20 @@ get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFo
 ############## ColdStartVariable, WarmStartVariable, HotStartVariable ############
 get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariable}, ::Type{PSY.ThermalMultiStart}, ::AbstractThermalFormulation) = true
 
+#################### Initial Conditions for models ###############
+get_initial_condition_value(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(dev) ? 1.0 : 0.0
+get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
+get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
 #! format: on
+
+function get_initial_condition_value(::InitialTimeDurationOn, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+    return PSY.get_status(d) ? PSY.get_time_at_status(d) : 0.0
+end
+
+function get_initial_condition_value(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+    return !PSY.get_status(d) ? PSY.get_time_at_status(d) : 0.0
+end
 
 function get_default_time_series_names(
     ::Type{U},
@@ -439,13 +451,12 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractThermalUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus, OnVariable)
+    add_initial_condition!(container, devices, formulation, DeviceStatus)
     add_initial_condition!(
         container,
         devices,
         formulation,
         DevicePower,
-        ActivePowerVariable,
     )
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
@@ -458,13 +469,12 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractCompactUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus, OnVariable)
+    add_initial_condition!(container, devices, formulation, DeviceStatus)
     add_initial_condition!(
         container,
         devices,
         formulation,
         DevicePower,
-        PowerAboveMinimumVariable,
     )
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
@@ -477,13 +487,12 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::ThermalBasicUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus, OnVariable)
+    add_initial_condition!(container, devices, formulation, DeviceStatus)
     add_initial_condition!(
         container,
         devices,
         formulation,
         DevicePower,
-        ActivePowerVariable,
     )
     return
 end
@@ -498,7 +507,6 @@ function initial_conditions!(
         devices,
         formulation,
         DevicePower,
-        ActivePowerVariable,
     )
     return
 end
