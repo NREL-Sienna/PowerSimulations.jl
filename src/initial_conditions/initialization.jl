@@ -20,35 +20,38 @@ const RELAXED_FORMULATION_MAPPING = Dict(
     :InterruptibleLoad => DeviceModel(PSY.InterruptibleLoad, StaticPowerLoad),
 )
 
-function _build_initialization_template(model::DecisionModel)
-    ic_template = ProblemTemplate(problem.template.transmission)
-    for (device, _) in problem.template.devices
-        model = RELAXED_FORMULATION_MAPPING[device]
-        set_device_model!(ic_template, model)
+function _build_initialization_template(model::OperationModel)
+    ic_template = ProblemTemplate(get_network_model(model.template))
+    for (device, device_model) in model.template.devices
+        base_model = RELAXED_FORMULATION_MAPPING[device]
+        base_model.use_slacks = device_model.use_slacks
+        base_model.duals = device_model.duals
+        base_model.time_series_names = device_model.time_series_names
+        base_model.attributes = device_model.attributes
+        set_device_model!(ic_template, base_model)
     end
-    for (device, _) in problem.template.branches
-        model = RELAXED_FORMULATION_MAPPING[device]
-        set_device_model!(ic_template, model)
+    for (device, device_model) in model.template.branches
+        base_model = RELAXED_FORMULATION_MAPPING[device]
+        base_model.use_slacks = device_model.use_slacks
+        base_model.duals = device_model.duals
+        base_model.time_series_names = device_model.time_series_names
+        base_model.attributes = device_model.attributes
+        set_device_model!(ic_template, base_model)
     end
-    for (device, model) in problem.template.services
-        set_service_model!(ic_template, model)
-    end
+    ic_template.services = model.template.services
     return ic_template
 end
 
-function _build_initialization_problem(
-    model::DecisionModel{M},
-    sim::Simulation,
-) where {M <: DecisionProblem}
+function build_initialization_problem(model::T) where T <: OperationModel
     settings = deepcopy(get_settings(model))
     set_horizon!(settings, 1)
     template = _build_initialization_template(model)
-    ic_model = DecisionModel{M}(template, problem.sys, settings)
+    ic_model = T(template, model.sys, settings)
     build!(ic_model; output_dir = get_internal(model).output_dir, serialize = false)
     return ic_model
 end
 
-function _perform_initialization_step!(
+function perform_initialization_step!(
     ic_op_model::DecisionModel,
     model::DecisionModel,
     sim::Simulation,
@@ -92,7 +95,7 @@ function _perform_initialization_step!(
 end
 
 function _create_initialization_problem(sim::Simulation)
-    ic_model = _build_initialization_problem(first(get_problems(sim)), sim)
+    ic_model = build_initialization_problem(first(get_problems(sim)), sim)
     solve!(ic_model)
     return ic_model
 end
@@ -102,8 +105,8 @@ function _initialization_problems!(sim::Simulation)
     # for initializing the simulation, but is not always guaranteed to provide a feasible initial conditions.
     # Currently the formulations used in the initialization problem are pre-defined, customization option
     # is be added in future release.
-    ic_model = _create_initialization_problem(sim)
+    ic_model = create_initialization_problem(sim)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        _perform_initialization_step!(ic_model, model, sim)
+        perform_initialization_step!(ic_model, model, sim)
     end
 end
