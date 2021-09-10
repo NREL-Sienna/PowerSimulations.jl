@@ -528,7 +528,7 @@ function deserialize_metadata!(
     )
 end
 
-function _assign_container!(container::Dict, key, value)
+function _assign_container!(container::Dict, key::OptimizationContainerKey, value::AbstractArray)
     if haskey(container, key)
         @error "$(encode_key(key)) is already stored" sort!(encode_key.(keys(container)))
         throw(IS.InvalidValue("$key is already stored"))
@@ -944,23 +944,49 @@ function get_expression(
 end
 
 ###################################Initial Conditions Containers############################
-function has_initial_conditions(container::OptimizationContainer, key::ICKey)
+function _add_initial_condition_container!(
+    container::OptimizationContainer,
+    ic_key::ICKey{T, U},
+    length_devices::Int;
+) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
+    if built_for_recurrent_solves(container)
+        ini_conds = Vector{InitialCondition{T, PJ.ParameterRef}}(undef, length_devices)
+    else
+        ini_conds = Vector{InitialCondition{T, Float64}}(undef, length_devices)
+    end
+    _assign_container!(container.initial_conditions, ic_key, ini_conds)
+    return ini_conds
+end
+
+function add_initial_condition_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs;
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
+    ic_key = ICKey(T, U, meta)
+    @debug "set_initial_condition_container" ic_key
+    return _add_initial_condition_container!(container, ic_key, length(axs);)
+end
+
+function has_initial_condition(container::OptimizationContainer, key::ICKey)
     return haskey(container.initial_conditions, key)
 end
 
-function iterate_initial_conditions(container::OptimizationContainer)
+function iterate_initial_condition(container::OptimizationContainer)
     return pairs(container.initial_conditions)
 end
 
-function get_initial_conditions(
+function get_initial_condition(
     container::OptimizationContainer,
     ::T,
     ::Type{D},
 ) where {T <: InitialConditionType, D <: PSY.Component}
-    return get_initial_conditions(container, ICKey(T, D))
+    return get_initial_condition(container, ICKey(T, D))
 end
 
-function get_initial_conditions(container::OptimizationContainer, key::ICKey)
+function get_initial_condition(container::OptimizationContainer, key::ICKey)
     initial_conditions = get(container.initial_conditions, key, nothing)
     if initial_conditions === nothing
         @error "$key is not stored" sort!(get_initial_conditions_keys(container))
@@ -971,20 +997,6 @@ end
 
 function get_initial_conditions_keys(container::OptimizationContainer)
     return collect(keys(container.initial_conditions))
-end
-
-function set_initial_conditions!(
-    container::OptimizationContainer,
-    ::T,
-    ::Type{D},
-    value,
-) where {T <: InitialConditionType, D <: PSY.Device}
-    set_initial_conditions!(container, ICKey(T, D), value)
-end
-
-function set_initial_conditions!(container::OptimizationContainer, key::ICKey, value)
-    @debug "set_initial_condition_container" key
-    container.initial_conditions[key] = value
 end
 
 function add_to_objective_function!(container::OptimizationContainer, expr)
