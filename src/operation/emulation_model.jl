@@ -373,14 +373,25 @@ function one_step_solve!(model::EmulationModel)
     return
 end
 
-function update_model!(model::EmulationModel)
+function initialize!(model::EmulationModel)
+    ic_model = build_initialization_problem(model)
+    one_step_solve!(ic_model)
+    write_results!(ic_model, 1)
+    for key in keys(get_initial_constraints(model))
+        update_initial_conditions!(model, key, )
+    end
+    return ic_model
+end
+
+function update_model!(model::EmulationModel, store)
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key)
     end
-    #for key in keys(get_initial_constraints(model))
-    #    update_initial_conditions!(model, key)
-    #end
     return
+end
+
+function update_model!(model::EmulationModel)
+    update_model!(model, model.store)
 end
 
 function run_impl(
@@ -394,10 +405,11 @@ function run_impl(
     if internal.execution_count > 0
         error("Call build! again")
     end
-
-    try
+        try
         prog_bar =
             ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+        @info "Initializing Model"
+        initialize(model)
         for execution in 1:(internal.executions)
             one_step_solve!(model)
             write_results!(model, execution)
