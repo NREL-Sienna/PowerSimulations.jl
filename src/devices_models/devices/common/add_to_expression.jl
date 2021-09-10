@@ -2,12 +2,12 @@ function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     var::JV,
     multiplier::Float64,
-    ixs::Int...,
-) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
+    ixs::Vararg{Int, N},
+) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
+    if isassigned(expression_array, ixs)
+        JuMP.add_to_expression!(expression_array[ixs], multiplier, var)
     else
-        expression_array[ixs...] = multiplier * var
+        expression_array[ixs] = multiplier * var
     end
 
     return
@@ -18,13 +18,13 @@ function add_to_jump_expression!(
     var::JV,
     multiplier::Float64,
     constant::Float64,
-    ixs::Int...,
-) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
-        JuMP.add_to_expression!(expression_array[ixs...], constant)
+    ixs::Vararg{Int, N},
+) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
+    if isassigned(expression_array, ixs)
+        JuMP.add_to_expression!(expression_array[ixs], multiplier, var)
+        JuMP.add_to_expression!(expression_array[ixs], constant)
     else
-        expression_array[ixs...] = multiplier * var + constant
+        expression_array[ixs] = multiplier * var + constant
     end
 
     return
@@ -33,27 +33,28 @@ end
 function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     value::Float64,
-    ixs::Int...,
-) where {T <: JuMP.AbstractJuMPScalar}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[ixs...], value)
+    ixs::Vararg{Int, N},
+) where {T <: JuMP.AbstractJuMPScalar, N}
+    if isassigned(expression_array, ixs)
+        JuMP.add_to_expression!(expression_array[ixs], value)
     else
-        expression_array[ixs...] = zero(eltype(expression_array)) + value
+        expression_array[ixs] = zero(eltype(expression_array)) + value
     end
 
     return
 end
 
+# use ixs::Vararg{Int, N} where N
 function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     parameter::PJ.ParameterRef,
     multiplier::Float64,
-    ixs::Int...,
-) where {T <: JuMP.AbstractJuMPScalar}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[ixs...], multiplier, parameter)
+    ixs::Vararg{Int, N},
+) where {T <: JuMP.AbstractJuMPScalar, N}
+    if isassigned(expression_array, ixs)
+        JuMP.add_to_expression!(expression_array[ixs], multiplier, parameter)
     else
-        expression_array[ixs...] = zero(eltype(expression_array)) + parameter * multiplier
+        expression_array[ixs] = zero(eltype(expression_array)) + parameter * multiplier
     end
 
     return
@@ -63,9 +64,9 @@ function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     parameter::Float64,
     multiplier::Float64,
-    ixs::Int...,
-) where {T <: JuMP.AbstractJuMPScalar}
-    add_to_jump_expression!(expression_array, parameter * multiplier, ixs...)
+    ixs::Vararg{Int, N},
+) where {T <: JuMP.AbstractJuMPScalar, N}
+    add_to_jump_expression!(expression_array, parameter * multiplier, ixs)
     return
 end
 
