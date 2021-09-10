@@ -975,7 +975,7 @@ function add_initial_condition_container!(
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     ic_key = ICKey(T, U, meta)
     @debug "set_initial_condition_container" ic_key
-    return _add_initial_condition_container!(container, ic_key, length(axs);)
+    return _add_initial_condition_container!(container, ic_key, length(axs))
 end
 
 function has_initial_condition(container::OptimizationContainer, key::ICKey)
