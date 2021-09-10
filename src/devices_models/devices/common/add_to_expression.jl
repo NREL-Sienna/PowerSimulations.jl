@@ -19,7 +19,7 @@ function add_to_jump_expression!(
     multiplier::Float64,
     constant::Float64,
     ixs::Vararg{Any, N},
-) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
+) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.VariableRef, N}
     if isassigned(expression_array, ixs...)
         JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], multiplier, var)
         JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], constant)
@@ -44,7 +44,6 @@ function add_to_jump_expression!(
     return
 end
 
-# use ixs::Vararg{Int, N} where N.
 function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     parameter::PJ.ParameterRef,
