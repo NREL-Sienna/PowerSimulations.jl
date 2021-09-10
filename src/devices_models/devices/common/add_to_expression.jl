@@ -2,12 +2,12 @@ function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     var::JV,
     multiplier::Float64,
-    ixs::Vararg{Int, N},
+    ixs::Vararg{Any, N},
 ) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
-    if isassigned(expression_array, ixs)
-        JuMP.add_to_expression!(expression_array[ixs], multiplier, var)
+    if isassigned(expression_array, ixs...)
+        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], multiplier, var)
     else
-        expression_array[ixs] = multiplier * var
+        expression_array[CartesianIndex(ixs)] = multiplier * var
     end
 
     return
@@ -18,13 +18,13 @@ function add_to_jump_expression!(
     var::JV,
     multiplier::Float64,
     constant::Float64,
-    ixs::Vararg{Int, N},
+    ixs::Vararg{Any, N},
 ) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
-    if isassigned(expression_array, ixs)
-        JuMP.add_to_expression!(expression_array[ixs], multiplier, var)
-        JuMP.add_to_expression!(expression_array[ixs], constant)
+    if isassigned(expression_array, ixs...)
+        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], multiplier, var)
+        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], constant)
     else
-        expression_array[ixs] = multiplier * var + constant
+        expression_array[CartesianIndex(ixs)] = multiplier * var + constant
     end
 
     return
@@ -33,28 +33,28 @@ end
 function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     value::Float64,
-    ixs::Vararg{Int, N},
+    ixs::Vararg{Any, N},
 ) where {T <: JuMP.AbstractJuMPScalar, N}
-    if isassigned(expression_array, ixs)
-        JuMP.add_to_expression!(expression_array[ixs], value)
+    if isassigned(expression_array, ixs...)
+        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], value)
     else
-        expression_array[ixs] = zero(eltype(expression_array)) + value
+        expression_array[CartesianIndex(ixs)] = zero(eltype(expression_array)) + value
     end
 
     return
 end
 
-# use ixs::Vararg{Int, N} where N
+# use ixs::Vararg{Int, N} where N.
 function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     parameter::PJ.ParameterRef,
     multiplier::Float64,
-    ixs::Vararg{Int, N},
+    ixs::Vararg{Any, N},
 ) where {T <: JuMP.AbstractJuMPScalar, N}
-    if isassigned(expression_array, ixs)
-        JuMP.add_to_expression!(expression_array[ixs], multiplier, parameter)
+    if isassigned(expression_array, ixs...)
+        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], multiplier, parameter)
     else
-        expression_array[ixs] = zero(eltype(expression_array)) + parameter * multiplier
+        expression_array[CartesianIndex(ixs)] = zero(eltype(expression_array)) + parameter * multiplier
     end
 
     return
@@ -64,7 +64,7 @@ function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     parameter::Float64,
     multiplier::Float64,
-    ixs::Vararg{Int, N},
+    ixs::Vararg{Any, N},
 ) where {T <: JuMP.AbstractJuMPScalar, N}
     add_to_jump_expression!(expression_array, parameter * multiplier, ixs)
     return
