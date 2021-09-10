@@ -409,11 +409,6 @@ include("core/settings.jl")
 include("core/cache_utils.jl")
 include("core/optimizer_stats.jl")
 
-include("initial_conditions/initial_condition.jl")
-include("initial_conditions/add_initial_condition.jl")
-include("initial_conditions/initial_condition_chronologies.jl")
-include("initial_conditions/update_initial_conditions.jl")
-
 include("core/optimization_container.jl")
 
 include("operation/problem_template.jl")
@@ -429,6 +424,10 @@ include("operation/operation_model_serialization.jl")
 include("operation/model_cache.jl")
 include("operation/time_series_interface.jl")
 include("operation/optimization_debugging.jl")
+
+include("initial_conditions/add_initial_condition.jl")
+include("initial_conditions/initial_condition_chronologies.jl")
+include("initial_conditions/update_initial_conditions.jl")
 
 include("parameters/add_parameters.jl")
 include("parameters/update_parameters.jl")
