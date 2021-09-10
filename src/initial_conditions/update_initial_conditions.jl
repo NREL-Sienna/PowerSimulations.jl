@@ -154,105 +154,52 @@ function calculate_ic_quantity(
     return energy_cache
 end
 
-############################# Initial Conditions Initialization ############################
-function add_initial_condition!(
-    container::OptimizationContainer,
-    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
-    ::D,
-    initial_conditions_type::Type{<:InitialConditionType},
-) where {
-    T <: PSY.Component,
-    D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
-}
-    _make_initial_conditions!(
-        container,
-        devices,
-        D(),
-        nothing,
-        ICKey(initial_conditions_type, T),
-        _get_variable_initial_value,
-    )
-end
-
-function add_initial_condition!(
-    container::OptimizationContainer,
-    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
-    ::D,
-    initial_conditions_type::Type{<:InitialConditionType},
-    variable_type::Type{<:VariableType},
-) where {
-    T <: PSY.Component,
-    D <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
-}
-    _make_initial_conditions!(
-        container,
-        devices,
-        D(),
-        variable_type(),
-        ICKey(initial_conditions_type, T),
-        _get_variable_initial_value,
-    )
-end
-
-function _make_initial_conditions!(
-    container::OptimizationContainer,
-    devices::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
-    device_formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
-    variable_type::Union{Nothing, VariableType},
-    key::ICKey,
-    get_val_func::Function, # Function to get the value from the device to intialize
-    cache = nothing,
-) where {T <: PSY.Component}
-    length_devices = length(devices)
-    parameters = built_for_recurrent_solves(container)
-    ic_container = get_initial_conditions(container)
-    if !haskey(ic_container, key)
-        @debug "Setting $(get_entry_type(key)) initial conditions for all devices $(T) based on system data" _group =
-            LOG_GROUP_INITIAL_CONDITIONS
-        ini_conds = Vector{InitialCondition}(undef, length_devices)
-        set_initial_conditions!(container, key, ini_conds)
-        for (ix, dev) in enumerate(devices)
-            val_ = get_val_func(dev, key, device_formulation, variable_type)
-            val = parameters ? add_jump_parameter(container.JuMPmodel, val_) : val_
-            ic = InitialCondition(key, dev, val, cache)
-            ini_conds[ix] = ic
-            @debug "set initial condition" _group = LOG_GROUP_INITIAL_CONDITIONS key ic val_
-        end
-    end
-
-    @assert length(ini_conds) == length_devices
-    return
-end
-
-function _get_variable_initial_value(
-    d::PSY.Component,
-    ::ICKey,
-    formulation::AbstractDeviceFormulation,
-    variable_type::VariableType,
-)
-    return get_variable_initial_value(variable_type, d, formulation)
-end
-
-function _get_variable_initial_value(
-    d::PSY.Component,
-    key::ICKey,
-    ::AbstractDeviceFormulation,
-    ::Nothing,
-)
-    return _get_duration_value(d, key)
-end
 
 function _get_ace_error(device, key)
     return PSY.get_initial_ace(device)
 end
 
-function _get_duration_value(dev, key)
-    if get_entry_type(key) == InitialTimeDurationOn
-        value = PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
-    else
-        @assert get_entry_type(key) == InitialTimeDurationOff
-        value = !PSY.get_status(dev) ? PSY.get_time_at_status(dev) : 0.0
-    end
 
-    return value
+
+""" Updates the initial conditions of the problem"""
+function initial_condition_update!(
+    model,
+    ini_cond_key::ICKey,
+    initial_conditions::Vector{InitialCondition},
+    ::IntraProblemChronology,
+    sim,
+)
+    # TODO: Replace this convoluted way to get information with access to data store
+    execution_count = get_execution_count(problem)
+    execution_count == 0 && return
+    simulation_cache = sim.internal.simulation_cache
+    for ic in initial_conditions
+        name = get_device_name(ic)
+        interval_chronology = get_model_interval_chronology(sim.sequence, get_name(model))
+        var_value = get_model_variable(
+            interval_chronology,
+            (problem => problem),
+            name,
+            ic.update_ref,
+        )
+        # We pass the simulation cache instead of the whole simulation to avoid definition dependencies.
+        # All the inputs to calculate_ic_quantity are defined before the simulation object
+        quantity = calculate_ic_quantity(
+            ini_cond_key,
+            ic,
+            var_value,
+            simulation_cache,
+            get_resolution(model),
+        )
+        previous_value = get_condition(ic)
+        PJ.set_value(ic.value, quantity)
+        IS.@record :simulation InitialConditionUpdateEvent(
+            get_current_time(sim),
+            ini_cond_key,
+            ic,
+            quantity,
+            previous_value,
+            get_simulation_number(model),
+        )
+    end
 end
