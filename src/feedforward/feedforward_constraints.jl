@@ -18,7 +18,7 @@ end
         ub_ff(container::OptimizationContainer,
               cons_name::Symbol,
               constraint_infos::Vector{DeviceRangeConstraintInfo},
-              param_reference::UpdateRef,
+              param_reference,
               var_key::VariableKey)
 
 Constructs a parameterized upper bound constraint to implement feedforward from other models.
@@ -165,7 +165,7 @@ end
             semicontinuousrange_ff(container::OptimizationContainer,
                                     cons_name::Symbol,
                                     var_key::VariableKey,
-                                    param_reference::UpdateRef)
+                                    param_reference)
 
 Constructs min/max range constraint from device variable with parameter setting.
 
@@ -192,7 +192,7 @@ where r in range_data.
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * var_key::VariableKey : the name of the continuous variable
-* param_reference::UpdateRef : UpdateRef of the parameter
+* param_reference : UpdateRef of the parameter
 """
 function semicontinuousrange_ff(
     container::OptimizationContainer,
@@ -275,7 +275,7 @@ end
 @doc raw"""
         integral_limit_ff(container::OptimizationContainer,
                         cons_name::Symbol,
-                        param_reference::UpdateRef,
+                        param_reference,
                         var_key::VariableKey)
 
 Constructs a parameterized integral limit constraint to implement feedforward from other models.
@@ -444,7 +444,7 @@ function get_problem_variable(
     chron::RecedingHorizon,
     problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::AbstractString,
-    var_ref::UpdateRef,
+    var_ref,
 ) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     step = axes(variable)[2][chron.periods]
@@ -460,7 +460,7 @@ function get_problem_variable(
     ::Consecutive,
     problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::String,
-    var_ref::UpdateRef,
+    var_ref,
 ) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     step = axes(variable)[2][get_end_of_interval_step(problems.first)]
@@ -476,7 +476,7 @@ function get_problem_variable(
     chron::Synchronize,
     problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::String,
-    var_ref::UpdateRef,
+    var_ref,
 ) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     e_count = get_execution_count(problems.second)
@@ -495,7 +495,7 @@ function get_problem_variable(
     ::FullHorizon,
     problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::String,
-    var_ref::UpdateRef,
+    var_ref,
 ) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     vars = variable[device_name, :]
@@ -510,7 +510,7 @@ function get_problem_variable(
     chron::Range,
     problems::Pair{DecisionModel{T}, DecisionModel{U}},
     device_name::String,
-    var_ref::UpdateRef,
+    var_ref,
 ) where {T, U <: DecisionModel}
     variable = get_variable(problems.first.internal.container, var_ref.access_ref)
     vars = variable[device_name, chron.range]
@@ -525,7 +525,7 @@ function feedforward_update!(
     destination_model::DecisionModel,
     source_model::DecisionModel,
     chronology::FeedForwardChronology,
-    param_reference::UpdateRef{JuMP.VariableRef},
+    param_reference,
     param_array::JuMPParamArray,
     current_time::Dates.DateTime,
 )
