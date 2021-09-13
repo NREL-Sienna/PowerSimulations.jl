@@ -19,19 +19,20 @@ function get_initial_cache(cache::TimeStatusChange, model::OperationModel)
     )
 
     device_axes = Set((
-        PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
+        PSY.get_name(get_component(ic)) for
+        ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
     ),)
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}}(undef, device_axes)
 
     for ic in ini_cond_on
-        device_name = PSY.get_name(ic.device)
+        device_name = PSY.get_name(get_component(ic))
         condition = get_condition(ic)
         status = (condition > 0.0) ? 1.0 : 0.0
         value_array[device_name] = Dict(:count => condition, :status => status)
     end
 
     for ic in ini_cond_off
-        device_name = PSY.get_name(ic.device)
+        device_name = PSY.get_name(get_component(ic))
         condition = get_condition(ic)
         status = (condition > 0.0) ? 0.0 : 1.0
         if value_array[device_name][:status] != status
@@ -53,10 +54,10 @@ function get_initial_cache(cache::StoredEnergy, model::OperationModel)
         cache.device_type,
     )
 
-    device_axes = Set([PSY.get_name(ic.device) for ic in ini_cond_level],)
+    device_axes = Set([PSY.get_name(get_component(ic)) for ic in ini_cond_level],)
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)
     for ic in ini_cond_level
-        device_name = PSY.get_name(ic.device)
+        device_name = PSY.get_name(get_component(ic))
         condition = get_condition(ic)
         value_array[device_name] = condition
     end

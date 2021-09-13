@@ -512,7 +512,7 @@ function _attach_feedforward!(sim::Simulation, model_name::Symbol)
     # JDNOTES: making a conversion here isn't great. Needs refactor
     feedforward = filter(p -> (p.first == model_name), get_sequence(sim).feedforward)
     for (key, ff) in feedforward
-        device_model = get_model(model.template, get_device_type(ff))
+        device_model = get_model(model.template, get_component_type(ff))
         device_model === nothing && throw(
             IS.ConflictingInputsError("Device model $key not found in model $model_name"),
         )
@@ -725,7 +725,7 @@ function initial_condition_update!(
     execution_count == 0 && return
     simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
-        name = get_device_name(ic)
+        name = get_component_name(ic)
         interval_chronology = get_model_interval_chronology(sim.sequence, get_name(model))
         var_value = get_model_variable(
             interval_chronology,
@@ -771,7 +771,7 @@ function initial_condition_update!(
     sequence = get_sequence(sim)
     interval = get_interval(sequence, model_name)
     for ic in initial_conditions
-        name = get_device_name(ic)
+        name = get_component_name(ic)
         current_ix = get_current_execution_index(sim)
         source_model_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
         source_model = get_model(sim, execution_index[source_model_ix])

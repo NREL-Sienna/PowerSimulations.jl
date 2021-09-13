@@ -348,7 +348,7 @@ function initialize!(model::EmulationModel)
     one_step_solve!(ic_model)
     write_results!(ic_model, 1)
     for key in keys(get_initial_constraints(model))
-        update_initial_conditions!(model, key, )
+        update_initial_conditions!(model, key)
     end
     return ic_model
 end
@@ -376,7 +376,7 @@ function run_impl(
     if internal.execution_count > 0
         error("Call build! again")
     end
-        try
+    try
         prog_bar =
             ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
         @info "Initializing Model"

@@ -42,7 +42,7 @@ function _build_initialization_template(model::OperationModel)
     return ic_template
 end
 
-function build_initialization_problem(model::T) where T <: OperationModel
+function build_initialization_problem(model::T) where {T <: OperationModel}
     settings = deepcopy(get_settings(model))
     set_horizon!(settings, 1)
     template = _build_initialization_template(model)
@@ -63,7 +63,7 @@ function perform_initialization_step!(
         # TODO: Replace this convoluted way to get information with access to data store
         simulation_cache = sim.internal.simulation_cache
         for ic in initial_conditions
-            name = get_device_name(ic)
+            name = get_component_name(ic)
             var_value = get_problem_variable(
                 RecedingHorizon(),
                 (ic_model => problem),
