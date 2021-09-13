@@ -81,7 +81,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -89,7 +89,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -218,7 +218,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -226,7 +226,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -347,7 +347,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -355,7 +355,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -464,7 +464,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -472,7 +472,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -578,7 +578,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -586,7 +586,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -685,7 +685,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -693,7 +693,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -790,7 +790,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -798,7 +798,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -895,7 +895,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -903,7 +903,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -1019,7 +1019,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -1027,7 +1027,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -1190,7 +1190,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -1198,7 +1198,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -1359,7 +1359,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -1367,7 +1367,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -1488,7 +1488,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -1496,7 +1496,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -1599,7 +1599,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -1607,7 +1607,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
@@ -1704,7 +1704,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
         add_to_expression!(
             container,
@@ -1712,7 +1712,7 @@ function construct_device!(
             PowerAboveMinimumVariable,
             devices,
             model,
-            S;,
+            S,
         )
     end
 end
