@@ -39,7 +39,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{ExpressionKey, JuMP.Containers.DenseAxisArray}
     parameters::Dict{ParameterKey, ParameterContainer}
-    initial_conditions::Dict{ICKey, Vector{InitialCondition}}
+    initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
@@ -520,9 +520,10 @@ function deserialize_metadata!(
         container.metadata.container_key_lookup,
         deserialize_metadata(OptimizationContainerMetadata, output_dir, model_name),
     )
+    return
 end
 
-function _assign_container!(container::Dict, key::OptimizationContainerKey, value::AbstractArray)
+function _assign_container!(container::Dict, key::OptimizationContainerKey, value)
     if haskey(container, key)
         @error "$(encode_key(key)) is already stored" sort!(encode_key.(keys(container)))
         throw(IS.InvalidValue("$key is already stored"))
@@ -530,6 +531,7 @@ function _assign_container!(container::Dict, key::OptimizationContainerKey, valu
     container[key] = value
     @debug "Added container entry $(typeof(key)) $(encode_key(key))" _group =
         LOG_GROUP_OPTIMZATION_CONTAINER
+    return
 end
 
 ####################################### Variable Container #################################
@@ -955,7 +957,7 @@ end
 function _add_initial_condition_container!(
     container::OptimizationContainer,
     ic_key::ICKey{T, U},
-    length_devices::Int;
+    length_devices::Int;,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     if built_for_recurrent_solves(container)
         ini_conds = Vector{InitialCondition{T, PJ.ParameterRef}}(undef, length_devices)
