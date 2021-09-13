@@ -198,13 +198,13 @@ function add_constraints!(
         add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
 
     for ic in initial_conditions
-        device = ic.device
+        device = get_component(ic)
         efficiency = PSY.get_efficiency(device)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
-            ic.value +
+            get_value(ic) +
             (
                 powerin_var[name, 1] * efficiency.in -
                 (powerout_var[name, 1] / efficiency.out)

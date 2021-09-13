@@ -7,7 +7,7 @@ Constructs multi-timestep constraint from initial conditions and binary variable
 
 If t = 1:
 
-``` varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1] ```
+``` varon[name, 1] == get_value(ic) + varstart[name, 1] - varstop[name, 1] ```
 
 where ic in initial_condtions.
 
@@ -55,10 +55,10 @@ function device_commitment!(
         meta = "aux",
     )
     for ic in initial_conditions
-        name = PSY.get_name(ic.device)
+        name = PSY.get_name(get_component(ic))
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
-            varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1]
+            varon[name, 1] == get_value(ic) + varstart[name, 1] - varstop[name, 1]
         )
         aux_constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
@@ -66,8 +66,8 @@ function device_commitment!(
         )
     end
 
-    for t in time_steps[2:end], i in initial_conditions
-        name = PSY.get_name(i.device)
+    for t in time_steps[2:end], ic in initial_conditions
+        name = get_component_name(ic)
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             varon[name, t] == varon[name, t - 1] + varstart[name, t] - varstop[name, t]
