@@ -9,7 +9,7 @@ function calculate_ic_quantity(
     elapsed_period::Dates.Period,
 ) where {T <: PSY.Component}
     cache = get_cache(simulation_cache, ic.cache_type, T)
-    name = get_device_name(ic)
+    name = get_component_name(ic)
     time_cache = cache_value(cache, name)
 
     current_counter = time_cache[:count]
@@ -30,7 +30,7 @@ function calculate_ic_quantity(
     elapsed_period::Dates.Period,
 ) where {T <: PSY.Component}
     cache = get_cache(simulation_cache, ic.cache_type, T)
-    name = get_device_name(ic)
+    name = get_component_name(ic)
     time_cache = cache_value(cache, name)
 
     current_counter = time_cache[:count]
@@ -68,7 +68,7 @@ function calculate_ic_quantity(
 ) where {T <: PSY.ThermalGen}
     cache = get_cache(simulation_cache, TimeStatusChange, T)
     # This code determines if there is a status change in the generators. Takes into account TimeStatusChange for the presence of UC stages.
-    dev = get_device(ic)
+    dev = get_component(ic)
     min_power = _get_active_power_min_limit(dev)
     if cache === nothing
         # Transitions can't be calculated without cache
@@ -82,7 +82,7 @@ function calculate_ic_quantity(
             get_condition(ic) >= min_power && var_value >= ABSOLUTE_TOLERANCE
     else
         # If the min is 0.0 this calculation doesn't matter
-        name = get_device_name(ic)
+        name = get_component_name(ic)
         time_cache = cache_value(cache, name)
         series = time_cache[:series]
         elapsed_time = time_cache[:elapsed]
@@ -146,7 +146,7 @@ function calculate_ic_quantity(
     elapsed_period::Dates.Period,
 ) where {T <: PSY.Device}
     cache = get_cache(simulation_cache, ic.cache_type, T)
-    name = get_device_name(ic)
+    name = get_component_name(ic)
     energy_cache = cache_value(cache, name)
     if energy_cache != var_value
         return var_value
@@ -154,12 +154,9 @@ function calculate_ic_quantity(
     return energy_cache
 end
 
-
 function _get_ace_error(device, key)
     return PSY.get_initial_ace(device)
 end
-
-
 
 """ Updates the initial conditions of the problem"""
 function initial_condition_update!(
@@ -174,7 +171,7 @@ function initial_condition_update!(
     execution_count == 0 && return
     simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
-        name = get_device_name(ic)
+        name = get_component_name(ic)
         interval_chronology = get_model_interval_chronology(sim.sequence, get_name(model))
         var_value = get_model_variable(
             interval_chronology,

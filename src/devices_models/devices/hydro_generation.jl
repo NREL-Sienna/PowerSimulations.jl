@@ -383,12 +383,12 @@ function add_constraints!(
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
-        device = ic.device
+        device = get_component(ic)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
-            ic.value - power_var[name, 1] * fraction_of_hour -
+            get_value(ic) - power_var[name, 1] * fraction_of_hour -
             spillage_var[name, 1] * fraction_of_hour +
             param[name, 1] * multiplier[name, 1]
         )
@@ -439,13 +439,13 @@ function add_constraints!(
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
-        device = ic.device
+        device = get_component(ic)
         efficiency = PSY.get_pump_efficiency(device)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
-            ic.value +
+            get_value(ic) +
             (
                 powerin_var[name, 1] * efficiency - spillage_var[name, 1] -
                 powerout_var[name, 1]
@@ -500,13 +500,13 @@ function add_constraints!(
     multiplier = get_parameter_multiplier_array(container, OutflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
-        device = ic.device
+        device = get_component(ic)
         efficiency = PSY.get_pump_efficiency(device)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
-            ic.value -
+            get_value(ic) -
             (
                 spillage_var[name, 1] + powerout_var[name, 1] -
                 powerin_var[name, 1] / efficiency

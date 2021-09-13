@@ -59,17 +59,25 @@ get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFo
 get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariable}, ::Type{PSY.ThermalMultiStart}, ::AbstractThermalFormulation) = true
 
 #################### Initial Conditions for models ###############
-get_initial_condition_value(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(dev) ? 1.0 : 0.0
+get_initial_condition_value(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
 get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
 get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
 #! format: on
 
-function get_initial_condition_value(::InitialTimeDurationOn, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+function get_initial_condition_value(
+    ::InitialTimeDurationOn,
+    d::PSY.ThermalGen,
+    ::AbstractThermalFormulation,
+)
     return PSY.get_status(d) ? PSY.get_time_at_status(d) : 0.0
 end
 
-function get_initial_condition_value(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+function get_initial_condition_value(
+    ::InitialTimeDurationOff,
+    d::PSY.ThermalGen,
+    ::AbstractThermalFormulation,
+)
     return !PSY.get_status(d) ? PSY.get_time_at_status(d) : 0.0
 end
 
@@ -240,8 +248,8 @@ function get_startup_shutdown_limits(
 end
 
 function _get_data_for_range_ic(
-    initial_conditions_power::Vector{InitialCondition},
-    initial_conditions_status::Vector{InitialCondition},
+    initial_conditions_power::Vector{<:InitialCondition},
+    initial_conditions_status::Vector{<:InitialCondition},
 )
     lenght_devices_power = length(initial_conditions_power)
     lenght_devices_status = length(initial_conditions_status)
@@ -249,8 +257,8 @@ function _get_data_for_range_ic(
     ini_conds = Matrix{InitialCondition}(undef, lenght_devices_power, 2)
     idx = 0
     for (ix, ic) in enumerate(initial_conditions_power)
-        g = ic.device
-        @assert g == initial_conditions_status[ix].device
+        g = get_component(ic)
+        @assert g == get_component(initial_conditions_status[ix])
         idx += 1
         ini_conds[idx, 1] = ic
         ini_conds[idx, 2] = initial_conditions_status[ix]
@@ -343,8 +351,8 @@ function add_constraints!(
     W::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: AbstractCompactUnitCommitment}
-    initial_conditions_power = get_initial_conditions(container, DevicePower(), T)
-    initial_conditions_status = get_initial_conditions(container, DeviceStatus(), T)
+    initial_conditions_power = get_initial_condition(container, DevicePower(), T)
+    initial_conditions_status = get_initial_condition(container, DeviceStatus(), T)
     ini_conds = _get_data_for_range_ic(initial_conditions_power, initial_conditions_status)
 
     if !isempty(ini_conds)
@@ -353,8 +361,8 @@ function add_constraints!(
         con = add_cons_container!(container, ActiveRangeICConstraint(), T, set_name)
 
         for (ix, ic) in enumerate(ini_conds[:, 1])
-            name = get_device_name(ic)
-            device = get_device(ic)
+            name = get_component_name(ic)
+            device = get_component(ic)
             limits = PSY.get_active_power_limits(device)
             lag_ramp_limits = PSY.get_power_trajectory(device)
             val = max(limits.max - lag_ramp_limits.shutdown, 0)
@@ -363,7 +371,7 @@ function add_constraints!(
             con[name] = JuMP.@constraint(
                 container.JuMPmodel,
                 val * varstop[name, 1] <=
-                ini_conds[ix, 2].value * (limits.max - limits.min) - ic.value
+                ini_conds[ix, 2].value * (limits.max - limits.min) - get_value(ic)
             )
         end
     else
@@ -407,7 +415,7 @@ function add_constraints!(
     varstop = get_variable(container, StopVariable(), U)
     varon = get_variable(container, OnVariable(), U)
     names = axes(varstart, 1)
-    initial_conditions = get_initial_conditions(container, DeviceStatus(), U)
+    initial_conditions = get_initial_condition(container, DeviceStatus(), U)
     constraint =
         add_cons_container!(container, CommitmentConstraint(), U, names, time_steps)
     aux_constraint = add_cons_container!(
@@ -420,10 +428,10 @@ function add_constraints!(
     )
 
     for ic in initial_conditions
-        name = PSY.get_name(ic.device)
+        name = PSY.get_name(get_component(ic))
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
-            varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1]
+            varon[name, 1] == get_value(ic) + varstart[name, 1] - varstop[name, 1]
         )
         aux_constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
@@ -431,8 +439,8 @@ function add_constraints!(
         )
     end
 
-    for t in time_steps[2:end], i in initial_conditions
-        name = PSY.get_name(i.device)
+    for t in time_steps[2:end], ic in initial_conditions
+        name = get_component_name(ic)
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             varon[name, t] == varon[name, t - 1] + varstart[name, t] - varstop[name, t]
@@ -451,15 +459,10 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractThermalUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus)
-    add_initial_condition!(
-        container,
-        devices,
-        formulation,
-        DevicePower,
-    )
-    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
-    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
+    add_initial_condition!(container, devices, formulation, DeviceStatus())
+    add_initial_condition!(container, devices, formulation, DevicePower())
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn())
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff())
 
     return
 end
@@ -469,15 +472,10 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractCompactUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus)
-    add_initial_condition!(
-        container,
-        devices,
-        formulation,
-        DevicePower,
-    )
-    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
-    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
+    add_initial_condition!(container, devices, formulation, DeviceStatus())
+    add_initial_condition!(container, devices, formulation, DevicePower())
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn())
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff())
 
     return
 end
@@ -487,13 +485,8 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::ThermalBasicUnitCommitment,
 ) where {T <: PSY.ThermalGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus)
-    add_initial_condition!(
-        container,
-        devices,
-        formulation,
-        DevicePower,
-    )
+    add_initial_condition!(container, devices, formulation, DeviceStatus())
+    add_initial_condition!(container, devices, formulation, DevicePower())
     return
 end
 
@@ -502,12 +495,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractThermalDispatchFormulation,
 ) where {T <: PSY.ThermalGen}
-    add_initial_condition!(
-        container,
-        devices,
-        formulation,
-        DevicePower,
-    )
+    add_initial_condition!(container, devices, formulation, DevicePower())
     return
 end
 
@@ -519,7 +507,7 @@ function calculate_aux_variable_value!(
 ) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(container, OnVariable(), T)
     aux_var_container = get_aux_variable(container, TimeDurationOn(), T)
-    ini_cond = get_initial_conditions(container, InitialTimeDurationOn(), T)
+    ini_cond = get_initial_condition(container, InitialTimeDurationOn(), T)
 
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
@@ -527,7 +515,7 @@ function calculate_aux_variable_value!(
 
     for ix in eachindex(JuMP.axes(aux_var_container)[1])
         @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
-        @assert JuMP.axes(aux_var_container)[1][ix] == get_device_name(ini_cond[ix])
+        @assert JuMP.axes(aux_var_container)[1][ix] == get_component_name(ini_cond[ix])
         on_var = JuMP.value.(on_var_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_var_container.data[ix, :] .= ini_cond_value
@@ -561,7 +549,7 @@ function calculate_aux_variable_value!(
 ) where {T <: PSY.ThermalGen}
     on_var_results = get_variable(container, OnVariable(), T)
     aux_var_container = get_aux_variable(container, TimeDurationOff(), T)
-    ini_cond = get_initial_conditions(container, InitialTimeDurationOff(), T)
+    ini_cond = get_initial_condition(container, InitialTimeDurationOff(), T)
 
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
@@ -569,7 +557,7 @@ function calculate_aux_variable_value!(
 
     for ix in eachindex(JuMP.axes(aux_var_container)[1])
         @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
-        @assert JuMP.axes(aux_var_container)[1][ix] == get_device_name(ini_cond[ix])
+        @assert JuMP.axes(aux_var_container)[1][ix] == get_component_name(ini_cond[ix])
         on_var = JuMP.value.(on_var_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_var_container.data[ix, :] .= ini_cond_value
@@ -631,12 +619,12 @@ function _get_data_for_rocc(
         minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
     end
 
-    initial_conditions_power = get_initial_conditions(container, DevicePower(), T)
+    initial_conditions_power = get_initial_condition(container, DevicePower(), T)
     lenght_devices_power = length(initial_conditions_power)
     data = Vector{DeviceRampConstraintInfo}(undef, lenght_devices_power)
     idx = 0
     for ic in initial_conditions_power
-        g = ic.device
+        g = get_component(ic)
         name = PSY.get_name(g)
         ramp_limits = PSY.get_ramp_limits(g)
         if !(ramp_limits === nothing)
@@ -676,7 +664,7 @@ function add_constraints!(
     if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         for r in data
-            add_device_services!(r, r.ic_power.device, model)
+            add_device_services!(r, get_component(r.ic_power), model)
         end
         device_mixedinteger_rateofchange!(
             container,
@@ -703,7 +691,7 @@ function add_constraints!(
     if !isempty(data)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         for r in data
-            add_device_services!(r, r.ic_power.device, model)
+            add_device_services!(r, get_component(r.ic_power), model)
         end
         device_mixedinteger_rateofchange!(
             container,
@@ -729,7 +717,7 @@ function add_constraints!(
     data = _get_data_for_rocc(container, U)
     if !isempty(data)
         for r in data
-            add_device_services!(r, r.ic_power.device, model)
+            add_device_services!(r, get_component(r.ic_power), model)
         end
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange!(
@@ -756,7 +744,7 @@ function add_constraints!(
     data = _get_data_for_rocc(container, U)
     if !isempty(data)
         for r in data
-            add_device_services!(r, r.ic_power.device, model)
+            add_device_services!(r, get_component(r.ic_power), model)
         end
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange!(
@@ -784,7 +772,7 @@ function add_constraints!(
 
     # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
     for r in data
-        add_device_services!(r, r.ic_power.device, model)
+        add_device_services!(r, get_component(r.ic_power), model)
     end
     if !isempty(data)
         device_multistart_rateofchange!(
@@ -955,10 +943,10 @@ function add_constraints!(
 ) where {T <: PSY.ThermalMultiStart}
     resolution = get_resolution(container)
     initial_conditions_offtime =
-        get_initial_conditions(container, InitialTimeDurationOff(), PSY.ThermalMultiStart)
+        get_initial_condition(container, InitialTimeDurationOff(), PSY.ThermalMultiStart)
 
     time_steps = get_time_steps(container)
-    set_name = [get_device_name(ic) for ic in initial_conditions_offtime]
+    set_name = [get_component_name(ic) for ic in initial_conditions_offtime]
     varbin = get_variable(container, OnVariable(), T)
     varstarts = [
         get_variable(container, HotStartVariable(), T),
@@ -987,10 +975,12 @@ function add_constraints!(
     )
 
     for t in time_steps, (ix, ic) in enumerate(initial_conditions_offtime)
-        name = PSY.get_name(ic.device)
-        startup_types = PSY.get_start_types(ic.device)
-        time_limits =
-            _convert_hours_to_timesteps(PSY.get_start_time_limits(ic.device), resolution)
+        name = PSY.get_name(get_component(ic))
+        startup_types = PSY.get_start_types(get_component(ic))
+        time_limits = _convert_hours_to_timesteps(
+            PSY.get_start_time_limits(get_component(ic)),
+            resolution,
+        )
         ic = initial_conditions_offtime[ix]
         for st in 1:(startup_types - 1)
             var = varstarts[st]
@@ -999,12 +989,12 @@ function add_constraints!(
                     container.JuMPmodel,
                     (time_limits[st + 1] - 1) * var[name, t] +
                     (1 - var[name, t]) * M_VALUE >=
-                    sum((1 - varbin[name, i]) for i in 1:t) + ic.value
+                    sum((1 - varbin[name, i]) for i in 1:t) + get_value(ic)
                 )
                 con_lb[name, t, st] = JuMP.@constraint(
                     container.JuMPmodel,
                     time_limits[st] * var[name, t] <=
-                    sum((1 - varbin[name, i]) for i in 1:t) + ic.value
+                    sum((1 - varbin[name, i]) for i in 1:t) + get_value(ic)
                 )
             end
         end
@@ -1041,10 +1031,10 @@ If the fraction of hours that a generator has a duration constraint is less than
 the fraction of hours that a single time_step represents then it is not binding.
 """
 function _get_data_for_tdc(
-    initial_conditions_on::Vector{InitialCondition},
-    initial_conditions_off::Vector{InitialCondition},
+    initial_conditions_on::Vector{T},
+    initial_conditions_off::Vector{U},
     resolution::Dates.TimePeriod,
-)
+) where {T <: InitialCondition, U <: InitialCondition}
     steps_per_hour = 60 / Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1 / steps_per_hour
     lenght_devices_on = length(initial_conditions_on)
@@ -1054,8 +1044,8 @@ function _get_data_for_tdc(
     ini_conds = Matrix{InitialCondition}(undef, lenght_devices_on, 2)
     idx = 0
     for (ix, ic) in enumerate(initial_conditions_on)
-        g = ic.device
-        @assert g == initial_conditions_off[ix].device
+        g = get_component(ic)
+        @assert g == get_component(initial_conditions_off[ix])
         time_limits = PSY.get_time_limits(g)
         name = PSY.get_name(g)
         if !(time_limits === nothing)
@@ -1090,8 +1080,8 @@ function add_constraints!(
     parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)
     # Use getter functions that don't require creating the keys here
-    initial_conditions_on = get_initial_conditions(container, InitialTimeDurationOn(), U)
-    initial_conditions_off = get_initial_conditions(container, InitialTimeDurationOff(), U)
+    initial_conditions_on = get_initial_condition(container, InitialTimeDurationOn(), U)
+    initial_conditions_off = get_initial_condition(container, InitialTimeDurationOff(), U)
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))
@@ -1130,8 +1120,8 @@ function add_constraints!(
 ) where {U <: PSY.ThermalGen}
     parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)
-    initial_conditions_on = get_initial_conditions(container, InitialTimeDurationOn(), U)
-    initial_conditions_off = get_initial_conditions(container, InitialTimeDurationOff(), U)
+    initial_conditions_on = get_initial_condition(container, InitialTimeDurationOn(), U)
+    initial_conditions_off = get_initial_condition(container, InitialTimeDurationOff(), U)
     ini_conds, time_params =
         _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
     if !(isempty(ini_conds))
