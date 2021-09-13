@@ -1,26 +1,30 @@
-function _set_initial_condition!(ini_cond::Vector{InitialCondition{T, PJ.ParameterRef}}, ix::Int, val::Float64, container::OptimizationContainer) where T <: InitialConditionType
-    ini_cond[ix] = add_jump_parameter(container.JuMPmodel, val)
-    return
-end
-
-function _set_initial_condition!(ini_cond::Vector{InitialCondition{T, Float64}}, ix::Int, val::Float64, ::OptimizationContainer) where T <: InitialConditionType
-    ini_cond[ix] = val
-    return
+function _get_initial_condition_value(
+    ::Vector{T},
+    component::PSY.Component,
+    ::U,
+    ::V,
+) where {
+    T <: InitialCondition,
+    U <: InitialConditionType,
+    V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+}
+    val = get_initial_condition_value(U(), component, V())
+    return T(component, val)
 end
 
 function add_initial_condition!(
     container::OptimizationContainer,
-    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
-    ::Type{U},
+    components::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
+    ::U,
     ::D,
 ) where {
     T <: PSY.Component,
     U <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     D <: InitialConditionType,
 }
-    add_initial_condition_container!(container, D(), T, devices)
-    for (ix, device) in enumerate(devices)
-        val = get_initial_condition_value(D(), device, U())
-        set_initial_condition!(ini_cond, ix, val, container)
+    ini_cond_vector = add_initial_condition_container!(container, D(), T, components)
+    for (ix, component) in enumerate(components)
+        ini_cond_vector[ix] =
+            _get_initial_condition_value(ini_cond_vector, component, D(), U())
     end
 end
