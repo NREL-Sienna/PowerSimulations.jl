@@ -70,7 +70,7 @@ function InitialConditionUpdateEvent(
         simulation_time,
         string(get_entry_type(key)),
         string(get_component_type(key)),
-        get_device_name(ic),
+        get_component_name(ic),
         val,
         previous_value,
         problem_number,
