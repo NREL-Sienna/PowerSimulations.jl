@@ -61,7 +61,7 @@ get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFo
 get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariable}, ::Type{PSY.ThermalMultiStart}, ::AbstractThermalFormulation) = true
 
 #################### Initial Conditions for models ###############
-get_initial_condition_value(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(dev) ? 1.0 : 0.0
+get_initial_condition_value(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
 get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
 get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
