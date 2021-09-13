@@ -109,21 +109,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -143,19 +141,36 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -208,21 +223,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -242,19 +255,36 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -307,21 +337,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -337,19 +365,36 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -409,21 +454,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -439,19 +482,35 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
 
     # Energy Budget Constraint
     add_constraints!(
@@ -535,21 +594,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -564,19 +621,36 @@ function construct_device!(
     devices = get_available_components(H, sys)
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -673,21 +747,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -703,19 +775,35 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
 
     # Initial Conditions
     add_initial_condition!(
@@ -791,21 +879,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -820,19 +906,36 @@ function construct_device!(
     devices = get_available_components(H, sys)
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -889,21 +992,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -922,19 +1023,36 @@ function construct_device!(
     devices = get_available_components(H, sys)
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+
     # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do
     # commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
     feedforward!(container, devices, model, get_feedforward(model))
@@ -985,21 +1103,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -1015,19 +1131,35 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -1091,21 +1223,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -1125,19 +1255,35 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
     # Energy Budget Constraint
     add_constraints!(
         container,
@@ -1227,21 +1373,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -1257,19 +1401,35 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -1371,21 +1531,19 @@ function construct_device!(
     if has_service_model(model)
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionLB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = LOWER_BOUND,
+            S;,
         )
         add_to_expression!(
             container,
-            ActivePowerRangeExpression,
+            ActivePowerRangeExpressionUB,
             ActivePowerVariable,
             devices,
             model,
-            S;
-            meta = UPPER_BOUND,
+            S;,
         )
     end
 end
@@ -1401,19 +1559,35 @@ function construct_device!(
 
     # Constraints
     if has_service_model(model)
-        argument = ActivePowerRangeExpression
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     else
-        argument = ActivePowerVariable
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
     end
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        argument,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
 
     # Initial Conditions
     add_initial_condition!(
@@ -1499,8 +1673,8 @@ function construct_device!(
         S,
     )
     if has_service_model(model)
-        add_expressions!(container, ReserveRangeExpression, devices, model, LOWER_BOUND)
-        add_expressions!(container, ReserveRangeExpression, devices, model, UPPER_BOUND)
+        add_expressions!(container, ReserveRangeExpressionLB, devices, model)
+        add_expressions!(container, ReserveRangeExpressionUB, devices, model)
     end
 end
 

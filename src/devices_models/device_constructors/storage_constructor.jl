@@ -448,8 +448,8 @@ function construct_device!(
         S,
     )
     if has_service_model(model)
-        add_expressions!(container, ReserveRangeExpression, devices, model, LOWER_BOUND)
-        add_expressions!(container, ReserveRangeExpression, devices, model, UPPER_BOUND)
+        add_expressions!(container, ReserveRangeExpressionLB, devices, model)
+        add_expressions!(container, ReserveRangeExpressionUB, devices, model)
     end
 end
 
@@ -561,8 +561,8 @@ function construct_device!(
         S,
     )
     if has_service_model(model)
-        add_expressions!(container, ReserveRangeExpression, devices, model, LOWER_BOUND)
-        add_expressions!(container, ReserveRangeExpression, devices, model, UPPER_BOUND)
+        add_expressions!(container, ReserveRangeExpressionLB, devices, model)
+        add_expressions!(container, ReserveRangeExpressionUB, devices, model)
     end
 end
 
