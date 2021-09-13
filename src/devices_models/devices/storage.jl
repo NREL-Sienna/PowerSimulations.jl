@@ -7,7 +7,8 @@ struct BatteryAncillaryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
 
 get_variable_multiplier(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
-get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::BatteryAncillaryServices) = ReserveRangeExpression
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ReserveRangeExpressionUB
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ReserveRangeExpressionLB
 ########################### ActivePowerInVariable, Storage #################################
 
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
@@ -236,8 +237,8 @@ function add_constraints!(
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
     time_steps = get_time_steps(container)
     var_e = get_variable(container, EnergyVariable(), T)
-    expr_up = get_expression(container, ReserveRangeExpression(), T, UPPER_BOUND)
-    expr_dn = get_expression(container, ReserveRangeExpression(), T, LOWER_BOUND)
+    expr_up = get_expression(container, ReserveRangeExpressionUB(), T)
+    expr_dn = get_expression(container, ReserveRangeExpressionLB(), T)
     names = [PSY.get_name(x) for x in devices]
     con_up = add_cons_container!(
         container,
@@ -283,8 +284,8 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     var_in = get_variable(container, ActivePowerInVariable(), T)
     var_out = get_variable(container, ActivePowerOutVariable(), T)
-    expr_up = get_expression(container, ReserveRangeExpression(), T, UPPER_BOUND)
-    expr_dn = get_expression(container, ReserveRangeExpression(), T, LOWER_BOUND)
+    expr_up = get_expression(container, ReserveRangeExpressionUB(), T)
+    expr_dn = get_expression(container, ReserveRangeExpressionLB(), T)
     names = [PSY.get_name(x) for x in devices]
     con_up = add_cons_container!(
         container,

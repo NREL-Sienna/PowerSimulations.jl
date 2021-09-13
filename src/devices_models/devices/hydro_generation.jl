@@ -13,8 +13,30 @@ struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
 get_variable_multiplier(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
-get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = ActivePowerRangeExpression
-get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroPumpedStorage}, ::AbstractHydroFormulation) = ReserveRangeExpression
+get_expression_type_for_reserve(
+    ::ActivePowerReserveVariable, 
+    ::Type{<:PSY.HydroGen}, 
+    ::Type{<:PSY.Reserve{PSY.ReserveUp}}
+) = ActivePowerRangeExpressionUB
+
+get_expression_type_for_reserve(
+    ::ActivePowerReserveVariable, 
+    ::Type{<:PSY.HydroGen}, 
+    ::Type{<:PSY.Reserve{PSY.ReserveDown}}
+) = ActivePowerRangeExpressionLB
+
+get_expression_type_for_reserve(
+    ::ActivePowerReserveVariable, 
+    ::Type{<:PSY.HydroPumpedStorage}, 
+    ::Type{<:PSY.Reserve{PSY.ReserveUp}}
+) = ReserveRangeExpressionUB
+
+get_expression_type_for_reserve(
+    ::ActivePowerReserveVariable, 
+    ::Type{<:PSY.HydroPumpedStorage}, 
+    ::Type{<:PSY.Reserve{PSY.ReserveDown}}
+) = ReserveRangeExpressionLB
+
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 
@@ -186,6 +208,18 @@ function add_constraints!(
         X,
         feedforward,
     )
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{<:RangeConstraintLBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
 end
 
 """

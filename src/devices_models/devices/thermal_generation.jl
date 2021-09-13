@@ -21,7 +21,8 @@ struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
 get_variable_multiplier(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
 get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
-get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = ActivePowerRangeExpression
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
 ############## ActivePowerVariable, ThermalGen ####################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_binary(::PowerAboveMinimumVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false

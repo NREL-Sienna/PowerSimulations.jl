@@ -386,10 +386,10 @@ function add_to_expression!(
 }
     service_name = get_service_name(model)
     variable = get_variable(container, U(), X, service_name)
-    if !has_expression(container, T(), V, UPPER_BOUND)
-        add_expressions!(container, T, devices, model, UPPER_BOUND)
+    if !has_expression(container, T(), V)
+        add_expressions!(container, T, devices, model)
     end
-    expression = get_expression(container, T(), V, UPPER_BOUND)
+    expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         add_to_jump_expression!(expression, variable[name, t], 1.0, name, t)
@@ -412,10 +412,10 @@ function add_to_expression!(
 }
     service_name = get_service_name(model)
     variable = get_variable(container, U(), X, service_name)
-    if !has_expression(container, T(), V, UPPER_BOUND)
-        add_expressions!(container, T, devices, model, LOWER_BOUND)
+    if !has_expression(container, T(), V)
+        add_expressions!(container, T, devices, model)
     end
-    expression = get_expression(container, T(), V, LOWER_BOUND)
+    expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         add_to_jump_expression!(expression, variable[name, t], -1.0, name, t)
@@ -434,9 +434,8 @@ function add_to_expression!(
     contributing_devices_map = get_contributing_devices_map(model)
     for (device_type, devices) in contributing_devices_map
         device_model = get(devices_template, Symbol(device_type), nothing)
-        X = get_formulation(device_model)
         isnothing(device_model) && continue
-        expression_type = get_expression_type_for_reserve(U(), device_type, X())
+        expression_type = get_expression_type_for_reserve(U(), device_type, V)
         add_to_expression!(container, expression_type, U, devices, model)
     end
     return

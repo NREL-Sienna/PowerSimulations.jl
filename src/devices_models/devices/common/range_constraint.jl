@@ -72,7 +72,7 @@ end
 function add_range_constraints!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},
-    U::Type{<:ExpressionType},
+    U::Type{<:RangeConstraintLBExpressions},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
@@ -80,21 +80,34 @@ function add_range_constraints!(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
-    array_lb = get_expression(container, expression, component_type, LOWER_BOUND)
-    array_ub = get_expression(container, expression, component_type, UPPER_BOUND)
+    array = get_expression(container, expression, component_type)
     add_lower_bound_range_constraints_impl!(
         container,
         T,
-        array_lb,
+        array,
         devices,
         model,
         X,
         feedforward,
     )
+end
+
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:RangeConstraintUBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
     add_upper_bound_range_constraints_impl!(
         container,
         T,
-        array_ub,
+        array,
         devices,
         model,
         X,
@@ -225,7 +238,7 @@ end
 function add_semicontinuous_range_constraints!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},
-    U::Type{<:ExpressionType},
+    U::Type{<:RangeConstraintLBExpressions},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
@@ -233,21 +246,34 @@ function add_semicontinuous_range_constraints!(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
-    array_lb = get_expression(container, expression, component_type, LOWER_BOUND)
-    array_ub = get_expression(container, expression, component_type, UPPER_BOUND)
+    array = get_expression(container, expression, component_type)
     add_semicontinuous_lower_bound_range_constraints_impl!(
         container,
         T,
-        array_lb,
+        array,
         devices,
         model,
         X,
         feedforward,
     )
+end
+
+function add_semicontinuous_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:RangeConstraintUBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
     add_semicontinuous_upper_bound_range_constraints_impl!(
         container,
         T,
-        array_ub,
+        array,
         devices,
         model,
         X,
@@ -695,7 +721,7 @@ function add_parameterized_lower_bound_range_constraints(
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     component_type = V
-    array = get_expression(container, variable, component_type, LOWER_BOUND)
+    array = get_expression(container, variable, component_type)
     add_parameterized_lower_bound_range_constraints_impl!(
         container,
         T,
@@ -783,7 +809,7 @@ function add_parameterized_upper_bound_range_constraints(
     variable = U()
     constraint_type = T
     component_type = V
-    array = get_expression(container, variable, component_type, UPPER_BOUND)
+    array = get_expression(container, variable, component_type)
     add_parameterized_upper_bound_range_constraints_impl!(
         container,
         T,
