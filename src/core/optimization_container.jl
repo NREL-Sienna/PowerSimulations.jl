@@ -962,7 +962,7 @@ end
 function _add_initial_condition_container!(
     container::OptimizationContainer,
     ic_key::ICKey{T, U},
-    length_devices::Int;,
+    length_devices::Int,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     if built_for_recurrent_solves(container)
         ini_conds = Vector{InitialCondition{T, PJ.ParameterRef}}(undef, length_devices)
