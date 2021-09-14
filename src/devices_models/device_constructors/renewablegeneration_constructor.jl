@@ -35,6 +35,24 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        add_to_expression!(
+            container,
+            ActivePowerRangeExpressionLB,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+        )
+        add_to_expression!(
+            container,
+            ActivePowerRangeExpressionUB,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+        )
+    end
 end
 
 function construct_device!(
@@ -50,15 +68,28 @@ function construct_device!(
 }
     devices = get_available_components(R, sys)
     # Constraints
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    if has_service_model(model)
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    else
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
+
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -103,6 +134,24 @@ function construct_device!(
         model,
         S,
     )
+    if has_service_model(model)
+        add_to_expression!(
+            container,
+            ActivePowerRangeExpressionLB,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+        )
+        add_to_expression!(
+            container,
+            ActivePowerRangeExpressionUB,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+        )
+    end
 end
 
 function construct_device!(
@@ -119,15 +168,27 @@ function construct_device!(
     devices = get_available_components(R, sys)
 
     # Constraints
-    add_constraints!(
-        container,
-        ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    if has_service_model(model)
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    else
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerVariable,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function

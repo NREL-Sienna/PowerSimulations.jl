@@ -1,3 +1,20 @@
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
+    model::DeviceModel{D, W},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {
+    T <: ExpressionType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    add_expression_container!(container, T(), D, names, time_steps; meta = meta)
+    return
+end
+
 function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     var::JV,
@@ -8,6 +25,21 @@ function add_to_jump_expression!(
         JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], multiplier, var)
     else
         expression_array[CartesianIndex(ixs)] = multiplier * var
+    end
+
+    return
+end
+
+function add_to_jump_expression!(
+    expression_array::AbstractArray{T},
+    var::JV,
+    multiplier::Float64,
+    ixs...,
+) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef}
+    if isassigned(expression_array, ixs...)
+        JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
+    else
+        expression_array[ixs...] = multiplier * var
     end
 
     return
@@ -315,4 +347,101 @@ function add_to_expression!(
             )
         end
     end
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X};
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {
+    T <: ExpressionType,
+    U <: VariableType,
+    V <: PSY.Device,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    variable = get_variable(container, U(), V)
+    if !has_expression(container, T(), V, meta)
+        add_expressions!(container, T, devices, model, meta)
+    end
+    expression = get_expression(container, T(), V, meta)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        add_to_jump_expression!(expression, variable[name, t], 1.0, name, t)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    model::ServiceModel{X, W},
+) where {
+    T <: ExpressionType,
+    U <: VariableType,
+    V <: PSY.Component,
+    X <: PSY.Reserve{PSY.ReserveUp},
+    W <: AbstractReservesFormulation,
+}
+    service_name = get_service_name(model)
+    variable = get_variable(container, U(), X, service_name)
+    if !has_expression(container, T(), V)
+        add_expressions!(container, T, devices, model)
+    end
+    expression = get_expression(container, T(), V)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        add_to_jump_expression!(expression, variable[name, t], 1.0, name, t)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    model::ServiceModel{X, W},
+) where {
+    T <: ExpressionType,
+    U <: VariableType,
+    V <: PSY.Component,
+    X <: PSY.Reserve{PSY.ReserveDown},
+    W <: AbstractReservesFormulation,
+}
+    service_name = get_service_name(model)
+    variable = get_variable(container, U(), X, service_name)
+    if !has_expression(container, T(), V)
+        add_expressions!(container, T, devices, model)
+    end
+    expression = get_expression(container, T(), V)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        add_to_jump_expression!(expression, variable[name, t], -1.0, name, t)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{U},
+    model::ServiceModel{V, W},
+    devices_template::Dict{Symbol, DeviceModel},
+) where {U <: VariableType, V <: PSY.Reserve, W <: AbstractReservesFormulation}
+    service_name = get_service_name(model)
+    variable = get_variable(container, U(), V, service_name)
+    contributing_devices_map = get_contributing_devices_map(model)
+    for (device_type, devices) in contributing_devices_map
+        device_model = get(devices_template, Symbol(device_type), nothing)
+        isnothing(device_model) && continue
+        expression_type = get_expression_type_for_reserve(U(), device_type, V)
+        add_to_expression!(container, expression_type, U, devices, model)
+    end
+    return
 end

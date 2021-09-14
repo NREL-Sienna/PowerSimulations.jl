@@ -50,6 +50,8 @@ const M_VALUE = 1e6
 
 const NO_SERVICE_NAME_PROVIDED = ""
 const CONTAINER_KEY_EMPTY_META = ""
+const UPPER_BOUND = "ub"
+const LOWER_BOUND = "lb"
 
 # File Names definitions
 const PROBLEM_SERIALIZATION_FILENAME = "operation_problem.bin"

@@ -24,6 +24,25 @@ function map_contributing_devices_by_type!(
     return
 end
 
+function populate_aggregated_service_model!(template, sys::PSY.System)
+    services_template = get_service_models(template)
+    for (key, service_model) in services_template
+        attributes = get_attributes(service_model)
+        if get(attributes, "aggregated_service_model", false)
+            delete!(services_template, key)
+            D = get_component_type(service_model)
+            B = get_formulation(service_model)
+            for service in PSY.get_components(D, sys)
+                new_key = (PSY.get_name(service), Symbol(D))
+                if !haskey(services_template, new_key)
+                    set_service_model!(template, ServiceModel(D, B, PSY.get_name(service)))
+                end
+            end
+        end
+    end
+    return
+end
+
 function populate_contributing_devices!(template, sys::PSY.System)
     service_models = get_service_models(template)
     isempty(service_models) && return
@@ -151,7 +170,7 @@ function construct_service!(
         contributing_devices,
         RangeReserve(),
     )
-
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     return
 end
 
@@ -169,7 +188,6 @@ function construct_service!(
 
     # Constraints
     service_requirement_constraint!(container, service, model)
-    modify_device_model!(devices_template, model, contributing_devices)
 
     # Cost Function
     cost_function!(container, service, model)
@@ -201,7 +219,7 @@ function construct_service!(
         contributing_devices,
         RangeReserve(),
     )
-
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     return
 end
 
@@ -219,7 +237,6 @@ function construct_service!(
 
     # Constraints
     service_requirement_constraint!(container, service, model)
-    modify_device_model!(devices_template, model, contributing_devices)
 
     # Cost Function
     cost_function!(container, service, model)
@@ -250,6 +267,7 @@ function construct_service!(
         contributing_devices,
         StepwiseCostReserve(),
     )
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
 end
 
 function construct_service!(
@@ -266,7 +284,7 @@ function construct_service!(
 
     # Constraints
     service_requirement_constraint!(container, service, model)
-    modify_device_model!(devices_template, model, contributing_devices)
+
     # Cost Function
     cost_function!(container, service, model)
 
@@ -391,7 +409,7 @@ function construct_service!(
         contributing_devices,
         RampReserve(),
     )
-
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     return
 end
 
@@ -410,7 +428,6 @@ function construct_service!(
     # Constraints
     service_requirement_constraint!(container, service, model)
     ramp_constraints!(container, service, contributing_devices, model)
-    modify_device_model!(devices_template, model, contributing_devices)
 
     # Cost Function
     cost_function!(container, service, model)

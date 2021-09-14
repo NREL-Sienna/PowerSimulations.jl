@@ -85,3 +85,10 @@ function _set_model!(
     end
     dict[key] = model
 end
+
+function has_service_model(model::DeviceModel)
+    if isempty(get_services(model))
+        return false
+    end
+    return true
+end

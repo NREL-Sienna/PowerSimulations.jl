@@ -348,18 +348,6 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     initialize_system_expressions!(container, transmission, sys)
 
     # Order is required
-    populate_aggregated_service_model!(template, sys)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
-        construct_services!(
-            container,
-            sys,
-            ArgumentConstructStage(),
-            get_service_models(template),
-            get_device_models(template),
-        )
-        #  TODO: Add dual variable container for services
-    end
-
     for device_model in values(template.devices)
         @debug "Building Arguments for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
             :ConstructGroup
@@ -375,6 +363,17 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             end
             @debug get_problem_size(container)
         end
+    end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
+        construct_services!(
+            container,
+            sys,
+            ArgumentConstructStage(),
+            get_service_models(template),
+            get_device_models(template),
+        )
+        #  TODO: Add dual variable container for services
     end
 
     for branch_model in values(template.branches)
@@ -922,6 +921,20 @@ function get_expression(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     return get_expression(container, ExpressionKey(T, U, meta))
+end
+
+function has_expression(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    key = ExpressionKey(T, U, meta)
+    var = get(container.expressions, key, nothing)
+    if var === nothing
+        return false
+    end
+    return true
 end
 
 # Special getter functions to handle system balance expressions
