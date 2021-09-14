@@ -51,6 +51,11 @@ get_variable_upper_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractSto
 get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
+
+#################### Initial Conditions for models ###############
+get_initial_condition_value(::DevicePower, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_active_power(d)
+get_initial_condition_value(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
+
 #! format: on
 
 get_multiplier_value(
@@ -127,13 +132,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{St},
     formulation::AbstractStorageFormulation,
 ) where {St <: PSY.Storage}
-    add_initial_condition!(
-        container,
-        devices,
-        formulation,
-        InitialEnergyLevel,
-        EnergyVariable,
-    )
+    add_initial_condition!(container, devices, formulation, InitialEnergyLevel())
     return
 end
 
@@ -187,7 +186,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevel(), V)
+    initial_conditions = get_initial_condition(container, InitialEnergyLevel(), V)
     energy_var = get_variable(container, EnergyVariable(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
