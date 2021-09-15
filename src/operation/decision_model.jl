@@ -216,13 +216,29 @@ function init_model_store!(model::DecisionModel)
     )
 end
 
+function build_initialization!(model::EmulationModel)
+    template = get_initialization_template(model)
+    requires_initialization = false
+    for device_model in get_device_models(template)
+        requires_initialization = requires_initialization(get_formulation(device_model))
+        if requires_initialization
+            @debug "Initialization required for the model"
+            build_initialization_problem(model)
+            break
+        end
+    end
+    if !requires_initialization
+        @debug "No initial conditions in the model"
+    end
+    return
+end
+
 function build_pre_step!(model::DecisionModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
             @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
-        system = get_system(model)
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
 
@@ -234,6 +250,16 @@ function build_pre_step!(model::DecisionModel)
         )
         @info "Initializing ModelStoreParams"
         init_model_store!(model)
+
+        @info "Mapping Service Models"
+        populate_aggregated_service_model!(get_template(model), get_system(model))
+        populate_contributing_devices!(get_template(model), get_system(model))
+        add_services_to_device_model!(get_template(model))
+
+        @info "Intilization Model"
+        build_initialization!(model)
+        initialize!(model)
+
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
@@ -293,13 +319,8 @@ end
 """
 Default implementation of build method for Operational Problems for models conforming with DecisionProblem specification. Overload this function to implement a custom build method
 """
-
 function build_problem!(model::DecisionModel)
-    populate_aggregated_service_model!(get_template(model), get_system(model))
-    populate_contributing_devices!(get_template(model), get_system(model))
-    add_services_to_device_model!(get_template(model))
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
-    build_initialization_problem(model)
 end
 
 function reset!(model::OperationModel)

@@ -53,6 +53,7 @@ function build_initialization_problem(model::T) where {T <: OperationModel}
     return
 end
 
+#=
 function perform_initialization_step!(
     ic_op_model::DecisionModel,
     model::DecisionModel,
@@ -112,3 +113,4 @@ function _initialization_problems!(sim::Simulation)
         perform_initialization_step!(ic_model, model, sim)
     end
 end
+=#
