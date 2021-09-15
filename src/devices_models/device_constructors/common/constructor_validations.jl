@@ -9,6 +9,7 @@ function validate_available_devices(
 
         return false
     end
+    PSY.check_components(system, devices)
     return true
 end
 
@@ -24,6 +25,7 @@ function validate_service!(
         return false
     end
 
+    PSY.check_components(sys, service)
     services_mapping = PSY.get_contributing_device_mapping(sys)
 
     contributing_devices_ =
@@ -38,6 +40,7 @@ function validate_service!(
         return false
     end
 
+    PSY.check_components(sys, contributing_devices)
     return true
 end
 
@@ -53,6 +56,7 @@ function validate_services!(
         return false
     end
 
+    PSY.check_components(sys, service)
     contributing_services = PSY.get_contributing_services(s)
     if isempty(contributing_services)
         @warn "The contributing services for group service $(PSY.get_name(service)) is empty, consider removing the group service from the system" _group =
@@ -60,5 +64,6 @@ function validate_services!(
         return false
     end
 
+    PSY.check_components(sys, contributing_devices)
     return true
 end
