@@ -429,6 +429,7 @@ include("operation/optimization_debugging.jl")
 include("initial_conditions/add_initial_condition.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
 include("initial_conditions/update_initial_conditions.jl")
+include("initial_conditions/calculate_initial_condition.jl")
 
 include("parameters/add_parameters.jl")
 include("parameters/update_parameters.jl")
