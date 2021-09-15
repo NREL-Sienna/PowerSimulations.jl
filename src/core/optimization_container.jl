@@ -1021,3 +1021,19 @@ end
 function deserialize_key(container::OptimizationContainer, name::AbstractString)
     return deserialize_key(container.metadata, name)
 end
+
+function calculate_aux_variables!(container::OptimizationContainer, system::PSY.System)
+    aux_vars = get_aux_variables(container)
+    for key in keys(aux_vars)
+        calculate_aux_variable_value!(container, key, system)
+    end
+    return
+end
+
+function calculate_dual_variables!(container::OptimizationContainer, system::PSY.System)
+    duals_vars = get_duals(container)
+    for key in keys(duals_vars)
+        _calculate_dual_variable_value!(container, key, system)
+    end
+    return
+end
