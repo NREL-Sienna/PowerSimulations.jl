@@ -55,6 +55,10 @@ function OptimizationContainer(
     ::Type{T},
 ) where {T <: PSY.TimeSeriesData}
     resolution = PSY.get_time_series_resolution(sys)
+    if isabstracttype(T)
+        error("Default Time Series Type $V can't be abstract")
+    end
+
     return OptimizationContainer(
         jump_model === nothing ? _make_jump_model(settings) :
         _finalize_jump_model!(jump_model, settings),
@@ -787,6 +791,9 @@ function add_param_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     param_key = ParameterKey(T, U, meta)
+    if isabstracttype(V)
+        error("$V can't be abstract: $param_key")
+    end
     attributes = TimeSeriesAttributes{V}(name)
     return _add_param_container!(container, param_key, attributes, axs...)
 end
