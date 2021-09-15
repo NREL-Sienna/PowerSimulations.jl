@@ -55,7 +55,7 @@ const LOG_FILE = "power-simulations-test.log"
 const DISABLED_TEST_FILES = [
     # "test_basic_model_structs.jl",
     # "test_device_branch_constructors.jl",
-    # "test_device_hydro_generation_constructors.jl",
+    "test_device_hydro_generation_constructors.jl",
     # "test_device_load_constructors.jl",
     # "test_device_renewable_generation_constructors.jl",
     # "test_device_storage_constructors.jl",
