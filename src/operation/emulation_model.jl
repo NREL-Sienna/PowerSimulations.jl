@@ -332,14 +332,18 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     if built_for_recurrent_solves(model)
         set_execution_count!(model, 0)
     end
-    container = OptimizationContainer(
+    model.internal.container = OptimizationContainer(
         get_system(model),
         get_settings(model),
         nothing,
         PSY.SingleTimeSeries,
     )
-    model.internal.container = container
-    model.internal.ic_model_container = deepcopy(container)
+    model.internal.ic_model_container = OptimizationContainer(
+        get_system(model),
+        get_settings(model),
+        nothing,
+        PSY.SingleTimeSeries,
+    )
     empty_time_series_cache!(model)
     set_status!(model, BuildStatus.EMPTY)
     return
@@ -412,9 +416,8 @@ function initialize!(model::EmulationModel)
         get_system(model),
         Dict{Symbol, Any}(),
     )
-    error("expected")
     for key in keys(get_initial_conditions(container))
-        update_initial_conditions!(model, key)
+        # set_first_initial_conditions!(model, key)
     end
     return
 end

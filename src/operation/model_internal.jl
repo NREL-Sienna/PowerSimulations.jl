@@ -36,6 +36,7 @@ end
 function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}())
     ic_container = deepcopy(container)
     set_horizon!(ic_container.settings, 1)
+    ic_container.JuMPmodel = _make_jump_model(ic_container.settings)
     return ModelInternal(
         container,
         ic_container,
