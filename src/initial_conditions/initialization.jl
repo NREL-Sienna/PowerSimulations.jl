@@ -20,7 +20,7 @@ const RELAXED_FORMULATION_MAPPING = Dict(
     :InterruptibleLoad => DeviceModel(PSY.InterruptibleLoad, StaticPowerLoad),
 )
 
-function _build_initialization_template(model::OperationModel)
+function get_initialization_template(model::OperationModel)
     ic_template = ProblemTemplate(get_network_model(model.template))
     for (device, device_model) in model.template.devices
         base_model = RELAXED_FORMULATION_MAPPING[device]
@@ -43,12 +43,14 @@ function _build_initialization_template(model::OperationModel)
 end
 
 function build_initialization_problem(model::T) where {T <: OperationModel}
-    settings = deepcopy(get_settings(model))
-    set_horizon!(settings, 1)
-    template = _build_initialization_template(model)
-    ic_model = T(template, model.sys, settings)
-    build!(ic_model; output_dir = get_internal(model).output_dir, serialize = false)
-    return ic_model
+    template = get_initialization_template(model)
+    init_optimization_container!(
+        model.internal.ic_model_container,
+        get_network_formulation(get_template(model)),
+        get_system(model),
+    )
+    build_impl!(model.internal.ic_model_container, template, get_system(model))
+    return
 end
 
 function perform_initialization_step!(
