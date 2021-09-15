@@ -30,6 +30,7 @@ function get_time_series(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: PSY.Component}
     parameter_container = get_parameter(container, parameter, T, meta)
+    parameter_container.attributes
     return _get_time_series(container, component, parameter_container.attributes)
 end
 
