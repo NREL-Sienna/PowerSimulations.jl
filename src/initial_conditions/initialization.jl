@@ -42,7 +42,7 @@ function get_initialization_template(model::OperationModel)
     return ic_template
 end
 
-function build_initialization_problem(model::T) where {T <: OperationModel}
+function build_initialization_problem!(model::T) where {T <: OperationModel}
     template = get_initialization_template(model)
     init_optimization_container!(
         model.internal.ic_model_container,

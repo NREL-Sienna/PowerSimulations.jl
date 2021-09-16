@@ -216,7 +216,7 @@ function init_model_store!(model::DecisionModel)
     )
 end
 
-function build_initialization!(model::EmulationModel)
+function build_initialization!(model::DecisionModel)
     template = get_initialization_template(model)
     requires_initialization = false
     for device_model in get_device_models(template)
@@ -293,7 +293,8 @@ function build!(
 end
 
 """
-Default implementation of build method for Operational Problems for models conforming with DecisionProblem specification. Overload this function to implement a custom build method
+Default implementation of build method for Operational Problems for models conforming with
+DecisionProblem specification. Overload this function to implement a custom build method
 """
 function build_problem!(model::DecisionModel)
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
