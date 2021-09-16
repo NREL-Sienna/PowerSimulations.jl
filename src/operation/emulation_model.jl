@@ -232,16 +232,16 @@ end
 
 function build_initialization!(model::EmulationModel)
     template = get_initialization_template(model)
-    requires_initialization = false
-    for device_model in get_device_models(template)
-        requires_initialization = requires_initialization(get_formulation(device_model))
-        if requires_initialization
-            @debug "Initialization required for the model"
-            build_initialization_problem(model)
+    requires_init = false
+    for (device_type, device_model) in get_device_models(template)
+        requires_init = requires_initialization(get_formulation(device_model)())
+        if requires_init
+            @debug "Initialization required for $device_type"
+            build_initialization_problem!(model)
             break
         end
     end
-    if !requires_initialization
+    if !requires_init
         @debug "No initial conditions in the model"
     end
     return
@@ -271,6 +271,7 @@ function build_pre_step!(model::EmulationModel)
         build_initialization!(model)
         initialize!(model)
         # Temporary while are able to switch from PJ to POI
+        container = get_optimization_container(model)
         container.built_for_recurrent_solves = true
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
@@ -284,6 +285,8 @@ function build_impl!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
         try
             build_pre_step!(model)
             build_problem!(model)
+            @info "Initializing ModelStoreParams"
+            init_model_store!(model)
             # serialize && serialize_problem(model)
             # serialize && serialize_optimization_model(model)
             serialize_metadata!(
@@ -334,7 +337,8 @@ end
 Default implementation of build method for Emulation Problems for models conforming with  DecisionProblem specification. Overload this function to implement a custom build method
 """
 function build_problem!(model::EmulationModel{<:EmulationProblem})
-
+    container = get_optimization_container(model)
+    system = get_system(model)
     build_impl!(container, get_template(model), system)
     return
 end
