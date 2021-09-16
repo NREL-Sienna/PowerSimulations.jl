@@ -23,6 +23,10 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::FixedOutput) 
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
 #! format: on
 
+get_initialization_device_model(
+    ::DeviceModel{T, <:AbstractRenewableFormulation},
+) where {T <: PSY.RenewableGen} = DeviceModel(T, FixedOutput)
+
 function get_min_max_limits(
     device,
     ::Type{ReactivePowerVariableLimitsConstraint},

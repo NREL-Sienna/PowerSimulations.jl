@@ -71,6 +71,18 @@ get_initial_condition_value(::DeviceAboveMinPower, d::PSY.ThermalGen, ::Abstract
 
 #! format: on
 
+function get_initialization_device_model(
+    model::DeviceModel{T, D},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
+    return DeviceModel(T, ThermalDispatch)
+end
+
+function get_initialization_device_model(
+    model::DeviceModel{T, D},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
+    return DeviceModel(T, ThermalBasicUnitCommitment)
+end
+
 function get_initial_condition_value(
     ::InitialTimeDurationOn,
     d::PSY.ThermalGen,

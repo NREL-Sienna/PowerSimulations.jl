@@ -1,29 +1,7 @@
-const RELAXED_FORMULATION_MAPPING = Dict(
-    :ThermalStandard => DeviceModel(PSY.ThermalStandard, ThermalBasicUnitCommitment),
-    :ThermalMultiStart =>
-        DeviceModel(PSY.ThermalMultiStart, ThermalBasicUnitCommitment), # Compact vs Standard representation
-    :HydroDispatch => DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver),
-    :HydroEnergyReservoir =>
-        DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchRunOfRiver),
-    :HydroPumpedStorage =>
-        DeviceModel(PSY.HydroPumpedStorage, HydroDispatchPumpedStorage),
-    :RenewableFix => DeviceModel(PSY.RenewableFix, FixedOutput),
-    :RenewableDispatch => DeviceModel(PSY.RenewableDispatch, FixedOutput),
-    :GenericBattery => DeviceModel(PSY.GenericBattery, BookKeeping),
-    :BatteryEMS => DeviceModel(PSY.BatteryEMS, BookKeeping),
-    :TapTransformer => DeviceModel(PSY.TapTransformer, StaticBranch),
-    :Transformer2W => DeviceModel(PSY.Transformer2W, StaticBranch),
-    :MonitoredLine => DeviceModel(PSY.MonitoredLine, StaticBranchUnbounded),
-    :Line => DeviceModel(PSY.Line, StaticBranch),
-    :HVDCLine => DeviceModel(PSY.HVDCLine, HVDCDispatch),
-    :PowerLoad => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
-    :InterruptibleLoad => DeviceModel(PSY.InterruptibleLoad, StaticPowerLoad),
-)
-
 function get_initialization_template(model::OperationModel)
     ic_template = ProblemTemplate(get_network_model(model.template))
     for (device, device_model) in model.template.devices
-        base_model = RELAXED_FORMULATION_MAPPING[device]
+        base_model = get_initialization_device_model(device_model)
         base_model.use_slacks = device_model.use_slacks
         base_model.duals = device_model.duals
         base_model.time_series_names = device_model.time_series_names
@@ -31,7 +9,7 @@ function get_initialization_template(model::OperationModel)
         set_device_model!(ic_template, base_model)
     end
     for (device, device_model) in model.template.branches
-        base_model = RELAXED_FORMULATION_MAPPING[device]
+        base_model = get_initialization_device_model(device_model)
         base_model.use_slacks = device_model.use_slacks
         base_model.duals = device_model.duals
         base_model.time_series_names = device_model.time_series_names

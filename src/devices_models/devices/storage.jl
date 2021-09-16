@@ -60,6 +60,10 @@ get_initial_condition_value(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStor
 
 #! format: on
 
+get_initialization_device_model(
+    ::DeviceModel{T, <:AbstractDeviceFormulation},
+) where {T <: PSY.Storage} = DeviceModel(T, BookKeeping)
+
 get_multiplier_value(
     ::EnergyTargetTimeSeriesParameter,
     d::PSY.Storage,

@@ -125,12 +125,33 @@ get_multiplier_value(::EnergyBudgetTimeSeriesParameter, d::PSY.HydroGen, ::Abstr
 get_multiplier_value(::EnergyTargetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 get_multiplier_value(::InflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_inflow(d) * PSY.get_conversion_factor(d)
 get_multiplier_value(::OutflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_outflow(d) * PSY.get_conversion_factor(d)
-
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_max_active_power(d)
-
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::FixedOutput) = PSY.get_max_active_power(d)
 
+#################### Initial Conditions for models ###############
+get_initial_condition_value(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
+get_initial_condition_value(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d) > 0.0 ? 1.0 : 0.0
+get_initial_condition_value(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
+get_initial_condition_value(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
+get_initial_condition_value(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
+
 #! format: on
+
+get_initialization_device_model(
+    model::DeviceModel{T, <:AbstractHydroFormulation},
+) where {T <: PSY.HydroEnergyReservoir} = model
+
+function get_initialization_device_model(
+    model::DeviceModel{T, <:AbstractHydroFormulation},
+) where {T <: PSY.HydroDispatch}
+    return DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver)
+end
+
+function get_initialization_device_model(
+    model::DeviceModel{T, <:AbstractHydroFormulation},
+) where {T <: PSY.HydroPumpedStorage}
+    return DeviceModel(PSY.HydroPumpedStorage, HydroDispatchPumpedStorage)
+end
 
 function get_default_time_series_names(
     ::Type{<:PSY.HydroGen},
@@ -408,7 +429,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevel(), V)
+    initial_conditions = get_initial_condition(container, InitialEnergyLevel(), V)
     energy_var = get_variable(container, EnergyVariable(), V)
     power_var = get_variable(container, ActivePowerVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
@@ -462,7 +483,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevelUp(), V)
+    initial_conditions = get_initial_condition(container, InitialEnergyLevelUp(), V)
 
     energy_var = get_variable(container, EnergyVariableUp(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
@@ -522,7 +543,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevelDown(), V)
+    initial_conditions = get_initial_condition(container, InitialEnergyLevelDown(), V)
 
     energy_var = get_variable(container, EnergyVariableDown(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
@@ -616,14 +637,8 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::AbstractHydroUnitCommitment,
 ) where {H <: PSY.HydroGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus, OnVariable)
-    add_initial_condition!(
-        container,
-        devices,
-        formulation,
-        DevicePower,
-        ActivePowerVariable,
-    )
+    add_initial_condition!(container, devices, formulation, DeviceStatus)
+    add_initial_condition!(container, devices, formulation, DevicePower)
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
 
