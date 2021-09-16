@@ -97,6 +97,7 @@ function EmulationModel{M}(
     direct_mode_optimizer = false,
     initial_time = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
+    horizon = 1,  # Unused; included for compatibility with DecisionModel.
 ) where {M <: EmulationProblem}
     settings = Settings(
         sys;
@@ -109,7 +110,7 @@ function EmulationModel{M}(
         allow_fails = allow_fails,
         optimizer_log_print = optimizer_log_print,
         direct_mode_optimizer = direct_mode_optimizer,
-        horizon = 1,
+        horizon = horizon,
     )
     return EmulationModel{M}(template, sys, settings, jump_model, name = name)
 end
@@ -163,35 +164,36 @@ function EmulationModel(
     return EmulationModel{GenericEmulationProblem}(template, sys, jump_model; kwargs...)
 end
 
-# """
-# EmulationModel(filename::AbstractString)
-#
-# Construct an EmulationProblem from a serialized file.
-#
-# # Arguments
-# - `filename::AbstractString`: path to serialized file
-# - `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
-#    serialized. Callers should pass whatever they passed to the original problem.
-# - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes}` = nothing: The optimizer does
-#    not get serialized. Callers should pass whatever they passed to the original problem.
-# - `system::Union{Nothing, PSY.System}`: Optionally, the system used for the model.
-#    If nothing and sys_to_file was set to true when the model was created, the system will
-#    be deserialized from a file.
-# """
-# function EmulationModel(
-#     filename::AbstractString;
-#     jump_model::Union{Nothing, JuMP.Model} = nothing,
-#     optimizer::Union{Nothing, MOI.OptimizerWithAttributes} = nothing,
-#     system::Union{Nothing, PSY.System} = nothing,
-# )
-#     return deserialize_problem(
-#         EmulationModel,
-#         filename;
-#         jump_model = jump_model,
-#         optimizer = optimizer,
-#         system = system,
-#     )
-# end
+"""
+EmulationModel(directory::AbstractString)
+
+Construct an EmulationProblem from a serialized file.
+
+# Arguments
+- `directory::AbstractString`: Directory containing a serialized model.
+- `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
+   serialized. Callers should pass whatever they passed to the original problem.
+- `optimizer::Union{Nothing,MOI.OptimizerWithAttributes}` = nothing: The optimizer does
+   not get serialized. Callers should pass whatever they passed to the original problem.
+- `system::Union{Nothing, PSY.System}`: Optionally, the system used for the model.
+   If nothing and sys_to_file was set to true when the model was created, the system will
+   be deserialized from a file.
+"""
+function EmulationModel(
+    directory::AbstractString;
+    jump_model::Union{Nothing, JuMP.Model} = nothing,
+    optimizer::Union{Nothing, MOI.OptimizerWithAttributes} = nothing,
+    system::Union{Nothing, PSY.System} = nothing,
+    kwargs...,
+)
+    return deserialize_problem(
+        EmulationModel,
+        directory;
+        jump_model = jump_model,
+        optimizer = optimizer,
+        system = system,
+    )
+end
 
 function get_current_time(model::EmulationModel)
     execution_count = get_internal(model).execution_count
@@ -239,31 +241,6 @@ function build_pre_step!(model::EmulationModel)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
-end
-
-function build_impl!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-        try
-            build_pre_step!(model)
-            build_problem!(model)
-            init_model_store!(model)
-            # serialize && serialize_problem(model)
-            # serialize && serialize_optimization_model(model)
-            serialize_metadata!(
-                get_optimization_container(model),
-                get_output_dir(model),
-                get_name(model),
-            )
-            set_status!(model, BuildStatus.BUILT)
-            log_values(get_settings(model))
-            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
-        catch e
-            set_status!(model, BuildStatus.FAILED)
-            bt = catch_backtrace()
-            @error "Emulation Problem Build Failed" exception = e, bt
-        end
-    end
-    return get_status(model)
 end
 
 """Implementation of build for any EmulationProblem"""
@@ -327,13 +304,6 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     return
 end
 
-function serialize_optimization_model(model::EmulationModel{<:EmulationProblem})
-    problem_name = "$(get_name(model))_EmulationModel"
-    json_file_name = "$(problem_name).json"
-    json_file_name = joinpath(get_output_dir(model), json_file_name)
-    serialize_optimization_model(get_optimization_container(model), json_file_name)
-end
-
 function calculate_aux_variables!(model::EmulationModel)
     container = get_optimization_container(model)
     system = get_system(model)
@@ -387,8 +357,9 @@ function run_impl(
     model::EmulationModel;
     optimizer = nothing,
     enable_progress_bar = _PROGRESS_METER_ENABLED,
+    kwargs...,
 )
-    set_run_status!(model, _pre_solve_model_checks(model, optimizer))
+    set_run_status!(model, _pre_solve_model_checks(model, optimizer; kwargs...))
     internal = get_internal(model)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
@@ -421,22 +392,43 @@ end
 
 """
 Default run method the Emulation model for a single instance. Solves problems
-    that conform to the requirements of EmulationModel{<: EmulationProblem}
+that conform to the requirements of EmulationModel{<: EmulationProblem}
+
+This will call [`build!`](@ref) on the model if it is not already built. It will forward all
+keyword arguments to that function.
 
 # Arguments
 - `model::EmulationModel = model`: Emulation model
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 - `executions::Int`: Number of executions for the emulator run
+- `serialize_problem_results::Bool`: If true, serialize ProblemResults to a binary file that
+  can be deserialized.
+- `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
+- `output_dir::String`: Required if the model is not already built, otherwise ignored
 - `enable_progress_bar::Bool`: Enables/Disable progress bar printing
 
 # Examples
 ```julia
 status = run!(model; optimizer = GLPK.Optimizer, executions = 10)
+status = run!(model; output_dir = ./model_output, optimizer = GLPK.Optimizer, executions = 10)
 ```
 """
-function run!(model::EmulationModel{<:EmulationProblem}; kwargs...)
+function run!(
+    model::EmulationModel{<:EmulationProblem};
+    serialize_problem_results = false,
+    export_problem_results = false,
+    kwargs...,
+)
     status = run_impl(model; kwargs...)
     set_run_status!(model, status)
+    if status == RunStatus.SUCCESSFUL
+        if serialize_problem_results || export_problem_results
+            results = ProblemResults(model)
+            serialize_problem_results && serialize_results(results, get_output_dir(model))
+            export_problem_results && export_results(results)
+        end
+    end
+
     return status
 end
 
@@ -458,7 +450,7 @@ function run!(
     # Initialize the InMemorySimulationStore
     solve_status = run!(model)
     if solve_status == RunStatus.SUCCESSFUL
-        write_problem_results!(step, model, start_time, store)
+        write_results!(step, model, start_time, store)
         advance_execution_count!(model)
     end
 
