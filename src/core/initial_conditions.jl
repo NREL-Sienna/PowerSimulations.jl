@@ -17,17 +17,17 @@ get_component_type(::ICKey{T, U}) where {T <: InitialConditionType, U <: PSY.Com
 """
 Container for the initial condition data
 """
-struct InitialCondition{T <: InitialConditionType, V <: Union{PJ.ParameterRef, Float64}}
+struct InitialCondition{T <: InitialConditionType, U <: Union{PJ.ParameterRef, Float64}}
     component::PSY.Component
-    value::V
+    value::U
 end
 
 function InitialCondition(
     ::Type{T},
     component::PSY.Component,
-    value::V,
-) where {T <: InitialConditionType, V <: Union{PJ.ParameterRef, Float64}}
-    return InitialCondition{T, V}(component, value)
+    value::U,
+) where {T <: InitialConditionType, U <: Union{PJ.ParameterRef, Float64}}
+    return InitialCondition{T, U}(component, value)
 end
 
 function InitialCondition(
@@ -36,10 +36,10 @@ function InitialCondition(
     value::V,
 ) where {
     T <: InitialConditionType,
-    V <: Union{PJ.ParameterRef, Float64},
     U <: PSY.Component,
+    V <: Union{PJ.ParameterRef, Float64},
 }
-    return InitialCondition{T, V}(component, value)
+    return InitialCondition{T, U}(component, value)
 end
 
 function get_condition(p::InitialCondition{T, Float64}) where {T <: InitialConditionType}
@@ -58,6 +58,7 @@ get_component_name(ic::InitialCondition) = PSY.get_name(ic.component)
 
 ######################### Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
+struct DeviceAboveMinPower <: InitialConditionType end
 struct DeviceStatus <: InitialConditionType end
 struct InitialTimeDurationOn <: InitialConditionType end
 struct InitialTimeDurationOff <: InitialConditionType end
