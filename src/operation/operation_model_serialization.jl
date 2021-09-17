@@ -1,3 +1,5 @@
+const _SERIALIZED_MODEL_FILENAME = "model.bin"
+
 struct ProblemSerializationWrapper
     template::ProblemTemplate
     sys::Union{Nothing, String}
@@ -6,10 +8,9 @@ struct ProblemSerializationWrapper
     name::String
 end
 
-function serialize_problem(model::T) where {T <: Union{DecisionModel, EmulationModel}}
+function serialize_problem(model::OperationModel)
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
-    problem_name = get_name(model)
     sys_to_file = get_system_to_file(get_settings(model))
     if sys_to_file
         sys = get_system(model)
@@ -27,17 +28,20 @@ function serialize_problem(model::T) where {T <: Union{DecisionModel, EmulationM
         typeof(model),
         string(get_name(model)),
     )
-    bin_file_name = "$problem_name.bin"
-    bin_file_name = joinpath(get_output_dir(model), bin_file_name)
+    bin_file_name = joinpath(get_output_dir(model), _SERIALIZED_MODEL_FILENAME)
     Serialization.serialize(bin_file_name, obj)
     @info "Serialized DecisionModel to" bin_file_name
 end
 
 function deserialize_problem(
     ::Type{T},
-    filename::AbstractString;
+    directory::AbstractString;
     kwargs...,
-) where {T <: Union{DecisionModel, EmulationModel}}
+) where {T <: OperationModel}
+    filename = joinpath(directory, _SERIALIZED_MODEL_FILENAME)
+    if !isfile(filename)
+        error("$directory does not contain a serialized model")
+    end
     obj = Serialization.deserialize(filename)
     if !(obj isa ProblemSerializationWrapper)
         throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))

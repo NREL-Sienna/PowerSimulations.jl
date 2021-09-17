@@ -76,9 +76,6 @@ end
 set_output_dir!(model::OperationModel, path::AbstractString) =
     get_internal(model).output_dir = path
 
-serialize_optimization_model(::OperationModel) = nothing
-serialize_problem(::OperationModel) = nothing
-
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
     internal.execution_count += 1
@@ -89,11 +86,41 @@ function advance_execution_count!(model::OperationModel)
     return
 end
 
-function _pre_solve_model_checks(model::OperationModel, optimizer)
+function build_impl!(model::OperationModel, serialize::Bool)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+        try
+            build_pre_step!(model)
+            build_problem!(model)
+            init_model_store!(model)
+            if serialize
+                serialize_problem(model)
+                serialize_optimization_model(model)
+            end
+            serialize_metadata!(get_optimization_container(model), get_output_dir(model))
+            set_status!(model, BuildStatus.BUILT)
+            log_values(get_settings(model))
+            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
+        catch e
+            set_status!(model, BuildStatus.FAILED)
+            bt = catch_backtrace()
+            @error "Operation Problem Build Failed" exception = e, bt
+        end
+    end
+    return get_status(model)
+end
+
+function _pre_solve_model_checks(model::OperationModel, optimizer; kwargs...)
     if !is_built(model)
-        error(
-            "Operations Problem Build status is $(get_status(model)). Solve can't continue",
-        )
+        if !haskey(kwargs, :output_dir)
+            error(
+                "'output_dir' must be provided as a kwarg if the model build status is $(get_status(model))",
+            )
+        else
+            status = build!(model; kwargs...)
+            if status != BuildStatus.BUILT
+                error("build! of the $(typeof(model)) failed: $status")
+            end
+        end
     end
     jump_model = get_jump_model(model)
     if optimizer !== nothing
@@ -141,3 +168,12 @@ function read_variable(model::OperationModel, key::VariableKey)
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))
+
+const _JUMP_MODEL_FILENAME = "jump_model.json"
+
+function serialize_optimization_model(model::OperationModel)
+    serialize_optimization_model(
+        get_optimization_container(model),
+        joinpath(get_output_dir(model), _JUMP_MODEL_FILENAME),
+    )
+end

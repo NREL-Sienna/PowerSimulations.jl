@@ -1,14 +1,15 @@
 # This needs renaming to avoid collision with the DecionModelResults/EmulationModelResults
-struct ProblemResults <: PSIResults
+mutable struct ProblemResults <: PSIResults
     base_power::Float64
     timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     system::Union{Nothing, PSY.System}
+    system_uuid::Base.UUID
     aux_variable_values::Dict{AuxVarKey, DataFrames.DataFrame}
     variable_values::Dict{VariableKey, DataFrames.DataFrame}
     dual_values::Dict{ConstraintKey, DataFrames.DataFrame}
     parameter_values::Dict{ParameterKey, DataFrames.DataFrame}
     optimizer_stats::DataFrames.DataFrame
-    container::OptimizationContainer
+    optimization_container_metadata::OptimizationContainerMetadata
     model_type::String
     output_dir::String
 end
@@ -37,6 +38,9 @@ function get_objective_value(res::ProblemResults, execution = 1)
     res.optimizer_stats[execution, :objective_value]
 end
 
+"""
+Construct ProblemResults from a solved DecisionModel.
+"""
 function ProblemResults(model::DecisionModel)
     status = get_run_status(model)
     status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
@@ -52,21 +56,26 @@ function ProblemResults(model::DecisionModel)
         DataFrames.insertcols!(df, 1, :DateTime => timestamps)
     end
 
+    sys = get_system(model)
     return ProblemResults(
         get_problem_base_power(model),
         timestamps,
-        model.sys,
+        sys,
+        IS.get_uuid(sys),
         Dict{VariableKey, DataFrames.DataFrame}(),
         variables,
         duals,
         parameters,
         optimizer_stats,
-        container,
+        get_metadata(container),
         IS.strip_module_name(typeof(model)),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end
 
+"""
+Construct ProblemResults from a solved EmulationModel.
+"""
 function ProblemResults(model::EmulationModel)
     status = get_run_status(model)
     status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
@@ -79,17 +88,19 @@ function ProblemResults(model::EmulationModel)
     optimizer_stats = read_optimizer_stats(model)
     initial_time = get_initial_time(model)
     container = get_optimization_container(model)
+    sys = get_system(model)
 
     return ProblemResults(
         get_problem_base_power(model),
         StepRange(initial_time, get_resolution(model), initial_time),
-        model.sys,
+        sys,
+        IS.get_uuid(sys),
         aux_variables,
         variables,
         duals,
         parameters,
         optimizer_stats,
-        container,
+        get_metadata(container),
         IS.strip_module_name(typeof(model)),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
@@ -159,7 +170,7 @@ function _deserialize_key(
     results::ProblemResults,
     name::AbstractString,
 )
-    return deserialize_key(results.container.metadata, name)
+    return deserialize_key(results.optimization_container_metadata, name)
 end
 
 function _deserialize_key(
@@ -212,6 +223,24 @@ end
 
 read_optimizer_stats(res::ProblemResults) = res.optimizer_stats
 
+"""
+Set the system in the results instance.
+
+Throws InvalidValue if the system UUID is incorrect.
+"""
+function set_system!(res::ProblemResults, system::PSY.System)
+    sys_uuid = IS.get_uuid(system)
+    if sys_uuid != res.system_uuid
+        throw(
+            IS.InvalidValue(
+                "System mismatch. $sys_uuid does not match the stored value of $(res.system_uuid)",
+            ),
+        )
+    end
+
+    res.system = system
+end
+
 # TODO:
 # - Handle PER-UNIT conversion of variables according to type
 
@@ -247,6 +276,64 @@ end
 function write_optimizer_stats(res::ProblemResults, directory::AbstractString)
     data = to_dict(res.optimizer_stats)
     JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(data))
+end
+
+const _PROBLEM_RESULTS_FILENAME = "problem_results.bin"
+
+"""
+Serialize the results to a binary file.
+
+It is recommended that `directory` be the directory that contains a serialized
+OperationModel. That will allow automatic deserialization of the PowerSystems.System.
+The `ProblemResults` instance can be deserialized with `ProblemResults(directory)`.
+"""
+function serialize_results(res::ProblemResults, directory::AbstractString)
+    mkpath(directory)
+    filename = joinpath(directory, _PROBLEM_RESULTS_FILENAME)
+    isfile(filename) && rm(filename)
+    Serialization.serialize(filename, _copy_for_serialization(res))
+    @info "Serialize ProblemResults to $filename"
+end
+
+"""
+Construct a ProblemResults instance from a serialized directory.
+
+If the directory contains a serialized PowerSystems.System then it will deserialize that
+system and add it to the results. Otherwise, it is up to the caller to call
+[`set_system!`](@ref) on the returned instance to restore it.
+"""
+function ProblemResults(directory::AbstractString)
+    filename = joinpath(directory, _PROBLEM_RESULTS_FILENAME)
+    if !isfile(filename)
+        error("No results file exists in $directory")
+    end
+
+    results = Serialization.deserialize(filename)
+    possible_sys_file = joinpath(directory, make_system_filename(results.system_uuid))
+    if isfile(possible_sys_file)
+        set_system!(results, PSY.System(possible_sys_file))
+    else
+        @info "$directory does not contain a serialized System, skipping deserialization."
+    end
+
+    return results
+end
+
+function _copy_for_serialization(res::ProblemResults)
+    return ProblemResults(
+        res.base_power,
+        res.timestamps,
+        nothing,
+        res.system_uuid,
+        res.aux_variable_values,
+        res.variable_values,
+        res.dual_values,
+        res.parameter_values,
+        res.optimizer_stats,
+        res.optimization_container_metadata,
+        res.model_type,
+        res.output_dir,
+    )
 end
 
 # TODO: These are not likely needed for v015.
