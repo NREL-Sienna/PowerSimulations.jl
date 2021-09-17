@@ -14,48 +14,6 @@ end
 get_entry_type(::ICKey{T, U}) where {T <: InitialConditionType, U <: PSY.Component} = T
 get_component_type(::ICKey{T, U}) where {T <: InitialConditionType, U <: PSY.Component} = U
 
-"""
-Container for the initial condition data
-"""
-struct InitialCondition{T <: InitialConditionType, V <: Union{PJ.ParameterRef, Float64}}
-    component::PSY.Component
-    value::V
-end
-
-function InitialCondition(
-    ::Type{T},
-    component::PSY.Component,
-    value::V,
-) where {T <: InitialConditionType, V <: Union{PJ.ParameterRef, Float64}}
-    return InitialCondition{T, V}(component, value)
-end
-
-function InitialCondition(
-    ::ICKey{T, U},
-    component::U,
-    value::V,
-) where {
-    T <: InitialConditionType,
-    V <: Union{PJ.ParameterRef, Float64},
-    U <: PSY.Component,
-}
-    return InitialCondition{T, V}(component, value)
-end
-
-function get_condition(p::InitialCondition{T, Float64}) where {T <: InitialConditionType}
-    return p.value
-end
-
-function get_condition(
-    p::InitialCondition{T, PJ.ParameterRef},
-) where {T <: InitialConditionType}
-    return JuMP.value(p.value)
-end
-
-get_component(ic::InitialCondition) = ic.component
-get_value(ic::InitialCondition) = ic.value
-get_component_name(ic::InitialCondition) = PSY.get_name(ic.component)
-
 ######################### Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
 struct DeviceStatus <: InitialConditionType end
