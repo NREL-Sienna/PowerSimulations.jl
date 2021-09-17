@@ -382,7 +382,13 @@ function construct_service!(
     service = PSY.get_component(SR, sys, name)
     contributing_services = PSY.get_contributing_services(service)
     # Constraints
-    add_constraints!(container, RequirementConstraint, service, contributing_services, model)
+    add_constraints!(
+        container,
+        RequirementConstraint,
+        service,
+        contributing_services,
+        model,
+    )
 
     return
 end
@@ -426,7 +432,7 @@ function construct_service!(
 
     # Constraints
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-    ramp_constraints!(container, service, contributing_devices, model)
+    add_constraints!(container, RampConstraint, service, contributing_devices, model)
 
     # Cost Function
     cost_function!(container, service, model)
@@ -476,7 +482,13 @@ function construct_service!(
 
     # Constraints
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-    add_constraints!(container, ReservePowerConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ReservePowerConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
 
     # Cost Function
     cost_function!(container, service, model)
