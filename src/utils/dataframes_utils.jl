@@ -75,7 +75,11 @@ function axis_array_to_dataframe(
             result[t] = _jump_value(input_array[t])
         end
 
-        @assert columns !== nothing
+        # TODO v015: This is a hack to workaround lack of support for this scenario.
+        # @assert columns !== nothing
+        if columns === nothing
+            columns = ["System"]
+        end
         return DataFrames.DataFrame(columns[1] => result)
     elseif length(axes(input_array)) == 2
         result = Array{Float64, length(input_array.axes)}(
