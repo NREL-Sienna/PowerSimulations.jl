@@ -173,9 +173,9 @@ Construct an DecisionProblem from a serialized file.
    be deserialized from a file.
 """
 function DecisionModel(
-    directory::AbstractString;
+    directory::AbstractString,
+    optimizer::MOI.OptimizerWithAttributes;
     jump_model::Union{Nothing, JuMP.Model} = nothing,
-    optimizer::Union{Nothing, MOI.OptimizerWithAttributes} = nothing,
     system::Union{Nothing, PSY.System} = nothing,
 )
     return deserialize_problem(
@@ -331,8 +331,8 @@ function solve_impl(model::DecisionModel; optimizer = nothing, kwargs...)
 end
 
 """
-Default solve method the operational model for a single instance. Solves problems
-that conform to the requirements of DecisionModel{<: DecisionProblem}
+Default solve method for models that conform to the requirements of
+DecisionModel{<: DecisionProblem}.
 
 This will call [`build!`](@ref) on the model if it is not already built. It will forward all
 keyword arguments to that function.
@@ -340,8 +340,6 @@ keyword arguments to that function.
 # Arguments
 - `model::OperationModel = model`: operation model
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
-- `serialize_problem_results::Bool`: If true, serialize ProblemResults to a binary file that
-  can be deserialized.
 - `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
 
 # Examples
@@ -352,18 +350,15 @@ results = solve!(OpModel, output_dir = "output")
 """
 function solve!(
     model::DecisionModel{<:DecisionProblem};
-    serialize_problem_results = false,
     export_problem_results = false,
     kwargs...,
 )
     status = solve_impl(model; kwargs...)
     set_run_status!(model, status)
     if status == RunStatus.SUCCESSFUL
-        if serialize_problem_results || export_problem_results
-            results = ProblemResults(model)
-            serialize_problem_results && serialize_results(results, get_output_dir(model))
-            export_problem_results && export_results(results)
-        end
+        results = ProblemResults(model)
+        serialize_results(results, get_output_dir(model))
+        export_problem_results && export_results(results)
     end
 
     return status

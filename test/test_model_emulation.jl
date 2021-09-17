@@ -74,8 +74,7 @@ end
     model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
     executions = 10
     @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
-    @test run!(model, serialize_problem_results = true, export_problem_results = true) ==
-          RunStatus.SUCCESSFUL
+    @test run!(model, export_problem_results = true) == RunStatus.SUCCESSFUL
     results1 = ProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
@@ -126,7 +125,7 @@ end
     @test PSI._JUMP_MODEL_FILENAME in file_list
     @test PSI._SERIALIZED_MODEL_FILENAME in file_list
     path2 = joinpath(path, "tmp")
-    model2 = EmulationModel(path, optimizer = Cbc_optimizer)
+    model2 = EmulationModel(path, Cbc_optimizer)
     build!(model2, output_dir = path2)
     @test run!(model2) == RunStatus.SUCCESSFUL
     results2 = ProblemResults(model2)

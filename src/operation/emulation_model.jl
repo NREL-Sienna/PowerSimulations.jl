@@ -171,18 +171,18 @@ Construct an EmulationProblem from a serialized file.
 
 # Arguments
 - `directory::AbstractString`: Directory containing a serialized model.
+- `optimizer::MOI.OptimizerWithAttributes`: The optimizer does not get serialized.
+   Callers should pass whatever they passed to the original problem.
 - `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
    serialized. Callers should pass whatever they passed to the original problem.
-- `optimizer::Union{Nothing,MOI.OptimizerWithAttributes}` = nothing: The optimizer does
-   not get serialized. Callers should pass whatever they passed to the original problem.
 - `system::Union{Nothing, PSY.System}`: Optionally, the system used for the model.
    If nothing and sys_to_file was set to true when the model was created, the system will
    be deserialized from a file.
 """
 function EmulationModel(
-    directory::AbstractString;
+    directory::AbstractString,
+    optimizer::MOI.OptimizerWithAttributes;
     jump_model::Union{Nothing, JuMP.Model} = nothing,
-    optimizer::Union{Nothing, MOI.OptimizerWithAttributes} = nothing,
     system::Union{Nothing, PSY.System} = nothing,
     kwargs...,
 )
@@ -391,8 +391,8 @@ function run_impl(
 end
 
 """
-Default run method the Emulation model for a single instance. Solves problems
-that conform to the requirements of EmulationModel{<: EmulationProblem}
+Default run method for problems that conform to the requirements of
+EmulationModel{<: EmulationProblem}
 
 This will call [`build!`](@ref) on the model if it is not already built. It will forward all
 keyword arguments to that function.
@@ -401,8 +401,6 @@ keyword arguments to that function.
 - `model::EmulationModel = model`: Emulation model
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 - `executions::Int`: Number of executions for the emulator run
-- `serialize_problem_results::Bool`: If true, serialize ProblemResults to a binary file that
-  can be deserialized.
 - `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
 - `output_dir::String`: Required if the model is not already built, otherwise ignored
 - `enable_progress_bar::Bool`: Enables/Disable progress bar printing
@@ -415,18 +413,15 @@ status = run!(model; output_dir = ./model_output, optimizer = GLPK.Optimizer, ex
 """
 function run!(
     model::EmulationModel{<:EmulationProblem};
-    serialize_problem_results = false,
     export_problem_results = false,
     kwargs...,
 )
     status = run_impl(model; kwargs...)
     set_run_status!(model, status)
     if status == RunStatus.SUCCESSFUL
-        if serialize_problem_results || export_problem_results
-            results = ProblemResults(model)
-            serialize_problem_results && serialize_results(results, get_output_dir(model))
-            export_problem_results && export_results(results)
-        end
+        results = ProblemResults(model)
+        serialize_results(results, get_output_dir(model))
+        export_problem_results && export_results(results)
     end
 
     return status

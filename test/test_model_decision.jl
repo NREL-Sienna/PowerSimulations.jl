@@ -247,7 +247,7 @@ end
     model_name = PSI.get_name(model)
     @test PSI._JUMP_MODEL_FILENAME in file_list
     @test PSI._SERIALIZED_MODEL_FILENAME in file_list
-    ED2 = DecisionModel(path, optimizer = OSQP_optimizer)
+    ED2 = DecisionModel(path, OSQP_optimizer)
     build!(ED2, output_dir = path)
     solve!(ED2)
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
@@ -261,7 +261,7 @@ end
 
     file_list = sort!(collect(readdir(path2)))
     @test .!all(occursin.(r".h5", file_list))
-    ED3 = DecisionModel(path2; system = sys, optimizer = OSQP_optimizer)
+    ED3 = DecisionModel(path2, OSQP_optimizer; system = sys)
     build!(ED3, output_dir = path2)
     solve!(ED3)
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
@@ -275,8 +275,7 @@ end
     )
     model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
     @test build!(model; output_dir = path) == PSI.BuildStatus.BUILT
-    @test solve!(model, serialize_problem_results = true, export_problem_results = true) ==
-          RunStatus.SUCCESSFUL
+    @test solve!(model, export_problem_results = true) == RunStatus.SUCCESSFUL
     results1 = ProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.

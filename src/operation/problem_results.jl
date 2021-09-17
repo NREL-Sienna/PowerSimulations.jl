@@ -287,13 +287,10 @@ It is recommended that `directory` be the directory that contains a serialized
 OperationModel. That will allow automatic deserialization of the PowerSystems.System.
 The `ProblemResults` instance can be deserialized with `ProblemResults(directory)`.
 """
-function serialize_results(res::ProblemResults, directory::AbstractString; force = false)
+function serialize_results(res::ProblemResults, directory::AbstractString)
     mkpath(directory)
     filename = joinpath(directory, _PROBLEM_RESULTS_FILENAME)
-    if isfile(filename) && !force
-        error("$filename already exists. Pass force = true to overwrite")
-    end
-
+    isfile(filename) && rm(filename)
     Serialization.serialize(filename, _copy_for_serialization(res))
     @info "Serialize ProblemResults to $filename"
 end
