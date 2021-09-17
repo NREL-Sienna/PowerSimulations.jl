@@ -80,10 +80,6 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                     binary_source_problem = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
-                ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_source_problem = PSI.ACTIVE_POWER,
-                    affected_variables = [PSI.ACTIVE_POWER],
-                ),
             ),
             cache = Dict(
                 ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
