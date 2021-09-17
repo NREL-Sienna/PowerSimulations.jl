@@ -96,6 +96,23 @@ end
     moi_tests(model, false, 1008, 0, 480, 216, 192, true)
 end
 
+@testset "Test Reserves from Thermal Standard UC with NonSpinningReserve" begin
+    template = get_thermal_standard_uc_template()
+    set_device_model!(
+        template,
+        DeviceModel(ThermalMultiStart, ThermalStandardUnitCommitment),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserveNonSpinning, NonSpinningReserve, "NonSpinningReserve"),
+    )
+
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin"; add_reserves = true)
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, false, 1032, 0, 888, 192, 240, true)
+end
+
 @testset "Test Upwards Reserves from Renewable Dispatch" begin
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
