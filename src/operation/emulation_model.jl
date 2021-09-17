@@ -280,34 +280,6 @@ function build_pre_step!(model::EmulationModel)
     return
 end
 
-
-
-function build_impl!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-        try
-            build_pre_step!(model)
-            build_problem!(model)
-            @info "Initializing ModelStoreParams"
-            init_model_store!(model)
-            # serialize && serialize_problem(model)
-            # serialize && serialize_optimization_model(model)
-            serialize_metadata!(
-                get_optimization_container(model),
-                get_output_dir(model),
-                get_name(model),
-            )
-            set_status!(model, BuildStatus.BUILT)
-            log_values(get_settings(model))
-            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
-        catch e
-            set_status!(model, BuildStatus.FAILED)
-            bt = catch_backtrace()
-            @error "Emulation Problem Build Failed" exception = e, bt
-        end
-    end
-    return get_status(model)
-end
-
 """Implementation of build for any EmulationProblem"""
 function build!(
     model::EmulationModel{<:EmulationProblem};

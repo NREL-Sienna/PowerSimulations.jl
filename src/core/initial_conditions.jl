@@ -56,6 +56,25 @@ get_component(ic::InitialCondition) = ic.component
 get_value(ic::InitialCondition) = ic.value
 get_component_name(ic::InitialCondition) = PSY.get_name(ic.component)
 
+"""
+Stores data to populate initial conditions before the build call
+"""
+mutable struct InitializationData
+    duals::Dict{ConstraintKey, DataFrames.DataFrame}
+    parameters::Dict{ParameterKey, DataFrames.DataFrame}
+    variables::Dict{VariableKey, DataFrames.DataFrame}
+    aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
+end
+
+function InitializationData()
+    return InitializationData(
+        Dict{ConstraintKey, DataFrames.DataFrame}(),
+        Dict{ParameterKey, DataFrames.DataFrame}(),
+        Dict{VariableKey, DataFrames.DataFrame}(),
+        Dict{AuxVarKey, DataFrames.DataFrame}(),
+    )
+end
+
 ######################### Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
 struct DeviceAboveMinPower <: InitialConditionType end

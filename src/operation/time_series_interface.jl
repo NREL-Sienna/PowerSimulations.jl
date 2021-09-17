@@ -5,7 +5,7 @@ function make_time_series_cache(
     initial_time,
     ::Int;
     ignore_scaling_factors = true,
-) where T <: PSY.StaticTimeSeries
+) where {T <: PSY.StaticTimeSeries}
     return IS.StaticTimeSeriesCache(
         T,
         component,
@@ -22,7 +22,7 @@ function make_time_series_cache(
     initial_time,
     horizon::Int;
     ignore_scaling_factors = true,
-) where T <: PSY.AbstractDeterministic
+) where {T <: PSY.AbstractDeterministic}
     return IS.ForecastCache(
         T,
         component,
@@ -59,7 +59,7 @@ function get_time_series_values!(
     initial_time,
     horizon::Int;
     ignore_scaling_factors = true,
-) where T <: PSY.Forecast
+) where {T <: PSY.Forecast}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
             T,
@@ -99,7 +99,7 @@ function get_time_series_values!(
     initial_time,
     len::Int = 1;
     ignore_scaling_factors = true,
-) where T <: PSY.StaticTimeSeries
+) where {T <: PSY.StaticTimeSeries}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
             T,

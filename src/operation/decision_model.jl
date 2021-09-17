@@ -218,16 +218,16 @@ end
 
 function build_initialization!(model::DecisionModel)
     template = get_initialization_template(model)
-    requires_initialization = false
+    requires_init = false
     for device_model in get_device_models(template)
-        requires_initialization = requires_initialization(get_formulation(device_model))
-        if requires_initialization
+        requires_init = requires_initialization(get_formulation(device_model))
+        if requires_init
             @debug "Initialization required for the model"
             build_initialization_problem(model)
             break
         end
     end
-    if !requires_initialization
+    if !requires_init
         @debug "No initial conditions in the model"
     end
     return

@@ -14,3 +14,4 @@ get_initialization_device_model(
     ::DeviceModel{T, D},
 ) where {T <: PSY.Device, D <: AbstractDeviceFormulation} =
     error("`get_initialization_device_model` must be implemented for $T and $D")
+requires_initialization(::AbstractDeviceFormulation) = false

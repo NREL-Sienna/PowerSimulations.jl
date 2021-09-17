@@ -1,8 +1,4 @@
-function calculate_ic_quantity(
-    ic::InitialCondition,
-    ::Float64,
-    ::Dates.Period,
-)
+function calculate_ic_quantity(ic::InitialCondition, ::Float64, ::Dates.Period)
     error("Initial condition calculation for $(typeof(ic)) not implemented")
 end
 
@@ -54,8 +50,7 @@ function calculate_ic_quantity(
     ic::InitialCondition{DevicePower, T},
     var_value::Float64,
     elapsed_period::Dates.Period,
-) where {T <: Union{Float64, PJ.ParameterRef}}
-
+) where {T <: Union{Float64, PJ.ParameterRef}} 
 end
 
 function calculate_ic_quantity(

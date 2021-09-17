@@ -1,10 +1,14 @@
 ######################### Initial Condition Updating #########################################
-function _set_first_initial_conditions!(initial_condition_vector::Vector, variable::JuMP.Containers.DenseAxisArray{JuMP.VariableRef}, elapsed_period::Dates.Period)
+function _set_first_initial_conditions!(
+    initial_condition_vector::Vector,
+    variable::JuMP.Containers.DenseAxisArray{JuMP.VariableRef},
+    elapsed_period::Dates.Period,
+)
     error("expected")
     for ic in initial_condition_vector
-       name = get_component_name(ic)
-       var_value = JuMP.value(variable[name, 1])
-       calculate_ic_quantity(initial_condition, var_value, elapsed_period)
+        name = get_component_name(ic)
+        var_value = JuMP.value(variable[name, 1])
+        calculate_ic_quantity(initial_condition, var_value, elapsed_period)
     end
     return
 end
@@ -12,7 +16,10 @@ end
 """
     Used to set the model's first initial conditions
 """
-function set_first_initial_conditions!(model::OperationModel, key::ICKey{InitialTimeDurationOn, T}) where T <: PSY.Component
+function set_first_initial_conditions!(
+    model::OperationModel,
+    key::ICKey{InitialTimeDurationOn, T},
+) where {T <: PSY.Component}
     ic_container = odel.internal.ic_model_container
     container = get_optimization_container(model)
     ic_var = get_aux_variable(ic_container, TimeDurationOn, T)
@@ -21,7 +28,10 @@ function set_first_initial_conditions!(model::OperationModel, key::ICKey{Initial
     # @debug last_status, var_status, abs(last_status - var_status) _group = LOG_GROUP_INITIAL_CONDITIONS
 end
 
-function set_first_initial_conditions!(model::OperationModel, key::ICKey{InitialTimeDurationOff, T}) where T <: PSY.Component
+function set_first_initial_conditions!(
+    model::OperationModel,
+    key::ICKey{InitialTimeDurationOff, T},
+) where {T <: PSY.Component}
     ic_container = odel.internal.ic_model_container
     container = get_optimization_container(model)
     ic_var = get_aux_variable(ic_container, TimeDurationOff, T)
@@ -31,7 +41,10 @@ function set_first_initial_conditions!(model::OperationModel, key::ICKey{Initial
     return
 end
 
-function set_first_initial_conditions!(model::OperationModel, key::ICKey{DevicePower, T}) where T <: PSY.Component
+function set_first_initial_conditions!(
+    model::OperationModel,
+    key::ICKey{DevicePower, T},
+) where {T <: PSY.Component}
     ic_container = odel.internal.ic_model_container
     container = get_optimization_container(model)
     ic_var = get_variable(ic_container, ActivePowerVariable, T)

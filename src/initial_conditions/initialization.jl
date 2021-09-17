@@ -1,22 +1,3 @@
-"""
-Stores results data for one EmulationModel
-"""
-mutable struct InitializationData
-    duals::Dict{ConstraintKey, DataFrames.DataFrame}
-    parameters::Dict{ParameterKey, DataFrames.DataFrame}
-    variables::Dict{VariableKey, DataFrames.DataFrame}
-    aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
-end
-
-function InitializationData()
-    return InitializationData(
-        Dict{ConstraintKey, DataFrames.DataFrame}(),
-        Dict{ParameterKey, DataFrames.DataFrame}(),
-        Dict{VariableKey, DataFrames.DataFrame}(),
-        Dict{AuxVarKey, DataFrames.DataFrame}(),
-    )
-end
-
 function get_initialization_template(model::OperationModel)
     ic_template = ProblemTemplate(get_network_model(model.template))
     for (_, device_model) in model.template.devices
