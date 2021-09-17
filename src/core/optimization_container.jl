@@ -523,7 +523,7 @@ function deserialize_metadata!(
     return
 end
 
-function _assign_container!(container::Dict, key::OptimizationContainerKey, value::AbstractArray)
+function _assign_container!(container::Dict, key::OptimizationContainerKey, value)
     if haskey(container, key)
         @error "$(encode_key(key)) is already stored" sort!(encode_key.(keys(container)))
         throw(IS.InvalidValue("$key is already stored"))
