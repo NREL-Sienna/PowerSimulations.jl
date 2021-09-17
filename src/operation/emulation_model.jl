@@ -232,33 +232,60 @@ function init_model_store!(model::EmulationModel)
     return
 end
 
+function build_initialization!(model::EmulationModel)
+    template = get_initialization_template(model)
+    requires_initialization = false
+    for device_model in get_device_models(template)
+        requires_initialization = requires_initialization(get_formulation(device_model))
+        if requires_initialization
+            @debug "Initialization required for the model"
+            build_initialization_problem(model)
+            break
+        end
+    end
+    if !requires_initialization
+        @debug "No initial conditions in the model"
+    end
+    return
+end
+
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
             @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
+        @info "Initializing Optimization Container For an EmulationModel"
+        init_optimization_container!(
+            get_optimization_container(model),
+            get_network_formulation(get_template(model)),
+            get_system(model),
+        )
+        @info "Initializing ModelStoreParams"
+        init_model_store!(model)
+
+        @info "Mapping Service Models"
+        populate_aggregated_service_model!(get_template(model), get_system(model))
+        populate_contributing_devices!(get_template(model), get_system(model))
+        add_services_to_device_model!(get_template(model))
+
+        @info "Intilization Model"
+        build_initialization!(model)
+        initialize!(model)
+        # Temporary while are able to switch from PJ to POI
+        container.built_for_recurrent_solves = true
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
 end
 
-function build_initialization!(model::EmulationModel)
-    container = get_optimization_container(model)
-    if isempty(keys(get_initial_conditions(container)))
-        @debug "No initial conditions in the model"
-    else
-        build_initialization_problem(model)
-    end
-    return
-end
+
 
 function build_impl!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
             build_pre_step!(model)
             build_problem!(model)
-            init_model_store!(model)
             # serialize && serialize_problem(model)
             # serialize && serialize_optimization_model(model)
             serialize_metadata!(
@@ -309,22 +336,8 @@ end
 Default implementation of build method for Emulation Problems for models conforming with  DecisionProblem specification. Overload this function to implement a custom build method
 """
 function build_problem!(model::EmulationModel{<:EmulationProblem})
-    @info "Initializing Optimization Container for EmulationModel"
 
-    container = get_optimization_container(model)
-    system = get_system(model)
-    init_optimization_container!(
-        container,
-        get_network_formulation(get_template(model)),
-        system,
-    )
-    # Temporary while are able to switch from PJ to POI
-    container.built_for_recurrent_solves = true
-    populate_aggregated_service_model!(get_template(model), get_system(model))
-    populate_contributing_devices!(get_template(model), get_system(model))
-    add_services_to_device_model!(get_template(model))
     build_impl!(container, get_template(model), system)
-    build_initialization_problem(model)
     return
 end
 
@@ -448,7 +461,6 @@ function run_impl(
     try
         prog_bar =
             ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
-        initialize!(model)
         for execution in 1:(internal.executions)
             one_step_solve!(model)
             write_results!(model, execution)

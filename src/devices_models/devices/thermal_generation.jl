@@ -19,6 +19,10 @@ struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
+requires_initialization(::AbstractThermalFormulation) = false
+requires_initialization(::AbstractThermalUnitCommitment) = true
+requires_initialization(::ThermalRampLimited) = true
+
 get_variable_multiplier(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
 get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
@@ -63,7 +67,7 @@ get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariab
 #################### Initial Conditions for models ###############
 get_initial_condition_value(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
 get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
-get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
+get_initial_condition_value(::DeviceAboveMinPower, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
 
 #! format: on
 
@@ -475,7 +479,7 @@ function initial_conditions!(
     formulation::AbstractCompactUnitCommitment,
 ) where {T <: PSY.ThermalGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus())
-    add_initial_condition!(container, devices, formulation, DevicePower())
+    add_initial_condition!(container, devices, formulation, DeviceAboveMinPower())
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOn())
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOff())
 
