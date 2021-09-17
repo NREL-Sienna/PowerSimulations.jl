@@ -243,6 +243,41 @@ function build_pre_step!(model::EmulationModel)
     return
 end
 
+function build_initialization!(model::EmulationModel)
+    container = get_optimization_container(model)
+    if isempty(keys(get_initial_conditions(container)))
+        @debug "No initial conditions in the model"
+    else
+        build_initialization_problem(model)
+    end
+    return
+end
+
+function build_impl!(model::EmulationModel{<:EmulationProblem}, serialize::Bool)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+        try
+            build_pre_step!(model)
+            build_problem!(model)
+            init_model_store!(model)
+            # serialize && serialize_problem(model)
+            # serialize && serialize_optimization_model(model)
+            serialize_metadata!(
+                get_optimization_container(model),
+                get_output_dir(model),
+                get_name(model),
+            )
+            set_status!(model, BuildStatus.BUILT)
+            log_values(get_settings(model))
+            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
+        catch e
+            set_status!(model, BuildStatus.FAILED)
+            bt = catch_backtrace()
+            @error "Emulation Problem Build Failed" exception = e, bt
+        end
+    end
+    return get_status(model)
+end
+
 """Implementation of build for any EmulationProblem"""
 function build!(
     model::EmulationModel{<:EmulationProblem};
@@ -285,7 +320,12 @@ function build_problem!(model::EmulationModel{<:EmulationProblem})
     )
     # Temporary while are able to switch from PJ to POI
     container.built_for_recurrent_solves = true
+    populate_aggregated_service_model!(get_template(model), get_system(model))
+    populate_contributing_devices!(get_template(model), get_system(model))
+    add_services_to_device_model!(get_template(model))
     build_impl!(container, get_template(model), system)
+    build_initialization_problem(model)
+    return
 end
 
 function reset!(model::EmulationModel{<:EmulationProblem})
@@ -299,28 +339,55 @@ function reset!(model::EmulationModel{<:EmulationProblem})
         PSY.SingleTimeSeries,
     )
     model.internal.container = container
+    model.internal.ic_model_container = deepcopy(container)
     empty_time_series_cache!(model)
     set_status!(model, BuildStatus.EMPTY)
+    return
+end
+
+function serialize_optimization_model(model::EmulationModel{<:EmulationProblem})
+    problem_name = "$(get_name(model))_EmulationModel"
+    json_file_name = "$(problem_name).json"
+    json_file_name = joinpath(get_output_dir(model), json_file_name)
+    serialize_optimization_model(get_optimization_container(model), json_file_name)
     return
 end
 
 function calculate_aux_variables!(model::EmulationModel)
     container = get_optimization_container(model)
     system = get_system(model)
-    aux_vars = get_aux_variables(container)
-    for key in keys(aux_vars)
-        calculate_aux_variable_value!(container, key, system)
-    end
+    calculate_aux_variables!(container, system)
     return
 end
 
 function calculate_dual_variables!(model::EmulationModel)
     container = get_optimization_container(model)
     system = get_system(model)
-    duals_vars = get_duals(container)
-    for key in keys(duals_vars)
-        _calculate_dual_variable_value!(container, key, system)
+    calculate_dual_variables!(container, system)
+    return
+end
+
+"""
+The one step solution method for the emulation model. Any Custom EmulationModel
+needs to reimplement this method. This method is called by run! and execute!.
+"""
+function _one_step_solve!(
+    container::OptimizationContainer,
+    system::PSY.System,
+    log::Dict{Symbol, Any},
+)
+    jump_model = get_jump_model(container)
+    _, log[:timed_solve_time], log[:solve_bytes_alloc], log[:sec_in_gc] =
+        @timed JuMP.optimize!(jump_model)
+    model_status = JuMP.primal_status(jump_model)
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        error("Optimizer returned $model_status")
     end
+
+    _, log[:timed_calculate_aux_variables] =
+        @timed calculate_aux_variables!(container, system)
+    _, log[:timed_calculate_dual_variables] =
+        @timed calculate_dual_variables!(container, system)
     return
 end
 
@@ -329,28 +396,27 @@ The one step solution method for the emulation model. Any Custom EmulationModel
 needs to reimplement this method. This method is called by run! and execute!.
 """
 function one_step_solve!(model::EmulationModel)
-    jump_model = get_jump_model(model)
-    log = get_solve_timed_log(model)
-    _, log[:timed_solve_time], log[:solve_bytes_alloc], log[:sec_in_gc] =
-        @timed JuMP.optimize!(jump_model)
-    model_status = JuMP.primal_status(jump_model)
-    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        error("Optimizer returned $model_status")
-    end
-
-    _, log[:timed_calculate_aux_variables] = @timed calculate_aux_variables!(model)
-    _, log[:timed_calculate_dual_variables] = @timed calculate_dual_variables!(model)
+    container = get_optimization_container(model)
+    _one_step_solve!(container, get_system(model), get_solve_timed_log(model))
     return
 end
 
 function initialize!(model::EmulationModel)
-    ic_model = build_initialization_problem(model)
-    one_step_solve!(ic_model)
-    write_results!(ic_model, 1)
-    for key in keys(get_initial_constraints(model))
+    container = get_optimization_container(model)
+    if isempty(keys(get_initial_conditions(container)))
+        return
+    end
+    @info "Initializing Model"
+    _one_step_solve!(
+        model.internal.ic_model_container,
+        get_system(model),
+        Dict{Symbol, Any}(),
+    )
+    error("expected")
+    for key in keys(get_initial_conditions(container))
         update_initial_conditions!(model, key)
     end
-    return ic_model
+    return
 end
 
 function update_model!(model::EmulationModel, store)
@@ -379,8 +445,7 @@ function run_impl(
     try
         prog_bar =
             ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
-        @info "Initializing Model"
-        initialize(model)
+        initialize!(model)
         for execution in 1:(internal.executions)
             one_step_solve!(model)
             write_results!(model, execution)

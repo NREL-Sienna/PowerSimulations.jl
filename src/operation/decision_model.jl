@@ -63,7 +63,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        _, ts_count, forecast_count = PSY.get_time_series_counts(sys)
+        _, _, forecast_count = PSY.get_time_series_counts(sys)
         if forecast_count < 1
             error(
                 "The system does not contain forecast data. A DecisionModel can't be built.",
@@ -296,20 +296,14 @@ end
 function calculate_aux_variables!(model::DecisionModel)
     container = get_optimization_container(model)
     system = get_system(model)
-    aux_vars = get_aux_variables(container)
-    for key in keys(aux_vars)
-        calculate_aux_variable_value!(container, key, system)
-    end
+    calculate_aux_variables!(container, system)
     return
 end
 
 function calculate_dual_variables!(model::DecisionModel)
     container = get_optimization_container(model)
     system = get_system(model)
-    duals_vars = get_duals(container)
-    for key in keys(duals_vars)
-        _calculate_dual_variable_value!(container, key, system)
-    end
+    calculate_dual_variables!(container, system)
     return
 end
 
