@@ -40,6 +40,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     expressions::Dict{ExpressionKey, JuMP.Containers.DenseAxisArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
+    initialization_data::InitializationData
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
@@ -74,6 +75,7 @@ function OptimizationContainer(
         Dict{ExpressionKey, AbstractArray}(),
         Dict{ParameterKey, ParameterContainer}(),
         Dict{ICKey, Vector{InitialCondition}}(),
+        InitializationData(),
         nothing,
         PSY.get_base_power(sys),
         Dict{Symbol, Any}(),

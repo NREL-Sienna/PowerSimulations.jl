@@ -1,6 +1,25 @@
+"""
+Stores results data for one EmulationModel
+"""
+mutable struct InitializationData
+    duals::Dict{ConstraintKey, DataFrames.DataFrame}
+    parameters::Dict{ParameterKey, DataFrames.DataFrame}
+    variables::Dict{VariableKey, DataFrames.DataFrame}
+    aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
+end
+
+function InitializationData()
+    return InitializationData(
+        Dict{ConstraintKey, DataFrames.DataFrame}(),
+        Dict{ParameterKey, DataFrames.DataFrame}(),
+        Dict{VariableKey, DataFrames.DataFrame}(),
+        Dict{AuxVarKey, DataFrames.DataFrame}(),
+    )
+end
+
 function get_initialization_template(model::OperationModel)
     ic_template = ProblemTemplate(get_network_model(model.template))
-    for (device, device_model) in model.template.devices
+    for (_, device_model) in model.template.devices
         base_model = get_initialization_device_model(device_model)
         base_model.use_slacks = device_model.use_slacks
         base_model.duals = device_model.duals
@@ -8,7 +27,7 @@ function get_initialization_template(model::OperationModel)
         base_model.attributes = device_model.attributes
         set_device_model!(ic_template, base_model)
     end
-    for (device, device_model) in model.template.branches
+    for (_, device_model) in model.template.branches
         base_model = get_initialization_device_model(device_model)
         base_model.use_slacks = device_model.use_slacks
         base_model.duals = device_model.duals
