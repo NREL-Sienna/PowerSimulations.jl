@@ -30,6 +30,7 @@ export ServiceModel
 export RangeReserve
 export RampReserve
 export StepwiseCostReserve
+export NonSpinningReserve
 export PIDSmoothACE
 export GroupReserve
 ######## Branch Models ########
