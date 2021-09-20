@@ -201,7 +201,7 @@ function device_mixedinteger_rateofchange!(
         con_up[name, t] = JuMP.@constraint(
             optimization_container.JuMPmodel,
             expression_ub - variable[name, t - 1] <=
-            r.ramp_limits.up + r.limits.max * varstart[name, 1]
+            r.ramp_limits.up + r.limits.max * varstart[name, t]
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_lb
