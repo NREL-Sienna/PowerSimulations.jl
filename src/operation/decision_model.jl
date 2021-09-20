@@ -314,7 +314,7 @@ function calculate_dual_variables!(model::DecisionModel)
 end
 
 function solve_impl(model::DecisionModel; optimizer = nothing, kwargs...)
-    status = _pre_solve_model_checks(model, optimizer; kwargs...)
+    status = _pre_solve_model_checks(model, optimizer)
     timed_log = get_solve_timed_log(model)
     jump_model = get_jump_model(model)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
@@ -351,14 +351,39 @@ results = solve!(OpModel, output_dir = "output")
 function solve!(
     model::DecisionModel{<:DecisionProblem};
     export_problem_results = false,
+    console_level = Logging.Error,
+    file_level = Logging.Info,
+    disable_timer_outputs = false,
     kwargs...,
 )
-    status = solve_impl(model; kwargs...)
-    set_run_status!(model, status)
-    if status == RunStatus.SUCCESSFUL
-        results = ProblemResults(model)
-        serialize_results(results, get_output_dir(model))
-        export_problem_results && export_results(results)
+    build_if_not_already_built!(
+        model;
+        console_level = console_level,
+        file_level = file_level,
+        disable_timer_outputs = disable_timer_outputs,
+        kwargs...,
+    )
+    TimerOutputs.reset_timer!(RUN_OPERATION_MODEL_TIMER)
+    disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
+    logger = configure_logging(model.internal, "a")
+    status = RunStatus.FAILED
+    try
+        Logging.with_logger(logger) do
+            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
+                status = solve_impl(model; kwargs...)
+                set_run_status!(model, status)
+            end
+            if status == RunStatus.SUCCESSFUL
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
+                    results = ProblemResults(model)
+                    serialize_results(results, get_output_dir(model))
+                    export_problem_results && export_results(results)
+                end
+            end
+            @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
+        end
+    finally
+        close(logger)
     end
 
     return status

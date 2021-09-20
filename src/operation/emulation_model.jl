@@ -359,7 +359,7 @@ function run_impl(
     enable_progress_bar = _PROGRESS_METER_ENABLED,
     kwargs...,
 )
-    set_run_status!(model, _pre_solve_model_checks(model, optimizer; kwargs...))
+    set_run_status!(model, _pre_solve_model_checks(model, optimizer))
     internal = get_internal(model)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
@@ -370,15 +370,17 @@ function run_impl(
         prog_bar =
             ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
         for execution in 1:(internal.executions)
-            one_step_solve!(model)
-            write_results!(model, execution)
-            advance_execution_count!(model)
-            update_model!(model)
-            ProgressMeter.update!(
-                prog_bar,
-                get_execution_count(model);
-                showvalues = [(:Execution, execution)],
-            )
+            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
+                one_step_solve!(model)
+                write_results!(model, execution)
+                advance_execution_count!(model)
+                update_model!(model)
+                ProgressMeter.update!(
+                    prog_bar,
+                    get_execution_count(model);
+                    showvalues = [(:Execution, execution)],
+                )
+            end
         end
     catch e
         @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
@@ -414,14 +416,41 @@ status = run!(model; output_dir = ./model_output, optimizer = GLPK.Optimizer, ex
 function run!(
     model::EmulationModel{<:EmulationProblem};
     export_problem_results = false,
+    console_level = Logging.Error,
+    file_level = Logging.Info,
+    disable_timer_outputs = false,
     kwargs...,
 )
-    status = run_impl(model; kwargs...)
-    set_run_status!(model, status)
-    if status == RunStatus.SUCCESSFUL
-        results = ProblemResults(model)
-        serialize_results(results, get_output_dir(model))
-        export_problem_results && export_results(results)
+    build_if_not_already_built!(
+        model;
+        console_level = console_level,
+        file_level = file_level,
+        disable_timer_outputs = disable_timer_outputs,
+        kwargs...,
+    )
+    set_console_level!(model, console_level)
+    set_file_level!(model, file_level)
+    TimerOutputs.reset_timer!(RUN_OPERATION_MODEL_TIMER)
+    disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
+    logger = configure_logging(model.internal, "a")
+    status = RunStatus.FAILED
+    try
+        Logging.with_logger(logger) do
+            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
+                status = run_impl(model; kwargs...)
+                set_run_status!(model, status)
+            end
+            if status == RunStatus.SUCCESSFUL
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
+                    results = ProblemResults(model)
+                    serialize_results(results, get_output_dir(model))
+                    export_problem_results && export_results(results)
+                end
+            end
+            @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
+        end
+    finally
+        close(logger)
     end
 
     return status
