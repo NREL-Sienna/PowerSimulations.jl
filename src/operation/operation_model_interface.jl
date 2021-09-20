@@ -133,6 +133,7 @@ function _pre_solve_model_checks(model::OperationModel, optimizer)
 
     optimizer_name = JuMP.solver_name(jump_model)
     @info "Solving $(typeof(model)) with optimizer = $optimizer_name"
+    @info "Solver backend: $(JuMP.backend(jump_model))"
 
     if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
         @error("No Optimizer has been defined, can't solve the operational problem")
