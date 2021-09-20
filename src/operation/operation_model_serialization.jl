@@ -1,4 +1,31 @@
 const _SERIALIZED_MODEL_FILENAME = "model.bin"
+const _SERIALIZED_OPTIMIZER_ATTRS =
+    (MOI.Silent(), MOI.NumberOfThreads(), MOI.TimeLimitSec())
+
+struct OptimizerAttributes
+    name::String
+    attrs::Dict
+end
+
+function OptimizerAttributes(model::OperationModel)
+    name = JuMP.solver_name(get_jump_model(model))
+    return OptimizerAttributes(name, _get_optimizer_attributes(model))
+end
+
+function _get_optimizer_attributes(model::OperationModel)
+    jump_model = get_jump_model(model)
+    attributes = Dict()
+    for attr in _SERIALIZED_OPTIMIZER_ATTRS
+        try
+            attributes[string(attr)] = JuMP.get_optimizer_attribute(jump_model, attr)
+        catch e
+            # Not all solvers support all attributes.
+            @debug "Failed to get $attr: $e"
+        end
+    end
+
+    return attributes
+end
 
 struct ProblemSerializationWrapper
     template::ProblemTemplate
@@ -6,6 +33,7 @@ struct ProblemSerializationWrapper
     settings::Settings
     model_type::DataType
     name::String
+    optimizer::OptimizerAttributes
 end
 
 function serialize_problem(model::OperationModel)
@@ -27,6 +55,7 @@ function serialize_problem(model::OperationModel)
         container.settings_copy,
         typeof(model),
         string(get_name(model)),
+        OptimizerAttributes(model),
     )
     bin_file_name = joinpath(get_output_dir(model), _SERIALIZED_MODEL_FILENAME)
     Serialization.serialize(bin_file_name, obj)
@@ -61,11 +90,22 @@ function deserialize_problem(
         sys = PSY.System(obj.sys)
     end
 
-    return obj.model_type(
-        obj.template,
-        sys,
-        kwargs[:jump_model];
-        name = obj.name,
-        settings...,
-    )
+    model =
+        obj.model_type(obj.template, sys, kwargs[:jump_model]; name = obj.name, settings...)
+    jump_model = get_jump_model(model)
+    if obj.optimizer.name == JuMP.solver_name(jump_model)
+        new_attrs = _get_optimizer_attributes(model)
+        for attr in _SERIALIZED_OPTIMIZER_ATTRS
+            attr_name = string(attr)
+            new = get(new_attrs, attr_name, nothing)
+            old = get(obj.optimizer.attrs, attr_name, nothing)
+            if new != old
+                @warn "Original solver used attribute $attr = $old. New solver uses $new."
+            end
+        end
+    else
+        @warn "Original solver was $(obj.optimizer.name), new solver is $(JuMP.solver_name(jump_model))"
+    end
+
+    return model
 end

@@ -114,7 +114,7 @@ end
         force_build = true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer = OSQP_optimizer)
     executions = 10
     @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
@@ -132,4 +132,22 @@ end
     var2 = read_variable(results, ActivePowerVariable, ThermalStandard)
 
     @test var1 == var2
+
+    # Not currently supported.
+    # Deserialize with different optimizer attributes.
+    #optimizer = JuMP.optimizer_with_attributes(
+    #    OSQP.Optimizer,
+    #    "verbose" => true,
+    #    "max_iter" => 50000,
+    #)
+    #@test_logs (:warn, r"Original solver used attribute") match_mode = :any EmulationModel(
+    #    path,
+    #    optimizer,
+    #)
+
+    # Deserialize with a different optimizer.
+    @test_logs (:warn, r"Original solver was .* new solver is") match_mode = :any EmulationModel(
+        path,
+        GLPK_optimizer,
+    )
 end
