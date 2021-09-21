@@ -130,6 +130,7 @@ get_resolution(container::OptimizationContainer) = container.resolution
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
 get_variables(container::OptimizationContainer) = container.variables
+get_initialization_data(container::OptimizationContainer) = container.initialization_data
 
 function is_milp(container::OptimizationContainer)
     type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)
@@ -870,7 +871,6 @@ function read_parameters(container::OptimizationContainer)
     parameters = get_parameters(container)
     (isnothing(parameters) || isempty(parameters)) && return params_dict
     for (k, v) in parameters
-        !isa(get_component_type(k), PSY.Component) && continue
         param_array = axis_array_to_dataframe(get_parameter_array(v))
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
         params_dict[k] = param_array .* multiplier_array
@@ -1016,6 +1016,64 @@ end
 
 function get_initial_conditions_keys(container::OptimizationContainer)
     return collect(keys(container.initial_conditions))
+end
+
+# TODO: This code is very simular to the in_memory_model_store function in line 100. Maybe we can do some consolidation
+function write_initialization_data(
+    container::OptimizationContainer,
+    ic_container::OptimizationContainer,
+)
+    for field in STORE_CONTAINERS
+        ic_container_dict = getfield(ic_container, field)
+        # TODO: Not ideal, clean up a bit more.
+        if field == STORE_CONTAINER_PARAMETERS
+            ic_container_dict = read_parameters(ic_container)
+        end
+        isempty(ic_container_dict) && continue
+        ic_data_dict = getfield(get_initialization_data(container), field)
+        for (key, field_container) in ic_container_dict
+            @debug "Adding $(encode_key_as_string(key)) to InitializationData"
+            if field == STORE_CONTAINER_PARAMETERS
+                ic_data_dict[key] = ic_container_dict[key]
+            else
+                ic_data_dict[key] = axis_array_to_dataframe(field_container, nothing)
+            end
+        end
+    end
+    return
+end
+
+# TODO: These methods aren't passing the potential meta fields in the keys
+function get_initialization_variable(
+    container::OptimizationContainer,
+    type::VariableType,
+    ::Type{T},
+) where {T <: Union{PSY.Component, PSY.System}}
+    return get_initialization_variable(get_initialization_data(container), type, T)
+end
+
+function get_initialization_aux_variable(
+    container::OptimizationContainer,
+    type::AuxVariableType,
+    ::Type{T},
+) where {T <: Union{PSY.Component, PSY.System}}
+    return get_initialization_aux_variable(get_initialization_data(container), type, T)
+end
+
+function get_initialization_dual(
+    container::OptimizationContainer,
+    type::ConstraintType,
+    ::Type{T},
+) where {T <: Union{PSY.Component, PSY.System}}
+    return get_initialization_dual(get_initialization_data(container), type, T)
+end
+
+function get_initialization_parameter(
+    container::OptimizationContainer,
+    type::ParameterType,
+    ::Type{T},
+) where {T <: Union{PSY.Component, PSY.System}}
+    return get_initialization_parameter(get_initialization_data(container), type, T)
 end
 
 function add_to_objective_function!(container::OptimizationContainer, expr)
