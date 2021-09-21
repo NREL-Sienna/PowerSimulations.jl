@@ -14,4 +14,4 @@ function get_available_components(
 end
 
 make_system_filename(sys::PSY.System) = "system-$(IS.get_uuid(sys)).json"
-make_system_filename(sys_uuid::Base.UUID) = "system-$(sys_uuid).json"
+make_system_filename(sys_uuid::Union{Base.UUID, AbstractString}) = "system-$(sys_uuid).json"

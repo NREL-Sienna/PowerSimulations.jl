@@ -158,12 +158,12 @@ function DecisionModel(
 end
 
 """
-    DecisionModel(filename::AbstractString)
+    DecisionModel(directory::AbstractString)
 
 Construct an DecisionProblem from a serialized file.
 
 # Arguments
-- `filename::AbstractString`: path to serialized file
+- `directory::AbstractString`: Directory containing a serialized model
 - `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
    serialized. Callers should pass whatever they passed to the original problem.
 - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes}` = nothing: The optimizer does
@@ -173,14 +173,14 @@ Construct an DecisionProblem from a serialized file.
    be deserialized from a file.
 """
 function DecisionModel(
-    filename::AbstractString;
+    directory::AbstractString,
+    optimizer::MOI.OptimizerWithAttributes;
     jump_model::Union{Nothing, JuMP.Model} = nothing,
-    optimizer::Union{Nothing, MOI.OptimizerWithAttributes} = nothing,
     system::Union{Nothing, PSY.System} = nothing,
 )
     return deserialize_problem(
         DecisionModel,
-        filename;
+        directory;
         jump_model = jump_model,
         optimizer = optimizer,
         system = system,
@@ -226,44 +226,12 @@ function build_pre_step!(model::DecisionModel)
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
 
-        @info "Initializing Optimization Container For a DecisionModel"
-        init_optimization_container!(
-            get_optimization_container(model),
-            get_network_formulation(get_template(model)),
-            get_system(model),
-        )
-        @info "Initializing ModelStoreParams"
-        init_model_store!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
 end
 
 get_horizon(model::DecisionModel) = get_horizon(get_settings(model))
-
-function _build!(model::DecisionModel{<:DecisionProblem}, serialize::Bool)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-        try
-            build_pre_step!(model)
-            build_problem!(model)
-            serialize && serialize_problem(model)
-            serialize && serialize_optimization_model(model)
-            serialize_metadata!(
-                get_optimization_container(model),
-                get_output_dir(model),
-                get_name(model),
-            )
-            set_status!(model, BuildStatus.BUILT)
-            log_values(get_settings(model))
-            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
-        catch e
-            set_status!(model, BuildStatus.FAILED)
-            bt = catch_backtrace()
-            @error "Operation Problem Build Failed" exception = e, bt
-        end
-    end
-    return get_status(model)
-end
 
 """Implementation of build for any DecisionProblem"""
 function build!(
@@ -283,7 +251,7 @@ function build!(
     logger = configure_logging(model.internal, "w")
     try
         Logging.with_logger(logger) do
-            return _build!(model, serialize)
+            return build_impl!(model, serialize)
         end
     finally
         close(logger)
@@ -295,10 +263,18 @@ Default implementation of build method for Operational Problems for models confo
 """
 
 function build_problem!(model::DecisionModel)
+    @info "Initializing Optimization Container For a DecisionModel"
     populate_aggregated_service_model!(get_template(model), get_system(model))
     populate_contributing_devices!(get_template(model), get_system(model))
     add_services_to_device_model!(get_template(model))
-    build_impl!(get_optimization_container(model), get_template(model), get_system(model))
+
+    container = get_optimization_container(model)
+    init_optimization_container!(
+        container,
+        get_network_formulation(get_template(model)),
+        get_system(model),
+    )
+    build_impl!(container, get_template(model), get_system(model))
 end
 
 function reset!(model::OperationModel)
@@ -315,13 +291,6 @@ function reset!(model::OperationModel)
     empty_time_series_cache!(model)
     set_status!(model, BuildStatus.EMPTY)
     return
-end
-
-function serialize_optimization_model(model::DecisionModel{<:DecisionProblem})
-    problem_name = "$(get_name(model))_DecisionModel"
-    json_file_name = "$(problem_name).json"
-    json_file_name = joinpath(get_output_dir(model), json_file_name)
-    serialize_optimization_model(get_optimization_container(model), json_file_name)
 end
 
 function calculate_aux_variables!(model::DecisionModel)
@@ -344,8 +313,8 @@ function calculate_dual_variables!(model::DecisionModel)
     return
 end
 
-function solve_impl(model::DecisionModel; optimizer = nothing)
-    status = _pre_solve_model_checks(model, optimizer)
+function solve_impl(model::DecisionModel; optimizer = nothing, kwargs...)
+    status = _pre_solve_model_checks(model, optimizer; kwargs...)
     timed_log = get_solve_timed_log(model)
     jump_model = get_jump_model(model)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
@@ -362,26 +331,40 @@ function solve_impl(model::DecisionModel; optimizer = nothing)
 end
 
 """
-Default solve method the operational model for a single instance. Solves problems
-    that conform to the requirements of DecisionModel{<: DecisionProblem}
+Default solve method for models that conform to the requirements of
+DecisionModel{<: DecisionProblem}.
+
+This will call [`build!`](@ref) on the model if it is not already built. It will forward all
+keyword arguments to that function.
+
 # Arguments
 - `model::OperationModel = model`: operation model
+- `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
+- `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
+
 # Examples
 ```julia
 results = solve!(OpModel)
+results = solve!(OpModel, output_dir = "output")
 ```
-# Accepted Key Words
-- `output_dir::String`: If a file path is provided the results
-automatically get written to file
-- `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 """
-function solve!(model::DecisionModel{<:DecisionProblem}; kwargs...)
+function solve!(
+    model::DecisionModel{<:DecisionProblem};
+    export_problem_results = false,
+    kwargs...,
+)
     status = solve_impl(model; kwargs...)
     set_run_status!(model, status)
+    if status == RunStatus.SUCCESSFUL
+        results = ProblemResults(model)
+        serialize_results(results, get_output_dir(model))
+        export_problem_results && export_results(results)
+    end
+
     return status
 end
 
-function write_problem_results!(
+function write_results!(
     step::Int,
     model::DecisionModel{<:DecisionProblem},
     start_time::Dates.DateTime,
@@ -390,7 +373,7 @@ function write_problem_results!(
 )
     stats = OptimizerStats(model, step)
     write_optimizer_stats!(store, get_name(model), stats, start_time)
-    write_model_results!(store, model, start_time; exports = exports)
+    write_results!(store, model, start_time; exports = exports)
     return
 end
 
@@ -415,14 +398,14 @@ function solve!(
 )
     solve_status = solve!(model)
     if solve_status == RunStatus.SUCCESSFUL
-        write_problem_results!(step, model, start_time, store, exports)
+        write_results!(step, model, start_time, store, exports)
         advance_execution_count!(model)
     end
 
     return solve_status
 end
 
-function write_model_results!(store, model::DecisionModel, timestamp; exports = nothing)
+function write_results!(store, model::DecisionModel, timestamp; exports = nothing)
     if exports !== nothing
         export_params = Dict{Symbol, Any}(
             :exports => exports,

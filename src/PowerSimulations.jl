@@ -114,6 +114,7 @@ export build!
 ## Op Model Exports
 export get_initial_conditions
 export serialize_problem
+export serialize_results
 export serialize_optimization_model
 ## Decision Model Export
 export solve!

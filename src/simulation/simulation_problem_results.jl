@@ -159,7 +159,7 @@ function set_system!(results::SimulationProblemResults, system::PSY.System)
     if sys_uuid != results.system_uuid
         throw(
             IS.InvalidValue(
-                "System mismatch. $sys_uuid does not match the stored value of $results.system_uuid",
+                "System mismatch. $sys_uuid does not match the stored value of $(results.system_uuid)",
             ),
         )
     end

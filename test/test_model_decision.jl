@@ -219,6 +219,20 @@ end
     @test length(get_timestamps(res)) == 24
 end
 
+@testset "Solve DecisionModelModel with auto-build" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
+    )
+    UC = DecisionModel(template, c_sys5)
+    output_dir = mktempdir(cleanup = true)
+    @test_throws ErrorException solve!(UC; optimizer = GLPK_optimizer)
+    @test solve!(UC; optimizer = GLPK_optimizer, output_dir = output_dir) ==
+          RunStatus.SUCCESSFUL
+end
+
 @testset "Test Serialization, deserialization and write optimizer problem" begin
     path = mktempdir(cleanup = true)
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
@@ -231,13 +245,11 @@ end
 
     file_list = sort!(collect(readdir(path)))
     model_name = PSI.get_name(model)
-    expected_json = "$(model_name)_DecisionModel.json"
-    @test expected_json in file_list
-    expected_bin = "$(model_name).bin"
-    @test expected_bin in file_list
-    filename = joinpath(path, expected_bin)
-    ED2 = DecisionModel(filename, optimizer = OSQP_optimizer)
+    @test PSI._JUMP_MODEL_FILENAME in file_list
+    @test PSI._SERIALIZED_MODEL_FILENAME in file_list
+    ED2 = DecisionModel(path, OSQP_optimizer)
     build!(ED2, output_dir = path)
+    solve!(ED2)
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 
     path2 = mktempdir(cleanup = true)
@@ -245,13 +257,13 @@ end
         DecisionModel(template, sys; optimizer = OSQP_optimizer, system_to_file = false)
 
     @test build!(model_no_sys; output_dir = path2) == PSI.BuildStatus.BUILT
-    @test solve!(model) == RunStatus.SUCCESSFUL
+    @test solve!(model_no_sys) == RunStatus.SUCCESSFUL
 
     file_list = sort!(collect(readdir(path2)))
     @test .!all(occursin.(r".h5", file_list))
-    filename = joinpath(path2, "$(model_name).bin")
-    ED3 = DecisionModel(filename; system = sys, optimizer = OSQP_optimizer)
+    ED3 = DecisionModel(path2, OSQP_optimizer; system = sys)
     build!(ED3, output_dir = path2)
+    solve!(ED3)
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
@@ -280,4 +292,40 @@ end
         "NonSpinningReserve",
     )
     @test service_key in keys(vars)
+end
+
+@testset "Test serialization/deserialization of DecisionModel results" begin
+    path = mktempdir(cleanup = true)
+    sys = PSB.build_system(PSITestSystems, "c_sys5_re")
+    template = get_template_dispatch_with_network(
+        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
+    )
+    model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
+    @test build!(model; output_dir = path) == PSI.BuildStatus.BUILT
+    @test solve!(model, export_problem_results = true) == RunStatus.SUCCESSFUL
+    results1 = ProblemResults(model)
+    var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
+    # Ensure that we can deserialize strings into keys.
+    var1_b = read_variable(results1, "ActivePowerVariable_ThermalStandard")
+
+    # Results were automatically serialized here.
+    results2 = ProblemResults(PSI.get_output_dir(model))
+    var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
+    @test var1_a == var2
+
+    # Serialize to a new directory with the exported function.
+    results_path = joinpath(path, "results")
+    serialize_results(results1, results_path)
+    @test isfile(joinpath(results_path, PSI._PROBLEM_RESULTS_FILENAME))
+    results3 = ProblemResults(results_path)
+    var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
+    @test var1_a == var3
+    @test get_system(results3) === nothing
+    set_system!(results3, get_system(results1))
+    @test get_system(results3) !== nothing
+
+    exp_file =
+        joinpath(path, "results", "variables", "ActivePowerVariable_ThermalStandard.csv")
+    var4 = PSI.read_dataframe(exp_file)
+    @test var1_a == var4
 end

@@ -11,7 +11,7 @@ function deserialize_metadata(
     output_dir::String,
     model_name,
 )
-    filename = _make_metadata_filename(output_dir, model_name)
+    filename = _make_metadata_filename(output_dir)
     return Serialization.deserialize(filename)
 end
 
@@ -489,14 +489,9 @@ end
 
 const _CONTAINER_METADATA_FILE = "optimization_container_metadata.bin"
 
-_make_metadata_filename(output_dir, model_name) =
-    joinpath(output_dir, "$(model_name)_$(_CONTAINER_METADATA_FILE)")
+_make_metadata_filename(output_dir) = joinpath(output_dir, _CONTAINER_METADATA_FILE)
 
-function serialize_metadata!(
-    container::OptimizationContainer,
-    output_dir::String,
-    model_name,
-)
+function serialize_metadata!(container::OptimizationContainer, output_dir::String)
     for key in Iterators.flatten((
         keys(container.constraints),
         keys(container.duals),
@@ -511,7 +506,7 @@ function serialize_metadata!(
         add_container_key!(container.metadata, encoded_key, key)
     end
 
-    filename = _make_metadata_filename(output_dir, model_name)
+    filename = _make_metadata_filename(output_dir)
     Serialization.serialize(filename, container.metadata)
     @debug "Serialized container keys to $filename" _group = IS.LOG_GROUP_SERIALIZATION
 end
