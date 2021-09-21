@@ -1,4 +1,4 @@
-function _get_initial_condition_value(
+function _get_initialization_value(
     ::Vector{T},
     component::PSY.Component,
     ::U,
@@ -11,11 +11,11 @@ function _get_initial_condition_value(
         AbstractServiceFormulation,
     },
 } where {U <: InitialConditionType}
-    val = get_initial_condition_value(U(), component, V())
+    val = get_initialization_value(U(), component, V())
     return T(component, val)
 end
 
-function _get_initial_condition_value(
+function _get_initialization_value(
     ::Vector{T},
     component::PSY.Component,
     ::U,
@@ -28,7 +28,8 @@ function _get_initial_condition_value(
         AbstractServiceFormulation,
     },
 } where {U <: InitialConditionType}
-    val = get_initial_condition_value(U(), component, V())
+    ic_data = get_initialization_data(container)
+    val = get_initialization_value(U(), component, V(), ic_data)
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
@@ -45,6 +46,6 @@ function add_initial_condition!(
     ini_cond_vector = add_initial_condition_container!(container, D(), T, components)
     for (ix, component) in enumerate(components)
         ini_cond_vector[ix] =
-            _get_initial_condition_value(ini_cond_vector, component, D(), U(), container)
+            _get_initialization_value(ini_cond_vector, component, D(), U(), container)
     end
 end
