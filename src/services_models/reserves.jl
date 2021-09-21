@@ -69,7 +69,7 @@ function add_constraints!(
     contributing_devices::U,
     model::ServiceModel{SR, V},
 ) where {
-    SR <: Union{PSY.Reserve, PSY.ReserveNonSpinning},
+    SR <: PSY.AbstractReserve,
     V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
@@ -77,8 +77,9 @@ function add_constraints!(
     initial_time = get_initial_time(container)
     @debug initial_time
     time_steps = get_time_steps(container)
+    names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(container, T(), SR, [name], time_steps; meta = name)
+    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
 
@@ -133,8 +134,9 @@ function add_constraints!(
     initial_time = get_initial_time(container)
     @debug initial_time
     time_steps = get_time_steps(container)
+    names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(container, T(), SR, [name], time_steps; meta = name)
+    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
     use_slacks && (slack_vars = reserve_slacks(container, service))
@@ -157,7 +159,7 @@ function cost_function!(
     container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, T},
-) where {SR <: Union{PSY.Reserve, PSY.ReserveNonSpinning}, T <: AbstractReservesFormulation}
+) where {SR <: PSY.AbstractReserve, T <: AbstractReservesFormulation}
     reserve =
         get_variable(container, ActivePowerReserveVariable(), SR, PSY.get_name(service))
     for r in reserve
@@ -179,8 +181,9 @@ function add_constraints!(
     initial_time = get_initial_time(container)
     @debug initial_time
     time_steps = get_time_steps(container)
+    names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(container, T(), SR, [name], time_steps; meta = name)
+    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
 

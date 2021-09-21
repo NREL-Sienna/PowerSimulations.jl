@@ -19,11 +19,7 @@ function add_variables!(
     service::U,
     contributing_devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     formulation::AbstractReservesFormulation,
-) where {
-    T <: VariableType,
-    U <: Union{PSY.Reserve, PSY.ReserveNonSpinning},
-    V <: PSY.Component,
-}
+) where {T <: VariableType, U <: PSY.AbstractReserve, V <: PSY.Component}
     add_service_variable!(container, T(), service, contributing_devices, formulation)
 end
 
