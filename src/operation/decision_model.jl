@@ -240,7 +240,6 @@ function build!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
-    serialize = true,
 )
     mkpath(output_dir)
     set_output_dir!(model, output_dir)
@@ -251,7 +250,7 @@ function build!(
     logger = configure_logging(model.internal, "w")
     try
         Logging.with_logger(logger) do
-            return build_impl!(model, serialize)
+            return build_impl!(model)
         end
     finally
         close(logger)
@@ -341,6 +340,7 @@ keyword arguments to that function.
 - `model::OperationModel = model`: operation model
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 - `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
+- `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
 
 # Examples
 ```julia
@@ -354,6 +354,7 @@ function solve!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
+    serialize = true,
     kwargs...,
 )
     build_if_not_already_built!(
@@ -363,6 +364,8 @@ function solve!(
         disable_timer_outputs = disable_timer_outputs,
         kwargs...,
     )
+    set_console_level!(model, console_level)
+    set_file_level!(model, file_level)
     TimerOutputs.reset_timer!(RUN_OPERATION_MODEL_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     logger = configure_logging(model.internal, "a")
@@ -374,6 +377,13 @@ function solve!(
                 set_run_status!(model, status)
             end
             if status == RunStatus.SUCCESSFUL
+                if serialize
+                    TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
+                        optimizer = get(kwargs, :optimizer, nothing)
+                        serialize_problem(model, optimizer = optimizer)
+                        serialize_optimization_model(model)
+                    end
+                end
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
                     results = ProblemResults(model)
                     serialize_results(results, get_output_dir(model))

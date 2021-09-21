@@ -86,16 +86,12 @@ function advance_execution_count!(model::OperationModel)
     return
 end
 
-function build_impl!(model::OperationModel, serialize::Bool)
+function build_impl!(model::OperationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
             build_pre_step!(model)
             build_problem!(model)
             init_model_store!(model)
-            if serialize
-                serialize_problem(model)
-                serialize_optimization_model(model)
-            end
             serialize_metadata!(get_optimization_container(model), get_output_dir(model))
             set_status!(model, BuildStatus.BUILT)
             log_values(get_settings(model))

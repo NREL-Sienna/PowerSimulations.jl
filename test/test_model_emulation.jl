@@ -47,18 +47,24 @@
 end
 
 @testset "Run EmulationModel with auto-build" begin
-    template = get_thermal_dispatch_template_network()
-    c_sys5 = PSB.build_system(
-        PSITestSystems,
-        "c_sys5_uc";
-        add_single_time_series = true,
-        force_build = true,
-    )
+    for serialize in (true, false)
+        template = get_thermal_dispatch_template_network()
+        c_sys5 = PSB.build_system(
+            PSITestSystems,
+            "c_sys5_uc";
+            add_single_time_series = true,
+            force_build = true,
+        )
 
-    model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
-    @test_throws ErrorException run!(model, executions = 10)
-    @test run!(model, executions = 10, output_dir = mktempdir(cleanup = true)) ==
-          RunStatus.SUCCESSFUL
+        model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
+        @test_throws ErrorException run!(model, executions = 10)
+        @test run!(
+            model,
+            executions = 10,
+            output_dir = mktempdir(cleanup = true),
+            serialize = serialize,
+        ) == RunStatus.SUCCESSFUL
+    end
 end
 
 @testset "Test serialization/deserialization of EmulationModel results" begin
@@ -133,17 +139,16 @@ end
 
     @test var1 == var2
 
-    # Not currently supported.
     # Deserialize with different optimizer attributes.
-    #optimizer = JuMP.optimizer_with_attributes(
-    #    OSQP.Optimizer,
-    #    "verbose" => true,
-    #    "max_iter" => 50000,
-    #)
-    #@test_logs (:warn, r"Original solver used attribute") match_mode = :any EmulationModel(
-    #    path,
-    #    optimizer,
-    #)
+    optimizer = JuMP.optimizer_with_attributes(
+        OSQP.Optimizer,
+        "verbose" => true,
+        "max_iter" => 60000,
+    )
+    @test_logs (:warn, r"Original solver used") match_mode = :any EmulationModel(
+        path,
+        optimizer,
+    )
 
     # Deserialize with a different optimizer.
     @test_logs (:warn, r"Original solver was .* new solver is") match_mode = :any EmulationModel(
