@@ -255,6 +255,11 @@ function build_pre_step!(model::EmulationModel)
             @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
+        # Temporary while are able to switch from PJ to POI
+        container = get_optimization_container(model)
+        container.built_for_recurrent_solves = true
+        model.internal.ic_model_container.built_for_recurrent_solves = true
+
         @info "Initializing Optimization Container For an EmulationModel"
         init_optimization_container!(
             get_optimization_container(model),
@@ -272,9 +277,6 @@ function build_pre_step!(model::EmulationModel)
         @info "Intilization Model"
         build_initialization!(model)
         initialize!(model)
-        # Temporary while are able to switch from PJ to POI
-        container = get_optimization_container(model)
-        container.built_for_recurrent_solves = true
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
@@ -396,7 +398,7 @@ end
 
 function initialize!(model::EmulationModel)
     container = get_optimization_container(model)
-    if isempty(keys(get_initial_conditions(container)))
+    if model.internal.ic_model_container === nothing
         return
     end
     @info "Initializing Model"
@@ -405,9 +407,8 @@ function initialize!(model::EmulationModel)
         get_system(model),
         Dict{Symbol, Any}(),
     )
-    for key in keys(get_initial_conditions(container))
-        # set_first_initial_conditions!(model, key)
-    end
+
+    write_initialization_data(container, model.internal.ic_model_container)
     return
 end
 

@@ -86,6 +86,14 @@ function advance_execution_count!(model::OperationModel)
     return
 end
 
+function write_initialization_data(model::OperationModel)
+    write_initialization_data(
+        get_optimization_container(model),
+        model.internal.ic_model_container,
+    )
+    return
+end
+
 function build_impl!(model::OperationModel, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
@@ -176,4 +184,5 @@ function serialize_optimization_model(model::OperationModel)
         get_optimization_container(model),
         joinpath(get_output_dir(model), _JUMP_MODEL_FILENAME),
     )
+    return
 end
