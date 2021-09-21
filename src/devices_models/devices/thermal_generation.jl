@@ -64,12 +64,87 @@ get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFo
 ############## ColdStartVariable, WarmStartVariable, HotStartVariable ############
 get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariable}, ::Type{PSY.ThermalMultiStart}, ::AbstractThermalFormulation) = true
 
-#################### Initial Conditions for models ###############
-get_initial_condition_value(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
-get_initial_condition_value(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
-get_initial_condition_value(::DeviceAboveMinPower, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
-
 #! format: on
+
+#################### Initial Conditions for models ###############
+function get_initialization_value(
+    ::DeviceStatus,
+    d::T,
+    ::AbstractThermalFormulation,
+    ic_data::InitializationData,
+) where {T <: PSY.ThermalGen}
+    if !has_initialization_variable(ic_data, OnVariable(), T)
+        status_var = PSY.get_status(d)
+    else
+        status_var =
+            get_initialization_variable(ic_data, OnVariable(), T)[1, PSY.get_name(d)]
+    end
+    @debug "Device $T $(PSY.get_name(d)) initialized DeviceStatus as $status_var" _group =
+        :ConstructGroup
+    return status_var
+end
+
+function get_initialization_value(
+    ::DevicePower,
+    d::T,
+    ::AbstractThermalFormulation,
+    ic_data::InitializationData,
+) where {T <: PSY.ThermalGen}
+    power_var =
+        get_initialization_variable(ic_data, ActivePowerVariable(), T)[1, PSY.get_name(d)]
+    @debug "Device $T $(PSY.get_name(d)) initialized DevicePower as $power_var" _group =
+        :ConstructGroup
+    return power_var
+end
+
+function get_initialization_value(
+    ::DeviceAboveMinPower,
+    d::T,
+    ::AbstractCompactUnitCommitment,
+    ic_data::InitializationData,
+) where {T <: PSY.ThermalGen}
+    power_var =
+        get_initialization_variable(ic_data, PowerAboveMinVariable(), T)[1, PSY.get_name(d)]
+    @debug "Device $T $(PSY.get_name(d)) initialized DeviceAboveMinPower as $power_var" _group =
+        :ConstructGroup
+    return power_var
+end
+
+function get_initialization_value(
+    ::InitialTimeDurationOn,
+    d::T,
+    ::AbstractThermalFormulation,
+    ic_data::InitializationData,
+) where {T <: PSY.ThermalGen}
+    status_var_result =
+        get_initialization_variable(ic_data, OnVariable(), T)[1, PSY.get_name(d)] >
+        ABSOLUTE_TOLERANCE
+    time = 0.0
+    if PSY.get_status(d) && status_var_result
+        time = PSY.get_time_at_status(d)
+    end
+    @debug "Device $T $(PSY.get_name(d)) initialized InitialTimeDurationOn as $time" _group =
+        :ConstructGroup
+    return time
+end
+
+function get_initialization_value(
+    ::InitialTimeDurationOff,
+    d::T,
+    ::AbstractThermalFormulation,
+    ic_data::InitializationData,
+) where {T <: PSY.ThermalGen}
+    status_var_result =
+        get_initialization_variable(ic_data, OnVariable(), T)[1, PSY.get_name(d)] >
+        ABSOLUTE_TOLERANCE
+    time = 0.0
+    if !PSY.get_status(d) && !status_var_result
+        time = PSY.get_time_at_status(d)
+    end
+    @debug "Device $T $(PSY.get_name(d)) initialized InitialTimeDurationOff as $time" _group =
+        :ConstructGroup
+    return time
+end
 
 function get_initialization_device_model(
     model::DeviceModel{T, D},
@@ -81,22 +156,6 @@ function get_initialization_device_model(
     model::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
     return DeviceModel(T, ThermalBasicUnitCommitment)
-end
-
-function get_initial_condition_value(
-    ::InitialTimeDurationOn,
-    d::PSY.ThermalGen,
-    ::AbstractThermalFormulation,
-)
-    return PSY.get_status(d) ? PSY.get_time_at_status(d) : 0.0
-end
-
-function get_initial_condition_value(
-    ::InitialTimeDurationOff,
-    d::PSY.ThermalGen,
-    ::AbstractThermalFormulation,
-)
-    return !PSY.get_status(d) ? PSY.get_time_at_status(d) : 0.0
 end
 
 function get_default_time_series_names(
@@ -504,7 +563,7 @@ function initial_conditions!(
     formulation::ThermalBasicUnitCommitment,
 ) where {T <: PSY.ThermalGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus())
-    add_initial_condition!(container, devices, formulation, DevicePower())
+    # add_initial_condition!(container, devices, formulation, DevicePower())
     return
 end
 
