@@ -55,8 +55,8 @@ get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStor
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
 
 #################### Initial Conditions for models ###############
-get_initial_condition_value(::DevicePower, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_active_power(d)
-get_initial_condition_value(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
+get_initialization_value(::DevicePower, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_active_power(d)
+get_initialization_value(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
 
 #! format: on
 

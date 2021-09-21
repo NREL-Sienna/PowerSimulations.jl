@@ -14,26 +14,26 @@ struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
 get_variable_multiplier(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable, 
-    ::Type{<:PSY.HydroGen}, 
+    ::ActivePowerReserveVariable,
+    ::Type{<:PSY.HydroGen},
     ::Type{<:PSY.Reserve{PSY.ReserveUp}}
 ) = ActivePowerRangeExpressionUB
 
 get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable, 
-    ::Type{<:PSY.HydroGen}, 
+    ::ActivePowerReserveVariable,
+    ::Type{<:PSY.HydroGen},
     ::Type{<:PSY.Reserve{PSY.ReserveDown}}
 ) = ActivePowerRangeExpressionLB
 
 get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable, 
-    ::Type{<:PSY.HydroPumpedStorage}, 
+    ::ActivePowerReserveVariable,
+    ::Type{<:PSY.HydroPumpedStorage},
     ::Type{<:PSY.Reserve{PSY.ReserveUp}}
 ) = ReserveRangeExpressionUB
 
 get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable, 
-    ::Type{<:PSY.HydroPumpedStorage}, 
+    ::ActivePowerReserveVariable,
+    ::Type{<:PSY.HydroPumpedStorage},
     ::Type{<:PSY.Reserve{PSY.ReserveDown}}
 ) = ReserveRangeExpressionLB
 
@@ -129,11 +129,11 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroForm
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::FixedOutput) = PSY.get_max_active_power(d)
 
 #################### Initial Conditions for models ###############
-get_initial_condition_value(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
-get_initial_condition_value(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d) > 0.0 ? 1.0 : 0.0
-get_initial_condition_value(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
-get_initial_condition_value(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
-get_initial_condition_value(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
+get_initialization_value(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
+get_initialization_value(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d) > 0.0 ? 1.0 : 0.0
+get_initialization_value(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
+get_initialization_value(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
+get_initialization_value(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
 
 #! format: on
 
