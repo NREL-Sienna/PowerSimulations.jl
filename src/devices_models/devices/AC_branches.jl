@@ -54,27 +54,6 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 #################################### Flow Variable Bounds ##################################################
-function _get_constraint_data(
-    devices::IS.FlattenIteratorWrapper{B},
-) where {B <: PSY.ACBranch}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
-        name = PSY.get_name(d)
-        services_ub = Vector{VariableKey}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        constraint_infos[ix] = DeviceRangeConstraintInfo(
-            name,
-            limit_values,
-            services_ub,
-            Vector{VariableKey}(),
-        )
-    end
-    return constraint_infos
-end
 
 function branch_rate_bounds!(
     container::OptimizationContainer,
@@ -82,8 +61,16 @@ function branch_rate_bounds!(
     ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
-    constraint_infos = _get_constraint_data(devices)
-    set_variable_bounds!(container, constraint_infos, FlowActivePowerVariable(), B)
+    var = get_variable(container, FlowActivePowerVariable(), B)
+    for d in devices
+        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
+        name = PSY.get_name(d)
+        for t in get_time_steps(container)
+            _var = var[name, t]
+            JuMP.set_upper_bound(_var, limit_values.max)
+            JuMP.set_lower_bound(_var, limit_values.min)
+        end
+    end
     return
 end
 
@@ -93,9 +80,19 @@ function branch_rate_bounds!(
     ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
 ) where {B <: PSY.ACBranch}
-    constraint_infos = _get_constraint_data(devices)
-    set_variable_bounds!(container, constraint_infos, FlowActivePowerFromToVariable(), B)
-    set_variable_bounds!(container, constraint_infos, FlowActivePowerToFromVariable(), B)
+    vars = [
+        get_variable(container, FlowActivePowerFromToVariable(), B),
+        get_variable(container, FlowActivePowerToFromVariable(), B),
+    ]
+    for d in devices
+        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
+        name = PSY.get_name(d)
+        for t in get_time_steps(container), var in vars
+            _var = var[name, t]
+            JuMP.set_upper_bound(_var, limit_values.max)
+            JuMP.set_lower_bound(_var, limit_values.min)
+        end
+    end
     return
 end
 
@@ -112,12 +109,12 @@ function get_min_max_limits(
     (min = -1 * PSY.get_rate(device), max = PSY.get_rate(device))
 end
 
-# TODO: Rename these to add_constraints!
 """
 Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
 """
-function branch_rate_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
+    cons_type::Type{RateLimitConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     X::Type{<:PM.AbstractActivePowerModel},
@@ -125,7 +122,7 @@ function branch_rate_constraints!(
 ) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
     add_range_constraints!(
         container,
-        RateLimitConstraint,
+        cons_type,
         FlowActivePowerVariable,
         devices,
         model,

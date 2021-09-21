@@ -99,7 +99,14 @@ function construct_device!(
     @debug "construct_device" _group = :BranchGroup
 
     devices = get_available_components(B, sys)
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        RateLimitConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -135,7 +142,14 @@ function construct_device!(
         get_feedforward(model),
     )
 
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    add_constraints!(
+        container,
+        RateLimitConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -282,7 +296,53 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    if model isa DeviceModel{B, HVDCLossless} # TODO: couldnt resolve ambiguity, so trying if/else
+        add_constraints!(
+            container,
+            FlowRateConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    else
+        add_constraints!(
+            container,
+            FlowRateConstraintFT,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            FlowRateConstraintTF,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{B, <:AbstractDCLineFormulation},
+    ::NetworkModel{S},
+) where {B <: PSY.DCBranch, S <: PM.AbstractDCPLLModel}
+    devices = get_available_components(B, sys)
+    add_constraints!(
+        container,
+        FlowRateConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -324,7 +384,14 @@ function construct_device!(
 }
     devices = get_available_components(B, sys)
 
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    add_constraints!(
+        container,
+        FlowRateConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -362,7 +429,14 @@ function construct_device!(
 
     devices = get_available_components(B, sys)
 
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    add_constraints!(
+        container,
+        FlowRateConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end

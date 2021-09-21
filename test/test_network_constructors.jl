@@ -411,7 +411,8 @@ end
         c_sys14_dc => [3264, 96, 672, 672, 2472],
     )
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
-    for network in networks, sys in systems
+    for network in networks, (ix, sys) in enumerate(systems)
+        @show network, ix
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
