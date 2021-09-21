@@ -107,6 +107,38 @@ function get_initialization_parameter(
     return ic_data.parameters[ParameterKey(T, U)]
 end
 
+function has_initialization_variable(
+    ic_data::InitializationData,
+    ::T,
+    ::Type{U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return haskey(ic_data.variables, VariableKey(T, U))
+end
+
+function has_initialization_aux_variable(
+    ic_data::InitializationData,
+    ::T,
+    ::Type{U},
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return haskey(ic_data.aux_variables, AuxVarKey(T, U))
+end
+
+function has_initialization_dual(
+    ic_data::InitializationData,
+    ::T,
+    ::Type{U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return haskey(ic_data.duals, ConstraintKey(T, U))
+end
+
+function has_initialization_parameter(
+    ic_data::InitializationData,
+    ::T,
+    ::Type{U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return haskey(ic_data.parameters, ParameterKey(T, U))
+end
+
 ######################### Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
 struct DeviceAboveMinPower <: InitialConditionType end
