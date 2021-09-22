@@ -100,56 +100,25 @@ end
 # Default fallback for unsupported constraints.
 _update_numerical_bounds(range::NumericalBounds, func, idx) = nothing
 
-function get_constraint_numerical_bounds(model::DecisionModel; verbose = false)
-    if verbose
-        constraint_bounds = Dict()
-        for (const_key, constriant_array) in
-            get_constraints(get_optimization_container(model))
-            bounds = ConstraintBounds()
-            for idx in Iterators.product(constriant_array.axes...)
-                con_obj = JuMP.constraint_object(constriant_array[idx...])
-                _update_coefficient_bounds(bounds, con_obj, idx)
-                _update_rhs_bounds(bounds, con_obj, idx)
-            end
-            constraint_bounds[const_key] = bounds
+function get_constraint_numerical_bounds(model::OperationModel)
+    bounds = ConstraintBounds()
+    for (const_key, constriant_array) in get_constraints(get_optimization_container(model))
+        for idx in Iterators.product(constriant_array.axes...)
+            con_obj = JuMP.constraint_object(constriant_array[idx...])
+            _update_coefficient_bounds(bounds, con_obj, (const_key, idx))
+            _update_rhs_bounds(bounds, con_obj, (const_key, idx))
         end
-        return constraint_bounds
-    else
-        bounds = ConstraintBounds()
-        for (const_key, constriant_array) in
-            get_constraints(get_optimization_container(model))
-            for idx in Iterators.product(constriant_array.axes...)
-                con_obj = JuMP.constraint_object(constriant_array[idx...])
-                _update_coefficient_bounds(bounds, con_obj, (const_key, idx))
-                _update_rhs_bounds(bounds, con_obj, (const_key, idx))
-            end
-        end
-        return bounds
     end
+    return bounds
 end
 
-function get_variable_numerical_bounds(model::DecisionModel; verbose = false)
-    if verbose
-        variable_bounds = Dict()
-        for (variable_key, variable_array) in
-            get_variables(get_optimization_container(model))
-            bounds = VariableBounds()
-            for idx in Iterators.product(variable_array.axes...)
-                var = variable_array[idx...]
-                _update_variable_bounds(bounds, var, idx)
-            end
-            variable_bounds[variable_key] = bounds
+function get_variable_numerical_bounds(model::DecisionModel)
+    bounds = VariableBounds()
+    for (variable_key, variable_array) in get_variables(get_optimization_container(model))
+        for idx in Iterators.product(variable_array.axes...)
+            var = variable_array[idx...]
+            _update_variable_bounds(bounds, var, (variable_key, idx))
         end
-        return variable_bounds
-    else
-        bounds = VariableBounds()
-        for (variable_key, variable_array) in
-            get_variables(get_optimization_container(model))
-            for idx in Iterators.product(variable_array.axes...)
-                var = variable_array[idx...]
-                _update_variable_bounds(bounds, var, (variable_key, idx))
-            end
-        end
-        return bounds
     end
+    return bounds
 end

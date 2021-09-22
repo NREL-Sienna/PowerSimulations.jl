@@ -338,10 +338,10 @@ end
     model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
 
-    bounds = PSI.get_constraint_numerical_bounds(model; verbose = false)
+    bounds = PSI.get_constraint_numerical_bounds(model)
     _check_constraint_bounds(bounds, valid_bounds)
 
-    model_bounds = PSI.get_constraint_numerical_bounds(model; verbose = true)
+    model_bounds = PSI.get_detailed_constraint_numerical_bounds(model)
     valid_model_bounds = Dict(
         :CopperPlateBalanceConstraint_System => (
             coefficient = (min = 1.0, max = 1.0),
@@ -367,10 +367,10 @@ end
     model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
 
-    bounds = PSI.get_variable_numerical_bounds(model; verbose = false)
+    bounds = PSI.get_variable_numerical_bounds(model)
     _check_variable_bounds(bounds, valid_bounds)
 
-    model_bounds = PSI.get_variable_numerical_bounds(model; verbose = true)
+    model_bounds = PSI.get_detailed_variable_numerical_bounds(model)
     valid_model_bounds = Dict(
         :StopVariable_ThermalStandard => (min = 0.0, max = 1.0),
         :StartVariable_ThermalStandard => (min = 0.0, max = 1.0),
