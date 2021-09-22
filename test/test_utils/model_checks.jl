@@ -253,3 +253,15 @@ function _test_html_print_methods(list::Array)
         @test !isnothing(grabbed)
     end
 end
+
+function _check_constraint_bounds(bounds::PSI.ConstraintBounds, valid_bounds::NamedTuple)
+    @test bounds.coefficient.min == valid_bounds.coefficient.min
+    @test bounds.coefficient.max == valid_bounds.coefficient.max
+    @test bounds.rhs.min == valid_bounds.rhs.min
+    @test bounds.rhs.max == valid_bounds.rhs.max
+end
+
+function _check_variable_bounds(bounds::PSI.VariableBounds, valid_bounds::NamedTuple)
+    @test bounds.bounds.min == valid_bounds.min
+    @test bounds.bounds.max == valid_bounds.max
+end
