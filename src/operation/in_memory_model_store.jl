@@ -35,6 +35,7 @@ end
 Stores results data for one EmulationModel
 """
 mutable struct EmulationModelOptimizerResults <: AbstractModelOptimizerResults
+    last_recorded_row::Int
     duals::Dict{ConstraintKey, DataFrames.DataFrame}
     parameters::Dict{ParameterKey, DataFrames.DataFrame}
     variables::Dict{VariableKey, DataFrames.DataFrame}
@@ -43,6 +44,7 @@ end
 
 function EmulationModelOptimizerResults()
     return EmulationModelOptimizerResults(
+        0,
         Dict{ConstraintKey, DataFrames.DataFrame}(),
         Dict{ParameterKey, DataFrames.DataFrame}(),
         Dict{VariableKey, DataFrames.DataFrame}(),
@@ -166,4 +168,36 @@ function read_results(
     container = getfield(store.data, container_type)
     # Return a copy because callers may mutate it.
     return copy(container[key], copycols = true)
+end
+
+function get_variable(
+    store::AbstractModelOptimizerResults,
+    ::T,
+    ::Type{U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return store.variables[VariableKey(T, U)]
+end
+
+function get_aux_variable(
+    store::AbstractModelOptimizerResults,
+    ::T,
+    ::Type{U},
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return store.aux_variables[AuxVarKey(T, U)]
+end
+
+function get_dual(
+    store::AbstractModelOptimizerResults,
+    ::T,
+    ::Type{U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return store.duals[ConstraintKey(T, U)]
+end
+
+function get_parameter(
+    store::AbstractModelOptimizerResults,
+    ::T,
+    ::Type{U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return store.parameters[ParameterKey(T, U)]
 end
