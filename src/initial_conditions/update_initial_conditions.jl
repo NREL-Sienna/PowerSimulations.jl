@@ -1,7 +1,7 @@
 function update_initial_conditions(
-    ::Vector{T},
-    store::EmulationModelOptimizerResults,
-    elapsed_period::Dates.Period,
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
 ) where {T <: InitialCondition{InitialTimeDurationOn, PJ.ParameterRef}}
     index = store.data.last_recorded_row
     for ic in ic_vector
@@ -12,8 +12,8 @@ function update_initial_conditions(
 end
 
 function update_initial_conditions(
-    ::Vector{T},
-    store::EmulationModelOptimizerResults,
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
     ::Dates.Period,
 ) where {T <: InitialCondition{InitialTimeDurationOff, PJ.ParameterRef}}
     index = store.data.last_recorded_row
@@ -25,8 +25,8 @@ function update_initial_conditions(
 end
 
 function update_initial_conditions(
-    ::Vector{T},
-    store::EmulationModelOptimizerResults,
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
     ::Dates.Period,
 ) where {T <: InitialCondition{DevicePower, PJ.ParameterRef}}
     index = store.data.last_recorded_row
@@ -38,13 +38,13 @@ function update_initial_conditions(
 end
 
 function update_initial_conditions(
-    ::Vector{T},
-    store::EmulationModelOptimizerResults,
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
     ::Dates.Period,
 ) where {T <: InitialCondition{DeviceStatus, PJ.ParameterRef}}
     index = store.data.last_recorded_row
     for ic in ic_vector
-        values = get_aux_variable(store, OnVariable(), get_component_type(ic))
+        values = get_variable(store, OnVariable(), get_component_type(ic))
         set_ic_quantity!(ic, values[index, get_component_name(ic)])
     end
     return

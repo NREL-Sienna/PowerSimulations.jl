@@ -171,33 +171,33 @@ function read_results(
 end
 
 function get_variable(
-    store::AbstractModelOptimizerResults,
+    store::InMemoryModelStore,
     ::T,
     ::Type{U},
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return store.variables[VariableKey(T, U)]
+    return store.data.variables[VariableKey(T, U)]
 end
 
 function get_aux_variable(
-    store::AbstractModelOptimizerResults,
+    store::InMemoryModelStore,
     ::T,
     ::Type{U},
 ) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return store.aux_variables[AuxVarKey(T, U)]
+    return store.data.aux_variables[AuxVarKey(T, U)]
 end
 
 function get_dual(
-    store::AbstractModelOptimizerResults,
+    store::InMemoryModelStore,
     ::T,
     ::Type{U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return store.duals[ConstraintKey(T, U)]
+    return store.data.duals[ConstraintKey(T, U)]
 end
 
 function get_parameter(
-    store::AbstractModelOptimizerResults,
+    store::InMemoryModelStore,
     ::T,
     ::Type{U},
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return store.parameters[ParameterKey(T, U)]
+    return store.data.parameters[ParameterKey(T, U)]
 end
