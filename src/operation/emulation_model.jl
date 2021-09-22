@@ -361,7 +361,7 @@ function run_impl(
     enable_progress_bar = _PROGRESS_METER_ENABLED,
     kwargs...,
 )
-    set_run_status!(model, _pre_solve_model_checks(model, optimizer))
+    _pre_solve_model_checks(model, optimizer)
     internal = get_internal(model)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
@@ -431,6 +431,8 @@ function run!(
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
                 run_impl(model; kwargs...)
+                # results requires RunStatus.SUCCESSFUL to run
+                set_run_status!(model, RunStatus.SUCCESSFUL)
             end
             if serialize
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
@@ -451,7 +453,6 @@ function run!(
         set_run_status!(model, RunStatus.FAILED)
         return get_run_status(model)
     finally
-        set_run_status!(model, RunStatus.SUCCESSFUL)
         close(logger)
     end
     return get_run_status(model)

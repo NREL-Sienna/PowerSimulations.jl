@@ -363,6 +363,8 @@ function solve!(
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                 solve_impl(model; kwargs...)
+                # results requires RunStatus.SUCCESSFUL to run
+                set_run_status!(model, RunStatus.SUCCESSFUL)
             end
             if serialize
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
@@ -383,7 +385,6 @@ function solve!(
         set_run_status!(model, RunStatus.FAILED)
         return get_run_status(model)
     finally
-        set_run_status!(model, RunStatus.SUCCESSFUL)
         close(logger)
     end
 
