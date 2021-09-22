@@ -58,7 +58,7 @@ function configure_logging(internal::ModelInternal, file_mode)
         console_stream = stderr,
         console_level = internal.console_level,
         file = true,
-        filename = joinpath(internal.output_dir, PROBLEM_BUILD_LOG_FILENAME),
+        filename = joinpath(internal.output_dir, PROBLEM_LOG_FILENAME),
         file_level = internal.file_level,
         file_mode = file_mode,
         tracker = nothing,

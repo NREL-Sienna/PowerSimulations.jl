@@ -74,18 +74,24 @@ end
 end
 
 @testset "Run EmulationModel with auto-build" begin
-    template = get_thermal_dispatch_template_network()
-    c_sys5 = PSB.build_system(
-        PSITestSystems,
-        "c_sys5_uc";
-        add_single_time_series = true,
-        force_build = true,
-    )
+    for serialize in (true, false)
+        template = get_thermal_dispatch_template_network()
+        c_sys5 = PSB.build_system(
+            PSITestSystems,
+            "c_sys5_uc";
+            add_single_time_series = true,
+            force_build = true,
+        )
 
-    model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
-    @test_throws ErrorException run!(model, executions = 10)
-    @test run!(model, executions = 10, output_dir = mktempdir(cleanup = true)) ==
-          RunStatus.SUCCESSFUL
+        model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
+        @test_throws ErrorException run!(model, executions = 10)
+        @test run!(
+            model,
+            executions = 10,
+            output_dir = mktempdir(cleanup = true),
+            serialize = serialize,
+        ) == RunStatus.SUCCESSFUL
+    end
 end
 
 @testset "Test serialization/deserialization of EmulationModel results" begin
@@ -141,7 +147,7 @@ end
         force_build = true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer = OSQP_optimizer)
     executions = 10
     @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
@@ -159,4 +165,21 @@ end
     var2 = read_variable(results, ActivePowerVariable, ThermalStandard)
 
     @test var1 == var2
+
+    # Deserialize with different optimizer attributes.
+    optimizer = JuMP.optimizer_with_attributes(
+        OSQP.Optimizer,
+        "verbose" => true,
+        "max_iter" => 60000,
+    )
+    @test_logs (:warn, r"Original solver used") match_mode = :any EmulationModel(
+        path,
+        optimizer,
+    )
+
+    # Deserialize with a different optimizer.
+    @test_logs (:warn, r"Original solver was .* new solver is") match_mode = :any EmulationModel(
+        path,
+        GLPK_optimizer,
+    )
 end
