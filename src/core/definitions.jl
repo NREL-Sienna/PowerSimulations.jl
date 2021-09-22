@@ -7,6 +7,7 @@ const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 const StartUpStages = NamedTuple{(:hot, :warm, :cold), NTuple{3, Float64}}
 
 const BUILD_PROBLEMS_TIMER = TimerOutputs.TimerOutput()
+const RUN_OPERATION_MODEL_TIMER = TimerOutputs.TimerOutput()
 const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 # Type Alias for JuMP and PJ containers
@@ -55,7 +56,7 @@ const LOWER_BOUND = "lb"
 
 # File Names definitions
 const PROBLEM_SERIALIZATION_FILENAME = "operation_problem.bin"
-const PROBLEM_BUILD_LOG_FILENAME = "operation_problem_build.log"
+const PROBLEM_LOG_FILENAME = "operation_problem.log"
 const HASH_FILENAME = "check.sha256"
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"

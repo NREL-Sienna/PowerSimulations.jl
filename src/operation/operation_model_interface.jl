@@ -86,16 +86,12 @@ function advance_execution_count!(model::OperationModel)
     return
 end
 
-function build_impl!(model::OperationModel, serialize::Bool)
+function build_impl!(model::OperationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
             build_pre_step!(model)
             build_problem!(model)
             init_model_store!(model)
-            if serialize
-                serialize_problem(model)
-                serialize_optimization_model(model)
-            end
             serialize_metadata!(get_optimization_container(model), get_output_dir(model))
             set_status!(model, BuildStatus.BUILT)
             log_values(get_settings(model))
@@ -109,23 +105,32 @@ function build_impl!(model::OperationModel, serialize::Bool)
     return get_status(model)
 end
 
-function _pre_solve_model_checks(model::OperationModel, optimizer; kwargs...)
+function build_if_not_already_built!(model; kwargs...)
     if !is_built(model)
         if !haskey(kwargs, :output_dir)
             error(
                 "'output_dir' must be provided as a kwarg if the model build status is $(get_status(model))",
             )
         else
-            status = build!(model; kwargs...)
+            new_kwargs = Dict(k => v for (k, v) in kwargs if k != :optimizer)
+            status = build!(model; new_kwargs...)
             if status != BuildStatus.BUILT
                 error("build! of the $(typeof(model)) failed: $status")
             end
         end
     end
+end
+
+function _pre_solve_model_checks(model::OperationModel, optimizer)
     jump_model = get_jump_model(model)
     if optimizer !== nothing
         JuMP.set_optimizer(jump_model, optimizer)
     end
+
+    optimizer_name = JuMP.solver_name(jump_model)
+    @info "Solving $(typeof(model)) with optimizer = $optimizer_name"
+    @info "Solver backend: $(JuMP.backend(jump_model))"
+
     if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
         @error("No Optimizer has been defined, can't solve the operational problem")
         return RunStatus.FAILED
