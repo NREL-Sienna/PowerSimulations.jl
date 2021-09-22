@@ -35,6 +35,8 @@ get_output_dir(model::OperationModel) = model.internal.output_dir
 get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
 get_parameters(model::OperationModel) = get_parameters(get_optimization_container(model))
 get_duals(model::OperationModel) = get_duals(get_optimization_container(model))
+get_initial_conditions(model::OperationModel) =
+    get_initial_conditions(get_optimization_container(model))
 
 get_run_status(model::OperationModel) = model.internal.run_status
 set_run_status!(model::OperationModel, status) = model.internal.run_status = status
