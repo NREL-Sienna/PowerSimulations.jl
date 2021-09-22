@@ -296,37 +296,28 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
-    if model isa DeviceModel{B, HVDCLossless} # TODO: couldnt resolve ambiguity, so trying if/else
-        add_constraints!(
-            container,
-            FlowRateConstraint,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            FlowRateConstraintFT,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            FlowRateConstraintTF,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+
+    add_constraints!(
+        container,
+        FlowRateConstraintFT,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        FlowRateConstraintTF,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+
     add_constraint_dual!(container, sys, model)
     return
 end
-
+#=
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -345,7 +336,7 @@ function construct_device!(
     )
     add_constraint_dual!(container, sys, model)
     return
-end
+end=#
 
 function construct_device!(
     container::OptimizationContainer,
