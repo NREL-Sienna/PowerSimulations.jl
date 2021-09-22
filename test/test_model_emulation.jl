@@ -7,7 +7,7 @@
         force_build = true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
           BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
@@ -20,7 +20,7 @@
         force_build = true,
     )
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    model = EmulationModel(template, c_sys5_uc_re; optimizer = Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_uc_re; optimizer = GLPK_optimizer)
 
     @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
           BuildStatus.BUILT
