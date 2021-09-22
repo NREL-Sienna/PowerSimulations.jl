@@ -267,6 +267,33 @@ end
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
+@testset "Test NonSpinning reseve model" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin", add_reserves = true)
+    template = get_thermal_standard_uc_template()
+    set_device_model!(
+        template,
+        DeviceModel(ThermalMultiStart, ThermalStandardUnitCommitment),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserveNonSpinning, NonSpinningReserve, "NonSpinningReserve"),
+    )
+
+    UC = DecisionModel(template, c_sys5)
+    output_dir = mktempdir(cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test solve!(UC; optimizer = Cbc_optimizer) == RunStatus.SUCCESSFUL
+    res = ProblemResults(UC)
+    @test isapprox(get_objective_value(res), 259346.0; atol = 10000.0)
+    vars = res.variable_values
+    service_key = PSI.VariableKey(
+        ActivePowerReserveVariable,
+        PSY.VariableReserveNonSpinning,
+        "NonSpinningReserve",
+    )
+    @test service_key in keys(vars)
+end
+
 @testset "Test serialization/deserialization of DecisionModel results" begin
     path = mktempdir(cleanup = true)
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")

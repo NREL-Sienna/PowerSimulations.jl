@@ -22,11 +22,12 @@ end
 """
 This function creates the requirement constraint that will be attained by the apropriate services
 """
-function service_requirement_constraint!(
+function add_constraints!(
     container::OptimizationContainer,
+    T::Type{RequirementConstraint},
     service::SR,
-    model::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
+    model::ServiceModel{SR, GroupReserve},
 ) where {SR <: PSY.StaticReserveGroup}
     initial_time = get_initial_time(container)
     @debug initial_time

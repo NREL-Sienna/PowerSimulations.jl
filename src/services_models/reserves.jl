@@ -2,7 +2,7 @@
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
 struct RampReserve <: AbstractReservesFormulation end
-
+struct NonSpinningReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables #########################################
 
 get_variable_multiplier(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
@@ -13,6 +13,14 @@ get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.Reserve, d::PSY.Com
 get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.Reserve, d::PSY.Storage, _) =  PSY.get_output_active_power_limits(d).max
 get_variable_lower_bound(::ActivePowerReserveVariable, ::PSY.Reserve, ::PSY.Component, _) = 0.0
 
+############################### ActivePowerReserveVariable, ReserveNonSpinning #########################################
+
+get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.ReserveNonSpinning}, ::AbstractReservesFormulation) = false
+get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.ReserveNonSpinning, d::PSY.Component, _) = PSY.get_max_active_power(d)
+get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.ReserveNonSpinning, d::PSY.Storage, _) =  PSY.get_output_active_power_limits(d).max
+get_variable_lower_bound(::ActivePowerReserveVariable, ::PSY.ReserveNonSpinning, ::PSY.Component, _) = 0.0
+
+
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 
 get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}, ::AbstractReservesFormulation) = false
@@ -20,6 +28,7 @@ get_variable_upper_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve,
 get_variable_lower_bound(::ServiceRequirementVariable, ::PSY.ReserveDemandCurve, ::PSY.Component, ::AbstractReservesFormulation) = 0.0
 
 get_multiplier_value(::RequirementTimeSeriesParameter, d::PSY.Reserve, ::AbstractReservesFormulation) = PSY.get_requirement(d)
+get_multiplier_value(::RequirementTimeSeriesParameter, d::PSY.ReserveNonSpinning, ::AbstractReservesFormulation) = PSY.get_requirement(d)
 
 #! format: on
 
@@ -27,6 +36,15 @@ function get_default_time_series_names(
     ::Type{<:PSY.Reserve},
     ::Type{T},
 ) where {T <: Union{RangeReserve, RampReserve}}
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        RequirementTimeSeriesParameter => "requirement",
+    )
+end
+
+function get_default_time_series_names(
+    ::Type{<:PSY.ReserveNonSpinning},
+    ::Type{NonSpinningReserve},
+)
     return Dict{Type{<:TimeSeriesParameter}, String}(
         RequirementTimeSeriesParameter => "requirement",
     )
@@ -44,24 +62,24 @@ function get_default_attributes(::Type{<:PSY.Service}, ::Type{<:AbstractServiceF
 end
 
 ################################## Reserve Requirement Constraint ##########################
-function service_requirement_constraint!(
+function add_constraints!(
     container::OptimizationContainer,
+    T::Type{RequirementConstraint},
     service::SR,
-    model::ServiceModel{SR, T},
-) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
+    contributing_devices::U,
+    model::ServiceModel{SR, V},
+) where {
+    SR <: PSY.AbstractReserve,
+    V <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
     parameters = built_for_recurrent_solves(container)
     initial_time = get_initial_time(container)
     @debug initial_time
     time_steps = get_time_steps(container)
+    names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(
-        container,
-        RequirementConstraint(),
-        SR,
-        [name],
-        time_steps;
-        meta = name,
-    )
+    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
 
@@ -102,23 +120,23 @@ function service_requirement_constraint!(
     return
 end
 
-function service_requirement_constraint!(
+function add_constraints!(
     container::OptimizationContainer,
+    T::Type{RequirementConstraint},
     service::SR,
-    model::ServiceModel{SR, T},
-) where {SR <: PSY.StaticReserve, T <: AbstractReservesFormulation}
+    contributing_devices::U,
+    model::ServiceModel{SR, V},
+) where {
+    SR <: PSY.StaticReserve,
+    V <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
     initial_time = get_initial_time(container)
     @debug initial_time
     time_steps = get_time_steps(container)
+    names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(
-        container,
-        RequirementConstraint(),
-        SR,
-        [name],
-        time_steps;
-        meta = name,
-    )
+    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
     use_slacks && (slack_vars = reserve_slacks(container, service))
@@ -141,7 +159,7 @@ function cost_function!(
     container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, T},
-) where {SR <: PSY.Reserve, T <: AbstractReservesFormulation}
+) where {SR <: PSY.AbstractReserve, T <: AbstractReservesFormulation}
     reserve =
         get_variable(container, ActivePowerReserveVariable(), SR, PSY.get_name(service))
     for r in reserve
@@ -150,23 +168,22 @@ function cost_function!(
     return
 end
 
-function service_requirement_constraint!(
+function add_constraints!(
     container::OptimizationContainer,
+    T::Type{RequirementConstraint},
     service::SR,
-    ::ServiceModel{SR, StepwiseCostReserve},
-) where {SR <: PSY.ReserveDemandCurve}
+    contributing_devices::U,
+    model::ServiceModel{SR, StepwiseCostReserve},
+) where {
+    SR <: PSY.ReserveDemandCurve,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
     initial_time = get_initial_time(container)
     @debug initial_time
     time_steps = get_time_steps(container)
+    names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(
-        container,
-        RequirementConstraint(),
-        SR,
-        [name],
-        time_steps;
-        meta = name,
-    )
+    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
 
@@ -226,56 +243,129 @@ function _get_data_for_ramp_limit(
     return data
 end
 
-function ramp_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
+    T::Type{RampConstraint},
     service::SR,
     contributing_devices::U,
-    ::ServiceModel{SR, T},
+    model::ServiceModel{SR, V},
 ) where {
     SR <: PSY.Reserve{PSY.ReserveUp},
-    T <: AbstractReservesFormulation,
+    V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    data = _get_data_for_ramp_limit(container, service, contributing_devices)
+    rate_data = _get_data_for_ramp_limit(container, service, contributing_devices)
     service_name = PSY.get_name(service)
-    if !isempty(data)
-        service_upward_rateofchange!(
+    if !isempty(rate_data)
+        time_steps = get_time_steps(container)
+        variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
+        set_name = [get_component_name(r) for r in rate_data]
+        con_up = add_cons_container!(
             container,
-            data,
-            RampConstraint(),
-            ActivePowerReserveVariable(),
-            service_name,
+            T(),
             SR,
+            set_name,
+            time_steps,
+            meta = service_name,
         )
+        for r in rate_data, t in time_steps
+            name = get_component_name(r)
+            con_up[name, t] =
+                JuMP.@constraint(container.JuMPmodel, variable[name, t] <= r.ramp_limits.up)
+        end
     else
         @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
     end
     return
 end
 
-function ramp_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
+    T::Type{RampConstraint},
     service::SR,
     contributing_devices::U,
-    ::ServiceModel{SR, T},
+    model::ServiceModel{SR, V},
 ) where {
     SR <: PSY.Reserve{PSY.ReserveDown},
-    T <: AbstractReservesFormulation,
+    V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    data = _get_data_for_ramp_limit(container, service, contributing_devices)
+    rate_data = _get_data_for_ramp_limit(container, service, contributing_devices)
     service_name = PSY.get_name(service)
-    if !isempty(data)
-        service_downward_rateofchange!(
+    if !isempty(rate_data)
+        time_steps = get_time_steps(container)
+        variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
+        set_name = [get_component_name(r) for r in rate_data]
+        con_down = add_cons_container!(
             container,
-            data,
-            RampConstraint(),
-            ActivePowerReserveVariable(),
-            service_name,
+            T(),
             SR,
+            set_name,
+            time_steps,
+            meta = service_name,
         )
+        for r in rate_data, t in time_steps
+            name = get_component_name(r)
+            con_down[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                variable[name, t] <= r.ramp_limits.down
+            )
+        end
     else
         @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ReservePowerConstraint},
+    service::SR,
+    contributing_devices::U,
+    ::ServiceModel{SR, V},
+) where {
+    SR <: PSY.VariableReserveNonSpinning,
+    V <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
+    constraint_type = T()
+    resolution = get_resolution(container)
+    if resolution > Dates.Minute(1)
+        minutes_per_period = Dates.value(Dates.Minute(resolution))
+    else
+        @warn("Not all formulations support under 1-minute resolutions. Exercise caution.")
+        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
+    end
+
+    cons = add_cons_container!(
+        container,
+        constraint_type,
+        SR,
+        [PSY.get_name(d) for d in contributing_devices],
+        time_steps,
+    )
+    var_r = get_variable(container, ActivePowerReserveVariable(), SR, PSY.get_name(service))
+    reserve_response_time = PSY.get_time_frame(service)
+    for d in contributing_devices
+        component_type = typeof(d)
+        name = PSY.get_name(d)
+        varstatus = get_variable(container, OnVariable(), component_type)
+        startup_time = PSY.get_time_limits(d).up
+        ramp_limits = _get_ramp_limits(d)
+        if reserve_response_time > startup_time
+            reserve_limit =
+                PSY.get_active_power_limits(d).min +
+                (reserve_response_time - startup_time) * minutes_per_period * ramp_limits.up
+        else
+            reserve_limit = 0
+        end
+        for t in time_steps
+            cons[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                var_r[name, t] <= (1 - varstatus[name, t]) * reserve_limit
+            )
+        end
     end
     return
 end
@@ -352,6 +442,14 @@ function modify_device_model!(
         end
     end
 
+    return
+end
+
+function modify_device_model!(
+    devices_template::Dict{Symbol, DeviceModel},
+    service_model::ServiceModel{<:PSY.ReserveNonSpinning, <:AbstractReservesFormulation},
+    contributing_devices::Vector{<:PSY.Component},
+)
     return
 end
 
