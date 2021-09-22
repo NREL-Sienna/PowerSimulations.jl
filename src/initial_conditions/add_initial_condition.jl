@@ -3,7 +3,7 @@ function _get_initialization_value(
     component::PSY.Component,
     ::U,
     ::V,
-    ::OptimizationContainer,
+    container::OptimizationContainer,
 ) where {
     T <: InitialCondition{U, Float64},
     V <: Union{
@@ -11,7 +11,8 @@ function _get_initialization_value(
         AbstractServiceFormulation,
     },
 } where {U <: InitialConditionType}
-    val = get_initialization_value(U(), component, V())
+    ic_data = get_initialization_data(container)
+    val = get_initialization_value(U(), component, V(), ic_data)
     return T(component, val)
 end
 

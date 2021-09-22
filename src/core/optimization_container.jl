@@ -461,6 +461,30 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     return
 end
 
+"""
+Default solve method for OptimizationContainer
+"""
+function solve_impl!(
+    container::OptimizationContainer,
+    system::PSY.System,
+    log::Dict{Symbol, Any},
+)
+    jump_model = get_jump_model(container)
+    _, log[:timed_solve_time], log[:solve_bytes_alloc], log[:sec_in_gc] =
+        @timed JuMP.optimize!(jump_model)
+    model_status = JuMP.primal_status(jump_model)
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        error("Optimizer returned $model_status")
+    end
+
+    _, log[:timed_calculate_aux_variables] =
+        @timed calculate_aux_variables!(container, system)
+    _, log[:timed_calculate_dual_variables] =
+        @timed calculate_dual_variables!(container, system)
+    # TODO: Run IIS here if supported by the solver
+    return
+end
+
 function export_optimizer_stats(
     optimizer_stats::Dict{Symbol, Any},
     container::OptimizationContainer,

@@ -232,23 +232,6 @@ function init_model_store!(model::EmulationModel)
     return
 end
 
-function build_initialization!(model::EmulationModel)
-    @assert model.internal.ic_model_container === nothing
-    requires_init = false
-    for (device_type, device_model) in get_device_models(get_template(model))
-        requires_init = requires_initialization(get_formulation(device_model)())
-        if requires_init
-            @debug "Initialization required for $device_type"
-            build_initialization_problem!(model)
-            break
-        end
-    end
-    if !requires_init
-        @info "No initial conditions in the model"
-    end
-    return
-end
-
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
@@ -351,49 +334,9 @@ end
 The one step solution method for the emulation model. Any Custom EmulationModel
 needs to reimplement this method. This method is called by run! and execute!.
 """
-function _one_step_solve!(
-    container::OptimizationContainer,
-    system::PSY.System,
-    log::Dict{Symbol, Any},
-)
-    jump_model = get_jump_model(container)
-    _, log[:timed_solve_time], log[:solve_bytes_alloc], log[:sec_in_gc] =
-        @timed JuMP.optimize!(jump_model)
-    model_status = JuMP.primal_status(jump_model)
-    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        error("Optimizer returned $model_status")
-    end
-
-    _, log[:timed_calculate_aux_variables] =
-        @timed calculate_aux_variables!(container, system)
-    _, log[:timed_calculate_dual_variables] =
-        @timed calculate_dual_variables!(container, system)
-    return
-end
-
-"""
-The one step solution method for the emulation model. Any Custom EmulationModel
-needs to reimplement this method. This method is called by run! and execute!.
-"""
 function one_step_solve!(model::EmulationModel)
     container = get_optimization_container(model)
-    _one_step_solve!(container, get_system(model), get_solve_timed_log(model))
-    return
-end
-
-function initialize!(model::EmulationModel)
-    container = get_optimization_container(model)
-    if model.internal.ic_model_container === nothing
-        return
-    end
-    @info "Solving Initialization Model"
-    _one_step_solve!(
-        model.internal.ic_model_container,
-        get_system(model),
-        Dict{Symbol, Any}(),
-    )
-
-    write_initialization_data(container, model.internal.ic_model_container)
+    solve_impl!(container, get_system(model), get_solve_timed_log(model))
     return
 end
 
@@ -409,6 +352,7 @@ end
 
 function update_model!(model::EmulationModel)
     update_model!(model, model.store)
+    return
 end
 
 function run_impl(
@@ -423,30 +367,21 @@ function run_impl(
     if internal.execution_count > 0
         error("Call build! again")
     end
-    try
-        prog_bar =
-            ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
-        for execution in 1:(internal.executions)
-            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
-                one_step_solve!(model)
-                write_results!(model, execution)
-                advance_execution_count!(model)
-                update_model!(model)
-                ProgressMeter.update!(
-                    prog_bar,
-                    get_execution_count(model);
-                    showvalues = [(:Execution, execution)],
-                )
-            end
+    prog_bar = ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+    for execution in 1:(internal.executions)
+        TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
+            one_step_solve!(model)
+            write_results!(model, execution)
+            advance_execution_count!(model)
+            update_model!(model)
+            ProgressMeter.update!(
+                prog_bar,
+                get_execution_count(model);
+                showvalues = [(:Execution, execution)],
+            )
         end
-    catch e
-        @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
-        set_run_status!(model, RunStatus.FAILED)
-        return get_run_status(model)
-    finally
-        set_run_status!(model, RunStatus.SUCCESSFUL)
     end
-    return get_run_status(model)
+    return
 end
 
 """
@@ -492,34 +427,34 @@ function run!(
     TimerOutputs.reset_timer!(RUN_OPERATION_MODEL_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     logger = configure_logging(model.internal, "a")
-    status = RunStatus.FAILED
     try
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
-                status = run_impl(model; kwargs...)
-                set_run_status!(model, status)
+                run_impl(model; kwargs...)
             end
-            if status == RunStatus.SUCCESSFUL
-                if serialize
-                    TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
-                        optimizer = get(kwargs, :optimizer, nothing)
-                        serialize_problem(model, optimizer = optimizer)
-                        serialize_optimization_model(model)
-                    end
+            if serialize
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
+                    optimizer = get(kwargs, :optimizer, nothing)
+                    serialize_problem(model, optimizer = optimizer)
+                    serialize_optimization_model(model)
                 end
-                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
-                    results = ProblemResults(model)
-                    serialize_results(results, get_output_dir(model))
-                    export_problem_results && export_results(results)
-                end
+            end
+            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
+                results = ProblemResults(model)
+                serialize_results(results, get_output_dir(model))
+                export_problem_results && export_results(results)
             end
             @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
         end
+    catch e
+        @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
+        set_run_status!(model, RunStatus.FAILED)
+        return get_run_status(model)
     finally
+        set_run_status!(model, RunStatus.SUCCESSFUL)
         close(logger)
     end
-
-    return status
+    return get_run_status(model)
 end
 
 """

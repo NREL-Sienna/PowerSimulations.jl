@@ -216,23 +216,6 @@ function init_model_store!(model::DecisionModel)
     )
 end
 
-function build_initialization!(model::DecisionModel)
-    template = get_initialization_template(model)
-    requires_init = false
-    for device_model in get_device_models(template)
-        requires_init = requires_initialization(get_formulation(device_model))
-        if requires_init
-            @debug "Initialization required for the model"
-            build_initialization_problem(model)
-            break
-        end
-    end
-    if !requires_init
-        @debug "No initial conditions in the model"
-    end
-    return
-end
-
 function build_pre_step!(model::DecisionModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
@@ -330,20 +313,10 @@ function calculate_dual_variables!(model::DecisionModel)
 end
 
 function solve_impl(model::DecisionModel; optimizer = nothing, kwargs...)
-    status = _pre_solve_model_checks(model, optimizer)
-    timed_log = get_solve_timed_log(model)
-    jump_model = get_jump_model(model)
-    _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
-        @timed JuMP.optimize!(jump_model)
-    model_status = JuMP.primal_status(jump_model)
-    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        return RunStatus.FAILED
-    else
-        calculate_aux_variables!(model)
-        calculate_dual_variables!(model)
-        status = RunStatus.SUCCESSFUL
-    end
-    return status
+    _pre_solve_model_checks(model, optimizer)
+    container = get_optimization_container(model)
+    solve_impl!(container, get_system(model), get_solve_timed_log(model))
+    return
 end
 
 """
@@ -386,34 +359,35 @@ function solve!(
     TimerOutputs.reset_timer!(RUN_OPERATION_MODEL_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     logger = configure_logging(model.internal, "a")
-    status = RunStatus.FAILED
     try
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
-                status = solve_impl(model; kwargs...)
-                set_run_status!(model, status)
+                solve_impl(model; kwargs...)
             end
-            if status == RunStatus.SUCCESSFUL
-                if serialize
-                    TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
-                        optimizer = get(kwargs, :optimizer, nothing)
-                        serialize_problem(model, optimizer = optimizer)
-                        serialize_optimization_model(model)
-                    end
+            if serialize
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
+                    optimizer = get(kwargs, :optimizer, nothing)
+                    serialize_problem(model, optimizer = optimizer)
+                    serialize_optimization_model(model)
                 end
-                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
-                    results = ProblemResults(model)
-                    serialize_results(results, get_output_dir(model))
-                    export_problem_results && export_results(results)
-                end
+            end
+            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
+                results = ProblemResults(model)
+                serialize_results(results, get_output_dir(model))
+                export_problem_results && export_results(results)
             end
             @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
         end
+    catch e
+        @error "Decision Problem solve failed" exception = (e, catch_backtrace())
+        set_run_status!(model, RunStatus.FAILED)
+        return get_run_status(model)
     finally
+        set_run_status!(model, RunStatus.SUCCESSFUL)
         close(logger)
     end
 
-    return status
+    return get_run_status(model)
 end
 
 function write_results!(
