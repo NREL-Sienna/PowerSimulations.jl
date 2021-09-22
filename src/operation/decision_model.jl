@@ -256,7 +256,7 @@ function build_pre_step!(model::DecisionModel)
         populate_contributing_devices!(get_template(model), get_system(model))
         add_services_to_device_model!(get_template(model))
 
-        @info "Intilization Model"
+        @info "Make Intilization Model"
         build_initialization!(model)
         initialize!(model)
 

@@ -17,7 +17,7 @@ end
 
 mutable struct ModelInternal
     container::OptimizationContainer
-    ic_model_container::OptimizationContainer
+    ic_model_container::Union{Nothing, OptimizationContainer}
     status::BuildStatus
     run_status::RunStatus
     base_conversion::Bool
@@ -34,12 +34,9 @@ mutable struct ModelInternal
 end
 
 function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}())
-    ic_container = deepcopy(container)
-    set_horizon!(ic_container.settings, 1)
-    ic_container.JuMPmodel = _make_jump_model(ic_container.settings)
     return ModelInternal(
         container,
-        ic_container,
+        nothing,
         BuildStatus.EMPTY,
         RunStatus.READY,
         true,

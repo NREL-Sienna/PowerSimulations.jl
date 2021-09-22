@@ -233,9 +233,9 @@ function init_model_store!(model::EmulationModel)
 end
 
 function build_initialization!(model::EmulationModel)
-    template = get_initialization_template(model)
+    @assert model.internal.ic_model_container === nothing
     requires_init = false
-    for (device_type, device_model) in get_device_models(template)
+    for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
         if requires_init
             @debug "Initialization required for $device_type"
@@ -244,7 +244,7 @@ function build_initialization!(model::EmulationModel)
         end
     end
     if !requires_init
-        @debug "No initial conditions in the model"
+        @info "No initial conditions in the model"
     end
     return
 end
@@ -258,7 +258,6 @@ function build_pre_step!(model::EmulationModel)
         # Temporary while are able to switch from PJ to POI
         container = get_optimization_container(model)
         container.built_for_recurrent_solves = true
-        model.internal.ic_model_container.built_for_recurrent_solves = true
 
         @info "Initializing Optimization Container For an EmulationModel"
         init_optimization_container!(
@@ -329,12 +328,7 @@ function reset!(model::EmulationModel{<:EmulationProblem})
         nothing,
         PSY.SingleTimeSeries,
     )
-    model.internal.ic_model_container = OptimizationContainer(
-        get_system(model),
-        get_settings(model),
-        nothing,
-        PSY.SingleTimeSeries,
-    )
+    model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
     set_status!(model, BuildStatus.EMPTY)
     return
@@ -401,7 +395,7 @@ function initialize!(model::EmulationModel)
     if model.internal.ic_model_container === nothing
         return
     end
-    @info "Initializing Model"
+    @info "Solving Initialization Model"
     _one_step_solve!(
         model.internal.ic_model_container,
         get_system(model),
@@ -415,6 +409,9 @@ end
 function update_model!(model::EmulationModel, store)
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key)
+    end
+    for key in keys(get_initial_conditions(model))
+        update_initial_conditions!(model, key)
     end
     return
 end
@@ -530,6 +527,7 @@ function write_results!(model::EmulationModel, execution)
     _write_model_variable_results!(store, container, execution)
     _write_model_aux_variable_results!(store, container, execution)
     write_optimizer_stats!(store, OptimizerStats(model, 1), execution)
+    store.data.last_recorded_row = execution
 end
 
 function _write_model_dual_results!(store, container, execution)
