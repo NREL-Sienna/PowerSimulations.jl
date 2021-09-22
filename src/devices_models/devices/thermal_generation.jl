@@ -563,7 +563,6 @@ function initial_conditions!(
     formulation::ThermalBasicUnitCommitment,
 ) where {T <: PSY.ThermalGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus())
-    # add_initial_condition!(container, devices, formulation, DevicePower())
     return
 end
 
