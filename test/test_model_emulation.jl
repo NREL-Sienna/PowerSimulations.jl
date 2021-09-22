@@ -13,17 +13,18 @@
     @test run!(model) == RunStatus.SUCCESSFUL
 
     template = get_thermal_standard_uc_template()
-    c_sys5_uc_re =
-        PSB.build_system(PSITestSystems, "c_sys5_uc_re"; add_single_time_series = true)
+    c_sys5_uc_re = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_uc_re";
+        add_single_time_series = true,
+        force_build = true,
+    )
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     model = EmulationModel(template, c_sys5_uc_re; optimizer = Cbc_optimizer)
 
     @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
           BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
-
-    c_sys5_uc_re =
-        PSB.build_system(PSITestSystems, "c_sys5_uc_re"; add_single_time_series = true)
 end
 
 @testset "Emulation Model Results" begin
