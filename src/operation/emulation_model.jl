@@ -333,14 +333,6 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     return
 end
 
-function serialize_optimization_model(model::EmulationModel{<:EmulationProblem})
-    problem_name = "$(get_name(model))_EmulationModel"
-    json_file_name = "$(problem_name).json"
-    json_file_name = joinpath(get_output_dir(model), json_file_name)
-    serialize_optimization_model(get_optimization_container(model), json_file_name)
-    return
-end
-
 function calculate_aux_variables!(model::EmulationModel)
     container = get_optimization_container(model)
     system = get_system(model)

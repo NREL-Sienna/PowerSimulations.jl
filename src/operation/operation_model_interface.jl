@@ -96,7 +96,7 @@ function write_initialization_data(model::OperationModel)
     return
 end
 
-function build_impl!(model::OperationModel, serialize::Bool)
+function build_impl!(model::OperationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
             build_pre_step!(model)
