@@ -241,7 +241,7 @@ function construct_device!(
 
     add_constraints!(
         container,
-        RateLimitFTConstraint,
+        RateLimitConstraintFromTo,
         devices,
         model,
         S,
@@ -249,7 +249,7 @@ function construct_device!(
     )
     add_constraints!(
         container,
-        RateLimitTFConstraint,
+        RateLimitConstraintToFrom,
         devices,
         model,
         S,
@@ -299,7 +299,7 @@ function construct_device!(
 
     add_constraints!(
         container,
-        FlowRateConstraintFT,
+        FlowRateConstraintFromTo,
         devices,
         model,
         S,
@@ -307,7 +307,7 @@ function construct_device!(
     )
     add_constraints!(
         container,
-        FlowRateConstraintTF,
+        FlowRateConstraintToFrom,
         devices,
         model,
         S,

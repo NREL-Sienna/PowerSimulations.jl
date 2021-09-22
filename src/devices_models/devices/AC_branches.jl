@@ -136,7 +136,7 @@ Add rate limit from to constraints for ACBranch with AbstractPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{RateLimitFTConstraint},
+    cons_type::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{T},
@@ -165,7 +165,7 @@ Add rate limit to from constraints for ACBranch with AbstractPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{RateLimitTFConstraint},
+    cons_type::Type{RateLimitConstraintToFrom},
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{T},
@@ -249,7 +249,6 @@ end
 
 ############################## Flow Limits Constraints #####################################
 # TODO: Write tests for these functions
-# TODO: Rename these to add_constraints!
 """
 Add branch flow constraints for monitored lines with DC Power Model
 """

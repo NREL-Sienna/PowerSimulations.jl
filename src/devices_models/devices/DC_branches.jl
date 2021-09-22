@@ -79,7 +79,7 @@ end
 
 add_constraints!(
     ::OptimizationContainer,
-    ::Type{<:Union{FlowRateConstraintFT, FlowRateConstraintTF, FlowRateConstraint}},
+    ::Type{<:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom, FlowRateConstraint}},
     ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
     ::DeviceModel{<:PSY.DCBranch, HVDCUnbounded},
     ::Type{<:PM.AbstractPowerModel},
@@ -89,7 +89,7 @@ add_constraints!(
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{
-        <:Union{FlowRateConstraintFT, FlowRateConstraintTF, FlowRateConstraint},
+        <:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom, FlowRateConstraint},
     },
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractDCLineFormulation},

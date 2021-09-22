@@ -262,8 +262,8 @@ export FlowLimitConstraint
 export FlowLimitFromToConstraint
 export FlowLimitToFromConstraint
 export FlowRateConstraint
-export FlowRateConstraintFT
-export FlowRateConstraintTF
+export FlowRateConstraintFromTo
+export FlowRateConstraintToFrom
 export FlowReactivePowerConstraint
 export FlowReactivePowerFromToConstraint
 export FlowReactivePowerToFromConstraint
@@ -282,8 +282,8 @@ export RampConstraint
 export RampLimitConstraint
 export RangeLimitConstraint
 export RateLimitConstraint
-export RateLimitFTConstraint
-export RateLimitTFConstraint
+export RateLimitConstraintFromTo
+export RateLimitConstraintToFrom
 export ReactiveConstraint
 export ReactivePowerVariableLimitsConstraint
 export ReactiveRangeConstraint

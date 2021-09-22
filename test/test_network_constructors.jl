@@ -256,8 +256,8 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     # Check for voltage and angle constraints
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitFTConstraint, PSY.Line),
-        PSI.ConstraintKey(RateLimitTFConstraint, PSY.Line),
+        PSI.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
+        PSI.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
         PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
     ]
