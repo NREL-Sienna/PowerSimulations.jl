@@ -317,26 +317,6 @@ function construct_device!(
     add_constraint_dual!(container, sys, model)
     return
 end
-#=
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{B, <:AbstractDCLineFormulation},
-    ::NetworkModel{S},
-) where {B <: PSY.DCBranch, S <: PM.AbstractDCPLLModel}
-    devices = get_available_components(B, sys)
-    add_constraints!(
-        container,
-        FlowRateConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraint_dual!(container, sys, model)
-    return
-end=#
 
 function construct_device!(
     container::OptimizationContainer,
