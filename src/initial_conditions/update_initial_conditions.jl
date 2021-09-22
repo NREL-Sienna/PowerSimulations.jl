@@ -58,5 +58,5 @@ function update_initial_conditions!(
     container = get_optimization_container(model)
     interval = get_interval(model.internal.store_parameters)
     ini_conditions_vector = get_initial_condition(container, key)
-    update_initial_conditions(ini_conditions_vector, store, interval)
+    update_initial_conditions(ini_conditions_vector, model.store, interval)
 end
