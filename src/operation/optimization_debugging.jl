@@ -58,13 +58,16 @@ function get_var_index(model::OperationModel, index::Int)
 end
 
 function get_detailed_contraint_numerical_bounds(model::OperationModel)
+    if !is_built(model)
+        error("Model not built, can't calculate constraint numerical bounds")
+    end
     constraint_bounds = Dict()
     for (const_key, constriant_array) in get_constraints(get_optimization_container(model))
         bounds = ConstraintBounds()
         for idx in Iterators.product(constriant_array.axes...)
             con_obj = JuMP.constraint_object(constriant_array[idx...])
-            _update_coefficient_bounds(bounds, con_obj, idx)
-            _update_rhs_bounds(bounds, con_obj, idx)
+            update_update_coefficient_bounds(bounds, con_obj, idx)
+            update_rhs_bounds(bounds, con_obj, idx)
         end
         constraint_bounds[const_key] = bounds
     end
@@ -72,12 +75,15 @@ function get_detailed_contraint_numerical_bounds(model::OperationModel)
 end
 
 function get_detailed_variable_numerical_bounds(model::OperationModel)
+    if !is_built(model)
+        error("Model not built, can't calculate variable numerical bounds")
+    end
     variable_bounds = Dict()
     for (variable_key, variable_array) in get_variables(get_optimization_container(model))
         bounds = VariableBounds()
         for idx in Iterators.product(variable_array.axes...)
             var = variable_array[idx...]
-            _update_variable_bounds(bounds, var, idx)
+            update_variable_bounds(bounds, var, idx)
         end
         variable_bounds[variable_key] = bounds
     end

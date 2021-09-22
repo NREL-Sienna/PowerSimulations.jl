@@ -25,17 +25,17 @@ mutable struct ConstraintBounds
     end
 end
 
-function _update_coefficient_bounds(
+function update_coefficient_bounds(
     v::ConstraintBounds,
     constraint::JuMP.ScalarConstraint,
     idx,
 )
-    _update_numerical_bounds(v.coefficient, constraint.func, idx)
+    update_numerical_bounds(v.coefficient, constraint.func, idx)
     return
 end
 
-function _update_rhs_bounds(v::ConstraintBounds, constraint::JuMP.ScalarConstraint, idx)
-    _update_numerical_bounds(v.rhs, constraint.set, idx)
+function update_rhs_bounds(v::ConstraintBounds, constraint::JuMP.ScalarConstraint, idx)
+    update_numerical_bounds(v.rhs, constraint.set, idx)
 end
 
 mutable struct VariableBounds
@@ -45,22 +45,22 @@ mutable struct VariableBounds
     end
 end
 
-function _update_variable_bounds(v::VariableBounds, variable::JuMP.VariableRef, idx)
+function update_variable_bounds(v::VariableBounds, variable::JuMP.VariableRef, idx)
     if JuMP.is_binary(variable)
         set_min!(v.bounds, 0.0)
-        _update_numerical_bounds(v.bounds, 1.0, idx)
+        update_numerical_bounds(v.bounds, 1.0, idx)
     else
         if JuMP.has_lower_bound(variable)
-            _update_numerical_bounds(v.bounds, JuMP.lower_bound(variable), idx)
+            update_numerical_bounds(v.bounds, JuMP.lower_bound(variable), idx)
         end
         if JuMP.has_upper_bound(variable)
-            _update_numerical_bounds(v.bounds, JuMP.upper_bound(variable), idx)
+            update_numerical_bounds(v.bounds, JuMP.upper_bound(variable), idx)
         end
     end
     return
 end
 
-function _update_numerical_bounds(v::NumericalBounds, value::Real, idx)
+function update_numerical_bounds(v::NumericalBounds, value::Real, idx)
     if !isapprox(value, 0.0)
         if v.min > abs(value)
             set_min!(v, value)
@@ -73,51 +73,57 @@ function _update_numerical_bounds(v::NumericalBounds, value::Real, idx)
     return
 end
 
-function _update_numerical_bounds(bonuds::NumericalBounds, func::JuMP.GenericAffExpr, idx)
+function update_numerical_bounds(bonuds::NumericalBounds, func::JuMP.GenericAffExpr, idx)
     for coefficient in values(func.terms)
-        _update_numerical_bounds(bonuds, coefficient, idx)
+        update_numerical_bounds(bonuds, coefficient, idx)
     end
     return
 end
 
-function _update_numerical_bounds(bonuds::NumericalBounds, func::MOI.LessThan, idx)
-    return _update_numerical_bounds(bonuds, func.upper, idx)
+function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.LessThan, idx)
+    return update_numerical_bounds(bonuds, func.upper, idx)
 end
 
-function _update_numerical_bounds(bonuds::NumericalBounds, func::MOI.GreaterThan, idx)
-    return _update_numerical_bounds(bonuds, func.lower, idx)
+function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.GreaterThan, idx)
+    return update_numerical_bounds(bonuds, func.lower, idx)
 end
 
-function _update_numerical_bounds(bonuds::NumericalBounds, func::MOI.EqualTo, idx)
-    return _update_numerical_bounds(bonuds, func.value, idx)
+function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.EqualTo, idx)
+    return update_numerical_bounds(bonuds, func.value, idx)
 end
 
-function _update_numerical_bounds(bonuds::NumericalBounds, func::MOI.Interval, idx)
-    _update_numerical_bounds(bonuds, func.upper, idx)
-    return _update_numerical_bounds(bonuds, func.lower, idx)
+function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.Interval, idx)
+    update_numerical_bounds(bonuds, func.upper, idx)
+    return update_numerical_bounds(bonuds, func.lower, idx)
 end
 
 # Default fallback for unsupported constraints.
-_update_numerical_bounds(range::NumericalBounds, func, idx) = nothing
+update_numerical_bounds(range::NumericalBounds, func, idx) = nothing
 
 function get_constraint_numerical_bounds(model::OperationModel)
+    if !is_built(model)
+        error("Model not built, can't calculate constraint numerical bounds")
+    end
     bounds = ConstraintBounds()
     for (const_key, constriant_array) in get_constraints(get_optimization_container(model))
         for idx in Iterators.product(constriant_array.axes...)
             con_obj = JuMP.constraint_object(constriant_array[idx...])
-            _update_coefficient_bounds(bounds, con_obj, (const_key, idx))
-            _update_rhs_bounds(bounds, con_obj, (const_key, idx))
+            update_coefficient_bounds(bounds, con_obj, (const_key, idx))
+            update_rhs_bounds(bounds, con_obj, (const_key, idx))
         end
     end
     return bounds
 end
 
-function get_variable_numerical_bounds(model::DecisionModel)
+function get_variable_numerical_bounds(model::OperationModel)
+    if !is_built(model)
+        error("Model not built, can't calculate variable numerical bounds")
+    end
     bounds = VariableBounds()
     for (variable_key, variable_array) in get_variables(get_optimization_container(model))
         for idx in Iterators.product(variable_array.axes...)
             var = variable_array[idx...]
-            _update_variable_bounds(bounds, var, (variable_key, idx))
+            update_variable_bounds(bounds, var, (variable_key, idx))
         end
     end
     return bounds

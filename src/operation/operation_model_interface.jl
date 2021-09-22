@@ -160,20 +160,53 @@ function build_if_not_already_built!(model; kwargs...)
     end
 end
 
+function _check_numerical_bounds(model::OperationModel)
+    variable_bounds = get_constraint_numerical_bounds(model)
+    if variable_bounds.max - variable_bounds.min > 1e9
+        @warn "Variable bounds range is $(variable_bounds.max - variable_bounds.min) and can result in numerical problems for the solver. \\
+        max_bound_variable = $(encode_key_as_string(variable_bounds.max_index)) \\
+        min_bound_variable = $(encode_key_as_string(variable_bounds.min_index)) \\
+        Run get_detailed_variable_numerical_bounds on the model for a deeper analysis"
+    else
+        @info "Variable bounds [$(variable_bounds.min) $(variable_bounds.max)]"
+    end
+
+    constraint_bounds = get_constraint_numerical_bounds(model)
+    if constraint_bounds.coefficient.max - constraint_bounds.coefficient.min > 1e9
+        @warn "Constraint coefficient bounds range is $(constraint_bounds.coefficient.max - constraint_bounds.coefficient.min) and can result in numerical problems for the solver. \\
+        max_bound_constraint = $(encode_key_as_string(constraint_bounds.coefficient.max_index)) \\
+        min_bound_constraint = $(encode_key_as_string(constraint_bounds.coefficient.min_index)) \\
+        Run get_detailed_constraint_numerical_bounds on the model for a deeper analysis"
+    else
+        @info "Constraint coefficient bounds [$(constraint_bounds.coefficient.min) $(constraint_bounds.coefficient.max)]"
+    end
+
+    if constraint_bounds.rhs.max - constraint_bounds.rhs.min > 1e9
+        @warn "Constraint right-hand-side bounds range is $(constraint_bounds.rhs.max - constraint_bounds.rhs.min) and can result in numerical problems for the solver. \\
+        max_bound_constraint = $(encode_key_as_string(constraint_bounds.rhs.max_index)) \\
+        min_bound_constraint = $(encode_key_as_string(constraint_bounds.rhs.min_index)) \\
+        Run get_detailed_constraint_numerical_bounds on the model for a deeper analysis"
+    else
+        @info "Constraint right-hand-side bounds [$(constraint_bounds.rhs.min) $(constraint_bounds.rhs.max)]"
+    end
+    return
+end
+
 function _pre_solve_model_checks(model::OperationModel, optimizer)
     jump_model = get_jump_model(model)
     if optimizer !== nothing
         JuMP.set_optimizer(jump_model, optimizer)
     end
 
-    optimizer_name = JuMP.solver_name(jump_model)
-    @info "Solving $(typeof(model)) with optimizer = $optimizer_name"
-    @info "Solver backend: $(JuMP.backend(jump_model))"
-
     if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
         error("No Optimizer has been defined, can't solve the operational problem")
     end
-    @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
+
+    optimizer_name = JuMP.solver_name(jump_model)
+    _check_numerical_bounds(model)
+    @info "Solving $(typeof(model)) with optimizer = $optimizer_name"
+    @info "Solver backend: $(JuMP.backend(jump_model))"
+
     return
 end
 
