@@ -189,7 +189,7 @@ function device_mixedinteger_rateofchange!(
         con_up[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             expression_ub - variable[name, t - 1] <=
-            r.ramp_limits.up + r.limits.max * varstart[name, 1]
+            r.ramp_limits.up + r.limits.max * varstart[name, t]
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in r.additional_terms_lb
@@ -303,68 +303,6 @@ function device_multistart_rateofchange!(
             container.JuMPmodel,
             variable[name, t - 1] - expression_lb <= r.ramp_limits.down
         )
-    end
-
-    return
-end
-
-function service_upward_rateofchange!(
-    container::OptimizationContainer,
-    rate_data::Vector{ServiceRampConstraintInfo},
-    cons_type::ConstraintType,
-    var_type::VariableType,
-    service_name::AbstractString,
-    ::Type{T},
-) where {T <: PSY.Component}
-    time_steps = get_time_steps(container)
-
-    # TODO DT: is this change valid?
-    variable = get_variable(container, var_type, T, service_name)
-
-    set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(
-        container,
-        cons_type,
-        T,
-        set_name,
-        time_steps,
-        meta = service_name,
-    )
-
-    for r in rate_data, t in time_steps
-        name = get_component_name(r)
-        con_up[name, t] =
-            JuMP.@constraint(container.JuMPmodel, variable[name, t] <= r.ramp_limits.up)
-    end
-
-    return
-end
-
-function service_downward_rateofchange!(
-    container::OptimizationContainer,
-    rate_data::Vector{ServiceRampConstraintInfo},
-    cons_type::ConstraintType,
-    var_type::VariableType,
-    service_name::AbstractString,
-    ::Type{T},
-) where {T <: PSY.Component}
-    time_steps = get_time_steps(container)
-    # TODO DT: is this change valid?
-    variable = get_variable(container, var_type, T, service_name)
-    set_name = [get_component_name(r) for r in rate_data]
-    con_down = add_cons_container!(
-        container,
-        cons_type,
-        T,
-        set_name,
-        time_steps,
-        meta = service_name,
-    )
-
-    for r in rate_data, t in time_steps
-        name = get_component_name(r)
-        con_down[name, t] =
-            JuMP.@constraint(container.JuMPmodel, variable[name, t] <= r.ramp_limits.down)
     end
 
     return

@@ -187,8 +187,7 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     # Constraints
-    service_requirement_constraint!(container, service, model)
-
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
     # Cost Function
     cost_function!(container, service, model)
 
@@ -236,7 +235,7 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     # Constraints
-    service_requirement_constraint!(container, service, model)
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
 
     # Cost Function
     cost_function!(container, service, model)
@@ -283,7 +282,7 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     # Constraints
-    service_requirement_constraint!(container, service, model)
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
 
     # Cost Function
     cost_function!(container, service, model)
@@ -383,7 +382,13 @@ function construct_service!(
     service = PSY.get_component(SR, sys, name)
     contributing_services = PSY.get_contributing_services(service)
     # Constraints
-    service_requirement_constraint!(container, service, model, contributing_services)
+    add_constraints!(
+        container,
+        RequirementConstraint,
+        service,
+        contributing_services,
+        model,
+    )
 
     return
 end
@@ -426,8 +431,64 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     # Constraints
-    service_requirement_constraint!(container, service, model)
-    ramp_constraints!(container, service, contributing_devices, model)
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+    add_constraints!(container, RampConstraint, service, contributing_devices, model)
+
+    # Cost Function
+    cost_function!(container, service, model)
+
+    if get_feedforward(model) !== nothing
+        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
+    end
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, NonSpinningReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Vector{<:DataType},
+) where {SR <: PSY.ReserveNonSpinning}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+
+    # Variables
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
+        NonSpinningReserve(),
+    )
+
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, NonSpinningReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Vector{<:DataType},
+) where {SR <: PSY.ReserveNonSpinning}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+
+    # Constraints
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ReservePowerConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
 
     # Cost Function
     cost_function!(container, service, model)
