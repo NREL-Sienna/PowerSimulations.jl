@@ -1,20 +1,3 @@
-function get_initialization_value(
-    ::DeviceStatus,
-    d::T,
-    ::AbstractThermalFormulation,
-    container::OptimizationContainer,
-) where {T <: PSY.ThermalGen}
-    if !has_initialization_variable(ic_data, OnVariable(), T)
-        status_var = PSY.get_status(d)
-    else
-        status_var =
-            get_initialization_variable(ic_data, OnVariable(), T)[1, PSY.get_name(d)]
-    end
-    @debug "Device $T $(PSY.get_name(d)) initialized DeviceStatus as $status_var" _group =
-        :ConstructGroup
-    return status_var
-end
-
 function _get_initialization_value(
     ::Vector{T},
     component::PSY.Component,
@@ -29,7 +12,14 @@ function _get_initialization_value(
     },
 } where {U <: InitialConditionType}
     ic_data = get_initialization_data(container)
-    val = get_initialization_value(U(), component, V(), ic_data)
+    var_type = initial_condition_variable(D(), component, U())
+    if !has_initialization_variable(ic_data, var_type, T)
+        val = initial_condition_default(D(), component, U())
+    else
+        val = initialization_variable(ic_data, var_type, T)[1, PSY.get_name(component)]
+    end
+    @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
+        :ConstructGroup
     return T(component, val)
 end
 
