@@ -82,7 +82,7 @@ function InitializationData()
     )
 end
 
-function get_initialization_variable(
+function get_initial_condition_value(
     ic_data::InitializationData,
     ::T,
     ::Type{U},
@@ -90,7 +90,7 @@ function get_initialization_variable(
     return ic_data.variables[VariableKey(T, U)]
 end
 
-function get_initialization_aux_variable(
+function get_initial_condition_value(
     ic_data::InitializationData,
     ::T,
     ::Type{U},
@@ -98,7 +98,7 @@ function get_initialization_aux_variable(
     return ic_data.aux_variables[AuxVarKey(T, U)]
 end
 
-function get_initialization_dual(
+function get_initial_condition_value(
     ic_data::InitializationData,
     ::T,
     ::Type{U},
@@ -106,7 +106,7 @@ function get_initialization_dual(
     return ic_data.duals[ConstraintKey(T, U)]
 end
 
-function get_initialization_parameter(
+function get_initial_condition_value(
     ic_data::InitializationData,
     ::T,
     ::Type{U},
@@ -114,7 +114,7 @@ function get_initialization_parameter(
     return ic_data.parameters[ParameterKey(T, U)]
 end
 
-function has_initialization_variable(
+function has_initial_condition_value(
     ic_data::InitializationData,
     ::T,
     ::Type{U},
@@ -122,7 +122,7 @@ function has_initialization_variable(
     return haskey(ic_data.variables, VariableKey(T, U))
 end
 
-function has_initialization_aux_variable(
+function has_initial_condition_value(
     ic_data::InitializationData,
     ::T,
     ::Type{U},
@@ -130,7 +130,7 @@ function has_initialization_aux_variable(
     return haskey(ic_data.aux_variables, AuxVarKey(T, U))
 end
 
-function has_initialization_dual(
+function has_initial_condition_value(
     ic_data::InitializationData,
     ::T,
     ::Type{U},
@@ -138,7 +138,7 @@ function has_initialization_dual(
     return haskey(ic_data.duals, ConstraintKey(T, U))
 end
 
-function has_initialization_parameter(
+function has_initial_condition_value(
     ic_data::InitializationData,
     ::T,
     ::Type{U},

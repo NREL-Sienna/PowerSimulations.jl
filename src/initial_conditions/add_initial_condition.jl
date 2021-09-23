@@ -38,10 +38,10 @@ function _get_initialization_value(
 } where {U <: InitialConditionType}
     ic_data = get_initialization_data(container)
     var_type = initial_condition_variable(D(), component, U())
-    if !has_initialization_variable(ic_data, var_type, T)
+    if !has_initialization_value(ic_data, var_type, T)
         val = initial_condition_default(D(), component, U())
     else
-        val = initialization_variable(ic_data, var_type, T)[1, PSY.get_name(component)]
+        val = get_initialization_value(ic_data, var_type, T)[1, PSY.get_name(component)]
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         :ConstructGroup
