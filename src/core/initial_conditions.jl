@@ -56,6 +56,12 @@ get_component(ic::InitialCondition) = ic.component
 get_value(ic::InitialCondition) = ic.value
 get_component_name(ic::InitialCondition) = PSY.get_name(ic.component)
 get_component_type(ic::InitialCondition) = typeof(ic.component)
+get_ic_type(
+    ::Type{InitialCondition{T, U}},
+) where {T <: InitialConditionType, U <: Union{PJ.ParameterRef, Float64}} = T
+get_ic_type(
+    ::InitialCondition{T, U},
+) where {T <: InitialConditionType, U <: Union{PJ.ParameterRef, Float64}} = T
 
 """
 Stores data to populate initial conditions before the build call

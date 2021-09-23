@@ -142,13 +142,13 @@ get_initialization_device_model(
 ) where {T <: PSY.HydroEnergyReservoir} = model
 
 function get_initialization_device_model(
-    model::DeviceModel{T, <:AbstractHydroFormulation},
+    ::DeviceModel{T, <:AbstractHydroFormulation},
 ) where {T <: PSY.HydroDispatch}
     return DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver)
 end
 
 function get_initialization_device_model(
-    model::DeviceModel{T, <:AbstractHydroFormulation},
+    ::DeviceModel{T, <:AbstractHydroFormulation},
 ) where {T <: PSY.HydroPumpedStorage}
     return DeviceModel(PSY.HydroPumpedStorage, HydroDispatchPumpedStorage)
 end
@@ -165,8 +165,8 @@ end
 
 function get_default_time_series_names(
     ::Type{PSY.HydroEnergyReservoir},
-    ::Type{T},
-) where {T <: Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}}
+    ::Type{<:Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}},
+)
     return Dict{Type{<:TimeSeriesParameter}, String}(
         EnergyBudgetTimeSeriesParameter => "hydro_budget",
     )
@@ -174,8 +174,8 @@ end
 
 function get_default_time_series_names(
     ::Type{PSY.HydroEnergyReservoir},
-    ::Type{T},
-) where {T <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
+    ::Type{<:Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}},
+)
     return Dict{Type{<:TimeSeriesParameter}, String}(
         EnergyTargetTimeSeriesParameter => "storage_target",
         InflowTimeSeriesParameter => "inflow",
@@ -184,8 +184,8 @@ end
 
 function get_default_time_series_names(
     ::Type{PSY.HydroPumpedStorage},
-    ::Type{T},
-) where {T <: HydroDispatchPumpedStorage}
+    ::Type{<:HydroDispatchPumpedStorage},
+)
     return Dict{Type{<:TimeSeriesParameter}, String}(
         InflowTimeSeriesParameter => "inflow",
         OutflowTimeSeriesParameter => "outflow",
@@ -635,7 +635,7 @@ end
 function initial_conditions!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    device_formulation::AbstractHydroUnitCommitment,
+    ::AbstractHydroUnitCommitment,
 ) where {H <: PSY.HydroGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus)
     add_initial_condition!(container, devices, formulation, DevicePower)
