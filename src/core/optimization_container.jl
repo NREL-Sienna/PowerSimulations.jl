@@ -1032,7 +1032,6 @@ end
 function get_initial_condition(container::OptimizationContainer, key::ICKey)
     initial_conditions = get(container.initial_conditions, key, nothing)
     if initial_conditions === nothing
-        @error "$key is not stored" sort!(get_initial_conditions_keys(container))
         throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
     end
     return initial_conditions
