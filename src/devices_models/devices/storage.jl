@@ -6,6 +6,8 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BatteryAncillaryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
 
+requires_initialization(::AbstractStorageFormulation) = false
+
 get_variable_multiplier(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ReserveRangeExpressionUB
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ReserveRangeExpressionLB
@@ -55,9 +57,8 @@ get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStor
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
 
 #################### Initial Conditions for models ###############
-get_initialization_value(::DevicePower, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_active_power(d)
-get_initialization_value(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
-
+initial_condition_default(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
+initial_condition_variable(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = EnergyVariable()
 #! format: on
 
 get_initialization_device_model(

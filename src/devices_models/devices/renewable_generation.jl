@@ -27,6 +27,10 @@ get_initialization_device_model(
     ::DeviceModel{T, <:AbstractRenewableFormulation},
 ) where {T <: PSY.RenewableGen} = DeviceModel(T, FixedOutput)
 
+get_initialization_device_model(
+    ::DeviceModel{T, FixedOutput},
+) where {T <: PSY.RenewableGen} = DeviceModel(T, FixedOutput)
+
 function get_min_max_limits(
     device,
     ::Type{ReactivePowerVariableLimitsConstraint},

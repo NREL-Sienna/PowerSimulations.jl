@@ -50,6 +50,58 @@ function update_initial_conditions(
     return
 end
 
+function update_initial_conditions(
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
+) where {T <: InitialCondition{DeviceAboveMinPower, PJ.ParameterRef}}
+    index = store.data.last_recorded_row
+    for ic in ic_vector
+        values = get_variable(store, PowerAboveMinimumVariable(), get_component_type(ic))
+        set_ic_quantity!(ic, values[index, get_component_name(ic)])
+    end
+    return
+end
+
+function update_initial_conditions(
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
+) where {T <: InitialCondition{InitialEnergyLevel, PJ.ParameterRef}}
+    index = store.data.last_recorded_row
+    for ic in ic_vector
+        values = get_variable(store, EnergyVariable(), get_component_type(ic))
+        set_ic_quantity!(ic, values[index, get_component_name(ic)])
+    end
+    return
+end
+
+function update_initial_conditions(
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
+) where {T <: InitialCondition{InitialEnergyLevelUp, PJ.ParameterRef}}
+    index = store.data.last_recorded_row
+    for ic in ic_vector
+        values = get_variable(store, EnergyVariableUp(), get_component_type(ic))
+        set_ic_quantity!(ic, values[index, get_component_name(ic)])
+    end
+    return
+end
+
+function update_initial_conditions(
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
+) where {T <: InitialCondition{InitialEnergyLevelDown, PJ.ParameterRef}}
+    index = store.data.last_recorded_row
+    for ic in ic_vector
+        values = get_variable(store, EnergyVariableDown(), get_component_type(ic))
+        set_ic_quantity!(ic, values[index, get_component_name(ic)])
+    end
+    return
+end
+
 function update_initial_conditions!(
     model::OperationModel,
     key::ICKey{T, U},

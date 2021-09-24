@@ -1,6 +1,6 @@
 function _get_initialization_value(
     ::Vector{T},
-    component::PSY.Component,
+    component::W,
     ::U,
     ::V,
     container::OptimizationContainer,
@@ -10,13 +10,14 @@ function _get_initialization_value(
         AbstractDeviceFormulation,
         AbstractServiceFormulation,
     },
+    W <: PSY.Component,
 } where {U <: InitialConditionType}
     ic_data = get_initialization_data(container)
-    var_type = initial_condition_variable(D(), component, U())
-    if !has_initialization_variable(ic_data, var_type, T)
-        val = initial_condition_default(D(), component, U())
+    var_type = initial_condition_variable(U(), component, V())
+    if !has_initial_condition_value(ic_data, var_type, W)
+        val = initial_condition_default(U(), component, V())
     else
-        val = initialization_variable(ic_data, var_type, T)[1, PSY.get_name(component)]
+        val = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         :ConstructGroup
@@ -25,7 +26,7 @@ end
 
 function _get_initialization_value(
     ::Vector{T},
-    component::PSY.Component,
+    component::W,
     ::U,
     ::V,
     container::OptimizationContainer,
@@ -35,17 +36,192 @@ function _get_initialization_value(
         AbstractDeviceFormulation,
         AbstractServiceFormulation,
     },
+    W <: PSY.Component,
 } where {U <: InitialConditionType}
     ic_data = get_initialization_data(container)
-    var_type = initial_condition_variable(D(), component, U())
-    if !has_initialization_value(ic_data, var_type, T)
-        val = initial_condition_default(D(), component, U())
+    var_type = initial_condition_variable(U(), component, V())
+    if !has_initial_condition_value(ic_data, var_type, W)
+        val = initial_condition_default(U(), component, V())
     else
-        val = get_initialization_value(ic_data, var_type, T)[1, PSY.get_name(component)]
+        val = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         :ConstructGroup
     return T(component, add_jump_parameter(get_jump_model(container), val))
+end
+
+function _get_initialization_value(
+    ::Vector{T},
+    component::W,
+    ::U,
+    ::V,
+    container::OptimizationContainer,
+) where {
+    T <: InitialCondition{U, Float64},
+    V <: Union{
+        AbstractDeviceFormulation,
+        AbstractServiceFormulation,
+    },
+    W <: PSY.Component,
+} where {U <: InitialTimeDurationOff}
+    ic_data = get_initialization_data(container)
+    var_type = initial_condition_variable(U(), component, V())
+    if !has_initial_condition_value(ic_data, var_type, W)
+        val = initial_condition_default(U(), component, V())
+    else
+        var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        val = 0.0
+        if !PSY.get_status(component) && !(var > ABSOLUTE_TOLERANCE)
+            val = PSY.get_time_at_status(component)
+        end
+    end
+    @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
+        :ConstructGroup
+    return T(component, val)
+end
+
+function _get_initialization_value(
+    ::Vector{T},
+    component::W,
+    ::U,
+    ::V,
+    container::OptimizationContainer,
+) where {
+    T <: InitialCondition{U, PJ.ParameterRef},
+    V <: Union{
+        AbstractDeviceFormulation,
+        AbstractServiceFormulation,
+    },
+    W <: PSY.Component,
+} where {U <: InitialTimeDurationOff}
+    ic_data = get_initialization_data(container)
+    var_type = initial_condition_variable(U(), component, V())
+    if !has_initial_condition_value(ic_data, var_type, W)
+        val = initial_condition_default(U(), component, V())
+    else
+        var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        val = 0.0
+        if !PSY.get_status(component) && !(var > ABSOLUTE_TOLERANCE)
+            val = PSY.get_time_at_status(component)
+        end
+    end
+    @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
+        :ConstructGroup
+    return T(component, add_jump_parameter(get_jump_model(container), val))
+end
+
+function _get_initialization_value(
+    ::Vector{T},
+    component::W,
+    ::U,
+    ::V,
+    container::OptimizationContainer,
+) where {
+    T <: InitialCondition{U, Float64},
+    V <: Union{
+        AbstractDeviceFormulation,
+        AbstractServiceFormulation,
+    },
+    W <: PSY.Component,
+} where {U <: InitialTimeDurationOn}
+    ic_data = get_initialization_data(container)
+    var_type = initial_condition_variable(U(), component, V())
+    if !has_initial_condition_value(ic_data, var_type, W)
+        val = initial_condition_default(U(), component, V())
+    else
+        var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        val = 0.0
+        if PSY.get_status(component) && (var > ABSOLUTE_TOLERANCE)
+            val = PSY.get_time_at_status(component)
+        end
+    end
+    @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
+        :ConstructGroup
+    return T(component, val)
+end
+
+function _get_initialization_value(
+    ::Vector{T},
+    component::W,
+    ::U,
+    ::V,
+    container::OptimizationContainer,
+) where {
+    T <: InitialCondition{U, PJ.ParameterRef},
+    V <: Union{
+        AbstractDeviceFormulation,
+        AbstractServiceFormulation,
+    },
+    W <: PSY.Component,
+} where {U <: InitialTimeDurationOn}
+    ic_data = get_initialization_data(container)
+    var_type = initial_condition_variable(U(), component, V())
+    if !has_initial_condition_value(ic_data, var_type, W)
+        val = initial_condition_default(U(), component, V())
+    else
+        var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        val = 0.0
+        if PSY.get_status(component) && (var > ABSOLUTE_TOLERANCE)
+            val = PSY.get_time_at_status(component)
+        end
+    end
+    @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
+        :ConstructGroup
+    return T(component, add_jump_parameter(get_jump_model(container), val))
+end
+
+function _get_initialization_value(
+    ::Vector{T},
+    component::W,
+    ::U,
+    ::V,
+    container::OptimizationContainer,
+) where {
+    T <:
+    InitialCondition{
+        U,
+        PJ.ParameterRef,
+    },
+    V <:
+    Union{
+        AbstractDeviceFormulation,
+        AbstractServiceFormulation,
+    },
+    W <:
+    PSY.Component,
+} where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
+    ic_data = get_initialization_data(container)
+    val = initial_condition_default(U(), component, V())
+    @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
+        :ConstructGroup
+    return T(component, add_jump_parameter(get_jump_model(container), val))
+end
+
+function _get_initialization_value(
+    ::Vector{T},
+    component::W,
+    ::U,
+    ::V,
+    container::OptimizationContainer,
+) where {
+    T <:
+    InitialCondition{
+        U,
+        Float64,
+    },
+    V <:
+    Union{
+        AbstractDeviceFormulation,
+        AbstractServiceFormulation,
+    },
+    W <:
+    PSY.Component,
+} where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
+    ic_data = get_initialization_data(container)
+    val = initial_condition_default(U(), component, V())
+    @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
+        :ConstructGroup
+    return T(component, val)
 end
 
 function add_initial_condition!(
