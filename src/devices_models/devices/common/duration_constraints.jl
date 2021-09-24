@@ -351,10 +351,24 @@ function device_duration_compact_retrospective!(
     varstop = get_variable(container, var_types[3], T)
 
     set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
-    con_up =
-        add_cons_container!(container, cons_type, T, set_names, time_steps, meta = "up")
-    con_down =
-        add_cons_container!(container, cons_type, T, set_names, time_steps, meta = "dn")
+    con_up = add_cons_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+        sparse = true,
+    )
+    con_down = add_cons_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+        sparse = true,
+    )
     total_time_steps = length(time_steps)
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
