@@ -106,10 +106,19 @@ function get_constraint_numerical_bounds(model::OperationModel)
     end
     bounds = ConstraintBounds()
     for (const_key, constriant_array) in get_constraints(get_optimization_container(model))
-        for idx in Iterators.product(constriant_array.axes...)
-            con_obj = JuMP.constraint_object(constriant_array[idx...])
-            update_coefficient_bounds(bounds, con_obj, (const_key, idx))
-            update_rhs_bounds(bounds, con_obj, (const_key, idx))
+        if typeof(constriant_array) <: JuMP.Containers.SparseAxisArray
+            for idx in eachindex(constriant_array)
+                constriant_array[idx] == 0.0 && continue
+                con_obj = JuMP.constraint_object(constriant_array[idx])
+                update_coefficient_bounds(bounds, con_obj, (const_key, idx))
+                update_rhs_bounds(bounds, con_obj, (const_key, idx))
+            end
+        else
+            for idx in Iterators.product(constriant_array.axes...)
+                con_obj = JuMP.constraint_object(constriant_array[idx...])
+                update_coefficient_bounds(bounds, con_obj, (const_key, idx))
+                update_rhs_bounds(bounds, con_obj, (const_key, idx))
+            end
         end
     end
     return bounds
