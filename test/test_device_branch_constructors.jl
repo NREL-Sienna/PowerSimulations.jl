@@ -195,12 +195,12 @@ end
 
 @testset "AC Power Flow Models for HVDCLine Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
-        PSI.ConstraintKey(RateLimitFTConstraint, Transformer2W),
-        PSI.ConstraintKey(RateLimitTFConstraint, Transformer2W),
-        PSI.ConstraintKey(RateLimitFTConstraint, TapTransformer),
-        PSI.ConstraintKey(RateLimitTFConstraint, TapTransformer),
-        PSI.ConstraintKey(FlowRateConstraintFT, HVDCLine),
-        PSI.ConstraintKey(FlowRateConstraintTF, HVDCLine),
+        PSI.ConstraintKey(RateLimitConstraintFromTo, Transformer2W),
+        PSI.ConstraintKey(RateLimitConstraintToFrom, Transformer2W),
+        PSI.ConstraintKey(RateLimitConstraintFromTo, TapTransformer),
+        PSI.ConstraintKey(RateLimitConstraintToFrom, TapTransformer),
+        PSI.ConstraintKey(FlowRateConstraintFromTo, HVDCLine),
+        PSI.ConstraintKey(FlowRateConstraintToFrom, HVDCLine),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")

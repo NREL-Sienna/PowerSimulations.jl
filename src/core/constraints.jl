@@ -30,8 +30,8 @@ struct FlowLimitConstraint <: ConstraintType end
 struct FlowLimitFromToConstraint <: ConstraintType end
 struct FlowLimitToFromConstraint <: ConstraintType end
 struct FlowRateConstraint <: ConstraintType end
-struct FlowRateConstraintFT <: ConstraintType end
-struct FlowRateConstraintTF <: ConstraintType end
+struct FlowRateConstraintFromTo <: ConstraintType end
+struct FlowRateConstraintToFrom <: ConstraintType end
 struct FlowReactivePowerConstraint <: ConstraintType end
 struct FlowReactivePowerFromToConstraint <: ConstraintType end
 struct FlowReactivePowerToFromConstraint <: ConstraintType end
@@ -48,9 +48,8 @@ struct RampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
 struct RateLimitConstraint <: ConstraintType end
-# TODO: rename TF and FT to ToFrom and FromTo
-struct RateLimitFTConstraint <: ConstraintType end
-struct RateLimitTFConstraint <: ConstraintType end
+struct RateLimitConstraintFromTo <: ConstraintType end
+struct RateLimitConstraintToFrom <: ConstraintType end
 struct ReactiveConstraint <: ConstraintType end
 struct ReactiveRangeConstraint <: ConstraintType end
 struct RegulationLimitsDownConstraint <: ConstraintType end

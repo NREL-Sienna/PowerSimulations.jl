@@ -215,7 +215,7 @@ end
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
         c_sys14 => [936, 0, 1080, 1080, 840],
-        c_sys14_dc => [984, 48, 984, 984, 840],
+        c_sys14_dc => [984, 96, 984, 984, 840],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 342000.0,
@@ -256,8 +256,8 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     # Check for voltage and angle constraints
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitFTConstraint, PSY.Line),
-        PSI.ConstraintKey(RateLimitTFConstraint, PSY.Line),
+        PSI.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
+        PSI.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
         PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
     ]
@@ -308,7 +308,7 @@ end
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 120],
         c_sys14 => [600, 0, 600, 600, 336],
-        c_sys14_dc => [648, 48, 552, 552, 384],
+        c_sys14_dc => [648, 96, 552, 552, 384],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 300000.0,
@@ -403,7 +403,7 @@ end
     DCPLL_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [528, 0, 408, 408, 288],
         c_sys14 => [1416, 0, 1080, 1080, 840],
-        c_sys14_dc => [1416, 48, 984, 984, 840],
+        c_sys14_dc => [1416, 96, 984, 984, 840],
     )
     LPACC_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1200, 0, 384, 384, 840],
@@ -411,7 +411,7 @@ end
         c_sys14_dc => [3264, 96, 672, 672, 2472],
     )
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
-    for network in networks, sys in systems
+    for network in networks, (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==

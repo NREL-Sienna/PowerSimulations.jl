@@ -99,7 +99,14 @@ function construct_device!(
     @debug "construct_device" _group = :BranchGroup
 
     devices = get_available_components(B, sys)
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        RateLimitConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -135,7 +142,14 @@ function construct_device!(
         get_feedforward(model),
     )
 
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    add_constraints!(
+        container,
+        RateLimitConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -227,7 +241,7 @@ function construct_device!(
 
     add_constraints!(
         container,
-        RateLimitFTConstraint,
+        RateLimitConstraintFromTo,
         devices,
         model,
         S,
@@ -235,7 +249,7 @@ function construct_device!(
     )
     add_constraints!(
         container,
-        RateLimitTFConstraint,
+        RateLimitConstraintToFrom,
         devices,
         model,
         S,
@@ -282,7 +296,24 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+
+    add_constraints!(
+        container,
+        FlowRateConstraintFromTo,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        FlowRateConstraintToFrom,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -324,7 +355,14 @@ function construct_device!(
 }
     devices = get_available_components(B, sys)
 
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    add_constraints!(
+        container,
+        FlowRateConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -362,7 +400,14 @@ function construct_device!(
 
     devices = get_available_components(B, sys)
 
-    branch_rate_constraints!(container, devices, model, S, get_feedforward(model)) # TODO: replace when range constraints are available
+    add_constraints!(
+        container,
+        FlowRateConstraint,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     add_constraint_dual!(container, sys, model)
     return
 end
