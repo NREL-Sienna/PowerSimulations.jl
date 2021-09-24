@@ -67,6 +67,9 @@ get_variable_binary(::AreaMismatchVariable, ::Type{<:PSY.Area}, ::AbstractAGCFor
 get_variable_binary(::LiftVariable, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = false
 get_variable_lower_bound(::LiftVariable, ::PSY.Area, ::AbstractAGCFormulation) = 0.0
 
+
+initial_condition_default(::AreaControlError, d::PSY.AGC, ::AbstractAGCFormulation) = PSY.get_initial_ace(d)
+initial_condition_variable(::AreaControlError, d::PSY.AGC, ::AbstractAGCFormulation) = AreaMismatchVariable()
 #! format: off
 
 """
@@ -219,7 +222,7 @@ function smooth_ace_pid!(container::OptimizationContainer, services::Vector{PSY.
                 )
             if t == 1
                 SACE_ini =
-                    get_initial_conditions(container, AreaControlError(), PSY.AGC)[ix]
+                    get_initial_condition(container, AreaControlError(), PSY.AGC)[ix]
                 sace_exp = SACE_ini.value + kp * ((1 + Δt / (kp / ki)) * (RAW_ACE[a, t]))
                 SACE_pid[a, t] =
                     JuMP.@constraint(container.JuMPmodel, SACE[a, t] == sace_exp)
