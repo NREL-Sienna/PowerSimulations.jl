@@ -70,6 +70,7 @@ export ThermalRampLimited
 export ThermalDispatchNoMin
 export ThermalMultiStartUnitCommitment
 export ThermalCompactUnitCommitment
+export ThermalCompactDispatch
 
 ###### Regulation Device Formulation #######
 export DeviceLimitedRegulation
