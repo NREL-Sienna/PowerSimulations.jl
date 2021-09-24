@@ -15,6 +15,24 @@ function add_expressions!(
     return
 end
 
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
+    model::ServiceModel{V, W};
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {
+    T <: ExpressionType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    V <: PSY.Reserve,
+    W <: AbstractReservesFormulation,
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    add_expression_container!(container, T(), D, names, time_steps; meta = meta)
+    return
+end
+
 function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     var::JV,
@@ -22,9 +40,9 @@ function add_to_jump_expression!(
     ixs::Vararg{Any, N},
 ) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
     if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], multiplier, var)
+        JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
     else
-        expression_array[CartesianIndex(ixs...)] = multiplier * var
+        expression_array[ixs...] = multiplier * var
     end
 
     return
