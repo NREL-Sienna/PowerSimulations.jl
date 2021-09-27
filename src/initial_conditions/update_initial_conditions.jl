@@ -2,7 +2,7 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{InitialTimeDurationOn, PJ.ParameterRef}}
+) where {T <: InitialCondition{InitialTimeDurationOn, Union{Float64, PJ.ParameterRef}}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_aux_variable(store, TimeDurationOn(), get_component_type(ic))
@@ -15,7 +15,7 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{InitialTimeDurationOff, PJ.ParameterRef}}
+) where {T <: InitialCondition{InitialTimeDurationOff, Union{Float64, PJ.ParameterRef}}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_aux_variable(store, TimeDurationOff(), get_component_type(ic))
@@ -28,7 +28,7 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{DevicePower, PJ.ParameterRef}}
+) where {T <: InitialCondition{DevicePower, Union{Float64, PJ.ParameterRef}}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_variable(store, ActivePowerVariable(), get_component_type(ic))
@@ -54,7 +54,7 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{DeviceAboveMinPower, PJ.ParameterRef}}
+) where {T <: InitialCondition{DeviceAboveMinPower, Union{Float64, PJ.ParameterRef}}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_variable(store, PowerAboveMinimumVariable(), get_component_type(ic))
@@ -67,7 +67,7 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{InitialEnergyLevel, PJ.ParameterRef}}
+) where {T <: InitialCondition{InitialEnergyLevel, Union{Float64, PJ.ParameterRef}}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_variable(store, EnergyVariable(), get_component_type(ic))
@@ -80,7 +80,7 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{InitialEnergyLevelUp, PJ.ParameterRef}}
+) where {T <: InitialCondition{InitialEnergyLevelUp, Union{Float64, PJ.ParameterRef}}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_variable(store, EnergyVariableUp(), get_component_type(ic))
@@ -93,7 +93,7 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{InitialEnergyLevelDown, PJ.ParameterRef}}
+) where {T <: InitialCondition{InitialEnergyLevelDown, Union{Float64, PJ.ParameterRef}}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_variable(store, EnergyVariableDown(), get_component_type(ic))

@@ -23,7 +23,7 @@ end
 function build_initialization_problem!(model::T) where {T <: OperationModel}
     model.internal.ic_model_container = deepcopy(get_optimization_container(model))
     ic_settings = model.internal.ic_model_container.settings
-    # TODO: add interface to allow user to change the horizon
+    # TODO: add an interface to allow user to configure initialization problem
     model.internal.ic_model_container.JuMPmodel = _make_jump_model(ic_settings)
     template = get_initialization_template(model)
     init_optimization_container!(
