@@ -19,8 +19,7 @@ function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     devices::U,
-    model::ServiceModel{V, W};
-    meta = CONTAINER_KEY_EMPTY_META,
+    model::ServiceModel{V, W};,
 ) where {
     T <: ExpressionType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
@@ -29,7 +28,7 @@ function add_expressions!(
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    add_expression_container!(container, T(), D, names, time_steps; meta = meta)
+    add_expression_container!(container, T(), D, names, time_steps)
     return
 end
 

@@ -372,11 +372,11 @@ function add_constraints!(
             container.JuMPmodel,
             expression_products <=
             (limits.max - limits.min) * varstatus[name, t] -
-            max(limits.max - startup_shutdown_limits.startup, 0) * varon[name, t]
+            max(limits.max - startup_shutdown_limits.startup, 0.0) * varon[name, t]
         )
 
         exp_lb = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
-        con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, exp_lb >= 0)
+        con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, exp_lb >= 0.0)
 
         if t == length(time_steps)
             continue
@@ -385,7 +385,8 @@ function add_constraints!(
                 container.JuMPmodel,
                 expression_products <=
                 (limits.max - limits.min) * varstatus[name, t] -
-                max(limits.max - startup_shutdown_limits.shutdown, 0) * varoff[name, t + 1]
+                max(limits.max - startup_shutdown_limits.shutdown, 0.0) *
+                varoff[name, t + 1]
             )
         end
     end
