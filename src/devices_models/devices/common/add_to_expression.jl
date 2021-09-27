@@ -19,7 +19,7 @@ function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     devices::U,
-    model::ServiceModel{V, W};,
+    model::ServiceModel{V, W},
 ) where {
     T <: ExpressionType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
