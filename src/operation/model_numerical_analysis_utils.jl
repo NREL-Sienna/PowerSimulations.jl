@@ -106,7 +106,8 @@ function get_constraint_numerical_bounds(model::OperationModel)
     end
     bounds = ConstraintBounds()
     for (const_key, constriant_array) in get_constraints(get_optimization_container(model))
-        if typeof(constriant_array) <: JuMP.Containers.SparseAxisArray
+        # TODO: handle this at compile and not at run time
+        if isa(constriant_array, JuMP.Containers.SparseAxisArray)
             for idx in eachindex(constriant_array)
                 constriant_array[idx] == 0.0 && continue
                 con_obj = JuMP.constraint_object(constriant_array[idx])
@@ -130,9 +131,17 @@ function get_variable_numerical_bounds(model::OperationModel)
     end
     bounds = VariableBounds()
     for (variable_key, variable_array) in get_variables(get_optimization_container(model))
-        for idx in Iterators.product(variable_array.axes...)
-            var = variable_array[idx...]
-            update_variable_bounds(bounds, var, (variable_key, idx))
+        if isa(variable_array, JuMP.Containers.SparseAxisArray)
+            for idx in eachindex(variable_array)
+                var = variable_array[idx]
+                var == 0.0 && continue
+                update_variable_bounds(bounds, var, (variable_key, idx))
+            end
+        else
+            for idx in Iterators.product(variable_array.axes...)
+                var = variable_array[idx...]
+                update_variable_bounds(bounds, var, (variable_key, idx))
+            end
         end
     end
     return bounds
