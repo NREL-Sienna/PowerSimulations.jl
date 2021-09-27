@@ -234,9 +234,9 @@ end
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
     )
-    UC = DecisionModel(template, c_sys5)
+    UC = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     output_dir = mktempdir(cleanup = true)
-    @test_throws ErrorException solve!(UC; optimizer = GLPK_optimizer)
+    @test_throws ErrorException solve!(UC)
     @test solve!(UC; optimizer = GLPK_optimizer, output_dir = output_dir) ==
           RunStatus.SUCCESSFUL
 end

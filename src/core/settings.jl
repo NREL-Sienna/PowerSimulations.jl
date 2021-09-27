@@ -1,4 +1,4 @@
-mutable struct Settings
+struct Settings
     horizon::Base.RefValue{Int}
     time_series_cache_size::Int
     warm_start::Base.RefValue{Bool}
@@ -129,10 +129,5 @@ end
 
 function set_warm_start!(settings::Settings, warm_start::Bool)
     settings.warm_start[] = warm_start
-    return
-end
-
-function set_optimizer!(settings::Settings, optimizer::MOI.OptimizerWithAttributes)
-    settings.optimizer = optimizer
     return
 end

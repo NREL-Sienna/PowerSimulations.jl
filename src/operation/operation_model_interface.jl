@@ -145,11 +145,6 @@ function build_impl!(model::OperationModel)
 end
 
 function build_if_not_already_built!(model; kwargs...)
-    container = get_optimization_container(model)
-    settings = get_settings(container)
-    if haskey(kwargs, :optimizer)
-        set_optimizer!(container.settings, kwargs[:optimizer])
-    end
     if !is_built(model)
         if !haskey(kwargs, :output_dir)
             error(
