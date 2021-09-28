@@ -33,6 +33,8 @@ end
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 get_name(attr::TimeSeriesAttributes) = attr.name
 
+struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes end
+
 struct ParameterContainer
     attributes::ParameterAttributes
     parameter_array::JuMP.Containers.DenseAxisArray
