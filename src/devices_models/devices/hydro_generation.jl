@@ -12,6 +12,9 @@ struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
+requires_initialization(::AbstractHydroFormulation) = false
+requires_initialization(::AbstractHydroUnitCommitment) = true
+
 get_variable_multiplier(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 get_expression_type_for_reserve(
     ::ActivePowerReserveVariable,
@@ -129,11 +132,26 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroForm
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::FixedOutput) = PSY.get_max_active_power(d)
 
 #################### Initial Conditions for models ###############
-get_initialization_value(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
-get_initialization_value(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d) > 0.0 ? 1.0 : 0.0
-get_initialization_value(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
-get_initialization_value(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
-get_initialization_value(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
+initial_condition_default(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d)
+initial_condition_variable(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
+
+initial_condition_default(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
+initial_condition_variable(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = ActivePowerVariable()
+
+initial_condition_default(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
+initial_condition_variable(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariable()
+
+initial_condition_default(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
+initial_condition_variable(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariableUp()
+
+initial_condition_default(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
+initial_condition_variable(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariableDown()
+
+initial_condition_default(::InitialTimeDurationOn, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d) ? PSY.get_time_at_status(d) :  0.0
+initial_condition_variable(::InitialTimeDurationOn, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
+
+initial_condition_default(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d) ? 0.0 : PSY.get_time_at_status(d)
+initial_condition_variable(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
 
 #! format: on
 

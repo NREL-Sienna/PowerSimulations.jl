@@ -339,7 +339,7 @@ function construct_service!(
 
     absolute_value_lift(container, areas)
     frequency_response_constraint!(container, sys)
-    add_initial_condition!(container, [service], T(), AreaControlError)
+    add_initial_condition!(container, [service], T(), AreaControlError())
     smooth_ace_pid!(container, [service])
     aux_constraints!(container, sys)
 

@@ -2,7 +2,10 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{InitialTimeDurationOn, PJ.ParameterRef}}
+) where {
+    T <:
+    InitialCondition{InitialTimeDurationOn, S},
+} where {S <: Union{Float64, PJ.ParameterRef}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_aux_variable(store, TimeDurationOn(), get_component_type(ic))
@@ -15,7 +18,12 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{InitialTimeDurationOff, PJ.ParameterRef}}
+) where {
+    T <: InitialCondition{
+        InitialTimeDurationOff,
+        S,
+    },
+} where {S <: Union{Float64, PJ.ParameterRef}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_aux_variable(store, TimeDurationOff(), get_component_type(ic))
@@ -28,7 +36,7 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{DevicePower, PJ.ParameterRef}}
+) where {T <: InitialCondition{DevicePower, S}} where {S <: Union{Float64, PJ.ParameterRef}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_variable(store, ActivePowerVariable(), get_component_type(ic))
@@ -41,10 +49,78 @@ function update_initial_conditions(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
-) where {T <: InitialCondition{DeviceStatus, PJ.ParameterRef}}
+) where {
+    T <: InitialCondition{DeviceStatus, S},
+} where {S <: Union{Float64, PJ.ParameterRef}}
     index = store.data.last_recorded_row
     for ic in ic_vector
         values = get_variable(store, OnVariable(), get_component_type(ic))
+        set_ic_quantity!(ic, values[index, get_component_name(ic)])
+    end
+    return
+end
+
+function update_initial_conditions(
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
+) where {
+    T <:
+    InitialCondition{DeviceAboveMinPower, S},
+} where {S <: Union{Float64, PJ.ParameterRef}}
+    index = store.data.last_recorded_row
+    for ic in ic_vector
+        values = get_variable(store, PowerAboveMinimumVariable(), get_component_type(ic))
+        set_ic_quantity!(ic, values[index, get_component_name(ic)])
+    end
+    return
+end
+
+function update_initial_conditions(
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
+) where {
+    T <:
+    InitialCondition{InitialEnergyLevel, S},
+} where {S <: Union{Float64, PJ.ParameterRef}}
+    index = store.data.last_recorded_row
+    for ic in ic_vector
+        values = get_variable(store, EnergyVariable(), get_component_type(ic))
+        set_ic_quantity!(ic, values[index, get_component_name(ic)])
+    end
+    return
+end
+
+function update_initial_conditions(
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
+) where {
+    T <:
+    InitialCondition{InitialEnergyLevelUp, S},
+} where {S <: Union{Float64, PJ.ParameterRef}}
+    index = store.data.last_recorded_row
+    for ic in ic_vector
+        values = get_variable(store, EnergyVariableUp(), get_component_type(ic))
+        set_ic_quantity!(ic, values[index, get_component_name(ic)])
+    end
+    return
+end
+
+function update_initial_conditions(
+    ic_vector::Vector{T},
+    store::InMemoryModelStore,
+    ::Dates.Period,
+) where {
+    T <: InitialCondition{
+        InitialEnergyLevelDown,
+        S,
+    },
+} where {S <: Union{Float64, PJ.ParameterRef}}
+    index = store.data.last_recorded_row
+    for ic in ic_vector
+        values = get_variable(store, EnergyVariableDown(), get_component_type(ic))
         set_ic_quantity!(ic, values[index, get_component_name(ic)])
     end
     return

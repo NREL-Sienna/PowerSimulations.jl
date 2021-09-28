@@ -161,14 +161,14 @@ function build_if_not_already_built!(model; kwargs...)
 end
 
 function _check_numerical_bounds(model::OperationModel)
-    variable_bounds = get_constraint_numerical_bounds(model)
-    if variable_bounds.max - variable_bounds.min > 1e9
-        @warn "Variable bounds range is $(variable_bounds.max - variable_bounds.min) and can result in numerical problems for the solver. \\
-        max_bound_variable = $(encode_key_as_string(variable_bounds.max_index)) \\
-        min_bound_variable = $(encode_key_as_string(variable_bounds.min_index)) \\
+    variable_bounds = get_variable_numerical_bounds(model)
+    if variable_bounds.bounds.max - variable_bounds.bounds.min > 1e9
+        @warn "Variable bounds range is $(variable_bounds.bounds.max - variable_bounds.bounds.min) and can result in numerical problems for the solver. \\
+        max_bound_variable = $(encode_key_as_string(variable_bounds.bounds.max_index)) \\
+        min_bound_variable = $(encode_key_as_string(variable_bounds.bounds.min_index)) \\
         Run get_detailed_variable_numerical_bounds on the model for a deeper analysis"
     else
-        @info "Variable bounds [$(variable_bounds.min) $(variable_bounds.max)]"
+        @info "Variable bounds [$(variable_bounds.bounds.min) $(variable_bounds.bounds.max)]"
     end
 
     constraint_bounds = get_constraint_numerical_bounds(model)
