@@ -57,11 +57,11 @@ end
             "ED" => (Hour(1), Consecutive()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedForward(
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFeedForward(
                 variable_source_problem = ActivePowerVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -127,11 +127,11 @@ end
             "ED" => (Hour(1), Consecutive()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedForward(
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFeedForward(
                 variable_source_problem = ActivePowerVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -179,7 +179,7 @@ end
             "ED" => (Minute(60), RecedingHorizon()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedForward(
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -231,11 +231,11 @@ end
             "ED" => (Hour(1), Consecutive()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedForward(
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFeedForward(
                 variable_source_problem = ActivePowerVariable,
                 affected_variables = [ActivePowerVariable],
             ),
