@@ -50,7 +50,7 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 
-get_initialization_device_model(
+get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractLoadFormulation},
 ) where {T <: PSY.ElectricLoad} = DeviceModel(T, StaticPowerLoad)
 

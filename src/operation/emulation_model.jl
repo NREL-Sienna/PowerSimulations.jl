@@ -256,8 +256,8 @@ function build_pre_step!(model::EmulationModel)
         populate_contributing_devices!(get_template(model), get_system(model))
         add_services_to_device_model!(get_template(model))
 
-        @info "Intilization Model"
-        build_initialization!(model)
+        @info "Initial Conditions  Model"
+        build_initial_conditions!(model)
         initialize!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end

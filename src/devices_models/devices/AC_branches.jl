@@ -25,11 +25,11 @@ struct StaticBranchUnbounded <: AbstractBranchFormulation end
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
 # for the branch flows either in AC or DC.
 
-get_initialization_device_model(
+get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractBranchFormulation},
 ) where {T <: PSY.ACBranch} = DeviceModel(T, StaticBranch)
 
-get_initialization_device_model(
+get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractBranchFormulation},
 ) where {T <: PSY.MonitoredLine} = DeviceModel(T, StaticBranchUnbounded)
 

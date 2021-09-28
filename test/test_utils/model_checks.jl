@@ -266,11 +266,12 @@ function _check_variable_bounds(bounds::PSI.VariableBounds, valid_bounds::NamedT
     @test bounds.bounds.max == valid_bounds.max
 end
 
-function check_duration_on_initialization_values(
+function check_duration_on_initial_conditions_values(
     model,
     ::Type{T},
 ) where {T <: PSY.Component}
-    initialization_data = PSI.get_initialization_data(PSI.get_optimization_container(model))
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     duration_on_data = PSI.get_initial_condition(
         PSI.get_optimization_container(model),
         InitialTimeDurationOn(),
@@ -278,8 +279,10 @@ function check_duration_on_initialization_values(
     )
     for ic in duration_on_data
         name = PSY.get_name(ic.component)
-        on_var =
-            PSI.get_initial_condition_value(initialization_data, OnVariable(), T)[1, name]
+        on_var = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
+            1,
+            name,
+        ]
         duration_on = JuMP.value(PSI.get_value(ic))
         if on_var == 1.0 && PSY.get_status(ic.component)
             @test duration_on == PSY.get_time_at_status(ic.component)
@@ -289,11 +292,12 @@ function check_duration_on_initialization_values(
     end
 end
 
-function check_duration_off_initialization_values(
+function check_duration_off_initial_conditions_values(
     model,
     ::Type{T},
 ) where {T <: PSY.Component}
-    initialization_data = PSI.get_initialization_data(PSI.get_optimization_container(model))
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     duration_off_data = PSI.get_initial_condition(
         PSI.get_optimization_container(model),
         InitialTimeDurationOff(),
@@ -301,8 +305,10 @@ function check_duration_off_initialization_values(
     )
     for ic in duration_off_data
         name = PSY.get_name(ic.component)
-        on_var =
-            PSI.get_initial_condition_value(initialization_data, OnVariable(), T)[1, name]
+        on_var = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
+            1,
+            name,
+        ]
         duration_off = JuMP.value(PSI.get_value(ic))
         if on_var == 0.0 && !PSY.get_status(ic.component)
             @test duration_off == PSY.get_time_at_status(ic.component)
@@ -312,7 +318,7 @@ function check_duration_off_initialization_values(
     end
 end
 
-function check_energy_initialization_values(model, ::Type{T}) where {T <: PSY.Component}
+function check_energy_initial_conditions_values(model, ::Type{T}) where {T <: PSY.Component}
     ic_data = PSI.get_initial_condition(
         PSI.get_optimization_container(model),
         InitialEnergyLevel(),
@@ -325,7 +331,7 @@ function check_energy_initialization_values(model, ::Type{T}) where {T <: PSY.Co
     end
 end
 
-function check_energy_initialization_values(model, ::Type{T}) where {T <: PSY.HydroGen}
+function check_energy_initial_conditions_values(model, ::Type{T}) where {T <: PSY.HydroGen}
     ic_data = PSI.get_initial_condition(
         PSI.get_optimization_container(model),
         InitialEnergyLevel(),

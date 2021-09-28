@@ -701,7 +701,7 @@ function build!(
             close(logger)
         end
     end
-    initialize_problem && _initialization_problems!(sim)
+    initialize_problem && _initial_conditions_problems!(sim)
     @info "\n$(BUILD_PROBLEMS_TIMER)\n"
     return get_simulation_build_status(sim)
 end

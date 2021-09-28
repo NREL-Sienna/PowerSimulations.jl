@@ -1,4 +1,4 @@
-function _get_initialization_value(
+function _get_initial_conditions_value(
     ::Vector{T},
     component::W,
     ::U,
@@ -12,7 +12,7 @@ function _get_initialization_value(
     },
     W <: PSY.Component,
 } where {U <: InitialConditionType}
-    ic_data = get_initialization_data(container)
+    ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
@@ -24,7 +24,7 @@ function _get_initialization_value(
     return T(component, val)
 end
 
-function _get_initialization_value(
+function _get_initial_conditions_value(
     ::Vector{T},
     component::W,
     ::U,
@@ -38,7 +38,7 @@ function _get_initialization_value(
     },
     W <: PSY.Component,
 } where {U <: InitialConditionType}
-    ic_data = get_initialization_data(container)
+    ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
@@ -50,7 +50,7 @@ function _get_initialization_value(
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
-function _get_initialization_value(
+function _get_initial_conditions_value(
     ::Vector{T},
     component::W,
     ::U,
@@ -64,7 +64,7 @@ function _get_initialization_value(
     },
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOff}
-    ic_data = get_initialization_data(container)
+    ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
@@ -80,7 +80,7 @@ function _get_initialization_value(
     return T(component, val)
 end
 
-function _get_initialization_value(
+function _get_initial_conditions_value(
     ::Vector{T},
     component::W,
     ::U,
@@ -94,7 +94,7 @@ function _get_initialization_value(
     },
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOff}
-    ic_data = get_initialization_data(container)
+    ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
@@ -110,7 +110,7 @@ function _get_initialization_value(
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
-function _get_initialization_value(
+function _get_initial_conditions_value(
     ::Vector{T},
     component::W,
     ::U,
@@ -124,7 +124,7 @@ function _get_initialization_value(
     },
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOn}
-    ic_data = get_initialization_data(container)
+    ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
@@ -140,7 +140,7 @@ function _get_initialization_value(
     return T(component, val)
 end
 
-function _get_initialization_value(
+function _get_initial_conditions_value(
     ::Vector{T},
     component::W,
     ::U,
@@ -154,7 +154,7 @@ function _get_initialization_value(
     },
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOn}
-    ic_data = get_initialization_data(container)
+    ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
@@ -170,7 +170,7 @@ function _get_initialization_value(
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
-function _get_initialization_value(
+function _get_initial_conditions_value(
     ::Vector{T},
     component::W,
     ::U,
@@ -190,14 +190,14 @@ function _get_initialization_value(
     W <:
     PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
-    ic_data = get_initialization_data(container)
+    ic_data = get_initial_conditions_data(container)
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         :ConstructGroup
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
-function _get_initialization_value(
+function _get_initial_conditions_value(
     ::Vector{T},
     component::W,
     ::U,
@@ -217,7 +217,7 @@ function _get_initialization_value(
     W <:
     PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
-    ic_data = get_initialization_data(container)
+    ic_data = get_initial_conditions_data(container)
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         :ConstructGroup
@@ -237,6 +237,6 @@ function add_initial_condition!(
     ini_cond_vector = add_initial_condition_container!(container, D(), T, components)
     for (ix, component) in enumerate(components)
         ini_cond_vector[ix] =
-            _get_initialization_value(ini_cond_vector, component, D(), U(), container)
+            _get_initial_conditions_value(ini_cond_vector, component, D(), U(), container)
     end
 end

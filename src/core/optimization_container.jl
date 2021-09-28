@@ -40,7 +40,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     expressions::Dict{ExpressionKey, JuMP.Containers.DenseAxisArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
-    initialization_data::InitializationData
+    initial_conditions_data::InitialConditionsData
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
@@ -75,7 +75,7 @@ function OptimizationContainer(
         Dict{ExpressionKey, AbstractArray}(),
         Dict{ParameterKey, ParameterContainer}(),
         Dict{ICKey, Vector{InitialCondition}}(),
-        InitializationData(),
+        InitialConditionsData(),
         nothing,
         PSY.get_base_power(sys),
         Dict{Symbol, Any}(),
@@ -130,7 +130,8 @@ get_resolution(container::OptimizationContainer) = container.resolution
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
 get_variables(container::OptimizationContainer) = container.variables
-get_initialization_data(container::OptimizationContainer) = container.initialization_data
+get_initial_conditions_data(container::OptimizationContainer) =
+    container.initial_conditions_data
 
 function is_milp(container::OptimizationContainer)
     type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)
@@ -1042,7 +1043,7 @@ function get_initial_conditions_keys(container::OptimizationContainer)
 end
 
 # TODO: This code is very simular to the in_memory_model_store function in line 100. Maybe we can do some consolidation
-function write_initialization_data(
+function write_initial_conditions_data(
     container::OptimizationContainer,
     ic_container::OptimizationContainer,
 )
@@ -1053,9 +1054,9 @@ function write_initialization_data(
             ic_container_dict = read_parameters(ic_container)
         end
         isempty(ic_container_dict) && continue
-        ic_data_dict = getfield(get_initialization_data(container), field)
+        ic_data_dict = getfield(get_initial_conditions_data(container), field)
         for (key, field_container) in ic_container_dict
-            @debug "Adding $(encode_key_as_string(key)) to InitializationData"
+            @debug "Adding $(encode_key_as_string(key)) to InitialConditionsData"
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
@@ -1067,36 +1068,40 @@ function write_initialization_data(
 end
 
 # TODO: These methods aren't passing the potential meta fields in the keys
-function get_initialization_variable(
+function get_initial_conditions_variable(
     container::OptimizationContainer,
     type::VariableType,
     ::Type{T},
 ) where {T <: Union{PSY.Component, PSY.System}}
-    return get_initialization_variable(get_initialization_data(container), type, T)
+    return get_initial_conditions_variable(get_initial_conditions_data(container), type, T)
 end
 
-function get_initialization_aux_variable(
+function get_initial_conditions_aux_variable(
     container::OptimizationContainer,
     type::AuxVariableType,
     ::Type{T},
 ) where {T <: Union{PSY.Component, PSY.System}}
-    return get_initialization_aux_variable(get_initialization_data(container), type, T)
+    return get_initial_conditions_aux_variable(
+        get_initial_conditions_data(container),
+        type,
+        T,
+    )
 end
 
-function get_initialization_dual(
+function get_initial_conditions_dual(
     container::OptimizationContainer,
     type::ConstraintType,
     ::Type{T},
 ) where {T <: Union{PSY.Component, PSY.System}}
-    return get_initialization_dual(get_initialization_data(container), type, T)
+    return get_initial_conditions_dual(get_initial_conditions_data(container), type, T)
 end
 
-function get_initialization_parameter(
+function get_initial_conditions_parameter(
     container::OptimizationContainer,
     type::ParameterType,
     ::Type{T},
 ) where {T <: Union{PSY.Component, PSY.System}}
-    return get_initialization_parameter(get_initialization_data(container), type, T)
+    return get_initial_conditions_parameter(get_initial_conditions_data(container), type, T)
 end
 
 function add_to_objective_function!(container::OptimizationContainer, expr)

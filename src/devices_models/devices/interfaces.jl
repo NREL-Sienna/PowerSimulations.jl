@@ -10,8 +10,8 @@ get_multiplier_value(x, y::PSY.Component, z) =
     error("Unable to get parameter $x for device $y for formulation $z")
 get_expression_type_for_reserve(_, y::Type{<:PSY.Component}, z) =
     error("`get_expression_type_for_reserve` must be implemented for $y and $z")
-get_initialization_device_model(
+get_initial_conditions_device_model(
     ::DeviceModel{T, D},
 ) where {T <: PSY.Device, D <: AbstractDeviceFormulation} =
-    error("`get_initialization_device_model` must be implemented for $T and $D")
+    error("`get_initial_conditions_device_model` must be implemented for $T and $D")
 requires_initialization(::AbstractDeviceFormulation) = false

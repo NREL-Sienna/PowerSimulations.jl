@@ -155,17 +155,17 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.HydroGen, ::Abstract
 
 #! format: on
 
-get_initialization_device_model(
+get_initial_conditions_device_model(
     model::DeviceModel{T, <:AbstractHydroFormulation},
 ) where {T <: PSY.HydroEnergyReservoir} = model
 
-function get_initialization_device_model(
+function get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractHydroFormulation},
 ) where {T <: PSY.HydroDispatch}
     return DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver)
 end
 
-function get_initialization_device_model(
+function get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractHydroFormulation},
 ) where {T <: PSY.HydroPumpedStorage}
     return DeviceModel(PSY.HydroPumpedStorage, HydroDispatchPumpedStorage)

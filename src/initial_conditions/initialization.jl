@@ -1,7 +1,7 @@
-function get_initialization_template(model::OperationModel)
+function get_initial_conditions_template(model::OperationModel)
     ic_template = ProblemTemplate(get_network_model(model.template))
     for (_, device_model) in model.template.devices
-        base_model = get_initialization_device_model(device_model)
+        base_model = get_initial_conditions_device_model(device_model)
         base_model.use_slacks = device_model.use_slacks
         base_model.duals = device_model.duals
         base_model.time_series_names = device_model.time_series_names
@@ -9,7 +9,7 @@ function get_initialization_template(model::OperationModel)
         set_device_model!(ic_template, base_model)
     end
     for (_, device_model) in model.template.branches
-        base_model = get_initialization_device_model(device_model)
+        base_model = get_initial_conditions_device_model(device_model)
         base_model.use_slacks = device_model.use_slacks
         base_model.duals = device_model.duals
         base_model.time_series_names = device_model.time_series_names
@@ -20,12 +20,12 @@ function get_initialization_template(model::OperationModel)
     return ic_template
 end
 
-function build_initialization_problem!(model::T) where {T <: OperationModel}
+function build_initial_conditions_problem!(model::T) where {T <: OperationModel}
     model.internal.ic_model_container = deepcopy(get_optimization_container(model))
     ic_settings = model.internal.ic_model_container.settings
-    # TODO: add an interface to allow user to configure initialization problem
+    # TODO: add an interface to allow user to configure initial_conditions problem
     model.internal.ic_model_container.JuMPmodel = _make_jump_model(ic_settings)
-    template = get_initialization_template(model)
+    template = get_initial_conditions_template(model)
     init_optimization_container!(
         model.internal.ic_model_container,
         get_network_formulation(get_template(model)),
@@ -36,7 +36,7 @@ function build_initialization_problem!(model::T) where {T <: OperationModel}
 end
 
 #=
-function perform_initialization_step!(
+function perform_initial_conditions_step!(
     ic_op_model::DecisionModel,
     model::DecisionModel,
     sim::Simulation,
@@ -79,20 +79,20 @@ function perform_initialization_step!(
     return
 end
 
-function _create_initialization_problem(sim::Simulation)
-    ic_model = build_initialization_problem(first(get_problems(sim)), sim)
+function _create_initial_conditions_problem(sim::Simulation)
+    ic_model = build_initial_conditions_problem(first(get_problems(sim)), sim)
     solve!(ic_model)
     return ic_model
 end
 
-function _initialization_problems!(sim::Simulation)
+function _initial_conditions_problems!(sim::Simulation)
     # NOTE: Here we assume the solution to the 1st period in the simulation provides a good initial conditions
     # for initializing the simulation, but is not always guaranteed to provide a feasible initial conditions.
     # Currently the formulations used in the initialization problem are pre-defined, customization option
     # is be added in future release.
-    ic_model = create_initialization_problem(sim)
+    ic_model = create_initial_conditions_problem(sim)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        perform_initialization_step!(ic_model, model, sim)
+        perform_initial_conditions_step!(ic_model, model, sim)
     end
 end
 =#

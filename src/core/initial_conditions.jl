@@ -66,15 +66,15 @@ get_ic_type(
 """
 Stores data to populate initial conditions before the build call
 """
-mutable struct InitializationData
+mutable struct InitialConditionsData
     duals::Dict{ConstraintKey, DataFrames.DataFrame}
     parameters::Dict{ParameterKey, DataFrames.DataFrame}
     variables::Dict{VariableKey, DataFrames.DataFrame}
     aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
 end
 
-function InitializationData()
-    return InitializationData(
+function InitialConditionsData()
+    return InitialConditionsData(
         Dict{ConstraintKey, DataFrames.DataFrame}(),
         Dict{ParameterKey, DataFrames.DataFrame}(),
         Dict{VariableKey, DataFrames.DataFrame}(),
@@ -83,7 +83,7 @@ function InitializationData()
 end
 
 function get_initial_condition_value(
-    ic_data::InitializationData,
+    ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
@@ -91,7 +91,7 @@ function get_initial_condition_value(
 end
 
 function get_initial_condition_value(
-    ic_data::InitializationData,
+    ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
 ) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
@@ -99,7 +99,7 @@ function get_initial_condition_value(
 end
 
 function get_initial_condition_value(
-    ic_data::InitializationData,
+    ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
@@ -107,7 +107,7 @@ function get_initial_condition_value(
 end
 
 function get_initial_condition_value(
-    ic_data::InitializationData,
+    ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
@@ -115,7 +115,7 @@ function get_initial_condition_value(
 end
 
 function has_initial_condition_value(
-    ic_data::InitializationData,
+    ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
@@ -123,7 +123,7 @@ function has_initial_condition_value(
 end
 
 function has_initial_condition_value(
-    ic_data::InitializationData,
+    ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
 ) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
@@ -131,7 +131,7 @@ function has_initial_condition_value(
 end
 
 function has_initial_condition_value(
-    ic_data::InitializationData,
+    ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
@@ -139,7 +139,7 @@ function has_initial_condition_value(
 end
 
 function has_initial_condition_value(
-    ic_data::InitializationData,
+    ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}

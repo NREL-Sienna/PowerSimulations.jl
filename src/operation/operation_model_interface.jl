@@ -88,14 +88,14 @@ function advance_execution_count!(model::OperationModel)
     return
 end
 
-function build_initialization!(model::OperationModel)
+function build_initial_conditions!(model::OperationModel)
     @assert model.internal.ic_model_container === nothing
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
         if requires_init
-            @debug "Initialization required for $device_type"
-            build_initialization_problem!(model)
+            @debug "initial_conditions required for $device_type"
+            build_initial_conditions_problem!(model)
             break
         end
     end
@@ -105,8 +105,8 @@ function build_initialization!(model::OperationModel)
     return
 end
 
-function write_initialization_data(model::OperationModel)
-    write_initialization_data(
+function write_initial_conditions_data(model::OperationModel)
+    write_initial_conditions_data(
         get_optimization_container(model),
         model.internal.ic_model_container,
     )
@@ -118,10 +118,10 @@ function initialize!(model::OperationModel)
     if model.internal.ic_model_container === nothing
         return
     end
-    @info "Solving Initialization Model"
+    @info "Solving initial_conditions Model"
     solve_impl!(model.internal.ic_model_container, get_system(model), Dict{Symbol, Any}())
 
-    write_initialization_data(container, model.internal.ic_model_container)
+    write_initial_conditions_data(container, model.internal.ic_model_container)
     return
 end
 

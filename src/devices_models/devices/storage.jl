@@ -61,7 +61,7 @@ initial_condition_default(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorag
 initial_condition_variable(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = EnergyVariable()
 #! format: on
 
-get_initialization_device_model(
+get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractDeviceFormulation},
 ) where {T <: PSY.Storage} = DeviceModel(T, BookKeeping)
 

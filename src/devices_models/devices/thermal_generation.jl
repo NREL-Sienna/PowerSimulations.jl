@@ -115,13 +115,13 @@ initial_condition_variable(
     ::AbstractThermalFormulation,
 ) = OnVariable()
 
-function get_initialization_device_model(
+function get_initial_conditions_device_model(
     model::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
     return DeviceModel(T, ThermalDispatch)
 end
 
-function get_initialization_device_model(
+function get_initial_conditions_device_model(
     model::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
     return DeviceModel(T, ThermalBasicUnitCommitment)
