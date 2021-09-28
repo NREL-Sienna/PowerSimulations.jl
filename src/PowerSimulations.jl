@@ -84,10 +84,11 @@ export FullHorizon
 export Range
 
 # feedforward models
-export UpperBoundFF
-export SemiContinuousFF
-export IntegralLimitFF
-export ParameterFF
+export UpperBoundFeedForward
+export LowerBoundFeedForward
+export SemiContinuousFeedForward
+export IntegralLimitFeedForward
+export FixValueFeedForward
 
 # InitialConditions chrons
 export InterProblemChronology
@@ -301,12 +302,15 @@ export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
 
 # Parameters
+# Time Series Parameters
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
 export EnergyTargetTimeSeriesParameter
 export EnergyBudgetTimeSeriesParameter
-export BinaryValueParameter
+
+# FeedForward Parameters
+export OnStatusParameter
 export UpperBoundValueParameter
 
 #################################################################################
@@ -440,7 +444,7 @@ include("parameters/add_parameters.jl")
 include("parameters/update_parameters.jl")
 
 include("feedforward/feedforward_chronologies.jl")
-include("feedforward/feedforward_structs.jl")
+include("feedforward/feedforwards.jl")
 
 include("simulation/param_result_cache.jl")
 include("simulation/result_cache.jl")

@@ -8,7 +8,7 @@
             "ED" => (Hour(1), Consecutive()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedForward(
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -48,7 +48,7 @@ end
             "ED" => (Hour(1), Consecutive()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedForward(
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -82,7 +82,7 @@ end
             "ED" => (Hour(1), Consecutive()),
         ),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedForward(
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),
@@ -182,11 +182,11 @@ end
         "ED" => (Hour(1), Consecutive()),
     )
     feedforward = Dict(
-        ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+        ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFeedForward(
             variable_source_problem = ActivePowerVariable,
             affected_variables = [ActivePowerVariable],
         ),
-        ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+        ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFeedForward(
             variable_source_problem = ActivePowerVariable,
             affected_variables = [ActivePowerVariable],
         ),
@@ -226,7 +226,7 @@ end
 #             "ED" => (Hour(1), Consecutive()),
 #         ),
 #         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
+#             ("ED", :devices, :Generators) => SemiContinuousFeedForward(
 #                 binary_source_stage = OnVariable,
 #                 affected_variables = [ActivePowerVariable],
 #             ),
@@ -255,7 +255,7 @@ end
 #             "ED" => (Hour(1), Consecutive()),
 #         ),
 #         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
+#             ("ED", :devices, :Generators) => SemiContinuousFeedForward(
 #                 binary_source_stage = OnVariable,
 #                 affected_variables = [ActivePowerVariable],
 #             ),
@@ -287,7 +287,7 @@ end
 #             "ED" => (Hour(1), Consecutive()),
 #         ),
 #         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
+#             ("ED", :devices, :Generators) => SemiContinuousFeedForward(
 #                 binary_source_stage = OnVariable,
 #                 affected_variables = [ActivePowerVariable],
 #             ),
