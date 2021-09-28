@@ -58,6 +58,10 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, D())
 
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,

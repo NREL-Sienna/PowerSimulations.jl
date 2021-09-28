@@ -1,20 +1,20 @@
-function initialize_simulation_info!(model::DecisionModel, ::FeedForwardChronology)
-    @assert built_for_recurrent_solves(model)
-    system = get_system(model)
-    resolution = get_resolution(model)
-    interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
-    end_of_interval_step = Int(interval / resolution)
-    get_simulation_info(model).end_of_interval_step = end_of_interval_step
-end
-
-function initialize_simulation_info!(model::DecisionModel, ::RecedingHorizon)
-    @assert built_for_recurrent_solves(model)
-    get_simulation_info(model).end_of_interval_step = 1
-end
+# function initialize_simulation_info!(model::DecisionModel, ::FeedForwardChronology)
+#     @assert built_for_recurrent_solves(model)
+#     system = get_system(model)
+#     resolution = get_resolution(model)
+#     interval = IS.time_period_conversion(PSY.get_forecast_interval(system))
+#     end_of_interval_step = Int(interval / resolution)
+#     get_simulation_info(model).end_of_interval_step = end_of_interval_step
+# end
+#
+# function initialize_simulation_info!(model::DecisionModel, ::RecedingHorizon)
+#     @assert built_for_recurrent_solves(model)
+#     get_simulation_info(model).end_of_interval_step = 1
+# end
 
 ####################### Feed Forward Affects ###############################################
 
-@doc raw"""
+"""
         ub_ff(container::OptimizationContainer,
               cons_name::Symbol,
               constraint_infos::Vector{DeviceRangeConstraintInfo},
@@ -194,39 +194,46 @@ where r in range_data.
 * var_key::VariableKey : the name of the continuous variable
 * param_reference : UpdateRef of the parameter
 """
-function semicontinuousrange_ff(
+function add_feedforward_arguments!(
     container::OptimizationContainer,
-    constraint_type::ConstraintType,
-    ::Type{T},
-    constraint_infos::Vector{DeviceRangeConstraintInfo},
-    param_type::VariableValueParameter,
-    variable_type::VariableType,
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::SemiContinuousFeedForward
+) where {T <: PSY.Component}
+    for var in get_affected_variables(ff)
+        add_parameters!(container, OnStatusParameter(), var, devices)
+    end
+    return
+end
+
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::SemiContinuousFeedForward
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
-    variable = get_variable(container, variable_type, T)
-    # Used to make sure the names are consistent between the variable and the infos
-    axes = JuMP.axes(variable)
-    set_name = [get_component_name(ci) for ci in constraint_infos]
-    @assert axes[2] == time_steps
-    container = add_param_container!(container, param_reference, T, set_name)
-    multiplier = get_multiplier_array(container)
-    param = get_parameter_array(container)
-    con_ub = add_cons_container!(
-        container,
-        constraint_type,
-        T,
-        set_name,
-        time_steps,
-        meta = "up",
-    )
-    con_lb = add_cons_container!(
-        container,
-        constraint_type,
-        T,
-        set_name,
-        time_steps,
-        meta = "lb",
-    )
+    for var in get_affected_variables(ff)
+        variable = get_variable(container, var)
+        axes = JuMP.axes(variable)
+        set_name = [PSY.get_name(d) for d in devices]
+        @assert axes[2] == time_steps
+        param = get_parameter_array(container)
+        var_type = get_entry_type(var)
+        con_ub = add_cons_container!(
+            container,
+            FeedforwardBinConstraint(),
+            T,
+            set_name,
+            time_steps,
+            meta = "$(var_type)up",
+        )
+        con_lb = add_cons_container!(
+            container,
+            FeedforwardBinConstraint(),
+            T,
+            set_name,
+            time_steps,
+            meta = "$(var_type)lb",
+        )
 
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
@@ -558,6 +565,6 @@ function feedforward_update!(
 end
 
 function attach_feedforward(model, ff::AbstractAffectFeedForward)
-    model.feedforward = ff
+    push!(model.feedforwards, ff)
     return
 end
