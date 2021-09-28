@@ -93,7 +93,7 @@ function add_variable!(
         !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
         if get_warm_start(settings)
-            init = get_variable_initial_value(variable_type, d, formulation)
+            init = get_variable_warm_start_value(variable_type, d, formulation)
             !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
         end
     end
@@ -139,7 +139,7 @@ function add_service_variable!(
         lb = get_variable_lower_bound(variable_type, service, d, container.settings)
         !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
-        init = get_variable_initial_value(variable_type, d, container.settings)
+        init = get_variable_warm_start_value(variable_type, d, container.settings)
         !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
     end
 

@@ -6,6 +6,8 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BatteryAncillaryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
 
+requires_initialization(::AbstractStorageFormulation) = false
+
 get_variable_multiplier(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ReserveRangeExpressionUB
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ReserveRangeExpressionLB
@@ -34,7 +36,7 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractSt
 get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_state_of_charge_limits(d).max
 get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_state_of_charge_limits(d).min
-get_variable_initial_value(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
+get_variable_warm_start_value(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
 
 ############## ReservationVariable, Storage ####################
 
@@ -53,7 +55,15 @@ get_variable_upper_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractSto
 get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
+
+#################### Initial Conditions for models ###############
+initial_condition_default(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
+initial_condition_variable(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = EnergyVariable()
 #! format: on
+
+get_initial_conditions_device_model(
+    ::DeviceModel{T, <:AbstractDeviceFormulation},
+) where {T <: PSY.Storage} = DeviceModel(T, BookKeeping)
 
 get_multiplier_value(
     ::EnergyTargetTimeSeriesParameter,
@@ -129,13 +139,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{St},
     formulation::AbstractStorageFormulation,
 ) where {St <: PSY.Storage}
-    add_initial_condition!(
-        container,
-        devices,
-        formulation,
-        InitialEnergyLevel,
-        EnergyVariable,
-    )
+    add_initial_condition!(container, devices, formulation, InitialEnergyLevel())
     return
 end
 
@@ -189,7 +193,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevel(), V)
+    initial_conditions = get_initial_condition(container, InitialEnergyLevel(), V)
     energy_var = get_variable(container, EnergyVariable(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
@@ -198,13 +202,13 @@ function add_constraints!(
         add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
 
     for ic in initial_conditions
-        device = ic.device
+        device = get_component(ic)
         efficiency = PSY.get_efficiency(device)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
-            ic.value +
+            get_value(ic) +
             (
                 powerin_var[name, 1] * efficiency.in -
                 (powerout_var[name, 1] / efficiency.out)

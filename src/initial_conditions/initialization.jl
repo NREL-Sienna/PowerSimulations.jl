@@ -1,54 +1,42 @@
-const RELAXED_FORMULATION_MAPPING = Dict(
-    :ThermalStandard => DeviceModel(PSY.ThermalStandard, ThermalBasicUnitCommitment),
-    :ThermalMultiStart =>
-        DeviceModel(PSY.ThermalMultiStart, ThermalBasicUnitCommitment), # Compact vs Standard representation
-    :HydroDispatch => DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver),
-    :HydroEnergyReservoir =>
-        DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchRunOfRiver),
-    :HydroPumpedStorage =>
-        DeviceModel(PSY.HydroPumpedStorage, HydroDispatchPumpedStorage),
-    :RenewableFix => DeviceModel(PSY.RenewableFix, FixedOutput),
-    :RenewableDispatch => DeviceModel(PSY.RenewableDispatch, FixedOutput),
-    :GenericBattery => DeviceModel(PSY.GenericBattery, BookKeeping),
-    :BatteryEMS => DeviceModel(PSY.BatteryEMS, BookKeeping),
-    :TapTransformer => DeviceModel(PSY.TapTransformer, StaticBranch),
-    :Transformer2W => DeviceModel(PSY.Transformer2W, StaticBranch),
-    :MonitoredLine => DeviceModel(PSY.MonitoredLine, StaticBranchUnbounded),
-    :Line => DeviceModel(PSY.Line, StaticBranch),
-    :HVDCLine => DeviceModel(PSY.HVDCLine, HVDCDispatch),
-    :PowerLoad => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
-    :InterruptibleLoad => DeviceModel(PSY.InterruptibleLoad, StaticPowerLoad),
-)
-
-function _build_initialization_template(model::DecisionModel)
-    ic_template = ProblemTemplate(problem.template.transmission)
-    for (device, _) in problem.template.devices
-        model = RELAXED_FORMULATION_MAPPING[device]
-        set_device_model!(ic_template, model)
+function get_initial_conditions_template(model::OperationModel)
+    ic_template = ProblemTemplate(get_network_model(model.template))
+    for (_, device_model) in model.template.devices
+        base_model = get_initial_conditions_device_model(device_model)
+        base_model.use_slacks = device_model.use_slacks
+        base_model.duals = device_model.duals
+        base_model.time_series_names = device_model.time_series_names
+        base_model.attributes = device_model.attributes
+        set_device_model!(ic_template, base_model)
     end
-    for (device, _) in problem.template.branches
-        model = RELAXED_FORMULATION_MAPPING[device]
-        set_device_model!(ic_template, model)
+    for (_, device_model) in model.template.branches
+        base_model = get_initial_conditions_device_model(device_model)
+        base_model.use_slacks = device_model.use_slacks
+        base_model.duals = device_model.duals
+        base_model.time_series_names = device_model.time_series_names
+        base_model.attributes = device_model.attributes
+        set_device_model!(ic_template, base_model)
     end
-    for (device, model) in problem.template.services
-        set_service_model!(ic_template, model)
-    end
+    ic_template.services = model.template.services
     return ic_template
 end
 
-function _build_initialization_problem(
-    model::DecisionModel{M},
-    sim::Simulation,
-) where {M <: DecisionProblem}
-    settings = deepcopy(get_settings(model))
-    set_horizon!(settings, 1)
-    template = _build_initialization_template(model)
-    ic_model = DecisionModel{M}(template, problem.sys, settings)
-    build!(ic_model; output_dir = get_internal(model).output_dir, serialize = false)
-    return ic_model
+function build_initial_conditions_problem!(model::T) where {T <: OperationModel}
+    model.internal.ic_model_container = deepcopy(get_optimization_container(model))
+    ic_settings = model.internal.ic_model_container.settings
+    # TODO: add an interface to allow user to configure initial_conditions problem
+    model.internal.ic_model_container.JuMPmodel = _make_jump_model(ic_settings)
+    template = get_initial_conditions_template(model)
+    init_optimization_container!(
+        model.internal.ic_model_container,
+        get_network_formulation(get_template(model)),
+        get_system(model),
+    )
+    build_impl!(model.internal.ic_model_container, template, get_system(model))
+    return
 end
 
-function _perform_initialization_step!(
+#=
+function perform_initial_conditions_step!(
     ic_op_model::DecisionModel,
     model::DecisionModel,
     sim::Simulation,
@@ -60,7 +48,7 @@ function _perform_initialization_step!(
         # TODO: Replace this convoluted way to get information with access to data store
         simulation_cache = sim.internal.simulation_cache
         for ic in initial_conditions
-            name = get_device_name(ic)
+            name = get_component_name(ic)
             var_value = get_problem_variable(
                 RecedingHorizon(),
                 (ic_model => problem),
@@ -91,19 +79,20 @@ function _perform_initialization_step!(
     return
 end
 
-function _create_initialization_problem(sim::Simulation)
-    ic_model = _build_initialization_problem(first(get_problems(sim)), sim)
+function _create_initial_conditions_problem(sim::Simulation)
+    ic_model = build_initial_conditions_problem(first(get_problems(sim)), sim)
     solve!(ic_model)
     return ic_model
 end
 
-function _initialization_problems!(sim::Simulation)
+function _initial_conditions_problems!(sim::Simulation)
     # NOTE: Here we assume the solution to the 1st period in the simulation provides a good initial conditions
     # for initializing the simulation, but is not always guaranteed to provide a feasible initial conditions.
     # Currently the formulations used in the initialization problem are pre-defined, customization option
     # is be added in future release.
-    ic_model = _create_initialization_problem(sim)
+    ic_model = create_initial_conditions_problem(sim)
     for (problem_number, (problem_name, problem)) in enumerate(get_problems(sim))
-        _perform_initialization_step!(ic_model, model, sim)
+        perform_initial_conditions_step!(ic_model, model, sim)
     end
 end
+=#

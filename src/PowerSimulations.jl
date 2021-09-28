@@ -70,6 +70,7 @@ export ThermalRampLimited
 export ThermalDispatchNoMin
 export ThermalMultiStartUnitCommitment
 export ThermalCompactUnitCommitment
+export ThermalCompactDispatch
 
 ###### Regulation Device Formulation #######
 export DeviceLimitedRegulation
@@ -396,7 +397,6 @@ include("core/definitions.jl")
 # Core components
 include("core/abstract_types.jl")
 include("core/optimization_container_keys.jl")
-include("core/aux_structs.jl")
 include("network_models/powermodels_formulations.jl")
 include("core/network_model.jl")
 include("core/parameters.jl")
@@ -406,17 +406,13 @@ include("core/variables.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
 include("core/expressions.jl")
+include("core/initial_conditions.jl")
 include("core/cache.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
 include("core/optimizer_stats.jl")
 
-include("initial_conditions/initial_conditions.jl")
-include("initial_conditions/initial_condition.jl")
-include("initial_conditions/initial_condition_chronologies.jl")
-
 include("core/optimization_container.jl")
-include("initial_conditions/update_initial_conditions.jl")
 
 include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
@@ -431,6 +427,12 @@ include("operation/operation_model_serialization.jl")
 include("operation/model_cache.jl")
 include("operation/time_series_interface.jl")
 include("operation/optimization_debugging.jl")
+include("operation/model_numerical_analysis_utils.jl")
+
+include("initial_conditions/add_initial_condition.jl")
+include("initial_conditions/initial_condition_chronologies.jl")
+include("initial_conditions/update_initial_conditions.jl")
+include("initial_conditions/calculate_initial_condition.jl")
 
 include("parameters/add_parameters.jl")
 include("parameters/update_parameters.jl")
@@ -513,7 +515,6 @@ include("operation/operation_problem_templates.jl")
 include("operation/decision_problems.jl")
 
 # Utils
-include("utils/jump_model_utils.jl")
 include("utils/printing.jl")
 include("utils/file_utils.jl")
 include("utils/logging.jl")

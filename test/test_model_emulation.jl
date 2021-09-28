@@ -6,8 +6,329 @@
         add_single_time_series = true,
         force_build = true,
     )
-    # c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_single_time_series = true)
-    # c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_uc_re"; add_single_time_series = true)
+
+    model = EmulationModel(template, c_sys5; optimizer = GLPK_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    template = get_thermal_standard_uc_template()
+    c_sys5_uc_re = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_uc_re";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    model = EmulationModel(template, c_sys5_uc_re; optimizer = GLPK_optimizer)
+
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    @test run!(model) == RunStatus.SUCCESSFUL
+end
+
+@testset "Emulation Model initial_conditions test for ThermalGen" begin
+    ######## Test with ThermalStandardUnitCommitment ########
+    template = get_thermal_standard_uc_template()
+    c_sys5_uc_re = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_uc_re";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    model = EmulationModel(template, c_sys5_uc_re; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    check_duration_on_initial_conditions_values(model, ThermalStandard)
+    check_duration_off_initial_conditions_values(model, ThermalStandard)
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with ThermalMultiStartUnitCommitment ########
+    template = get_thermal_standard_uc_template()
+    c_sys5_uc = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_pglib";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
+    model = EmulationModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 1, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+
+    check_duration_on_initial_conditions_values(model, ThermalStandard)
+    check_duration_off_initial_conditions_values(model, ThermalStandard)
+    check_duration_on_initial_conditions_values(model, ThermalMultiStart)
+    check_duration_off_initial_conditions_values(model, ThermalMultiStart)
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with ThermalCompactUnitCommitment ########
+    template = get_thermal_standard_uc_template()
+    c_sys5_uc = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_pglib";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, ThermalMultiStart, ThermalCompactUnitCommitment)
+    model = EmulationModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 1, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    check_duration_on_initial_conditions_values(model, ThermalStandard)
+    check_duration_off_initial_conditions_values(model, ThermalStandard)
+    check_duration_on_initial_conditions_values(model, ThermalMultiStart)
+    check_duration_off_initial_conditions_values(model, ThermalMultiStart)
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with ThermalCompactDispatch ########
+    template = get_thermal_standard_uc_template()
+    c_sys5_uc = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_pglib";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, ThermalStandard, ThermalCompactDispatch)
+    model = EmulationModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 1, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    @test run!(model) == RunStatus.SUCCESSFUL
+end
+
+@testset "Emulation Model initial_conditions test for Storage" begin
+    ######## Test with BookKeeping ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_bat = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_bat";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, GenericBattery, BookKeeping)
+    model = EmulationModel(template, c_sys5_bat; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    ic_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialEnergyLevel(),
+        GenericBattery,
+    )
+    for ic in ic_data
+        name = PSY.get_name(ic.component)
+        e_var = JuMP.value(PSI.get_value(ic))
+        @test PSY.get_initial_energy(ic.component) == e_var
+    end
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with BatteryAncillaryServices ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_bat = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_bat";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, GenericBattery, BatteryAncillaryServices)
+    model = EmulationModel(template, c_sys5_bat; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    ic_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialEnergyLevel(),
+        GenericBattery,
+    )
+    for ic in ic_data
+        name = PSY.get_name(ic.component)
+        e_var = JuMP.value(PSI.get_value(ic))
+        @test PSY.get_initial_energy(ic.component) == e_var
+    end
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with EnergyTarget ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_bat = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_bat_ems";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, BatteryEMS, EnergyTarget)
+    model = EmulationModel(template, c_sys5_bat; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    ic_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialEnergyLevel(),
+        BatteryEMS,
+    )
+    for ic in ic_data
+        name = PSY.get_name(ic.component)
+        e_var = JuMP.value(PSI.get_value(ic))
+        @test PSY.get_initial_energy(ic.component) == e_var
+    end
+    @test run!(model) == RunStatus.SUCCESSFUL
+end
+
+@testset "Emulation Model initial_conditions test for Hydro" begin
+    ######## Test with HydroDispatchRunOfRiver ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_hyd = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_hyd";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    model = EmulationModel(template, c_sys5_hyd; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    @test !PSI.has_initial_condition_value(
+        initial_conditions_data,
+        ActivePowerVariable(),
+        HydroEnergyReservoir,
+    )
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with HydroCommitmentRunOfRiver ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_hyd = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_hyd";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
+    set_device_model!(template, HydroEnergyReservoir, HydroCommitmentRunOfRiver)
+    model = EmulationModel(template, c_sys5_hyd; optimizer = Cbc_optimizer)
+
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    @test PSI.has_initial_condition_value(
+        initial_conditions_data,
+        OnVariable(),
+        HydroEnergyReservoir,
+    )
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with HydroCommitmentRunOfRiver ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_hyd = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_hyd";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
+    model = EmulationModel(template, c_sys5_hyd; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    @test !PSI.has_initial_condition_value(
+        initial_conditions_data,
+        ActivePowerVariable(),
+        HydroEnergyReservoir,
+    )
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with HydroCommitmentRunOfRiver ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_hyd = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_hyd";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirBudget)
+    model = EmulationModel(template, c_sys5_hyd; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    @test PSI.has_initial_condition_value(
+        initial_conditions_data,
+        OnVariable(),
+        HydroEnergyReservoir,
+    )
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with HydroCommitmentRunOfRiver ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_hyd = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_hyd_ems";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    model = EmulationModel(template, c_sys5_hyd; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    @test !PSI.has_initial_condition_value(
+        initial_conditions_data,
+        ActivePowerVariable(),
+        HydroEnergyReservoir,
+    )
+    ic_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialEnergyLevel(),
+        HydroEnergyReservoir,
+    )
+    for ic in ic_data
+        name = PSY.get_name(ic.component)
+        e_var = JuMP.value(PSI.get_value(ic))
+        @test PSY.get_initial_storage(ic.component) == e_var
+    end
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    ######## Test with HydroCommitmentRunOfRiver ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_hyd = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_hyd_ems";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirStorage)
+    model = EmulationModel(template, c_sys5_hyd; optimizer = Cbc_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
+          BuildStatus.BUILT
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    @test PSI.has_initial_condition_value(
+        initial_conditions_data,
+        OnVariable(),
+        HydroEnergyReservoir,
+    )
+    ic_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialEnergyLevel(),
+        HydroEnergyReservoir,
+    )
+    for ic in ic_data
+        name = PSY.get_name(ic.component)
+        e_var = JuMP.value(PSI.get_value(ic))
+        @test PSY.get_initial_storage(ic.component) == e_var
+    end
+    @test run!(model) == RunStatus.SUCCESSFUL
+end
+
+@testset "Emulation Model Results" begin
+    template = get_thermal_dispatch_template_network()
+    c_sys5 = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_uc";
+        add_single_time_series = true,
+        force_build = true,
+    )
 
     model = EmulationModel(template, c_sys5; optimizer = Cbc_optimizer)
     executions = 10

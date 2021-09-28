@@ -1577,7 +1577,7 @@ function construct_device!(
     add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
 
     # Aux Variables
-    add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+    # add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
@@ -1681,7 +1681,7 @@ function construct_device!(
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
 
     # Aux Variables
-    add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+    # add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
     # This isn't working properly since it isn't adding to the nodal expression the min power
     # we need to add an extra term to the expressions with the mins

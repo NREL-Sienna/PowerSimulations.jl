@@ -12,35 +12,38 @@ struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
+requires_initialization(::AbstractHydroFormulation) = false
+requires_initialization(::AbstractHydroUnitCommitment) = true
+
 get_variable_multiplier(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable, 
-    ::Type{<:PSY.HydroGen}, 
+    ::ActivePowerReserveVariable,
+    ::Type{<:PSY.HydroGen},
     ::Type{<:PSY.Reserve{PSY.ReserveUp}}
 ) = ActivePowerRangeExpressionUB
 
 get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable, 
-    ::Type{<:PSY.HydroGen}, 
+    ::ActivePowerReserveVariable,
+    ::Type{<:PSY.HydroGen},
     ::Type{<:PSY.Reserve{PSY.ReserveDown}}
 ) = ActivePowerRangeExpressionLB
 
 get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable, 
-    ::Type{<:PSY.HydroPumpedStorage}, 
+    ::ActivePowerReserveVariable,
+    ::Type{<:PSY.HydroPumpedStorage},
     ::Type{<:PSY.Reserve{PSY.ReserveUp}}
 ) = ReserveRangeExpressionUB
 
 get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable, 
-    ::Type{<:PSY.HydroPumpedStorage}, 
+    ::ActivePowerReserveVariable,
+    ::Type{<:PSY.HydroPumpedStorage},
     ::Type{<:PSY.Reserve{PSY.ReserveDown}}
 ) = ReserveRangeExpressionLB
 
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 
-get_variable_initial_value(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
+get_variable_warm_start_value(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).min
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroUnitCommitment) = 0.0
@@ -51,13 +54,13 @@ get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::HydroDispatch
 
 ############## ReactivePowerVariable, HydroGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_initial_value(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
+get_variable_warm_start_value(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).max
 
 ############## EnergyVariable, HydroGen ####################
 get_variable_binary(::EnergyVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-get_variable_initial_value(pv::EnergyVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
+get_variable_warm_start_value(pv::EnergyVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
 get_variable_lower_bound(::EnergyVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::EnergyVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 
@@ -65,7 +68,7 @@ get_variable_upper_bound(::EnergyVariable, d::PSY.HydroGen, ::AbstractHydroFormu
 
 get_variable_binary(::EnergyVariableUp, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 
-get_variable_initial_value(pv::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
+get_variable_warm_start_value(pv::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
 
 get_variable_lower_bound(::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d).up
@@ -74,7 +77,7 @@ get_variable_upper_bound(::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFor
 
 get_variable_binary(::EnergyVariableDown, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 
-get_variable_initial_value(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
+get_variable_warm_start_value(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
 
 get_variable_lower_bound(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d).down
@@ -98,7 +101,7 @@ get_variable_multiplier(::ActivePowerOutVariable, d::Type{<:PSY.HydroGen}, ::Abs
 ############## OnVariable, HydroGen ####################
 
 get_variable_binary(::OnVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = true
-get_variable_initial_value(::OnVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d) > 0 ? 1.0 : 0.0
+get_variable_warm_start_value(::OnVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d) > 0 ? 1.0 : 0.0
 
 ############## WaterSpillageVariable, HydroGen ####################
 
@@ -125,12 +128,48 @@ get_multiplier_value(::EnergyBudgetTimeSeriesParameter, d::PSY.HydroGen, ::Abstr
 get_multiplier_value(::EnergyTargetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 get_multiplier_value(::InflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_inflow(d) * PSY.get_conversion_factor(d)
 get_multiplier_value(::OutflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_outflow(d) * PSY.get_conversion_factor(d)
-
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_max_active_power(d)
-
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::FixedOutput) = PSY.get_max_active_power(d)
 
+#################### Initial Conditions for models ###############
+initial_condition_default(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d)
+initial_condition_variable(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
+
+initial_condition_default(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
+initial_condition_variable(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = ActivePowerVariable()
+
+initial_condition_default(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
+initial_condition_variable(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariable()
+
+initial_condition_default(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
+initial_condition_variable(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariableUp()
+
+initial_condition_default(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
+initial_condition_variable(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariableDown()
+
+initial_condition_default(::InitialTimeDurationOn, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d) ? PSY.get_time_at_status(d) :  0.0
+initial_condition_variable(::InitialTimeDurationOn, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
+
+initial_condition_default(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d) ? 0.0 : PSY.get_time_at_status(d)
+initial_condition_variable(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
+
 #! format: on
+
+get_initial_conditions_device_model(
+    model::DeviceModel{T, <:AbstractHydroFormulation},
+) where {T <: PSY.HydroEnergyReservoir} = model
+
+function get_initial_conditions_device_model(
+    ::DeviceModel{T, <:AbstractHydroFormulation},
+) where {T <: PSY.HydroDispatch}
+    return DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver)
+end
+
+function get_initial_conditions_device_model(
+    ::DeviceModel{T, <:AbstractHydroFormulation},
+) where {T <: PSY.HydroPumpedStorage}
+    return DeviceModel(PSY.HydroPumpedStorage, HydroDispatchPumpedStorage)
+end
 
 function get_default_time_series_names(
     ::Type{<:PSY.HydroGen},
@@ -144,8 +183,8 @@ end
 
 function get_default_time_series_names(
     ::Type{PSY.HydroEnergyReservoir},
-    ::Type{T},
-) where {T <: Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}}
+    ::Type{<:Union{HydroCommitmentReservoirBudget, HydroDispatchReservoirBudget}},
+)
     return Dict{Type{<:TimeSeriesParameter}, String}(
         EnergyBudgetTimeSeriesParameter => "hydro_budget",
     )
@@ -153,8 +192,8 @@ end
 
 function get_default_time_series_names(
     ::Type{PSY.HydroEnergyReservoir},
-    ::Type{T},
-) where {T <: Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}}
+    ::Type{<:Union{HydroDispatchReservoirStorage, HydroCommitmentReservoirStorage}},
+)
     return Dict{Type{<:TimeSeriesParameter}, String}(
         EnergyTargetTimeSeriesParameter => "storage_target",
         InflowTimeSeriesParameter => "inflow",
@@ -163,8 +202,8 @@ end
 
 function get_default_time_series_names(
     ::Type{PSY.HydroPumpedStorage},
-    ::Type{T},
-) where {T <: HydroDispatchPumpedStorage}
+    ::Type{<:HydroDispatchPumpedStorage},
+)
     return Dict{Type{<:TimeSeriesParameter}, String}(
         InflowTimeSeriesParameter => "inflow",
         OutflowTimeSeriesParameter => "outflow",
@@ -408,7 +447,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevel(), V)
+    initial_conditions = get_initial_condition(container, InitialEnergyLevel(), V)
     energy_var = get_variable(container, EnergyVariable(), V)
     power_var = get_variable(container, ActivePowerVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
@@ -419,12 +458,12 @@ function add_constraints!(
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
-        device = ic.device
+        device = get_component(ic)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
-            ic.value - power_var[name, 1] * fraction_of_hour -
+            get_value(ic) - power_var[name, 1] * fraction_of_hour -
             spillage_var[name, 1] * fraction_of_hour +
             param[name, 1] * multiplier[name, 1]
         )
@@ -462,7 +501,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevelUp(), V)
+    initial_conditions = get_initial_condition(container, InitialEnergyLevelUp(), V)
 
     energy_var = get_variable(container, EnergyVariableUp(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
@@ -475,13 +514,13 @@ function add_constraints!(
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
-        device = ic.device
+        device = get_component(ic)
         efficiency = PSY.get_pump_efficiency(device)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
-            ic.value +
+            get_value(ic) +
             (
                 powerin_var[name, 1] * efficiency - spillage_var[name, 1] -
                 powerout_var[name, 1]
@@ -522,7 +561,7 @@ function add_constraints!(
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     names = [PSY.get_name(x) for x in devices]
-    initial_conditions = get_initial_conditions(container, InitialEnergyLevelDown(), V)
+    initial_conditions = get_initial_condition(container, InitialEnergyLevelDown(), V)
 
     energy_var = get_variable(container, EnergyVariableDown(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
@@ -536,13 +575,13 @@ function add_constraints!(
     multiplier = get_parameter_multiplier_array(container, OutflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
-        device = ic.device
+        device = get_component(ic)
         efficiency = PSY.get_pump_efficiency(device)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
-            ic.value -
+            get_value(ic) -
             (
                 spillage_var[name, 1] + powerout_var[name, 1] -
                 powerin_var[name, 1] / efficiency
@@ -614,16 +653,10 @@ end
 function initial_conditions!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    device_formulation::AbstractHydroUnitCommitment,
+    ::AbstractHydroUnitCommitment,
 ) where {H <: PSY.HydroGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus, OnVariable)
-    add_initial_condition!(
-        container,
-        devices,
-        formulation,
-        DevicePower,
-        ActivePowerVariable,
-    )
+    add_initial_condition!(container, devices, formulation, DeviceStatus)
+    add_initial_condition!(container, devices, formulation, DevicePower)
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
     add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
 

@@ -35,6 +35,8 @@ get_output_dir(model::OperationModel) = model.internal.output_dir
 get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
 get_parameters(model::OperationModel) = get_parameters(get_optimization_container(model))
 get_duals(model::OperationModel) = get_duals(get_optimization_container(model))
+get_initial_conditions(model::OperationModel) =
+    get_initial_conditions(get_optimization_container(model))
 
 get_run_status(model::OperationModel) = model.internal.run_status
 set_run_status!(model::OperationModel, status) = model.internal.run_status = status
@@ -86,6 +88,43 @@ function advance_execution_count!(model::OperationModel)
     return
 end
 
+function build_initial_conditions!(model::OperationModel)
+    @assert model.internal.ic_model_container === nothing
+    requires_init = false
+    for (device_type, device_model) in get_device_models(get_template(model))
+        requires_init = requires_initialization(get_formulation(device_model)())
+        if requires_init
+            @debug "initial_conditions required for $device_type"
+            build_initial_conditions_problem!(model)
+            break
+        end
+    end
+    if !requires_init
+        @info "No initial conditions in the model"
+    end
+    return
+end
+
+function write_initial_conditions_data(model::OperationModel)
+    write_initial_conditions_data(
+        get_optimization_container(model),
+        model.internal.ic_model_container,
+    )
+    return
+end
+
+function initialize!(model::OperationModel)
+    container = get_optimization_container(model)
+    if model.internal.ic_model_container === nothing
+        return
+    end
+    @info "Solving initial_conditions Model"
+    solve_impl!(model.internal.ic_model_container, get_system(model), Dict{Symbol, Any}())
+
+    write_initial_conditions_data(container, model.internal.ic_model_container)
+    return
+end
+
 function build_impl!(model::OperationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
@@ -121,22 +160,54 @@ function build_if_not_already_built!(model; kwargs...)
     end
 end
 
+function _check_numerical_bounds(model::OperationModel)
+    variable_bounds = get_variable_numerical_bounds(model)
+    if variable_bounds.bounds.max - variable_bounds.bounds.min > 1e9
+        @warn "Variable bounds range is $(variable_bounds.bounds.max - variable_bounds.bounds.min) and can result in numerical problems for the solver. \\
+        max_bound_variable = $(encode_key_as_string(variable_bounds.bounds.max_index)) \\
+        min_bound_variable = $(encode_key_as_string(variable_bounds.bounds.min_index)) \\
+        Run get_detailed_variable_numerical_bounds on the model for a deeper analysis"
+    else
+        @info "Variable bounds [$(variable_bounds.bounds.min) $(variable_bounds.bounds.max)]"
+    end
+
+    constraint_bounds = get_constraint_numerical_bounds(model)
+    if constraint_bounds.coefficient.max - constraint_bounds.coefficient.min > 1e9
+        @warn "Constraint coefficient bounds range is $(constraint_bounds.coefficient.max - constraint_bounds.coefficient.min) and can result in numerical problems for the solver. \\
+        max_bound_constraint = $(encode_key_as_string(constraint_bounds.coefficient.max_index)) \\
+        min_bound_constraint = $(encode_key_as_string(constraint_bounds.coefficient.min_index)) \\
+        Run get_detailed_constraint_numerical_bounds on the model for a deeper analysis"
+    else
+        @info "Constraint coefficient bounds [$(constraint_bounds.coefficient.min) $(constraint_bounds.coefficient.max)]"
+    end
+
+    if constraint_bounds.rhs.max - constraint_bounds.rhs.min > 1e9
+        @warn "Constraint right-hand-side bounds range is $(constraint_bounds.rhs.max - constraint_bounds.rhs.min) and can result in numerical problems for the solver. \\
+        max_bound_constraint = $(encode_key_as_string(constraint_bounds.rhs.max_index)) \\
+        min_bound_constraint = $(encode_key_as_string(constraint_bounds.rhs.min_index)) \\
+        Run get_detailed_constraint_numerical_bounds on the model for a deeper analysis"
+    else
+        @info "Constraint right-hand-side bounds [$(constraint_bounds.rhs.min) $(constraint_bounds.rhs.max)]"
+    end
+    return
+end
+
 function _pre_solve_model_checks(model::OperationModel, optimizer)
     jump_model = get_jump_model(model)
     if optimizer !== nothing
         JuMP.set_optimizer(jump_model, optimizer)
     end
 
+    if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
+        error("No Optimizer has been defined, can't solve the operational problem")
+    end
+
     optimizer_name = JuMP.solver_name(jump_model)
+    _check_numerical_bounds(model)
     @info "Solving $(typeof(model)) with optimizer = $optimizer_name"
     @info "Solver backend: $(JuMP.backend(jump_model))"
 
-    if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
-        @error("No Optimizer has been defined, can't solve the operational problem")
-        return RunStatus.FAILED
-    end
-    @assert jump_model.moi_backend.state != MOIU.NO_OPTIMIZER
-    return RunStatus.RUNNING
+    return
 end
 
 # TODO v015: DecisionModel needs to implement a store and the method get_store
@@ -181,4 +252,5 @@ function serialize_optimization_model(model::OperationModel)
         get_optimization_container(model),
         joinpath(get_output_dir(model), _JUMP_MODEL_FILENAME),
     )
+    return
 end

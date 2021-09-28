@@ -39,7 +39,8 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{ExpressionKey, JuMP.Containers.DenseAxisArray}
     parameters::Dict{ParameterKey, ParameterContainer}
-    initial_conditions::Dict{ICKey, Vector{InitialCondition}}
+    initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
+    initial_conditions_data::InitialConditionsData
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     solve_timed_log::Dict{Symbol, Any}
@@ -55,6 +56,10 @@ function OptimizationContainer(
     ::Type{T},
 ) where {T <: PSY.TimeSeriesData}
     resolution = PSY.get_time_series_resolution(sys)
+    if isabstracttype(T)
+        error("Default Time Series Type $V can't be abstract")
+    end
+
     return OptimizationContainer(
         jump_model === nothing ? _make_jump_model(settings) :
         _finalize_jump_model!(jump_model, settings),
@@ -70,6 +75,7 @@ function OptimizationContainer(
         Dict{ExpressionKey, AbstractArray}(),
         Dict{ParameterKey, ParameterContainer}(),
         Dict{ICKey, Vector{InitialCondition}}(),
+        InitialConditionsData(),
         nothing,
         PSY.get_base_power(sys),
         Dict{Symbol, Any}(),
@@ -124,6 +130,8 @@ get_resolution(container::OptimizationContainer) = container.resolution
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
 get_variables(container::OptimizationContainer) = container.variables
+get_initial_conditions_data(container::OptimizationContainer) =
+    container.initial_conditions_data
 
 function is_milp(container::OptimizationContainer)
     type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)
@@ -454,6 +462,30 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     return
 end
 
+"""
+Default solve method for OptimizationContainer
+"""
+function solve_impl!(
+    container::OptimizationContainer,
+    system::PSY.System,
+    log::Dict{Symbol, Any},
+)
+    jump_model = get_jump_model(container)
+    _, log[:timed_solve_time], log[:solve_bytes_alloc], log[:sec_in_gc] =
+        @timed JuMP.optimize!(jump_model)
+    model_status = JuMP.primal_status(jump_model)
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        error("Optimizer returned $model_status")
+    end
+
+    _, log[:timed_calculate_aux_variables] =
+        @timed calculate_aux_variables!(container, system)
+    _, log[:timed_calculate_dual_variables] =
+        @timed calculate_dual_variables!(container, system)
+    # TODO: Run IIS here if supported by the solver
+    return
+end
+
 function export_optimizer_stats(
     optimizer_stats::Dict{Symbol, Any},
     container::OptimizationContainer,
@@ -520,9 +552,10 @@ function deserialize_metadata!(
         container.metadata.container_key_lookup,
         deserialize_metadata(OptimizationContainerMetadata, output_dir, model_name),
     )
+    return
 end
 
-function _assign_container!(container::Dict, key, value)
+function _assign_container!(container::Dict, key::OptimizationContainerKey, value)
     if haskey(container, key)
         @error "$(encode_key(key)) is already stored" sort!(encode_key.(keys(container)))
         throw(IS.InvalidValue("$key is already stored"))
@@ -530,6 +563,7 @@ function _assign_container!(container::Dict, key, value)
     container[key] = value
     @debug "Added container entry $(typeof(key)) $(encode_key(key))" _group =
         LOG_GROUP_OPTIMZATION_CONTAINER
+    return
 end
 
 ####################################### Variable Container #################################
@@ -785,6 +819,9 @@ function add_param_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     param_key = ParameterKey(T, U, meta)
+    if isabstracttype(V)
+        error("$V can't be abstract: $param_key")
+    end
     attributes = TimeSeriesAttributes{V}(name)
     return _add_param_container!(container, param_key, attributes, axs...)
 end
@@ -859,7 +896,6 @@ function read_parameters(container::OptimizationContainer)
     parameters = get_parameters(container)
     (isnothing(parameters) || isempty(parameters)) && return params_dict
     for (k, v) in parameters
-        !isa(get_component_type(k), PSY.Component) && continue
         param_array = axis_array_to_dataframe(get_parameter_array(v))
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
         params_dict[k] = param_array .* multiplier_array
@@ -952,26 +988,51 @@ function get_expression(
 end
 
 ###################################Initial Conditions Containers############################
-function has_initial_conditions(container::OptimizationContainer, key::ICKey)
+function _add_initial_condition_container!(
+    container::OptimizationContainer,
+    ic_key::ICKey{T, U},
+    length_devices::Int,
+) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
+    if built_for_recurrent_solves(container)
+        ini_conds = Vector{InitialCondition{T, PJ.ParameterRef}}(undef, length_devices)
+    else
+        ini_conds = Vector{InitialCondition{T, Float64}}(undef, length_devices)
+    end
+    _assign_container!(container.initial_conditions, ic_key, ini_conds)
+    return ini_conds
+end
+
+function add_initial_condition_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs;
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
+    ic_key = ICKey(T, U, meta)
+    @debug "add_initial_condition_container" ic_key
+    return _add_initial_condition_container!(container, ic_key, length(axs))
+end
+
+function has_initial_condition(container::OptimizationContainer, key::ICKey)
     return haskey(container.initial_conditions, key)
 end
 
-function iterate_initial_conditions(container::OptimizationContainer)
+function iterate_initial_condition(container::OptimizationContainer)
     return pairs(container.initial_conditions)
 end
 
-function get_initial_conditions(
+function get_initial_condition(
     container::OptimizationContainer,
     ::T,
     ::Type{D},
 ) where {T <: InitialConditionType, D <: PSY.Component}
-    return get_initial_conditions(container, ICKey(T, D))
+    return get_initial_condition(container, ICKey(T, D))
 end
 
-function get_initial_conditions(container::OptimizationContainer, key::ICKey)
+function get_initial_condition(container::OptimizationContainer, key::ICKey)
     initial_conditions = get(container.initial_conditions, key, nothing)
     if initial_conditions === nothing
-        @error "$key is not stored" sort!(get_initial_conditions_keys(container))
         throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
     end
     return initial_conditions
@@ -981,18 +1042,66 @@ function get_initial_conditions_keys(container::OptimizationContainer)
     return collect(keys(container.initial_conditions))
 end
 
-function set_initial_conditions!(
+# TODO: This code is very simular to the in_memory_model_store function in line 100. Maybe we can do some consolidation
+function write_initial_conditions_data(
     container::OptimizationContainer,
-    ::T,
-    ::Type{D},
-    value,
-) where {T <: InitialConditionType, D <: PSY.Device}
-    set_initial_conditions!(container, ICKey(T, D), value)
+    ic_container::OptimizationContainer,
+)
+    for field in STORE_CONTAINERS
+        ic_container_dict = getfield(ic_container, field)
+        # TODO: Not ideal, clean up a bit more.
+        if field == STORE_CONTAINER_PARAMETERS
+            ic_container_dict = read_parameters(ic_container)
+        end
+        isempty(ic_container_dict) && continue
+        ic_data_dict = getfield(get_initial_conditions_data(container), field)
+        for (key, field_container) in ic_container_dict
+            @debug "Adding $(encode_key_as_string(key)) to InitialConditionsData"
+            if field == STORE_CONTAINER_PARAMETERS
+                ic_data_dict[key] = ic_container_dict[key]
+            else
+                ic_data_dict[key] = axis_array_to_dataframe(field_container, nothing)
+            end
+        end
+    end
+    return
 end
 
-function set_initial_conditions!(container::OptimizationContainer, key::ICKey, value)
-    @debug "set_initial_condition_container" key
-    container.initial_conditions[key] = value
+# TODO: These methods aren't passing the potential meta fields in the keys
+function get_initial_conditions_variable(
+    container::OptimizationContainer,
+    type::VariableType,
+    ::Type{T},
+) where {T <: Union{PSY.Component, PSY.System}}
+    return get_initial_conditions_variable(get_initial_conditions_data(container), type, T)
+end
+
+function get_initial_conditions_aux_variable(
+    container::OptimizationContainer,
+    type::AuxVariableType,
+    ::Type{T},
+) where {T <: Union{PSY.Component, PSY.System}}
+    return get_initial_conditions_aux_variable(
+        get_initial_conditions_data(container),
+        type,
+        T,
+    )
+end
+
+function get_initial_conditions_dual(
+    container::OptimizationContainer,
+    type::ConstraintType,
+    ::Type{T},
+) where {T <: Union{PSY.Component, PSY.System}}
+    return get_initial_conditions_dual(get_initial_conditions_data(container), type, T)
+end
+
+function get_initial_conditions_parameter(
+    container::OptimizationContainer,
+    type::ParameterType,
+    ::Type{T},
+) where {T <: Union{PSY.Component, PSY.System}}
+    return get_initial_conditions_parameter(get_initial_conditions_data(container), type, T)
 end
 
 function add_to_objective_function!(container::OptimizationContainer, expr)
@@ -1001,4 +1110,20 @@ end
 
 function deserialize_key(container::OptimizationContainer, name::AbstractString)
     return deserialize_key(container.metadata, name)
+end
+
+function calculate_aux_variables!(container::OptimizationContainer, system::PSY.System)
+    aux_vars = get_aux_variables(container)
+    for key in keys(aux_vars)
+        calculate_aux_variable_value!(container, key, system)
+    end
+    return
+end
+
+function calculate_dual_variables!(container::OptimizationContainer, system::PSY.System)
+    duals_vars = get_duals(container)
+    for key in keys(duals_vars)
+        _calculate_dual_variable_value!(container, key, system)
+    end
+    return
 end

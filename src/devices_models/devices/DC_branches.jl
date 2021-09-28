@@ -47,6 +47,10 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 
+get_initial_conditions_device_model(
+    ::DeviceModel{T, <:AbstractDCLineFormulation},
+) where {T <: PSY.HVDCLine} = DeviceModel(T, HVDCDispatch)
+
 #################################### Rate Limits Constraints ##################################################
 function add_constraints!(
     container::OptimizationContainer,

@@ -63,7 +63,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        _, ts_count, forecast_count = PSY.get_time_series_counts(sys)
+        _, _, forecast_count = PSY.get_time_series_counts(sys)
         if forecast_count < 1
             error(
                 "The system does not contain forecast data. A DecisionModel can't be built.",
@@ -222,9 +222,26 @@ function build_pre_step!(model::DecisionModel)
             @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
-        system = get_system(model)
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
+
+        @info "Initializing Optimization Container For a DecisionModel"
+        init_optimization_container!(
+            get_optimization_container(model),
+            get_network_formulation(get_template(model)),
+            get_system(model),
+        )
+        @info "Initializing ModelStoreParams"
+        init_model_store!(model)
+
+        @info "Mapping Service Models"
+        populate_aggregated_service_model!(get_template(model), get_system(model))
+        populate_contributing_devices!(get_template(model), get_system(model))
+        add_services_to_device_model!(get_template(model))
+
+        @info "Make Initial Conditions  Model"
+        build_initial_conditions!(model)
+        initialize!(model)
 
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
@@ -258,22 +275,11 @@ function build!(
 end
 
 """
-Default implementation of build method for Operational Problems for models conforming with DecisionProblem specification. Overload this function to implement a custom build method
+Default implementation of build method for Operational Problems for models conforming with
+DecisionProblem specification. Overload this function to implement a custom build method
 """
-
 function build_problem!(model::DecisionModel)
-    @info "Initializing Optimization Container For a DecisionModel"
-    populate_aggregated_service_model!(get_template(model), get_system(model))
-    populate_contributing_devices!(get_template(model), get_system(model))
-    add_services_to_device_model!(get_template(model))
-
-    container = get_optimization_container(model)
-    init_optimization_container!(
-        container,
-        get_network_formulation(get_template(model)),
-        get_system(model),
-    )
-    build_impl!(container, get_template(model), get_system(model))
+    build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end
 
 function reset!(model::OperationModel)
@@ -295,38 +301,22 @@ end
 function calculate_aux_variables!(model::DecisionModel)
     container = get_optimization_container(model)
     system = get_system(model)
-    aux_vars = get_aux_variables(container)
-    for key in keys(aux_vars)
-        calculate_aux_variable_value!(container, key, system)
-    end
+    calculate_aux_variables!(container, system)
     return
 end
 
 function calculate_dual_variables!(model::DecisionModel)
     container = get_optimization_container(model)
     system = get_system(model)
-    duals_vars = get_duals(container)
-    for key in keys(duals_vars)
-        _calculate_dual_variable_value!(container, key, system)
-    end
+    calculate_dual_variables!(container, system)
     return
 end
 
 function solve_impl(model::DecisionModel; optimizer = nothing, kwargs...)
-    status = _pre_solve_model_checks(model, optimizer)
-    timed_log = get_solve_timed_log(model)
-    jump_model = get_jump_model(model)
-    _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
-        @timed JuMP.optimize!(jump_model)
-    model_status = JuMP.primal_status(jump_model)
-    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        return RunStatus.FAILED
-    else
-        calculate_aux_variables!(model)
-        calculate_dual_variables!(model)
-        status = RunStatus.SUCCESSFUL
-    end
-    return status
+    _pre_solve_model_checks(model, optimizer)
+    container = get_optimization_container(model)
+    solve_impl!(container, get_system(model), get_solve_timed_log(model))
+    return
 end
 
 """
@@ -369,34 +359,36 @@ function solve!(
     TimerOutputs.reset_timer!(RUN_OPERATION_MODEL_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     logger = configure_logging(model.internal, "a")
-    status = RunStatus.FAILED
     try
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
-                status = solve_impl(model; kwargs...)
-                set_run_status!(model, status)
+                solve_impl(model; kwargs...)
+                # results requires RunStatus.SUCCESSFUL to run
+                set_run_status!(model, RunStatus.SUCCESSFUL)
             end
-            if status == RunStatus.SUCCESSFUL
-                if serialize
-                    TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
-                        optimizer = get(kwargs, :optimizer, nothing)
-                        serialize_problem(model, optimizer = optimizer)
-                        serialize_optimization_model(model)
-                    end
+            if serialize
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
+                    optimizer = get(kwargs, :optimizer, nothing)
+                    serialize_problem(model, optimizer = optimizer)
+                    serialize_optimization_model(model)
                 end
-                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
-                    results = ProblemResults(model)
-                    serialize_results(results, get_output_dir(model))
-                    export_problem_results && export_results(results)
-                end
+            end
+            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
+                results = ProblemResults(model)
+                serialize_results(results, get_output_dir(model))
+                export_problem_results && export_results(results)
             end
             @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
         end
+    catch e
+        @error "Decision Problem solve failed" exception = (e, catch_backtrace())
+        set_run_status!(model, RunStatus.FAILED)
+        return get_run_status(model)
     finally
         close(logger)
     end
 
-    return status
+    return get_run_status(model)
 end
 
 function write_results!(

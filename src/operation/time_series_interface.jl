@@ -1,13 +1,13 @@
 function make_time_series_cache(
-    ::Type{PSY.StaticTimeSeries},
+    ::Type{T},
     component,
     name,
     initial_time,
     ::Int;
     ignore_scaling_factors = true,
-)
+) where {T <: PSY.StaticTimeSeries}
     return IS.StaticTimeSeriesCache(
-        PSY.SingleTimeSeries,
+        T,
         component,
         name,
         start_time = initial_time,
@@ -16,15 +16,15 @@ function make_time_series_cache(
 end
 
 function make_time_series_cache(
-    ::Type{PSY.Deterministic},
+    ::Type{T},
     component,
     name,
     initial_time,
     horizon::Int;
     ignore_scaling_factors = true,
-)
+) where {T <: PSY.AbstractDeterministic}
     return IS.ForecastCache(
-        PSY.AbstractDeterministic,
+        T,
         component,
         name,
         start_time = initial_time,
@@ -42,7 +42,7 @@ function make_time_series_cache(
     ignore_scaling_factors = true,
 )
     return IS.ForecastCache(
-        PSY.AbstractDeterministic,
+        PSY.Probabilistic,
         component,
         name,
         start_time = initial_time,
@@ -52,17 +52,17 @@ function make_time_series_cache(
 end
 
 function get_time_series_values!(
-    time_series_type::Type{<:PSY.Forecast},
+    time_series_type::Type{T},
     model::DecisionModel,
     component,
     name,
     initial_time,
     horizon::Int;
     ignore_scaling_factors = true,
-)
+) where {T <: PSY.Forecast}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
-            time_series_type,
+            T,
             component,
             name,
             start_time = initial_time,
@@ -72,7 +72,7 @@ function get_time_series_values!(
     end
 
     cache = get_time_series_cache(model)
-    key = TimeSeriesCacheKey(IS.get_uuid(component), time_series_type, name)
+    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name)
     if haskey(cache, key)
         ts_cache = cache[key]
     else
@@ -92,17 +92,17 @@ function get_time_series_values!(
 end
 
 function get_time_series_values!(
-    time_series_type::Type{PSY.SingleTimeSeries},
+    ::Type{T},
     model::EmulationModel,
     component,
     name,
     initial_time,
     len::Int = 1;
     ignore_scaling_factors = true,
-)
+) where {T <: PSY.StaticTimeSeries}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
-            time_series_type,
+            T,
             component,
             name,
             start_time = initial_time,
@@ -112,12 +112,12 @@ function get_time_series_values!(
     end
 
     cache = get_time_series_cache(model)
-    key = TimeSeriesCacheKey(IS.get_uuid(component), time_series_type, name)
+    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name)
     if haskey(cache, key)
         ts_cache = cache[key]
     else
         ts_cache = make_time_series_cache(
-            time_series_type,
+            T,
             component,
             name,
             initial_time,

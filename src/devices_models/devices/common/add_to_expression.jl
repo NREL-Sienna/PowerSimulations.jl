@@ -2,7 +2,7 @@ function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     devices::U,
-    model::DeviceModel{D, W},
+    model::DeviceModel{D, W};
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {
     T <: ExpressionType,
@@ -15,18 +15,20 @@ function add_expressions!(
     return
 end
 
-function add_to_jump_expression!(
-    expression_array::AbstractArray{T},
-    var::JV,
-    multiplier::Float64,
-    ixs::Vararg{Any, N},
-) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], multiplier, var)
-    else
-        expression_array[CartesianIndex(ixs)] = multiplier * var
-    end
-
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
+    model::ServiceModel{V, W},
+) where {
+    T <: ExpressionType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    V <: PSY.Reserve,
+    W <: AbstractReservesFormulation,
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    add_expression_container!(container, T(), D, names, time_steps)
     return
 end
 
@@ -34,8 +36,8 @@ function add_to_jump_expression!(
     expression_array::AbstractArray{T},
     var::JV,
     multiplier::Float64,
-    ixs...,
-) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef}
+    ixs::Vararg{Any, N},
+) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
     if isassigned(expression_array, ixs...)
         JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
     else
@@ -366,7 +368,7 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     if !has_expression(container, T(), V, meta)
-        add_expressions!(container, T, devices, model, meta)
+        add_expressions!(container, T, devices, model, meta = meta)
     end
     expression = get_expression(container, T(), V, meta)
     for d in devices, t in get_time_steps(container)
