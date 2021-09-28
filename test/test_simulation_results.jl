@@ -129,12 +129,12 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                 "ED" => (Hour(1), Consecutive()),
             ),
             feedforward = Dict(
-                "ED" => SemiContinuousFF(
+                "ED" => SemiContinuousFeedForward(
                     device_type = ThermalStandard,
                     binary_source_problem = OnVariable,
                     affected_variables = [ActivePowerVariable],
                 ),
-                "ED" => IntegralLimitFF(
+                "ED" => IntegralLimitFeedForward(
                     device_type = HydroEnergyReservoir,
                     variable_source_problem = ActivePowerVariable,
                     affected_variables = [ActivePowerVariable],

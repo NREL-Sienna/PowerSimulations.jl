@@ -648,3 +648,6 @@ end
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end
 end
+
+@testset "Test FeedForwards to ThermalGeneration models" begin 
+end

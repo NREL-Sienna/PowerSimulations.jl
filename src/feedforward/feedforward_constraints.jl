@@ -232,7 +232,7 @@ function semicontinuousrange_ff(
         name = get_component_name(constraint_info)
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
-        @debug "SemiContinuousFF" name ub_value lb_value
+        @debug "SemiContinuousFeedForward" name ub_value lb_value
         # default set to 1.0, as this implementation doesn't use multiplier
         multiplier[name] = 1.0
         param[name] = add_parameter(container.JuMPmodel, 1.0)
@@ -343,7 +343,7 @@ function feedforward!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, <:AbstractDeviceFormulation},
-    ff_model::UpperBoundFF,
+    ff_model::UpperBoundFeedForward,
 ) where {T <: PSY.StaticInjection}
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -372,7 +372,7 @@ function feedforward!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, <:AbstractDeviceFormulation},
-    ff_model::SemiContinuousFF,
+    ff_model::SemiContinuousFeedForward,
 ) where {T <: PSY.StaticInjection}
     bin_var = VariableKey(get_binary_source_problem(ff_model), T)
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
@@ -400,7 +400,7 @@ function feedforward!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractDeviceFormulation},
-    ff_model::IntegralLimitFF,
+    ff_model::IntegralLimitFeedForward,
 ) where {T <: PSY.StaticInjection}
     for var_key in get_affected_variables(ff_model)
         var_type = get_entry_type(var_key)
@@ -416,27 +416,27 @@ function feedforward!(
     end
 end
 
-function feedforward!(
-    optimization_container::OptimizationContainer,
-    devices::Vector{T},
-    ::ServiceModel{SR, <:AbstractServiceFormulation},
-    ff_model::RangeFF,
-) where {SR <: PSY.Service, T <: PSY.Device}
-    parameter_ref_ub =
-        UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_ub, "ub")
-    parameter_ref_lb =
-        UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_lb, "lb")
-    for var_name in get_affected_variables(ff_model)
-        # TODO: This function isn't implemented correctly needs review to use keys
-        range_ff(
-            optimization_container,
-            Symbol("RANGE_FF_" * "$var_name"),
-            devices,
-            (parameter_ref_lb, parameter_ref_ub),
-            var_name,
-        )
-    end
-end
+# function feedforward!(
+#     optimization_container::OptimizationContainer,
+#     devices::Vector{T},
+#     ::ServiceModel{SR, <:AbstractServiceFormulation},
+#     ff_model::RangeFeedForward,
+# ) where {SR <: PSY.Service, T <: PSY.Device}
+#     parameter_ref_ub =
+#         UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_ub, "ub")
+#     parameter_ref_lb =
+#         UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_lb, "lb")
+#     for var_name in get_affected_variables(ff_model)
+#         # TODO: This function isn't implemented correctly needs review to use keys
+#         range_ff(
+#             optimization_container,
+#             Symbol("RANGE_FeedForward_" * "$var_name"),
+#             devices,
+#             (parameter_ref_lb, parameter_ref_ub),
+#             var_name,
+#         )
+#     end
+# end
 
 ######################### FeedForward Variables Updating #####################################
 # This makes the choice in which variable to get from the results.
