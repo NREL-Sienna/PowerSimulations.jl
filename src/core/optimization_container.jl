@@ -1009,7 +1009,7 @@ function add_initial_condition_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     ic_key = ICKey(T, U, meta)
-    @debug "set_initial_condition_container" ic_key
+    @debug "add_initial_condition_container" ic_key
     return _add_initial_condition_container!(container, ic_key, length(axs))
 end
 
