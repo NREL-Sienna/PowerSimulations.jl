@@ -1,3 +1,5 @@
+abstract type SubComponentVariableType <: VariableType end
+
 struct VariableKey{T <: VariableType, U <: Union{PSY.Component, PSY.System}} <:
        OptimizationContainerKey
     meta::String
@@ -112,6 +114,12 @@ struct FlowReactivePowerFromToVariable <: VariableType end
 struct FlowReactivePowerToFromVariable <: VariableType end
 
 struct VariableNotDefined <: VariableType end
+
+struct ComponentActivePowerVariable <: SubComponentVariableType end
+
+struct ComponentReactivePowerVariable <: SubComponentVariableType end
+
+struct ComponentActivePowerReserveVariable <: SubComponentVariableType end
 
 ###############################
 
