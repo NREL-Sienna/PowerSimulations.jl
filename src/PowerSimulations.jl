@@ -278,7 +278,7 @@ export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
-export OutputPowerRangeConstraint
+export PowerOutputRangeConstraint
 export ParticipationAssignmentConstraint
 export RampConstraint
 export RampLimitConstraint
@@ -478,6 +478,7 @@ include("devices_models/devices/DC_branches.jl")
 include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
+include("devices_models/devices/hybrid_generation.jl")
 
 # Services Models
 include("services_models/agc.jl")
