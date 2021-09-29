@@ -1,4 +1,4 @@
-function update_initial_conditions(
+function update_initial_conditions!(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
@@ -14,7 +14,7 @@ function update_initial_conditions(
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
@@ -32,7 +32,7 @@ function update_initial_conditions(
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
@@ -45,7 +45,7 @@ function update_initial_conditions(
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
@@ -60,7 +60,7 @@ function update_initial_conditions(
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
@@ -76,7 +76,7 @@ function update_initial_conditions(
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
@@ -92,7 +92,7 @@ function update_initial_conditions(
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
@@ -108,7 +108,7 @@ function update_initial_conditions(
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     ic_vector::Vector{T},
     store::InMemoryModelStore,
     ::Dates.Period,
@@ -130,9 +130,18 @@ function update_initial_conditions!(
     model::OperationModel,
     key::ICKey{T, U},
 ) where {T <: InitialConditionType, U <: PSY.Component}
-    # TODO: Add Recorder Event here
     container = get_optimization_container(model)
     interval = get_interval(model.internal.store_parameters)
     ini_conditions_vector = get_initial_condition(container, key)
-    update_initial_conditions(ini_conditions_vector, model.store, interval)
+    timestamp = get_current_timestamp(model)
+    previous_values = get_condition.(ini_conditions_vector)
+    update_initial_conditions!(ini_conditions_vector, model.store, interval)
+    for (i, initial_condition) in enumerate(ini_conditions_vector)
+        IS.@record :execution InitialConditionUpdateEvent(
+            timestamp,
+            initial_condition,
+            previous_values[i],
+            0,
+        )
+    end
 end

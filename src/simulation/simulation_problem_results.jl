@@ -324,7 +324,7 @@ julia> read_variables(res, [(ActivePowerVariable, ThermalStandard)])
 julia> read_variables(res, ["ActivePowerVariable_ThermalStandard")])
 ```
 """
-# TODO DT: the read.*internal functions can likely be deleted.
+# TODO: the read.*internal functions can likely be deleted.
 function read_variables_internal(
     res::SimulationProblemResults;
     variables::Union{Nothing, Vector{Union{String, Tuple}}} = nothing,
@@ -529,7 +529,7 @@ function read_parameter(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
-    # TODO DT: parameters are not handled correctly
+    # TODO: parameters are not handled correctly
     #parameter_key = ParameterKey(param_type(time_series_name), device_type)
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)

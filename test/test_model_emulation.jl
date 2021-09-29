@@ -25,6 +25,7 @@
     @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
           BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
+    @test !isempty(collect(readdir(PSI.get_recorder_dir(model))))
 end
 
 @testset "Emulation Model initial_conditions test for ThermalGen" begin

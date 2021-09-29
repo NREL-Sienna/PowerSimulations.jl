@@ -32,16 +32,24 @@ get_status(model::OperationModel) = model.internal.status
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
 get_output_dir(model::OperationModel) = model.internal.output_dir
+get_recorder_dir(model::OperationModel) = joinpath(model.internal.output_dir, "recorder")
 get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
 get_parameters(model::OperationModel) = get_parameters(get_optimization_container(model))
 get_duals(model::OperationModel) = get_duals(get_optimization_container(model))
 get_initial_conditions(model::OperationModel) =
     get_initial_conditions(get_optimization_container(model))
 
+get_interval(model::OperationModel) = model.internal.store_parameters.interval
 get_run_status(model::OperationModel) = model.internal.run_status
 set_run_status!(model::OperationModel, status) = model.internal.run_status = status
 get_time_series_cache(model::OperationModel) = model.internal.time_series_cache
 empty_time_series_cache!(x::OperationModel) = empty!(get_time_series_cache(x))
+
+function get_current_timestamp(model::OperationModel)
+    # For EmulationModel interval and resolution are the same.
+    # TODO: make a field to store an updated timestamp
+    return get_initial_time(model) + get_execution_count(model) * get_interval(model)
+end
 
 function get_timestamps(model::OperationModel)
     start_time = get_initial_time(get_optimization_container(model))
@@ -244,6 +252,27 @@ function read_variable(model::OperationModel, key::VariableKey)
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))
+
+function add_recorders!(model::OperationModel, recorders)
+    internal = get_internal(model)
+    for name in union(REQUIRED_RECORDERS, recorders)
+        add_recorder!(internal, name)
+    end
+end
+
+function register_recorders!(model::OperationModel, file_mode)
+    recorder_dir = get_recorder_dir(model)
+    mkpath(recorder_dir)
+    for name in get_recorders(get_internal(model))
+        IS.register_recorder!(name; mode = file_mode, directory = recorder_dir)
+    end
+end
+
+function unregister_recorders!(model::OperationModel)
+    for name in get_recorders(get_internal(model))
+        IS.unregister_recorder!(name)
+    end
+end
 
 const _JUMP_MODEL_FILENAME = "jump_model.json"
 

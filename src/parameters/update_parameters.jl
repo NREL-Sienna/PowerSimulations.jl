@@ -107,14 +107,47 @@ function update_parameter_values!(
     ::ParameterKey{T, U},
 ) where {T <: TimeSeriesParameter, U <: PSY.Device}
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-        # TODO: Add recorder here for parameter update
         optimization_container = PSI.get_optimization_container(model)
         parameter_array = PSI.get_parameter_array(optimization_container, T(), U)
-        parameter_attributes = PSI.get_parameter_attributes(optimization_container, T(), U)
+        parameter_attributes = get_parameter_attributes(optimization_container, T(), U)
         system = PSI.get_system(model)
         update_parameter_values!(parameter_array, parameter_attributes, U, model)
+        _gen_parameter_update_event(
+            parameter_attributes,
+            T,
+            U,
+            get_current_timestamp(model),
+            0,
+        )
     end
     return
+end
+
+function _gen_parameter_update_event(
+    ::ParameterAttributes,
+    ::Type{<:ParameterType},
+    ::Type{<:PSY.Device},
+    ::String,
+    ::Dates.DateTime,
+    ::Int,
+)
+    return
+end
+
+function _gen_parameter_update_event(
+    attributes::TimeSeriesAttributes,
+    parameter_type::Type{<:ParameterType},
+    device_type::Type{<:PSY.Device},
+    timestamp::Dates.DateTime,
+    problem_number::Int,
+)
+    IS.@record :execution ParameterUpdateEvent(
+        parameter_type,
+        device_type,
+        attributes.name,
+        timestamp,
+        problem_number,
+    )
 end
 
 # Old update parameter code for reference
