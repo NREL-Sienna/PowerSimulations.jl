@@ -179,6 +179,70 @@ function add_upper_bound_range_constraints_impl!(
     end
 end
 
+function add_lower_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    use_parameters = built_for_recurrent_solves(container)
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    device_names = [PSY.get_name(d) for d in devices]
+
+    con_lb = add_cons_container!(
+        container,
+        constraint,
+        component_type,
+        device_names,
+        time_steps,
+        meta = "lb",
+    )
+
+    for (i, device) in enumerate(devices), t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        con_lb[ci_name, t] =
+            JuMP.@constraint(container.JuMPmodel, array[ci_name, PSY.ThermalGen, t] >= limits.min)
+    end
+end
+
+function add_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    use_parameters = built_for_recurrent_solves(container)
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    device_names = [PSY.get_name(d) for d in devices]
+
+    con_ub = add_cons_container!(
+        container,
+        constraint,
+        component_type,
+        device_names,
+        time_steps,
+        meta = "ub",
+    )
+
+    for (i, device) in enumerate(devices), t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        con_ub[ci_name, t] =
+            JuMP.@constraint(container.JuMPmodel, array[ci_name, PSY.ThermalGen, t] <= limits.max)
+    end
+end
+
 @doc raw"""
 Constructs min/max range constraint from device variable and on/off decision variable.
 
@@ -879,6 +943,41 @@ function add_parameterized_upper_bound_range_constraints_impl!(
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             array[name, t] <= multiplier[name, t] * parameter[name, t]
+        )
+    end
+end
+
+function add_parameterized_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    array,
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.HybridSystem, W <: AbstractDeviceFormulation}
+    time_steps = get_time_steps(container)
+    constraint = T()
+    component_type = V
+    names = [PSY.get_name(d) for d in devices]
+
+    constraint = add_cons_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+
+    parameter = get_parameter_array(container, P(), V)
+    multiplier = get_parameter_multiplier_array(container, P(), V)
+    for (i, device) in enumerate(devices), t in time_steps
+        name = PSY.get_name(device)
+        constraint[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[name, PSY.RenewableGen, t] <= multiplier[name, t] * parameter[name, t]
         )
     end
 end
