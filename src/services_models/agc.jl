@@ -130,7 +130,7 @@ end
 function absolute_value_lift(container::OptimizationContainer, areas)
     time_steps = get_time_steps(container)
     area_names = [PSY.get_name(a) for a in areas]
-    # TODO DT: correct component type and meta?
+    # TODO: correct component type and meta?
     container_lb = add_cons_container!(container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "lb")
     container_ub = add_cons_container!(container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "ub")
     mismatch = get_variable(container, AreaMismatchVariable(), PSY.Area)

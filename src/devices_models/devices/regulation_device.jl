@@ -59,7 +59,7 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = get_time_steps(container)
 
-    # TODO DT: should "up" be specified in meta instead of the constraint type?
+    # TODO: should "up" be specified in meta instead of the constraint type?
     container_up =
         add_cons_container!(container, RegulationLimitsUpConstraint(), U, names, time_steps)
 
@@ -227,8 +227,8 @@ function ramp_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = get_time_steps(container)
 
-    # TODO DT: appropriate use of meta?
-    # TODO DT: is component_type correct?
+    # TODO: appropriate use of meta?
+    # TODO: is component_type correct?
     container_up = add_cons_container!(
         container,
         RampLimitConstraint(),
@@ -282,7 +282,7 @@ function participation_assignment!(
 
     component_names = [PSY.get_name(d) for d in devices]
 
-    # TODO DT: appropriate use of meta?
+    # TODO: appropriate use of meta?
     participation_assignment_up = add_cons_container!(
         container,
         ParticipationAssignmentConstraint(),

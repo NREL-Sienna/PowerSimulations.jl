@@ -488,7 +488,7 @@ function _write_model_dual_results!(
             key,
             timestamp,
             constraint,
-            [encode_key(key)],  # TODO DT: this doesn't seem right
+            [encode_key(key)],  # TODO DT: is this what the columns should be?
         )
 
         if exports !== nothing &&
@@ -522,7 +522,6 @@ function _write_model_parameter_results!(
     horizon = get_horizon(get_settings(model))
 
     for (key, container) in parameters
-        name = encode_key(key)  # TODO DT
         !isa(container.update_ref, UpdateRef{<:PSY.Component}) && continue
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)

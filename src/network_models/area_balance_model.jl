@@ -11,7 +11,7 @@ function area_balance(
     constraint = add_cons_container!(
         container,
         AreaDispatchBalanceConstraint(),
-        PSY.Area,  # TODO DT: is this correct?
+        PSY.Area,
         keys(area_mapping),
         time_steps,
     )
@@ -34,7 +34,7 @@ function area_balance(
     participation_assignment_up = add_cons_container!(
         container,
         AreaParticipationAssignmentConstraint(),
-        PSY.Area,  # # TODO DT: correct?
+        PSY.Area,
         keys(area_mapping),
         time_steps,
         meta = "up",
@@ -42,7 +42,7 @@ function area_balance(
     participation_assignment_dn = add_cons_container!(
         container,
         AreaParticipationAssignmentConstraint(),
-        PSY.Area,  # TODO DT: correct?
+        PSY.Area,
         keys(area_mapping),
         time_steps,
         meta = "dn",
