@@ -176,6 +176,7 @@ export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
+export list_recorder_events
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
@@ -334,7 +335,8 @@ import InfrastructureSystems:
     get_timestamp,
     get_resolution,
     get_name,
-    @assert_op
+    @assert_op,
+    list_recorder_events
 export get_name
 export get_model_base_power
 export get_total_cost

@@ -66,7 +66,7 @@ function perform_initial_conditions_step!(
             )
             previous_value = get_condition(ic)
             PJ.set_value(ic.value, quantity)
-            IS.@record :simulation InitialConditionUpdateEvent(
+            IS.@record :execution InitialConditionUpdateEvent(
                 get_current_time(sim),
                 ini_cond_key,
                 ic,

@@ -38,7 +38,7 @@
     # Test single stage sequence
     test_sequence = SimulationSequence(
         models = SimulationModels(
-        # TODO DT: support passing one model without making a vector
+        # TODO: support passing one model without making a vector
         [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC")]),
         intervals = Dict("DAUC" => (Hour(24), Consecutive())),
         ini_cond_chronology = InterProblemChronology(),

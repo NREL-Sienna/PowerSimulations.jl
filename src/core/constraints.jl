@@ -86,7 +86,6 @@ end
 get_entry_type(
     ::ConstraintKey{T, U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = T
-# TODO DT: since this can be System, "get_component_type" isn't the best name
 get_component_type(
     ::ConstraintKey{T, U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = U

@@ -266,7 +266,7 @@ they passed to the original Simulation.
 
 # Arguments
 - `directory::AbstractString`: the directory returned from the call to serialize
-# TODO DT: this description is probably wrong
+# TODO: this description is probably wrong
 - `model_info::Dict`: Two-level dictionary containing model parameters that cannot be
   serialized. The outer dict should be keyed by the problem name. The inner dict must contain
   'optimizer' and may contain 'jump_model'. These should be the same values used for the
@@ -744,7 +744,7 @@ function initial_condition_update!(
         )
         previous_value = get_condition(ic)
         PJ.set_value(ic.value, quantity)
-        IS.@record :simulation InitialConditionUpdateEvent(
+        IS.@record :execution InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
             ic,
@@ -793,7 +793,7 @@ function initial_condition_update!(
             calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
         previous_value = get_condition(ic)
         PJ.set_value(ic.value, quantity)
-        IS.@record :simulation InitialConditionUpdateEvent(
+        IS.@record :execution InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
             ic,

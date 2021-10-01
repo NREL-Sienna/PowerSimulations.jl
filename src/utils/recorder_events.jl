@@ -48,31 +48,55 @@ end
 
 struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
-    simulation_time::Dates.DateTime
+    execution_timestamp::Dates.DateTime
     initial_condition_type::String
     device_type::String
     device_name::String
-    val::Float64
+    new_value::Float64
     previous_value::Float64
     problem_number::Int
 end
 
 function InitialConditionUpdateEvent(
     simulation_time,
-    key::ICKey,
     ic::InitialCondition,
-    val::Float64,
     previous_value::Float64,
     problem_number::Int,
 )
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
         simulation_time,
-        string(get_entry_type(key)),
-        string(get_component_type(key)),
+        string(get_ic_type(ic)),
+        string(get_component_type(ic)),
         get_component_name(ic),
-        val,
+        get_condition(ic),
         previous_value,
+        problem_number,
+    )
+end
+
+struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
+    common::IS.RecorderEventCommon
+    execution_timestamp::Dates.DateTime
+    parameter_type::String
+    device_type::String
+    tag::String
+    problem_number::Int
+end
+
+function ParameterUpdateEvent(
+    parameter_type::Type{<:ParameterType},
+    device_type::Type{<:PSY.Device},
+    tag::String,
+    execution_timestamp::Dates.DateTime,
+    problem_number::Int,
+)
+    return ParameterUpdateEvent(
+        IS.RecorderEventCommon("ParameterUpdateEvent"),
+        execution_timestamp,
+        string(parameter_type),
+        string(device_type),
+        tag,
         problem_number,
     )
 end
@@ -361,7 +385,14 @@ function show_recorder_events(
     else
         # This will not display the first column, 'timestamp'.
         f_c(data, i) = i > 1
-        IS.show_recorder_events(io, filename, filter_func; filters_col = (f_c,), kwargs...)
+        IS.show_recorder_events(
+            io,
+            T,
+            filename,
+            filter_func;
+            filters_col = (f_c,),
+            kwargs...,
+        )
     end
 end
 
