@@ -11,8 +11,8 @@ abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
 
 struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
-struct ThermalDispatch <: AbstractThermalDispatchFormulation end
-struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
+struct ThermalBasicDispatch <: AbstractThermalDispatchFormulation end
+struct ThermalStandardDispatch <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 
 struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
@@ -21,7 +21,7 @@ struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
 requires_initialization(::AbstractThermalFormulation) = false
 requires_initialization(::AbstractThermalUnitCommitment) = true
-requires_initialization(::ThermalRampLimited) = true
+requires_initialization(::ThermalStandardDispatch) = true
 
 get_variable_multiplier(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
 get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
@@ -118,7 +118,7 @@ initial_condition_variable(
 function get_initial_conditions_device_model(
     model::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    return DeviceModel(T, ThermalDispatch)
+    return DeviceModel(T, ThermalBasicDispatch)
 end
 
 function get_initial_conditions_device_model(

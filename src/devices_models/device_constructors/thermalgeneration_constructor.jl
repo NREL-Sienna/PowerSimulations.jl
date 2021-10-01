@@ -543,17 +543,17 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, ThermalRampLimited},
+    model::DeviceModel{T, ThermalStandardDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, ThermalRampLimited())
-    add_variables!(container, ReactivePowerVariable, devices, ThermalRampLimited())
+    add_variables!(container, ActivePowerVariable, devices, ThermalStandardDispatch())
+    add_variables!(container, ReactivePowerVariable, devices, ThermalStandardDispatch())
 
     # Initial Conditions
-    initial_conditions!(container, devices, ThermalRampLimited())
+    initial_conditions!(container, devices, ThermalStandardDispatch())
 
     add_to_expression!(
         container,
@@ -598,7 +598,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, ThermalRampLimited},
+    model::DeviceModel{T, ThermalStandardDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
@@ -659,16 +659,16 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, ThermalRampLimited},
+    model::DeviceModel{T, ThermalStandardDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, ThermalRampLimited())
+    add_variables!(container, ActivePowerVariable, devices, ThermalStandardDispatch())
 
     # Initial Conditions
-    initial_conditions!(container, devices, ThermalRampLimited())
+    initial_conditions!(container, devices, ThermalStandardDispatch())
 
     add_to_expression!(
         container,
@@ -705,7 +705,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, ThermalRampLimited},
+    model::DeviceModel{T, ThermalStandardDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
