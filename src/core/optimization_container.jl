@@ -626,6 +626,7 @@ function get_variable(
     ::Type{U},
     meta::String = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    meta = remove_delimiter!(meta)
     return get_variable(container, VariableKey(T, U, meta))
 end
 
