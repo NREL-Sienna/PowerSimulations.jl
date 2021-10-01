@@ -28,7 +28,7 @@ get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractSto
 get_variable_multiplier(::ActivePowerOutVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
 
 ############## ReactivePowerVariable, Storage ####################
-get_variable_multiplier(::PowerSimulations.ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
+get_variable_multiplier(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 
 ############## EnergyVariable, Storage ####################
@@ -62,7 +62,7 @@ initial_condition_variable(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStora
 #! format: on
 
 get_initial_conditions_device_model(
-    ::DeviceModel{T, <:AbstractDeviceFormulation},
+    ::DeviceModel{T, <:AbstractStorageFormulation},
 ) where {T <: PSY.Storage} = DeviceModel(T, BookKeeping)
 
 get_multiplier_value(
