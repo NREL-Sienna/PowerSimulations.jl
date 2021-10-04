@@ -729,6 +729,7 @@ function initial_condition_update!(
             get_simulation_number(problem),
         )
     end
+    return
 end
 
 """ Updates the initial conditions of the problem"""

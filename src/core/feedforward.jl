@@ -602,7 +602,7 @@ function energy_target_ff(
     var_name::Tuple{Symbol, Symbol},
     target_period::Int,
     penalty_cost::Float64,
-) where {T <: PSY.StaticInjection}
+) where {T <: PSY.HybridSystem}
     time_steps = model_time_steps(optimization_container)
     variable = get_variable(optimization_container, var_name[1])
     varslack = get_variable(optimization_container, var_name[2])
@@ -623,6 +623,44 @@ function energy_target_ff(
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
             variable[idx] + varslack[name, target_period] >=
+            param_ub[name] * multiplier_ub[name]
+        )
+        add_to_cost_expression!(
+            optimization_container,
+            varslack[name, target_period] * penalty_cost,
+        )
+    end
+end
+
+function energy_target_ff(
+    optimization_container::PSI.OptimizationContainer,
+    cons_name::Symbol,
+    param_reference::PSI.UpdateRef,
+    var_name::Tuple{Symbol, Symbol},
+    target_period::Int,
+    penalty_cost::Float64,
+)
+    time_steps = PSI.model_time_steps(optimization_container)
+    variable = PSI.get_variable(optimization_container, var_name[1])
+    varslack = PSI.get_variable(optimization_container, var_name[2])
+    axes = JuMP.axes(variable)
+    set_name = axes[1]
+
+    @assert axes[2] == time_steps
+    container_ub =
+        PSI.add_param_container!(optimization_container, param_reference, set_name)
+    param_ub = PSI.get_parameter_array(container_ub)
+    multiplier_ub = PSI.get_multiplier_array(container_ub)
+    con_ub = PSI.add_cons_container!(optimization_container, cons_name, set_name)
+
+    for name in axes[1]
+        value = JuMP.upper_bound(variable[name, 1])
+        param_ub[name] = PSI.add_parameter(optimization_container.JuMPmodel, value)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
+        con_ub[name] = JuMP.@constraint(
+            optimization_container.JuMPmodel,
+            variable[name, target_period] + varslack[name, target_period] >=
             param_ub[name] * multiplier_ub[name]
         )
         add_to_cost_expression!(
@@ -757,7 +795,7 @@ function PSI.feedforward!(
     devices::IS.FlattenIteratorWrapper{T},
     ::PSI.DeviceModel{T, D},
     ff_model::EnergyTargetFF,
-) where {T <: PSY.StaticInjection, D <: PSI.AbstractDeviceFormulation}
+) where {T <: PSY.HybridSystem, D <: PSI.AbstractDeviceFormulation}
     PSI.add_variables!(optimization_container, PSI.EnergyShortageVariable, devices, D())
     for prefix in PSI.get_affected_variables(ff_model)
         var_name = PSI.make_variable_name(prefix, T)
@@ -769,6 +807,29 @@ function PSI.feedforward!(
             optimization_container,
             PSI.make_constraint_name(FEEDFORWARD_ENERGY_TARGET, T),
             devices,
+            parameter_ref,
+            (var_name, varslack_name),
+            ff_model.target_period,
+            ff_model.penalty_cost,
+        )
+    end
+end
+
+function PSI.feedforward!(
+    optimization_container::PSI.OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::PSI.DeviceModel{T, D},
+    ff_model::EnergyTargetFF,
+) where {T <: PSY.StaticInjection, D <: PSI.AbstractDeviceFormulation}
+    PSI.add_variables!(optimization_container, PSI.EnergyShortageVariable, devices, D())
+    for prefix in PSI.get_affected_variables(ff_model)
+        var_name = PSI.make_variable_name(prefix, T)
+        varslack_name = PSI.make_variable_name(PSI.ENERGY_SHORTAGE, T)
+        source_var_name = PSI.make_variable_name(PSI.get_variable_source_problem(ff_model), T)
+        parameter_ref = PSI.UpdateRef{JuMP.VariableRef}(source_var_name)
+        energy_target_ff(
+            optimization_container,
+            PSI.make_constraint_name(FEEDFORWARD_ENERGY_TARGET, T),
             parameter_ref,
             (var_name, varslack_name),
             ff_model.target_period,

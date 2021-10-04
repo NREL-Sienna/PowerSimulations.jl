@@ -195,8 +195,10 @@ function energy_balance!(
         name = get_component_name(info)
         idx = get_index(name, 1, inputs.subcomponent_type)
         # Create the PGAE outside of the constraint definition
-        !isnothing(info.timeseries) ? ts_value = info.timeseries[1] * info.multiplier :
         ts_value = 0.0
+        if !isnothing(info.timeseries)
+            ts_value = info.timeseries[1] * info.multiplier
+        end
         expr = JuMP.AffExpr(0.0)
         for var in varin
             JuMP.add_to_expression!(expr, var[idx], eff_in * fraction_of_hour)
@@ -216,9 +218,10 @@ function energy_balance!(
         name = get_component_name(info)
         idx = get_index(name, t, inputs.subcomponent_type)
         idx_ = get_index(name, t - 1, inputs.subcomponent_type)
-        !isnothing(info.timeseries) ? ts_value = info.timeseries[t] * info.multiplier :
         ts_value = 0.0
-
+        if !isnothing(info.timeseries) 
+            ts_value = info.timeseries[t] * info.multiplier
+        end
         expr = JuMP.AffExpr(0.0, varenergy[idx_] => 1.0)
         for var in varin
             JuMP.add_to_expression!(expr, var[idx], eff_in * fraction_of_hour)
