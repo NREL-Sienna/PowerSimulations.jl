@@ -258,7 +258,7 @@ export EqualityConstraint
 export FeedforwardBinConstraint
 export FeedforwardConstraint
 export FeedforwardIntegralLimitConstraint
-export FeedforwardUBConstraint
+# export FeedforwardUBConstraint
 export FlowActivePowerConstraint
 export FlowActivePowerFromToConstraint
 export FlowActivePowerToFromConstraint

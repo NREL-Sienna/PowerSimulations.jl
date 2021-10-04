@@ -75,7 +75,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -84,9 +83,8 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S)
     participation_assignment!(container, devices, model, S, nothing)
     regulation_cost!(container, devices, model)
     add_constraint_dual!(container, sys, model)
@@ -168,7 +166,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -177,7 +174,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     participation_assignment!(container, devices, model, S, nothing)
     regulation_cost!(container, devices, model)

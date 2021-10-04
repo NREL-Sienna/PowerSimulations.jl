@@ -649,5 +649,16 @@ end
     end
 end
 
-@testset "Test FeedForwards to ThermalGeneration models" begin 
+@testset "Test FeedForwards to ThermalGeneration models" begin
+    device_model = DeviceModel(ThermalStandard, ThermalDispatch)
+    ff = SemiContinuousFeedForward(
+        component_type = ThermalStandard,
+        source = OnVariable,
+        affected_values = [ActivePowerVariable],
+    )
+    PSI.attach_feedforward(device_model, ff)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 240, 0, 240, 240, 0, false)
 end
