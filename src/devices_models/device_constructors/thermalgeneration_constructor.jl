@@ -74,6 +74,8 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -210,6 +212,8 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
 
     if has_service_model(model)
         add_to_expression!(
@@ -340,6 +344,8 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -457,6 +463,8 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -571,6 +579,9 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -678,6 +689,9 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -783,6 +797,9 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -888,6 +905,9 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1012,6 +1032,9 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1183,6 +1206,8 @@ function construct_device!(
         S,
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1352,6 +1377,8 @@ function construct_device!(
         S,
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1481,6 +1508,8 @@ function construct_device!(
         S,
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1592,6 +1621,8 @@ function construct_device!(
         model,
         S,
     )
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1696,6 +1727,9 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
 
     if has_service_model(model)
         add_to_expression!(
