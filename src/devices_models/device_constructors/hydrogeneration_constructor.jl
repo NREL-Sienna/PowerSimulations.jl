@@ -148,7 +148,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -157,7 +156,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -167,7 +165,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
@@ -178,9 +175,8 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -262,7 +258,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -271,7 +266,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -281,11 +275,10 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -372,7 +365,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -381,7 +373,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -391,7 +382,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
@@ -402,20 +392,12 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # Energy Budget Constraint
-    add_constraints!(
-        container,
-        EnergyBudgetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -489,7 +471,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -498,7 +479,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -508,21 +488,13 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
     # Energy Budget Constraint
-    add_constraints!(
-        container,
-        EnergyBudgetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -628,7 +600,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -637,7 +608,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -647,7 +617,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
@@ -658,7 +627,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # Initial Conditions
@@ -669,23 +637,9 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        EnergyTargetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -781,7 +735,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -790,7 +743,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -800,7 +752,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
@@ -812,23 +763,9 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        EnergyTargetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -911,7 +848,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -920,7 +856,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -930,7 +865,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
@@ -941,13 +875,12 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do
-    # commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
+    # commit_hydro_active_power_ub!(container, devices, model, )
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1028,7 +961,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -1037,7 +969,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -1047,13 +978,12 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
     # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do
-    # commit_hydro_active_power_ub!(container, devices, model, get_feedforward(model))
-    feedforward!(container, devices, model, get_feedforward(model))
+    # commit_hydro_active_power_ub!(container, devices, model, )
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1136,7 +1066,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -1145,7 +1074,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -1155,7 +1083,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
     add_constraints!(
@@ -1165,19 +1092,11 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     # Energy Budget Constraint
-    add_constraints!(
-        container,
-        EnergyBudgetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1260,7 +1179,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -1269,7 +1187,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -1279,20 +1196,12 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
     # Energy Budget Constraint
-    add_constraints!(
-        container,
-        EnergyBudgetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1406,7 +1315,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -1415,7 +1323,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -1425,7 +1332,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
     add_constraints!(
@@ -1435,7 +1341,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # Initial Conditions
@@ -1446,23 +1351,9 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        EnergyTargetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1563,7 +1454,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -1572,7 +1462,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -1582,7 +1471,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
@@ -1595,23 +1483,9 @@ function construct_device!(
     )
 
     # Energy Balance Constraint
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        EnergyTargetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1691,7 +1565,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -1700,7 +1573,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # Initial Conditions
@@ -1718,23 +1590,9 @@ function construct_device!(
     )
 
     # Energy Balanace limits
-    add_constraints!(
-        container,
-        EnergyCapacityUpConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        EnergyCapacityDownConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyCapacityUpConstraint, devices, model, S)
+    add_constraints!(container, EnergyCapacityDownConstraint, devices, model, S)
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)

@@ -128,15 +128,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractActivePowerModel},
     feedforward::Nothing,
 ) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
-    add_range_constraints!(
-        container,
-        cons_type,
-        FlowActivePowerVariable,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
+    add_range_constraints!(container, cons_type, FlowActivePowerVariable, devices, model, X)
 end
 
 """
@@ -274,7 +266,6 @@ function branch_flow_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -346,7 +337,6 @@ function branch_flow_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
     add_range_constraints!(
         container,
@@ -355,7 +345,6 @@ function branch_flow_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 

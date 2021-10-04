@@ -14,7 +14,7 @@
 
 ####################### Feed Forward Affects ###############################################
 
-"""
+@doc raw"""
         ub_ff(container::OptimizationContainer,
               cons_name::Symbol,
               constraint_infos::Vector{DeviceRangeConstraintInfo},
@@ -197,7 +197,7 @@ where r in range_data.
 function add_feedforward_arguments!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::SemiContinuousFeedForward
+    ff::SemiContinuousFeedForward,
 ) where {T <: PSY.Component}
     for var in get_affected_variables(ff)
         add_parameters!(container, OnStatusParameter(), var, devices)
@@ -208,7 +208,7 @@ end
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::SemiContinuousFeedForward
+    ff::SemiContinuousFeedForward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     for var in get_affected_variables(ff)
@@ -234,7 +234,7 @@ function add_feedforward_constraints!(
             time_steps,
             meta = "$(var_type)lb",
         )
-
+    end
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
         ub_value = JuMP.upper_bound(variable[name, 1])

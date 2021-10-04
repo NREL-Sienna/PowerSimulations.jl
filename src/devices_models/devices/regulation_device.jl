@@ -218,7 +218,6 @@ function ramp_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
-    ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
     R_up = get_variable(container, DeltaActivePowerUpVariable(), T)
     R_dn = get_variable(container, DeltaActivePowerDownVariable(), T)

@@ -84,8 +84,7 @@ function add_parameters!(
     @debug "adding" T D var
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
-    parameter_container =
-        add_param_container!(container, T(), D, var, names, time_steps)
+    parameter_container = add_param_container!(container, T(), D, var, names, time_steps)
     jump_model = get_jump_model(container)
 
     for d in devices

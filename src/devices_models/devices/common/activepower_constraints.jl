@@ -23,7 +23,6 @@ function active_power_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{V},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
     inputs = make_active_power_constraints_inputs(
         T,
