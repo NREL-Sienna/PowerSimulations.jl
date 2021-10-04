@@ -357,8 +357,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X};
-    meta = CONTAINER_KEY_EMPTY_META,
+    ::Type{X},
 ) where {
     T <: ExpressionType,
     U <: VariableType,
@@ -367,10 +366,10 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    if !has_expression(container, T(), V, meta)
-        add_expressions!(container, T, devices, model, meta = meta)
+    if !has_expression(container, T(), V)
+        add_expressions!(container, T, devices, model)
     end
-    expression = get_expression(container, T(), V, meta)
+    expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         add_to_jump_expression!(expression, variable[name, t], 1.0, name, t)
