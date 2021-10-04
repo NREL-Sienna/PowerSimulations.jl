@@ -127,9 +127,9 @@ function add_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
     if get_attribute(model, "reservation")
-        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_range_constraints!(container, T, U, devices, model, X)
     end
 end
 
@@ -172,7 +172,6 @@ function energy_capacity_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 

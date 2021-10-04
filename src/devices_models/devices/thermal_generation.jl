@@ -177,9 +177,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ThermalGen, W <: ThermalCompactDispatch}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 """
@@ -218,9 +217,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ThermalGen, W <: AbstractThermalDispatchFormulation}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 """
@@ -248,9 +246,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ThermalGen, W <: AbstractThermalUnitCommitment}
-    add_semicontinuous_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
 end
 
 """
@@ -322,7 +319,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ThermalMultiStart, W <: ThermalMultiStartUnitCommitment}
     time_steps = get_time_steps(container)
     constraint_type = T()
@@ -399,7 +395,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ThermalMultiStart, W <: ThermalMultiStartUnitCommitment}
     time_steps = get_time_steps(container)
     constraint_type = T()
@@ -438,7 +433,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ThermalMultiStart, W <: ThermalMultiStartUnitCommitment}
     time_steps = get_time_steps(container)
     constraint_type = T()
@@ -500,7 +494,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, S},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: AbstractCompactUnitCommitment}
     initial_conditions_power = get_initial_condition(container, DeviceAboveMinPower(), T)
     initial_conditions_status = get_initial_condition(container, DeviceStatus(), T)
@@ -559,7 +552,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
     time_steps = get_time_steps(container)
     varstart = get_variable(container, StartVariable(), U)
@@ -828,7 +820,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
     data = _get_data_for_rocc(container, model)
     if !isempty(data)
@@ -855,7 +846,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractCompactUnitCommitment}
     data = _get_data_for_rocc(container, model)
     if !isempty(data)
@@ -882,7 +872,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, ThermalCompactDispatch},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen}
     data = _get_data_for_rocc(container, model)
     if !isempty(data)
@@ -909,7 +898,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalDispatchFormulation}
     data = _get_data_for_rocc(container, model)
     if !isempty(data)
@@ -936,7 +924,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
     data = _get_data_for_rocc(container, model)
 
@@ -990,7 +977,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalMultiStart}
     resolution = get_resolution(container)
     time_steps = get_time_steps(container)
@@ -1063,7 +1049,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalMultiStart}
     time_steps = get_time_steps(container)
     varstart = get_variable(container, StartVariable(), T)
@@ -1109,7 +1094,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalMultiStart}
     resolution = get_resolution(container)
     initial_conditions_offtime =
@@ -1182,7 +1166,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, S},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: AbstractThermalUnitCommitment}
     time_steps = get_time_steps(container)
     varon = get_variable(container, OnVariable(), T)
@@ -1245,7 +1228,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
     parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)
@@ -1286,7 +1268,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, ThermalMultiStartUnitCommitment},
     W::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {U <: PSY.ThermalGen}
     parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)
@@ -1482,7 +1463,6 @@ function cost_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
     no_min_spec = AddCostSpec(;
         variable_type = ActivePowerVariable,

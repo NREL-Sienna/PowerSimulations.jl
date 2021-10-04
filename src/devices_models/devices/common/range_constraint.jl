@@ -44,29 +44,12 @@ function add_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     component_type = V
     array = get_variable(container, variable, component_type)
-    add_lower_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
-    add_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
 end
 
 function add_range_constraints!(
@@ -76,20 +59,11 @@ function add_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
     array = get_expression(container, expression, component_type)
-    add_lower_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
 end
 
 function add_range_constraints!(
@@ -99,20 +73,11 @@ function add_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
     array = get_expression(container, expression, component_type)
-    add_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
 end
 
 function add_lower_bound_range_constraints_impl!(
@@ -122,7 +87,6 @@ function add_lower_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
@@ -154,7 +118,6 @@ function add_upper_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
@@ -210,7 +173,6 @@ function add_semicontinuous_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     component_type = V
@@ -222,7 +184,6 @@ function add_semicontinuous_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
     add_semicontinuous_upper_bound_range_constraints_impl!(
         container,
@@ -231,7 +192,6 @@ function add_semicontinuous_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -242,7 +202,6 @@ function add_semicontinuous_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
@@ -254,7 +213,6 @@ function add_semicontinuous_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -265,7 +223,6 @@ function add_semicontinuous_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
@@ -277,7 +234,6 @@ function add_semicontinuous_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -288,7 +244,6 @@ function add_semicontinuous_lower_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
@@ -326,7 +281,6 @@ function add_semicontinuous_upper_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
@@ -381,29 +335,12 @@ function add_reserve_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     component_type = V
     array = get_variable(container, variable, component_type)
-    add_reserve_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
-    add_reserve_lower_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
+    add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
 end
 
 function add_reserve_range_constraints!(
@@ -413,29 +350,12 @@ function add_reserve_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = W
     array = get_expression(container, expression, component_type)
-    add_reserve_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
-    add_reserve_lower_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
+    add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
 end
 
 function add_reserve_lower_bound_range_constraints_impl!(
@@ -445,7 +365,6 @@ function add_reserve_lower_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
@@ -486,7 +405,6 @@ function add_reserve_upper_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
@@ -542,7 +460,6 @@ function add_reserve_range_constraints!(
     devices::IS.FlattenIteratorWrapper{W},
     model::DeviceModel{W, X},
     Y::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     U <:
     Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
@@ -552,24 +469,8 @@ function add_reserve_range_constraints!(
     variable = V()
     component_type = W
     array = get_variable(container, variable, component_type)
-    add_reserve_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        Y,
-        feedforward,
-    )
-    add_reserve_lower_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        Y,
-        feedforward,
-    )
+    add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model, Y)
+    add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model, Y)
 end
 
 @doc raw"""
@@ -594,7 +495,6 @@ function add_reserve_range_constraints!(
     devices::IS.FlattenIteratorWrapper{W},
     model::DeviceModel{W, X},
     Y::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     U <:
     Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
@@ -604,24 +504,8 @@ function add_reserve_range_constraints!(
     expression = V()
     component_type = W
     array = get_expression(container, expression, component_type)
-    add_reserve_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        Y,
-        feedforward,
-    )
-    add_reserve_lower_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        Y,
-        feedforward,
-    )
+    add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model, Y)
+    add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model, Y)
 end
 
 function add_reserve_lower_bound_range_constraints_impl!(
@@ -631,7 +515,6 @@ function add_reserve_lower_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{W},
     model::DeviceModel{W, X},
     Y::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     U <:
     Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
@@ -674,7 +557,6 @@ function add_reserve_upper_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{W},
     model::DeviceModel{W, X},
     Y::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     U <:
     Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
@@ -717,7 +599,6 @@ function add_parameterized_lower_bound_range_constraints(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     component_type = V
@@ -730,7 +611,6 @@ function add_parameterized_lower_bound_range_constraints(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -742,7 +622,6 @@ function add_parameterized_lower_bound_range_constraints(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     component_type = V
@@ -755,7 +634,6 @@ function add_parameterized_lower_bound_range_constraints(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -767,7 +645,6 @@ function add_parameterized_lower_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     constraint_type = T
@@ -804,7 +681,6 @@ function add_parameterized_upper_bound_range_constraints(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     constraint_type = T
@@ -818,7 +694,6 @@ function add_parameterized_upper_bound_range_constraints(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -830,7 +705,6 @@ function add_parameterized_upper_bound_range_constraints(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     constraint_type = T
@@ -844,7 +718,6 @@ function add_parameterized_upper_bound_range_constraints(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -856,7 +729,6 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     constraint = T()
@@ -891,7 +763,7 @@ end
 #     devices::IS.FlattenIteratorWrapper{V},
 #     model::DeviceModel{V, W},
 #     X::Type{<:PM.AbstractPowerModel},
-#     feedforward::Union{Nothing, AbstractAffectFeedForward},
+#
 # ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
 
 #     # TODO: the following is incorrect implementation of bigM constraints
