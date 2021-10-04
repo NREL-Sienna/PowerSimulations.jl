@@ -425,9 +425,9 @@ function advance_execution_count!(problem::OperationsProblem)
     info = get_simulation_info(problem)
     info.execution_count += 1
     # Reset execution count at the end of step
-    # if get_execution_count(problem) == get_executions(problem)
-    #     info.execution_count = 0
-    # end
+    if get_execution_count(problem) == get_executions(problem)
+        info.execution_count = 0
+    end
     return
 end
 
