@@ -601,6 +601,7 @@ function add_var_container!(
     axs...;
     sparse = false,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    meta = remove_delimiter!(meta)
     var_key = VariableKey(T, U, meta)
     return _add_var_container!(container, var_key, sparse, axs...)
 end
@@ -626,7 +627,6 @@ function get_variable(
     ::Type{U},
     meta::String = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    meta = remove_delimiter!(meta)
     return get_variable(container, VariableKey(T, U, meta))
 end
 
