@@ -40,7 +40,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     function DeviceModel(
         ::Type{D},
         ::Type{B};
-        feedforward = Vector{AbstractAffectFeedForward}(),
+        feedforwards = Vector{AbstractAffectFeedForward}(),
         use_slacks = false,
         duals = Vector{DataType}(),
         time_series_names = get_default_time_series_names(D, B),
@@ -49,7 +49,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)
         new{D, B}(
-            feedforward,
+            feedforwards,
             use_slacks,
             duals,
             Vector{ServiceModel}(),
