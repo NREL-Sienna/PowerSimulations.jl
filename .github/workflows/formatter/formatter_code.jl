@@ -1,4 +1,9 @@
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.instantiate()
+
 using JuliaFormatter
+
 main_paths = ["."]
 for main_path in main_paths
     format(
