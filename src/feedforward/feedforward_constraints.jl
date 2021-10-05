@@ -13,69 +13,6 @@
 # end
 
 ####################### Feed Forward Affects ###############################################
-
-@doc raw"""
-        ub_ff(container::OptimizationContainer,
-              cons_name::Symbol,
-              constraint_infos::Vector{DeviceRangeConstraintInfo},
-              param_reference,
-              var_key::VariableKey)
-
-Constructs a parameterized upper bound constraint to implement feedforward from other models.
-The Parameters are initialized using the uppper boundary values of the provided variables.
-
-# Constraints
-``` variable[var_name, t] <= param_reference[var_name] ```
-
-# LaTeX
-
-`` x \leq param^{max}``
-
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* cons_name::Symbol : name of the constraint
-* param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
-* var_key::VariableKey : the name of the continuous variable
-"""
-function ub_ff(
-    container::OptimizationContainer,
-    cons_type::ConstraintType,
-    constraint_infos::Vector{DeviceRangeConstraintInfo},
-    parameter::VariableValueParameter,
-    var_type::VariableType,
-    ::Type{T},
-) where {T <: PSY.Component}
-    time_steps = get_time_steps(container)
-    variable = get_variable(container, var_type, T)
-
-    axes = JuMP.axes(variable)
-    set_name = axes[1]
-    @assert axes[2] == time_steps
-    container = add_param_container!(container, parameter, T, set_name)
-    param_ub = get_parameter_array(container)
-    multiplier_ub = get_multiplier_array(container)
-    con_ub = add_cons_container!(container, cons_type, T, set_name, time_steps)
-
-    for constraint_info in constraint_infos
-        name = get_component_name(constraint_info)
-        value = JuMP.upper_bound(variable[name, 1])
-        param_ub[name] = add_parameter(container.JuMPmodel, value)
-        # default set to 1.0, as this implementation doesn't use multiplier
-        multiplier_ub[name] = 1.0
-        for t in time_steps
-            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-            for val in constraint_info.additional_terms_ub
-                JuMP.add_to_expression!(expression_ub, variable[name, t])
-            end
-            con_ub[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
-                expression_ub <= param_ub[name] * multiplier_ub[name]
-            )
-        end
-    end
-    return
-end
-
 @doc raw"""
         range_ff(container::OptimizationContainer,
                         cons_name::Symbol,
@@ -212,12 +149,13 @@ function add_feedforward_constraints!(
     ff::SemiContinuousFeedForward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
+    parameter_type = get_default_parameter_type(ff, T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
         set_name = [PSY.get_name(d) for d in devices]
         @assert axes[2] == time_steps
-        param = get_parameter_array(container)
+        param = get_parameter_array(container, parameter_type, T)
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
             container,
@@ -236,6 +174,7 @@ function add_feedforward_constraints!(
             meta = "$(var_type)lb",
         )
     end
+
     for constraint_info in constraint_infos
         name = get_component_name(constraint_info)
         ub_value = JuMP.upper_bound(variable[name, 1])
@@ -267,6 +206,7 @@ function add_feedforward_constraints!(
             con_lb[name, t] =
                 JuMP.@constraint(container.JuMPmodel, expression_lb >= mul_lb * param[name])
         end
+
     end
 
     # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
@@ -277,6 +217,65 @@ function add_feedforward_constraints!(
         end
     end
 
+    return
+end
+
+@doc raw"""
+        ub_ff(container::OptimizationContainer,
+              cons_name::Symbol,
+              constraint_infos::Vector{DeviceRangeConstraintInfo},
+              param_reference,
+              var_key::VariableKey)
+
+Constructs a parameterized upper bound constraint to implement feedforward from other models.
+The Parameters are initialized using the uppper boundary values of the provided variables.
+
+# Constraints
+``` variable[var_name, t] <= param_reference[var_name] ```
+
+# LaTeX
+
+`` x \leq param^{max}``
+
+# Arguments
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* cons_name::Symbol : name of the constraint
+* param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
+* var_key::VariableKey : the name of the continuous variable
+"""
+add_feedforward_constraints!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::UpperBoundFeedForward,
+) where {T <: PSY.Component}
+    time_steps = get_time_steps(container)
+    variable = get_variable(container, var_type, T)
+
+    axes = JuMP.axes(variable)
+    set_name = axes[1]
+    @assert axes[2] == time_steps
+    container = add_param_container!(container, parameter, T, set_name)
+    param_ub = get_parameter_array(container)
+    multiplier_ub = get_multiplier_array(container)
+    con_ub = add_cons_container!(container, cons_type, T, set_name, time_steps)
+
+    for constraint_info in constraint_infos
+        name = get_component_name(constraint_info)
+        value = JuMP.upper_bound(variable[name, 1])
+        param_ub[name] = add_parameter(container.JuMPmodel, value)
+        # default set to 1.0, as this implementation doesn't use multiplier
+        multiplier_ub[name] = 1.0
+        for t in time_steps
+            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            for val in constraint_info.additional_terms_ub
+                JuMP.add_to_expression!(expression_ub, variable[name, t])
+            end
+            con_ub[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                expression_ub <= param_ub[name] * multiplier_ub[name]
+            )
+        end
+    end
     return
 end
 
