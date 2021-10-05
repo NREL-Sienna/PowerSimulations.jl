@@ -7,6 +7,9 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
     add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
     add_to_expression!(
         container,
         ActivePowerBalance,
