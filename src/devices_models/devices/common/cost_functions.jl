@@ -56,13 +56,17 @@ end
 set_addtional_linear_terms!(spec::AddCostSpec, key, value) =
     spec.addtional_linear_terms[key] = value
 
-function add_service_variables!(spec::AddCostSpec, services)
-    for service in services
-        name = PSY.get_name(service)
+function add_service_variables!(spec::AddCostSpec, service_models)
+    for service_model in service_models
+        name = get_service_name(service_model)
         set_addtional_linear_terms!(
             spec,
             name,
-            VariableKey(ActivePowerReserveVariable, typeof(service), name),
+            VariableKey(
+                ActivePowerReserveVariable,
+                get_component_type(service_model),
+                name,
+            ),
         )
     end
     return
@@ -74,15 +78,15 @@ Add variables to the OptimizationContainer for a service.
 function cost_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
 ) where {T <: PSY.Component, U <: AbstractDeviceFormulation}
     for d in devices
         spec = AddCostSpec(T, U, container)
         @debug T, spec _group = LOG_GROUP_COST_FUNCTIONS
-        services = PSY.get_services(d)
-        add_service_variables!(spec, services)
+        service_models = get_services(model)
+        add_service_variables!(spec, service_models)
         add_to_cost!(container, spec, PSY.get_operation_cost(d), d)
     end
     return

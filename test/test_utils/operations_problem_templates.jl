@@ -7,7 +7,7 @@ end
 
 function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     template = ProblemTemplate(network)
-    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, MonitoredLine, StaticBranchBounds)
     set_device_model!(template, Line, StaticBranch)
@@ -55,7 +55,7 @@ end
 
 function get_template_hydro_st_ed(network = CopperPlatePowerModel, duals = [])
     template = ProblemTemplate(network)
-    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptibleLoad, DispatchablePowerLoad)
@@ -66,7 +66,7 @@ end
 function get_template_dispatch_with_network(network = StandardPTDFModel)
     template = ProblemTemplate(network)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, Line, StaticBranch)
     set_device_model!(template, Transformer2W, StaticBranch)
     set_device_model!(template, TapTransformer, StaticBranch)

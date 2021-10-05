@@ -33,7 +33,7 @@ end
 
     ed_template = template_economic_dispatch()
     @test !isempty(ed_template.devices)
-    @test PSI.get_formulation(ed_template.devices[:ThermalStandard]) == ThermalDispatch
+    @test PSI.get_formulation(ed_template.devices[:ThermalStandard]) == ThermalBasicDispatch
     ed_template = template_economic_dispatch(network = ACPPowerModel)
     @test get_network_formulation(ed_template) == ACPPowerModel
     @test !isempty(ed_template.branches)
