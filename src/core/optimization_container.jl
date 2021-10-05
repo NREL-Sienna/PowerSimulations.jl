@@ -987,6 +987,13 @@ function get_expression(
     return get_expression(container, ExpressionKey(T, PSY.System, meta))
 end
 
+function read_expressions(container::OptimizationContainer)
+    return Dict(
+        k => axis_array_to_dataframe(v) for (k, v) in get_expressions(container) if
+        !(get_entry_type(k) <: SystemBalanceExpressions)
+    )
+end
+
 ###################################Initial Conditions Containers############################
 function _add_initial_condition_container!(
     container::OptimizationContainer,
@@ -1052,6 +1059,9 @@ function write_initial_conditions_data(
         # TODO: Not ideal, clean up a bit more.
         if field == STORE_CONTAINER_PARAMETERS
             ic_container_dict = read_parameters(ic_container)
+        end
+        if field == STORE_CONTAINER_EXPRESSIONS
+            continue
         end
         isempty(ic_container_dict) && continue
         ic_data_dict = getfield(get_initial_conditions_data(container), field)

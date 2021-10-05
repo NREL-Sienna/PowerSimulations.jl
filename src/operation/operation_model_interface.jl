@@ -222,6 +222,9 @@ list_parameter_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER
 list_parameter_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
 list_dual_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
 list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
+list_expression_keys(x::OperationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
+list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)
 
 function _list_names(model::OperationModel, container_type)
     return encode_keys_as_strings(list_keys(get_store(model), container_type))
@@ -241,6 +244,10 @@ end
 
 function read_variable(model::OperationModel, key::VariableKey)
     return read_results(get_store(model), STORE_CONTAINER_VARIABLES, key)
+end
+
+function read_expression(model::OperationModel, key::ExpressionKey)
+    return read_results(get_store(model), STORE_CONTAINER_EXPRESSIONS, key)
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))

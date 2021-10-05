@@ -8,6 +8,7 @@ mutable struct DecisionModelOptimizerResults <: AbstractModelOptimizerResults
     parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
     variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
     aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
+    expressions::Dict{ExpressionKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
 end
 
 function DecisionModelOptimizerResults()
@@ -28,6 +29,10 @@ function DecisionModelOptimizerResults()
             AuxVarKey,
             Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
         }(),
+        Dict{
+            AuxVarKey,
+            Dict{ExpressionKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
+        }(),
     )
 end
 
@@ -40,6 +45,7 @@ mutable struct EmulationModelOptimizerResults <: AbstractModelOptimizerResults
     parameters::Dict{ParameterKey, DataFrames.DataFrame}
     variables::Dict{VariableKey, DataFrames.DataFrame}
     aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
+    expressions::Dict{ExpressionKey, DataFrames.DataFrame}
 end
 
 function EmulationModelOptimizerResults()
@@ -49,6 +55,7 @@ function EmulationModelOptimizerResults()
         Dict{ParameterKey, DataFrames.DataFrame}(),
         Dict{VariableKey, DataFrames.DataFrame}(),
         Dict{AuxVarKey, DataFrames.DataFrame}(),
+        Dict{ExpressionKey, DataFrames.DataFrame}(),
     )
 end
 
