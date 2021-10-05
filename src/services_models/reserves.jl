@@ -392,13 +392,12 @@ function add_to_cost!(
     container::OptimizationContainer,
     spec::AddCostSpec,
     service::SR,
-    component_name::String,
 ) where {SR <: PSY.Reserve}
     time_steps = get_time_steps(container)
     variable_cost_forecast = get_time_series(container, service, "variable_cost")
     variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
     for t in time_steps
-        variable_cost!(container, spec, component_name, variable_cost_forecast[t], t)
+        variable_cost!(container, spec, service, variable_cost_forecast[t], t)
     end
     return
 end
@@ -410,7 +409,7 @@ function cost_function!(
 ) where {SR <: PSY.ReserveDemandCurve}
     spec = AddCostSpec(SR, get_formulation(model), container)
     @debug SR, spec
-    add_to_cost!(container, spec, service, PSY.get_name(service))
+    add_to_cost!(container, spec, service)
     return
 end
 
