@@ -1,6 +1,6 @@
 function add_parameters!(
     container::OptimizationContainer,
-    ::Type{T},
+    ::T,
     devices::U,
     model::DeviceModel{D, W},
 ) where {
