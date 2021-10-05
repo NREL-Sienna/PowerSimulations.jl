@@ -601,6 +601,7 @@ function add_var_container!(
     axs...;
     sparse = false,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    meta = remove_delimiter!(meta)
     var_key = VariableKey(T, U, meta)
     return _add_var_container!(container, var_key, sparse, axs...)
 end

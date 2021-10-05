@@ -21,7 +21,7 @@ end
 
 function _default_devices_dispatch()
     default = _default_devices_uc()
-    default[1] = DeviceModel(PSY.ThermalStandard, ThermalDispatch)
+    default[1] = DeviceModel(PSY.ThermalStandard, ThermalBasicDispatch)
     return default
 end
 
