@@ -393,7 +393,7 @@ end
     end
 end
 
-@testset "DecisionModel Model initial_conditions test for ThermalGen" begin
+@testset "Decision Model initial_conditions test for ThermalGen" begin
     ######## Test with ThermalStandardUnitCommitment ########
     template = get_thermal_standard_uc_template()
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build = true)
@@ -439,7 +439,7 @@ end
     @test solve!(model) == RunStatus.SUCCESSFUL
 end
 
-@testset "Emulation Model initial_conditions test for Storage" begin
+@testset "Decision Model initial_conditions test for Storage" begin
     ######## Test with BookKeeping ########
     template = get_thermal_dispatch_template_network()
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; force_build = true)
@@ -468,7 +468,7 @@ end
     @test solve!(model) == RunStatus.SUCCESSFUL
 end
 
-@testset "Emulation Model initial_conditions test for Hydro" begin
+@testset "Decision Model initial_conditions test for Hydro" begin
     ######## Test with HydroDispatchRunOfRiver ########
     template = get_thermal_dispatch_template_network()
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
