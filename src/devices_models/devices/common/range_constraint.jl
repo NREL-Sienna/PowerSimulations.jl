@@ -115,6 +115,49 @@ function add_range_constraints!(
     )
 end
 
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    component_type = V
+    array = get_variable(container, variable, component_type)
+
+    add_lower_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
+    add_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
+    add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
+end
+
 function add_lower_bound_range_constraints_impl!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},
@@ -192,7 +235,7 @@ function add_lower_bound_range_constraints_impl!(
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
 
     con_lb = add_cons_container!(
         container,
@@ -204,8 +247,9 @@ function add_lower_bound_range_constraints_impl!(
     )
 
     for (i, device) in enumerate(devices), t in time_steps
+        !check_subcomponent_exist(device, PSY.ThermalGen) && continue
         ci_name = PSY.get_name(device)
-        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] =
             JuMP.@constraint(container.JuMPmodel, array[ci_name, PSY.ThermalGen, t] >= limits.min)
     end
@@ -224,7 +268,7 @@ function add_upper_bound_range_constraints_impl!(
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
 
     con_ub = add_cons_container!(
         container,
@@ -236,8 +280,9 @@ function add_upper_bound_range_constraints_impl!(
     )
 
     for (i, device) in enumerate(devices), t in time_steps
+        !check_subcomponent_exist(device, PSY.ThermalGen) && continue
         ci_name = PSY.get_name(device)
-        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_ub[ci_name, t] =
             JuMP.@constraint(container.JuMPmodel, array[ci_name, PSY.ThermalGen, t] <= limits.max)
     end
@@ -960,7 +1005,7 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     time_steps = get_time_steps(container)
     constraint = T()
     component_type = V
-    names = [PSY.get_name(d) for d in devices]
+    names = [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.RenewableGen)]
 
     constraint = add_cons_container!(
         container,
@@ -968,12 +1013,13 @@ function add_parameterized_upper_bound_range_constraints_impl!(
         component_type,
         names,
         time_steps,
-        meta = "ub",
+        meta = "re ub",
     )
 
     parameter = get_parameter_array(container, P(), V)
     multiplier = get_parameter_multiplier_array(container, P(), V)
     for (i, device) in enumerate(devices), t in time_steps
+        !check_subcomponent_exist(device, PSY.RenewableGen) && continue
         name = PSY.get_name(device)
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,

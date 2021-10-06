@@ -5,16 +5,16 @@ struct StandardHybridDispatch <: AbstractStandardHybridFormulation end
 
 requires_initialization(::AbstractHybridFormulation) = false
 
-get_variable_multiplier(_, ::Type{<:PSY.HybridSystem}, ::AbstractHybridDisaptchFormulation) = 1.0
-get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
-get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
+get_variable_multiplier(_, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = 1.0
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HybridSystem}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HybridSystem}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
 
 ########################### ActivePowerOutVariable, HybridSystem #################################
 get_variable_binary(::ActivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation ) = false
 get_variable_warm_start_value(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_active_power(d)
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractStandardHybridFormulation) = -1.0 * get_input_active_power_limits(d).max
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = -1.0 * PSY.get_input_active_power_limits(d).max
 
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = get_input_active_power_limits(d).min
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractStandardHybridFormulation) = PSY.get_output_active_power_limits(d).min
 
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_output_active_power_limits(d).max
 
@@ -48,9 +48,14 @@ get_variable_warm_start_value(::ReactivePowerVariable, d::PSY.HybridSystem, ::Ab
 get_variable_binary(::ComponentReactivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
 get_variable_lower_bound(::ComponentReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = 0.0
 
-############## SubComponentReserveVariable, HybridSystem ####################
-get_variable_binary(::SubComponentReserveVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = true
-get_variable_lower_bound(::SubComponentReserveVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = 0.0
+############## ComponentReserveVariable, HybridSystem ####################
+# TODO: test hybrid reserve participation
+
+# get_variable_binary(::ComponentReserveVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = true
+# get_variable_lower_bound(::ComponentReserveVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = 0.0
+
+############## ReservationVariable, HybridSystem ####################
+get_variable_binary(::ReservationVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = true
 
 ####################
 
@@ -61,7 +66,7 @@ get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractHybridFormulation},
 ) where {T <: PSY.HybridSystem} = DeviceModel(T, BasicHybridDisaptch)
 
-get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_max_active_power(get_renewable_unit(d))
+get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_renewable_unit(d))
 
 
 check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) =
@@ -124,17 +129,31 @@ get_min_max_limits(
 
 get_min_max_limits(
     device::PSY.HybridSystem,
-    ::PSY.ThermalGen,
+    ::Type{PSY.ThermalGen},
+    ::Type{ComponentActivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractHybridFormulation},
+) = PSY.get_active_power_limits(PSY.get_thermal_unit(device))
+
+get_min_max_limits(
+    device::PSY.HybridSystem,
+    ::Type{PSY.ThermalGen},
     ::Type{ComponentReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractHybridFormulation},
 ) = PSY.get_reactive_power_limits(PSY.get_thermal_unit(device))
 
 get_min_max_limits(
     device::PSY.HybridSystem,
-    ::PSY.RenewableGen,
-    ::Type{ComponentActivePowerVariableLimitsConstraint},
+    ::Type{PSY.RenewableGen},
+    ::Type{ComponentReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractHybridFormulation},
 ) = PSY.get_reactive_power_limits(PSY.get_renewable_unit(device))
+
+get_min_max_limits(
+    device::PSY.HybridSystem,
+    ::Type{PSY.Storage},
+    ::Type{ComponentReactivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractHybridFormulation},
+) = PSY.get_reactive_power_limits(PSY.get_storage(device))
 
 get_min_max_limits(
     device::PSY.HybridSystem,
@@ -199,25 +218,6 @@ function add_constraints!(
     end
 end
 
-function add_constraints!(
-    container::OptimizationContainer,
-    T::Type{EnergyVariableLimitConstraint},
-    U::Type{<:VariableType},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
-    add_range_constraints!(
-        container,
-        T,
-        U,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
-end
 
 function add_constraints!(
     container::OptimizationContainer,
@@ -231,21 +231,21 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     var = get_variable(container, ComponentReactivePowerVariable(), V)
     device_names = [PSY.get_name(d) for d in devices]
-    subcomp_types = get_subcomponent_var_types(variable_type)
+    subcomp_types = get_subcomponent_var_types(U)
 
     constraint_ub = add_cons_container!(container, ReactiveRangeConstraint(), V, device_names, subcomp_types, time_steps; meta = "ub", sparse = true)
     constraint_lb = add_cons_container!(container, ReactiveRangeConstraint(), V, device_names, subcomp_types, time_steps; meta = "lb", sparse = true)
 
     for t in time_steps, d in devices, subcomp in subcomp_types
         !check_subcomponent_exist(d, subcomp) && continue
-        name = PSY.get_name(device)
-        limits = get_min_max_limits(device,subcomp, T, W)
+        name = PSY.get_name(d)
+        limits = get_min_max_limits(d, subcomp, T, W)
         constraint_ub[name, subcomp, t] =
             JuMP.@constraint(container.JuMPmodel, var[name, subcomp, t] <= limits.max)
         constraint_lb[name, subcomp, t] =
             JuMP.@constraint(container.JuMPmodel, var[name, subcomp, t] >= limits.min)
     end
-            
+    
 end
 ######################## Energy balance constraints ############################
 
@@ -260,7 +260,7 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    names = [PSY.get_name(x) for x in devices if !isnothing(PSY.get_storage(device))]
+    names = [PSY.get_name(x) for x in devices if !isnothing(PSY.get_storage(x))]
     initial_conditions = get_initial_condition(container, InitialEnergyLevel(), V)
     energy_var = get_variable(container, EnergyVariable(), V)
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
@@ -307,7 +307,7 @@ function add_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, D <: AbstractHybridFormulation, X <: PM.AbstractPowerModel}
 
-    time_steps = model_time_steps(container)
+    time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
 
     var_p = get_variable(container, ActivePowerVariable(), V)
@@ -340,7 +340,7 @@ function add_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, D <: AbstractHybridFormulation, X <: PM.AbstractPowerModel}
 
-    time_steps = model_time_steps(container)
+    time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
 
     var_q = get_variable(container, ReactivePowerVariable(), V)
@@ -370,7 +370,7 @@ function add_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, D <: AbstractHybridFormulation, X <: PM.AbstractPowerModel}
 
-    time_steps = model_time_steps(container)
+    time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
 
     var_q = get_variable(container, ReactivePowerVariable(), V)

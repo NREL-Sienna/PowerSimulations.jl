@@ -34,6 +34,17 @@ function get_time_series(
     return _get_time_series(container, component, parameter_container.attributes)
 end
 
+function get_time_series(
+    container::OptimizationContainer,
+    component::T,
+    parameter::ActivePowerTimeSeriesParameter,
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: PSY.HybridSystem}
+    parameter_container = get_parameter(container, parameter, T, meta)
+    parameter_container.attributes
+    return _get_time_series(container, PSY.get_renewable_unit(component), parameter_container.attributes)
+end
+
 # This is just for temporary compatibility with current code. Needs to be eliminated once the time series
 # refactor is done.
 function get_time_series(

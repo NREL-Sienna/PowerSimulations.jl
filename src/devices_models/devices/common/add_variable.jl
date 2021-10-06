@@ -32,17 +32,14 @@ function add_variables!(
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     formulation::AbstractDeviceFormulation,
 ) where {T <: SubComponentVariableType, U <: PSY.Component}
-    add_subcomponent_variables!(optimization_container, T(), devices, formulation)
+    add_variable!(container, T(), devices, formulation)
 end
 
-get_subcomponent_var_types(::ComponentActivePowerVariable) =
+get_subcomponent_var_types(::Type{ComponentActivePowerVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen]
-get_subcomponent_var_types(::ComponentActivePowerReserveVariable) =
+get_subcomponent_var_types(::Type{ComponentActivePowerReserveVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
-get_subcomponent_var_types(::ComponentActivePowerReserveVariable) =
-    [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
-get_subcomponent_var_types(::SubComponentEnergyVariable) = [PSY.Storage]
-get_subcomponent_var_types(::ComponentReactivePowerVariable) = 
+get_subcomponent_var_types(::Type{ComponentReactivePowerVariable}) = 
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
 
 @doc raw"""
@@ -181,7 +178,7 @@ function add_variable!(
     time_steps = get_time_steps(container)
     settings = get_settings(container)
     binary = get_variable_binary(variable_type, D, formulation)
-    subcomp_types = get_subcomponent_var_types(variable_type)
+    subcomp_types = get_subcomponent_var_types(T)
 
     variable = add_var_container!(
         container,
@@ -189,7 +186,8 @@ function add_variable!(
         D,
         [PSY.get_name(d) for d in devices],
         subcomp_types,
-        time_steps,
+        time_steps;
+        sparse = true
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types
