@@ -76,6 +76,10 @@ export ThermalCompactDispatch
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
+######## Hybrid Formulations ########
+export BasicHybridDispatch
+export StandardHybridDispatch
+
 # feedforward chrons
 export RecedingHorizon
 export Synchronize
@@ -286,7 +290,6 @@ export RangeLimitConstraint
 export RateLimitConstraint
 export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
-export ReactiveConstraint
 export ReactivePowerVariableLimitsConstraint
 export ReactiveRangeConstraint
 export RegulationLimitsDownConstraint
@@ -505,7 +508,7 @@ include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")
 include("devices_models/device_constructors/storage_constructor.jl")
 include("devices_models/device_constructors/regulationdevice_constructor.jl")
-
+include("devices_models/device_constructors/hybridgeneration_constructor.jl")
 # Network constructors
 include("network_models/network_constructor.jl")
 
