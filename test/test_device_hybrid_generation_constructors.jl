@@ -3,12 +3,10 @@
     sys = PSB.build_system(PSITestSystems, "c_sys5_hybrid")
 
     # Parameters Testing
-    model =
-        DecisionModel(MockOperationProblem, DCPPowerModel, sys)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model)
     moi_tests(model, false, 672, 0, 384, 336, 192, true)
     psi_checkobjfun_test(model, GAEVF)
-
 end
 
 @testset "Hybrid ACPPowerModel with BasicHybridDispatch formulation" begin
@@ -27,12 +25,10 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_hybrid")
 
     # Parameters Testing
-    model =
-        DecisionModel(MockOperationProblem, DCPPowerModel, sys)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model)
     moi_tests(model, false, 672, 0, 384, 336, 192, true)
     psi_checkobjfun_test(model, GAEVF)
-
 end
 
 @testset "Hybrid ACPPowerModel with StandardHybridDispatch formulation" begin

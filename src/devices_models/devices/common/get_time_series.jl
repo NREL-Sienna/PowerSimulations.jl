@@ -42,7 +42,11 @@ function get_time_series(
 ) where {T <: PSY.HybridSystem}
     parameter_container = get_parameter(container, parameter, T, meta)
     parameter_container.attributes
-    return _get_time_series(container, PSY.get_renewable_unit(component), parameter_container.attributes)
+    return _get_time_series(
+        container,
+        PSY.get_renewable_unit(component),
+        parameter_container.attributes,
+    )
 end
 
 # This is just for temporary compatibility with current code. Needs to be eliminated once the time series

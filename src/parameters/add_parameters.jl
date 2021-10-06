@@ -53,7 +53,8 @@ function add_parameters!(
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.RenewableGen)]
+    names =
+        [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.RenewableGen)]
     ts_name = get_time_series_names(model)[T]
     @debug "adding" T name ts_type
     parameter_container =
@@ -78,7 +79,6 @@ function add_parameters!(
     end
     return
 end
-
 
 function add_parameters!(
     container::OptimizationContainer,

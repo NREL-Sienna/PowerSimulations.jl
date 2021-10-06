@@ -39,7 +39,7 @@ get_subcomponent_var_types(::Type{ComponentActivePowerVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen]
 get_subcomponent_var_types(::Type{ComponentActivePowerReserveVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
-get_subcomponent_var_types(::Type{ComponentReactivePowerVariable}) = 
+get_subcomponent_var_types(::Type{ComponentReactivePowerVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
 
 @doc raw"""
@@ -187,7 +187,7 @@ function add_variable!(
         [PSY.get_name(d) for d in devices],
         subcomp_types,
         time_steps;
-        sparse = true
+        sparse = true,
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types

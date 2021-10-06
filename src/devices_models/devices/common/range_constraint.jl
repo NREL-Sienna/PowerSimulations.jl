@@ -235,7 +235,8 @@ function add_lower_bound_range_constraints_impl!(
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
+    device_names =
+        [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
 
     con_lb = add_cons_container!(
         container,
@@ -250,8 +251,10 @@ function add_lower_bound_range_constraints_impl!(
         !check_subcomponent_exist(device, PSY.ThermalGen) && continue
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
-        con_lb[ci_name, t] =
-            JuMP.@constraint(container.JuMPmodel, array[ci_name, PSY.ThermalGen, t] >= limits.min)
+        con_lb[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[ci_name, PSY.ThermalGen, t] >= limits.min
+        )
     end
 end
 
@@ -268,7 +271,8 @@ function add_upper_bound_range_constraints_impl!(
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
+    device_names =
+        [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
 
     con_ub = add_cons_container!(
         container,
@@ -283,8 +287,10 @@ function add_upper_bound_range_constraints_impl!(
         !check_subcomponent_exist(device, PSY.ThermalGen) && continue
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
-        con_ub[ci_name, t] =
-            JuMP.@constraint(container.JuMPmodel, array[ci_name, PSY.ThermalGen, t] <= limits.max)
+        con_ub[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[ci_name, PSY.ThermalGen, t] <= limits.max
+        )
     end
 end
 
@@ -1005,7 +1011,8 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     time_steps = get_time_steps(container)
     constraint = T()
     component_type = V
-    names = [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.RenewableGen)]
+    names =
+        [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.RenewableGen)]
 
     constraint = add_cons_container!(
         container,

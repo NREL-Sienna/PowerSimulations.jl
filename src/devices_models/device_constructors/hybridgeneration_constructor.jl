@@ -36,7 +36,6 @@ function construct_device!(
         model,
         S,
     )
-
 end
 
 function construct_device!(
@@ -159,7 +158,6 @@ function construct_device!(
         model,
         S,
     )
-
 end
 
 function construct_device!(
@@ -276,7 +274,11 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
-) where {T <: PSY.HybridSystem, D <: StandardHybridDispatch, S <: PM.AbstractActivePowerModel}
+) where {
+    T <: PSY.HybridSystem,
+    D <: StandardHybridDispatch,
+    S <: PM.AbstractActivePowerModel,
+}
     devices = get_available_components(T, sys)
 
     # Variables
@@ -289,7 +291,7 @@ function construct_device!(
     if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, D())
     end
-    
+
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
@@ -306,14 +308,17 @@ function construct_device!(
     )
 end
 
-
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, D},
     ::Type{S},
-) where {T <: PSY.HybridSystem, D <: StandardHybridDispatch, S <: PM.AbstractActivePowerModel}
+) where {
+    T <: PSY.HybridSystem,
+    D <: StandardHybridDispatch,
+    S <: PM.AbstractActivePowerModel,
+}
     devices = get_available_components(T, sys)
 
     # Constraints
@@ -423,9 +428,7 @@ function construct_device!(
         model,
         S,
     )
-
 end
-
 
 function construct_device!(
     container::OptimizationContainer,
