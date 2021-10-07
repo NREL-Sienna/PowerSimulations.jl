@@ -104,5 +104,5 @@ function remove_undef!(expression_array::AbstractArray)
         end
     end
 
-    return
+    return expression_array
 end
