@@ -124,7 +124,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
@@ -163,7 +162,6 @@ function energy_capacity_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
     add_range_constraints!(
         container,
@@ -186,7 +184,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
@@ -236,7 +233,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
     time_steps = get_time_steps(container)
     var_e = get_variable(container, EnergyVariable(), T)
@@ -282,7 +278,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
     time_steps = get_time_steps(container)
     var_in = get_variable(container, ActivePowerInVariable(), T)
@@ -333,7 +328,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: EnergyTarget, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
