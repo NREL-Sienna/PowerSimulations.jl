@@ -234,7 +234,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
     add_range_constraints!(container, T, U, devices, model, X)
     add_parameterized_upper_bound_range_constraints(
@@ -255,7 +254,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
     add_range_constraints!(container, T, U, devices, model, X)
 end
@@ -270,7 +268,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
     add_parameterized_upper_bound_range_constraints(
@@ -324,7 +321,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
 end
@@ -339,7 +335,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroDispatchFormulation}
     add_range_constraints!(container, T, U, devices, model, X)
 end
@@ -354,7 +349,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
@@ -373,7 +367,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
@@ -418,7 +411,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
     add_range_constraints!(container, T, U, devices, model, X)
 end
@@ -435,7 +427,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     V <: PSY.HydroEnergyReservoir,
     W <: AbstractHydroFormulation,
@@ -489,7 +480,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     V <: PSY.HydroPumpedStorage,
     W <: AbstractHydroFormulation,
@@ -549,7 +539,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     V <: PSY.HydroPumpedStorage,
     W <: AbstractHydroFormulation,
@@ -610,7 +599,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
@@ -690,7 +678,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
