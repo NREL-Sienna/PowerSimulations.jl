@@ -43,7 +43,7 @@ reserves = ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve)
 ```
 """
 mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
-    feedforward::Vector{<:AbstractAffectFeedForward}
+    feedforwards::Vector{<:AbstractAffectFeedForward}
     service_name::String
     use_slacks::Bool
     duals::Vector{DataType}
@@ -100,7 +100,7 @@ function ServiceModel(
     service_type::Type{D},
     formulation_type::Type{B};
     use_slacks = false,
-    feedforward = nothing,
+    feedforwards = Vector{AbstractAffectFeedForward}(),
     duals = Vector{DataType}(),
     time_series_names = get_default_time_series_names(D, B),
     attributes = get_default_attributes(D, B),
@@ -113,7 +113,7 @@ function ServiceModel(
         formulation_type,
         NO_SERVICE_NAME_PROVIDED;
         use_slacks,
-        feedforward,
+        feedforwards,
         duals,
         time_series_names,
         attributes,
