@@ -255,9 +255,9 @@ export EnergyShortageVariableLimitsConstraint
 export EnergyTargetConstraint
 export EqualityConstraint
 export FeedforwardBinConstraint
-export FeedforwardConstraint
+export FeedforwardUpperBoundConstraint
+export FeedforwardLowerBoundConstraint
 export FeedforwardIntegralLimitConstraint
-# export FeedforwardUBConstraint
 export FlowActivePowerConstraint
 export FlowActivePowerFromToConstraint
 export FlowActivePowerToFromConstraint
@@ -443,6 +443,8 @@ include("parameters/update_parameters.jl")
 
 include("feedforward/feedforward_chronologies.jl")
 include("feedforward/feedforwards.jl")
+include("feedforward/feedforward_arguments.jl")
+include("feedforward/feedforward_constraints.jl")
 
 include("simulation/param_result_cache.jl")
 include("simulation/result_cache.jl")
@@ -466,10 +468,8 @@ include("devices_models/devices/common/rating_constraints.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/commitment_constraint.jl")
-include("devices_models/devices/common/timeseries_constraint.jl")
+# include("devices_models/devices/common/timeseries_constraint.jl")
 include("devices_models/devices/common/get_time_series.jl")
-
-include("feedforward/feedforward_constraints.jl")
 
 # Device Modeling components
 include("devices_models/devices/interfaces.jl")
