@@ -195,7 +195,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
-    add_constraint_dual!(container, sys, mod)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
