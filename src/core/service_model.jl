@@ -81,7 +81,7 @@ get_component_type(
 get_formulation(
     ::ServiceModel{D, B},
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation} = B
-get_feedforwards(m::ServiceModel) = m.feedforward
+get_feedforwards(m::ServiceModel) = m.feedforwards
 get_service_name(m::ServiceModel) = m.service_name
 get_use_slacks(m::ServiceModel) = m.use_slacks
 get_duals(m::ServiceModel) = m.duals
