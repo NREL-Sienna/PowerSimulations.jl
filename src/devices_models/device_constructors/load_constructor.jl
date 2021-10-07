@@ -406,7 +406,7 @@ function construct_device!(
     new_model = DeviceModel(
         L,
         StaticPowerLoad,
-        feedforward = model.feedforward,
+        feedforwards = model.feedforwards,
         time_series_names = model.time_series_names,
         attributes = model.attributes,
     )

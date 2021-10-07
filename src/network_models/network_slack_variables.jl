@@ -36,10 +36,9 @@ function add_to_expression!(
     expression = get_expression(container, T(), PSY.System)
     for t in get_time_steps(container)
         add_to_jump_expression!(
-            expression,
+            expression[t],
             variable[t],
             get_variable_multiplier(U(), PSY.System, W()),
-            t,
         )
     end
     return
