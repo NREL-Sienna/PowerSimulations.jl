@@ -124,3 +124,119 @@ function add_feedforward_constraints!(
     end
     return
 end
+
+@doc raw"""
+        lb_ff(container::OptimizationContainer,
+              cons_name::Symbol,
+              constraint_infos,
+              param_reference,
+              var_key::VariableKey)
+
+Constructs a parameterized upper bound constraint to implement feedforward from other models.
+The Parameters are initialized using the uppper boundary values of the provided variables.
+
+# Constraints
+``` variable[var_name, t] <= param_reference[var_name] ```
+
+# LaTeX
+
+`` x \leq param^{max}``
+
+# Arguments
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* cons_name::Symbol : name of the constraint
+* param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
+* var_key::VariableKey : the name of the continuous variable
+"""
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    ::DeviceModel,
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::LowerBoundFeedForward,
+) where {T <: PSY.Component}
+    time_steps = get_time_steps(container)
+    parameter_type = get_default_parameter_type(ff, T)
+    param_ub = get_parameter_array(container, parameter_type, T)
+    multiplier_ub = get_parameter_multiplier_array(container, parameter_type, T)
+    for var in get_affected_values(ff)
+        variable = get_variable(container, var)
+        axes = JuMP.axes(variable)
+        set_name = [PSY.get_name(d) for d in devices]
+        @assert axes[2] == time_steps
+
+        var_type = get_entry_type(var)
+        con_ub = add_cons_container!(
+            container,
+            FeedforwardUpperBoundConstraint(),
+            T,
+            set_name,
+            time_steps,
+            meta = "$(var_type)up",
+        )
+
+        for t in time_steps, name in set_name
+            con_ub[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                variable[name, t] >= param_ub[name, t] * multiplier_ub[name, t]
+            )
+        end
+    end
+    return
+end
+
+@doc raw"""
+        integral_limit_ff(container::OptimizationContainer,
+                        cons_name::Symbol,
+                        param_reference,
+                        var_key::VariableKey)
+
+Constructs a parameterized integral limit constraint to implement feedforward from other models.
+The Parameters are initialized using the upper boundary values of the provided variables.
+
+# Constraints
+``` sum(variable[var_name, t] for t in time_steps)/length(time_steps) <= param_reference[var_name] ```
+
+# LaTeX
+
+`` \sum_{t} x \leq param^{max}``
+`` \sum_{t} x * DeltaT_lower \leq param^{max} * DeltaT_upper ``
+    `` P_LL - P_max * ON_upper <= 0.0 ``
+    `` P_LL - P_min * ON_upper >= 0.0 ``
+
+# Arguments
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* cons_name::Symbol : name of the constraint
+* param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
+* var_key::VariableKey : the name of the continuous variable
+"""
+#function add_feedforward_constraints!(
+#    container::OptimizationContainer,
+#    ::DeviceModel,
+#    devices::IS.FlattenIteratorWrapper{T},
+#    ff::IntegralLimitFeedForward,
+#) where {T <: PSY.Component}
+#    time_steps = get_time_steps(container)
+#    variable = get_variable(container, variable_type, T)
+#
+#    axes = JuMP.axes(variable)
+#    set_name = axes[1]
+#
+#    @assert axes[2] == time_steps
+#    container_ub = add_param_container!(container, param_type, T, set_name)
+#    param_ub = get_parameter_array(container_ub)
+#    multiplier_ub = get_multiplier_array(container_ub)
+#    con_ub = add_cons_container!(container, constraint_type, T, set_name)
+#
+#    # for name in axes[1]
+#    #     value = JuMP.upper_bound(variable[name, 1])
+#    #     param_ub[name] = add_parameter(container.JuMPmodel, value)
+#    #     # default set to 1.0, as this implementation doesn't use multiplier
+#    #     multiplier_ub[name] = 1.0
+#    #     con_ub[name] = JuMP.@constraint(
+#    #         container.JuMPmodel,
+#    #         sum(variable[name, t] for t in time_steps) / length(time_steps) <=
+#    #         param_ub[name] * multiplier_ub[name]
+#    #     )
+#    # end
+#    return
+#end
