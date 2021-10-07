@@ -1,14 +1,3 @@
-
-struct TimeSeriesConstraintSpecInternal
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo}
-    constraint_type::ConstraintType
-    variable_type::VariableType
-    bin_variable_type::Union{Nothing, VariableType}
-    # Only needed because of the must_run constraints
-    parameter::Union{Nothing, TimeSeriesParameter}
-    component_type::Type{<:PSY.Component}
-end
-
 function lazy_lb!(
     container::OptimizationContainer,
     inputs::TimeSeriesConstraintSpecInternal,
