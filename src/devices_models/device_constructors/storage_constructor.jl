@@ -79,7 +79,7 @@ function construct_device!(
         S,
     )
     energy_capacity_constraints!(container, devices, model, S)
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -159,7 +159,7 @@ function construct_device!(
         S,
     )
     energy_capacity_constraints!(container, devices, model, S)
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -258,7 +258,7 @@ function construct_device!(
         S,
     )
     energy_capacity_constraints!(container, devices, model, S)
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -344,7 +344,7 @@ function construct_device!(
         S,
     )
     energy_capacity_constraints!(container, devices, model, S)
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -442,7 +442,7 @@ function construct_device!(
         S,
     )
     energy_capacity_constraints!(container, devices, model, S)
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -523,7 +523,7 @@ function construct_device!(
         S,
     )
     energy_capacity_constraints!(container, devices, model, S)
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
