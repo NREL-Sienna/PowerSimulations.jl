@@ -266,16 +266,12 @@ function get_problem_size(container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-abstract type ConstructStage end
-struct ArgumentConstructStage end
-struct ModelConstructStage end
-
 # This function is necessary while we switch from ParameterJuMP to POI
 function _make_container_array(parameter_jump::Bool, ax...)
     if parameter_jump
-        return JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...)
+        return remove_undef!(JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...))
     else
-        return JuMP.Containers.DenseAxisArray{GAE}(undef, ax...)
+        return remove_undef!(JuMP.Containers.DenseAxisArray{GAE}(undef, ax...))
     end
 end
 
@@ -921,11 +917,13 @@ function _add_expression_container!(
     axs...;
     sparse = false,
 )
+    expr_type = built_for_recurrent_solves(container) ? PGAE : GAE
     if sparse
-        expr_container = sparse_container_spec(JuMP.AbstractJuMPScalar, axs...)
+        expr_container = sparse_container_spec(expr_type, axs...)
     else
-        expr_container = container_spec(JuMP.AbstractJuMPScalar, axs...)
+        expr_container = container_spec(expr_type, axs...)
     end
+    remove_undef!(expr_container)
     _assign_container!(container.expressions, expr_key, expr_container)
     return expr_container
 end

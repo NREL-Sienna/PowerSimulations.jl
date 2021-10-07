@@ -302,9 +302,6 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
-    remove_undef!(container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)])
-    remove_undef!(container.expressions[ExpressionKey(ReactivePowerBalance, PSY.Bus)])
-
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_p"] =
             container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)][bus.number, t]
@@ -333,8 +330,6 @@ function powermodels_network!(
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
-
-    remove_undef!(container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)])
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["inj_p"] =
