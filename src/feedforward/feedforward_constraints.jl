@@ -1,86 +1,12 @@
-####################### Feed Forward Affects ###############################################
-@doc raw"""
-        range_ff(container::OptimizationContainer,
-                        cons_name::Symbol,
-                        param_reference::NTuple{2, UpdateRef},
-                        var_key::VariableKey)
-
-Constructs min/max range parameterized constraint from device variable to include feedforward.
-
-# Constraints
-
-``` param_reference[1][var_name] <= variable[var_name, t] ```
-``` variable[var_name, t] <= param_reference[2][var_name] ```
-
-where r in range_data.
-
-# LaTeX
-
-`` param^{min} \leq x ``
-`` x \leq param^{max}``
-
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* param_reference::NTuple{2, UpdateRef} : Tuple with the lower bound and upper bound parameter reference
-* cons_name::Symbol : name of the constraint
-* var_key::VariableKey : the name of the continuous variable
-"""
-function range_ff(
+function add_feedforward_constraints!(
     container::OptimizationContainer,
-    cons_type_lb::ConstraintType,
-    cons_type_ub::ConstraintType,
-    constraint_infos,
-    param_reference::NTuple{2, <:VariableValueParameter},
-    var_type::VariableType,
-    ::Type{T},
-) where {T <: PSY.Component}
-    time_steps = get_time_steps(container)
-    variable = get_variable(container, var_type)
-    # Used to make sure the names are consistent between the variable and the infos
-    axes = JuMP.axes(variable)
-    set_name = axes[1]
-    @assert axes[2] == time_steps
-
-    # Create containers for the constraints
-    container_lb = add_param_container!(container, param_reference[1], T, set_name)
-    param_lb = get_parameter_array(container_lb)
-    multiplier_lb = get_multiplier_array(container_lb)
-    container_ub = add_param_container!(container, param_reference[2], T, set_name)
-    param_ub = get_parameter_array(container_ub)
-    multiplier_ub = get_multiplier_array(container_ub)
-    # Create containers for the parameters
-    con_lb = add_cons_container!(container, cons_type_lb, T, set_name, time_steps)
-    con_ub = add_cons_container!(container, cons_type_ub, T, set_name, time_steps)
-
-    # for constraint_info in constraint_infos
-    #     name = get_component_name(constraint_info)
-    #     param_lb[name] =
-    #         add_parameter(container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
-    #     param_ub[name] =
-    #         add_parameter(container.JuMPmodel, JuMP.upper_bound(variable[name, 1]))
-    #     # default set to 1.0, as this implementation doesn't use multiplier
-    #     multiplier_ub[name] = 1.0
-    #     multiplier_lb[name] = 1.0
-    #     for t in time_steps
-    #         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-    #         for val in constraint_info.additional_terms_ub
-    #             JuMP.add_to_expression!(expression_ub, variable[name, t])
-    #         end
-    #         expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-    #         for val in constraint_info.additional_terms_lb
-    #             JuMP.add_to_expression!(expression_lb, variable[name, t], -1.0)
-    #         end
-    #         con_ub[name, t] = JuMP.@constraint(
-    #             container.JuMPmodel,
-    #             expression_ub <= param_ub[name] * multiplier_ub[name]
-    #         )
-    #         con_lb[name, t] = JuMP.@constraint(
-    #             container.JuMPmodel,
-    #             expression_lb >= param_lb[name] * multiplier_lb[name]
-    #         )
-    #     end
-    # end
-
+    model::DeviceModel,
+    devices::IS.FlattenIteratorWrapper{V},
+) where {V <: PSY.Component}
+    for ff in get_feedforwards(model)
+        @debug "constraints" ff V
+        add_feedforward_constraints!(container, model, devices, ff)
+    end
     return
 end
 
@@ -119,6 +45,7 @@ where r in range_data.
 """
 function add_feedforward_constraints!(
     container::OptimizationContainer,
+    ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
     ff::SemiContinuousFeedForward,
 ) where {T <: PSY.Component}
@@ -164,6 +91,7 @@ The Parameters are initialized using the uppper boundary values of the provided 
 """
 function add_feedforward_constraints!(
     container::OptimizationContainer,
+    ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
     ff::UpperBoundFeedForward,
 ) where {T <: PSY.Component}
