@@ -76,13 +76,15 @@ function add_parameters!(
     container::OptimizationContainer,
     ::T,
     key::VariableKey{U, D},
+    model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: VariableValueParameter,
     U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    @debug "adding" T D var
+    @debug "adding" T D U
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
     parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
@@ -94,8 +96,8 @@ function add_parameters!(
             set_parameter!(
                 parameter_container,
                 jump_model,
-                1.0, # Make method later
-                1.0, # Make method later
+                get_initial_parameter_value(T(), d, W()),
+                get_parameter_multiplier(T(), d, W()),
                 name,
                 t,
             )
