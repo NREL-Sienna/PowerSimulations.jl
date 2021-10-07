@@ -191,9 +191,7 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforwards(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model)
-    end
+    add_feedforward_constraints!(container, model, devices)
 
     return
 end
@@ -240,9 +238,7 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforwards(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model)
-    end
+    add_feedforward_constraints!(container, model, devices)
 
     return
 end
@@ -287,9 +283,7 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforwards(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model)
-    end
+    add_feedforward_constraints!(container, model, devices)
 end
 
 function construct_service!(
@@ -343,9 +337,7 @@ function construct_service!(
     smooth_ace_pid!(container, [service])
     aux_constraints!(container, sys)
 
-    if get_feedforwards(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model)
-    end
+    add_feedforward_constraints!(container, model, devices)
 
     return
 end
@@ -437,9 +429,7 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforwards(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model)
-    end
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -493,8 +483,6 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforwards(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model)
-    end
+    add_feedforward_constraints!(container, model, devices)
     return
 end
