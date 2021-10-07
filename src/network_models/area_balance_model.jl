@@ -6,7 +6,6 @@ function area_balance(
 )
     time_steps = get_time_steps(container)
     nodal_net_balance = get_expression(container, expression)
-    remove_undef!(nodal_net_balance)
 
     constraint = add_cons_container!(
         container,
