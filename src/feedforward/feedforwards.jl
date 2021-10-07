@@ -34,6 +34,11 @@ function get_affected_values(ff::AbstractAffectFeedForward)
     return ff.affected_values
 end
 
+function attach_feedforward(model, ff::AbstractAffectFeedForward)
+    push!(model.feedforwards, ff)
+    return
+end
+
 """
 Adds an upper bound constraint to a variable.
 """
