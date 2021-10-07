@@ -4,7 +4,7 @@ function add_feedforward_arguments!(
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     for ff in get_feedforwards(model)
-        @debug ff V
+        @debug "arguments" ff V
         add_feedforward_arguments!(container, model, devices, ff)
     end
     return
