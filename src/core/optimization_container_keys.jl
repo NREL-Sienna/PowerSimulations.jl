@@ -33,7 +33,7 @@ end
 function remove_delimiter!(name)
     # TODO: Replace this temporary hack to remove _ from service names
     if occursin(_DELIMITER, name)
-        name = replace(name, Regex(_DELIMITER) => " ")
+        name = replace(name, _DELIMITER => " ")
     end
     return name
 end
