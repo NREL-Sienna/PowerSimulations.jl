@@ -694,7 +694,6 @@ end
     moi_tests(model, true, 120, 0, 288, 120, 0, false)
 end
 
-
 @testset "Test FeedForwards to ThermalStandard with ThermalBasicDispatch" begin
     device_model = DeviceModel(ThermalStandard, ThermalBasicDispatch)
     ff_sc = SemiContinuousFeedForward(
@@ -716,7 +715,6 @@ end
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, true, 120, 0, 240, 120, 0, false)
 end
-
 
 @testset "Test FeedForwards to ThermalStandard with ThermalCompactDispatch" begin
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
@@ -740,7 +738,6 @@ end
     moi_tests(model, true, 120, 0, 288, 120, 0, false)
 end
 
-
 @testset "Test FeedForwards to ThermalMultiStart with ThermalStandardDispatch" begin
     device_model = DeviceModel(ThermalMultiStart, ThermalStandardDispatch)
     ff_sc = SemiContinuousFeedForward(
@@ -763,7 +760,6 @@ end
     moi_tests(model, true, 240, 0, 192, 48, 48, false)
 end
 
-
 @testset "Test FeedForwards to ThermalMultiStart with ThermalBasicDispatch" begin
     device_model = DeviceModel(ThermalMultiStart, ThermalBasicDispatch)
     ff_sc = SemiContinuousFeedForward(
@@ -785,7 +781,6 @@ end
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, true, 240, 0, 96, 48, 48, false)
 end
-
 
 @testset "Test FeedForwards to ThermalMultiStart with ThermalCompactDispatch" begin
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)

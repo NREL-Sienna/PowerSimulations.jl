@@ -151,7 +151,11 @@ struct IntegralLimitFeedForward <: AbstractAffectFeedForward
                 )
             end
         end
-        new(_get_optimization_container_key(T(), component_type, meta), values, number_of_periods)
+        new(
+            _get_optimization_container_key(T(), component_type, meta),
+            values,
+            number_of_periods,
+        )
     end
 end
 

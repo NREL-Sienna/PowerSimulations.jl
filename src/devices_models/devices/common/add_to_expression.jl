@@ -127,7 +127,7 @@ function add_to_expression!(
 }
     parameter = get_parameter_array(container, U(), V)
     multiplier = get_parameter_multiplier_array(container, U(), V)
-    
+
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
         name = get_name(d)
@@ -201,7 +201,6 @@ function add_to_expression!(
     end
     return
 end
-
 
 function add_to_expression!(
     container::OptimizationContainer,
@@ -318,11 +317,7 @@ function add_to_expression!(
         bus_no = PSY.get_number(PSY.get_bus(d))
         mult = get_expression_multiplier(U(), T(), d, W())
         add_to_jump_expression!(sys_expr[t], parameter[name, t], mult)
-        add_to_jump_expression!(
-            nodal_expr[bus_no, t],
-            parameter[name, t],
-            mult,
-        )
+        add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
     end
     return
 end

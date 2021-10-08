@@ -1277,7 +1277,7 @@ function construct_device!(
     add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
     add_feedforward_arguments!(container, model, devices)
-    
+
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
 

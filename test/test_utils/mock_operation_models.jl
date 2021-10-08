@@ -45,7 +45,8 @@ function mock_construct_device!(
         PSI.get_network_formulation(template),
         PSI.get_system(problem),
     )
-    PSI.get_optimization_container(problem).built_for_recurrent_solves = built_for_recurrent_solves
+    PSI.get_optimization_container(problem).built_for_recurrent_solves =
+        built_for_recurrent_solves
     PSI.initialize_system_expressions!(
         PSI.get_optimization_container(problem),
         PSI.get_network_formulation(template),
