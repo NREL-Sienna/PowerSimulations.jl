@@ -340,7 +340,7 @@ end
         component_type = VariableReserve{ReserveUp},
         source = ActivePowerReserveVariable,
         affected_values = [ActivePowerReserveVariable],
-        name = "Reserve1",
+        meta = "Reserve1",
     )
     PSI.attach_feedforward(service_model, ff_lb)
 
