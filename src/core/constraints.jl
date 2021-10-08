@@ -21,6 +21,7 @@ struct EnergyShortageVariableLimitsConstraint <: ConstraintType end
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardBinConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
+struct FeedforwardFixValueConstraint <: ConstraintType end
 struct FeedforwardUpperBoundConstraint <: ConstraintType end
 struct FeedforwardLowerBoundConstraint <: ConstraintType end
 struct FlowActivePowerConstraint <: ConstraintType end

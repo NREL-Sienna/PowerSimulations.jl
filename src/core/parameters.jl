@@ -109,9 +109,9 @@ abstract type VariableValueParameter <: RightHandSideParameter end
 
 struct UpperBoundValueParameter <: VariableValueParameter end
 struct LowerBoundValueParameter <: VariableValueParameter end
-
-# Used for the semicontinuousrange_ff
 struct OnStatusParameter <: VariableValueParameter end
+struct IntegralLimitParameter <: VariableValueParameter end
+struct FixValueParameter <: VariableValueParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
