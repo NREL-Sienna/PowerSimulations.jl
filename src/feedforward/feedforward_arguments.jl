@@ -49,7 +49,7 @@ function add_feedforward_arguments!(
     return
 end
 
-function _handle_active_power_semicontinous_feedforward!(
+function _handle_active_power_semicontinuous_feedforward!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
@@ -83,7 +83,7 @@ function add_feedforward_arguments!(
     parameter_type = get_default_parameter_type(ff, T)
     for var_key in get_affected_values(ff)
         if get_entry_type(var_key) == ActivePowerVariable || get_entry_type(var_key) == PowerAboveMinimumVariable
-            _handle_active_power_semicontinous_feedforward!(
+            _handle_active_power_semicontinuous_feedforward!(
                 container,
                 model,
                 devices,
