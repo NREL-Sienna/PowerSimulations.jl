@@ -429,7 +429,6 @@ end
     check_duration_on_initial_conditions_values(model, ThermalMultiStart)
     check_duration_off_initial_conditions_values(model, ThermalMultiStart)
     @test solve!(model) == RunStatus.SUCCESSFUL
-
 end
 
 @testset "Emulation Model initial_conditions test for Storage" begin
