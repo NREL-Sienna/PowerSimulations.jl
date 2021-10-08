@@ -470,3 +470,113 @@ end
     moi_tests(model, false, 15, 0, 3, 3, 9, false)
     psi_checksolve_test(model, [MOI.OPTIMAL], -17179.0)
 end
+
+@testset "Test FeedForwards to HydroDispatch with HydroCommitmentRunOfRiver model" begin
+    device_model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
+    ff_sc = SemiContinuousFeedForward(
+        component_type = HydroDispatch,
+        source = OnVariable,
+        affected_values = [ActivePowerVariable],
+    )
+
+    ff_ub = UpperBoundFeedForward(
+        component_type = HydroDispatch,
+        source = ActivePowerVariable,
+        affected_values = [ActivePowerVariable],
+    )
+
+    PSI.attach_feedforward(device_model, ff_sc)
+    PSI.attach_feedforward(device_model, ff_ub)
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    moi_tests(model, true, 48, 0, 72, 24, 0, true)
+end
+
+@testset "Test FeedForwards to HydroDispatch with HydroDispatchRunOfRiver model" begin
+    device_model = DeviceModel(HydroDispatch, HydroDispatchRunOfRiver)
+
+    ff_ub = UpperBoundFeedForward(
+        component_type = HydroDispatch,
+        source = ActivePowerVariable,
+        affected_values = [ActivePowerVariable],
+    )
+
+    PSI.attach_feedforward(device_model, ff_ub)
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    moi_tests(model, true, 24, 0, 72, 24, 0, false)
+end
+
+@testset "Test FeedForwards to HydroEnergyReservoir with HydroDispatchReservoirBudget model" begin
+    device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirBudget)
+    ff_il = IntegralLimitFeedForward(
+        component_type = HydroEnergyReservoir,
+        source = ActivePowerVariable,
+        affected_values = [ActivePowerVariable],
+        number_of_periods = 12,
+    )
+
+    PSI.attach_feedforward(device_model, ff_il)
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    moi_tests(model, true, 24, 0, 26, 24, 0, false)
+end
+
+@testset "Test FeedForwards to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
+    device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    ff_il = IntegralLimitFeedForward(
+        component_type = HydroEnergyReservoir,
+        source = ActivePowerVariable,
+        affected_values = [ActivePowerVariable],
+        number_of_periods = 12,
+    )
+
+    PSI.attach_feedforward(device_model, ff_il)
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    moi_tests(model, true, 120, 0, 25, 24, 48, false)
+end
+
+@testset "Test FeedForwards to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
+    device_model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
+    ff_sc = SemiContinuousFeedForward(
+        component_type = HydroEnergyReservoir,
+        source = OnVariable,
+        affected_values = [ActivePowerVariable],
+    )
+
+    ff_il = IntegralLimitFeedForward(
+        component_type = HydroEnergyReservoir,
+        source = ActivePowerVariable,
+        affected_values = [ActivePowerVariable],
+        number_of_periods = 12,
+    )
+
+    PSI.attach_feedforward(device_model, ff_sc)
+    PSI.attach_feedforward(device_model, ff_il)
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    moi_tests(model, true, 144, 0, 25, 24, 48, true)
+end
+
+@testset "Test FeedForwards to HydroEnergyReservoir models" begin
+    device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
+
+    ff_il = IntegralLimitFeedForward(
+        component_type = HydroPumpedStorage,
+        source = ActivePowerOutVariable,
+        affected_values = [ActivePowerOutVariable],
+        number_of_periods = 12,
+    )
+
+    PSI.attach_feedforward(device_model, ff_il)
+    c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    moi_tests(model, true, 72, 0, 25, 24, 24, true)
+end
