@@ -312,9 +312,8 @@ function add_constraints!(
         constraint_type,
         component_type,
         names,
-        time_steps,
+        time_steps[1:(end - 1)],
         meta = "off",
-        sparse = true,
     )
     con_lb = add_cons_container!(
         container,
@@ -332,23 +331,22 @@ function add_constraints!(
         if JuMP.has_lower_bound(varp[name, t])
             JuMP.set_lower_bound(varp[name, t], 0.0)
         end
-        expression_products = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
+
         con_on[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            expression_products <=
+            varp[name, t] <=
             (limits.max - limits.min) * varstatus[name, t] -
             max(limits.max - startup_shutdown_limits.startup, 0.0) * varon[name, t]
         )
 
-        exp_lb = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
-        con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, exp_lb >= 0.0)
+        con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, varp[name, t] >= 0.0)
 
         if t == length(time_steps)
             continue
         else
             con_off[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
-                expression_products <=
+                varp[name, t] <=
                 (limits.max - limits.min) * varstatus[name, t] -
                 max(limits.max - startup_shutdown_limits.shutdown, 0.0) *
                 varoff[name, t + 1]
@@ -370,11 +368,7 @@ function add_constraints!(
     expression_type = U()
     component_type = V
     expression_products = get_expression(container, expression_type, component_type)
-    # Check if this is necessary
     varp = get_variable(container, PowerAboveMinimumVariable(), component_type)
-    # varstatus = get_variable(container, OnVariable(), component_type)
-    # varon = get_variable(container, StartVariable(), component_type)
-    # varoff = get_variable(container, StopVariable(), component_type)
 
     names = [PSY.get_name(x) for x in devices]
     con_lb = add_cons_container!(
@@ -388,9 +382,6 @@ function add_constraints!(
 
     for device in devices, t in time_steps
         name = PSY.get_name(device)
-        # Check these are necessary
-        # limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
-        # startup_shutdown_limits = get_startup_shutdown_limits(device, T, W)
         if JuMP.has_lower_bound(varp[name, t])
             JuMP.set_lower_bound(varp[name, t], 0.0)
         end
@@ -424,16 +415,15 @@ function add_constraints!(
         component_type,
         names,
         time_steps,
-        meta = "on",
+        meta = "ubon",
     )
     con_off = add_cons_container!(
         container,
         constraint_type,
         component_type,
         names,
-        time_steps,
-        meta = "off",
-        sparse = true,
+        time_steps[1:(end - 1)],
+        meta = "uboff",
     )
 
     for device in devices, t in time_steps
