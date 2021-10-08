@@ -159,7 +159,7 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+    add_parameters!(container, RequirementTimeSeriesParameter(), service, model)
     contributing_devices = get_contributing_devices(model)
 
     # Variables
@@ -171,6 +171,7 @@ function construct_service!(
         RangeReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -191,7 +192,7 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, model, service)
 
     return
 end
@@ -217,6 +218,7 @@ function construct_service!(
         RangeReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -238,7 +240,7 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, model, service)
 
     return
 end
@@ -263,6 +265,7 @@ function construct_service!(
         StepwiseCostReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
 end
 
 function construct_service!(
@@ -283,7 +286,7 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, model, service)
 end
 
 function construct_service!(
@@ -314,7 +317,7 @@ function construct_service!(
     # add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas)
     # add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas)
     balancing_auxiliary_variables!(container, sys)
-
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -337,7 +340,7 @@ function construct_service!(
     smooth_ace_pid!(container, [service])
     aux_constraints!(container, sys)
 
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, model, service)
 
     return
 end
@@ -396,7 +399,7 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
-    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+    add_parameters!(container, RequirementTimeSeriesParameter(), service, model)
 
     # Variables
     add_variables!(
@@ -407,6 +410,7 @@ function construct_service!(
         RampReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -429,7 +433,7 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, model, service)
     return
 end
 
@@ -444,7 +448,7 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
-    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+    add_parameters!(container, RequirementTimeSeriesParameter(), service, model)
 
     # Variables
     add_variables!(
@@ -454,7 +458,7 @@ function construct_service!(
         contributing_devices,
         NonSpinningReserve(),
     )
-
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -483,6 +487,6 @@ function construct_service!(
     # Cost Function
     cost_function!(container, service, model)
 
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, model, service)
     return
 end
