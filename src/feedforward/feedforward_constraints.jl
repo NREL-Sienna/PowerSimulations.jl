@@ -334,7 +334,7 @@ function add_feedforward_constraints!(
         var_type = get_entry_type(var)
 
         for t in time_steps, name in set_name
-            JuMP.@constraint(
+            JuMP.fix(
                 variable[name, t],
                 param[name, t] * multiplier[name, t];
                 force = true
