@@ -180,7 +180,7 @@ function add_feedforward_constraints!(
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
             container,
-            FeedforwardUpperBoundConstraint(),
+            FeedforwardLowerBoundConstraint(),
             T,
             set_name,
             time_steps,
@@ -200,7 +200,7 @@ end
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::ServiceModel,
-    devices::Vector{T},
+    contributing_devices::Vector{T},
     ff::LowerBoundFeedForward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
@@ -210,17 +210,17 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
-        set_name = [PSY.get_name(d) for d in devices]
+        set_name = [PSY.get_name(d) for d in contributing_devices]
         @assert axes[2] == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
             container,
-            FeedforwardUpperBoundConstraint(),
+            FeedforwardLowerBoundConstraint(),
             T,
             set_name,
             time_steps,
-            meta = "$(var_type)up",
+            meta = "$(var_type)lb",
         )
 
         for t in time_steps, name in set_name
@@ -332,19 +332,12 @@ function add_feedforward_constraints!(
         set_name = [PSY.get_name(d) for d in devices]
         @assert axes[2] == time_steps
         var_type = get_entry_type(var)
-        con_ub = add_cons_container!(
-            container,
-            FeedforwardFixValueConstraint(),
-            T,
-            set_name,
-            time_steps,
-            meta = "$(var_type)fixvalue",
-        )
 
         for t in time_steps, name in set_name
-            con_ub[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
-                variable[name, t] == param[name, t] * multiplier[name, t]
+            JuMP.@constraint(
+                variable[name, t],
+                param[name, t] * multiplier[name, t];
+                force = true
             )
         end
     end
@@ -399,7 +392,7 @@ function add_feedforward_constraints!(
             FeedforwardEnergyTargetConstraint(),
             T,
             set_name,
-            meta = "$(var_type)fixvalue",
+            meta = "$(var_type)target",
         )
 
         for name in set_name

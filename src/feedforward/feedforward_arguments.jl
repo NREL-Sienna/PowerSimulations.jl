@@ -39,12 +39,12 @@ end
 function add_feedforward_arguments!(
     container::OptimizationContainer,
     model::ServiceModel{SR},
-    devices::Vector{T},
+    contributing_devices::Vector{T},
     ff::AbstractAffectFeedForward,
 ) where {T <: PSY.Component, SR <: PSY.AbstractReserve}
     parameter_type = get_default_parameter_type(ff, SR)
     for var_key in get_affected_values(ff)
-        add_parameters!(container, parameter_type, var_key, model, devices)
+        add_parameters!(container, parameter_type, var_key, model, contributing_devices)
     end
     return
 end
