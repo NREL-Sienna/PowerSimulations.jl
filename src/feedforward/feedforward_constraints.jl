@@ -326,7 +326,6 @@ function add_feedforward_constraints!(
     parameter_type = get_default_parameter_type(ff, T)
     param = get_parameter_array(container, parameter_type, T)
     multiplier = get_parameter_multiplier_array(container, parameter_type, T)
-    affected_periods = ff.number_of_periods
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
@@ -346,6 +345,76 @@ function add_feedforward_constraints!(
             con_ub[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 variable[name, t] == param[name, t] * multiplier[name, t]
+            )
+        end
+    end
+    return
+end
+
+@doc raw"""
+        add_feedforward_constraints(
+            container::OptimizationContainer,
+            ::DeviceModel,
+            devices::IS.FlattenIteratorWrapper{T},
+            ff::EnergyTargetFeedForward,
+        ) where {T <: PSY.Component}
+
+Constructs a equality constraint to a fix a variable in one model using the variable value from other model results.
+
+# Constraints
+``` variable[var_name, t] + slack[var_name, t] >= param[var_name, t] ```
+
+# LaTeX
+
+`` x + slack >= param``
+
+# Arguments
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* model::DeviceModel : the device model
+* devices::IS.FlattenIteratorWrapper{T} : list of devices
+* ff::EnergyTargetFeedForward : a instance of the FixValue FeedForward
+"""
+
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    ::DeviceModel,
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::EnergyTargetFeedForward,
+) where {T <: PSY.Component}
+    time_steps = get_time_steps(container)
+    parameter_type = get_default_parameter_type(ff, T)
+    param = get_parameter_array(container, parameter_type, T)
+    multiplier = get_parameter_multiplier_array(container, parameter_type, T)
+    target_period = ff.target_period
+    penalty_cost = ff.penalty_cost
+    for var in get_affected_values(ff)
+        variable = get_variable(container, var)
+        slack_var = get_variable(container, EnergyShortageVariable(), T)
+        axes = JuMP.axes(variable)
+        set_name = [PSY.get_name(d) for d in devices]
+        @assert axes[2] == time_steps
+        var_type = get_entry_type(var)
+        con_ub = add_cons_container!(
+            container,
+            FeedforwardEnergyTargetConstraint(),
+            T,
+            set_name,
+            meta = "$(var_type)fixvalue",
+        )
+
+        for name in set_name
+            t = target_period
+            con_ub[name] = JuMP.@constraint(
+                container.JuMPmodel,
+                variable[name, t] + slack_var[name, t] >=
+                param[name, t] * multiplier[name, t]
+            )
+            linear_gen_cost!(
+                container,
+                VariableKey(EnergyShortageVariable, T),
+                name,
+                penalty_cost,
+                target_period,
             )
         end
     end

@@ -99,3 +99,17 @@ function add_feedforward_arguments!(
     end
     return
 end
+
+function add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::DeviceModel,
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::EnergyTargetFeedForward,
+) where {T <: PSY.Component}
+    parameter_type = get_default_parameter_type(ff, T)
+    for var_key in get_affected_values(ff)
+        add_parameters!(container, parameter_type, var_key, model, devices)
+    end
+    add_variables!(container, EnergyShortageVariable, devices, get_formulation(model)())
+    return
+end

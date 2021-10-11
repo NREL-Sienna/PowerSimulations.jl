@@ -24,6 +24,7 @@ struct FeedforwardIntegralLimitConstraint <: ConstraintType end
 struct FeedforwardFixValueConstraint <: ConstraintType end
 struct FeedforwardUpperBoundConstraint <: ConstraintType end
 struct FeedforwardLowerBoundConstraint <: ConstraintType end
+struct FeedforwardEnergyTargetConstraint <: ConstraintType end
 struct FlowActivePowerConstraint <: ConstraintType end
 struct FlowActivePowerFromToConstraint <: ConstraintType end
 struct FlowActivePowerToFromConstraint <: ConstraintType end

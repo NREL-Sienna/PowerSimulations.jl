@@ -189,3 +189,40 @@ struct FixValueFeedForward <: AbstractAffectFeedForward
 end
 
 get_default_parameter_type(::FixValueFeedForward, _) = FixValueParameter()
+
+"""
+Adds a constraint to enforce a minimum energy level target with a slack variable associated witha penalty term.
+"""
+struct EnergyTargetFeedForward <: AbstractAffectFeedForward
+    optimization_container_key::OptimizationContainerKey
+    affected_values::Vector{<:OptimizationContainerKey}
+    target_period::Int
+    penalty_cost::Float64
+    function EnergyTargetFeedForward(;
+        component_type::Type{<:PSY.Component},
+        source::Type{T},
+        affected_values::Vector{DataType},
+        target_period::Int,
+        penalty_cost::Float64,
+        meta = CONTAINER_KEY_EMPTY_META,
+    ) where {T}
+        values = Vector{VariableKey}(undef, length(affected_values))
+        for (ix, v) in enumerate(affected_values)
+            if v <: VariableType
+                values[ix] = _get_optimization_container_key(v(), component_type, meta)
+            else
+                error(
+                    "EnergyTargetFeedForward is only compatible with VariableType or ParamterType affected values",
+                )
+            end
+        end
+        new(
+            _get_optimization_container_key(T(), component_type, meta),
+            values,
+            target_period,
+            penalty_cost,
+        )
+    end
+end
+
+get_default_parameter_type(::EnergyTargetFeedForward, _) = EnergyTargetParameter()

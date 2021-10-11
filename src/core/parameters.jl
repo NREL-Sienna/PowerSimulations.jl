@@ -112,7 +112,6 @@ struct LowerBoundValueParameter <: VariableValueParameter end
 struct OnStatusParameter <: VariableValueParameter end
 struct IntegralLimitParameter <: VariableValueParameter end
 struct FixValueParameter <: VariableValueParameter end
+struct EnergyTargetParameter <: VariableValueParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
-
-struct EnergyTargetParameter <: AuxVariableValueParameter end
