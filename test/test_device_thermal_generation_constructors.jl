@@ -504,12 +504,6 @@ end
 
 @testset "Thermal Standard with Compact Dispatch and DC - PF" begin
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
-    ff_sc = SemiContinuousFeedForward(
-        component_type = PSY.ThermalStandard,
-        source = PSI.OnVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
-    )
-    PSI.attach_feedforward(device_model, ff_sc)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -519,12 +513,6 @@ end
 
 @testset "Thermal MultiStart with Compact Dispatch and DC - PF" begin
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
-    ff_sc = SemiContinuousFeedForward(
-        component_type = PSY.ThermalMultiStart,
-        source = PSI.OnVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
-    )
-    PSI.attach_feedforward(device_model, ff_sc)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -534,12 +522,6 @@ end
 
 @testset "Thermal Standard with Compact Dispatch and AC - PF" begin
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
-    ff_sc = SemiContinuousFeedForward(
-        component_type = PSY.ThermalStandard,
-        source = PSI.OnVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
-    )
-    PSI.attach_feedforward(device_model, ff_sc)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -549,12 +531,6 @@ end
 
 @testset "Thermal MultiStart with Compact Dispatch and AC - PF" begin
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
-    ff_sc = SemiContinuousFeedForward(
-        component_type = PSY.ThermalMultiStart,
-        source = PSI.OnVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
-    )
-    PSI.attach_feedforward(device_model, ff_sc)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
