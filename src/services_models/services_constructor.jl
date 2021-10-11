@@ -159,7 +159,7 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
-    add_parameters!(container, RequirementTimeSeriesParameter(), service, model)
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
     contributing_devices = get_contributing_devices(model)
 
     # Variables
@@ -399,7 +399,7 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
-    add_parameters!(container, RequirementTimeSeriesParameter(), service, model)
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
 
     # Variables
     add_variables!(
@@ -448,7 +448,7 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
-    add_parameters!(container, RequirementTimeSeriesParameter(), service, model)
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
 
     # Variables
     add_variables!(

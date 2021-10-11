@@ -90,13 +90,7 @@ end
         add_single_time_series = true,
         force_build = true,
     )
-    ff_sc = SemiContinuousFeedForward(
-        component_type = ThermalStandard,
-        source = OnVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
-    )
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
-    PSI.attach_feedforward(device_model, ff_sc)
     set_device_model!(template, device_model)
     model = EmulationModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
