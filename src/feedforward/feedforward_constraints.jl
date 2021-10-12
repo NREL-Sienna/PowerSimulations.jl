@@ -212,7 +212,6 @@ function add_feedforward_constraints!(
         axes = JuMP.axes(variable)
         set_name = [PSY.get_name(d) for d in contributing_devices]
         @assert axes[2] == time_steps
-
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
             container,
