@@ -18,6 +18,9 @@ function construct_device!(
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     # Expression
     add_to_expression!(
         container,
@@ -125,6 +128,8 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
     # Expression
     add_to_expression!(
         container,

@@ -549,3 +549,9 @@ function _write_model_aux_variable_results!(store, container, execution)
         write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, execution, variable)
     end
 end
+
+function _write_model_expression_results!(store, container, execution)
+    for (key, expression) in get_expressions(container)
+        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, execution, expression)
+    end
+end

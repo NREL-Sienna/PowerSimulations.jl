@@ -8,6 +8,7 @@ mutable struct ProblemResults <: PSIResults
     variable_values::Dict{VariableKey, DataFrames.DataFrame}
     dual_values::Dict{ConstraintKey, DataFrames.DataFrame}
     parameter_values::Dict{ParameterKey, DataFrames.DataFrame}
+    expression_values::Dict{ExpressionKey, DataFrames.DataFrame}
     optimizer_stats::DataFrames.DataFrame
     optimization_container_metadata::OptimizationContainerMetadata
     model_type::String
@@ -24,9 +25,13 @@ list_parameter_names(res::ProblemResults) =
     encode_keys_as_strings(keys(res.parameter_values))
 list_dual_keys(res::ProblemResults) = collect(keys(res.dual_values))
 list_dual_names(res::ProblemResults) = encode_keys_as_strings(keys(res.dual_values))
+list_expression_keys(res::ProblemResults) = collect(keys(res.expression_values))
+list_expression_names(res::ProblemResults) =
+    encode_keys_as_strings(keys(res.expression_values))
 get_timestamps(res::ProblemResults) = res.timestamps
 get_model_base_power(res::ProblemResults) = res.base_power
 get_dual_values(res::ProblemResults) = res.dual_values
+get_expressionl_values(res::ProblemResults) = res.expression_values
 get_variable_values(res::ProblemResults) = res.variable_values
 IS.get_total_cost(res::ProblemResults) = get_objective_value(res)
 IS.get_optimizer_stats(res::ProblemResults) = res.optimizer_stats
@@ -49,10 +54,16 @@ function ProblemResults(model::DecisionModel)
     variables = read_variables(container)
     duals = read_duals(container)
     parameters = read_parameters(container)
+    expressions = read_expressions(container)
     timestamps = get_timestamps(model)
     optimizer_stats = to_dataframe(OptimizerStats(model))
 
-    for df in Iterators.flatten(((values(variables), values(duals), values(parameters))))
+    for df in Iterators.flatten(((
+        values(variables),
+        values(duals),
+        values(parameters),
+        values(expressions),
+    )))
         DataFrames.insertcols!(df, 1, :DateTime => timestamps)
     end
 
@@ -66,6 +77,7 @@ function ProblemResults(model::DecisionModel)
         variables,
         duals,
         parameters,
+        expressions,
         optimizer_stats,
         get_metadata(container),
         IS.strip_module_name(typeof(model)),
@@ -85,6 +97,7 @@ function ProblemResults(model::EmulationModel)
     variables = Dict(x => read_variable(model, x) for x in list_variable_keys(model))
     duals = Dict(x => read_dual(model, x) for x in list_dual_keys(model))
     parameters = Dict(x => read_parameter(model, x) for x in list_parameter_keys(model))
+    expression = Dict(x => read_expression(model, x) for x in list_expression_keys(model))
     optimizer_stats = read_optimizer_stats(model)
     initial_time = get_initial_time(model)
     container = get_optimization_container(model)
@@ -99,6 +112,7 @@ function ProblemResults(model::EmulationModel)
         variables,
         duals,
         parameters,
+        expression,
         optimizer_stats,
         get_metadata(container),
         IS.strip_module_name(typeof(model)),
@@ -221,6 +235,16 @@ function read_dual(res::ProblemResults, args...)
     return read_dual(res, key)
 end
 
+function read_expression(res::ProblemResults, key::ExpressionKey)
+    !haskey(res.expression_values, key) && error("$key is not stored")
+    return res.expression_values[key]
+end
+
+function read_expression(res::ProblemResults, args...)
+    key = _deserialize_key(ExpressionKey, res, args...)
+    return read_expression(res, key)
+end
+
 read_optimizer_stats(res::ProblemResults) = res.optimizer_stats
 
 """
@@ -329,6 +353,7 @@ function _copy_for_serialization(res::ProblemResults)
         res.variable_values,
         res.dual_values,
         res.parameter_values,
+        res.expression_values,
         res.optimizer_stats,
         res.optimization_container_metadata,
         res.model_type,

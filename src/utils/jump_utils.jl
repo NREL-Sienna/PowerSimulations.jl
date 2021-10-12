@@ -13,6 +13,10 @@ function _jump_value(input::JuMP.VariableRef)
     return JuMP.value(input)
 end
 
+function _jump_value(input::JuMP.AbstractJuMPScalar)
+    return JuMP.value(input)
+end
+
 function _jump_value(input::PJ.ParameterRef)
     return PJ.value(input)
 end

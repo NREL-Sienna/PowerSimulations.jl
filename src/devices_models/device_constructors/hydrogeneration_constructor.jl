@@ -106,6 +106,9 @@ function construct_device!(
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -220,6 +223,9 @@ function construct_device!(
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -317,6 +323,9 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -442,6 +451,9 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -574,6 +586,9 @@ function construct_device!(
     # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -743,6 +758,9 @@ function construct_device!(
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -874,6 +892,9 @@ function construct_device!(
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -985,6 +1006,9 @@ function construct_device!(
         model,
         S,
     )
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     if has_service_model(model)
@@ -1098,6 +1122,10 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1218,6 +1246,10 @@ function construct_device!(
 
     # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1368,6 +1400,9 @@ function construct_device!(
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1525,6 +1560,9 @@ function construct_device!(
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     if has_service_model(model)
         add_to_expression!(
             container,
@@ -1651,6 +1689,9 @@ function construct_device!(
     # Parameters
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
     add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
         container,

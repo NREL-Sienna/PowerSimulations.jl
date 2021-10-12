@@ -601,7 +601,7 @@ function _write_model_aux_variable_results!(
 )
     problem_name = get_name(model)
     if exports !== nothing
-        exports_path = joinpath(exports[:exports_path], "variables")
+        exports_path = joinpath(exports[:exports_path], "aux_variables")
         mkpath(exports_path)
     end
 
@@ -609,18 +609,54 @@ function _write_model_aux_variable_results!(
         write_result!(
             store,
             problem_name,
-            STORE_CONTAINER_VARIABLES,
+            STORE_CONTAINER_AUX_VARIABLES,
             key,
             timestamp,
             variable,
         )
 
         if exports !== nothing &&
-           should_export_variable(exports[:exports], timestamp, problem_name, key)
+           should_export_aux_variable(exports[:exports], timestamp, problem_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
             df = axis_array_to_dataframe(variable)
+            time_col = range(timestamp, length = horizon, step = resolution)
+            DataFrames.insertcols!(df, 1, :DateTime => time_col)
+            export_result(file_type, exports_path, key, timestamp, df)
+        end
+    end
+end
+
+function _write_model_expression_results!(
+    store,
+    container,
+    model::DecisionModel,
+    timestamp,
+    exports,
+)
+    problem_name = get_name(model)
+    if exports !== nothing
+        exports_path = joinpath(exports[:exports_path], "expressions")
+        mkpath(exports_path)
+    end
+
+    for (key, expression) in get_expressions(container)
+        write_result!(
+            store,
+            problem_name,
+            STORE_CONTAINER_EXPRESSIONS,
+            key,
+            timestamp,
+            expression,
+        )
+
+        if exports !== nothing &&
+           should_export_expression(exports[:exports], timestamp, problem_name, key)
+            horizon = exports[:horizon]
+            resolution = exports[:resolution]
+            file_type = exports[:file_type]
+            df = axis_array_to_dataframe(expression)
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, timestamp, df)

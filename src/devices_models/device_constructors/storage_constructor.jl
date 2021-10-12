@@ -213,6 +213,9 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
 
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -328,6 +331,9 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
+
+    #Cost Expression
+    add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
         container,

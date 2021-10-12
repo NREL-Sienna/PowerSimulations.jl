@@ -267,6 +267,7 @@ function construct_service!(
         StepwiseCostReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_expressions!(container, ProductionCostExpression, [service], model)
 end
 
 function construct_service!(
