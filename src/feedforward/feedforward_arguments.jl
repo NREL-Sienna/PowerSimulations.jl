@@ -12,6 +12,19 @@ end
 
 function add_feedforward_arguments!(
     container::OptimizationContainer,
+    model::ServiceModel,
+    service::V,
+) where {V <: PSY.AbstractReserve}
+    for ff in get_feedforwards(model)
+        @debug "arguments" ff V
+        contributing_devices = get_contributing_devices(model)
+        add_feedforward_arguments!(container, model, contributing_devices, ff)
+    end
+    return
+end
+
+function add_feedforward_arguments!(
+    container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
     ff::AbstractAffectFeedForward,
@@ -23,7 +36,20 @@ function add_feedforward_arguments!(
     return
 end
 
-function _handle_active_power_semicontinous_feedforward!(
+function add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::ServiceModel{SR},
+    contributing_devices::Vector{T},
+    ff::AbstractAffectFeedForward,
+) where {T <: PSY.Component, SR <: PSY.AbstractReserve}
+    parameter_type = get_default_parameter_type(ff, SR)
+    for var_key in get_affected_values(ff)
+        add_parameters!(container, parameter_type, var_key, model, contributing_devices)
+    end
+    return
+end
+
+function _handle_active_power_semicontinuous_feedforward!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
@@ -56,8 +82,9 @@ function add_feedforward_arguments!(
 ) where {T <: PSY.Component}
     parameter_type = get_default_parameter_type(ff, T)
     for var_key in get_affected_values(ff)
-        if get_entry_type(var_key) == ActivePowerVariable
-            _handle_active_power_semicontinous_feedforward!(
+        if get_entry_type(var_key) == ActivePowerVariable ||
+           get_entry_type(var_key) == PowerAboveMinimumVariable
+            _handle_active_power_semicontinuous_feedforward!(
                 container,
                 model,
                 devices,
@@ -70,5 +97,19 @@ function add_feedforward_arguments!(
             )
         end
     end
+    return
+end
+
+function add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::DeviceModel,
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::EnergyTargetFeedForward,
+) where {T <: PSY.Component}
+    parameter_type = get_default_parameter_type(ff, T)
+    for var_key in get_affected_values(ff)
+        add_parameters!(container, parameter_type, var_key, model, devices)
+    end
+    add_variables!(container, EnergyShortageVariable, devices, get_formulation(model)())
     return
 end

@@ -111,6 +111,36 @@ function add_to_expression!(
     return
 end
 
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnStatusParameter,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    parameter = get_parameter_array(container, U(), V)
+    multiplier = get_parameter_multiplier_array(container, U(), V)
+
+    for d in devices, t in get_time_steps(container)
+        bus_number = PSY.get_number(PSY.get_bus(d))
+        name = get_name(d)
+        mult = get_expression_multiplier(U(), T(), d, W())
+        add_to_jump_expression!(
+            get_expression(container, T(), X)[bus_number, t],
+            parameter[name, t],
+            mult,
+        )
+    end
+    return
+end
+
 """
 Default implementation to add variables to SystemBalanceExpressions
 """
@@ -167,6 +197,34 @@ function add_to_expression!(
             get_expression(container, T(), X)[t],
             parameter[name, t],
             multiplier[name, t],
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnStatusParameter,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+    X <: CopperPlatePowerModel,
+}
+    parameter = get_parameter_array(container, U(), V)
+    multiplier = get_parameter_multiplier_array(container, U(), V)
+    for d in devices, t in get_time_steps(container)
+        name = get_name(d)
+        mult = get_expression_multiplier(U(), T(), d, W())
+        add_to_jump_expression!(
+            get_expression(container, T(), X)[t],
+            parameter[name, t],
+            mult,
         )
     end
     return
@@ -232,6 +290,34 @@ function add_to_expression!(
             parameter[name, t],
             multiplier[name, t],
         )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnStatusParameter,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+    X <: Union{PTDFPowerModel, StandardPTDFModel},
+}
+    parameter = get_parameter_array(container, U(), V)
+    multiplier = get_parameter_multiplier_array(container, U(), V)
+    sys_expr = get_expression(container, T(), PSY.System)
+    nodal_expr = get_expression(container, T(), PSY.Bus)
+    for d in devices, t in get_time_steps(container)
+        name = get_name(d)
+        bus_no = PSY.get_number(PSY.get_bus(d))
+        mult = get_expression_multiplier(U(), T(), d, W())
+        add_to_jump_expression!(sys_expr[t], parameter[name, t], mult)
+        add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
     end
     return
 end
@@ -342,7 +428,7 @@ function add_to_expression!(
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::ServiceModel{X, W},
 ) where {
-    T <: ActivePowerRangeExpressionUB,
+    T <: Union{ActivePowerRangeExpressionUB, ReserveRangeExpressionUB},
     U <: VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveUp},
@@ -368,7 +454,7 @@ function add_to_expression!(
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::ServiceModel{X, W},
 ) where {
-    T <: ActivePowerRangeExpressionLB,
+    T <: Union{ActivePowerRangeExpressionLB, ReserveRangeExpressionLB},
     U <: VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveDown},
@@ -410,8 +496,8 @@ function add_to_expression!(
             add_to_jump_expression!(
                 expression[name, t],
                 parameter_array[name, t],
-                mult,
                 -mult,
+                mult,
             )
         end
     end

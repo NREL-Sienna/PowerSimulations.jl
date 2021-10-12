@@ -42,6 +42,7 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -134,6 +135,7 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -235,6 +237,7 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -336,6 +339,7 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -433,6 +437,7 @@ function construct_device!(
         add_expressions!(container, ReserveRangeExpressionLB, devices, model)
         add_expressions!(container, ReserveRangeExpressionUB, devices, model)
     end
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -529,6 +534,7 @@ function construct_device!(
         add_expressions!(container, ReserveRangeExpressionLB, devices, model)
         add_expressions!(container, ReserveRangeExpressionUB, devices, model)
     end
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
