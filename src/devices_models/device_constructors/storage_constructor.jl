@@ -289,7 +289,7 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
 
     # Cost Function
-    cost_function!(container, devices, model, S, )
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -383,7 +383,7 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
 
     # Cost Function
-    cost_function!(container, devices, model, S, )
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
