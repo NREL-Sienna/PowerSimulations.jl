@@ -717,7 +717,7 @@ function calculate_aux_variable_value!(
         on_var_results = get_parameter_array(container, OnStatusParameter(), T)
     else
         error(
-            "Thermal Compact Formulation is NOT supported without a FeedForward for Commitment decision, 
+            "Thermal Compact Formulation is NOT supported without a FeedForward for Commitment decision,
       please consider changing your simulation setup or adding a SemiContinuousFeedForward.",
         )
     end
