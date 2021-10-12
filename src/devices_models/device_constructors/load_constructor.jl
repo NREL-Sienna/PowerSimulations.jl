@@ -71,7 +71,7 @@ function construct_device!(
         model,
         S,
     )
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -134,7 +134,7 @@ function construct_device!(
         model,
         S,
     )
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -209,7 +209,7 @@ function construct_device!(
         model,
         S,
     )
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -266,7 +266,7 @@ function construct_device!(
         model,
         S,
     )
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -319,7 +319,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerTimeSeriesParameter,
+        ActivePowerTimeSeriesParameter(),
         devices,
         model,
         S,
