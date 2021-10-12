@@ -846,6 +846,19 @@ function add_param_container!(
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    source_key::V,
+    axs...;
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
+    param_key = ParameterKey(T, U, meta)
+    attributes = VariableValueAttributes{V}()
+    return _add_param_container!(container, param_key, attributes, axs...)
+end
+
 function get_parameter_keys(container::OptimizationContainer)
     return collect(keys(container.parameters))
 end
