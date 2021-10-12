@@ -81,7 +81,15 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
@@ -170,7 +178,15 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
@@ -279,7 +295,15 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
@@ -381,7 +405,15 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
@@ -496,7 +528,15 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits
@@ -600,7 +640,15 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    energy_capacity_constraints!(container, devices, model, S, get_feedforward(model))
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Energy Balanace limits

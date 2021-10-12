@@ -158,22 +158,16 @@ end
 """
 Add Energy Capacity Constraints for AbstractStorageFormulation
 """
-function energy_capacity_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
+    T::Type{EnergyCapacityConstraint},
+    U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X},
+    X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
-    add_range_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
+    add_range_constraints!(container, T, U, devices, model, X, feedforward)
 end
 
 ############################ book keeping constraints ######################################
