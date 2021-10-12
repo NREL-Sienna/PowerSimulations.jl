@@ -60,7 +60,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerTimeSeriesParameter(),
+        ActivePowerTimeSeriesParameter,
         devices,
         model,
         S,
@@ -170,7 +170,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -261,7 +261,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -369,7 +369,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -456,7 +456,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -590,7 +590,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -707,7 +707,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -804,13 +804,10 @@ function construct_device!(
         S,
     )
 
-    # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do. Jose: I guess we should fix it
-    # commit_hydro_active_power_ub!(container, devices, model, )
-
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -898,12 +895,10 @@ function construct_device!(
         S,
     )
 
-    # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do: Check this
-    # commit_hydro_active_power_ub!(container, devices, model, )
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -1007,7 +1002,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -1103,7 +1098,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -1245,7 +1240,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -1367,7 +1362,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -1476,7 +1471,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, nothing)
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return

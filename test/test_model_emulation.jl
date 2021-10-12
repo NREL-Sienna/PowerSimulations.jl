@@ -90,11 +90,11 @@ end
         add_single_time_series = true,
         force_build = true,
     )
-    set_device_model!(template, ThermalStandard, ThermalCompactDispatch)
+    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
+    set_device_model!(template, device_model)
     model = EmulationModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
-    @test build!(model; executions = 1, output_dir = mktempdir(cleanup = true)) ==
+    @test build!(model; executions = 10, output_dir = mktempdir(cleanup = true)) ==
           BuildStatus.BUILT
-    @test run!(model) == RunStatus.SUCCESSFUL
 end
 
 @testset "Emulation Model initial_conditions test for Storage" begin

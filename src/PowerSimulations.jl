@@ -89,6 +89,7 @@ export LowerBoundFeedForward
 export SemiContinuousFeedForward
 export IntegralLimitFeedForward
 export FixValueFeedForward
+export EnergyTargetFeedForward
 
 # InitialConditions chrons
 export InterProblemChronology

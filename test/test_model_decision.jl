@@ -429,14 +429,6 @@ end
     check_duration_on_initial_conditions_values(model, ThermalMultiStart)
     check_duration_off_initial_conditions_values(model, ThermalMultiStart)
     @test solve!(model) == RunStatus.SUCCESSFUL
-
-    ######## Test with ThermalCompactUnitCommitment ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build = true)
-    set_device_model!(template, ThermalStandard, ThermalCompactDispatch)
-    model = DecisionModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
-    @test solve!(model) == RunStatus.SUCCESSFUL
 end
 
 @testset "Emulation Model initial_conditions test for Storage" begin

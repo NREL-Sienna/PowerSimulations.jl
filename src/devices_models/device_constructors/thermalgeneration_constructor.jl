@@ -1274,13 +1274,15 @@ function construct_device!(
     add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
 
     # Aux Variables
-    # add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+    add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+
+    add_parameters!(container, OnStatusParameter(), devices, model)
+
+    add_feedforward_arguments!(container, model, devices)
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
-    # This isn't working properly since it isn't adding to the nodal expression the min power
-    # we need to add an extra term to the expressions with the mins
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1289,6 +1291,15 @@ function construct_device!(
         model,
         S,
     )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -1305,7 +1316,6 @@ function construct_device!(
         model,
         S,
     )
-    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -1367,10 +1377,12 @@ function construct_device!(
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
 
     # Aux Variables
-    # add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+    add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
-    # This isn't working properly since it isn't adding to the nodal expression the min power
-    # we need to add an extra term to the expressions with the mins
+    add_parameters!(container, OnStatusParameter(), devices, model)
+
+    add_feedforward_arguments!(container, model, devices)
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1380,6 +1392,7 @@ function construct_device!(
         S,
     )
 
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
@@ -1399,7 +1412,6 @@ function construct_device!(
         model,
         S,
     )
-    add_feedforward_arguments!(container, model, devices)
     return
 end
 
