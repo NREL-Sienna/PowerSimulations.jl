@@ -143,7 +143,7 @@ function construct_device!(
     add_constraints!(container, RampConstraint, devices, model, S)
     add_constraints!(container, DurationConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -248,7 +248,7 @@ function construct_device!(
     add_constraints!(container, RampConstraint, devices, model, S)
     add_constraints!(container, DurationConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -359,7 +359,7 @@ function construct_device!(
     )
     add_constraints!(container, CommitmentConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -452,7 +452,7 @@ function construct_device!(
 
     add_constraints!(container, CommitmentConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -560,7 +560,7 @@ function construct_device!(
     )
     add_constraints!(container, RampConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -650,7 +650,7 @@ function construct_device!(
 
     add_constraints!(container, RampConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -754,7 +754,7 @@ function construct_device!(
         S,
     )
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -842,7 +842,7 @@ function construct_device!(
         S,
     )
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -973,7 +973,7 @@ function construct_device!(
     add_constraints!(container, MustRunConstraint, devices, model, S)
     add_constraints!(container, ActiveRangeICConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -1080,7 +1080,7 @@ function construct_device!(
     add_constraints!(container, MustRunConstraint, devices, model, S)
     add_constraints!(container, ActiveRangeICConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -1192,7 +1192,7 @@ function construct_device!(
     add_constraints!(container, RampConstraint, devices, model, S)
     add_constraints!(container, DurationConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -1290,7 +1290,7 @@ function construct_device!(
     add_constraints!(container, RampConstraint, devices, model, S)
     add_constraints!(container, DurationConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -1387,7 +1387,7 @@ function construct_device!(
     )
     add_constraints!(container, RampConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -1477,7 +1477,7 @@ function construct_device!(
 
     add_constraints!(container, RampConstraint, devices, model, S)
 
-    add_feedforward_constraints!(container, model, device)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
