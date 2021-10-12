@@ -67,7 +67,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.RenewableGen, W <: AbstractDeviceFormulation}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 """
@@ -113,7 +113,6 @@ function add_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 

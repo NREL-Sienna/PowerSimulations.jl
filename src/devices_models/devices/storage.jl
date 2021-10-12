@@ -127,9 +127,9 @@ function add_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
     if get_attribute(model, "reservation")
-        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_range_constraints!(container, T, U, devices, model, X)
     end
 end
 
@@ -164,10 +164,16 @@ function add_constraints!(
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    ::Type{X},
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
+    add_range_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        X,
+    )
 end
 
 ############################ book keeping constraints ######################################

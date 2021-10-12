@@ -102,7 +102,6 @@ function add_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -123,7 +122,6 @@ function add_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 

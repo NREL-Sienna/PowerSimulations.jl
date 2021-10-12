@@ -79,7 +79,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -89,7 +88,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
@@ -100,12 +98,11 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
-    cost_function!(container, devices, model, S)
+    cost_function!(container, devices, model)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -181,7 +178,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -191,15 +187,14 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
-    feedforward!(container, devices, model, get_feedforward(model))
+    feedforward!(container, devices, model, )
 
     # Cost Function
     cost_function!(container, devices, model, S)
 
-    add_constraint_dual!(container, sys, model)
+    add_constraint_dual!(container, sys, mod)
 
     return
 end
