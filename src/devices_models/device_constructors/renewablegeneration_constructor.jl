@@ -102,7 +102,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S)
+    cost_function!(container, devices, model)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -195,7 +195,7 @@ function construct_device!(
     # Cost Function
     cost_function!(container, devices, model, S)
 
-    add_constraint_dual!(container, sys, model)
+    add_constraint_dual!(container, sys, mod)
 
     return
 end
