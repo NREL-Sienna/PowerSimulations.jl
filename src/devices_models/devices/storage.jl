@@ -160,7 +160,7 @@ Add Energy Capacity Constraints for AbstractStorageFormulation
 """
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{<:EnergyVariableLimitsConstraint},
+    T::Type{EnergyCapacityConstraint},
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
