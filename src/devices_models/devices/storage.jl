@@ -12,9 +12,7 @@ get_variable_multiplier(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) 
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ReserveRangeExpressionUB
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ReserveRangeExpressionLB
 ########################### ActivePowerInVariable, Storage #################################
-
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_input_active_power_limits(d).max
 get_variable_multiplier(::ActivePowerInVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = -1.0
@@ -32,26 +30,21 @@ get_variable_multiplier(::PowerSimulations.ReactivePowerVariable, ::Type{<:PSY.S
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 
 ############## EnergyVariable, Storage ####################
-
 get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_state_of_charge_limits(d).max
 get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_state_of_charge_limits(d).min
 get_variable_warm_start_value(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
 
 ############## ReservationVariable, Storage ####################
-
 get_variable_binary(::ReservationVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = true
-
 get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage = PSY.get_efficiency(v)
 
 ############## EnergyShortageVariable, Storage ####################
-
 get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_lower_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_rating(d)
 
 ############## EnergySurplusVariable, Storage ####################
-
 get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
@@ -271,7 +264,7 @@ function add_constraints!(
         )
         con_dn[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            -expr_dn[name, t] <= (limits.max - var_e[name, t]) / efficiency.in
+            expr_dn[name, t] <= (limits.max - var_e[name, t]) / efficiency.in
         )
     end
     return
@@ -318,7 +311,7 @@ function add_constraints!(
         )
         con_dn[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            -expr_dn[name, t] <= var_out[name, t] + (in_limits.max - var_in[name, t])
+            expr_dn[name, t] <= var_out[name, t] + (in_limits.max - var_in[name, t])
         )
     end
     return
