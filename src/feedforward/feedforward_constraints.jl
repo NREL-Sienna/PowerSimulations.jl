@@ -123,6 +123,7 @@ function add_feedforward_constraints!(
     ff::SemiContinuousFeedForward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
+    parameter_type = get_default_parameter_type(ff, T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
