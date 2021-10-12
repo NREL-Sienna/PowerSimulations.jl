@@ -1343,6 +1343,15 @@ function construct_device!(
     add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
     add_to_expression!(
         container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
+    add_to_expression!(
+        container,
         ActivePowerRangeExpressionLB,
         PowerAboveMinimumVariable,
         devices,
@@ -1357,7 +1366,6 @@ function construct_device!(
         model,
         S,
     )
-    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -1458,7 +1466,6 @@ function construct_device!(
         model,
         S,
     )
-    add_feedforward_arguments!(container, model, devices)
     return
 end
 

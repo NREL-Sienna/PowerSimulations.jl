@@ -53,8 +53,6 @@ function mock_construct_device!(
         PSI.get_system(problem),
     )
     if PSI.validate_available_devices(model, PSI.get_system(problem))
-        PSI.get_optimization_container(problem).built_for_recurrent_solves =
-            built_for_recurrent_solves
         PSI.construct_device!(
             PSI.get_optimization_container(problem),
             PSI.get_system(problem),
