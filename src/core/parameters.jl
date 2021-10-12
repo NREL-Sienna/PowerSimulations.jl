@@ -107,8 +107,8 @@ struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 
-struct BinaryValueParameter <: VariableValueParameter end
 struct UpperBoundValueParameter <: VariableValueParameter end
+struct LowerBoundValueParameter <: VariableValueParameter end
 
 # Used for the semicontinuousrange_ff
 struct OnStatusParameter <: VariableValueParameter end

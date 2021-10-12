@@ -197,10 +197,11 @@ where r in range_data.
 function add_feedforward_arguments!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::SemiContinuousFeedForward,
+    ff::AbstractAffectFeedForward,
 ) where {T <: PSY.Component}
-    for var in get_affected_variables(ff)
-        add_parameters!(container, OnStatusParameter(), var, devices)
+    parameter_type = get_default_parameter_type(ff, T)
+    for var_key in get_affected_values(ff)
+        add_parameters!(container, parameter_type, var_key, devices)
     end
     return
 end
@@ -211,7 +212,7 @@ function add_feedforward_constraints!(
     ff::SemiContinuousFeedForward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
-    for var in get_affected_variables(ff)
+    for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
         set_name = [PSY.get_name(d) for d in devices]
@@ -360,7 +361,7 @@ function feedforward!(
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info
     end
-    for var_key in get_affected_variables(ff_model)
+    for var_key in get_affected_values(ff_model)
         var_type = get_entry_type(var_key)
         component_type = get_component_type(var_key)
         parameter_ref = UpdateRef{JuMP.VariableRef}(component_type, var_type)
@@ -391,7 +392,7 @@ function feedforward!(
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info
     end
-    for var_key in get_affected_variables(ff_model)
+    for var_key in get_affected_values(ff_model)
         semicontinuousrange_ff(
             container,
             FeedforwardBinConstraint,
@@ -409,7 +410,7 @@ function feedforward!(
     ::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::IntegralLimitFeedForward,
 ) where {T <: PSY.StaticInjection}
-    for var_key in get_affected_variables(ff_model)
+    for var_key in get_affected_values(ff_model)
         var_type = get_entry_type(var_key)
         component_type = get_component_type(var_key)
         parameter_ref = UpdateRef{JuMP.VariableRef}(component_type, var_type)
@@ -433,7 +434,7 @@ end
 #         UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_ub, "ub")
 #     parameter_ref_lb =
 #         UpdateRef{JuMP.VariableRef}(ff_model.variable_source_problem_lb, "lb")
-#     for var_name in get_affected_variables(ff_model)
+#     for var_name in get_affected_values(ff_model)
 #         # TODO: This function isn't implemented correctly needs review to use keys
 #         range_ff(
 #             optimization_container,

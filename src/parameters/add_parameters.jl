@@ -1,6 +1,6 @@
 function add_parameters!(
     container::OptimizationContainer,
-    ::Type{T},
+    ::T,
     devices::U,
     model::DeviceModel{D, W},
 ) where {
@@ -40,7 +40,7 @@ end
 
 function add_parameters!(
     container::OptimizationContainer,
-    parameter_type::Type{T},
+    ::T,
     service::U,
     model::ServiceModel{U, V},
 ) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
@@ -74,17 +74,18 @@ end
 
 function add_parameters!(
     container::OptimizationContainer,
-    ::Type{T},
-    var::VariableKey,
-    devices::U,
+    ::T,
+    key::VariableKey{U, D},
+    devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    U <: VariableType,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     @debug "adding" T D var
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
-    parameter_container = add_param_container!(container, T(), D, var, names, time_steps)
+    parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
     jump_model = get_jump_model(container)
 
     for d in devices

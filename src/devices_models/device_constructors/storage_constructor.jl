@@ -205,7 +205,7 @@ function construct_device!(
     end
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
@@ -289,7 +289,7 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
 
     # Cost Function
-    cost_function!(container, devices, model, S, )
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -315,7 +315,7 @@ function construct_device!(
     end
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
@@ -383,7 +383,7 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
 
     # Cost Function
-    cost_function!(container, devices, model, S, )
+    cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return

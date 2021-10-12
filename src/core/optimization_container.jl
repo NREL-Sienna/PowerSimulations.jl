@@ -772,10 +772,18 @@ function read_duals(container::OptimizationContainer)
 end
 
 ##################################### Parameter Container ##################################
-function _add_param_container!(container::OptimizationContainer, key::ParameterKey, axs...)
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::VariableValueAttributes{<:OptimizationContainerKey},
+    axs...,
+) where {T <: VariableValueParameter, U <: PSY.Component}
+    # Temporary while we change to POI vs PJ
+    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
-        JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
-        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), 1.0),
+        attribute,
+        JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),
+        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -796,17 +804,6 @@ function _add_param_container!(
     )
     _assign_container!(container.parameters, key, param_container)
     return param_container
-end
-
-function add_param_container!(
-    container::OptimizationContainer,
-    ::T,
-    ::Type{U},
-    axs...;
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    param_key = ParameterKey(T, U, meta)
-    return _add_param_container!(container, param_key, axs...)
 end
 
 function add_param_container!(

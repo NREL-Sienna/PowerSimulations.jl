@@ -6,11 +6,11 @@ function construct_device!(
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerTimeSeriesParameter,
+        ActivePowerTimeSeriesParameter(),
         devices,
         model,
         S,
@@ -190,6 +190,10 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, D())
 
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -297,6 +301,10 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -413,6 +421,10 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -510,6 +522,10 @@ function construct_device!(
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalRampLimited())
+
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
 
     add_to_expression!(
         container,
@@ -625,6 +641,10 @@ function construct_device!(
     # Initial Conditions
     initial_conditions!(container, devices, ThermalRampLimited())
 
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -721,6 +741,10 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
 
     add_to_expression!(
         container,
@@ -833,6 +857,10 @@ function construct_device!(
 
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
+
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
 
     add_to_expression!(
         container,
@@ -948,6 +976,10 @@ function construct_device!(
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
     # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
+
+    for ff in get_feedforwards(model)
+        add_feedforward_arguments!(container, devices, ff)
+    end
 
     add_to_expression!(
         container,
