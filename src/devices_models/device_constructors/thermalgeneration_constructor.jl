@@ -498,7 +498,6 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -596,7 +595,6 @@ function construct_device!(
     )
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-
 
     add_to_expression!(
         container,
@@ -788,7 +786,6 @@ function construct_device!(
     )
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-
 
     add_to_expression!(
         container,
@@ -1448,7 +1445,6 @@ function construct_device!(
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-
 
     add_to_expression!(
         container,
