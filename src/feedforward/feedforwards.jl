@@ -59,6 +59,8 @@ struct UpperBoundFeedForward <: AbstractAffectFeedForward
     end
 end
 
+get_default_parameter_type(::UpperBoundFeedForward, _) = UpperBoundValueParameter()
+
 """
 Adds a lower bound constraint to a variable.
 """
@@ -84,6 +86,8 @@ struct LowerBoundFeedForward <: AbstractAffectFeedForward
     end
 end
 
+get_default_parameter_type(::LowerBoundFeedForward, _) = LowerBoundValueParameter()
+
 """
 Adds a constraint to make the bounds of a variable 0.0. Effectively allows to "turn off" a value.
 """
@@ -108,6 +112,8 @@ struct SemiContinuousFeedForward <: AbstractAffectFeedForward
         new(_get_optimization_container_key(T(), component_type), values)
     end
 end
+
+get_default_parameter_type(::SemiContinuousFeedForward, _) = OnStatusParameter()
 
 """
 Adds a constraint to limit the sum of a variable over the number of periods to the source value
@@ -136,6 +142,8 @@ struct IntegralLimitFeedForward <: AbstractAffectFeedForward
     end
 end
 
+get_default_parameter_type(::IntegralLimitFeedForward, _) = OnStatusParameter()
+
 """
 Fixes a Variable or Parameter Value in the model. Is the only Feed Forward that can be used
 with a Parameter or a Variable as the affected value.
@@ -161,3 +169,5 @@ struct FixValueFeedForward <: AbstractAffectFeedForward
         new(_get_optimization_container_key(T(), component_type), values)
     end
 end
+
+get_default_parameter_type(::FixValueFeedForward, _) = OnStatusParameter()

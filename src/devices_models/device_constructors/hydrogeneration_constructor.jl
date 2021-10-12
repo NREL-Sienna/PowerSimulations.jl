@@ -10,8 +10,8 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
-    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter(), devices, model)
 
     # Expression
     add_to_expression!(
@@ -53,13 +53,13 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
 
     # Expression
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerTimeSeriesParameter,
+        ActivePowerTimeSeriesParameter(),
         devices,
         model,
         S,
@@ -104,7 +104,7 @@ function construct_device!(
         S,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -179,7 +179,7 @@ function construct_device!(
         model,
         S,
     )
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -217,7 +217,7 @@ function construct_device!(
         S,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -284,7 +284,7 @@ function construct_device!(
         )
     end
 
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -315,7 +315,7 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+    add_parameters!(container, EnergyBudgetTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -406,7 +406,7 @@ function construct_device!(
     # Energy Budget Constraint
     add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -432,7 +432,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
 
     # Parameters
-    add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
+    add_parameters!(container, EnergyBudgetTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -506,7 +506,7 @@ function construct_device!(
     # Energy Budget Constraint
     add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -556,8 +556,8 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
-    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -654,7 +654,7 @@ function construct_device!(
     # Energy Balance Constraint
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -709,8 +709,8 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
-    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -783,7 +783,7 @@ function construct_device!(
     # Energy Balance Constraint
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -827,7 +827,7 @@ function construct_device!(
         S,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -901,7 +901,7 @@ function construct_device!(
     # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do
     # commit_hydro_active_power_ub!(container, devices, model, )
 
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1007,7 +1007,7 @@ function construct_device!(
 
     # TODO: check with jose if this being handled by the above add_constraints function is the right thing to do
     # commit_hydro_active_power_ub!(container, devices, model, )
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1124,7 +1124,7 @@ function construct_device!(
     # Energy Budget Constraint
     add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1233,7 +1233,7 @@ function construct_device!(
     # Energy Budget Constraint
     add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1306,8 +1306,8 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
-    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -1388,7 +1388,7 @@ function construct_device!(
     # Energy Balance Constraint
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1448,8 +1448,8 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
-    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -1523,7 +1523,7 @@ function construct_device!(
     # Energy Balance Constraint
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)
@@ -1561,8 +1561,8 @@ function construct_device!(
     end
 
     # Parameters
-    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
-    add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
+    add_parameters!(container, OutflowTimeSeriesParameter(), devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -1633,7 +1633,7 @@ function construct_device!(
     # Energy Balanace limits
     add_constraints!(container, EnergyCapacityUpConstraint, devices, model, S)
     add_constraints!(container, EnergyCapacityDownConstraint, devices, model, S)
-    feedforward!(container, devices, model, )
+    feedforward!(container, devices, model)
 
     # Cost Function
     cost_function!(container, devices, model, S, nothing)

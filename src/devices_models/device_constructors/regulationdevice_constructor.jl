@@ -15,12 +15,12 @@ function construct_device!(
     end
 
     devices = get_available_components(get_component_type(model), sys)
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
 
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerTimeSeriesParameter,
+        ActivePowerTimeSeriesParameter(),
         devices,
         model,
         S,
@@ -105,12 +105,12 @@ function construct_device!(
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
     devices = get_available_components(get_component_type(model), sys)
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
 
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerTimeSeriesParameter,
+        ActivePowerTimeSeriesParameter(),
         devices,
         model,
         S,
@@ -192,12 +192,12 @@ function construct_device!(
     ::Type{S},
 ) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
     devices = get_available_components(get_component_type(model), sys)
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
 
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerTimeSeriesParameter,
+        ActivePowerTimeSeriesParameter(),
         devices,
         model,
         S,
