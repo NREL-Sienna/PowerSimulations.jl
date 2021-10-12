@@ -110,7 +110,6 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -229,7 +228,6 @@ function construct_device!(
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -665,7 +663,6 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -773,7 +770,6 @@ function construct_device!(
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-
 
     add_to_expression!(
         container,
@@ -973,7 +969,6 @@ function construct_device!(
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-
 
     add_parameters!(container, EnergyBudgetTimeSeriesParameter(), devices, model)
 
@@ -1213,7 +1208,6 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -1345,7 +1339,6 @@ function construct_device!(
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-
 
     add_to_expression!(
         container,
