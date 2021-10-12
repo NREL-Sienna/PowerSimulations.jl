@@ -99,7 +99,7 @@ function construct_device!(
         model,
         S,
     )
-    feedforward!(container, devices, model)
+    add_feedforward_constraints!(container, model, device)
 
     # Cost Function
     cost_function!(container, devices, model)
@@ -190,7 +190,7 @@ function construct_device!(
             S,
         )
     end
-    feedforward!(container, devices, model)
+    add_feedforward_constraints!(container, model, device)
 
     # Cost Function
     cost_function!(container, devices, model, S)
