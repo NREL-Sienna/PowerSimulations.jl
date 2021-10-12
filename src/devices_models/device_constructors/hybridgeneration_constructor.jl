@@ -36,6 +36,45 @@ function construct_device!(
         model,
         S,
     )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionLB,
+        ComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionUB,
+        ComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    if has_service_model(model)
+        add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
+        add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
+
+        add_to_expression!(
+            container,
+            ComponentActivePowerRangeExpressionLB,
+            ComponentActivePowerReserveDownVariable,
+            devices,
+            model,
+            S,
+        )
+        add_to_expression!(
+            container,
+            ComponentActivePowerRangeExpressionUB,
+            ComponentActivePowerReserveUpVariable,
+            devices,
+            model,
+            S,
+        )
+        add_expressions!(container, ComponentReserveDownBalanceExpression, devices, model)
+        add_expressions!(container, ComponentReserveUpBalanceExpression, devices, model)
+    end
 end
 
 function construct_device!(
@@ -83,7 +122,16 @@ function construct_device!(
     add_constraints!(
         container,
         ComponentActivePowerVariableLimitsConstraint,
-        ComponentActivePowerVariable,
+        ComponentActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        ComponentActivePowerVariableLimitsConstraint,
+        ComponentActivePowerRangeExpressionUB,
         devices,
         model,
         S,
@@ -106,6 +154,42 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+
+    if has_service_model(model)
+        add_constraints!(
+            container,
+            ReserveEnergyConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            RangeLimitConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ComponentReserveUpBalance,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ComponentReserveDownBalance,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
+
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -158,6 +242,44 @@ function construct_device!(
         model,
         S,
     )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionLB,
+        ComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionUB,
+        ComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    if has_service_model(model)
+        add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
+        add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
+        add_to_expression!(
+            container,
+            ComponentActivePowerRangeExpressionLB,
+            ComponentActivePowerReserveDownVariable,
+            devices,
+            model,
+            S,
+        )
+        add_to_expression!(
+            container,
+            ComponentActivePowerRangeExpressionUB,
+            ComponentActivePowerReserveUpVariable,
+            devices,
+            model,
+            S,
+        )
+        add_expressions!(container, ComponentReserveDownBalanceExpression, devices, model)
+        add_expressions!(container, ComponentReserveUpBalanceExpression, devices, model)
+    end
 end
 
 function construct_device!(
@@ -182,7 +304,16 @@ function construct_device!(
     add_constraints!(
         container,
         ComponentActivePowerVariableLimitsConstraint,
-        ComponentActivePowerVariable,
+        ComponentActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        ComponentActivePowerVariableLimitsConstraint,
+        ComponentActivePowerRangeExpressionUB,
         devices,
         model,
         S,
@@ -260,6 +391,40 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    if has_service_model(model)
+        add_constraints!(
+            container,
+            ReserveEnergyConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            RangeLimitConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ComponentReserveUpBalance,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ComponentReserveDownBalance,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function
@@ -306,6 +471,44 @@ function construct_device!(
         model,
         S,
     )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionLB,
+        ComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionUB,
+        ComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    if has_service_model(model)
+        add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
+        add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
+        add_to_expression!(
+            container,
+            ComponentActivePowerRangeExpressionLB,
+            ComponentActivePowerReserveDownVariable,
+            devices,
+            model,
+            S,
+        )
+        add_to_expression!(
+            container,
+            ComponentActivePowerRangeExpressionUB,
+            ComponentActivePowerReserveUpVariable,
+            devices,
+            model,
+            S,
+        )
+        add_expressions!(container, ComponentReserveDownBalanceExpression, devices, model)
+        add_expressions!(container, ComponentReserveUpBalanceExpression, devices, model)
+    end
 end
 
 function construct_device!(
@@ -334,7 +537,16 @@ function construct_device!(
     add_constraints!(
         container,
         ComponentActivePowerVariableLimitsConstraint,
-        ComponentActivePowerVariable,
+        ComponentActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        ComponentActivePowerVariableLimitsConstraint,
+        ComponentActivePowerRangeExpressionUB,
         devices,
         model,
         S,
@@ -375,6 +587,41 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+
+    if has_service_model(model)
+        add_constraints!(
+            container,
+            ReserveEnergyConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            RangeLimitConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ComponentReserveUpBalance,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ComponentReserveDownBalance,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
 
     feedforward!(container, devices, model, get_feedforward(model))
 
@@ -428,6 +675,44 @@ function construct_device!(
         model,
         S,
     )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionLB,
+        ComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionUB,
+        ComponentActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    if has_service_model(model)
+        add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
+        add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
+        add_to_expression!(
+            container,
+            ComponentActivePowerRangeExpressionLB,
+            ComponentActivePowerReserveDownVariable,
+            devices,
+            model,
+            S,
+        )
+        add_to_expression!(
+            container,
+            ComponentActivePowerRangeExpressionUB,
+            ComponentActivePowerReserveUpVariable,
+            devices,
+            model,
+            S,
+        )
+        add_expressions!(container, ComponentReserveDownBalanceExpression, devices, model)
+        add_expressions!(container, ComponentReserveUpBalanceExpression, devices, model)
+    end
 end
 
 function construct_device!(
@@ -451,7 +736,16 @@ function construct_device!(
     add_constraints!(
         container,
         ComponentActivePowerVariableLimitsConstraint,
-        ComponentActivePowerVariable,
+        ComponentActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        container,
+        ComponentActivePowerVariableLimitsConstraint,
+        ComponentActivePowerRangeExpressionUB,
         devices,
         model,
         S,
@@ -529,6 +823,42 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+
+    if has_service_model(model)
+        add_constraints!(
+            container,
+            ReserveEnergyConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            RangeLimitConstraint,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ComponentReserveUpBalance,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+        add_constraints!(
+            container,
+            ComponentReserveDownBalance,
+            devices,
+            model,
+            S,
+            get_feedforward(model),
+        )
+    end
+
     feedforward!(container, devices, model, get_feedforward(model))
 
     # Cost Function

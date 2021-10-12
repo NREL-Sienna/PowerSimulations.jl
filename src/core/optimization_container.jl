@@ -37,7 +37,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{ExpressionKey, JuMP.Containers.DenseAxisArray}
+    expressions::Dict{ExpressionKey, AbstractArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
     initial_conditions_data::InitialConditionsData

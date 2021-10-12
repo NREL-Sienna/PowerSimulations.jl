@@ -3,7 +3,6 @@ function add_expressions!(
     ::Type{T},
     devices::U,
     model::DeviceModel{D, W};
-    meta = CONTAINER_KEY_EMPTY_META,
 ) where {
     T <: ExpressionType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
@@ -11,7 +10,23 @@ function add_expressions!(
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    add_expression_container!(container, T(), D, names, time_steps; meta = meta)
+    add_expression_container!(container, T(), D, names, time_steps)
+    return
+end
+
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
+    model::DeviceModel{D, W};
+) where {
+    T <: Union{ComponentActivePowerRangeExpressionUB, ComponentActivePowerRangeExpressionLB},
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.HybridSystem}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    add_expression_container!(container, T(), D, names, [PSY.ThermalGen, PSY.RenewableGen], time_steps; sparse = true)
     return
 end
 
@@ -44,6 +59,16 @@ function add_to_jump_expression!(
         expression_array[ixs...] = multiplier * var
     end
 
+    return
+end
+
+function add_to_jump_expression!(
+    expression_array::AbstractArray,
+    var::JV,
+    multiplier::Float64,
+    ixs::Vararg{Any, N},
+) where {JV <: Any, N}
+        expression_array[ixs...] = multiplier * var
     return
 end
 
@@ -358,7 +383,6 @@ function add_to_expression!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X};
-    meta = CONTAINER_KEY_EMPTY_META,
 ) where {
     T <: ExpressionType,
     U <: VariableType,
@@ -367,13 +391,39 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    if !has_expression(container, T(), V, meta)
-        add_expressions!(container, T, devices, model, meta = meta)
+    if !has_expression(container, T(), V)
+        add_expressions!(container, T, devices, model)
     end
-    expression = get_expression(container, T(), V, meta)
+    expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         add_to_jump_expression!(expression, variable[name, t], 1.0, name, t)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X};
+) where {
+    T <: Union{ComponentActivePowerRangeExpressionUB, ComponentActivePowerRangeExpressionLB},
+    U <: ComponentActivePowerVariable,
+    V <: PSY.HybridSystem,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    variable = get_variable(container, U(), V)
+    if !has_expression(container, T(), V)
+        add_expressions!(container, T, devices, model)
+    end
+    expression = get_expression(container, T(), V)
+    for d in devices, t in get_time_steps(container), sub_comp in [PSY.ThermalGen, PSY.RenewableGen]
+        name = PSY.get_name(d)
+        add_to_jump_expression!(expression, variable[name, sub_comp, t], 1.0, name, sub_comp, t)
     end
     return
 end

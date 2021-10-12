@@ -158,6 +158,62 @@ function add_range_constraints!(
     )
 end
 
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    U::Type{<:RangeConstraintLBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
+    add_lower_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
+end
+
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    U::Type{<:RangeConstraintUBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
+    add_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
+    add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+        feedforward,
+    )
+end
+
 function add_lower_bound_range_constraints_impl!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},

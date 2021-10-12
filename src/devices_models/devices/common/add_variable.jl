@@ -37,7 +37,9 @@ end
 
 get_subcomponent_var_types(::Type{ComponentActivePowerVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen]
-get_subcomponent_var_types(::Type{ComponentActivePowerReserveVariable}) =
+get_subcomponent_var_types(::Type{ComponentActivePowerReserveUpVariable}) =
+    [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
+get_subcomponent_var_types(::Type{ComponentActivePowerReserveDownVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
 get_subcomponent_var_types(::Type{ComponentReactivePowerVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]

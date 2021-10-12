@@ -119,7 +119,9 @@ struct ComponentActivePowerVariable <: SubComponentVariableType end
 
 struct ComponentReactivePowerVariable <: SubComponentVariableType end
 
-struct ComponentActivePowerReserveVariable <: SubComponentVariableType end
+struct ComponentActivePowerReserveUpVariable <: SubComponentVariableType end
+
+struct ComponentActivePowerReserveDownVariable <: SubComponentVariableType end
 
 ###############################
 
