@@ -914,14 +914,14 @@ end
 function _add_expression_container!(
     container::OptimizationContainer,
     expr_key::ExpressionKey,
+    ::Type{T},
     axs...;
     sparse = false,
-)
-    expr_type = built_for_recurrent_solves(container) ? PGAE : GAE
+) where {T <: JuMP.AbstractJuMPScalar}
     if sparse
-        expr_container = sparse_container_spec(expr_type, axs...)
+        expr_container = sparse_container_spec(T, axs...)
     else
-        expr_container = container_spec(expr_type, axs...)
+        expr_container = container_spec(T, axs...)
     end
     remove_undef!(expr_container)
     _assign_container!(container.expressions, expr_key, expr_container)
@@ -937,7 +937,33 @@ function add_expression_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
-    return _add_expression_container!(container, expr_key, axs...; sparse = sparse)
+    expr_type = built_for_recurrent_solves(container) ? PGAE : GAE
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
+end
+
+function add_expression_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ProductionCostExpression, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    expr_type = JuMP.QuadExpr
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
 end
 
 function get_expression_keys(container::OptimizationContainer)
