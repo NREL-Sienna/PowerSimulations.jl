@@ -937,11 +937,14 @@ function variable_cost!(
     base_power = get_base_power(container)
     component_name = PSY.get_name(component)
     cost_data = PSY.get_cost(cost_component)
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     if cost_data[1] >= eps()
-        @debug "Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-        resolution = get_resolution(container)
-        dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-        variable = get_variable(container, var_key)[component_name, time_period]
+        @debug "$component_name Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+        variable = get_variable(container, spec.variable_type(), spec.component_type)[
+            component_name,
+            time_period,
+        ]
         gen_cost =
             sum((variable .* base_power) .^ 2) * cost_data[1] +
             sum(variable .* base_power) * cost_data[2]
@@ -952,13 +955,13 @@ function variable_cost!(
             time_period,
         )
     else
-        @debug "Quadratic Variable Cost with only linear term" _group =
+        @debug "$component_name Quadratic Variable Cost with only linear term" _group =
             LOG_GROUP_COST_FUNCTIONS component_name
         linear_gen_cost!(
             container,
             spec.variable_type(),
             component,
-            cost_data[2] * spec.multiplier * base_power,
+            cost_data[2] * spec.multiplier * base_power * dt,
             time_period,
         )
     end
