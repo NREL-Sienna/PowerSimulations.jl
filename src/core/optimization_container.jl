@@ -1172,3 +1172,36 @@ function calculate_dual_variables!(container::OptimizationContainer, system::PSY
     end
     return
 end
+
+########################### Helper Functions to get keys ###################################
+function get_optimization_container_key(
+    ::T,
+    ::Type{U},
+    meta::String,
+) where {T <: AuxVariableType, U <: PSY.Component}
+    return AuxVariableKey(T, U, meta)
+end
+
+function get_optimization_container_key(
+    ::T,
+    ::Type{U},
+    meta::String,
+) where {T <: VariableType, U <: PSY.Component}
+    return VariableKey(T, U, meta)
+end
+
+function get_optimization_container_key(
+    ::T,
+    ::Type{U},
+    meta::String,
+) where {T <: ParameterType, U <: PSY.Component}
+    return ParameterKey(T, U, meta)
+end
+
+function get_optimization_container_key(
+    ::T,
+    ::Type{U},
+    meta::String,
+) where {T <: ConstraintType, U <: PSY.Component}
+    return ConstraintKey(T, U, meta)
+end
