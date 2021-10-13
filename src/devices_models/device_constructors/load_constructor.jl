@@ -284,8 +284,8 @@ function construct_device!(
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
-    add_parameters!(container, ReactivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
     add_to_expression!(
         container,
@@ -314,7 +314,7 @@ function construct_device!(
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_to_expression!(
         container,
@@ -351,8 +351,8 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
-    add_parameters!(container, ReactivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -385,7 +385,7 @@ function construct_device!(
     devices = get_available_components(L, sys)
 
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
         ActivePowerBalance,

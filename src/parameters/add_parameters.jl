@@ -37,75 +37,6 @@ end
 
 function add_parameters!(
     container::OptimizationContainer,
-    ::Type{T},
-    key::VariableKey{U, S},
-    model::ServiceModel{S, W},
-    devices::V,
-) where {
-    S <: PSY.AbstractReserve,
-    T <: VariableValueParameter,
-    U <: VariableType,
-    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: AbstractReservesFormulation,
-} where {D <: PSY.Component}
-    add_parameters!(container, T(), key, model, devices)
-end
-
-function add_parameters!(
-    container::OptimizationContainer,
-    ::T,
-    devices::U,
-    model::DeviceModel{D, W},
-) where {
-    T <: TimeSeriesParameter,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: AbstractDeviceFormulation,
-} where {D <: PSY.Component}
-    add_parameters!(container, T(), devices, model)
-end
-
-function add_parameters!(
-    container::OptimizationContainer,
-    ::Type{T},
-    service::U,
-    model::ServiceModel{U, V},
-) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
-    add_parameters!(container, T(), service, model)
-end
-
-function add_parameters!(
-    container::OptimizationContainer,
-    ::Type{T},
-    key::VariableKey{U, D},
-    model::DeviceModel{D, W},
-    devices::V,
-) where {
-    T <: VariableValueParameter,
-    U <: VariableType,
-    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: AbstractDeviceFormulation,
-} where {D <: PSY.Component}
-    add_parameters!(container, T(), key, model, devices)
-end
-
-function add_parameters!(
-    container::OptimizationContainer,
-    ::Type{T},
-    key::VariableKey{U, S},
-    model::ServiceModel{S, W},
-    devices::V,
-) where {
-    S <: PSY.AbstractReserve,
-    T <: VariableValueParameter,
-    U <: VariableType,
-    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: AbstractReservesFormulation,
-} where {D <: PSY.Component}
-    add_parameters!(container, T(), key, model, devices)
-end
-
-function add_parameters!(
-    container::OptimizationContainer,
     ::T,
     devices::U,
     model::DeviceModel{D, W},
@@ -125,7 +56,6 @@ function add_parameters!(
     parameter_container =
         add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
     jump_model = get_jump_model(container)
-
     for d in devices
         name = PSY.get_name(d)
         ts_vector = get_time_series(container, d, T())
@@ -142,6 +72,22 @@ function add_parameters!(
         end
     end
     return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    key::VariableKey{U, S},
+    model::ServiceModel{S, W},
+    devices::V,
+) where {
+    S <: PSY.AbstractReserve,
+    T <: VariableValueParameter,
+    U <: VariableType,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractReservesFormulation,
+} where {D <: PSY.Component}
+    add_parameters!(container, T(), key, model, devices)
 end
 
 function add_parameters!(
@@ -224,6 +170,9 @@ function add_parameters!(
 } where {D <: PSY.Component}
     @debug "adding" T D V
 
+    # We do this to handle cases where the same parameter is also added as a FeedForward.
+    # When the OnStatusParameter is added without a feedforward it takes a Float value.
+    # This is used to handle the special case of compact formulations.
     !isempty(get_feedforwards(model)) && return
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)

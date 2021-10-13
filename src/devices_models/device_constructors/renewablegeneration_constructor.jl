@@ -16,7 +16,7 @@ function construct_device!(
     add_variables!(container, ReactivePowerVariable, devices, D())
 
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -124,7 +124,7 @@ function construct_device!(
     # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -210,8 +210,8 @@ function construct_device!(
     devices = get_available_components(R, sys)
 
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
-    add_parameters!(container, ReactivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
     add_to_expression!(
         container,
@@ -240,7 +240,7 @@ function construct_device!(
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(R, sys)
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
         ActivePowerBalance,

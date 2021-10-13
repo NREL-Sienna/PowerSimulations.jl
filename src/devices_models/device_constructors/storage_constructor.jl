@@ -79,15 +79,7 @@ function construct_device!(
         model,
         S,
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-
-    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -167,15 +159,7 @@ function construct_device!(
         model,
         S,
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-    )
-
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -208,7 +192,7 @@ function construct_device!(
     end
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
@@ -277,15 +261,7 @@ function construct_device!(
         model,
         S,
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-
-    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -318,7 +294,7 @@ function construct_device!(
     end
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
 
     # Initial Conditions
     initial_conditions!(container, devices, EnergyTarget())
@@ -371,15 +347,7 @@ function construct_device!(
         model,
         S,
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-
-    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -477,15 +445,7 @@ function construct_device!(
         model,
         S,
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-
-    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
@@ -566,15 +526,7 @@ function construct_device!(
         model,
         S,
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-
-    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)

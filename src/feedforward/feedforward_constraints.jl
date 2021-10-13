@@ -114,9 +114,9 @@ function add_feedforward_constraints!(
     multiplier_ub = get_parameter_multiplier_array(container, parameter_type, T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        axes = JuMP.axes(variable)
-        @assert axes[1] == [PSY.get_name(d) for d in devices]
-        @assert axes[2] == time_steps
+        set_name, set_time = JuMP.axes(variable)
+        @assert set_name == [PSY.get_name(d) for d in devices]
+        @assert set_time == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
@@ -173,9 +173,9 @@ function add_feedforward_constraints!(
     multiplier_ub = get_parameter_multiplier_array(container, parameter_type, T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        axes = JuMP.axes(variable)
-        set_name = [PSY.get_name(d) for d in devices]
-        @assert axes[2] == time_steps
+        set_name, set_time = JuMP.axes(variable)
+        @assert set_name == [PSY.get_name(d) for d in devices]
+        @assert set_time == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
@@ -209,9 +209,10 @@ function add_feedforward_constraints!(
     multiplier_ub = get_parameter_multiplier_array(container, parameter_type, T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        axes = JuMP.axes(variable)
-        set_name = [PSY.get_name(d) for d in contributing_devices]
-        @assert axes[2] == time_steps
+        set_name, set_time = JuMP.axes(variable)
+        @assert set_name == [PSY.get_name(d) for d in devices]
+        @assert set_time == time_steps
+
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
             container,
@@ -268,8 +269,9 @@ function add_feedforward_constraints!(
     affected_periods = ff.number_of_periods
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        axes = JuMP.axes(variable)
-        set_name = [PSY.get_name(d) for d in devices]
+        set_name, set_time = JuMP.axes(variable)
+        @assert set_name == [PSY.get_name(d) for d in devices]
+        @assert set_time == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
@@ -327,10 +329,9 @@ function add_feedforward_constraints!(
     multiplier = get_parameter_multiplier_array(container, parameter_type, T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        axes = JuMP.axes(variable)
-        set_name = [PSY.get_name(d) for d in devices]
-        @assert axes[2] == time_steps
-        var_type = get_entry_type(var)
+        set_name, set_time = JuMP.axes(variable)
+        @assert set_name == [PSY.get_name(d) for d in devices]
+        @assert set_time == time_steps
 
         for t in time_steps, name in set_name
             JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force = true)
@@ -378,9 +379,10 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         slack_var = get_variable(container, EnergyShortageVariable(), T)
-        axes = JuMP.axes(variable)
-        set_name = [PSY.get_name(d) for d in devices]
-        @assert axes[2] == time_steps
+        set_name, set_time = JuMP.axes(variable)
+        @assert set_name == [PSY.get_name(d) for d in devices]
+        @assert set_time == time_steps
+
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
             container,

@@ -10,8 +10,8 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
-    add_parameters!(container, ReactivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
     # Expression
     add_to_expression!(
@@ -54,7 +54,7 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
     # Parameters
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     # Expression
     add_to_expression!(
@@ -105,7 +105,7 @@ function construct_device!(
         S,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -208,7 +208,7 @@ function construct_device!(
         S,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -295,7 +295,7 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyBudgetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -401,7 +401,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
 
     # Parameters
-    add_parameters!(container, EnergyBudgetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -515,8 +515,8 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
-    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -657,8 +657,8 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
-    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -766,7 +766,7 @@ function construct_device!(
         S,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -868,7 +868,7 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter(), devices, model)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -969,7 +969,7 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    add_parameters!(container, EnergyBudgetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
     add_to_expression!(
         container,
@@ -1069,7 +1069,7 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyBudgetTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -1201,8 +1201,8 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
-    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -1333,8 +1333,8 @@ function construct_device!(
     )
 
     # Parameters
-    add_parameters!(container, EnergyTargetTimeSeriesParameter(), devices, model)
-    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -1436,8 +1436,8 @@ function construct_device!(
     end
 
     # Parameters
-    add_parameters!(container, InflowTimeSeriesParameter(), devices, model)
-    add_parameters!(container, OutflowTimeSeriesParameter(), devices, model)
+    add_parameters!(container, InflowTimeSeriesParameter, devices, model)
+    add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
