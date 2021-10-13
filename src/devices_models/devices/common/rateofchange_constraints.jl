@@ -1,3 +1,36 @@
+function _get_minutes_per_period(container::OptimizationContainer)
+    resolution = get_resolution(container)
+    if resolution > Dates.Minute(1)
+        minutes_per_period = Dates.value(Dates.Minute(resolution))
+    else
+        @warn("Not all formulations support under 1-minute resolutions. Exercise caution.")
+        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
+    end
+    return minutes_per_period
+end
+
+function _get_ramp_constraint_devices(
+    container::OptimizationContainer,
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+) where {U <: PSY.Component}
+    minutes_per_period = _get_minutes_per_period(container)
+    filtered_device = Vector{U}()
+    for d in devices
+        ramp_limits = PSY.get_ramp_limits(d)
+        if !(ramp_limits === nothing)
+            p_lims = PSY.get_active_power_limits(d)
+            max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
+            if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
+                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
+                continue
+            else
+                push!(filtered_device, d)
+            end
+        end
+    end
+    return filtered_device
+end
+
 @doc raw"""
 Constructs allowed rate-of-change constraints from variables, initial condtions, and rate data.
 
@@ -20,81 +53,58 @@ If t > 1:
 
 `` r^{down} \leq x_t - x_{t-1} \leq r^{up}, \forall t \geq 2 ``
 
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* rate_data::Tuple{Vector{String}, Vector{UpDown}} : gives name (1) and max ramp up/down rates (2)
-* initial_conditions::Vector{InitialCondition} : for time zero 'variable'
-* cons_name::Symbol : name of the constraint
-* var_name::Tuple{Symbol, Symbol, Symbol} : the name of the variable
 """
-function device_linear_rateofchange!(
+function add_linear_ramp_constraints!(
     container::OptimizationContainer,
-    rate_data::Vector{DeviceRampConstraintInfo},
-    cons_type::ConstraintType,
-    var_type::VariableType,
-    ::Type{T},
-) where {T <: PSY.Component}
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     parameters = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
+    variable = get_variable(container, U(), V)
+    ramp_devices = _get_ramp_constraint_devices(container, devices)
+    minutes_per_period = _get_minutes_per_period(container)
+    IC = _get_initial_condition_type(T, V, W)
+    initial_conditions_power = get_initial_condition(container, IC(), V)
+    expr_dn = get_expression(container, ActivePowerRangeExpressionLB(), V)
+    expr_up = get_expression(container, ActivePowerRangeExpressionUB(), V)
 
-    variable = get_variable(container, var_type, T)
+    set_name = [PSY.get_name(r) for r in ramp_devices]
+    con_up = add_cons_container!(container, T(), V, set_name, time_steps, meta = "up")
+    con_down = add_cons_container!(container, T(), V, set_name, time_steps, meta = "dn")
 
-    set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "up")
-    con_down =
-        add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "dn")
-
-    for r in rate_data
-        name = get_component_name(r)
-        ic_power = get_value(get_ic_power(r))
+    for ic in initial_conditions_power
+        name = get_component_name(ic)
+        # This is to filter out devices that dont need a ramping constraint
+        name ∉ set_name && continue
+        ramp_limits = PSY.get_ramp_limits(get_component(ic))
+        ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
         @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
-        expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in r.additional_terms_ub
-            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, 1])
-        end
         con_up[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
-            expression_ub - ic_power <= r.ramp_limits.up
+            expr_up[name, 1] - ic_power <= ramp_limits.up * minutes_per_period
         )
-        expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in r.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(container, val)[name, 1],
-                -1.0,
-            )
-        end
         con_down[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
-            ic_power - expression_lb <= r.ramp_limits.down
+            ic_power - expr_dn[name, 1] <= ramp_limits.down * minutes_per_period
         )
-    end
-
-    for t in time_steps[2:end], r in rate_data
-        name = get_component_name(r)
-        expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in r.additional_terms_ub
-            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, t])
-        end
-        con_up[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_ub - variable[name, t - 1] <= r.ramp_limits.up
-        )
-        expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in r.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(container, val)[name, t],
-                -1.0,
+        for t in time_steps[2:end]
+            con_up[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                expr_up[name, t] - variable[name, t - 1] <=
+                ramp_limits.up * minutes_per_period
+            )
+            con_down[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                variable[name, t - 1] - expr_dn[name, t] <=
+                ramp_limits.down * minutes_per_period
             )
         end
-        con_down[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            variable[name, t - 1] - expression_lb <= r.ramp_limits.down
-        )
     end
-
     return
 end
 
@@ -119,191 +129,64 @@ If t > 1:
 `` r^{down} + r^{min} x^{stop}_1 \leq x_1 - x_{init} \leq r^{up} + r^{max} x^{start}_1, \text{ for } t = 1 ``
 
 `` r^{down} + r^{min} x^{stop}_t \leq x_t - x_{t-1} \leq r^{up} + r^{max} x^{start}_t, \forall t \geq 2 ``
-
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}} : (1) gives name
-                                                                     (2) gives min/max ramp rates
-                                                                     (3) gives min/max for 'variable'
-* initial_conditions::Vector{InitialCondition} : for time zero 'variable'
-* cons_name::Symbol : name of the constraint
-* var_keys::Tuple{VariableKey, VariableKey, VariableKey} : the names of the variables
-- : var_keys[1] : 'variable'
-- : var_keys[2] : 'varstart'
-- : var_keys[3] : 'varstop'
 """
-function device_mixedinteger_rateofchange!(
+function add_semicontinuous_ramp_constraints!(
     container::OptimizationContainer,
-    rate_data::Vector{DeviceRampConstraintInfo},
-    cons_type::ConstraintType,
-    var_types::Tuple{VariableType, VariableType, VariableType},
-    ::Type{T},
-) where {T <: PSY.Component}
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     parameters = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
+    variable = get_variable(container, U(), V)
+    varstart = get_variable(container, StartVariable(), V)
+    varstop = get_variable(container, StopVariable(), V)
 
-    variable = get_variable(container, var_types[1], T)
-    varstart = get_variable(container, var_types[2], T)
-    varstop = get_variable(container, var_types[3], T)
+    ramp_devices = _get_ramp_constraint_devices(container, devices)
+    minutes_per_period = _get_minutes_per_period(container)
+    IC = _get_initial_condition_type(T, V, W)
+    initial_conditions_power = get_initial_condition(container, IC(), V)
+    expr_dn = get_expression(container, ActivePowerRangeExpressionLB(), V)
+    expr_up = get_expression(container, ActivePowerRangeExpressionUB(), V)
 
-    set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "up")
-    con_down =
-        add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "dn")
+    set_name = [PSY.get_name(r) for r in ramp_devices]
+    con_up = add_cons_container!(container, T(), V, set_name, time_steps, meta = "up")
+    con_down = add_cons_container!(container, T(), V, set_name, time_steps, meta = "dn")
 
-    for r in rate_data
-        name = get_component_name(r)
-        ic_power = get_value(get_ic_power(r))
+    for ic in initial_conditions_power
+        name = get_component_name(ic)
+        # This is to filter out devices that dont need a ramping constraint
+        name ∉ set_name && continue
+        device = get_component(ic)
+        ramp_limits = PSY.get_ramp_limits(device)
+        power_limits = PSY.get_active_power_limits(device)
+        ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
         @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
-        expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in r.additional_terms_ub
-            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, 1])
-        end
         con_up[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
-            expression_ub - (ic_power) <=
-            r.ramp_limits.up + r.limits.max * varstart[name, 1]
+            expr_up[name, 1] - ic_power <=
+            ramp_limits.up * minutes_per_period + power_limits.max * varstart[name, 1]
         )
-        expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in r.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(container, val)[name, 1],
-                -1.0,
-            )
-        end
         con_down[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
-            (ic_power) - expression_lb <=
-            r.ramp_limits.down + r.limits.min * varstop[name, 1]
+            ic_power - expr_dn[name, 1] <=
+            ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, 1]
         )
-    end
-
-    for t in time_steps[2:end], r in rate_data
-        name = get_component_name(r)
-        expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in r.additional_terms_ub
-            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, t])
-        end
-        con_up[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_ub - variable[name, t - 1] <=
-            r.ramp_limits.up + r.limits.max * varstart[name, t]
-        )
-        expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in r.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(container, val)[name, t],
-                -1.0,
+        for t in time_steps[2:end]
+            con_up[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                expr_up[name, t] - variable[name, t - 1] <=
+                ramp_limits.up * minutes_per_period + power_limits.max * varstart[name, t]
+            )
+            con_down[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                variable[name, t - 1] - expr_dn[name, t] <=
+                ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, t]
             )
         end
-        con_down[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            variable[name, t - 1] - expression_lb <=
-            r.ramp_limits.down + r.limits.min * varstop[name, t]
-        )
     end
-
-    return
-end
-
-@doc raw"""
-Constructs allowed rate-of-change constraints from variables, initial condtions, start/stop status, and rate data
-
-# Equations
-If t = 1:
-
-``` variable[name, 1] - initial_conditions[ix].value <= rate_data[1][ix].up ```
-
-``` initial_conditions[ix].value - variable[name, 1] <= rate_data[1][ix].down ```
-
-If t > 1:
-
-``` variable[name, t] - variable[name, t-1] <= rate_data[1][ix].up  ```
-
-``` variable[name, t-1] - variable[name, t] <= rate_data[1][ix].down ```
-
-# LaTeX
-
-`` r^{down}  \leq x_1 - x_{init} \leq r^{up}  \text{ for } t = 1 ``
-
-`` r^{down} \leq x_t - x_{t-1} \leq r^{up}  \forall t \geq 2 ``
-
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}} : (1) gives name
-                                                                     (2) gives min/max ramp rates
-                                                                     (3) gives min/max for 'variable'
-* initial_conditions::Vector{InitialCondition} : for time zero 'variable'
-* cons_name::Symbol : name of the constraint
-* var_keys::Tuple{VariableKey, VariableKey, VariableKey} : the names of the variables
-- : var_name : 'variable'
-"""
-function device_multistart_rateofchange!(
-    container::OptimizationContainer,
-    rate_data::Vector{DeviceRampConstraintInfo},
-    cons_type::ConstraintType,
-    var_type::VariableType,
-    ::Type{T},
-) where {T <: PSY.Component}
-    time_steps = get_time_steps(container)
-    variable = get_variable(container, var_type, T)
-
-    set_name = [get_component_name(r) for r in rate_data]
-    con_up = add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "up")
-    con_down =
-        add_cons_container!(container, cons_type, T, set_name, time_steps, meta = "dn")
-
-    for r in rate_data
-        name = get_component_name(r)
-        ic_power = get_value(get_ic_power(r))
-        expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in r.additional_terms_ub
-            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, 1])
-        end
-        con_up[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_ub - (ic_power) <= r.ramp_limits.up
-        )
-        expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in r.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(container, val)[name, 1],
-                1.0,
-            )
-        end
-        con_down[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
-            (ic_power) - expression_lb <= r.ramp_limits.down
-        )
-    end
-
-    for t in time_steps[2:end], r in rate_data
-        name = get_component_name(r)
-        expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in r.additional_terms_ub
-            JuMP.add_to_expression!(expression_ub, get_variable(container, val)[name, t])
-        end
-        con_up[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_ub - variable[name, t - 1] <= r.ramp_limits.up
-        )
-        expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in r.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(container, val)[name, t],
-                1.0,
-            )
-        end
-        con_down[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            variable[name, t - 1] - expression_lb <= r.ramp_limits.down
-        )
-    end
-
     return
 end
