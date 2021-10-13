@@ -1,7 +1,3 @@
-function get_optimization_container_key(ff::AbstractAffectFeedForward)
-    return ff.optimization_container_key
-end
-
 function get_affected_values(ff::AbstractAffectFeedForward)
     return ff.affected_values
 end
@@ -38,6 +34,7 @@ struct UpperBoundFeedForward <: AbstractAffectFeedForward
 end
 
 get_default_parameter_type(::UpperBoundFeedForward, _) = UpperBoundValueParameter()
+get_optimization_container_key(ff::UpperBoundFeedForward) = ff.optimization_container_key
 
 """
 Adds a lower bound constraint to a variable.
@@ -66,6 +63,7 @@ struct LowerBoundFeedForward <: AbstractAffectFeedForward
 end
 
 get_default_parameter_type(::LowerBoundFeedForward, _) = LowerBoundValueParameter()
+get_optimization_container_key(ff::LowerBoundFeedForward) = ff.optimization_container_key
 
 """
 Adds a constraint to make the bounds of a variable 0.0. Effectively allows to "turn off" a value.
@@ -94,6 +92,7 @@ struct SemiContinuousFeedForward <: AbstractAffectFeedForward
 end
 
 get_default_parameter_type(::SemiContinuousFeedForward, _) = OnStatusParameter()
+get_optimization_container_key(f::SemiContinuousFeedForward) = f.optimization_container_key
 
 """
 Adds a constraint to limit the sum of a variable over the number of periods to the source value
@@ -157,6 +156,7 @@ struct FixValueFeedForward <: AbstractAffectFeedForward
 end
 
 get_default_parameter_type(::FixValueFeedForward, _) = FixValueParameter()
+get_optimization_container_key(ff::FixValueFeedForward) = ff.optimization_container_key
 
 """
 Adds a constraint to enforce a minimum energy level target with a slack variable associated witha penalty term.
@@ -194,3 +194,4 @@ struct EnergyTargetFeedForward <: AbstractAffectFeedForward
 end
 
 get_default_parameter_type(::EnergyTargetFeedForward, _) = EnergyTargetParameter()
+get_optimization_container_key(ff::EnergyTargetFeedForward) = ff.optimization_container_key
