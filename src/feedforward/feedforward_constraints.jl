@@ -363,7 +363,6 @@ Constructs a equality constraint to a fix a variable in one model using the vari
 * devices::IS.FlattenIteratorWrapper{T} : list of devices
 * ff::EnergyTargetFeedForward : a instance of the FixValue FeedForward
 """
-
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
@@ -392,17 +391,17 @@ function add_feedforward_constraints!(
             meta = "$(var_type)target",
         )
 
-        for name in set_name
-            t = target_period
+        for d in devices
+            name = PSY.get_name(d)
             con_ub[name] = JuMP.@constraint(
                 container.JuMPmodel,
-                variable[name, t] + slack_var[name, t] >=
-                param[name, t] * multiplier[name, t]
+                variable[name, target_period] + slack_var[name, target_period] >=
+                param[name, target_period] * multiplier[name, target_period]
             )
             linear_gen_cost!(
                 container,
-                VariableKey(EnergyShortageVariable, T),
-                name,
+                EnergyShortageVariable(),
+                d,
                 penalty_cost,
                 target_period,
             )
