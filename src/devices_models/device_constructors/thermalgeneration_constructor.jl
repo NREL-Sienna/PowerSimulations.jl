@@ -15,6 +15,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 function construct_device!(
@@ -26,6 +27,7 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     # FixedOutput doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel
+    return
 end
 
 """
@@ -76,24 +78,25 @@ function construct_device!(
     )
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 """
@@ -112,36 +115,22 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -149,30 +138,17 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        CommitmentConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    add_constraints!(
-        container,
-        DurationConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, DurationConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 """
@@ -215,24 +191,25 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 """
@@ -250,60 +227,34 @@ function construct_device!(
     S <: PM.AbstractActivePowerModel,
 }
     devices = get_available_components(T, sys)
-    # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
 
-    add_constraints!(
-        container,
-        CommitmentConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    add_constraints!(
-        container,
-        DurationConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, DurationConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
+
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 """
@@ -346,24 +297,26 @@ function construct_device!(
     )
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 """
@@ -379,36 +332,22 @@ function construct_device!(
     devices = get_available_components(T, sys)
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
 
     add_constraints!(
         container,
@@ -417,21 +356,15 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        CommitmentConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 """
@@ -465,24 +398,26 @@ function construct_device!(
     )
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 """
@@ -498,50 +433,31 @@ function construct_device!(
     devices = get_available_components(T, sys)
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
-
     add_constraints!(
         container,
-        CommitmentConstraint,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
+
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 """
@@ -551,17 +467,17 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, ThermalRampLimited},
+    model::DeviceModel{T, ThermalStandardDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, ThermalRampLimited())
-    add_variables!(container, ReactivePowerVariable, devices, ThermalRampLimited())
+    add_variables!(container, ActivePowerVariable, devices, ThermalStandardDispatch())
+    add_variables!(container, ReactivePowerVariable, devices, ThermalStandardDispatch())
 
     # Initial Conditions
-    initial_conditions!(container, devices, ThermalRampLimited())
+    initial_conditions!(container, devices, ThermalStandardDispatch())
 
     add_to_expression!(
         container,
@@ -582,24 +498,25 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 """
@@ -609,42 +526,28 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, ThermalRampLimited},
+    model::DeviceModel{T, ThermalStandardDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
 
     add_constraints!(
         container,
@@ -653,14 +556,15 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 """
@@ -670,16 +574,16 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, ThermalRampLimited},
+    model::DeviceModel{T, ThermalStandardDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
     # Variables
-    add_variables!(container, ActivePowerVariable, devices, ThermalRampLimited())
+    add_variables!(container, ActivePowerVariable, devices, ThermalStandardDispatch())
 
     # Initial Conditions
-    initial_conditions!(container, devices, ThermalRampLimited())
+    initial_conditions!(container, devices, ThermalStandardDispatch())
 
     add_to_expression!(
         container,
@@ -692,24 +596,25 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 """
@@ -719,49 +624,36 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, ThermalRampLimited},
+    model::DeviceModel{T, ThermalStandardDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
-    # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
 
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 function construct_device!(
@@ -800,24 +692,24 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -834,36 +726,22 @@ function construct_device!(
     devices = get_available_components(T, sys)
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
 
     add_constraints!(
         container,
@@ -872,13 +750,14 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(container, devices, model, get_feedforward(model))
+
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 function construct_device!(
@@ -908,24 +787,25 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 function construct_device!(
@@ -942,40 +822,28 @@ function construct_device!(
     devices = get_available_components(T, sys)
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
+    return
 end
 
 function construct_device!(
@@ -1012,6 +880,7 @@ function construct_device!(
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
+
     # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
@@ -1035,24 +904,25 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 function construct_device!(
@@ -1066,36 +936,22 @@ function construct_device!(
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
 
     add_constraints!(
         container,
@@ -1104,69 +960,22 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        CommitmentConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    add_constraints!(
-        container,
-        DurationConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        StartupTimeLimitTemperatureConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        StartTypeConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        StartupInitialConditionConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        MustRunConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        ActiveRangeICConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, DurationConstraint, devices, model, S)
+    add_constraints!(container, StartupTimeLimitTemperatureConstraint, devices, model, S)
+    add_constraints!(container, StartTypeConstraint, devices, model, S)
+    add_constraints!(container, StartupInitialConditionConstraint, devices, model, S)
+    add_constraints!(container, MustRunConstraint, devices, model, S)
+    add_constraints!(container, ActiveRangeICConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
+
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 function construct_device!(
@@ -1208,24 +1017,25 @@ function construct_device!(
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -1241,96 +1051,36 @@ function construct_device!(
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
     add_constraints!(
         container,
-        CommitmentConstraint,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
         devices,
         model,
         S,
-        get_feedforward(model),
-    )
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    add_constraints!(
-        container,
-        DurationConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
-        StartupTimeLimitTemperatureConstraint,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        StartTypeConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        StartupInitialConditionConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        MustRunConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        ActiveRangeICConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, DurationConstraint, devices, model, S)
+    add_constraints!(container, StartupTimeLimitTemperatureConstraint, devices, model, S)
+    add_constraints!(container, StartTypeConstraint, devices, model, S)
+    add_constraints!(container, StartupInitialConditionConstraint, devices, model, S)
+    add_constraints!(container, MustRunConstraint, devices, model, S)
+    add_constraints!(container, ActiveRangeICConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
+
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 end
 
@@ -1379,24 +1129,26 @@ function construct_device!(
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 function construct_device!(
@@ -1408,36 +1160,23 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
+
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -1445,30 +1184,17 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        CommitmentConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    add_constraints!(
-        container,
-        DurationConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, DurationConstraint, devices, model, S)
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_feedforward_constraints!(container, model, devices)
+
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 function construct_device!(
@@ -1510,24 +1236,25 @@ function construct_device!(
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 function construct_device!(
@@ -1539,57 +1266,33 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
     add_constraints!(
         container,
-        CommitmentConstraint,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
     add_constraints!(
         container,
-        DurationConstraint,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(container, devices, model, get_feedforward(model))
+
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, DurationConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
+
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 function construct_device!(
@@ -1606,13 +1309,15 @@ function construct_device!(
     add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
 
     # Aux Variables
-    # add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+    add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+
+    add_parameters!(container, OnStatusParameter(), devices, model)
+
+    add_feedforward_arguments!(container, model, devices)
 
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
-    # This isn't working properly since it isn't adding to the nodal expression the min power
-    # we need to add an extra term to the expressions with the mins
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1623,24 +1328,42 @@ function construct_device!(
     )
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    return
 end
 
 function construct_device!(
@@ -1653,36 +1376,23 @@ function construct_device!(
     devices = PSY.get_components(T, sys)
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
+
     add_constraints!(
         container,
         ReactivePowerVariableLimitsConstraint,
@@ -1690,13 +1400,15 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, RampConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
+
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 function construct_device!(
@@ -1712,10 +1424,12 @@ function construct_device!(
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
 
     # Aux Variables
-    # add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
+    add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
-    # This isn't working properly since it isn't adding to the nodal expression the min power
-    # we need to add an extra term to the expressions with the mins
+    add_parameters!(container, OnStatusParameter(), devices, model)
+
+    add_feedforward_arguments!(container, model, devices)
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1725,30 +1439,30 @@ function construct_device!(
         S,
     )
 
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
     # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    if has_service_model(model)
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-        )
-    end
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    return
 end
 
 function construct_device!(
@@ -1761,39 +1475,29 @@ function construct_device!(
     devices = PSY.get_components(T, sys)
 
     # Constraints
-    if has_service_model(model)
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionLB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            ActivePowerRangeExpressionUB,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    else
-        add_constraints!(
-            container,
-            ActivePowerVariableLimitsConstraint,
-            PowerAboveMinimumVariable,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-    end
-    add_constraints!(container, RampConstraint, devices, model, S, get_feedforward(model))
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
+
+    add_constraints!(container, RampConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
+
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end

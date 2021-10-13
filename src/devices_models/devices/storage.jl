@@ -12,46 +12,37 @@ get_variable_multiplier(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) 
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ReserveRangeExpressionUB
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Storage}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ReserveRangeExpressionLB
 ########################### ActivePowerInVariable, Storage #################################
-
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_input_active_power_limits(d).max
 get_variable_multiplier(::ActivePowerInVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = -1.0
 
 ########################### ActivePowerOutVariable, Storage #################################
-
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
-
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_output_active_power_limits(d).max
 get_variable_multiplier(::ActivePowerOutVariable, d::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
 
 ############## ReactivePowerVariable, Storage ####################
-get_variable_multiplier(::PowerSimulations.ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
+get_variable_multiplier(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = 1.0
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 
 ############## EnergyVariable, Storage ####################
-
 get_variable_binary(::EnergyVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_state_of_charge_limits(d).max
 get_variable_lower_bound(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_state_of_charge_limits(d).min
 get_variable_warm_start_value(::EnergyVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
 
 ############## ReservationVariable, Storage ####################
-
 get_variable_binary(::ReservationVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = true
-
 get_efficiency(v::T, var::Type{<:InitialConditionType}) where T <: PSY.Storage = PSY.get_efficiency(v)
 
 ############## EnergyShortageVariable, Storage ####################
-
 get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_lower_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_upper_bound(::EnergyShortageVariable, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_rating(d)
 
 ############## EnergySurplusVariable, Storage ####################
-
 get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = false
 get_variable_upper_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = 0.0
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStorageFormulation) = - PSY.get_rating(d)
@@ -59,10 +50,15 @@ get_variable_lower_bound(::EnergySurplusVariable, d::PSY.Storage, ::AbstractStor
 #################### Initial Conditions for models ###############
 initial_condition_default(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = PSY.get_initial_energy(d)
 initial_condition_variable(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStorageFormulation) = EnergyVariable()
+
+########################### Parameter related set functions ################################
+get_parameter_multiplier(::VariableValueParameter, d::PSY.Storage, ::AbstractStorageFormulation) = 1.0
+get_initial_parameter_value(::VariableValueParameter, d::PSY.Storage, ::AbstractStorageFormulation) = 1.0
+
 #! format: on
 
 get_initial_conditions_device_model(
-    ::DeviceModel{T, <:AbstractDeviceFormulation},
+    ::DeviceModel{T, <:AbstractStorageFormulation},
 ) where {T <: PSY.Storage} = DeviceModel(T, BookKeeping)
 
 get_multiplier_value(
@@ -124,12 +120,11 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
     if get_attribute(model, "reservation")
-        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_range_constraints!(container, T, U, devices, model, X)
     end
 end
 
@@ -164,10 +159,16 @@ function add_constraints!(
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    ::Type{X},
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
+    add_range_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        X,
+    )
 end
 
 ############################ book keeping constraints ######################################
@@ -181,7 +182,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
@@ -231,7 +231,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
     time_steps = get_time_steps(container)
     var_e = get_variable(container, EnergyVariable(), T)
@@ -277,7 +276,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
     time_steps = get_time_steps(container)
     var_in = get_variable(container, ActivePowerInVariable(), T)
@@ -328,7 +326,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Storage, W <: EnergyTarget, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]

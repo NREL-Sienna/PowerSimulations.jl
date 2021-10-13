@@ -56,13 +56,17 @@ end
 set_addtional_linear_terms!(spec::AddCostSpec, key, value) =
     spec.addtional_linear_terms[key] = value
 
-function add_service_variables!(spec::AddCostSpec, services)
-    for service in services
-        name = PSY.get_name(service)
+function add_service_variables!(spec::AddCostSpec, service_models)
+    for service_model in service_models
+        name = get_service_name(service_model)
         set_addtional_linear_terms!(
             spec,
             name,
-            VariableKey(ActivePowerReserveVariable, typeof(service), name),
+            VariableKey(
+                ActivePowerReserveVariable,
+                get_component_type(service_model),
+                name,
+            ),
         )
     end
     return
@@ -74,15 +78,14 @@ Add variables to the OptimizationContainer for a service.
 function cost_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
 ) where {T <: PSY.Component, U <: AbstractDeviceFormulation}
     for d in devices
         spec = AddCostSpec(T, U, container)
         @debug T, spec _group = LOG_GROUP_COST_FUNCTIONS
-        services = PSY.get_services(d)
-        add_service_variables!(spec, services)
+        service_models = get_services(model)
+        add_service_variables!(spec, service_models)
         add_to_cost!(container, spec, PSY.get_operation_cost(d), d)
     end
     return
@@ -167,7 +170,7 @@ function pwlparamcheck(cost)
     return slope_convexity_check(slopes[2:end])
 end
 
-function linear_gen_cost!(
+function _linear_gen_cost!(
     container::OptimizationContainer,
     var_key::VariableKey,
     component::PSY.Component,
@@ -180,6 +183,23 @@ function linear_gen_cost!(
     variable = get_variable(container, var_key)[component_name, time_period]
     gen_cost = sum(variable) * linear_term
     add_to_cost_expression!(container, gen_cost * dt, component, time_period)
+    return
+end
+
+function linear_gen_cost!(
+    container::OptimizationContainer,
+    ::T,
+    component::U,
+    linear_term::Float64,
+    time_period::Int,
+) where {T <: VariableType, U <: PSY.Component}
+    _linear_gen_cost!(
+        container::OptimizationContainer,
+        VariableKey(T, U),
+        component::PSY.Component,
+        linear_term::Float64,
+        time_period::Int,
+    )
     return
 end
 
@@ -364,13 +384,7 @@ function add_to_cost!(
     if !(spec.fixed_cost === nothing) && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
-                container,
-                VariableKey(OnVariable, spec.component_type),
-                component,
-                spec.fixed_cost,
-                t,
-            )
+            linear_gen_cost!(container, OnVariable(), component, spec.fixed_cost, t)
         end
     end
     return
@@ -409,7 +423,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(StartVariable, spec.component_type),
+                StartVariable(),
                 component,
                 spec.start_up_cost(cost_data) * spec.multiplier,
                 t,
@@ -422,7 +436,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(StopVariable, spec.component_type),
+                StopVariable(),
                 component,
                 spec.shut_down_cost(cost_data) * spec.multiplier,
                 t,
@@ -435,7 +449,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(OnVariable, spec.component_type),
+                OnVariable(),
                 component,
                 spec.fixed_cost(cost_data) * spec.multiplier,
                 t,
@@ -475,7 +489,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(OnVariable, spec.component_type),
+                OnVariable(),
                 component,
                 spec.fixed_cost(cost_data) * spec.multiplier,
                 t,
@@ -488,7 +502,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(StopVariable, spec.component_type),
+                StopVariable(),
                 component,
                 spec.shut_down_cost(cost_data) * spec.multiplier,
                 t,
@@ -519,11 +533,10 @@ function add_to_cost!(
         start_cost_data = PSY.get_start_up(cost_data)
         if spec.has_multistart_variables
             for (st, var_type) in enumerate(START_VARIABLES)
-                var_name = VariableKey(var_type, spec.component_type)
                 for t in time_steps
                     linear_gen_cost!(
                         container,
-                        var_name,
+                        var_type(),
                         component,
                         start_cost_data[st] * spec.multiplier,
                         t,
@@ -531,11 +544,10 @@ function add_to_cost!(
                 end
             end
         else
-            start_var = VariableKey(StartVariable, spec.component_type)
             for t in time_steps
                 linear_gen_cost!(
                     container,
-                    start_var,
+                    StartVariable(),
                     component,
                     start_cost_data[1] * spec.multiplier,
                     t,
@@ -577,11 +589,10 @@ function add_to_cost!(
         start_cost_data = spec.start_up_cost(cost_data)
         if spec.has_multistart_variables
             for (st, var_type) in enumerate(START_VARIABLES)
-                var_name = VariableKey(var_type, spec.component_type)
                 for t in time_steps
                     linear_gen_cost!(
                         container,
-                        var_name,
+                        var_type(),
                         component,
                         start_cost_data[st] * spec.multiplier,
                         t,
@@ -589,11 +600,10 @@ function add_to_cost!(
                 end
             end
         else
-            start_var = VariableKey(StartVariable, spec.component_type)
             for t in time_steps
                 linear_gen_cost!(
                     container,
-                    start_var,
+                    StartVariable(),
                     component,
                     start_cost_data[1] * spec.multiplier,
                     t,
@@ -607,7 +617,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(OnVariable, spec.component_type),
+                OnVariable(),
                 component,
                 PSY.get_no_load(cost_data) * spec.multiplier,
                 t,
@@ -620,7 +630,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(StopVariable, spec.component_type),
+                StopVariable(),
                 component,
                 spec.shut_down_cost(cost_data) * spec.multiplier,
                 t,
@@ -665,11 +675,10 @@ function add_to_cost!(
 
     if !(spec.start_up_cost === nothing)
         start_cost_data = spec.start_up_cost(cost_data)
-        var_name = VariableKey(StartVariable, spec.component_type)
         for t in time_steps
             linear_gen_cost!(
                 container,
-                var_name,
+                StartVariable(),
                 component,
                 start_cost_data.hot * spec.multiplier,
                 t,
@@ -682,7 +691,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(OnVariable, spec.component_type),
+                OnVariable(),
                 component,
                 PSY.get_no_load(cost_data) * spec.multiplier,
                 t,
@@ -695,7 +704,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(StopVariable, spec.component_type),
+                StopVariable(),
                 component,
                 spec.shut_down_cost(cost_data) * spec.multiplier,
                 t,
@@ -790,7 +799,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(OnVariable, spec.component_type),
+                OnVariable(),
                 component,
                 spec.fixed_cost(cost_data) * spec.multiplier,
                 t,
@@ -803,7 +812,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(StartVariable, spec.component_type),
+                StartVariable(),
                 component,
                 cost_data.spec.start_up_cost(cost_data) * spec.multiplier,
                 t,
@@ -816,7 +825,7 @@ function add_to_cost!(
         for t in time_steps
             linear_gen_cost!(
                 container,
-                VariableKey(StopVariable, spec.component_type),
+                StopVariable(),
                 component,
                 spec.shut_down_cost(cost_data) * spec.multiplier,
                 t,
@@ -829,14 +838,14 @@ function add_to_cost!(
     for t in time_steps
         linear_gen_cost!(
             container,
-            VariableKey(EnergySurplusVariable, spec.component_type),
+            EnergySurplusVariable(),
             component,
             cost_data.energy_surplus_cost * OBJECTIVE_FUNCTION_NEGATIVE * base_power,
             t,
         )
         linear_gen_cost!(
             container,
-            VariableKey(EnergyShortageVariable, spec.component_type),
+            EnergyShortageVariable(),
             component,
             cost_data.energy_shortage_cost * spec.multiplier * base_power,
             t,
@@ -886,11 +895,10 @@ function variable_cost!(
 )
     @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     base_power = get_base_power(container)
-    var_name = VariableKey(spec.variable_type, spec.component_type)
     cost_data = PSY.get_cost(cost_component)
     linear_gen_cost!(
         container,
-        var_name,
+        spec.variable_type(),
         component,
         cost_data * spec.multiplier * base_power,
         time_period,
@@ -928,13 +936,15 @@ function variable_cost!(
 )
     base_power = get_base_power(container)
     component_name = PSY.get_name(component)
-    var_key = VariableKey(spec.variable_type, spec.component_type)
     cost_data = PSY.get_cost(cost_component)
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     if cost_data[1] >= eps()
-        @debug "Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-        resolution = get_resolution(container)
-        dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-        variable = get_variable(container, var_key)[component_name, time_period]
+        @debug "$component_name Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+        variable = get_variable(container, spec.variable_type(), spec.component_type)[
+            component_name,
+            time_period,
+        ]
         gen_cost =
             sum((variable .* base_power) .^ 2) * cost_data[1] +
             sum(variable .* base_power) * cost_data[2]
@@ -945,13 +955,13 @@ function variable_cost!(
             time_period,
         )
     else
-        @debug "Quadratic Variable Cost with only linear term" _group =
+        @debug "$component_name Quadratic Variable Cost with only linear term" _group =
             LOG_GROUP_COST_FUNCTIONS component_name
         linear_gen_cost!(
             container,
-            var_key,
+            spec.variable_type(),
             component,
-            cost_data[2] * spec.multiplier * base_power,
+            cost_data[2] * spec.multiplier * base_power * dt,
             time_period,
         )
     end

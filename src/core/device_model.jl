@@ -30,7 +30,7 @@ thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
 ```
 """
 mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
-    feedforward::Union{Nothing, AbstractAffectFeedForward}
+    feedforwards::Vector{<:AbstractAffectFeedForward}
     use_slacks::Bool
     duals::Vector{DataType}
     services::Vector{ServiceModel}
@@ -40,7 +40,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     function DeviceModel(
         ::Type{D},
         ::Type{B};
-        feedforward = nothing,
+        feedforwards = Vector{AbstractAffectFeedForward}(),
         use_slacks = false,
         duals = Vector{DataType}(),
         time_series_names = get_default_time_series_names(D, B),
@@ -49,7 +49,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)
         new{D, B}(
-            feedforward,
+            feedforwards,
             use_slacks,
             duals,
             Vector{ServiceModel}(),
@@ -65,7 +65,7 @@ get_component_type(
 get_formulation(
     ::DeviceModel{D, B},
 ) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = B
-get_feedforward(m::DeviceModel) = m.feedforward
+get_feedforwards(m::DeviceModel) = m.feedforwards
 get_services(m::DeviceModel) = m.services
 get_services(::Nothing) = nothing
 get_use_slacks(m::DeviceModel) = m.use_slacks

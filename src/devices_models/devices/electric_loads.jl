@@ -65,7 +65,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ElectricLoad, W <: AbstractControllablePowerLoadFormulation}
     time_steps = get_time_steps(container)
     constraint = add_cons_container!(
@@ -92,7 +91,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
     add_parameterized_upper_bound_range_constraints(
         container,
@@ -102,7 +100,6 @@ function add_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -113,7 +110,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.ControllableLoad, W <: InterruptiblePowerLoad}
     add_parameterized_upper_bound_range_constraints(
         container,
@@ -123,7 +119,6 @@ function add_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 

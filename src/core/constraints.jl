@@ -20,9 +20,10 @@ struct EnergyTargetConstraint <: ConstraintType end
 struct EnergyShortageVariableLimitsConstraint <: ConstraintType end
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardBinConstraint <: ConstraintType end
-struct FeedforwardConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
-struct FeedforwardUBConstraint <: ConstraintType end
+struct FeedforwardUpperBoundConstraint <: ConstraintType end
+struct FeedforwardLowerBoundConstraint <: ConstraintType end
+struct FeedforwardEnergyTargetConstraint <: ConstraintType end
 struct FlowActivePowerConstraint <: ConstraintType end
 struct FlowActivePowerFromToConstraint <: ConstraintType end
 struct FlowActivePowerToFromConstraint <: ConstraintType end

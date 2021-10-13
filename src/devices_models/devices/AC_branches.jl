@@ -104,7 +104,7 @@ function branch_rate_bounds!(
     return
 end
 
-#################################### Rate Limits constraint_infos ###############################
+################################## Rate Limits constraint_infos ############################
 
 """
 Min and max limits for Abstract Branch Formulation
@@ -126,17 +126,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     X::Type{<:PM.AbstractActivePowerModel},
-    feedforward::Nothing,
 ) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
-    add_range_constraints!(
-        container,
-        cons_type,
-        FlowActivePowerVariable,
-        devices,
-        model,
-        X,
-        feedforward,
-    )
+    add_range_constraints!(container, cons_type, FlowActivePowerVariable, devices, model, X)
 end
 
 """
@@ -148,7 +139,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{T},
-    ::Nothing,
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -177,7 +167,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{T},
-    ::Nothing,
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -206,7 +195,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{S},
-    ::Nothing,
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     ptdf = get_PTDF(network_model)
     branches = PSY.get_name.(devices)
@@ -214,7 +202,6 @@ function add_constraints!(
     branch_flow =
         add_cons_container!(container, NetworkFlowConstraint(), B, branches, time_steps)
     nodal_balance_expressions = get_expression(container, ActivePowerBalance(), S)
-    remove_undef!(nodal_balance_expressions)
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(container)
     for br in devices
@@ -265,7 +252,6 @@ function branch_flow_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     X::Type{<:PM.AbstractDCPModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.MonitoredLine, U <: AbstractBranchFormulation}
     add_range_constraints!(
         container,
@@ -274,7 +260,6 @@ function branch_flow_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -286,7 +271,6 @@ function branch_flow_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractDCPModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
     nothing
 end
@@ -337,7 +321,6 @@ function branch_flow_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.MonitoredLine, U <: AbstractBranchFormulation}
     add_range_constraints!(
         container,
@@ -346,7 +329,6 @@ function branch_flow_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
     add_range_constraints!(
         container,
@@ -355,7 +337,6 @@ function branch_flow_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -367,7 +348,6 @@ function branch_flow_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
     nothing
 end

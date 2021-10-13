@@ -42,6 +42,7 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -61,7 +62,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -70,7 +70,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -79,28 +78,11 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -145,6 +127,7 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -167,7 +150,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -176,28 +158,13 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -256,6 +223,7 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -275,7 +243,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -284,7 +251,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -293,41 +259,17 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        EnergyTargetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
-
     return
 end
 
@@ -375,6 +317,7 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -394,7 +337,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -403,40 +345,16 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        EnergyTargetConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
-
+    cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -489,6 +407,7 @@ function construct_device!(
         add_expressions!(container, ReserveRangeExpressionLB, devices, model)
         add_expressions!(container, ReserveRangeExpressionUB, devices, model)
     end
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -508,7 +427,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -517,7 +435,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -526,46 +443,17 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     if has_service_model(model)
-        add_constraints!(
-            container,
-            ReserveEnergyConstraint,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            RangeLimitConstraint,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
+        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, RangeLimitConstraint, devices, model, S)
     end
+    add_feedforward_constraints!(container, model, devices)
+
     add_constraint_dual!(container, sys, model)
 
     return
@@ -610,6 +498,7 @@ function construct_device!(
         add_expressions!(container, ReserveRangeExpressionLB, devices, model)
         add_expressions!(container, ReserveRangeExpressionUB, devices, model)
     end
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
@@ -629,7 +518,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -638,46 +526,18 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        container,
-        EnergyCapacityConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     if has_service_model(model)
-        add_constraints!(
-            container,
-            ReserveEnergyConstraint,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
-        add_constraints!(
-            container,
-            RangeLimitConstraint,
-            devices,
-            model,
-            S,
-            get_feedforward(model),
-        )
+        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, RangeLimitConstraint, devices, model, S)
     end
+
+    add_feedforward_constraints!(container, model, devices)
+
     add_constraint_dual!(container, sys, model)
 
     return

@@ -33,7 +33,11 @@ function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs.
 end
 
 # Only used for testing
-function mock_construct_device!(problem::PSI.DecisionModel{MockOperationProblem}, model)
+function mock_construct_device!(
+    problem::PSI.DecisionModel{MockOperationProblem},
+    model;
+    built_for_recurrent_solves = false,
+)
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
     PSI.init_optimization_container!(
@@ -41,6 +45,8 @@ function mock_construct_device!(problem::PSI.DecisionModel{MockOperationProblem}
         PSI.get_network_formulation(template),
         PSI.get_system(problem),
     )
+    PSI.get_optimization_container(problem).built_for_recurrent_solves =
+        built_for_recurrent_solves
     PSI.initialize_system_expressions!(
         PSI.get_optimization_container(problem),
         PSI.get_network_formulation(template),

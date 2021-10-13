@@ -64,6 +64,12 @@ struct MyCustomEmulator <: PSI.EmulationProblem
 """
 abstract type EmulationProblem end
 
+"Optimization Container construction stage"
+abstract type ConstructStage end
+
+struct ArgumentConstructStage <: ConstructStage end
+struct ModelConstructStage <: ConstructStage end
+
 abstract type PSIResults <: IS.Results end
 
 ################################ Abstract Types for Simulation #############################

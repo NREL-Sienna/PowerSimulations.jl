@@ -5,7 +5,6 @@ function make_active_power_constraints_inputs(
     ::Type{T},
     ::Type{U},
     ::Type{V},
-    ::Union{Nothing, AbstractAffectFeedForward},
     ::Bool,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
     error("make_active_power_constraints_inputs is not implemented for types $T / $U / $V")
@@ -23,7 +22,6 @@ function active_power_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{V},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
     inputs = make_active_power_constraints_inputs(
         T,

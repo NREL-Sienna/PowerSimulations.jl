@@ -99,14 +99,7 @@ function construct_device!(
     @debug "construct_device" _group = :BranchGroup
 
     devices = get_available_components(B, sys)
-    add_constraints!(
-        container,
-        RateLimitConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, RateLimitConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -133,23 +126,9 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
 
-    add_constraints!(
-        container,
-        NetworkFlowConstraint,
-        devices,
-        model,
-        network_model,
-        get_feedforward(model),
-    )
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
 
-    add_constraints!(
-        container,
-        RateLimitConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, RateLimitConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -174,14 +153,7 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
 
-    add_constraints!(
-        container,
-        NetworkFlowConstraint,
-        devices,
-        model,
-        network_model,
-        get_feedforward(model),
-    )
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
 
     branch_rate_bounds!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
@@ -208,14 +180,7 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
 
-    add_constraints!(
-        container,
-        NetworkFlowConstraint,
-        devices,
-        model,
-        network_model,
-        get_feedforward(model),
-    )
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -239,22 +204,8 @@ function construct_device!(
     devices = get_available_components(B, sys)
     branch_rate_bounds!(container, devices, model, S)
 
-    add_constraints!(
-        container,
-        RateLimitConstraintFromTo,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        RateLimitConstraintToFrom,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, RateLimitConstraintFromTo, devices, model, S)
+    add_constraints!(container, RateLimitConstraintToFrom, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -297,22 +248,8 @@ function construct_device!(
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
 
-    add_constraints!(
-        container,
-        FlowRateConstraintFromTo,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        container,
-        FlowRateConstraintToFrom,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -355,14 +292,7 @@ function construct_device!(
 }
     devices = get_available_components(B, sys)
 
-    add_constraints!(
-        container,
-        FlowRateConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, FlowRateConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -400,14 +330,7 @@ function construct_device!(
 
     devices = get_available_components(B, sys)
 
-    add_constraints!(
-        container,
-        FlowRateConstraint,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, FlowRateConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
 end

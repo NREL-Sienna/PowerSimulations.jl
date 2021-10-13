@@ -79,7 +79,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -89,7 +88,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
@@ -100,9 +98,8 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -130,6 +127,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
+
     # Expression
     add_to_expression!(
         container,
@@ -181,7 +179,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     else
         add_constraints!(
@@ -191,10 +188,9 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
