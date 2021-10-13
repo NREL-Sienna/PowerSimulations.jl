@@ -164,7 +164,7 @@ end
     psi_checksolve_test(model, [MOI.OPTIMAL], -1825.0, 10.0)
 end
 
-### FeedForward Test ### 
+### FeedForward Test ###
 
 @testset "Test EnergyTargetFeedForward to GenericBattery with BookKeeping model" begin
     device_model = DeviceModel(GenericBattery, BookKeeping)

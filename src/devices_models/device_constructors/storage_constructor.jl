@@ -164,6 +164,8 @@ function construct_device!(
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
 
+    add_feedforward_constraints!(container, model, devices)
+
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -263,6 +265,7 @@ function construct_device!(
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -348,6 +351,7 @@ function construct_device!(
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
     cost_function!(container, devices, model, S)
@@ -448,6 +452,8 @@ function construct_device!(
         add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
         add_constraints!(container, RangeLimitConstraint, devices, model, S)
     end
+    add_feedforward_constraints!(container, model, devices)
+
     add_constraint_dual!(container, sys, model)
 
     return
@@ -529,6 +535,9 @@ function construct_device!(
         add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
         add_constraints!(container, RangeLimitConstraint, devices, model, S)
     end
+
+    add_feedforward_constraints!(container, model, devices)
+
     add_constraint_dual!(container, sys, model)
 
     return
