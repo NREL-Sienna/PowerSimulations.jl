@@ -153,19 +153,22 @@ function build_impl!(model::OperationModel)
 end
 
 function build_if_not_already_built!(model; kwargs...)
-    if !is_built(model)
+    status = get_status(model)
+    if status == BuildStatus.EMPTY
         if !haskey(kwargs, :output_dir)
             error(
-                "'output_dir' must be provided as a kwarg if the model build status is $(get_status(model))",
+                "'output_dir' must be provided as a kwarg if the model build status is $status",
             )
         else
             new_kwargs = Dict(k => v for (k, v) in kwargs if k != :optimizer)
             status = build!(model; new_kwargs...)
-            if status != BuildStatus.BUILT
-                error("build! of the $(typeof(model)) failed: $status")
-            end
+
         end
     end
+    if status != BuildStatus.BUILT
+        error("build! of the $(typeof(model)) failed: $status")
+    end
+    return
 end
 
 function _check_numerical_bounds(model::OperationModel)
