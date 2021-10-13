@@ -9,7 +9,6 @@ function VariableKey(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     check_meta_chars(meta)
-    meta = remove_delimiter!(meta)
     return VariableKey{T, U}(meta)
 end
 
