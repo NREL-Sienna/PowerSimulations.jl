@@ -162,7 +162,6 @@ function build_if_not_already_built!(model; kwargs...)
         else
             new_kwargs = Dict(k => v for (k, v) in kwargs if k != :optimizer)
             status = build!(model; new_kwargs...)
-
         end
     end
     if status != BuildStatus.BUILT
