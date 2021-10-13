@@ -824,7 +824,6 @@ function add_constraints!(
     return
 end
 
-
 ########################### start up trajectory constraints ######################################
 
 function _convert_hours_to_timesteps(
