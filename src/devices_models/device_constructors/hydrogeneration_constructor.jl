@@ -969,8 +969,6 @@ function construct_device!(
     #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
-    add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
-
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
