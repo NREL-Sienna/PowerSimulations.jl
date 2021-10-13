@@ -115,8 +115,8 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
-        @assert set_name == [PSY.get_name(d) for d in devices]
-        @assert set_time == time_steps
+        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
@@ -174,8 +174,8 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
-        @assert set_name == [PSY.get_name(d) for d in devices]
-        @assert set_time == time_steps
+        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
@@ -211,7 +211,7 @@ function add_feedforward_constraints!(
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
         @assert set_name == [PSY.get_name(d) for d in contributing_devices]
-        @assert set_time == time_steps
+        IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
@@ -270,8 +270,8 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
-        @assert set_name == [PSY.get_name(d) for d in devices]
-        @assert set_time == time_steps
+        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
@@ -330,8 +330,8 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
-        @assert set_name == [PSY.get_name(d) for d in devices]
-        @assert set_time == time_steps
+        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_time == time_steps
 
         for t in time_steps, name in set_name
             JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force = true)
@@ -379,8 +379,8 @@ function add_feedforward_constraints!(
         variable = get_variable(container, var)
         slack_var = get_variable(container, EnergyShortageVariable(), T)
         set_name, set_time = JuMP.axes(variable)
-        @assert set_name == [PSY.get_name(d) for d in devices]
-        @assert set_time == time_steps
+        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
         con_ub = add_cons_container!(
