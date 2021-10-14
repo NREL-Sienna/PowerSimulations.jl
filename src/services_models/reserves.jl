@@ -203,28 +203,14 @@ _get_ramp_limits(::PSY.Component) = nothing
 _get_ramp_limits(d::PSY.ThermalGen) = PSY.get_ramp_limits(d)
 _get_ramp_limits(d::PSY.HydroGen) = PSY.get_ramp_limits(d)
 
-function _get_data_for_ramp_limit(
+function _get_ramp_constraint_contributing_devices(
     container::OptimizationContainer,
-    service::SR,
-    contributing_devices::U,
-) where {
-    SR <: PSY.Reserve,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-} where {D <: PSY.Component}
+    service::PSY.Reserve,
+    contributing_devices::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+) where {D <: PSY.Component}
     time_frame = PSY.get_time_frame(service)
-    resolution = get_resolution(container)
-    if resolution > Dates.Minute(1)
-        minutes_per_period = Dates.value(Dates.Minute(resolution))
-    else
-        @warn("Not all formulations support under 1-minute resolutions. Exercise caution.")
-        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
-    end
-    lenght_contributing_devices = length(contributing_devices)
-    idx = 0
-    data = Vector{ServiceRampConstraintInfo}(undef, lenght_contributing_devices)
-
+    filtered_device = Vector{D}()
     for d in contributing_devices
-        name = PSY.get_name(d)
         ramp_limits = _get_ramp_limits(d)
         if !(ramp_limits === nothing)
             p_lims = PSY.get_active_power_limits(d)
@@ -233,35 +219,32 @@ function _get_data_for_ramp_limit(
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
-                idx += 1
+                push!(filtered_device, d)
             end
-            ramp = (up = ramp_limits.up * time_frame, down = ramp_limits.down * time_frame)
-            data[idx] = ServiceRampConstraintInfo(name, ramp)
         end
     end
-    if idx < lenght_contributing_devices
-        deleteat!(data, (idx + 1):lenght_contributing_devices)
-    end
-    return data
+    return filtered_device
 end
 
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{RampConstraint},
     service::SR,
-    contributing_devices::U,
+    contributing_devices::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     model::ServiceModel{SR, V},
 ) where {
     SR <: PSY.Reserve{PSY.ReserveUp},
     V <: AbstractReservesFormulation,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-} where {D <: PSY.Component}
-    rate_data = _get_data_for_ramp_limit(container, service, contributing_devices)
+    D <: PSY.Component,
+}
+    ramp_devices =
+        _get_ramp_constraint_contributing_devices(container, service, contributing_devices)
     service_name = PSY.get_name(service)
-    if !isempty(rate_data)
+    if !isempty(ramp_devices)
         time_steps = get_time_steps(container)
+        time_frame = PSY.get_time_frame(service)
         variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-        set_name = [get_component_name(r) for r in rate_data]
+        set_name = [PSY.get_name(d) for d in ramp_devices]
         con_up = add_cons_container!(
             container,
             T(),
@@ -270,10 +253,13 @@ function add_constraints!(
             time_steps,
             meta = service_name,
         )
-        for r in rate_data, t in time_steps
-            name = get_component_name(r)
-            con_up[name, t] =
-                JuMP.@constraint(container.JuMPmodel, variable[name, t] <= r.ramp_limits.up)
+        for d in ramp_devices, t in time_steps
+            name = PSY.get_name(d)
+            ramp_limits = PSY.get_ramp_limits(d)
+            con_up[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                variable[name, t] <= ramp_limits.up * time_frame
+            )
         end
     else
         @warn "Data doesn't contain contributing devices with ramp limits for service $service_name, consider adjusting your formulation"
@@ -285,19 +271,21 @@ function add_constraints!(
     container::OptimizationContainer,
     T::Type{RampConstraint},
     service::SR,
-    contributing_devices::U,
+    contributing_devices::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     model::ServiceModel{SR, V},
 ) where {
     SR <: PSY.Reserve{PSY.ReserveDown},
     V <: AbstractReservesFormulation,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-} where {D <: PSY.Component}
-    rate_data = _get_data_for_ramp_limit(container, service, contributing_devices)
+    D <: PSY.Component,
+}
+    ramp_devices =
+        _get_ramp_constraint_contributing_devices(container, service, contributing_devices)
     service_name = PSY.get_name(service)
-    if !isempty(rate_data)
+    if !isempty(ramp_devices)
         time_steps = get_time_steps(container)
+        time_frame = PSY.get_time_frame(service)
         variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-        set_name = [get_component_name(r) for r in rate_data]
+        set_name = [PSY.get_name(d) for d in ramp_devices]
         con_down = add_cons_container!(
             container,
             T(),
@@ -306,11 +294,12 @@ function add_constraints!(
             time_steps,
             meta = service_name,
         )
-        for r in rate_data, t in time_steps
-            name = get_component_name(r)
+        for d in ramp_devices, t in time_steps
+            name = PSY.get_name(d)
+            ramp_limits = PSY.get_ramp_limits(d)
             con_down[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
-                variable[name, t] <= r.ramp_limits.down
+                variable[name, t] <= ramp_limits.down * time_frame
             )
         end
     else

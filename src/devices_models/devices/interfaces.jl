@@ -15,3 +15,8 @@ get_initial_conditions_device_model(
 ) where {T <: PSY.Device, D <: AbstractDeviceFormulation} =
     error("`get_initial_conditions_device_model` must be implemented for $T and $D")
 requires_initialization(::AbstractDeviceFormulation) = false
+_get_initial_condition_type(
+    X::Type{<:ConstraintType},
+    Y::Type{<:PSY.Component},
+    Z::Type{<:AbstractDeviceFormulation},
+) = error("`_get_initial_condition_type` must be implemented for $X , $Y and $Z")

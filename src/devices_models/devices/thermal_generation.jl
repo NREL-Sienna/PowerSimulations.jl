@@ -737,58 +737,20 @@ end
 This function gets the data for the generators for ramping constraints of thermal generators
 """
 _get_initial_condition_type(
+    ::Type{RampConstraint},
     ::Type{<:PSY.ThermalGen},
     ::Type{<:AbstractThermalFormulation},
 ) = DevicePower
 _get_initial_condition_type(
+    ::Type{RampConstraint},
     ::Type{<:PSY.ThermalGen},
     ::Type{<:AbstractCompactUnitCommitment},
 ) = DeviceAboveMinPower
-_get_initial_condition_type(::Type{<:PSY.ThermalGen}, ::Type{ThermalCompactDispatch}) =
-    DeviceAboveMinPower
-
-function _get_data_for_rocc(
-    container::OptimizationContainer,
-    ::DeviceModel{T, V},
-) where {T <: PSY.ThermalGen, V <: AbstractThermalFormulation}
-    resolution = get_resolution(container)
-    if resolution > Dates.Minute(1)
-        minutes_per_period = Dates.value(Dates.Minute(resolution))
-    else
-        @warn("Not all formulations support under 1-minute resolutions. Exercise caution.")
-        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
-    end
-
-    IC = _get_initial_condition_type(T, V)
-    initial_conditions_power = get_initial_condition(container, IC(), T)
-    lenght_devices_power = length(initial_conditions_power)
-    data = Vector{DeviceRampConstraintInfo}(undef, lenght_devices_power)
-    idx = 0
-    for ic in initial_conditions_power
-        g = get_component(ic)
-        name = PSY.get_name(g)
-        ramp_limits = PSY.get_ramp_limits(g)
-        if !(ramp_limits === nothing)
-            p_lims = PSY.get_active_power_limits(g)
-            max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
-                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
-                continue
-            else
-                idx += 1
-            end
-            ramp = (
-                up = ramp_limits.up * minutes_per_period,
-                down = ramp_limits.down * minutes_per_period,
-            )
-            data[idx] = DeviceRampConstraintInfo(name, p_lims, ic, ramp)
-        end
-    end
-    if idx < lenght_devices_power
-        deleteat!(data, (idx + 1):lenght_devices_power)
-    end
-    return data
-end
+_get_initial_condition_type(
+    ::Type{RampConstraint},
+    ::Type{<:PSY.ThermalGen},
+    ::Type{ThermalCompactDispatch},
+) = DeviceAboveMinPower
 
 """
 This function adds the ramping limits of generators when there are CommitmentVariables
@@ -800,22 +762,14 @@ function add_constraints!(
     model::DeviceModel{U, V},
     W::Type{<:PM.AbstractPowerModel},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
-    data = _get_data_for_rocc(container, model)
-    if !isempty(data)
-        # Here goes the reactive power ramp limits when versions for AC and DC are added
-        for r in data
-            add_device_services!(r, get_component(r.ic_power), model)
-        end
-        device_mixedinteger_rateofchange!(
-            container,
-            data,
-            RampConstraint(),
-            (ActivePowerVariable(), StartVariable(), StopVariable()),
-            U,
-        )
-    else
-        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
-    end
+    add_semicontinuous_ramp_constraints!(
+        container,
+        T,
+        ActivePowerVariable,
+        devices,
+        model,
+        W,
+    )
     return
 end
 
@@ -826,22 +780,14 @@ function add_constraints!(
     model::DeviceModel{U, V},
     W::Type{<:PM.AbstractPowerModel},
 ) where {U <: PSY.ThermalGen, V <: AbstractCompactUnitCommitment}
-    data = _get_data_for_rocc(container, model)
-    if !isempty(data)
-        # Here goes the reactive power ramp limits when versions for AC and DC are added
-        for r in data
-            add_device_services!(r, get_component(r.ic_power), model)
-        end
-        device_mixedinteger_rateofchange!(
-            container,
-            data,
-            RampConstraint(),
-            (PowerAboveMinimumVariable(), StartVariable(), StopVariable()),
-            U,
-        )
-    else
-        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
-    end
+    add_semicontinuous_ramp_constraints!(
+        container,
+        T,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        W,
+    )
     return
 end
 
@@ -852,22 +798,7 @@ function add_constraints!(
     model::DeviceModel{U, ThermalCompactDispatch},
     W::Type{<:PM.AbstractPowerModel},
 ) where {U <: PSY.ThermalGen}
-    data = _get_data_for_rocc(container, model)
-    if !isempty(data)
-        for r in data
-            add_device_services!(r, get_component(r.ic_power), model)
-        end
-        # Here goes the reactive power ramp limits when versions for AC and DC are added
-        device_linear_rateofchange!(
-            container,
-            data,
-            RampConstraint(),
-            PowerAboveMinimumVariable(),
-            U,
-        )
-    else
-        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
-    end
+    add_linear_ramp_constraints!(container, T, PowerAboveMinimumVariable, devices, model, W)
     return
 end
 
@@ -878,22 +809,7 @@ function add_constraints!(
     model::DeviceModel{U, V},
     W::Type{<:PM.AbstractPowerModel},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalDispatchFormulation}
-    data = _get_data_for_rocc(container, model)
-    if !isempty(data)
-        for r in data
-            add_device_services!(r, get_component(r.ic_power), model)
-        end
-        # Here goes the reactive power ramp limits when versions for AC and DC are added
-        device_linear_rateofchange!(
-            container,
-            data,
-            RampConstraint(),
-            ActivePowerVariable(),
-            U,
-        )
-    else
-        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
-    end
+    add_linear_ramp_constraints!(container, T, ActivePowerVariable, devices, model, W)
     return
 end
 
@@ -904,23 +820,7 @@ function add_constraints!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     W::Type{<:PM.AbstractPowerModel},
 )
-    data = _get_data_for_rocc(container, model)
-
-    # TODO: Refactor this to a cleaner format that doesn't require passing the device and rate_data this way
-    for r in data
-        add_device_services!(r, get_component(r.ic_power), model)
-    end
-    if !isempty(data)
-        device_multistart_rateofchange!(
-            container,
-            data,
-            RampConstraint(),
-            PowerAboveMinimumVariable(),
-            PSY.ThermalMultiStart,
-        )
-    else
-        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
-    end
+    add_linear_ramp_constraints!(container, T, PowerAboveMinimumVariable, devices, model, W)
     return
 end
 
