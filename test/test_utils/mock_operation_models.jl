@@ -20,8 +20,27 @@ function PSI.DecisionModel(
     )
 end
 
+function make_mock_forecast(horizon, resolution, interval, steps)
+    init_time = DateTime("2024-01-01")
+    forecast_timestamps = collect(range(init_time, length = horizon, step = resolution))
+    Iload_timeseries_DA = []
+    for i in 1:steps
+        push!(Iload_timeseries_DA + interval*i, TimeArray(forecast_timestamps, rand(horizon)))
+    end
+    return Deterministic("mock_forecast", Iload_timeseries_DA)
+end
+
 function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs...)
     sys = System(100.0)
+    add_component!(sys, Bus(nothing); skip_validation = true)
+    l = PowerLoad(nothing)
+    set_bus!(l, get_component(Bus, sys, "init"))
+    add_component!(sys, l; skip_validation = true)
+    forecast
+
+    add_time_series!(sys, l,
+
+
     settings = PSI.Settings(sys; kwargs...)
     return DecisionModel{MockOperationProblem}(
         ProblemTemplate(CopperPlatePowerModel),

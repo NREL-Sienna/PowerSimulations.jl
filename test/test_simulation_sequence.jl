@@ -1,28 +1,15 @@
 @testset "Simulation Sequence Correct Execution Order" begin
     models = SimulationModels(
-        DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC"),
+        [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC"),
         DecisionModel(MockOperationProblem; horizon = 24, name = "HAUC"),
-        DecisionModel(MockOperationProblem; horizon = 12, name = "ED"),
-        DecisionModel(MockOperationProblem; horizon = 6, name = "AGC"),
+        DecisionModel(MockOperationProblem; horizon = 12, name = "ED")],
+        EmulationModel(MockOperationProblem; name = "AGC"),
     )
 
-    # Test RH sequences
-    feedforward_chronologies = Dict(
-        ("UC" => "HAUC") => Synchronize(periods = 24),
-        ("HAUC" => "ED") => RecedingHorizon(),
-        ("ED" => "AGC") => RecedingHorizon(),
-    )
     ini_cond_chronology = InterProblemChronology()
-    intervals = Dict(
-        "DAUC" => (Hour(24), Consecutive()),
-        "HAUC" => (Hour(1), RecedingHorizon()),
-        "ED" => (Minute(5), RecedingHorizon()),
-        "AGC" => (Minute(1), Consecutive()),
-    )
+
     test_sequence = SimulationSequence(
         models = models,
-        feedforward_chronologies = feedforward_chronologies,
-        intervals = intervals,
         ini_cond_chronology = ini_cond_chronology,
     )
 
