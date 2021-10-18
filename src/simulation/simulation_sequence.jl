@@ -132,11 +132,8 @@ function _get_num_executions_by_problem(problems, execution_order)
 end
 
 @doc raw"""
-    SimulationSequence(horizons::Dict{Symbol, Int}
-                        step_resolution::Dates.TimePeriod
-                        intervals::Dict{Symbol, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
-                        order::Dict{Int, Symbol}
-                        feedforward_chronologies::Dict{Pair{Symbol, Symbol}, <:FeedForwardChronology}
+    SimulationSequence(
+                        models::SimulationModels,
                         feedforward::Dict{Symbol, <:AbstractAffectFeedForward}
                         ini_cond_chronology::Dict{Symbol, <:FeedForwardChronology}
                         cache::Dict{Symbol, AbstractCache}
@@ -144,14 +141,9 @@ end
 """
 mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Int}
-    # JDNOTE: This field might be able to go away.
-    step_resolution::Dates.TimePeriod
-    # The Symbol here is the name of the problem
     intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
-    feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
-    feedforward::Dict{<:Tuple, <:AbstractAffectFeedForward}
+    feedforwards::Dict{<:Tuple, <:AbstractAffectFeedForward}
     ini_cond_chronology::InitialConditionChronology
-    cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
     executions_by_problem::Dict{Symbol, Int}
     current_execution_index::Int64
@@ -159,12 +151,8 @@ mutable struct SimulationSequence
 
     function SimulationSequence(;
         models::SimulationModels,
-        # JDNOTE: We could remove interval here later
-        intervals::Dict,
-        feedforward_chronologies = Dict{Pair{Symbol, Symbol}, FeedForwardChronology}(),
         feedforward = Dict{Symbol, AbstractAffectFeedForward}(),
         ini_cond_chronology = InterProblemChronology(),
-        cache = Dict{Tuple, AbstractCache}(),
     )
         # Allow strings or symbols as keys; convert to symbols.
         intervals = Dict(Symbol(k) => v for (k, v) in intervals)
@@ -203,10 +191,8 @@ mutable struct SimulationSequence
             horizons,
             step_resolution,
             _intervals,
-            feedforward_chronologies,
             feedforward,
             ini_cond_chronology,
-            cache,
             execution_order,
             executions_by_problem,
             0,
