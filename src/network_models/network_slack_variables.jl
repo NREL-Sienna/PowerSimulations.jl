@@ -11,7 +11,7 @@ function add_variables!(
     U <: Union{CopperPlatePowerModel, StandardPTDFModel},
 }
     time_steps = get_time_steps(container)
-    variable = add_var_container!(container, T(), PSY.System, time_steps)
+    variable = add_variable_container!(container, T(), PSY.System, time_steps)
 
     for t in time_steps
         variable[t] =

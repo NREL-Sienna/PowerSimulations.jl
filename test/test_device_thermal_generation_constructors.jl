@@ -26,7 +26,7 @@ end
         PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "dn"),
     ]
 
-    aux_vars_keys = [
+    aux_variables_keys = [
         PSI.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
         PSI.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
     ]
@@ -39,7 +39,7 @@ end
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
-    psi_aux_var_test(model, aux_vars_keys)
+    psi_aux_variable_test(model, aux_variables_keys)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
@@ -62,7 +62,7 @@ end
         PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "dn"),
     ]
 
-    aux_vars_keys = [
+    aux_variables_keys = [
         PSI.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
         PSI.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
     ]
@@ -76,7 +76,7 @@ end
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
-    psi_aux_var_test(model, aux_vars_keys)
+    psi_aux_variable_test(model, aux_variables_keys)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)

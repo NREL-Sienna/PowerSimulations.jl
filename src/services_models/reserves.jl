@@ -81,7 +81,8 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
+    constraint =
+        add_constraints_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
 
@@ -138,7 +139,8 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
+    constraint =
+        add_constraints_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     use_slacks = get_use_slacks(model)
     use_slacks && (slack_vars = reserve_slacks(container, service))
@@ -185,7 +187,8 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)
-    constraint = add_cons_container!(container, T(), SR, names, time_steps; meta = name)
+    constraint =
+        add_constraints_container!(container, T(), SR, names, time_steps; meta = name)
     reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
     requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
 
@@ -245,7 +248,7 @@ function add_constraints!(
         time_frame = PSY.get_time_frame(service)
         variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
         set_name = [PSY.get_name(d) for d in ramp_devices]
-        con_up = add_cons_container!(
+        con_up = add_constraints_container!(
             container,
             T(),
             SR,
@@ -286,7 +289,7 @@ function add_constraints!(
         time_frame = PSY.get_time_frame(service)
         variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
         set_name = [PSY.get_name(d) for d in ramp_devices]
-        con_down = add_cons_container!(
+        con_down = add_constraints_container!(
             container,
             T(),
             SR,
@@ -329,7 +332,7 @@ function add_constraints!(
         minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
     end
 
-    cons = add_cons_container!(
+    cons = add_constraints_container!(
         container,
         constraint_type,
         SR,

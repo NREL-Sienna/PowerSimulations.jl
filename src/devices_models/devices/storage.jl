@@ -192,8 +192,13 @@ function add_constraints!(
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
 
-    constraint =
-        add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyBalanceConstraint(),
+        V,
+        names,
+        time_steps,
+    )
 
     for ic in initial_conditions
         device = get_component(ic)
@@ -237,7 +242,7 @@ function add_constraints!(
     expr_up = get_expression(container, ReserveRangeExpressionUB(), T)
     expr_dn = get_expression(container, ReserveRangeExpressionLB(), T)
     names = [PSY.get_name(x) for x in devices]
-    con_up = add_cons_container!(
+    con_up = add_constraints_container!(
         container,
         ReserveEnergyConstraint(),
         T,
@@ -245,7 +250,7 @@ function add_constraints!(
         time_steps,
         meta = "up",
     )
-    con_dn = add_cons_container!(
+    con_dn = add_constraints_container!(
         container,
         ReserveEnergyConstraint(),
         T,
@@ -283,7 +288,7 @@ function add_constraints!(
     expr_up = get_expression(container, ReserveRangeExpressionUB(), T)
     expr_dn = get_expression(container, ReserveRangeExpressionLB(), T)
     names = [PSY.get_name(x) for x in devices]
-    con_up = add_cons_container!(
+    con_up = add_constraints_container!(
         container,
         RangeLimitConstraint(),
         T,
@@ -291,7 +296,7 @@ function add_constraints!(
         time_steps,
         meta = "up",
     )
-    con_dn = add_cons_container!(
+    con_dn = add_constraints_container!(
         container,
         RangeLimitConstraint(),
         T,
@@ -337,8 +342,13 @@ function add_constraints!(
     multiplier =
         get_parameter_multiplier_array(container, EnergyTargetTimeSeriesParameter(), V)
 
-    constraint =
-        add_cons_container!(container, EnergyTargetConstraint(), V, name_index, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyTargetConstraint(),
+        V,
+        name_index,
+        time_steps,
+    )
     for d in devices
         name = PSY.get_name(d)
         shortage_cost = PSY.get_energy_shortage_cost(PSY.get_operation_cost(d))

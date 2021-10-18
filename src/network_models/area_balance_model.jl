@@ -7,7 +7,7 @@ function area_balance(
     time_steps = get_time_steps(container)
     nodal_net_balance = get_expression(container, expression)
 
-    constraint = add_cons_container!(
+    constraint = add_constraints_container!(
         container,
         AreaDispatchBalanceConstraint(),
         PSY.Area,
@@ -30,7 +30,7 @@ function area_balance(
     expr_up = get_expression(container, EmergencyUp(), PSY.Area)
     expr_dn = get_expression(container, EmergencyDown(), PSY.Area)
 
-    participation_assignment_up = add_cons_container!(
+    participation_assignment_up = add_constraints_container!(
         container,
         AreaParticipationAssignmentConstraint(),
         PSY.Area,
@@ -38,7 +38,7 @@ function area_balance(
         time_steps,
         meta = "up",
     )
-    participation_assignment_dn = add_cons_container!(
+    participation_assignment_dn = add_constraints_container!(
         container,
         AreaParticipationAssignmentConstraint(),
         PSY.Area,

@@ -563,7 +563,7 @@ function _assign_container!(container::Dict, key::OptimizationContainerKey, valu
 end
 
 ####################################### Variable Container #################################
-function _add_var_container!(
+function _add_variable_container!(
     container::OptimizationContainer,
     var_key::VariableKey{T, U},
     sparse::Bool,
@@ -578,7 +578,7 @@ function _add_var_container!(
     return var_container
 end
 
-function add_var_container!(
+function add_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
@@ -586,10 +586,10 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     var_key = VariableKey(T, U)
-    return _add_var_container!(container, var_key, sparse, axs...)
+    return _add_variable_container!(container, var_key, sparse, axs...)
 end
 
-function add_var_container!(
+function add_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
@@ -598,7 +598,7 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     var_key = VariableKey(T, U, meta)
-    return _add_var_container!(container, var_key, sparse, axs...)
+    return _add_variable_container!(container, var_key, sparse, axs...)
 end
 
 function get_variable_keys(container::OptimizationContainer)
@@ -630,7 +630,7 @@ function read_variables(container::OptimizationContainer)
 end
 
 ##################################### AuxVariable Container ################################
-function add_aux_var_container!(
+function add_aux_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
@@ -639,12 +639,12 @@ function add_aux_var_container!(
 ) where {T <: AuxVariableType, U <: PSY.Component}
     var_key = AuxVarKey(T, U)
     if sparse
-        aux_var_container = sparse_container_spec(Float64, axs...)
+        aux_variable_container = sparse_container_spec(Float64, axs...)
     else
-        aux_var_container = container_spec(Float64, axs...)
+        aux_variable_container = container_spec(Float64, axs...)
     end
-    _assign_container!(container.aux_variables, var_key, aux_var_container)
-    return aux_var_container
+    _assign_container!(container.aux_variables, var_key, aux_variable_container)
+    return aux_variable_container
 end
 
 function get_aux_variable_keys(container::OptimizationContainer)
@@ -701,7 +701,7 @@ function get_dual_keys(container::OptimizationContainer)
 end
 
 ##################################### Constraint Container #################################
-function _add_cons_container!(
+function _add_constraints_container!(
     container::OptimizationContainer,
     cons_key::ConstraintKey,
     axs...;
@@ -716,7 +716,7 @@ function _add_cons_container!(
     return cons_container
 end
 
-function add_cons_container!(
+function add_constraints_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
@@ -725,7 +725,7 @@ function add_cons_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     cons_key = ConstraintKey(T, U, meta)
-    return _add_cons_container!(container, cons_key, axs...; sparse = sparse)
+    return _add_constraints_container!(container, cons_key, axs...; sparse = sparse)
 end
 
 function get_constraint_keys(container::OptimizationContainer)

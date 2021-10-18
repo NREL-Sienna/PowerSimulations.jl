@@ -145,7 +145,13 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     var1 = get_variable(container, FlowActivePowerFromToVariable(), B)
     var2 = get_variable(container, FlowReactivePowerFromToVariable(), B)
-    add_cons_container!(container, cons_type(), B, [r[1] for r in rating_data], time_steps)
+    add_constraints_container!(
+        container,
+        cons_type(),
+        B,
+        [r[1] for r in rating_data],
+        time_steps,
+    )
     constraint = get_constraint(container, cons_type(), B)
 
     for r in rating_data
@@ -173,7 +179,13 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     var1 = get_variable(container, FlowActivePowerToFromVariable(), B)
     var2 = get_variable(container, FlowReactivePowerToFromVariable(), B)
-    add_cons_container!(container, cons_type(), B, [r[1] for r in rating_data], time_steps)
+    add_constraints_container!(
+        container,
+        cons_type(),
+        B,
+        [r[1] for r in rating_data],
+        time_steps,
+    )
     constraint = get_constraint(container, cons_type(), B)
 
     for r in rating_data
@@ -199,8 +211,13 @@ function add_constraints!(
     ptdf = get_PTDF(network_model)
     branches = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
-    branch_flow =
-        add_cons_container!(container, NetworkFlowConstraint(), B, branches, time_steps)
+    branch_flow = add_constraints_container!(
+        container,
+        NetworkFlowConstraint(),
+        B,
+        branches,
+        time_steps,
+    )
     nodal_balance_expressions = get_expression(container, ActivePowerBalance(), S)
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(container)

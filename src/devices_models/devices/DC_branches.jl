@@ -62,7 +62,7 @@ function add_constraints!(
     var = get_variable(container, FlowActivePowerVariable(), B)
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    constraint = add_cons_container!(container, cons_type(), B, names, time_steps)
+    constraint = add_constraints_container!(container, cons_type(), B, names, time_steps)
     for t in time_steps, d in devices
         min_rate = max(
             PSY.get_active_power_limits_from(d).min,
@@ -101,7 +101,7 @@ function add_constraints!(
     names = [PSY.get_name(d) for d in devices]
 
     var = get_variable(container, FlowActivePowerVariable(), B)
-    constraint = add_cons_container!(container, cons_type(), B, names, time_steps)
+    constraint = add_constraints_container!(container, cons_type(), B, names, time_steps)
     for t in time_steps, d in devices
         min_rate = max(
             PSY.get_active_power_limits_from(d).min,

@@ -70,7 +70,7 @@ function add_variable!(
     settings = get_settings(container)
     binary = get_variable_binary(variable_type, D, formulation)
 
-    variable = add_var_container!(
+    variable = add_variable_container!(
         container,
         variable_type,
         D,
@@ -116,7 +116,7 @@ function add_service_variable!(
 
     binary = get_variable_binary(variable_type, T, formulation)
 
-    variable = add_var_container!(
+    variable = add_variable_container!(
         container,
         variable_type,
         T,

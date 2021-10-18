@@ -119,7 +119,7 @@ function add_feedforward_constraints!(
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
-        con_ub = add_cons_container!(
+        con_ub = add_constraints_container!(
             container,
             FeedforwardUpperBoundConstraint(),
             T,
@@ -178,7 +178,7 @@ function add_feedforward_constraints!(
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
-        con_ub = add_cons_container!(
+        con_ub = add_constraints_container!(
             container,
             FeedforwardLowerBoundConstraint(),
             T,
@@ -214,7 +214,7 @@ function add_feedforward_constraints!(
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
-        con_ub = add_cons_container!(
+        con_ub = add_constraints_container!(
             container,
             FeedforwardLowerBoundConstraint(),
             T,
@@ -274,7 +274,7 @@ function add_feedforward_constraints!(
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
-        con_ub = add_cons_container!(
+        con_ub = add_constraints_container!(
             container,
             FeedforwardIntegralLimitConstraint(),
             T,
@@ -383,7 +383,7 @@ function add_feedforward_constraints!(
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
-        con_ub = add_cons_container!(
+        con_ub = add_constraints_container!(
             container,
             FeedforwardEnergyTargetConstraint(),
             T,

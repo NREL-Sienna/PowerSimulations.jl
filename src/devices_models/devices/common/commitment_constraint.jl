@@ -45,8 +45,9 @@ function device_commitment!(
     varstop = get_variable(container, var_types[2], T)
     varon = get_variable(container, var_types[3], T)
     varstart_names = axes(varstart, 1)
-    constraint = add_cons_container!(container, cons_type, T, varstart_names, time_steps)
-    aux_constraint = add_cons_container!(
+    constraint =
+        add_constraints_container!(container, cons_type, T, varstart_names, time_steps)
+    aux_constraint = add_constraints_container!(
         container,
         cons_type,
         T,

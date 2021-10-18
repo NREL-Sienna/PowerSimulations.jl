@@ -305,7 +305,7 @@ function add_constraints!(
     varoff = get_variable(container, StopVariable(), component_type)
 
     names = [PSY.get_name(x) for x in devices]
-    con_on = add_cons_container!(
+    con_on = add_constraints_container!(
         container,
         constraint_type,
         component_type,
@@ -313,7 +313,7 @@ function add_constraints!(
         time_steps,
         meta = "on",
     )
-    con_off = add_cons_container!(
+    con_off = add_constraints_container!(
         container,
         constraint_type,
         component_type,
@@ -321,7 +321,7 @@ function add_constraints!(
         time_steps[1:(end - 1)],
         meta = "off",
     )
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         constraint_type,
         component_type,
@@ -377,7 +377,7 @@ function add_constraints!(
     varp = get_variable(container, PowerAboveMinimumVariable(), component_type)
 
     names = [PSY.get_name(x) for x in devices]
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         constraint_type,
         component_type,
@@ -415,7 +415,7 @@ function add_constraints!(
     varp = get_variable(container, PowerAboveMinimumVariable(), component_type)
 
     names = [PSY.get_name(x) for x in devices]
-    con_on = add_cons_container!(
+    con_on = add_constraints_container!(
         container,
         constraint_type,
         component_type,
@@ -423,7 +423,7 @@ function add_constraints!(
         time_steps,
         meta = "ubon",
     )
-    con_off = add_cons_container!(
+    con_off = add_constraints_container!(
         container,
         constraint_type,
         component_type,
@@ -472,7 +472,7 @@ function add_constraints!(
     if !isempty(ini_conds)
         varstop = get_variable(container, StopVariable(), T)
         set_name = [PSY.get_name(d) for d in devices]
-        con = add_cons_container!(container, ActiveRangeICConstraint(), T, set_name)
+        con = add_constraints_container!(container, ActiveRangeICConstraint(), T, set_name)
 
         for (ix, ic) in enumerate(ini_conds[:, 1])
             name = get_component_name(ic)
@@ -530,8 +530,8 @@ function add_constraints!(
     names = axes(varstart, 1)
     initial_conditions = get_initial_condition(container, DeviceStatus(), U)
     constraint =
-        add_cons_container!(container, CommitmentConstraint(), U, names, time_steps)
-    aux_constraint = add_cons_container!(
+        add_constraints_container!(container, CommitmentConstraint(), U, names, time_steps)
+    aux_constraint = add_constraints_container!(
         container,
         CommitmentConstraint(),
         U,
@@ -625,25 +625,26 @@ function calculate_aux_variable_value!(
     key::AuxVarKey{TimeDurationOn, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
-    on_var_results = get_variable(container, OnVariable(), T)
-    aux_var_container = get_aux_variable(container, TimeDurationOn(), T)
+    on_variable_results = get_variable(container, OnVariable(), T)
+    aux_variable_container = get_aux_variable(container, TimeDurationOn(), T)
     ini_cond = get_initial_condition(container, InitialTimeDurationOn(), T)
 
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     minutes_per_period = Dates.value(Dates.Minute(resolution))
 
-    for ix in eachindex(JuMP.axes(aux_var_container)[1])
-        @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
-        @assert JuMP.axes(aux_var_container)[1][ix] == get_component_name(ini_cond[ix])
-        on_var = JuMP.value.(on_var_results.data[ix, :])
+    for ix in eachindex(JuMP.axes(aux_variable_container)[1])
+        @assert JuMP.axes(aux_variable_container)[1][ix] ==
+                JuMP.axes(on_variable_results)[1][ix]
+        @assert JuMP.axes(aux_variable_container)[1][ix] == get_component_name(ini_cond[ix])
+        on_var = JuMP.value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
-        aux_var_container.data[ix, :] .= ini_cond_value
+        aux_variable_container.data[ix, :] .= ini_cond_value
         sum_on_var = sum(on_var)
         if sum_on_var == time_steps[end] # Unit was always on
-            aux_var_container.data[ix, :] += time_steps * minutes_per_period
+            aux_variable_container.data[ix, :] += time_steps * minutes_per_period
         elseif sum_on_var == 0.0 # Unit was always off
-            aux_var_container.data[ix, :] .= 0.0
+            aux_variable_container.data[ix, :] .= 0.0
         else
             previous_condition = ini_cond_value
             for (t, v) in enumerate(on_var)
@@ -654,7 +655,7 @@ function calculate_aux_variable_value!(
                 else
                     error("Binary condition returned $v")
                 end
-                previous_condition = aux_var_container.data[ix, t] = time_value
+                previous_condition = aux_variable_container.data[ix, t] = time_value
             end
         end
     end
@@ -667,25 +668,26 @@ function calculate_aux_variable_value!(
     key::AuxVarKey{TimeDurationOff, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
-    on_var_results = get_variable(container, OnVariable(), T)
-    aux_var_container = get_aux_variable(container, TimeDurationOff(), T)
+    on_variable_results = get_variable(container, OnVariable(), T)
+    aux_variable_container = get_aux_variable(container, TimeDurationOff(), T)
     ini_cond = get_initial_condition(container, InitialTimeDurationOff(), T)
 
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     minutes_per_period = Dates.value(Dates.Minute(resolution))
 
-    for ix in eachindex(JuMP.axes(aux_var_container)[1])
-        @assert JuMP.axes(aux_var_container)[1][ix] == JuMP.axes(on_var_results)[1][ix]
-        @assert JuMP.axes(aux_var_container)[1][ix] == get_component_name(ini_cond[ix])
-        on_var = JuMP.value.(on_var_results.data[ix, :])
+    for ix in eachindex(JuMP.axes(aux_variable_container)[1])
+        @assert JuMP.axes(aux_variable_container)[1][ix] ==
+                JuMP.axes(on_variable_results)[1][ix]
+        @assert JuMP.axes(aux_variable_container)[1][ix] == get_component_name(ini_cond[ix])
+        on_var = JuMP.value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
-        aux_var_container.data[ix, :] .= ini_cond_value
+        aux_variable_container.data[ix, :] .= ini_cond_value
         sum_on_var = sum(on_var)
         if sum_on_var == time_steps[end] # Unit was always on
-            aux_var_container.data[ix, :] .= 0.0
+            aux_variable_container.data[ix, :] .= 0.0
         elseif sum_on_var == 0.0 # Unit was always off
-            aux_var_container.data[ix, :] += time_steps * minutes_per_period
+            aux_variable_container.data[ix, :] += time_steps * minutes_per_period
         else
             previous_condition = ini_cond_value
             for (t, v) in enumerate(on_var)
@@ -696,7 +698,7 @@ function calculate_aux_variable_value!(
                 else
                     error("Binary condition returned $v")
                 end
-                previous_condition = aux_var_container.data[ix, t] = time_value
+                previous_condition = aux_variable_container.data[ix, t] = time_value
             end
         end
     end
@@ -712,22 +714,23 @@ function calculate_aux_variable_value!(
     devices = PSY.get_components(T, system)
     time_steps = get_time_steps(container)
     if has_on_variable(container, T)
-        on_var_results = get_variable(container, OnVariable(), T)
+        on_variable_results = get_variable(container, OnVariable(), T)
     elseif has_on_parameter(container, T)
-        on_var_results = get_parameter_array(container, OnStatusParameter(), T)
+        on_variable_results = get_parameter_array(container, OnStatusParameter(), T)
     else
         error(
             "Thermal Compact Formulation is NOT supported without a FeedForward for Commitment decision,
       please consider changing your simulation setup or adding a SemiContinuousFeedForward.",
         )
     end
-    p_var_results = get_variable(container, PowerAboveMinimumVariable(), T)
-    aux_var_container = get_aux_variable(container, PowerOutput(), T)
+    p_variable_results = get_variable(container, PowerAboveMinimumVariable(), T)
+    aux_variable_container = get_aux_variable(container, PowerOutput(), T)
     for d in devices, t in time_steps
         name = PSY.get_name(d)
         min = PSY.get_active_power_limits(d).min
-        aux_var_container[name, t] =
-            JuMP.value(on_var_results[name, t]) * min + JuMP.value(p_var_results[name, t])
+        aux_variable_container[name, t] =
+            JuMP.value(on_variable_results[name, t]) * min +
+            JuMP.value(p_variable_results[name, t])
     end
 
     return
@@ -868,7 +871,7 @@ function add_constraints!(
     names = [PSY.get_name(d) for d in devices]
 
     con = [
-        add_cons_container!(
+        add_constraints_container!(
             container,
             StartupTimeLimitTemperatureConstraint(),
             T,
@@ -877,7 +880,7 @@ function add_constraints!(
             sparse = true,
             meta = "hot",
         ),
-        add_cons_container!(
+        add_constraints_container!(
             container,
             StartupTimeLimitTemperatureConstraint(),
             T,
@@ -938,7 +941,13 @@ function add_constraints!(
     ]
 
     set_name = [PSY.get_name(d) for d in devices]
-    con = add_cons_container!(container, StartTypeConstraint(), T, set_name, time_steps)
+    con = add_constraints_container!(
+        container,
+        StartTypeConstraint(),
+        T,
+        set_name,
+        time_steps,
+    )
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
@@ -986,7 +995,7 @@ function add_constraints!(
         get_variable(container, WarmStartVariable(), T),
     ]
 
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         StartupInitialConditionConstraint(),
         T,
@@ -996,7 +1005,7 @@ function add_constraints!(
         sparse = true,
         meta = "ub",
     )
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         StartupInitialConditionConstraint(),
         T,
@@ -1049,7 +1058,8 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     varon = get_variable(container, OnVariable(), T)
     names = [PSY.get_name(d) for d in devices if PSY.get_must_run(d)]
-    constraint = add_cons_container!(container, MustRunConstraint(), T, names, time_steps)
+    constraint =
+        add_constraints_container!(container, MustRunConstraint(), T, names, time_steps)
 
     for name in names, t in time_steps
         constraint[name, t] = JuMP.@constraint(container.JuMPmodel, varon[name, t] >= 1.0)

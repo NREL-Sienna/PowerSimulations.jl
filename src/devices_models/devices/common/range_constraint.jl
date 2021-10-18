@@ -94,7 +94,7 @@ function add_lower_bound_range_constraints_impl!(
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -125,7 +125,7 @@ function add_upper_bound_range_constraints_impl!(
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -252,7 +252,7 @@ function add_semicontinuous_lower_bound_range_constraints_impl!(
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [OnVariable()]
 
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -289,7 +289,7 @@ function add_semicontinuous_upper_bound_range_constraints_impl!(
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [OnVariable()]
 
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -379,7 +379,7 @@ function add_reserve_lower_bound_range_constraints_impl!(
     names = [PSY.get_name(x) for x in devices]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -419,7 +419,7 @@ function add_reserve_upper_bound_range_constraints_impl!(
     names = [PSY.get_name(x) for x in devices]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -528,7 +528,7 @@ function add_reserve_lower_bound_range_constraints_impl!(
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [ReservationVariable()]
 
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -569,7 +569,7 @@ function add_reserve_upper_bound_range_constraints_impl!(
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [ReservationVariable()]
 
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -653,7 +653,7 @@ function add_parameterized_lower_bound_range_constraints_impl!(
     component_type = V
     names = [PSY.get_name(d) for d in devices]
 
-    constraint = add_cons_container!(
+    constraint = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -735,7 +735,7 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     component_type = V
     names = [PSY.get_name(d) for d in devices]
 
-    constraint = add_cons_container!(
+    constraint = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -776,7 +776,7 @@ end
 #     jump_variable = get_variable(container, variable, component_type)
 #     names = [PSY.get_name(d) for d in devices]
 
-#     constraint = add_cons_container!(
+#     constraint = add_constraints_container!(
 #         container,
 #         constraint,
 #         component_type,

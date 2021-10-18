@@ -132,7 +132,7 @@ function has_on_parameter(
 end
 
 # TODO: Function is broken
-function _get_pwl_vars_container(container::OptimizationContainer)
+function _get_pwl_variables_container(container::OptimizationContainer)
     if !haskey(container.variables, :PWL_cost_vars)
         contents = Dict{Tuple{String, Int, Int}, Any}()
         container = JuMP.Containers.SparseAxisArray(contents)
@@ -270,7 +270,7 @@ function pwl_gencost_sos!(
             upper_bound = 1.0
         )
         if export_pwl_vars
-            container = _get_pwl_vars_container(container)
+            container = _get_pwl_variables_container(container)
             container[(component_name, time_period, i)] = pwlvars[i]
         end
         JuMP.add_to_expression!(gen_cost, cost_data[i][1] * pwlvars[i])
@@ -337,7 +337,7 @@ function pwl_gencost_linear!(
             upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i] / base_power
         )
         if export_pwl_vars
-            container = _get_pwl_vars_container(container)
+            container = _get_pwl_variables_container(container)
             container[(component_name, time_period, i)] = pwlvar
         end
         JuMP.add_to_expression!(

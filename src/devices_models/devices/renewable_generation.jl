@@ -85,7 +85,8 @@ function add_constraints!(
     p_var = get_variable(container, ActivePowerVariable(), V)
     q_var = get_variable(container, ReactivePowerVariable(), V)
     jump_model = get_jump_model(container)
-    constraint = add_cons_container!(container, EqualityConstraint(), V, names, time_steps)
+    constraint =
+        add_constraints_container!(container, EqualityConstraint(), V, names, time_steps)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_power_factor(d)))

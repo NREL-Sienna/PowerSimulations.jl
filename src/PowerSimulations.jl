@@ -175,9 +175,9 @@ export read_optimizer_stats
 
 ## Utils Exports
 export get_all_constraint_index
-export get_all_var_index
-export get_con_index
-export get_var_index
+export get_all_variable_index
+export get_constraint_index
+export get_variable_index
 export list_recorder_events
 export show_recorder_events
 export list_simulation_events

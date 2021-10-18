@@ -67,7 +67,7 @@ function add_constraints!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ElectricLoad, W <: AbstractControllablePowerLoadFormulation}
     time_steps = get_time_steps(container)
-    constraint = add_cons_container!(
+    constraint = add_constraints_container!(
         container,
         T(),
         V,

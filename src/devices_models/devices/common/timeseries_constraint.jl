@@ -5,7 +5,7 @@ function lazy_lb!(
     time_steps = get_time_steps(container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
     variable = get_variable(container, inputs.variable_type, inputs.component_type)
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         inputs.constraint_type,
         inputs.component_type,
@@ -56,7 +56,7 @@ function device_timeseries_ub!(
     time_steps = get_time_steps(container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
     variable = get_variable(container, inputs.variable_type, inputs.component_type)
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         inputs.constraint_type,
         inputs.component_type,
@@ -113,7 +113,7 @@ function device_timeseries_lb!(
     time_steps = get_time_steps(container)
     variable = get_variable(container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    constraint = add_cons_container!(
+    constraint = add_constraints_container!(
         container,
         inputs.constraint_type,
         inputs.component_type,
@@ -161,7 +161,7 @@ function device_timeseries_param_ub!(
     time_steps = get_time_steps(container)
     names = [get_component_name(x) for x in inputs.constraint_infos]
     variable = get_variable(container, inputs.variable_type, inputs.component_type)
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         inputs.constraint_type,
         inputs.component_type,
@@ -228,7 +228,7 @@ function device_timeseries_param_lb!(
     time_steps = get_time_steps(container)
     variable = get_variable(container, inputs.variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    add_cons_container!(
+    add_constraints_container!(
         container,
         inputs.constraint_type,
         inputs.component_type,
@@ -292,7 +292,7 @@ function device_timeseries_ub_bin!(
     varcts = get_variable(container, inputs.variable_type, inputs.component_type)
     varbin = get_variable(container, inputs.bin_variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         inputs.constraint_type,
         inputs.component_type,
@@ -346,7 +346,7 @@ function device_timeseries_ub_bigM!(
     varcts = get_variable(container, inputs.variable_type, inputs.component_type)
     varbin = get_variable(container, inputs.bin_variable_type, inputs.component_type)
     names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         inputs.constraint_type,
         inputs.component_type,
@@ -354,7 +354,7 @@ function device_timeseries_ub_bigM!(
         time_steps,
         meta = "ub",
     )
-    con_status = add_cons_container!(
+    con_status = add_constraints_container!(
         container,
         inputs.constraint_type,
         inputs.component_type,

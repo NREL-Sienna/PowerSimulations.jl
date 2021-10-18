@@ -16,12 +16,12 @@ end
 """
 Each Tuple corresponds to (con_name, internal_index, moi_index)
 """
-function get_all_var_index(model::OperationModel)
-    var_keys = get_all_var_keys(model)
+function get_all_variable_index(model::OperationModel)
+    var_keys = get_all_variable_keys(model)
     return [(encode_key(v[1]), v[2], v[3]) for v in var_keys]
 end
 
-function get_all_var_keys(model::OperationModel)
+function get_all_variable_keys(model::OperationModel)
     var_index = Vector{Tuple{VariableKey, Int, Int}}()
     container = get_optimization_container(model)
     for (key, value) in get_variables(container)
@@ -33,7 +33,7 @@ function get_all_var_keys(model::OperationModel)
     return var_index
 end
 
-function get_con_index(model::OperationModel, index::Int)
+function get_constraint_index(model::OperationModel, index::Int)
     container = get_optimization_container(model)
     constraints = get_constraints(container)
     for i in get_all_constraint_index(model::OperationModel)
@@ -45,10 +45,10 @@ function get_con_index(model::OperationModel, index::Int)
     return
 end
 
-function get_var_index(model::OperationModel, index::Int)
+function get_variable_index(model::OperationModel, index::Int)
     container = get_optimization_container(model)
     variables = get_variables(container)
-    for i in get_all_var_keys(model)
+    for i in get_all_variable_keys(model)
         if i[3] == index
             return variables[i[1]].data[i[2]]
         end

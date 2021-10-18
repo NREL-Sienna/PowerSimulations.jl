@@ -3,7 +3,7 @@ function reserve_slacks(
     service::T,
 ) where {T <: PSY.Reserve}
     time_steps = get_time_steps(container)
-    variable = add_var_container!(
+    variable = add_variable_container!(
         container,
         ReserveRequirementSlack(),
         T,

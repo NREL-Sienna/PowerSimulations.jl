@@ -21,7 +21,7 @@ function add_variable!(
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}
     @assert !isempty(devices)
     time_steps = get_time_steps(container)
-    add_aux_var_container!(
+    add_aux_variable_container!(
         container,
         var_type,
         D,

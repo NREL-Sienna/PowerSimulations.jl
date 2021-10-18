@@ -433,8 +433,13 @@ function add_constraints!(
     power_var = get_variable(container, ActivePowerVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
 
-    constraint =
-        add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyBalanceConstraint(),
+        V,
+        names,
+        time_steps,
+    )
     param = get_parameter_array(container, InflowTimeSeriesParameter(), V)
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
@@ -488,8 +493,13 @@ function add_constraints!(
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
 
-    constraint =
-        add_cons_container!(container, EnergyCapacityUpConstraint(), V, names, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyCapacityUpConstraint(),
+        V,
+        names,
+        time_steps,
+    )
     param = get_parameter_array(container, InflowTimeSeriesParameter(), V)
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
@@ -547,8 +557,13 @@ function add_constraints!(
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
 
-    constraint =
-        add_cons_container!(container, EnergyCapacityDownConstraint(), V, names, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyCapacityDownConstraint(),
+        V,
+        names,
+        time_steps,
+    )
 
     param = get_parameter_array(container, OutflowTimeSeriesParameter(), V)
     multiplier = get_parameter_multiplier_array(container, OutflowTimeSeriesParameter(), V)
@@ -596,8 +611,13 @@ function add_constraints!(
     resolution = get_resolution(container)
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
-    constraint =
-        add_cons_container!(container, EnergyTargetConstraint(), V, set_name, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyTargetConstraint(),
+        V,
+        set_name,
+        time_steps,
+    )
 
     e_var = get_variable(container, EnergyVariable(), V)
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
@@ -676,7 +696,8 @@ function add_constraints!(
     # Variable not used. Check if needed Sourabh
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
-    constraint = add_cons_container!(container, EnergyBudgetConstraint(), V, set_name)
+    constraint =
+        add_constraints_container!(container, EnergyBudgetConstraint(), V, set_name)
 
     variable_out = get_variable(container, ActivePowerVariable(), V)
     param = get_parameter_array(container, EnergyBudgetTimeSeriesParameter(), V)

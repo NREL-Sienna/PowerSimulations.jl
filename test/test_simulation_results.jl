@@ -259,9 +259,9 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             end
         end
 
-        realized_var_uc = read_realized_variables(results_uc)
-        @test length(keys(realized_var_uc)) == 12
-        for var in values(realized_var_uc)
+        realized_variable_uc = read_realized_variables(results_uc)
+        @test length(keys(realized_variable_uc)) == 12
+        for var in values(realized_variable_uc)
             @test size(var)[1] == 48
         end
 
@@ -489,9 +489,9 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             end
         end
 
-        realized_var_rh = read_realized_variables(results_rh)
-        @test length(keys(realized_var_rh)) == 12
-        for var in values(realized_var_rh)
+        realized_variable_rh = read_realized_variables(results_rh)
+        @test length(keys(realized_variable_rh)) == 12
+        for var in values(realized_variable_rh)
             @test size(var)[1] == 48
             existing_timetsamps = get_timestamps(results_rh)
             for ts in existing_timetsamps

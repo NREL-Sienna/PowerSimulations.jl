@@ -75,24 +75,24 @@ end
     MOIU.attach_optimizer(container.JuMPmodel)
     constraint_indices = get_all_constraint_index(model)
     for (key, index, moi_index) in constraint_indices
-        val1 = get_con_index(model, moi_index)
+        val1 = get_constraint_index(model, moi_index)
         val2 = container.constraints[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_con_index(model, length(constraint_indices) + 1))
+    @test isnothing(get_constraint_index(model, length(constraint_indices) + 1))
 
-    var_keys = PSI.get_all_var_keys(model)
-    var_index = get_all_var_index(model)
+    var_keys = PSI.get_all_variable_keys(model)
+    var_index = get_all_variable_index(model)
     for (ix, (key, index, moi_index)) in enumerate(var_keys)
         index_tuple = var_index[ix]
         @test index_tuple[1] == PSI.encode_key(key)
         @test index_tuple[2] == index
         @test index_tuple[3] == moi_index
-        val1 = get_var_index(model, moi_index)
+        val1 = get_variable_index(model, moi_index)
         val2 = container.variables[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_var_index(model, length(var_index) + 1))
+    @test isnothing(get_variable_index(model, length(var_index) + 1))
 end
 
 # @testset "Test print methods" begin

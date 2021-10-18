@@ -145,8 +145,8 @@ function construct_network!(
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(container, T, sys, template, instantiate_model)
-    add_pm_var_refs!(container, T, sys)
-    add_pm_con_refs!(container, T, sys)
+    add_pm_variable_refs!(container, T, sys)
+    add_pm_constraint_refs!(container, T, sys)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -172,8 +172,8 @@ function construct_network!(
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(container, T, sys, template, instantiate_model)
-    add_pm_var_refs!(container, T, sys)
-    add_pm_con_refs!(container, T, sys)
+    add_pm_variable_refs!(container, T, sys)
+    add_pm_constraint_refs!(container, T, sys)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -198,8 +198,8 @@ function construct_network!(
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(container, T, sys, template, instantiate_model)
-    add_pm_var_refs!(container, T, sys)
-    add_pm_con_refs!(container, T, sys)
+    add_pm_variable_refs!(container, T, sys)
+    add_pm_constraint_refs!(container, T, sys)
     add_constraint_dual!(container, sys, model)
     return
 end
