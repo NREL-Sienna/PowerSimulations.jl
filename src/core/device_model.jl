@@ -86,9 +86,4 @@ function _set_model!(
     dict[key] = model
 end
 
-function has_service_model(model::DeviceModel)
-    if isempty(get_services(model))
-        return false
-    end
-    return true
-end
+has_service_model(model::DeviceModel) = !isempty(get_services(model))
