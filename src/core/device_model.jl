@@ -81,7 +81,7 @@ function _set_model!(
 ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
     key = Symbol(D)
     if haskey(dict, key)
-        @info("Overwriting $(D) existing model")
+        @warn "Overwriting $(D) existing model"
     end
     dict[key] = model
 end

@@ -122,7 +122,7 @@ end
 
 function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)
     if haskey(dict, key)
-        @info("Overwriting $(key) existing model")
+        @warn "Overwriting $(key) existing model"
     end
     dict[key] = model
     return
