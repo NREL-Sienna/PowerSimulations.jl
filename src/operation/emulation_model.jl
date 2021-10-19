@@ -511,7 +511,7 @@ end
 
 function _write_model_parameter_results!(store, container, execution)
     parameters = get_parameters(container)
-    (isnothing(parameters) || isempty(parameters)) && return
+    (parameters === nothing || isempty(parameters)) && return
     horizon = 1
 
     for (key, parameter) in parameters

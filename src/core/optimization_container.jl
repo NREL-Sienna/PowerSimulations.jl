@@ -900,7 +900,7 @@ function read_parameters(container::OptimizationContainer)
     # the system
     params_dict = Dict{ParameterKey, DataFrames.DataFrame}()
     parameters = get_parameters(container)
-    (isnothing(parameters) || isempty(parameters)) && return params_dict
+    (parameters === nothing || isempty(parameters)) && return params_dict
     for (k, v) in parameters
         param_array = axis_array_to_dataframe(get_parameter_array(v))
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))

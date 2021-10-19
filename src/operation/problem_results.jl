@@ -372,7 +372,7 @@ function _read_realized_results(
     container_keys::Union{Nothing, Vector{<:OptimizationContainerKey}},
 )
     existing_keys = collect(keys(result_values))
-    container_keys = isnothing(container_keys) ? existing_keys : container_keys
+    container_keys = container_keys === nothing ? existing_keys : container_keys
     _validate_keys(existing_keys, container_keys)
     return Dict(encode_key_string(k) => v for (k, v) in result_values if k in container_keys)
 end

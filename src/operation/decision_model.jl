@@ -518,7 +518,7 @@ function _write_model_parameter_results!(
     end
 
     parameters = get_parameters(container)
-    (isnothing(parameters) || isempty(parameters)) && return
+    (parameters === nothing || isempty(parameters)) && return
     horizon = get_horizon(get_settings(model))
 
     for (key, container) in parameters

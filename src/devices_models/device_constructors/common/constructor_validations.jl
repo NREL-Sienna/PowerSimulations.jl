@@ -19,7 +19,7 @@ function validate_service!(
     sys::PSY.System,
 ) where {S <: PSY.Service}
     service = PSY.get_component(S, sys, get_service_name(model))
-    if isnothing(service)
+    if service === nothing
         @warn "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
             :ConstructGroup
         return false
@@ -50,7 +50,7 @@ function validate_services!(
     sys::PSY.System,
 ) where {S <: PSY.StaticReserveGroup}
     service = PSY.get_component(S, sys, get_service_name(model))
-    if isnothing(service)
+    if service === nothing
         @warn "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
             :ConstructGroup
         return false

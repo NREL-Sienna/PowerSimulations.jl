@@ -30,7 +30,7 @@
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        @test !isnothing(ps_model.internal.container.pm)
+        @test ps_model.internal.container.pm !== nothing
         # TODO: Change test
         # @test :nodal_balance_active in keys(ps_model.internal.container.expressions)
     end
@@ -382,7 +382,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test !isnothing(ps_model.internal.container.pm)
+        @test ps_model.internal.container.pm !== nothing
     end
 end
 
@@ -427,7 +427,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test !isnothing(ps_model.internal.container.pm)
+        @test ps_model.internal.container.pm !== nothing
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],

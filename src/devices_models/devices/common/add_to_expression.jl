@@ -515,7 +515,7 @@ function add_to_expression!(
     contributing_devices_map = get_contributing_devices_map(model)
     for (device_type, devices) in contributing_devices_map
         device_model = get(devices_template, Symbol(device_type), nothing)
-        isnothing(device_model) && continue
+        device_model === nothing && continue
         expression_type = get_expression_type_for_reserve(U(), device_type, V)
         add_to_expression!(container, expression_type, U, devices, model)
     end

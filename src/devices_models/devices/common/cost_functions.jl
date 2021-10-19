@@ -529,7 +529,7 @@ function add_to_cost!(
     end
 
     # Start-up costs
-    if !isnothing(spec.start_up_cost)
+    if spec.start_up_cost !== nothing
         start_cost_data = PSY.get_start_up(cost_data)
         if spec.has_multistart_variables
             for (st, var_type) in enumerate(START_VARIABLES)

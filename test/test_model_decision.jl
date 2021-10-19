@@ -79,7 +79,7 @@ end
         val2 = container.constraints[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_constraint_index(model, length(constraint_indices) + 1))
+    @test get_constraint_index(model, length(constraint_indices) + 1) === nothing
 
     var_keys = PSI.get_all_variable_keys(model)
     var_index = get_all_variable_index(model)
@@ -92,7 +92,7 @@ end
         val2 = container.variables[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_variable_index(model, length(var_index) + 1))
+    @test get_variable_index(model, length(var_index) + 1) === nothing
 end
 
 # @testset "Test print methods" begin

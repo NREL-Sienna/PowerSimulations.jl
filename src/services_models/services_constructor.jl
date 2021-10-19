@@ -53,7 +53,7 @@ function populate_contributing_devices!(template, sys::PSY.System)
     for (service_key, service_model) in service_models
         S = get_component_type(service_model)
         service = PSY.get_component(S, sys, get_service_name(service_model))
-        if isnothing(service)
+        if service === nothing
             @warn "The data doesn't include services of type $(S) and name $(get_service_name(service_model)), consider changing the service models" _group =
                 :ConstructGroup
             continue

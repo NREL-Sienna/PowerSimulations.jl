@@ -30,7 +30,7 @@ function psi_constraint_test(
 )
     constraints = PSI.get_constraints(model)
     for con in constraint_keys
-        @test !isnothing(get(constraints, con, nothing))
+        @test get(constraints, con, nothing) !== nothing
     end
     return
 end
@@ -42,7 +42,7 @@ function psi_aux_variable_test(
     op_container = PSI.get_optimization_container(model)
     vars = PSI.get_aux_variables(op_container)
     for key in constraint_keys
-        @test !isnothing(get(vars, key, nothing))
+        @test get(vars, key, nothing) !== nothing
     end
     return
 end
@@ -243,7 +243,7 @@ function _test_plain_print_methods(list::Array)
         io = IOBuffer()
         show(io, "text/plain", object)
         grabbed = String(take!(io))
-        @test !isnothing(grabbed)
+        @test grabbed !== nothing
     end
 end
 
@@ -253,7 +253,7 @@ function _test_html_print_methods(list::Array)
         io = IOBuffer()
         show(io, "text/html", object)
         grabbed = String(take!(io))
-        @test !isnothing(grabbed)
+        @test grabbed !== nothing
     end
 end
 

@@ -29,7 +29,7 @@
     @test isempty(values(sim.internal.simulation_cache))
     for field in fieldnames(SimulationSequence)
         if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
-            @test !isnothing(getfield(sim.sequence, field))
+            @test getfield(sim.sequence, field) !== nothing
         end
     end
     @test isa(sim.sequence, SimulationSequence)

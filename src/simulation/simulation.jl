@@ -993,7 +993,7 @@ function _execute!(
     enable_progress_bar = _PROGRESS_METER_ENABLED,
     disable_timer_outputs = false,
 )
-    @assert !isnothing(sim.internal)
+    @assert sim.internal !== nothing
 
     set_simulation_status!(sim, RunStatus.RUNNING)
     execution_order = get_execution_order(sim)

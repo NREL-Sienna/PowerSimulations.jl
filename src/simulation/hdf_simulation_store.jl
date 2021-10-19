@@ -144,7 +144,7 @@ function open_store(
         )
         return func(store)
     finally
-        !isnothing(store) && close(store)
+        store !== nothing && close(store)
     end
 end
 
@@ -155,7 +155,7 @@ function Base.close(store::HdfSimulationStore)
 end
 
 function Base.isopen(store::HdfSimulationStore)
-    return isnothing(store.file) ? false : HDF5.isopen(store.file)
+    return store.file === nothing ? false : HDF5.isopen(store.file)
 end
 
 function Base.flush(store::HdfSimulationStore)

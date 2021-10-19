@@ -774,7 +774,7 @@ function load_results!(
     duals::Vector{Tuple} = Vector{Tuple}(),
     parameters::Vector{Tuple} = Vector{Tuple}(),
 )
-    initial_time = isnothing(initial_time) ? first(get_timestamps(res)) : initial_time
+    initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
 
     res.results_timestamps = _process_timestamps(res, initial_time, count)
 
