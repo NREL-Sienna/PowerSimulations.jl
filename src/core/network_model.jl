@@ -9,19 +9,19 @@ function _check_pm_formulation(::Type{T}) where {T <: PM.AbstractPowerModel}
 end
 
 """
-Establishes the model for a particular device specified by type. Uses the keyword argument
-feedforward to enable passing values between operation model at simulation time
-
+Establishes the model for a particular device specified by type.
 # Arguments
--`::Type{D}`: Power System Device Type
--`::Type{B}`: Abstract Device Formulation
+-`::Type{T}`: PowerModels AbstractPowerModel
 
 # Accepted Key Words
-- `feedforward::Array{<:AbstractAffectFeedForward}` : use to pass parameters between models
+- `use_slacks::Bool`: Adds slacks to the network modelings
+- `PTDF::PSY.PTDF`: PTDF Array calculated using PowerSystems
+- `duals::Vector{DataType}`: Constraint types to calculate the duals
 
 # Example
 ```julia
-thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
+ptdf_array = PSY.PTDF(system)
+thermal_gens = NetworkModel(StandardPTDFModel, ptdf = ptdf_array),
 ```
 """
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
