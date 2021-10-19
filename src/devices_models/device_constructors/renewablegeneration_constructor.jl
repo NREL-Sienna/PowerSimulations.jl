@@ -11,14 +11,11 @@ function construct_device!(
 }
     devices = get_available_components(R, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
-    # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     # Expression
@@ -70,7 +67,7 @@ function construct_device!(
     S <: PM.AbstractPowerModel,
 }
     devices = get_available_components(R, sys)
-    # Constraints
+
     if has_service_model(model)
         add_constraints!(
             container,
@@ -101,7 +98,6 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -121,11 +117,10 @@ function construct_device!(
 }
     devices = get_available_components(R, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
-    # Parameters
+
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     # Expression
@@ -170,7 +165,6 @@ function construct_device!(
 }
     devices = get_available_components(R, sys)
 
-    # Constraints
     if has_service_model(model)
         add_constraints!(
             container,
@@ -192,7 +186,6 @@ function construct_device!(
     end
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -209,7 +202,6 @@ function construct_device!(
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(R, sys)
 
-    # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
@@ -239,7 +231,7 @@ function construct_device!(
     ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(R, sys)
-    # Parameters
+
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,

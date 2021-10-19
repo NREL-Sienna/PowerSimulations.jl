@@ -15,7 +15,7 @@ end
 
 function validate_service!(
     model::ServiceModel{S, <:AbstractServiceFormulation},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
     sys::PSY.System,
 ) where {S <: PSY.Service}
     service = PSY.get_component(S, sys, get_service_name(model))

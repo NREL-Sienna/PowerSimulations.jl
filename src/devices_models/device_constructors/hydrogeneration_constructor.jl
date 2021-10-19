@@ -9,7 +9,7 @@ function construct_device!(
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
-    # Parameters
+
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
@@ -53,7 +53,7 @@ function construct_device!(
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
-    # Parameters
+
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     # Expression
@@ -84,7 +84,6 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
@@ -107,7 +106,6 @@ function construct_device!(
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -144,7 +142,6 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -172,7 +169,6 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
@@ -196,7 +192,6 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
 
     add_to_expression!(
@@ -226,7 +221,6 @@ function construct_device!(
         S,
     )
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_feedforward_arguments!(container, model, devices)
@@ -246,7 +240,6 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -266,7 +259,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -285,7 +277,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
     add_variables!(
         container,
@@ -294,10 +285,8 @@ function construct_device!(
         HydroDispatchReservoirBudget(),
     )
 
-    # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -345,7 +334,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -377,7 +365,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -397,13 +384,10 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
 
-    # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -444,7 +428,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -467,7 +450,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
@@ -486,7 +468,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirStorage())
     add_variables!(
         container,
@@ -514,11 +495,9 @@ function construct_device!(
         HydroDispatchReservoirStorage(),
     )
 
-    # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -565,7 +544,7 @@ function construct_device!(
     ::Type{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
-    # Constraints
+
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -592,7 +571,6 @@ function construct_device!(
         S,
     )
 
-    # Initial Conditions
     add_initial_condition!(
         container,
         devices,
@@ -604,7 +582,6 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -624,8 +601,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
-
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirStorage())
     add_variables!(container, EnergyVariable, devices, HydroDispatchReservoirStorage())
     add_variables!(
@@ -656,11 +631,9 @@ function construct_device!(
         S,
     )
 
-    # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -694,7 +667,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -712,7 +684,6 @@ function construct_device!(
         S,
     )
 
-    # Initial Conditions
     add_initial_condition!(
         container,
         devices,
@@ -724,7 +695,6 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
@@ -743,7 +713,6 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
@@ -768,7 +737,6 @@ function construct_device!(
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -799,7 +767,7 @@ function construct_device!(
     ::Type{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
-    # Constraints
+
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -828,7 +796,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -852,7 +819,6 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
 
@@ -865,7 +831,6 @@ function construct_device!(
         S,
     )
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -902,7 +867,7 @@ function construct_device!(
     S <: PM.AbstractActivePowerModel,
 }
     devices = get_available_components(H, sys)
-    # Constraints
+
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -922,7 +887,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -941,7 +905,6 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
@@ -963,10 +926,8 @@ function construct_device!(
         S,
     )
 
-    # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -998,7 +959,6 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1029,7 +989,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
@@ -1053,7 +1012,6 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
 
@@ -1066,10 +1024,8 @@ function construct_device!(
         S,
     )
 
-    # Parameters
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_to_expression!(
         container,
@@ -1105,7 +1061,6 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1128,7 +1083,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -1147,7 +1101,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(
         container,
         ActivePowerVariable,
@@ -1198,11 +1151,9 @@ function construct_device!(
         S,
     )
 
-    # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -1234,7 +1185,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1261,7 +1211,6 @@ function construct_device!(
         S,
     )
 
-    # Initial Conditions
     add_initial_condition!(
         container,
         devices,
@@ -1273,7 +1222,6 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
@@ -1293,7 +1241,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(
         container,
         ActivePowerVariable,
@@ -1330,11 +1277,9 @@ function construct_device!(
         S,
     )
 
-    # Parameters
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -1366,8 +1311,6 @@ function construct_device!(
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    # Constraints
-
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1385,7 +1328,6 @@ function construct_device!(
         S,
     )
 
-    # Initial Conditions
     add_initial_condition!(
         container,
         devices,
@@ -1398,7 +1340,6 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
@@ -1418,7 +1359,6 @@ function construct_device!(
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    # Variables
     add_variables!(container, ActivePowerInVariable, devices, HydroDispatchPumpedStorage())
     add_variables!(container, ActivePowerOutVariable, devices, HydroDispatchPumpedStorage())
     add_variables!(container, EnergyVariableUp, devices, HydroDispatchPumpedStorage())
@@ -1433,11 +1373,9 @@ function construct_device!(
         )
     end
 
-    # Parameters
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
     add_parameters!(container, OutflowTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -1473,7 +1411,6 @@ function construct_device!(
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    # Constraints
     add_constraints!(
         container,
         OutputActivePowerVariableLimitsConstraint,
@@ -1491,7 +1428,6 @@ function construct_device!(
         S,
     )
 
-    # Initial Conditions
     add_initial_condition!(
         container,
         devices,
@@ -1510,7 +1446,6 @@ function construct_device!(
     add_constraints!(container, EnergyCapacityDownConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)

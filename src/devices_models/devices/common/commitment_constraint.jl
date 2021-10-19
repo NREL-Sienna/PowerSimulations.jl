@@ -1,7 +1,7 @@
 @doc raw"""
 Constructs multi-timestep constraint from initial conditions and binary variable tuple.
 
-# Constraints
+
 
 ``` varstart + varstop <= 1.0 ```
 

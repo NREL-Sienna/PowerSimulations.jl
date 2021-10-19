@@ -31,7 +31,7 @@ end
 
 Constructs min/max range constraint from device variable with parameter setting.
 
-# Constraints
+
 If device min = 0:
 
 ``` variable[var_name, t] <= r.max*param_reference[var_name] ```
@@ -89,7 +89,7 @@ end
 Constructs a parameterized upper bound constraint to implement feedforward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
 
-# Constraints
+
 ``` variable[var_name, t] <= param_reference[var_name] ```
 
 # LaTeX
@@ -148,7 +148,7 @@ end
 Constructs a parameterized upper bound constraint to implement feedforward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
 
-# Constraints
+
 ``` variable[var_name, t] <= param_reference[var_name] ```
 
 # LaTeX
@@ -242,7 +242,7 @@ end
 Constructs a parameterized integral limit constraint to implement feedforward from other models.
 The Parameters are initialized using the upper boundary values of the provided variables.
 
-# Constraints
+
 ``` sum(variable[var_name, t] for t in 1:affected_periods)/affected_periods <= param_reference[var_name] ```
 
 # LaTeX
@@ -303,7 +303,7 @@ end
 
 Constructs a equality constraint to a fix a variable in one model using the variable value from other model results.
 
-# Constraints
+
 ``` variable[var_name, t] == param[var_name, t] ```
 
 # LaTeX
@@ -350,7 +350,7 @@ end
 
 Constructs a equality constraint to a fix a variable in one model using the variable value from other model results.
 
-# Constraints
+
 ``` variable[var_name, t] + slack[var_name, t] >= param[var_name, t] ```
 
 # LaTeX

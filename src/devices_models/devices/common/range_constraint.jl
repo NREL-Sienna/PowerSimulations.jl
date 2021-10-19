@@ -20,7 +20,7 @@ end
 @doc raw"""
 Constructs min/max range constraint from device variable.
 
-# Constraints
+
 If min and max within an epsilon width:
 
 ``` variable[name, t] == limits.max ```
@@ -145,7 +145,7 @@ end
 @doc raw"""
 Constructs min/max range constraint from device variable and on/off decision variable.
 
-# Constraints
+
 If device min = 0:
 
 ``` varcts[name, t] <= limits.max*varbin[name, t]) ```
@@ -314,7 +314,7 @@ end
 @doc raw"""
 Constructs min/max range constraint from device variable and reservation decision variable.
 
-# Constraints
+
 
 ``` varcts[name, t] <= limits.max * (1 - varbin[name, t]) ```
 
@@ -441,7 +441,7 @@ end
 @doc raw"""
 Constructs min/max range constraint from device variable and reservation decision variable.
 
-# Constraints
+
 
 ``` varcts[name, t] <= limits.max * varbin[name, t] ```
 
@@ -476,7 +476,7 @@ end
 @doc raw"""
 Constructs min/max range constraint from device variable and reservation decision variable.
 
-# Constraints
+
 
 ``` varcts[name, t] <= limits.max * varbin[name, t] ```
 

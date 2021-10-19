@@ -25,7 +25,7 @@ function construct_device!(
         model,
         S,
     )
-    # Variables
+
     add_variables!(
         container,
         DeltaActivePowerUpVariable,
@@ -67,7 +67,7 @@ function construct_device!(
     end
 
     devices = get_available_components(get_component_type(model), sys)
-    # Constraints
+
     add_constraints!(
         container,
         DeltaActivePowerUpVariableLimitsConstraint,
@@ -115,7 +115,7 @@ function construct_device!(
         model,
         S,
     )
-    # Variables
+
     add_variables!(
         container,
         DeltaActivePowerUpVariable,
@@ -157,7 +157,6 @@ function construct_device!(
     end
 
     devices = get_available_components(get_component_type(model), sys)
-    # Constraints
 
     add_constraints!(
         container,

@@ -34,7 +34,7 @@ end
 @doc raw"""
 Constructs allowed rate-of-change constraints from variables, initial condtions, and rate data.
 
-# Constraints
+
 If t = 1:
 
 ``` variable[name, 1] - initial_conditions[ix].value <= rate_data[1][ix].up ```

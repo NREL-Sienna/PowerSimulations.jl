@@ -46,18 +46,15 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
     add_variables!(container, StartVariable, devices, D())
     add_variables!(container, StopVariable, devices, D())
 
-    # Aux Variables
     add_variables!(container, TimeDurationOn, devices, D())
     add_variables!(container, TimeDurationOff, devices, D())
 
-    # Initial Conditions
     initial_conditions!(container, devices, D())
 
     add_to_expression!(
@@ -76,7 +73,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -114,7 +111,7 @@ function construct_device!(
     S <: PM.AbstractPowerModel,
 }
     devices = get_available_components(T, sys)
-    # Constraints
+
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -145,7 +142,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -167,17 +163,14 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
     add_variables!(container, StartVariable, devices, D())
     add_variables!(container, StopVariable, devices, D())
 
-    # Aux Variables
     add_variables!(container, TimeDurationOn, devices, D())
     add_variables!(container, TimeDurationOff, devices, D())
 
-    # Initial Conditions
     initial_conditions!(container, devices, D())
 
     add_to_expression!(
@@ -188,7 +181,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -250,7 +243,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -269,14 +261,12 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, ReactivePowerVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, OnVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, StartVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, StopVariable, devices, ThermalBasicUnitCommitment())
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
     add_to_expression!(
@@ -295,7 +285,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -331,7 +321,6 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -361,7 +350,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -379,13 +367,11 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, OnVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, StartVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, StopVariable, devices, ThermalBasicUnitCommitment())
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
     add_to_expression!(
@@ -396,7 +382,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -432,7 +418,6 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -454,7 +439,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -472,11 +456,9 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, ThermalStandardDispatch())
     add_variables!(container, ReactivePowerVariable, devices, ThermalStandardDispatch())
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
     add_to_expression!(
@@ -495,7 +477,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -531,7 +513,6 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -561,7 +542,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -579,10 +559,8 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, ThermalStandardDispatch())
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
     add_to_expression!(
@@ -593,7 +571,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -650,7 +628,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -669,7 +646,6 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
@@ -689,7 +665,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -725,7 +701,6 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -754,7 +729,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -773,7 +747,6 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
 
     add_to_expression!(
@@ -784,7 +757,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -821,7 +794,6 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -841,7 +813,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     return
 end
@@ -856,7 +827,6 @@ function construct_device!(
 ) where {S <: PM.AbstractPowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
-    # Variables
     add_variables!(
         container,
         PowerAboveMinimumVariable,
@@ -876,12 +846,10 @@ function construct_device!(
     add_variables!(container, WarmStartVariable, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, HotStartVariable, devices, ThermalMultiStartUnitCommitment())
 
-    # Aux Variables
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
     add_to_expression!(
@@ -901,7 +869,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -935,7 +903,6 @@ function construct_device!(
 ) where {S <: PM.AbstractPowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -972,7 +939,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -987,7 +953,6 @@ function construct_device!(
 ) where {S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
-    # Variables
     add_variables!(
         container,
         PowerAboveMinimumVariable,
@@ -1001,7 +966,6 @@ function construct_device!(
     add_variables!(container, WarmStartVariable, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, HotStartVariable, devices, ThermalMultiStartUnitCommitment())
 
-    # Aux Variables
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
@@ -1015,7 +979,7 @@ function construct_device!(
         S,
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -1047,10 +1011,8 @@ function construct_device!(
 ) where {S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1079,7 +1041,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 end
@@ -1093,7 +1054,6 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
-    # Variables
     add_variables!(
         container,
         PowerAboveMinimumVariable,
@@ -1110,12 +1070,10 @@ function construct_device!(
     add_variables!(container, StartVariable, devices, ThermalCompactUnitCommitment())
     add_variables!(container, StopVariable, devices, ThermalCompactUnitCommitment())
 
-    # Aux Variables
     add_variables!(container, TimeDurationOn, devices, ThermalCompactUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalCompactUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalCompactUnitCommitment())
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
 
     add_to_expression!(
@@ -1127,7 +1085,7 @@ function construct_device!(
         S,
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -1159,7 +1117,7 @@ function construct_device!(
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
-    # Constraints
+
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1191,7 +1149,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -1206,7 +1163,6 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
-    # Variables
     add_variables!(
         container,
         PowerAboveMinimumVariable,
@@ -1217,12 +1173,10 @@ function construct_device!(
     add_variables!(container, StartVariable, devices, ThermalCompactUnitCommitment())
     add_variables!(container, StopVariable, devices, ThermalCompactUnitCommitment())
 
-    # Aux Variables
     add_variables!(container, TimeDurationOn, devices, ThermalCompactUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalCompactUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalCompactUnitCommitment())
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
 
     add_to_expression!(
@@ -1234,7 +1188,7 @@ function construct_device!(
         S,
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -1265,7 +1219,7 @@ function construct_device!(
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
-    # Constraints
+
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1289,7 +1243,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -1304,18 +1257,15 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
-    # Variables
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
     add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
 
-    # Aux Variables
     add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
     add_parameters!(container, OnStatusParameter(), devices, model)
 
     add_feedforward_arguments!(container, model, devices)
 
-    # Initial Conditions
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
     add_to_expression!(
@@ -1326,7 +1276,7 @@ function construct_device!(
         model,
         S,
     )
-    #Cost Expression
+
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -1375,7 +1325,6 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1405,7 +1354,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -1420,10 +1368,8 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
-    # Variables
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
 
-    # Aux Variables
     add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
     add_parameters!(container, OnStatusParameter(), devices, model)
@@ -1440,10 +1386,9 @@ function construct_device!(
     )
 
     add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
-    # Initial Conditions
+
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 
     add_to_expression!(
@@ -1474,7 +1419,6 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -1496,7 +1440,6 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return

@@ -11,7 +11,6 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
@@ -34,10 +33,8 @@ function construct_device!(
         S,
     )
 
-    # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 end
 
@@ -54,7 +51,6 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -73,7 +69,6 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -93,7 +88,6 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, D())
 
     # Add Variables to expressions
@@ -105,10 +99,9 @@ function construct_device!(
         model,
         S,
     )
-    # Parameters
+
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 end
 
@@ -125,7 +118,6 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -136,7 +128,6 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -152,7 +143,6 @@ function construct_device!(
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
@@ -176,10 +166,8 @@ function construct_device!(
         S,
     )
 
-    # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 end
 
@@ -192,7 +180,6 @@ function construct_device!(
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -211,7 +198,6 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -227,7 +213,6 @@ function construct_device!(
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
-    # Variables
     add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
     add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
 
@@ -241,10 +226,8 @@ function construct_device!(
         S,
     )
 
-    # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
-    #Cost Expression
     add_expressions!(container, ProductionCostExpression, devices, model)
 end
 
@@ -257,7 +240,6 @@ function construct_device!(
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
-    # Constraints
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -268,7 +250,6 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
     cost_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
@@ -283,7 +264,7 @@ function construct_device!(
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
-    # Parameters
+
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
@@ -313,7 +294,7 @@ function construct_device!(
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
-    # Parameters
+
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_to_expression!(
@@ -350,7 +331,7 @@ function construct_device!(
     S <: PM.AbstractPowerModel,
 }
     devices = get_available_components(L, sys)
-    # Parameters
+
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
@@ -384,7 +365,6 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    # Parameters
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
