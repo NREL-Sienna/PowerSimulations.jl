@@ -11,11 +11,10 @@ function ParameterKey(
     return ParameterKey{T, U}(meta)
 end
 
-function ParameterKey(::Type{T}) where {T <: ParameterType}
-    return ParameterKey(T, PSY.Component, CONTAINER_KEY_EMPTY_META)
-end
-
-function ParameterKey(::Type{T}, meta::String) where {T <: ParameterType}
+function ParameterKey(
+    ::Type{T},
+    meta::String = CONTAINER_KEY_EMPTY_META,
+) where {T <: ParameterType}
     return ParameterKey(T, PSY.Component, meta)
 end
 
