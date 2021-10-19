@@ -13,7 +13,7 @@ end
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
-    @test_logs (:info, "Overwriting ThermalStandard existing model") set_device_model!(
+    @test_logs (:warn, "Overwriting ThermalStandard existing model") set_device_model!(
         template,
         DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
     )
