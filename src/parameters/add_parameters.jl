@@ -14,6 +14,21 @@ end
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
+    devices::U,
+    model::DeviceModel{D, W},
+) where {
+    T <: TimeSeriesParameter,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.HybridSystem}
+    _devices = [d for d in devices if PSY.get_renewable_unit(d) != nothing]
+    add_parameters!(container, T(), _devices, model)
+end
+
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
     service::U,
     model::ServiceModel{U, V},
 ) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
