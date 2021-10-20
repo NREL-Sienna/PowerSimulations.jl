@@ -135,50 +135,14 @@ function construct_device!(
         S,
     )
 
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        PowerOutputRangeConstraint,
-        devices,
-        model,
-        S,
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, PowerOutputRangeConstraint, devices, model, S)
 
     if has_service_model(model)
-        add_constraints!(
-            container,
-            ReserveEnergyConstraint,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            RangeLimitConstraint,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            ComponentReserveUpBalance,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            ComponentReserveDownBalance,
-            devices,
-            model,
-            S,
-        )
+        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, RangeLimitConstraint, devices, model, S)
+        add_constraints!(container, ComponentReserveUpBalance, devices, model, S)
+        add_constraints!(container, ComponentReserveDownBalance, devices, model, S)
     end
 
     add_feedforward_constraints!(container, model, devices)
@@ -346,68 +310,20 @@ function construct_device!(
     )
 
     # Constraints
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        PowerOutputRangeConstraint,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        ReactivePowerConstraint,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        InterConnectionLimitConstraint,
-        devices,
-        model,
-        S,
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, PowerOutputRangeConstraint, devices, model, S)
+    add_constraints!(container, ReactivePowerConstraint, devices, model, S)
+    add_constraints!(container, InterConnectionLimitConstraint, devices, model, S)
     if has_service_model(model)
-        add_constraints!(
-            container,
-            ReserveEnergyConstraint,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            RangeLimitConstraint,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            ComponentReserveUpBalance,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            ComponentReserveDownBalance,
-            devices,
-            model,
-            S,
-        )
+        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, RangeLimitConstraint, devices, model, S)
+        add_constraints!(container, ComponentReserveUpBalance, devices, model, S)
+        add_constraints!(container, ComponentReserveDownBalance, devices, model, S)
     end
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, )
+    cost_function!(container, devices, model, S)
 
     return
 end
@@ -548,56 +464,20 @@ function construct_device!(
         S,
     )
 
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        PowerOutputRangeConstraint,
-        devices,
-        model,
-        S,
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, PowerOutputRangeConstraint, devices, model, S)
 
     if has_service_model(model)
-        add_constraints!(
-            container,
-            ReserveEnergyConstraint,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            RangeLimitConstraint,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            ComponentReserveUpBalance,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            ComponentReserveDownBalance,
-            devices,
-            model,
-            S,
-        )
+        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, RangeLimitConstraint, devices, model, S)
+        add_constraints!(container, ComponentReserveUpBalance, devices, model, S)
+        add_constraints!(container, ComponentReserveDownBalance, devices, model, S)
     end
 
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S,)
+    cost_function!(container, devices, model, S)
 
     return
 end
@@ -758,70 +638,22 @@ function construct_device!(
     )
 
     # Constraints
-    add_constraints!(
-        container,
-        EnergyBalanceConstraint,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        PowerOutputRangeConstraint,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        ReactivePowerConstraint,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        InterConnectionLimitConstraint,
-        devices,
-        model,
-        S,
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, PowerOutputRangeConstraint, devices, model, S)
+    add_constraints!(container, ReactivePowerConstraint, devices, model, S)
+    add_constraints!(container, InterConnectionLimitConstraint, devices, model, S)
 
     if has_service_model(model)
-        add_constraints!(
-            container,
-            ReserveEnergyConstraint,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            RangeLimitConstraint,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            ComponentReserveUpBalance,
-            devices,
-            model,
-            S,
-        )
-        add_constraints!(
-            container,
-            ComponentReserveDownBalance,
-            devices,
-            model,
-            S,
-        )
+        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, RangeLimitConstraint, devices, model, S)
+        add_constraints!(container, ComponentReserveUpBalance, devices, model, S)
+        add_constraints!(container, ComponentReserveDownBalance, devices, model, S)
     end
 
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S,)
+    cost_function!(container, devices, model, S)
 
     return
 end

@@ -92,22 +92,8 @@ function add_range_constraints!(
     component_type = V
     array = get_variable(container, variable, component_type)
 
-    add_lower_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-    )
-    add_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-    )
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
     add_parameterized_upper_bound_range_constraints_impl!(
         container,
         T,
@@ -130,14 +116,7 @@ function add_range_constraints!(
     expression = U()
     component_type = V
     array = get_expression(container, expression, component_type)
-    add_lower_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-    )
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
 end
 
 function add_range_constraints!(
@@ -151,14 +130,7 @@ function add_range_constraints!(
     expression = U()
     component_type = V
     array = get_expression(container, expression, component_type)
-    add_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        devices,
-        model,
-        X,
-    )
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
     add_parameterized_upper_bound_range_constraints_impl!(
         container,
         T,

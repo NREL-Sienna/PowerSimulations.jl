@@ -198,7 +198,7 @@ function add_constraints!(
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X,)
+        add_range_constraints!(container, T, U, devices, model, X)
     end
 end
 
@@ -211,9 +211,9 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     if get_attribute(model, "reservation")
-        add_reserve_range_constraints!(container, T, U, devices, model, X,)
+        add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X,)
+        add_range_constraints!(container, T, U, devices, model, X)
     end
 end
 
@@ -279,8 +279,13 @@ function add_constraints!(
     powerin_var = get_variable(container, ActivePowerInVariable(), V)
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
 
-    constraint =
-        add_constraints_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyBalanceConstraint(),
+        V,
+        names,
+        time_steps,
+    )
 
     for ic in initial_conditions
         device = get_component(ic)
@@ -364,8 +369,13 @@ function add_constraints!(
     var_q = get_variable(container, ReactivePowerVariable(), V)
     var_sub_q = get_variable(container, ComponentReactivePowerVariable(), V)
 
-    constraint =
-        add_constraints_container!(container, ReactivePowerConstraint(), V, name_index, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        ReactivePowerConstraint(),
+        V,
+        name_index,
+        time_steps,
+    )
 
     for d in devices, t in time_steps
         name = PSY.get_name(d)
@@ -505,7 +515,6 @@ function add_constraints!(
     return
 end
 
-
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{ComponentReserveUpBalance},
@@ -525,11 +534,14 @@ function add_constraints!(
         time_steps,
     )
 
-    for d in devices, t in time_steps, 
+    for d in devices, t in time_steps
         name = PSY.get_name(d)
         con_up[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            sub_expr_up[name, t] ==  sum(sub_r_up[name, sub_comp_type, t] for sub_comp_type in [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage])
+            sub_expr_up[name, t] == sum(
+                sub_r_up[name, sub_comp_type, t] for
+                sub_comp_type in [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
+            )
         )
     end
     return
@@ -554,11 +566,14 @@ function add_constraints!(
         time_steps,
     )
 
-    for d in devices, t in time_steps, 
+    for d in devices, t in time_steps
         name = PSY.get_name(d)
         con_dn[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            sub_expr_dn[name, t] ==  sum(sub_r_dn[name, sub_comp_type, t] for sub_comp_type in [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage])
+            sub_expr_dn[name, t] == sum(
+                sub_r_dn[name, sub_comp_type, t] for
+                sub_comp_type in [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
+            )
         )
     end
     return

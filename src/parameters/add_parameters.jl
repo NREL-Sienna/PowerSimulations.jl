@@ -25,7 +25,6 @@ function add_parameters!(
     add_parameters!(container, T(), _devices, model)
 end
 
-
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
