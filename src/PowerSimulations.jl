@@ -404,6 +404,11 @@ include("core/definitions.jl")
 
 # Core components
 include("core/abstract_types.jl")
+include("core/abstract_formulations.jl")
+include("core/abstract_simulation_store.jl")
+include("core/operation_model_abstract_types.jl")
+include("core/optimization_container_types.jl")
+include("core/abstract_feedforward.jl")
 include("core/optimization_container_keys.jl")
 include("network_models/powermodels_formulations.jl")
 include("core/network_model.jl")

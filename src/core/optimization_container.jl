@@ -1,3 +1,9 @@
+"Optimization Container construction stage"
+abstract type ConstructStage end
+
+struct ArgumentConstructStage <: ConstructStage end
+struct ModelConstructStage <: ConstructStage end
+
 struct OptimizationContainerMetadata
     container_key_lookup::Dict{String, <:OptimizationContainerKey}
 end
