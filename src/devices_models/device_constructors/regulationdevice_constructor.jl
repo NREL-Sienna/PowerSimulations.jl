@@ -25,7 +25,7 @@ function construct_device!(
         model,
         S,
     )
-    # Variables
+
     add_variables!(
         container,
         DeltaActivePowerUpVariable,
@@ -67,7 +67,7 @@ function construct_device!(
     end
 
     devices = get_available_components(get_component_type(model), sys)
-    # Constraints
+
     add_constraints!(
         container,
         DeltaActivePowerUpVariableLimitsConstraint,
@@ -75,7 +75,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -84,9 +83,8 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    ramp_constraints!(container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(container, devices, model, S)
     participation_assignment!(container, devices, model, S, nothing)
     regulation_cost!(container, devices, model)
     add_constraint_dual!(container, sys, model)
@@ -117,7 +115,7 @@ function construct_device!(
         model,
         S,
     )
-    # Variables
+
     add_variables!(
         container,
         DeltaActivePowerUpVariable,
@@ -159,7 +157,6 @@ function construct_device!(
     end
 
     devices = get_available_components(get_component_type(model), sys)
-    # Constraints
 
     add_constraints!(
         container,
@@ -168,7 +165,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -177,7 +173,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     participation_assignment!(container, devices, model, S, nothing)
     regulation_cost!(container, devices, model)

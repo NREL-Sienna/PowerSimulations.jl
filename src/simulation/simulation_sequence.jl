@@ -6,7 +6,7 @@
 Calculates how many times a problem is executed for every interval of the previous problem
 """
 function _calculate_interval_inner_counts(
-    intervals::OrderedDict{Symbol, Tuple{Dates.TimePeriod, <:FeedForwardChronology}},
+    intervals::OrderedDict{Symbol, Tuple{Dates.TimePeriod, <:FeedforwardChronology}},
 )
     order = collect(keys(intervals))
     reverse_order = length(intervals):-1:1
@@ -66,7 +66,7 @@ function _fill_execution_order(
 end
 
 function _get_execution_order_vector(
-    intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
+    intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedforwardChronology}},
 )
     length(intervals) == 1 && return [1]
     interval_run_counts = _calculate_interval_inner_counts(intervals)
@@ -134,11 +134,11 @@ end
 @doc raw"""
     SimulationSequence(horizons::Dict{Symbol, Int}
                         step_resolution::Dates.TimePeriod
-                        intervals::Dict{Symbol, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
+                        intervals::Dict{Symbol, <:Tuple{<:Dates.TimePeriod, <:FeedforwardChronology}}
                         order::Dict{Int, Symbol}
-                        feedforward_chronologies::Dict{Pair{Symbol, Symbol}, <:FeedForwardChronology}
-                        feedforward::Dict{Symbol, <:AbstractAffectFeedForward}
-                        ini_cond_chronology::Dict{Symbol, <:FeedForwardChronology}
+                        feedforward_chronologies::Dict{Pair{Symbol, Symbol}, <:FeedforwardChronology}
+                        feedforward::Dict{Symbol, <:AbstractAffectFeedforward}
+                        ini_cond_chronology::Dict{Symbol, <:FeedforwardChronology}
                         cache::Dict{Symbol, AbstractCache}
                         )
 """
@@ -147,9 +147,9 @@ mutable struct SimulationSequence
     # JDNOTE: This field might be able to go away.
     step_resolution::Dates.TimePeriod
     # The Symbol here is the name of the problem
-    intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
-    feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
-    feedforward::Dict{<:Tuple, <:AbstractAffectFeedForward}
+    intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedforwardChronology}}
+    feedforward_chronologies::Dict{Pair{String, String}, <:FeedforwardChronology}
+    feedforward::Dict{<:Tuple, <:AbstractAffectFeedforward}
     ini_cond_chronology::InitialConditionChronology
     cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
@@ -161,8 +161,8 @@ mutable struct SimulationSequence
         models::SimulationModels,
         # JDNOTE: We could remove interval here later
         intervals::Dict,
-        feedforward_chronologies = Dict{Pair{Symbol, Symbol}, FeedForwardChronology}(),
-        feedforward = Dict{Symbol, AbstractAffectFeedForward}(),
+        feedforward_chronologies = Dict{Pair{Symbol, Symbol}, FeedforwardChronology}(),
+        feedforward = Dict{Symbol, AbstractAffectFeedforward}(),
         ini_cond_chronology = InterProblemChronology(),
         cache = Dict{Tuple, AbstractCache}(),
     )
@@ -179,7 +179,7 @@ mutable struct SimulationSequence
         end
         horizons = determine_horizons!(models)
         _intervals =
-            OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}()
+            OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedforwardChronology}}()
         for name in get_model_names(models)
             # JDNOTE: Temporary conversion while we re-define how to do this
             if !(name in keys(intervals))

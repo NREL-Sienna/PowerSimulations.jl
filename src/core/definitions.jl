@@ -60,7 +60,7 @@ const PROBLEM_LOG_FILENAME = "operation_problem.log"
 const HASH_FILENAME = "check.sha256"
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"
-const REQUIRED_RECORDERS = (:simulation_status, :simulation)
+const REQUIRED_RECORDERS = (:simulation_status, :execution)
 const KNOWN_SIMULATION_PATHS = [
     "data_store",
     "logs",
@@ -110,9 +110,11 @@ const STORE_CONTAINER_DUALS = :duals
 const STORE_CONTAINER_PARAMETERS = :parameters
 const STORE_CONTAINER_VARIABLES = :variables
 const STORE_CONTAINER_AUX_VARIABLES = :aux_variables
+const STORE_CONTAINER_EXPRESSIONS = :expressions
 const STORE_CONTAINERS = (
     STORE_CONTAINER_DUALS,
     STORE_CONTAINER_PARAMETERS,
     STORE_CONTAINER_VARIABLES,
     STORE_CONTAINER_AUX_VARIABLES,
+    STORE_CONTAINER_EXPRESSIONS,
 )

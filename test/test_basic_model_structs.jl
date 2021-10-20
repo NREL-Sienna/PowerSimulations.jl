@@ -17,34 +17,69 @@ end
     )
 end
 
-@testset "FeedForward Struct Tests" begin
-    ff = UpperBoundFF(
-        device_type = RenewableDispatch,
-        variable_source_problem = ActivePowerVariable,
-        affected_variables = [ActivePowerVariable],
+@testset "Feedforward Struct Tests" begin
+    ffs = [
+        UpperBoundFeedforward(
+            component_type = RenewableDispatch,
+            source = ActivePowerVariable,
+            affected_values = [ActivePowerVariable],
+        ),
+        LowerBoundFeedforward(
+            component_type = RenewableDispatch,
+            source = ActivePowerVariable,
+            affected_values = [ActivePowerVariable],
+        ),
+        SemiContinuousFeedforward(
+            component_type = ThermalMultiStart,
+            source = OnVariable,
+            affected_values = [ActivePowerVariable, ReactivePowerVariable],
+        ),
+        IntegralLimitFeedforward(
+            component_type = GenericBattery,
+            source = EnergyVariable,
+            affected_values = [EnergyVariable],
+            number_of_periods = 10,
+        ),
+    ]
+
+    for ff in ffs
+        for av in PSI.get_affected_values(ff)
+            @test isa(av, PSI.VariableKey)
+        end
+    end
+
+    ff = FixValueFeedforward(
+        component_type = HydroDispatch,
+        source = OnVariable,
+        affected_values = [OnStatusParameter],
     )
 
-    @test isa(PSI.get_variable_source_problem_key(ff), PSI.VariableKey)
+    for av in PSI.get_affected_values(ff)
+        @test isa(av, PSI.ParameterKey)
+    end
 
-    ff = SemiContinuousFF(
-        device_type = ThermalMultiStart,
-        binary_source_problem = OnVariable,
-        affected_variables = [ActivePowerVariable, ReactivePowerVariable],
+    @test_throws ErrorException IntegralLimitFeedforward(
+        component_type = GenericBattery,
+        source = EnergyVariable,
+        affected_values = [OnStatusParameter],
+        number_of_periods = 10,
     )
 
-    @test isa(PSI.get_binary_source_problem_key(ff), PSI.VariableKey)
-
-    ff = IntegralLimitFF(
-        device_type = GenericBattery,
-        variable_source_problem = EnergyVariable,
-        affected_variables = [EnergyVariable],
+    @test_throws ErrorException UpperBoundFeedforward(
+        component_type = RenewableDispatch,
+        source = ActivePowerVariable,
+        affected_values = [OnStatusParameter],
     )
 
-    @test isa(PSI.get_variable_source_problem_key(ff), PSI.VariableKey)
+    @test_throws ErrorException LowerBoundFeedforward(
+        component_type = RenewableDispatch,
+        source = ActivePowerVariable,
+        affected_values = [OnStatusParameter],
+    )
 
-    ff = ParameterFF(
-        device_type = HydroDispatch,
-        variable_source_problem = ActivePowerVariable,
-        affected_parameters = [],
+    @test_throws ErrorException SemiContinuousFeedforward(
+        component_type = ThermalMultiStart,
+        source = OnVariable,
+        affected_values = [ActivePowerVariable, OnStatusParameter],
     )
 end

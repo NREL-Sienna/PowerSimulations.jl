@@ -16,7 +16,7 @@ system = build_c_sys5_re(; add_reserves = true)
 solver = optimizer_with_attributes(Cbc.Optimizer)
 
 devices = Dict{Symbol, DeviceModel}(
-    :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+    :Generators => DeviceModel(ThermalStandard, ThermalBasicDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )
 branches = Dict{Symbol, DeviceModel}(

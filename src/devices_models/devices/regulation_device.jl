@@ -59,9 +59,14 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = get_time_steps(container)
 
-    # TODO DT: should "up" be specified in meta instead of the constraint type?
-    container_up =
-        add_cons_container!(container, RegulationLimitsUpConstraint(), U, names, time_steps)
+    # TODO: should "up" be specified in meta instead of the constraint type?
+    container_up = add_constraints_container!(
+        container,
+        RegulationLimitsUpConstraint(),
+        U,
+        names,
+        time_steps,
+    )
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -111,7 +116,7 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = get_time_steps(container)
 
-    container_dn = add_cons_container!(
+    container_dn = add_constraints_container!(
         container,
         RegulationLimitsDownConstraint(),
         U,
@@ -166,8 +171,13 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = get_time_steps(container)
 
-    container_up =
-        add_cons_container!(container, RegulationLimitsUpConstraint(), U, names, time_steps)
+    container_up = add_constraints_container!(
+        container,
+        RegulationLimitsUpConstraint(),
+        U,
+        names,
+        time_steps,
+    )
 
     for d in devices
         name = PSY.get_name(d)
@@ -194,7 +204,7 @@ function add_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = get_time_steps(container)
 
-    container_dn = add_cons_container!(
+    container_dn = add_constraints_container!(
         container,
         RegulationLimitsDownConstraint(),
         U,
@@ -218,7 +228,6 @@ function ramp_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
-    ::Nothing,
 ) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
     R_up = get_variable(container, DeltaActivePowerUpVariable(), T)
     R_dn = get_variable(container, DeltaActivePowerDownVariable(), T)
@@ -227,9 +236,9 @@ function ramp_constraints!(
     names = [PSY.get_name(g) for g in devices]
     time_steps = get_time_steps(container)
 
-    # TODO DT: appropriate use of meta?
-    # TODO DT: is component_type correct?
-    container_up = add_cons_container!(
+    # TODO: appropriate use of meta?
+    # TODO: is component_type correct?
+    container_up = add_constraints_container!(
         container,
         RampLimitConstraint(),
         U,
@@ -237,7 +246,7 @@ function ramp_constraints!(
         time_steps,
         meta = "up",
     )
-    container_dn = add_cons_container!(
+    container_dn = add_constraints_container!(
         container,
         RampLimitConstraint(),
         U,
@@ -282,8 +291,8 @@ function participation_assignment!(
 
     component_names = [PSY.get_name(d) for d in devices]
 
-    # TODO DT: appropriate use of meta?
-    participation_assignment_up = add_cons_container!(
+    # TODO: appropriate use of meta?
+    participation_assignment_up = add_constraints_container!(
         container,
         ParticipationAssignmentConstraint(),
         T,
@@ -291,7 +300,7 @@ function participation_assignment!(
         time_steps,
         meta = "up",
     )
-    participation_assignment_dn = add_cons_container!(
+    participation_assignment_dn = add_constraints_container!(
         container,
         ParticipationAssignmentConstraint(),
         T,

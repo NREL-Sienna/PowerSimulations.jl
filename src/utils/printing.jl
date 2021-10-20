@@ -222,7 +222,7 @@ end
 function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
     for (keys, sync) in feed_forward
         period = sync.periods
-        # TODO DT: this is incorrect
+        # TODO: this is incorrect
         stage1 = string(keys[1])
         stage2 = stage1
         spaces = " "^(length(stage2) + 2)
@@ -369,7 +369,7 @@ function Base.show(io::IO, sequence::SimulationSequence)
     for (k, v) in sequence.feedforward
         println(io, "$(k): $(typeof(v)) -> $(v.device_type)\n")
         to = string.(v.affected_variables)
-        if isa(v, SemiContinuousFF)
+        if isa(v, SemiContinuousFeedforward)
             from = string.(v.binary_source_problem)
         else
             from = string.(v.variable_source_problem)

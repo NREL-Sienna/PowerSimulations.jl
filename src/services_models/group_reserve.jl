@@ -33,7 +33,7 @@ function add_constraints!(
     @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    add_cons_container!(
+    add_constraints_container!(
         container,
         RequirementConstraint(),
         SR,

@@ -58,12 +58,11 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, HVDCLossless},
     ::Type{<:PM.AbstractDCPModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    constraint = add_cons_container!(container, cons_type(), B, names, time_steps)
+    constraint = add_constraints_container!(container, cons_type(), B, names, time_steps)
     for t in time_steps, d in devices
         min_rate = max(
             PSY.get_active_power_limits_from(d).min,
@@ -87,7 +86,6 @@ add_constraints!(
     ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
     ::DeviceModel{<:PSY.DCBranch, HVDCUnbounded},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) = nothing
 
 function add_constraints!(
@@ -98,13 +96,12 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
 
     var = get_variable(container, FlowActivePowerVariable(), B)
-    constraint = add_cons_container!(container, cons_type(), B, names, time_steps)
+    constraint = add_constraints_container!(container, cons_type(), B, names, time_steps)
     for t in time_steps, d in devices
         min_rate = max(
             PSY.get_active_power_limits_from(d).min,

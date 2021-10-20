@@ -11,11 +11,10 @@ function ParameterKey(
     return ParameterKey{T, U}(meta)
 end
 
-function ParameterKey(::Type{T}) where {T <: ParameterType}
-    return ParameterKey(T, PSY.Component, CONTAINER_KEY_EMPTY_META)
-end
-
-function ParameterKey(::Type{T}, meta::String) where {T <: ParameterType}
+function ParameterKey(
+    ::Type{T},
+    meta::String = CONTAINER_KEY_EMPTY_META,
+) where {T <: ParameterType}
     return ParameterKey(T, PSY.Component, meta)
 end
 
@@ -32,6 +31,8 @@ end
 
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 get_name(attr::TimeSeriesAttributes) = attr.name
+
+struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes end
 
 struct ParameterContainer
     attributes::ParameterAttributes
@@ -105,12 +106,11 @@ struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 
-struct BinaryValueParameter <: VariableValueParameter end
 struct UpperBoundValueParameter <: VariableValueParameter end
-
-# Used for the semicontinuousrange_ff
+struct LowerBoundValueParameter <: VariableValueParameter end
 struct OnStatusParameter <: VariableValueParameter end
+struct IntegralLimitParameter <: VariableValueParameter end
+struct FixValueParameter <: VariableValueParameter end
+struct EnergyTargetParameter <: VariableValueParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
-
-struct EnergyTargetParameter <: AuxVariableValueParameter end

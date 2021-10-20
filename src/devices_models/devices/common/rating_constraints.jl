@@ -29,7 +29,13 @@ function rating_constraint!(
     time_steps = get_time_steps(container)
     var1 = get_variable(container, var_types[1], T)
     var2 = get_variable(container, var_types[2], T)
-    add_cons_container!(container, cons_type, T, [r[1] for r in rating_data], time_steps)
+    add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        [r[1] for r in rating_data],
+        time_steps,
+    )
     constraint = get_constraint(container, cons_type, T)
 
     for r in rating_data

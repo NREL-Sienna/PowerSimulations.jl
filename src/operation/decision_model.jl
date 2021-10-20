@@ -254,6 +254,7 @@ get_horizon(model::DecisionModel) = get_horizon(get_settings(model))
 function build!(
     model::DecisionModel{<:DecisionProblem};
     output_dir::String,
+    recorders = [],
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
@@ -264,12 +265,16 @@ function build!(
     set_file_level!(model, file_level)
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
-    logger = configure_logging(model.internal, "w")
+    file_mode = "w"
+    add_recorders!(model, recorders)
+    register_recorders!(model, file_mode)
+    logger = configure_logging(model.internal, file_mode)
     try
         Logging.with_logger(logger) do
             return build_impl!(model)
         end
     finally
+        unregister_recorders!(model)
         close(logger)
     end
 end
@@ -358,7 +363,9 @@ function solve!(
     set_file_level!(model, file_level)
     TimerOutputs.reset_timer!(RUN_OPERATION_MODEL_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
-    logger = configure_logging(model.internal, "a")
+    file_mode = "a"
+    register_recorders!(model, file_mode)
+    logger = configure_logging(model.internal, file_mode)
     try
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
@@ -385,6 +392,7 @@ function solve!(
         set_run_status!(model, RunStatus.FAILED)
         return get_run_status(model)
     finally
+        unregister_recorders!(model)
         close(logger)
     end
 
@@ -480,7 +488,7 @@ function _write_model_dual_results!(
             key,
             timestamp,
             constraint,
-            [encode_key(key)],  # TODO DT: this doesn't seem right
+            [encode_key(key)],  # TODO DT: is this what the columns should be?
         )
 
         if exports !== nothing &&
@@ -510,11 +518,10 @@ function _write_model_parameter_results!(
     end
 
     parameters = get_parameters(container)
-    (isnothing(parameters) || isempty(parameters)) && return
+    (parameters === nothing || isempty(parameters)) && return
     horizon = get_horizon(get_settings(model))
 
     for (key, container) in parameters
-        name = encode_key(key)  # TODO DT
         !isa(container.update_ref, UpdateRef{<:PSY.Component}) && continue
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
@@ -594,7 +601,7 @@ function _write_model_aux_variable_results!(
 )
     problem_name = get_name(model)
     if exports !== nothing
-        exports_path = joinpath(exports[:exports_path], "variables")
+        exports_path = joinpath(exports[:exports_path], "aux_variables")
         mkpath(exports_path)
     end
 
@@ -602,18 +609,54 @@ function _write_model_aux_variable_results!(
         write_result!(
             store,
             problem_name,
-            STORE_CONTAINER_VARIABLES,
+            STORE_CONTAINER_AUX_VARIABLES,
             key,
             timestamp,
             variable,
         )
 
         if exports !== nothing &&
-           should_export_variable(exports[:exports], timestamp, problem_name, key)
+           should_export_aux_variable(exports[:exports], timestamp, problem_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
             df = axis_array_to_dataframe(variable)
+            time_col = range(timestamp, length = horizon, step = resolution)
+            DataFrames.insertcols!(df, 1, :DateTime => time_col)
+            export_result(file_type, exports_path, key, timestamp, df)
+        end
+    end
+end
+
+function _write_model_expression_results!(
+    store,
+    container,
+    model::DecisionModel,
+    timestamp,
+    exports,
+)
+    problem_name = get_name(model)
+    if exports !== nothing
+        exports_path = joinpath(exports[:exports_path], "expressions")
+        mkpath(exports_path)
+    end
+
+    for (key, expression) in get_expressions(container)
+        write_result!(
+            store,
+            problem_name,
+            STORE_CONTAINER_EXPRESSIONS,
+            key,
+            timestamp,
+            expression,
+        )
+
+        if exports !== nothing &&
+           should_export_expression(exports[:exports], timestamp, problem_name, key)
+            horizon = exports[:horizon]
+            resolution = exports[:resolution]
+            file_type = exports[:file_type]
+            df = axis_array_to_dataframe(expression)
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, timestamp, df)

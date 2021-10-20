@@ -36,11 +36,11 @@ function _make_params()
     )
     container_metadata = OptimizationContainerMetadata(
         Dict(
-            "ActivePowerVariable_ThermalStandard" =>
+            "ActivePowerVariable__ThermalStandard" =>
                 PSI.VariableKey(ActivePowerVariable, ThermalStandard),
-            "EnergyVariable_HydroEnergyReservoir" =>
+            "EnergyVariable__HydroEnergyReservoir" =>
                 PSI.VariableKey(EnergyVariable, HydroEnergyReservoir),
-            "OnVariable_ThermalStandard" =>
+            "OnVariable__ThermalStandard" =>
                 PSI.VariableKey(OnVariable, ThermalStandard),
         ),
     )
@@ -175,7 +175,7 @@ end
 
     # Missing name
     @test_throws IS.InvalidValue SimulationResultsExport(
-        Dict("models" => [Dict("variables" => ["ActivePowerVariable_ThermalStandard"])]),
+        Dict("models" => [Dict("variables" => ["ActivePowerVariable__ThermalStandard"])]),
         params,
     )
 end

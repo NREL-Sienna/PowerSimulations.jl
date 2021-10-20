@@ -32,16 +32,24 @@ get_status(model::OperationModel) = model.internal.status
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
 get_output_dir(model::OperationModel) = model.internal.output_dir
+get_recorder_dir(model::OperationModel) = joinpath(model.internal.output_dir, "recorder")
 get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
 get_parameters(model::OperationModel) = get_parameters(get_optimization_container(model))
 get_duals(model::OperationModel) = get_duals(get_optimization_container(model))
 get_initial_conditions(model::OperationModel) =
     get_initial_conditions(get_optimization_container(model))
 
+get_interval(model::OperationModel) = model.internal.store_parameters.interval
 get_run_status(model::OperationModel) = model.internal.run_status
 set_run_status!(model::OperationModel, status) = model.internal.run_status = status
 get_time_series_cache(model::OperationModel) = model.internal.time_series_cache
 empty_time_series_cache!(x::OperationModel) = empty!(get_time_series_cache(x))
+
+function get_current_timestamp(model::OperationModel)
+    # For EmulationModel interval and resolution are the same.
+    # TODO: make a field to store an updated timestamp
+    return get_initial_time(model) + get_execution_count(model) * get_interval(model)
+end
 
 function get_timestamps(model::OperationModel)
     start_time = get_initial_time(get_optimization_container(model))
@@ -145,19 +153,21 @@ function build_impl!(model::OperationModel)
 end
 
 function build_if_not_already_built!(model; kwargs...)
-    if !is_built(model)
+    status = get_status(model)
+    if status == BuildStatus.EMPTY
         if !haskey(kwargs, :output_dir)
             error(
-                "'output_dir' must be provided as a kwarg if the model build status is $(get_status(model))",
+                "'output_dir' must be provided as a kwarg if the model build status is $status",
             )
         else
             new_kwargs = Dict(k => v for (k, v) in kwargs if k != :optimizer)
             status = build!(model; new_kwargs...)
-            if status != BuildStatus.BUILT
-                error("build! of the $(typeof(model)) failed: $status")
-            end
         end
     end
+    if status != BuildStatus.BUILT
+        error("build! of the $(typeof(model)) failed: $status")
+    end
+    return
 end
 
 function _check_numerical_bounds(model::OperationModel)
@@ -222,6 +232,9 @@ list_parameter_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER
 list_parameter_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
 list_dual_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
 list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
+list_expression_keys(x::OperationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
+list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)
 
 function _list_names(model::OperationModel, container_type)
     return encode_keys_as_strings(list_keys(get_store(model), container_type))
@@ -243,7 +256,32 @@ function read_variable(model::OperationModel, key::VariableKey)
     return read_results(get_store(model), STORE_CONTAINER_VARIABLES, key)
 end
 
+function read_expression(model::OperationModel, key::ExpressionKey)
+    return read_results(get_store(model), STORE_CONTAINER_EXPRESSIONS, key)
+end
+
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))
+
+function add_recorders!(model::OperationModel, recorders)
+    internal = get_internal(model)
+    for name in union(REQUIRED_RECORDERS, recorders)
+        add_recorder!(internal, name)
+    end
+end
+
+function register_recorders!(model::OperationModel, file_mode)
+    recorder_dir = get_recorder_dir(model)
+    mkpath(recorder_dir)
+    for name in get_recorders(get_internal(model))
+        IS.register_recorder!(name; mode = file_mode, directory = recorder_dir)
+    end
+end
+
+function unregister_recorders!(model::OperationModel)
+    for name in get_recorders(get_internal(model))
+        IS.unregister_recorder!(name)
+    end
+end
 
 const _JUMP_MODEL_FILENAME = "jump_model.json"
 

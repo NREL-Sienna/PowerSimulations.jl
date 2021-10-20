@@ -65,8 +65,8 @@ export EnergyTarget
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
-export ThermalDispatch
-export ThermalRampLimited
+export ThermalBasicDispatch
+export ThermalStandardDispatch
 export ThermalDispatchNoMin
 export ThermalMultiStartUnitCommitment
 export ThermalCompactUnitCommitment
@@ -88,10 +88,12 @@ export FullHorizon
 export Range
 
 # feedforward models
-export UpperBoundFF
-export SemiContinuousFF
-export IntegralLimitFF
-export ParameterFF
+export UpperBoundFeedforward
+export LowerBoundFeedforward
+export SemiContinuousFeedforward
+export IntegralLimitFeedforward
+export FixValueFeedforward
+export EnergyTargetFeedforward
 
 # InitialConditions chrons
 export InterProblemChronology
@@ -165,6 +167,7 @@ export list_problems
 export list_supported_formats
 export load_results!
 export read_dual
+# TBD if these are going to be developed
 #export read_realized_duals
 #export read_realized_variables
 #export read_realized_parameters
@@ -177,9 +180,10 @@ export read_optimizer_stats
 
 ## Utils Exports
 export get_all_constraint_index
-export get_all_var_index
-export get_con_index
-export get_var_index
+export get_all_variable_index
+export get_constraint_index
+export get_variable_index
+export list_recorder_events
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
@@ -258,9 +262,9 @@ export EnergyShortageVariableLimitsConstraint
 export EnergyTargetConstraint
 export EqualityConstraint
 export FeedforwardBinConstraint
-export FeedforwardConstraint
+export FeedforwardUpperBoundConstraint
+export FeedforwardLowerBoundConstraint
 export FeedforwardIntegralLimitConstraint
-export FeedforwardUBConstraint
 export FlowActivePowerConstraint
 export FlowActivePowerFromToConstraint
 export FlowActivePowerToFromConstraint
@@ -303,12 +307,15 @@ export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
 
 # Parameters
+# Time Series Parameters
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
 export EnergyTargetTimeSeriesParameter
 export EnergyBudgetTimeSeriesParameter
-export BinaryValueParameter
+
+# Feedforward Parameters
+export OnStatusParameter
 export UpperBoundValueParameter
 
 #################################################################################
@@ -337,7 +344,8 @@ import InfrastructureSystems:
     get_timestamp,
     get_resolution,
     get_name,
-    @assert_op
+    @assert_op,
+    list_recorder_events
 export get_name
 export get_model_base_power
 export get_total_cost
@@ -399,6 +407,11 @@ include("core/definitions.jl")
 
 # Core components
 include("core/abstract_types.jl")
+include("core/abstract_formulations.jl")
+include("core/abstract_simulation_store.jl")
+include("core/operation_model_abstract_types.jl")
+include("core/optimization_container_types.jl")
+include("core/abstract_feedforward.jl")
 include("core/optimization_container_keys.jl")
 include("network_models/powermodels_formulations.jl")
 include("core/network_model.jl")
@@ -441,7 +454,9 @@ include("parameters/add_parameters.jl")
 include("parameters/update_parameters.jl")
 
 include("feedforward/feedforward_chronologies.jl")
-include("feedforward/feedforward_structs.jl")
+include("feedforward/feedforwards.jl")
+include("feedforward/feedforward_arguments.jl")
+include("feedforward/feedforward_constraints.jl")
 
 include("simulation/param_result_cache.jl")
 include("simulation/result_cache.jl")
@@ -465,10 +480,7 @@ include("devices_models/devices/common/rating_constraints.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/commitment_constraint.jl")
-include("devices_models/devices/common/timeseries_constraint.jl")
 include("devices_models/devices/common/get_time_series.jl")
-
-include("feedforward/feedforward_constraints.jl")
 
 # Device Modeling components
 include("devices_models/devices/interfaces.jl")

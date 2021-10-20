@@ -321,10 +321,10 @@ returned by this function it will return from memory. Otherwise, it will read fr
 # Examples
 ```julia
 julia> read_variables(res, [(ActivePowerVariable, ThermalStandard)])
-julia> read_variables(res, ["ActivePowerVariable_ThermalStandard")])
+julia> read_variables(res, ["ActivePowerVariable__ThermalStandard")])
 ```
 """
-# TODO DT: the read.*internal functions can likely be deleted.
+# TODO: the read.*internal functions can likely be deleted.
 function read_variables_internal(
     res::SimulationProblemResults;
     variables::Union{Nothing, Vector{Union{String, Tuple}}} = nothing,
@@ -475,7 +475,7 @@ Return the values for the requested variable. It keeps requests when performing 
 # Examples
 ```julia
 read_variable(results, ActivePowerVariable, ThermalStandard)
-read_variable(results, "ActivePowerVariable_ThermalStandard")
+read_variable(results, "ActivePowerVariable__ThermalStandard")
 ```
 """
 function read_variable(
@@ -529,7 +529,7 @@ function read_parameter(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
-    # TODO DT: parameters are not handled correctly
+    # TODO: parameters are not handled correctly
     #parameter_key = ParameterKey(param_type(time_series_name), device_type)
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
@@ -774,7 +774,7 @@ function load_results!(
     duals::Vector{Tuple} = Vector{Tuple}(),
     parameters::Vector{Tuple} = Vector{Tuple}(),
 )
-    initial_time = isnothing(initial_time) ? first(get_timestamps(res)) : initial_time
+    initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
 
     res.results_timestamps = _process_timestamps(res, initial_time, count)
 

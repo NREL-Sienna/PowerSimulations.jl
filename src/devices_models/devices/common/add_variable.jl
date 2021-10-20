@@ -91,7 +91,7 @@ function add_variable!(
     settings = get_settings(container)
     binary = get_variable_binary(variable_type, D, formulation)
 
-    variable = add_var_container!(
+    variable = add_variable_container!(
         container,
         variable_type,
         D,
@@ -103,7 +103,7 @@ function add_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "$(variable_type)_$(D)_$(T)_{$(name), $(t)}",
+            base_name = "$(T)_$(D)_{$(name), $(t)}",
             binary = binary
         )
 
@@ -137,7 +137,7 @@ function add_service_variable!(
 
     binary = get_variable_binary(variable_type, T, formulation)
 
-    variable = add_var_container!(
+    variable = add_variable_container!(
         container,
         variable_type,
         T,
@@ -217,37 +217,3 @@ function add_variable!(
     return
 end
 
-@doc raw"""
-Adds a bounds to a variable in the optimization model.
-
-# Bounds
-
-``` bounds.min <= varstart[name, t] <= bounds.max  ```
-
-
-# LaTeX
-
-``  x^{device}_t >= bound^{min;} \forall t ``
-
-``  x^{device}_t <= bound^{max} \forall t ``
-
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* bounds::DeviceRangeConstraintInfo : contains names and vector of min / max
-* var_type::AbstractString : type of the variable
-* T: type of the device
-
-"""
-function set_variable_bounds!(
-    container::OptimizationContainer,
-    bounds::Vector{DeviceRangeConstraintInfo},
-    var_type::VariableType,
-    ::Type{T},
-) where {T <: PSY.Component}
-    var = get_variable(container, var_type, T)
-    for t in get_time_steps(container), bound in bounds
-        _var = var[get_component_name(bound), t]
-        JuMP.set_upper_bound(_var, bound.limits.max)
-        JuMP.set_lower_bound(_var, bound.limits.min)
-    end
-end

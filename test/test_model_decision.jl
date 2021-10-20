@@ -59,7 +59,7 @@ end
     results_dir = joinpath(output_dir, "results")
     @test isfile(joinpath(results_dir, "optimizer_stats.csv"))
     variables_dir = joinpath(results_dir, "variables")
-    @test isfile(joinpath(variables_dir, "ActivePowerVariable_ThermalStandard.csv"))
+    @test isfile(joinpath(variables_dir, "ActivePowerVariable__ThermalStandard.csv"))
 end
 
 @testset "Test optimization debugging functions" begin
@@ -75,24 +75,24 @@ end
     MOIU.attach_optimizer(container.JuMPmodel)
     constraint_indices = get_all_constraint_index(model)
     for (key, index, moi_index) in constraint_indices
-        val1 = get_con_index(model, moi_index)
+        val1 = get_constraint_index(model, moi_index)
         val2 = container.constraints[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_con_index(model, length(constraint_indices) + 1))
+    @test get_constraint_index(model, length(constraint_indices) + 1) === nothing
 
-    var_keys = PSI.get_all_var_keys(model)
-    var_index = get_all_var_index(model)
+    var_keys = PSI.get_all_variable_keys(model)
+    var_index = get_all_variable_index(model)
     for (ix, (key, index, moi_index)) in enumerate(var_keys)
         index_tuple = var_index[ix]
         @test index_tuple[1] == PSI.encode_key(key)
         @test index_tuple[2] == index
         @test index_tuple[3] == moi_index
-        val1 = get_var_index(model, moi_index)
+        val1 = get_variable_index(model, moi_index)
         val2 = container.variables[key].data[index]
         @test val1 == val2
     end
-    @test isnothing(get_var_index(model, length(var_index) + 1))
+    @test get_variable_index(model, length(var_index) + 1) === nothing
 end
 
 # @testset "Test print methods" begin
@@ -198,7 +198,7 @@ end
     dual_results = PSI.read_duals(container)[constraint_key]
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
-        @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint_System])
+        @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint__System])
     end
 
     # system = PSI.get_system(model)
@@ -314,7 +314,7 @@ end
     results1 = ProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
-    var1_b = read_variable(results1, "ActivePowerVariable_ThermalStandard")
+    var1_b = read_variable(results1, "ActivePowerVariable__ThermalStandard")
 
     # Results were automatically serialized here.
     results2 = ProblemResults(PSI.get_output_dir(model))
@@ -333,7 +333,7 @@ end
     @test get_system(results3) !== nothing
 
     exp_file =
-        joinpath(path, "results", "variables", "ActivePowerVariable_ThermalStandard.csv")
+        joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
     var4 = PSI.read_dataframe(exp_file)
     @test var1_a == var4
 end
@@ -351,13 +351,13 @@ end
 
     model_bounds = PSI.get_detailed_constraint_numerical_bounds(model)
     valid_model_bounds = Dict(
-        :CopperPlateBalanceConstraint_System => (
+        :CopperPlateBalanceConstraint__System => (
             coefficient = (min = 1.0, max = 1.0),
             rhs = (min = 6.434489705000001, max = 9.930296584),
         ),
-        :ActivePowerVariableLimitsConstraint_ThermalStandard_lb =>
+        :ActivePowerVariableLimitsConstraint__ThermalStandard__lb =>
             (coefficient = (min = 1.0, max = 1.0), rhs = (min = Inf, max = -Inf)),
-        :ActivePowerVariableLimitsConstraint_ThermalStandard_ub =>
+        :ActivePowerVariableLimitsConstraint__ThermalStandard__ub =>
             (coefficient = (min = 1.0, max = 1.0), rhs = (min = 0.4, max = 6.0)),
     )
     for (constriant_key, constriant_bounds) in model_bounds
@@ -380,10 +380,10 @@ end
 
     model_bounds = PSI.get_detailed_variable_numerical_bounds(model)
     valid_model_bounds = Dict(
-        :StopVariable_ThermalStandard => (min = 0.0, max = 1.0),
-        :StartVariable_ThermalStandard => (min = 0.0, max = 1.0),
-        :ActivePowerVariable_ThermalStandard => (min = 0.4, max = 6.0),
-        :OnVariable_ThermalStandard => (min = 0.0, max = 1.0),
+        :StopVariable__ThermalStandard => (min = 0.0, max = 1.0),
+        :StartVariable__ThermalStandard => (min = 0.0, max = 1.0),
+        :ActivePowerVariable__ThermalStandard => (min = 0.4, max = 6.0),
+        :OnVariable__ThermalStandard => (min = 0.0, max = 1.0),
     )
     for (variable_key, variable_bounds) in model_bounds
         _check_variable_bounds(
@@ -393,7 +393,7 @@ end
     end
 end
 
-@testset "DecisionModel Model initial_conditions test for ThermalGen" begin
+@testset "Decision Model initial_conditions test for ThermalGen" begin
     ######## Test with ThermalStandardUnitCommitment ########
     template = get_thermal_standard_uc_template()
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build = true)
@@ -429,17 +429,9 @@ end
     check_duration_on_initial_conditions_values(model, ThermalMultiStart)
     check_duration_off_initial_conditions_values(model, ThermalMultiStart)
     @test solve!(model) == RunStatus.SUCCESSFUL
-
-    ######## Test with ThermalCompactUnitCommitment ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build = true)
-    set_device_model!(template, ThermalStandard, ThermalCompactDispatch)
-    model = DecisionModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
-    @test solve!(model) == RunStatus.SUCCESSFUL
 end
 
-@testset "Emulation Model initial_conditions test for Storage" begin
+@testset "Decision Model initial_conditions test for Storage" begin
     ######## Test with BookKeeping ########
     template = get_thermal_dispatch_template_network()
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; force_build = true)
@@ -468,7 +460,7 @@ end
     @test solve!(model) == RunStatus.SUCCESSFUL
 end
 
-@testset "Emulation Model initial_conditions test for Hydro" begin
+@testset "Decision Model initial_conditions test for Hydro" begin
     ######## Test with HydroDispatchRunOfRiver ########
     template = get_thermal_dispatch_template_network()
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)

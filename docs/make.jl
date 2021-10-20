@@ -35,8 +35,8 @@ makedocs(
     pages = Any[
         "Introduction" => "index.md",
         #"Quick Start Guide" => "qs_guide.md",
-        "Logging" => "man/logging.md",
-        "Operation Model" => "man/op_problem.md",
+        #"Logging" => "man/logging.md",
+        # "Operation Model" => "man/op_problem.md",
         # "How To" => Any[
         #     "Set Up Plots" => "howto/3.0_set_up_plots.md",
         #     "Make Stack Plots" => "howto/3.1_make_stack_plots.md",
@@ -46,8 +46,8 @@ makedocs(
         #     "Plot Fewer Variables" => "howto/3.5_plot_fewer_variables.md",
         #     "Plot Multiple Results" => "howto/3.6_plot_multiple_results.md",
         # ],
-        "Simulation Recorder" => "man/simulation_recorder.md",
-        "Model References" => Any["Hydro Models" => "ref/hydro.md"],
+        #"Simulation Recorder" => "man/simulation_recorder.md",
+        #"Model References" => Any["Hydro Models" => "ref/hydro.md"],
         "API" => Any["PowerSimulations" => "api/PowerSimulations.md"],
     ],
 )

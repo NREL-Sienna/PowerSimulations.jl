@@ -13,6 +13,10 @@ function _jump_value(input::JuMP.VariableRef)
     return JuMP.value(input)
 end
 
+function _jump_value(input::JuMP.AbstractJuMPScalar)
+    return JuMP.value(input)
+end
+
 function _jump_value(input::PJ.ParameterRef)
     return PJ.value(input)
 end
@@ -104,5 +108,5 @@ function remove_undef!(expression_array::AbstractArray)
         end
     end
 
-    return
+    return expression_array
 end

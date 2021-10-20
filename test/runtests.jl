@@ -85,7 +85,7 @@ LOG_LEVELS = Dict(
 function get_logging_level(env_name::String, default)
     level = get(ENV, env_name, default)
     log_level = get(LOG_LEVELS, level, nothing)
-    if isnothing(log_level)
+    if log_level === nothing
         error("Invalid log level $level: Supported levels: $(values(LOG_LEVELS))")
     end
 

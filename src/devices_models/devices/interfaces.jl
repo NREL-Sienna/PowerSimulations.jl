@@ -17,3 +17,8 @@ get_initial_conditions_device_model(
 requires_initialization(::AbstractDeviceFormulation) = false
 check_subcomponent_exist(T::PSY.Component, S::Type{<:PSY.Component}) =
     error("`check_subcomponent_exist` must be implemented for $T and subcomponent type $S")
+_get_initial_condition_type(
+    X::Type{<:ConstraintType},
+    Y::Type{<:PSY.Component},
+    Z::Type{<:AbstractDeviceFormulation},
+) = error("`_get_initial_condition_type` must be implemented for $X , $Y and $Z")

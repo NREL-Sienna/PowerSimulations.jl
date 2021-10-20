@@ -14,11 +14,10 @@ function VariableKey(
     return VariableKey{T, U}(meta)
 end
 
-function VariableKey(::Type{T}) where {T <: VariableType}
-    return VariableKey(T, PSY.Component, CONTAINER_KEY_EMPTY_META)
-end
-
-function VariableKey(::Type{T}, meta::String) where {T <: VariableType}
+function VariableKey(
+    ::Type{T},
+    meta::String = CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableType}
     return VariableKey(T, PSY.Component, meta)
 end
 

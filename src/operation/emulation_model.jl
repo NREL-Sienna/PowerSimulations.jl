@@ -269,6 +269,7 @@ function build!(
     model::EmulationModel{<:EmulationProblem};
     executions = 1,
     output_dir::String,
+    recorders = [],
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
@@ -279,13 +280,17 @@ function build!(
     set_file_level!(model, file_level)
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
-    logger = configure_logging(model.internal, "w")
+    file_mode = "w"
+    add_recorders!(model, recorders)
+    register_recorders!(model, file_mode)
+    logger = configure_logging(model.internal, file_mode)
     try
         Logging.with_logger(logger) do
             set_executions!(model, executions)
             return build_impl!(model)
         end
     finally
+        unregister_recorders!(model)
         close(logger)
     end
 end
@@ -426,7 +431,9 @@ function run!(
     set_file_level!(model, file_level)
     TimerOutputs.reset_timer!(RUN_OPERATION_MODEL_TIMER)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
-    logger = configure_logging(model.internal, "a")
+    file_mode = "a"
+    register_recorders!(model, file_mode)
+    logger = configure_logging(model.internal, file_mode)
     try
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
@@ -453,6 +460,7 @@ function run!(
         set_run_status!(model, RunStatus.FAILED)
         return get_run_status(model)
     finally
+        unregister_recorders!(model)
         close(logger)
     end
     return get_run_status(model)
@@ -503,7 +511,7 @@ end
 
 function _write_model_parameter_results!(store, container, execution)
     parameters = get_parameters(container)
-    (isnothing(parameters) || isempty(parameters)) && return
+    (parameters === nothing || isempty(parameters)) && return
     horizon = 1
 
     for (key, parameter) in parameters
@@ -539,5 +547,11 @@ end
 function _write_model_aux_variable_results!(store, container, execution)
     for (key, variable) in get_aux_variables(container)
         write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, execution, variable)
+    end
+end
+
+function _write_model_expression_results!(store, container, execution)
+    for (key, expression) in get_expressions(container)
+        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, execution, expression)
     end
 end

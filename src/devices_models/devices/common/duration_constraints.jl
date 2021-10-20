@@ -53,10 +53,22 @@ function device_duration_retrospective!(
     varstop = get_variable(container, var_types[3], T)
 
     set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
-    con_up =
-        add_cons_container!(container, cons_type, T, set_names, time_steps, meta = "up")
-    con_down =
-        add_cons_container!(container, cons_type, T, set_names, time_steps, meta = "dn")
+    con_up = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+    )
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -148,8 +160,8 @@ function device_duration_look_ahead!(
     varstop = get_variable(container, var_types[3], T)
 
     set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(container, cons_type_up, set_names, time_steps)
-    con_down = add_cons_container!(container, cons_type_down, set_names, time_steps)
+    con_up = add_constraints_container!(container, cons_type_up, set_names, time_steps)
+    con_down = add_constraints_container!(container, cons_type_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -247,10 +259,22 @@ function device_duration_parameters!(
     varstop = get_variable(container, var_types[3], T)
 
     set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
-    con_up =
-        add_cons_container!(container, cons_type, T, set_names, time_steps, meta = "up")
-    con_down =
-        add_cons_container!(container, cons_type, T, set_names, time_steps, meta = "dn")
+    con_up = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+    )
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -351,7 +375,7 @@ function device_duration_compact_retrospective!(
     varstop = get_variable(container, var_types[3], T)
 
     set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(
+    con_up = add_constraints_container!(
         container,
         cons_type,
         T,
@@ -360,7 +384,7 @@ function device_duration_compact_retrospective!(
         meta = "up",
         sparse = true,
     )
-    con_down = add_cons_container!(
+    con_down = add_constraints_container!(
         container,
         cons_type,
         T,

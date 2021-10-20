@@ -71,7 +71,7 @@ function initialize_simulation_internals!(models::SimulationModels, uuid::Base.U
             0,
             Set{CacheKey}(),
             0,
-            Dict{Int, FeedForwardChronology}(),
+            Dict{Int, FeedforwardChronology}(),
             false,
             uuid,
         )

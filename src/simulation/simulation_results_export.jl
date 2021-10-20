@@ -136,15 +136,23 @@ function should_export(exports::SimulationResultsExport, tstamp::Dates.DateTime)
 end
 
 function should_export_dual(exports::SimulationResultsExport, tstamp, model, name)
-    return _should_export(exports, tstamp, model, :duals, name)
+    return _should_export(exports, tstamp, model, STORE_CONTAINER_DUALS, name)
 end
 
 function should_export_parameter(exports::SimulationResultsExport, tstamp, model, name)
-    return _should_export(exports, tstamp, model, :parameters, name)
+    return _should_export(exports, tstamp, model, STORE_CONTAINER_PARAMETERS, name)
 end
 
 function should_export_variable(exports::SimulationResultsExport, tstamp, model, name)
-    return _should_export(exports, tstamp, model, :variables, name)
+    return _should_export(exports, tstamp, model, STORE_CONTAINER_VARIABLES, name)
+end
+
+function should_export_expression(exports::SimulationResultsExport, tstamp, model, name)
+    return _should_export(exports, tstamp, model, STORE_CONTAINER_EXPRESSIONS, name)
+end
+
+function should_export_aux_variable(exports::SimulationResultsExport, tstamp, model, name)
+    return _should_export(exports, tstamp, model, STORE_CONTAINER_AUX_VARIABLES, name)
 end
 
 function _should_export(exports::SimulationResultsExport, tstamp, model, field_name, name)

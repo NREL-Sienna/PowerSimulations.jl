@@ -47,89 +47,51 @@ function add_expressions!(
     return
 end
 
+# Note: add_to_jump_expression! are legacy when more control was needed over the calls to
+# add_to_expression. These might be removed post JuMP 1.0 release.
 function add_to_jump_expression!(
-    expression_array::AbstractArray{T},
-    var::JV,
+    expression::T,
+    var::JuMP.VariableRef,
     multiplier::Float64,
-    ixs::Vararg{Any, N},
-) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.AbstractVariableRef, N}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[ixs...], multiplier, var)
-    else
-        expression_array[ixs...] = multiplier * var
-    end
-
+) where {T <: JuMP.AbstractJuMPScalar}
+    JuMP.add_to_expression!(expression, multiplier, var)
     return
 end
 
 function add_to_jump_expression!(
-    expression_array::AbstractArray,
-    var::JV,
-    multiplier::Float64,
-    ixs::Vararg{Any, N},
-) where {JV <: Any, N}
-        expression_array[ixs...] = multiplier * var
-    return
-end
-
-function add_to_jump_expression!(
-    expression_array::AbstractArray{T},
-    var::JV,
-    multiplier::Float64,
-    constant::Float64,
-    ixs::Vararg{Any, N},
-) where {T <: JuMP.AbstractJuMPScalar, JV <: JuMP.VariableRef, N}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], multiplier, var)
-        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], constant)
-    else
-        expression_array[CartesianIndex(ixs)] = multiplier * var + constant
-    end
-
-    return
-end
-
-function add_to_jump_expression!(
-    expression_array::AbstractArray{T},
+    expression::T,
     value::Float64,
-    ixs::Vararg{Any, N},
-) where {T <: JuMP.AbstractJuMPScalar, N}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(expression_array[CartesianIndex(ixs)], value)
-    else
-        expression_array[CartesianIndex(ixs)] = zero(eltype(expression_array)) + value
-    end
-
+) where {T <: JuMP.AbstractJuMPScalar}
+    JuMP.add_to_expression!(expression, value)
     return
 end
 
 function add_to_jump_expression!(
-    expression_array::AbstractArray{T},
+    expression::T,
     parameter::PJ.ParameterRef,
     multiplier::Float64,
-    ixs::Vararg{Any, N},
-) where {T <: JuMP.AbstractJuMPScalar, N}
-    if isassigned(expression_array, ixs...)
-        JuMP.add_to_expression!(
-            expression_array[CartesianIndex(ixs)],
-            multiplier,
-            parameter,
-        )
-    else
-        expression_array[CartesianIndex(ixs)] =
-            zero(eltype(expression_array)) + parameter * multiplier
-    end
-
+) where {T <: JuMP.AbstractJuMPScalar}
+    PJ.add_to_expression!(expression, multiplier, parameter)
     return
 end
 
 function add_to_jump_expression!(
-    expression_array::AbstractArray{T},
+    expression::T,
+    var::Union{JuMP.VariableRef, PJ.ParameterRef},
+    multiplier::Float64,
+    constant::Float64,
+) where {T <: JuMP.AbstractJuMPScalar}
+    add_to_jump_expression!(expression, constant)
+    add_to_jump_expression!(expression, var, multiplier)
+    return
+end
+
+function add_to_jump_expression!(
+    expression::T,
     parameter::Float64,
     multiplier::Float64,
-    ixs::Vararg{Any, N},
-) where {T <: JuMP.AbstractJuMPScalar, N}
-    add_to_jump_expression!(expression_array, parameter * multiplier, ixs...)
+) where {T <: JuMP.AbstractJuMPScalar}
+    add_to_jump_expression!(expression, parameter * multiplier)
     return
 end
 
@@ -156,11 +118,39 @@ function add_to_expression!(
         bus_number = PSY.get_number(PSY.get_bus(d))
         name = get_name(d)
         add_to_jump_expression!(
-            get_expression(container, T(), X),
+            get_expression(container, T(), X)[bus_number, t],
             parameter[name, t],
             multiplier[name, t],
-            bus_number,
-            t,
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnStatusParameter,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    parameter = get_parameter_array(container, U(), V)
+    multiplier = get_parameter_multiplier_array(container, U(), V)
+
+    for d in devices, t in get_time_steps(container)
+        bus_number = PSY.get_number(PSY.get_bus(d))
+        name = get_name(d)
+        mult = get_expression_multiplier(U(), T(), d, W())
+        add_to_jump_expression!(
+            get_expression(container, T(), X)[bus_number, t],
+            parameter[name, t],
+            mult,
         )
     end
     return
@@ -189,11 +179,9 @@ function add_to_expression!(
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))
         add_to_jump_expression!(
-            expression,
+            expression[bus_number, t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
-            bus_number,
-            t,
         )
     end
     return
@@ -221,10 +209,37 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         name = get_name(d)
         add_to_jump_expression!(
-            get_expression(container, T(), X),
+            get_expression(container, T(), X)[t],
             parameter[name, t],
             multiplier[name, t],
-            t,
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnStatusParameter,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+    X <: CopperPlatePowerModel,
+}
+    parameter = get_parameter_array(container, U(), V)
+    multiplier = get_parameter_multiplier_array(container, U(), V)
+    for d in devices, t in get_time_steps(container)
+        name = get_name(d)
+        mult = get_expression_multiplier(U(), T(), d, W())
+        add_to_jump_expression!(
+            get_expression(container, T(), X)[t],
+            parameter[name, t],
+            mult,
         )
     end
     return
@@ -252,10 +267,9 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         add_to_jump_expression!(
-            expression,
+            expression[t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
-            t,
         )
     end
     return
@@ -280,21 +294,45 @@ function add_to_expression!(
 }
     parameter = get_parameter_array(container, U(), V)
     multiplier = get_parameter_multiplier_array(container, U(), V)
+    sys_expr = get_expression(container, T(), PSY.System)
+    nodal_expr = get_expression(container, T(), PSY.Bus)
     for d in devices, t in get_time_steps(container)
         name = get_name(d)
+        bus_no = PSY.get_number(PSY.get_bus(d))
+        add_to_jump_expression!(sys_expr[t], parameter[name, t], multiplier[name, t])
         add_to_jump_expression!(
-            get_expression(container, T(), PSY.System),
+            nodal_expr[bus_no, t],
             parameter[name, t],
             multiplier[name, t],
-            t,
         )
-        add_to_jump_expression!(
-            get_expression(container, T(), PSY.Bus),
-            parameter[name, t],
-            multiplier[name, t],
-            PSY.get_number(PSY.get_bus(d)),
-            t,
-        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnStatusParameter,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+    X <: Union{PTDFPowerModel, StandardPTDFModel},
+}
+    parameter = get_parameter_array(container, U(), V)
+    multiplier = get_parameter_multiplier_array(container, U(), V)
+    sys_expr = get_expression(container, T(), PSY.System)
+    nodal_expr = get_expression(container, T(), PSY.Bus)
+    for d in devices, t in get_time_steps(container)
+        name = get_name(d)
+        bus_no = PSY.get_number(PSY.get_bus(d))
+        mult = get_expression_multiplier(U(), T(), d, W())
+        add_to_jump_expression!(sys_expr[t], parameter[name, t], mult)
+        add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
     end
     return
 end
@@ -317,20 +355,20 @@ function add_to_expression!(
     X <: Union{PTDFPowerModel, StandardPTDFModel},
 }
     variable = get_variable(container, U(), V)
+    sys_expr = get_expression(container, T(), PSY.System)
+    nodal_expr = get_expression(container, T(), PSY.Bus)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
+        bus_no = PSY.get_number(PSY.get_bus(d))
         add_to_jump_expression!(
-            get_expression(container, T(), PSY.System),
+            sys_expr[t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
-            t,
         )
         add_to_jump_expression!(
-            get_expression(container, T(), PSY.Bus),
+            nodal_expr[bus_no, t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
-            PSY.get_number(PSY.get_bus(d)),
-            t,
         )
     end
     return
@@ -359,18 +397,14 @@ function add_to_expression!(
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
             add_to_jump_expression!(
-                expression,
+                expression[PSY.get_number(PSY.get_arc(d).from), t],
                 flow_variable,
                 -1.0,
-                PSY.get_number(PSY.get_arc(d).from),
-                t,
             )
             add_to_jump_expression!(
-                expression,
+                expression[PSY.get_number(PSY.get_arc(d).to), t],
                 flow_variable,
                 1.0,
-                PSY.get_number(PSY.get_arc(d).to),
-                t,
             )
         end
     end
@@ -382,9 +416,9 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X};
+    ::Type{X},
 ) where {
-    T <: ExpressionType,
+    T <: Union{ActivePowerRangeExpressionUB, ActivePowerRangeExpressionLB},
     U <: VariableType,
     V <: PSY.Device,
     W <: AbstractDeviceFormulation,
@@ -397,7 +431,7 @@ function add_to_expression!(
     expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        add_to_jump_expression!(expression, variable[name, t], 1.0, name, t)
+        add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
     end
     return
 end
@@ -435,7 +469,7 @@ function add_to_expression!(
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::ServiceModel{X, W},
 ) where {
-    T <: ExpressionType,
+    T <: Union{ActivePowerRangeExpressionUB, ReserveRangeExpressionUB},
     U <: VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveUp},
@@ -449,7 +483,7 @@ function add_to_expression!(
     expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        add_to_jump_expression!(expression, variable[name, t], 1.0, name, t)
+        add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
     end
     return
 end
@@ -461,7 +495,7 @@ function add_to_expression!(
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::ServiceModel{X, W},
 ) where {
-    T <: ExpressionType,
+    T <: Union{ActivePowerRangeExpressionLB, ReserveRangeExpressionLB},
     U <: VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveDown},
@@ -475,7 +509,38 @@ function add_to_expression!(
     expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        add_to_jump_expression!(expression, variable[name, t], -1.0, name, t)
+        add_to_jump_expression!(expression[name, t], variable[name, t], -1.0)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::U,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: Union{ActivePowerRangeExpressionUB, ActivePowerRangeExpressionLB},
+    U <: OnStatusParameter,
+    V <: PSY.Device,
+    W <: AbstractDeviceFormulation,
+}
+    parameter_array = get_parameter_array(container, U(), V)
+    if !has_expression(container, T(), V)
+        add_expressions!(container, T, devices, model)
+    end
+    expression = get_expression(container, T(), V)
+    for d in devices, mult in get_expression_multiplier(U(), T(), d, W())
+        for t in get_time_steps(container)
+            name = PSY.get_name(d)
+            add_to_jump_expression!(
+                expression[name, t],
+                parameter_array[name, t],
+                -mult,
+                mult,
+            )
+        end
     end
     return
 end
@@ -491,7 +556,7 @@ function add_to_expression!(
     contributing_devices_map = get_contributing_devices_map(model)
     for (device_type, devices) in contributing_devices_map
         device_model = get(devices_template, Symbol(device_type), nothing)
-        isnothing(device_model) && continue
+        device_model === nothing && continue
         expression_type = get_expression_type_for_reserve(U(), device_type, V)
         add_to_expression!(container, expression_type, U, devices, model)
     end

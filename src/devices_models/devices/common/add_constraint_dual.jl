@@ -82,10 +82,10 @@ function _calculate_dual_variable_value!(
     ::PSY.System,
 ) where {D <: Union{PSY.Component, PSY.System}}
     constraint_container = get_constraint(container, key)
-    dual_var_container = get_duals(container)[key]
+    dual_variable_container = get_duals(container)[key]
 
     for t in constraint_container.axes[1]
-        dual_var_container[t] = JuMP.dual(constraint_container[t])
+        dual_variable_container[t] = JuMP.dual(constraint_container[t])
     end
     return
 end
@@ -96,10 +96,10 @@ function _calculate_dual_variable_value!(
     ::PSY.System,
 )
     constraint_container = get_constraint(container, key)
-    dual_var_container = get_duals(container)[key]
+    dual_variable_container = get_duals(container)[key]
 
     for name in constraint_container.axes[1], t in constraint_container.axes[2]
-        dual_var_container[name, t] = JuMP.dual(constraint_container[name, t])
+        dual_variable_container[name, t] = JuMP.dual(constraint_container[name, t])
     end
     return
 end

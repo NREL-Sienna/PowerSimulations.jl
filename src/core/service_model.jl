@@ -34,7 +34,7 @@ model at simulation time
 -`::Type{B}`: Abstract Service Formulation
 
 # Accepted Key Words
-- `feedforward::Array{<:AbstractAffectFeedForward}` : use to pass parameters between models
+- `feedforward::Array{<:AbstractAffectFeedforward}` : use to pass parameters between models
 - `use_service_name::Bool` : use the name as the name for the service
 
 # Example
@@ -43,7 +43,7 @@ reserves = ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve)
 ```
 """
 mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
-    feedforward::Union{Nothing, AbstractAffectFeedForward}
+    feedforwards::Vector{<:AbstractAffectFeedforward}
     service_name::String
     use_slacks::Bool
     duals::Vector{DataType}
@@ -55,7 +55,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         ::Type{B},
         service_name::String;
         use_slacks = false,
-        feedforward = nothing,
+        feedforwards = Vector{AbstractAffectFeedforward}(),
         duals = Vector{DataType}(),
         time_series_names = get_default_time_series_names(D, B),
         attributes = get_default_attributes(D, B),
@@ -64,7 +64,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)
         new{D, B}(
-            feedforward,
+            feedforwards,
             service_name,
             use_slacks,
             duals,
@@ -81,7 +81,7 @@ get_component_type(
 get_formulation(
     ::ServiceModel{D, B},
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation} = B
-get_feedforward(m::ServiceModel) = m.feedforward
+get_feedforwards(m::ServiceModel) = m.feedforwards
 get_service_name(m::ServiceModel) = m.service_name
 get_use_slacks(m::ServiceModel) = m.use_slacks
 get_duals(m::ServiceModel) = m.duals
@@ -100,11 +100,13 @@ function ServiceModel(
     service_type::Type{D},
     formulation_type::Type{B};
     use_slacks = false,
-    feedforward = nothing,
+    feedforwards = Vector{AbstractAffectFeedforward}(),
     duals = Vector{DataType}(),
     time_series_names = get_default_time_series_names(D, B),
     attributes = get_default_attributes(D, B),
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
+    # If more attributes are used later, move free form string to const and organize
+    # attributes
     if !haskey(attributes, "aggregated_service_model")
         push!(attributes, "aggregated_service_model" => true)
     end
@@ -113,7 +115,7 @@ function ServiceModel(
         formulation_type,
         NO_SERVICE_NAME_PROVIDED;
         use_slacks,
-        feedforward,
+        feedforwards,
         duals,
         time_series_names,
         attributes,
@@ -122,7 +124,7 @@ end
 
 function _set_model!(dict::Dict, key::Tuple{String, Symbol}, model::ServiceModel)
     if haskey(dict, key)
-        @info("Overwriting $(key) existing model")
+        @warn "Overwriting $(key) existing model"
     end
     dict[key] = model
     return

@@ -38,7 +38,7 @@
     # Test single stage sequence
     test_sequence = SimulationSequence(
         models = SimulationModels(
-        # TODO DT: support passing one model without making a vector
+        # TODO: support passing one model without making a vector
         [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC")]),
         intervals = Dict("DAUC" => (Hour(24), Consecutive())),
         ini_cond_chronology = InterProblemChronology(),
@@ -96,7 +96,7 @@ end
             "ED" => (Hour(1), Consecutive()),
         ),
         feedforward = Dict(
-            "ED" => SemiContinuousFF(
+            "ED" => SemiContinuousFeedforward(
                 device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
@@ -114,7 +114,7 @@ end
             "ED" => (Hour(3), RecedingHorizon()),
         ),
         feedforward = Dict(
-            "ED" => SemiContinuousFF(
+            "ED" => SemiContinuousFeedforward(
                 device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
@@ -134,7 +134,7 @@ end
             "ED" => (Minute(5), RecedingHorizon()),
         ),
         feedforward = Dict(
-            "ED" => SemiContinuousFF(
+            "ED" => SemiContinuousFeedforward(
                 device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
@@ -151,7 +151,7 @@ end
             "ED" => (Minute(5), RecedingHorizon()),
         ),
         feedforward = Dict(
-            "ED" => SemiContinuousFF(
+            "ED" => SemiContinuousFeedforward(
                 device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
@@ -168,7 +168,7 @@ end
             "ED" => (Minute(5), RecedingHorizon()),
         ),
         feedforward = Dict(
-            "ED" => SemiContinuousFF(
+            "ED" => SemiContinuousFeedforward(
                 device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
@@ -185,7 +185,7 @@ end
             "ED" => (Minute(5), RecedingHorizon()),
         ),
         feedforward = Dict(
-            "ED" => SemiContinuousFF(
+            "ED" => SemiContinuousFeedforward(
                 device_type = ThermalStandard,
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],

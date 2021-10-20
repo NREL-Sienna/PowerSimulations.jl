@@ -21,19 +21,16 @@ get_expression_type_for_reserve(
     ::Type{<:PSY.HydroGen},
     ::Type{<:PSY.Reserve{PSY.ReserveUp}}
 ) = ActivePowerRangeExpressionUB
-
 get_expression_type_for_reserve(
     ::ActivePowerReserveVariable,
     ::Type{<:PSY.HydroGen},
     ::Type{<:PSY.Reserve{PSY.ReserveDown}}
 ) = ActivePowerRangeExpressionLB
-
 get_expression_type_for_reserve(
     ::ActivePowerReserveVariable,
     ::Type{<:PSY.HydroPumpedStorage},
     ::Type{<:PSY.Reserve{PSY.ReserveUp}}
 ) = ReserveRangeExpressionUB
-
 get_expression_type_for_reserve(
     ::ActivePowerReserveVariable,
     ::Type{<:PSY.HydroPumpedStorage},
@@ -42,9 +39,7 @@ get_expression_type_for_reserve(
 
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-
 get_variable_warm_start_value(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
-
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).min
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroUnitCommitment) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).max
@@ -65,65 +60,52 @@ get_variable_lower_bound(::EnergyVariable, d::PSY.HydroGen, ::AbstractHydroFormu
 get_variable_upper_bound(::EnergyVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 
 ########################### EnergyVariableUp, HydroGen #################################
-
 get_variable_binary(::EnergyVariableUp, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-
 get_variable_warm_start_value(pv::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
-
 get_variable_lower_bound(::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::EnergyVariableUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d).up
 
 ########################### EnergyVariableDown, HydroGen #################################
-
 get_variable_binary(::EnergyVariableDown, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-
 get_variable_warm_start_value(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
-
 get_variable_lower_bound(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::EnergyVariableDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d).down
 
 ########################### ActivePowerInVariable, HydroGen #################################
-
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-
 get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = nothing
 get_variable_multiplier(::ActivePowerInVariable, d::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = -1.0
 
 ########################### ActivePowerOutVariable, HydroGen #################################
-
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
-
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = nothing
 get_variable_multiplier(::ActivePowerOutVariable, d::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
 
 ############## OnVariable, HydroGen ####################
-
 get_variable_binary(::OnVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = true
 get_variable_warm_start_value(::OnVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d) > 0 ? 1.0 : 0.0
 
 ############## WaterSpillageVariable, HydroGen ####################
-
 get_variable_binary(::WaterSpillageVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 get_variable_lower_bound(::WaterSpillageVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 
 ############## ReservationVariable, HydroGen ####################
-
 get_variable_binary(::ReservationVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = true
 get_variable_binary(::ReservationVariable, ::Type{<:PSY.HydroPumpedStorage}, ::AbstractHydroFormulation) = true
-############## EnergyShortageVariable, HydroGen ####################
 
+############## EnergyShortageVariable, HydroGen ####################
 get_variable_binary(::EnergyShortageVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 get_variable_lower_bound(::EnergyShortageVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_upper_bound(::EnergyShortageVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
-
+get_variable_upper_bound(::EnergyShortageVariable, d::PSY.HydroPumpedStorage, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d).up
 ############## EnergySurplusVariable, HydroGen ####################
-
 get_variable_binary(::EnergySurplusVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
 get_variable_upper_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = 0.0
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = - PSY.get_storage_capacity(d)
-
+get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroPumpedStorage, ::AbstractHydroFormulation) = - PSY.get_storage_capacity(d).up
+########################### Parameter related set functions ################################
 get_multiplier_value(::EnergyBudgetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 get_multiplier_value(::EnergyTargetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 get_multiplier_value(::InflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_inflow(d) * PSY.get_conversion_factor(d)
@@ -131,25 +113,24 @@ get_multiplier_value(::OutflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHy
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_max_active_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.HydroGen, ::FixedOutput) = PSY.get_max_active_power(d)
 
+get_parameter_multiplier(::VariableValueParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = 1.0
+get_initial_parameter_value(::VariableValueParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = 1.0
+get_expression_multiplier(::OnStatusParameter, ::ActivePowerRangeExpressionUB, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).max
+get_expression_multiplier(::OnStatusParameter, ::ActivePowerRangeExpressionLB, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power_limits(d).min
+
 #################### Initial Conditions for models ###############
 initial_condition_default(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d)
 initial_condition_variable(::DeviceStatus, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
-
 initial_condition_default(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_active_power(d)
 initial_condition_variable(::DevicePower, d::PSY.HydroGen, ::AbstractHydroFormulation) = ActivePowerVariable()
-
 initial_condition_default(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d)
 initial_condition_variable(::InitialEnergyLevel, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariable()
-
 initial_condition_default(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).up
 initial_condition_variable(::InitialEnergyLevelUp, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariableUp()
-
 initial_condition_default(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_initial_storage(d).down
 initial_condition_variable(::InitialEnergyLevelDown, d::PSY.HydroGen, ::AbstractHydroFormulation) = EnergyVariableDown()
-
 initial_condition_default(::InitialTimeDurationOn, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d) ? PSY.get_time_at_status(d) :  0.0
 initial_condition_variable(::InitialTimeDurationOn, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
-
 initial_condition_default(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d) ? 0.0 : PSY.get_time_at_status(d)
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
 
@@ -234,9 +215,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -245,7 +225,6 @@ function add_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -256,9 +235,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 """
@@ -267,13 +245,23 @@ Add semicontinuous range constraints for Hydro Unit Commitment formulation
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{<:Union{VariableType, <:RangeConstraintLBExpressions}},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver}
+    add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver}
-    add_semicontinuous_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -282,7 +270,6 @@ function add_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -326,9 +313,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
-    add_semicontinuous_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
 end
 
 """
@@ -341,9 +327,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroDispatchFormulation}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 """
@@ -356,12 +341,11 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
-        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_range_constraints!(container, T, U, devices, model, X)
     end
 end
 
@@ -375,12 +359,11 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
-        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_range_constraints!(container, T, U, devices, model, X)
     end
 end
 
@@ -420,9 +403,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 ######################## Energy balance constraints ############################
@@ -437,7 +419,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     V <: PSY.HydroEnergyReservoir,
     W <: AbstractHydroFormulation,
@@ -452,8 +433,13 @@ function add_constraints!(
     power_var = get_variable(container, ActivePowerVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
 
-    constraint =
-        add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyBalanceConstraint(),
+        V,
+        names,
+        time_steps,
+    )
     param = get_parameter_array(container, InflowTimeSeriesParameter(), V)
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
@@ -491,7 +477,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     V <: PSY.HydroPumpedStorage,
     W <: AbstractHydroFormulation,
@@ -508,8 +493,13 @@ function add_constraints!(
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
 
-    constraint =
-        add_cons_container!(container, EnergyCapacityUpConstraint(), V, names, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyCapacityUpConstraint(),
+        V,
+        names,
+        time_steps,
+    )
     param = get_parameter_array(container, InflowTimeSeriesParameter(), V)
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
@@ -551,7 +541,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {
     V <: PSY.HydroPumpedStorage,
     W <: AbstractHydroFormulation,
@@ -568,8 +557,13 @@ function add_constraints!(
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
     spillage_var = get_variable(container, WaterSpillageVariable(), V)
 
-    constraint =
-        add_cons_container!(container, EnergyCapacityDownConstraint(), V, names, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyCapacityDownConstraint(),
+        V,
+        names,
+        time_steps,
+    )
 
     param = get_parameter_array(container, OutflowTimeSeriesParameter(), V)
     multiplier = get_parameter_multiplier_array(container, OutflowTimeSeriesParameter(), V)
@@ -612,14 +606,18 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
-    constraint =
-        add_cons_container!(container, EnergyTargetConstraint(), V, set_name, time_steps)
+    constraint = add_constraints_container!(
+        container,
+        EnergyTargetConstraint(),
+        V,
+        set_name,
+        time_steps,
+    )
 
     e_var = get_variable(container, EnergyVariable(), V)
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
@@ -692,14 +690,14 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     # Variable not used. Check if needed Sourabh
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
-    constraint = add_cons_container!(container, EnergyBudgetConstraint(), V, set_name)
+    constraint =
+        add_constraints_container!(container, EnergyBudgetConstraint(), V, set_name)
 
     variable_out = get_variable(container, ActivePowerVariable(), V)
     param = get_parameter_array(container, EnergyBudgetTimeSeriesParameter(), V)

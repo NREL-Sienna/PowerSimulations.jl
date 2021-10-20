@@ -266,7 +266,7 @@ they passed to the original Simulation.
 
 # Arguments
 - `directory::AbstractString`: the directory returned from the call to serialize
-# TODO DT: this description is probably wrong
+# TODO: this description is probably wrong
 - `model_info::Dict`: Two-level dictionary containing model parameters that cannot be
   serialized. The outer dict should be keyed by the problem name. The inner dict must contain
   'optimizer' and may contain 'jump_model'. These should be the same values used for the
@@ -378,7 +378,7 @@ function check_chronology!(
     sim::Simulation,
     key::Pair,
     ::T,
-) where {T <: FeedForwardChronology}
+) where {T <: FeedforwardChronology}
     error("Chronology $(T) not implemented")
     return
 end
@@ -611,7 +611,7 @@ function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Assign FeedForward" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Assign Feedforward" begin
         for (ix, model) in enumerate(get_models(sim))
             name = get_name(model)
             problem_interval = get_interval(sequence, name)
@@ -744,7 +744,7 @@ function initial_condition_update!(
         )
         previous_value = get_condition(ic)
         PJ.set_value(ic.value, quantity)
-        IS.@record :simulation InitialConditionUpdateEvent(
+        IS.@record :execution InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
             ic,
@@ -793,7 +793,7 @@ function initial_condition_update!(
             calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
         previous_value = get_condition(ic)
         PJ.set_value(ic.value, quantity)
-        IS.@record :simulation InitialConditionUpdateEvent(
+        IS.@record :execution InitialConditionUpdateEvent(
             get_current_time(sim),
             ini_cond_key,
             ic,
@@ -993,7 +993,7 @@ function _execute!(
     enable_progress_bar = _PROGRESS_METER_ENABLED,
     disable_timer_outputs = false,
 )
-    @assert !isnothing(sim.internal)
+    @assert sim.internal !== nothing
 
     set_simulation_status!(sim, RunStatus.RUNNING)
     execution_order = get_execution_order(sim)

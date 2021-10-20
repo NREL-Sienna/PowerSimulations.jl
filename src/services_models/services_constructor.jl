@@ -1,5 +1,5 @@
 function get_incompatible_devices(devices_template::Dict)
-    incompatible_device_types = Vector{DataType}()
+    incompatible_device_types = Set{DataType}()
     for model in values(devices_template)
         formulation = get_formulation(model)
         if formulation == FixedOutput
@@ -53,7 +53,7 @@ function populate_contributing_devices!(template, sys::PSY.System)
     for (service_key, service_model) in service_models
         S = get_component_type(service_model)
         service = PSY.get_component(S, sys, get_service_name(service_model))
-        if isnothing(service)
+        if service === nothing
             @warn "The data doesn't include services of type $(S) and name $(get_service_name(service_model)), consider changing the service models" _group =
                 :ConstructGroup
             continue
@@ -155,14 +155,13 @@ function construct_service!(
     ::ArgumentConstructStage,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
     contributing_devices = get_contributing_devices(model)
 
-    # Variables
     add_variables!(
         container,
         ActivePowerReserveVariable,
@@ -171,6 +170,7 @@ function construct_service!(
         RangeReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -180,20 +180,17 @@ function construct_service!(
     ::ModelConstructStage,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
 
-    # Constraints
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-    # Cost Function
+
     cost_function!(container, service, model)
 
-    if get_feedforward(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
-    end
+    add_feedforward_constraints!(container, model, service)
 
     return
 end
@@ -204,13 +201,12 @@ function construct_service!(
     ::ArgumentConstructStage,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.StaticReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
 
-    # Variables
     add_variables!(
         container,
         ActivePowerReserveVariable,
@@ -219,6 +215,7 @@ function construct_service!(
         RangeReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -228,21 +225,17 @@ function construct_service!(
     ::ModelConstructStage,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.StaticReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
 
-    # Constraints
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
 
-    # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforward(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
-    end
+    add_feedforward_constraints!(container, model, service)
 
     return
 end
@@ -253,7 +246,7 @@ function construct_service!(
     ::ArgumentConstructStage,
     model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -267,6 +260,7 @@ function construct_service!(
         StepwiseCostReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_expressions!(container, ProductionCostExpression, [service], model)
 end
 
 function construct_service!(
@@ -275,21 +269,17 @@ function construct_service!(
     ::ModelConstructStage,
     model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
 
-    # Constraints
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
 
-    # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforward(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
-    end
+    add_feedforward_constraints!(container, model, service)
 end
 
 function construct_service!(
@@ -298,7 +288,7 @@ function construct_service!(
     ::ArgumentConstructStage,
     model::ServiceModel{S, T},
     devices_template::Dict{Symbol, DeviceModel},
-    ::Vector{<:DataType},
+    ::Set{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
     name = get_service_name(model)
     service = PSY.get_component(S, sys, name)
@@ -320,7 +310,7 @@ function construct_service!(
     # add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas)
     # add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas)
     balancing_auxiliary_variables!(container, sys)
-
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -330,7 +320,7 @@ function construct_service!(
     ::ModelConstructStage,
     model::ServiceModel{S, T},
     devices_template::Dict{Symbol, DeviceModel},
-    ::Vector{<:DataType},
+    ::Set{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
     name = get_service_name(model)
     service = PSY.get_component(S, sys, name)
@@ -343,9 +333,7 @@ function construct_service!(
     smooth_ace_pid!(container, [service])
     aux_constraints!(container, sys)
 
-    if get_feedforward(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
-    end
+    add_feedforward_constraints!(container, model, service)
 
     return
 end
@@ -359,7 +347,7 @@ function construct_service!(
     ::ArgumentConstructStage,
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
-    ::Vector{<:DataType},
+    ::Set{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -376,12 +364,12 @@ function construct_service!(
     ::ModelConstructStage,
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
-    ::Vector{<:DataType},
+    ::Set{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_services = PSY.get_contributing_services(service)
-    # Constraints
+
     add_constraints!(
         container,
         RequirementConstraint,
@@ -399,14 +387,13 @@ function construct_service!(
     ::ArgumentConstructStage,
     model::ServiceModel{SR, RampReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
 
-    # Variables
     add_variables!(
         container,
         ActivePowerReserveVariable,
@@ -415,6 +402,7 @@ function construct_service!(
         RampReserve(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -424,22 +412,18 @@ function construct_service!(
     ::ModelConstructStage,
     model::ServiceModel{SR, RampReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
 
-    # Constraints
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
     add_constraints!(container, RampConstraint, service, contributing_devices, model)
 
-    # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforward(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
-    end
+    add_feedforward_constraints!(container, model, service)
     return
 end
 
@@ -449,14 +433,13 @@ function construct_service!(
     ::ArgumentConstructStage,
     model::ServiceModel{SR, NonSpinningReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.ReserveNonSpinning}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
 
-    # Variables
     add_variables!(
         container,
         ActivePowerReserveVariable,
@@ -464,7 +447,7 @@ function construct_service!(
         contributing_devices,
         NonSpinningReserve(),
     )
-
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -474,13 +457,12 @@ function construct_service!(
     ::ModelConstructStage,
     model::ServiceModel{SR, NonSpinningReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.ReserveNonSpinning}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
 
-    # Constraints
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
     add_constraints!(
         container,
@@ -490,11 +472,8 @@ function construct_service!(
         model,
     )
 
-    # Cost Function
     cost_function!(container, service, model)
 
-    if get_feedforward(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
-    end
+    add_feedforward_constraints!(container, model, service)
     return
 end

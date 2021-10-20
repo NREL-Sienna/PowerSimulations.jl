@@ -1,3 +1,9 @@
+"Optimization Container construction stage"
+abstract type ConstructStage end
+
+struct ArgumentConstructStage <: ConstructStage end
+struct ModelConstructStage <: ConstructStage end
+
 struct OptimizationContainerMetadata
     container_key_lookup::Dict{String, <:OptimizationContainerKey}
 end
@@ -266,16 +272,12 @@ function get_problem_size(container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-abstract type ConstructStage end
-struct ArgumentConstructStage end
-struct ModelConstructStage end
-
 # This function is necessary while we switch from ParameterJuMP to POI
 function _make_container_array(parameter_jump::Bool, ax...)
     if parameter_jump
-        return JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...)
+        return remove_undef!(JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...))
     else
-        return JuMP.Containers.DenseAxisArray{GAE}(undef, ax...)
+        return remove_undef!(JuMP.Containers.DenseAxisArray{GAE}(undef, ax...))
     end
 end
 
@@ -567,7 +569,7 @@ function _assign_container!(container::Dict, key::OptimizationContainerKey, valu
 end
 
 ####################################### Variable Container #################################
-function _add_var_container!(
+function _add_variable_container!(
     container::OptimizationContainer,
     var_key::VariableKey{T, U},
     sparse::Bool,
@@ -582,7 +584,7 @@ function _add_var_container!(
     return var_container
 end
 
-function add_var_container!(
+function add_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
@@ -590,10 +592,10 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     var_key = VariableKey(T, U)
-    return _add_var_container!(container, var_key, sparse, axs...)
+    return _add_variable_container!(container, var_key, sparse, axs...)
 end
 
-function add_var_container!(
+function add_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
@@ -602,7 +604,7 @@ function add_var_container!(
     sparse = false,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     var_key = VariableKey(T, U, meta)
-    return _add_var_container!(container, var_key, sparse, axs...)
+    return _add_variable_container!(container, var_key, sparse, axs...)
 end
 
 function get_variable_keys(container::OptimizationContainer)
@@ -634,7 +636,7 @@ function read_variables(container::OptimizationContainer)
 end
 
 ##################################### AuxVariable Container ################################
-function add_aux_var_container!(
+function add_aux_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
@@ -643,12 +645,12 @@ function add_aux_var_container!(
 ) where {T <: AuxVariableType, U <: PSY.Component}
     var_key = AuxVarKey(T, U)
     if sparse
-        aux_var_container = sparse_container_spec(Float64, axs...)
+        aux_variable_container = sparse_container_spec(Float64, axs...)
     else
-        aux_var_container = container_spec(Float64, axs...)
+        aux_variable_container = container_spec(Float64, axs...)
     end
-    _assign_container!(container.aux_variables, var_key, aux_var_container)
-    return aux_var_container
+    _assign_container!(container.aux_variables, var_key, aux_variable_container)
+    return aux_variable_container
 end
 
 function get_aux_variable_keys(container::OptimizationContainer)
@@ -705,7 +707,7 @@ function get_dual_keys(container::OptimizationContainer)
 end
 
 ##################################### Constraint Container #################################
-function _add_cons_container!(
+function _add_constraints_container!(
     container::OptimizationContainer,
     cons_key::ConstraintKey,
     axs...;
@@ -720,7 +722,7 @@ function _add_cons_container!(
     return cons_container
 end
 
-function add_cons_container!(
+function add_constraints_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
@@ -729,7 +731,7 @@ function add_cons_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     cons_key = ConstraintKey(T, U, meta)
-    return _add_cons_container!(container, cons_key, axs...; sparse = sparse)
+    return _add_constraints_container!(container, cons_key, axs...; sparse = sparse)
 end
 
 function get_constraint_keys(container::OptimizationContainer)
@@ -772,10 +774,18 @@ function read_duals(container::OptimizationContainer)
 end
 
 ##################################### Parameter Container ##################################
-function _add_param_container!(container::OptimizationContainer, key::ParameterKey, axs...)
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::VariableValueAttributes{<:OptimizationContainerKey},
+    axs...,
+) where {T <: VariableValueParameter, U <: PSY.Component}
+    # Temporary while we change to POI vs PJ
+    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
-        JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
-        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), 1.0),
+        attribute,
+        JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),
+        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
     )
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -802,17 +812,6 @@ function add_param_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
-    axs...;
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    param_key = ParameterKey(T, U, meta)
-    return _add_param_container!(container, param_key, axs...)
-end
-
-function add_param_container!(
-    container::OptimizationContainer,
-    ::T,
-    ::Type{U},
     ::Type{V},
     name::String,
     axs...;
@@ -823,6 +822,19 @@ function add_param_container!(
         error("$V can't be abstract: $param_key")
     end
     attributes = TimeSeriesAttributes{V}(name)
+    return _add_param_container!(container, param_key, attributes, axs...)
+end
+
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    source_key::V,
+    axs...;
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
+    param_key = ParameterKey(T, U, meta)
+    attributes = VariableValueAttributes{V}()
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
@@ -894,7 +906,7 @@ function read_parameters(container::OptimizationContainer)
     # the system
     params_dict = Dict{ParameterKey, DataFrames.DataFrame}()
     parameters = get_parameters(container)
-    (isnothing(parameters) || isempty(parameters)) && return params_dict
+    (parameters === nothing || isempty(parameters)) && return params_dict
     for (k, v) in parameters
         param_array = axis_array_to_dataframe(get_parameter_array(v))
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
@@ -907,14 +919,16 @@ end
 function _add_expression_container!(
     container::OptimizationContainer,
     expr_key::ExpressionKey,
+    ::Type{T},
     axs...;
     sparse = false,
-)
+) where {T <: JuMP.AbstractJuMPScalar}
     if sparse
-        expr_container = sparse_container_spec(JuMP.AbstractJuMPScalar, axs...)
+        expr_container = sparse_container_spec(T, axs...)
     else
-        expr_container = container_spec(JuMP.AbstractJuMPScalar, axs...)
+        expr_container = container_spec(T, axs...)
     end
+    remove_undef!(expr_container)
     _assign_container!(container.expressions, expr_key, expr_container)
     return expr_container
 end
@@ -928,7 +942,33 @@ function add_expression_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
-    return _add_expression_container!(container, expr_key, axs...; sparse = sparse)
+    expr_type = built_for_recurrent_solves(container) ? PGAE : GAE
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
+end
+
+function add_expression_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ProductionCostExpression, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    expr_type = JuMP.QuadExpr
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
 end
 
 function get_expression_keys(container::OptimizationContainer)
@@ -985,6 +1025,13 @@ function get_expression(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: SystemBalanceExpressions}
     return get_expression(container, ExpressionKey(T, PSY.System, meta))
+end
+
+function read_expressions(container::OptimizationContainer)
+    return Dict(
+        k => axis_array_to_dataframe(v) for (k, v) in get_expressions(container) if
+        !(get_entry_type(k) <: SystemBalanceExpressions)
+    )
 end
 
 ###################################Initial Conditions Containers############################
@@ -1052,6 +1099,9 @@ function write_initial_conditions_data(
         # TODO: Not ideal, clean up a bit more.
         if field == STORE_CONTAINER_PARAMETERS
             ic_container_dict = read_parameters(ic_container)
+        end
+        if field == STORE_CONTAINER_EXPRESSIONS
+            continue
         end
         isempty(ic_container_dict) && continue
         ic_data_dict = getfield(get_initial_conditions_data(container), field)
@@ -1126,4 +1176,37 @@ function calculate_dual_variables!(container::OptimizationContainer, system::PSY
         _calculate_dual_variable_value!(container, key, system)
     end
     return
+end
+
+########################### Helper Functions to get keys ###################################
+function get_optimization_container_key(
+    ::T,
+    ::Type{U},
+    meta::String,
+) where {T <: AuxVariableType, U <: PSY.Component}
+    return AuxVariableKey(T, U, meta)
+end
+
+function get_optimization_container_key(
+    ::T,
+    ::Type{U},
+    meta::String,
+) where {T <: VariableType, U <: PSY.Component}
+    return VariableKey(T, U, meta)
+end
+
+function get_optimization_container_key(
+    ::T,
+    ::Type{U},
+    meta::String,
+) where {T <: ParameterType, U <: PSY.Component}
+    return ParameterKey(T, U, meta)
+end
+
+function get_optimization_container_key(
+    ::T,
+    ::Type{U},
+    meta::String,
+) where {T <: ConstraintType, U <: PSY.Component}
+    return ConstraintKey(T, U, meta)
 end

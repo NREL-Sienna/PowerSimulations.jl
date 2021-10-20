@@ -77,7 +77,7 @@ Steady State deviation of the frequency
 """
 function add_variables!(container::OptimizationContainer, ::Type{T}) where {T <: SteadyStateFrequencyDeviation}
     time_steps = get_time_steps(container)
-    variable = add_var_container!(container, T(), PSY.Area, time_steps)
+    variable = add_variable_container!(container, T(), PSY.Area, time_steps)
     for t in time_steps
         variable[t] = JuMP.@variable(container.JuMPmodel,
         base_name ="ΔF_{$(t)}"
@@ -102,8 +102,8 @@ end
 function balancing_auxiliary_variables!(container, sys)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
     time_steps = get_time_steps(container)
-    R_up_emergency = add_var_container!(container, AdditionalDeltaActivePowerUpVariable(),  PSY.Area, area_names, time_steps)
-    R_dn_emergency = add_var_container!(container, AdditionalDeltaActivePowerDownVariable(),  PSY.Area, area_names, time_steps)
+    R_up_emergency = add_variable_container!(container, AdditionalDeltaActivePowerUpVariable(),  PSY.Area, area_names, time_steps)
+    R_dn_emergency = add_variable_container!(container, AdditionalDeltaActivePowerDownVariable(),  PSY.Area, area_names, time_steps)
 
     emergency_up =
         add_expression_container!(container, EmergencyUp(), PSY.Area, area_names, time_steps)
@@ -130,9 +130,9 @@ end
 function absolute_value_lift(container::OptimizationContainer, areas)
     time_steps = get_time_steps(container)
     area_names = [PSY.get_name(a) for a in areas]
-    # TODO DT: correct component type and meta?
-    container_lb = add_cons_container!(container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "lb")
-    container_ub = add_cons_container!(container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "ub")
+    # TODO: correct component type and meta?
+    container_lb = add_constraints_container!(container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "lb")
+    container_ub = add_constraints_container!(container, AbsoluteValueConstraint(), PSY.Area, area_names, time_steps, meta = "ub")
     mismatch = get_variable(container, AreaMismatchVariable(), PSY.Area)
     z = get_variable(container, LiftVariable(), PSY.Area)
     jump_model = get_jump_model(container)
@@ -178,7 +178,7 @@ function frequency_response_constraint!(container::OptimizationContainer, sys::P
     R_dn_emergency =
         get_variable(container, AdditionalDeltaActivePowerUpVariable(), PSY.Area)
 
-    const_container = add_cons_container!(container, FrequencyResponseConstraint(), PSY.System, time_steps)
+    const_container = add_constraints_container!(container, FrequencyResponseConstraint(), PSY.System, time_steps)
 
     for s in services, t in time_steps
         system_balance = sum(area_balance.data[:, t])
@@ -202,7 +202,7 @@ function smooth_ace_pid!(container::OptimizationContainer, services::Vector{PSY.
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
     RAW_ACE = add_expression_container!(container, RawACE(), PSY.Area, area_names, time_steps)
     SACE = get_variable(container, SmoothACE(), PSY.Area)
-    SACE_pid = add_cons_container!(container, SACEPidAreaConstraint(), PSY.Area, area_names, time_steps)
+    SACE_pid = add_constraints_container!(container, SACEPidAreaConstraint(), PSY.Area, area_names, time_steps)
 
     Δf = get_variable(container, SteadyStateFrequencyDeviation(), PSY.Area)
 
@@ -245,7 +245,7 @@ end
 function aux_constraints!(container::OptimizationContainer, sys::PSY.System)
     time_steps = get_time_steps(container)
     area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
-    aux_equation = add_cons_container!(container, BalanceAuxConstraint(), PSY.System, area_names, time_steps)
+    aux_equation = add_constraints_container!(container, BalanceAuxConstraint(), PSY.System, area_names, time_steps)
     area_mismatch = get_variable(container,  AreaMismatchVariable(), PSY.Area)
     SACE = get_variable(container, SmoothACE(), PSY.Area)
     R_up = get_variable(container, DeltaActivePowerUpVariable(), PSY.Area)

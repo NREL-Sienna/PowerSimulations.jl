@@ -10,7 +10,7 @@ mutable struct SimulationInfo
     caches::Set{CacheKey}
     end_of_interval_step::Int
     # JD: Will probably go away
-    chronolgy_dict::Dict{Int, <:FeedForwardChronology}
+    chronolgy_dict::Dict{Int, <:FeedforwardChronology}
     requires_rebuild::Bool
     sequence_uuid::Base.UUID
 end
@@ -27,13 +27,18 @@ mutable struct ModelInternal
     simulation_info::Union{Nothing, SimulationInfo}
     time_series_cache::Dict{TimeSeriesCacheKey, <:IS.TimeSeriesCache}
     ext::Dict{String, Any}
+    recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
     # TODO: Marge all structs (ModelInternal, ModelStoreParams and SimulationInternal) to a single Internal Struct
     store_parameters::Union{Nothing, ModelStoreParams}
 end
 
-function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}())
+function ModelInternal(
+    container::OptimizationContainer;
+    ext = Dict{String, Any}(),
+    recorders = [],
+)
     return ModelInternal(
         container,
         nothing,
@@ -46,11 +51,18 @@ function ModelInternal(container::OptimizationContainer; ext = Dict{String, Any}
         nothing,
         Dict{TimeSeriesCacheKey, IS.TimeSeriesCache}(),
         ext,
+        recorders,
         Logging.Warn,
         Logging.Info,
         nothing,
     )
 end
+
+function add_recorder!(internal::ModelInternal, recorder::Symbol)
+    push!(internal.recorders, recorder)
+end
+
+get_recorders(internal::ModelInternal) = internal.recorders
 
 function configure_logging(internal::ModelInternal, file_mode)
     return IS.configure_logging(

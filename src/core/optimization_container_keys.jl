@@ -1,6 +1,6 @@
 abstract type OptimizationContainerKey end
 
-const _DELIMITER = "_"
+const _DELIMITER = "__"
 
 function make_key(::Type{T}, args...) where {T <: OptimizationContainerKey}
     return T(args...)

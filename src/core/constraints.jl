@@ -20,9 +20,10 @@ struct EnergyTargetConstraint <: ConstraintType end
 struct EnergyShortageVariableLimitsConstraint <: ConstraintType end
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardBinConstraint <: ConstraintType end
-struct FeedforwardConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
-struct FeedforwardUBConstraint <: ConstraintType end
+struct FeedforwardUpperBoundConstraint <: ConstraintType end
+struct FeedforwardLowerBoundConstraint <: ConstraintType end
+struct FeedforwardEnergyTargetConstraint <: ConstraintType end
 struct FlowActivePowerConstraint <: ConstraintType end
 struct FlowActivePowerFromToConstraint <: ConstraintType end
 struct FlowActivePowerToFromConstraint <: ConstraintType end
@@ -93,7 +94,6 @@ end
 get_entry_type(
     ::ConstraintKey{T, U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = T
-# TODO DT: since this can be System, "get_component_type" isn't the best name
 get_component_type(
     ::ConstraintKey{T, U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = U

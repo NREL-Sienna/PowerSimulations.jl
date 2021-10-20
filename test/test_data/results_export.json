@@ -3,8 +3,8 @@
     {
       "name": "ED",
       "variables": [
-        "ActivePowerVariable_ThermalStandard",
-        "EnergyVariable_HydroEnergyReservoir"
+        "ActivePowerVariable__ThermalStandard",
+        "EnergyVariable__HydroEnergyReservoir"
       ],
       "store_all_parameters": true,
       "optimizer_stats": true
@@ -12,7 +12,7 @@
     {
       "name": "UC",
       "variables": [
-        "OnVariable_ThermalStandard"
+        "OnVariable__ThermalStandard"
       ],
       "store_all_duals": true,
       "store_all_parameters": true,

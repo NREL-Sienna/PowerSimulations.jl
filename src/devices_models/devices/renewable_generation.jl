@@ -65,9 +65,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.RenewableGen, W <: AbstractDeviceFormulation}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 """
@@ -80,14 +79,14 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.RenewableGen, W <: RenewableConstantPowerFactor}
     names = [PSY.get_name(d) for d in devices]
     time_steps = get_time_steps(container)
     p_var = get_variable(container, ActivePowerVariable(), V)
     q_var = get_variable(container, ReactivePowerVariable(), V)
     jump_model = get_jump_model(container)
-    constraint = add_cons_container!(container, EqualityConstraint(), V, names, time_steps)
+    constraint =
+        add_constraints_container!(container, EqualityConstraint(), V, names, time_steps)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_power_factor(d)))
@@ -103,7 +102,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.RenewableGen, W <: AbstractRenewableDispatchFormulation}
     add_parameterized_upper_bound_range_constraints(
         container,
@@ -113,7 +111,6 @@ function add_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 

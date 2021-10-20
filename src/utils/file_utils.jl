@@ -61,7 +61,7 @@ function read_file_hashes(path)
 end
 
 # this ensures that the time_stamp is not double shortened
-function find_var_length(es::Dict, e_list::Array)
+function find_variable_length(es::Dict, e_list::Array)
     return size(es[Symbol(splitext(e_list[1])[1])], 1)
 end
 
