@@ -111,17 +111,6 @@ function _check_chronology_consistency(
     return
 end
 
-function _check_cache_definition(cache::Dict{<:Tuple, <:AbstractCache})
-    for (problem_names, c) in cache
-        if typeof(c) == TimeStatusChange && length(problem_names) > 1
-            error(
-                "TimeStatusChange cache currently only supports single problem. Please consider changing your cache definitions",
-            )
-        end
-    end
-    return
-end
-
 function _get_num_executions_by_problem(problems, execution_order)
     problem_names = get_model_names(problems)
     executions_by_problem = Dict(x => 0 for x in problem_names)
@@ -134,15 +123,14 @@ end
 @doc raw"""
     SimulationSequence(
                         models::SimulationModels,
-                        feedforward::Dict{Symbol, <:AbstractAffectFeedForward}
-                        ini_cond_chronology::Dict{Symbol, <:FeedForwardChronology}
+                        feedforward::Dict{Symbol, <:AbstractAffectFeedforward}
+                        ini_cond_chronology::Dict{Symbol, <:FeedforwardChronology}
                         cache::Dict{Symbol, AbstractCache}
                         )
 """
 mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Int}
-    intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
-    feedforwards::Dict{<:Tuple, <:AbstractAffectFeedForward}
+    feedforwards::Dict{<:Tuple, <:AbstractAffectFeedforward}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}
     executions_by_problem::Dict{Symbol, Int}
@@ -151,7 +139,7 @@ mutable struct SimulationSequence
 
     function SimulationSequence(;
         models::SimulationModels,
-        feedforward = Dict{Symbol, AbstractAffectFeedForward}(),
+        feedforward = Dict{Symbol, AbstractAffectFeedforward}(),
         ini_cond_chronology = InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.

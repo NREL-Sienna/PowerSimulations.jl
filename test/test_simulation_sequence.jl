@@ -1,17 +1,17 @@
 @testset "Simulation Sequence Correct Execution Order" begin
     models = SimulationModels(
-        [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC"),
-        DecisionModel(MockOperationProblem; horizon = 24, name = "HAUC"),
-        DecisionModel(MockOperationProblem; horizon = 12, name = "ED")],
-        EmulationModel(MockOperationProblem; name = "AGC"),
+        [
+            DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC"),
+            DecisionModel(MockOperationProblem; horizon = 24, name = "HAUC"),
+            DecisionModel(MockOperationProblem; horizon = 12, name = "ED"),
+        ],
+        EmulationModel(MockEmulationProblem; name = "AGC"),
     )
 
     ini_cond_chronology = InterProblemChronology()
 
-    test_sequence = SimulationSequence(
-        models = models,
-        ini_cond_chronology = ini_cond_chronology,
-    )
+    test_sequence =
+        SimulationSequence(models = models, ini_cond_chronology = ini_cond_chronology)
 
     @test length(findall(x -> x == 4, test_sequence.execution_order)) == 24 * 60
     @test length(findall(x -> x == 3, test_sequence.execution_order)) == 24 * 12
