@@ -365,17 +365,8 @@ function add_to_cost!(
     @debug "TwoPartCost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     if !(spec.variable_cost === nothing)
         variable_cost = spec.variable_cost(cost_data)
-        if spec.uses_compact_power &&
-           variable_cost == PSY.VariableCost{Vector{NTuple{2, Float64}}}
-            var_cost = PSY.get_cost(spec.variable_cost(cost_data))
-            no_load_cost, p_min = var_cost[1]
-            variable_cost_data =
-                PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
-        else
-            variable_cost_data = spec.variable_cost(cost_data)
-        end
         for t in time_steps
-            variable_cost!(container, spec, component, variable_cost_data, t)
+            variable_cost!(container, spec, component, variable_cost, t)
         end
     else
         @warn "No variable cost defined for $component_name"
@@ -404,18 +395,9 @@ function add_to_cost!(
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     variable_cost = spec.variable_cost(cost_data)
-    if spec.uses_compact_power &&
-       variable_cost == PSY.VariableCost{Vector{NTuple{2, Float64}}}
-        var_cost = PSY.get_cost(spec.variable_cost(cost_data))
-        no_load_cost, p_min = var_cost[1]
-        variable_cost_data =
-            PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
-    else
-        variable_cost_data = spec.variable_cost(cost_data)
-    end
     time_steps = get_time_steps(container)
     for t in time_steps
-        variable_cost!(container, spec, component, variable_cost_data, t)
+        variable_cost!(container, spec, component, variable_cost, t)
     end
 
     if !(spec.start_up_cost === nothing)
@@ -511,19 +493,7 @@ function add_to_cost!(
     end
 
     # Original implementation had SOS by default, here it detects if that's needed
-    if spec.uses_compact_power
-        variable_cost_data = spec.variable_cost(cost_data)
-    else
-        base_power = get_base_power(container)
-        min_gen_cost = PSY.get_no_load(cost_data)
-        min_gen = PSY.get_active_power_limits(component).min
-        variable_cost_data_ = PSY.get_cost(spec.variable_cost(cost_data))
-        variable_cost_data_ = [
-            (v[1] + min_gen_cost, v[2] + min_gen * base_power) for v in variable_cost_data_
-        ]
-        variable_cost_data = PSY.VariableCost(variable_cost_data_)
-    end
-
+    variable_cost_data = spec.variable_cost(cost_data)
     for t in time_steps
         variable_cost!(container, spec, component, variable_cost_data, t)
     end
