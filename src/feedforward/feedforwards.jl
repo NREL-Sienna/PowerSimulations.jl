@@ -1,8 +1,8 @@
-function get_affected_values(ff::AbstractAffectFeedForward)
+function get_affected_values(ff::AbstractAffectFeedforward)
     return ff.affected_values
 end
 
-function attach_feedforward(model, ff::AbstractAffectFeedForward)
+function attach_feedforward(model, ff::AbstractAffectFeedforward)
     push!(model.feedforwards, ff)
     return
 end
@@ -10,10 +10,10 @@ end
 """
 Adds an upper bound constraint to a variable.
 """
-struct UpperBoundFeedForward <: AbstractAffectFeedForward
+struct UpperBoundFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector
-    function UpperBoundFeedForward(;
+    function UpperBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
@@ -25,7 +25,7 @@ struct UpperBoundFeedForward <: AbstractAffectFeedForward
                 values[ix] = get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "UpperBoundFeedForward is only compatible with VariableType affected values",
+                    "UpperBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
@@ -33,16 +33,16 @@ struct UpperBoundFeedForward <: AbstractAffectFeedForward
     end
 end
 
-get_default_parameter_type(::UpperBoundFeedForward, _) = UpperBoundValueParameter()
-get_optimization_container_key(ff::UpperBoundFeedForward) = ff.optimization_container_key
+get_default_parameter_type(::UpperBoundFeedforward, _) = UpperBoundValueParameter()
+get_optimization_container_key(ff::UpperBoundFeedforward) = ff.optimization_container_key
 
 """
 Adds a lower bound constraint to a variable.
 """
-struct LowerBoundFeedForward <: AbstractAffectFeedForward
+struct LowerBoundFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector{<:OptimizationContainerKey}
-    function LowerBoundFeedForward(;
+    function LowerBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
@@ -54,7 +54,7 @@ struct LowerBoundFeedForward <: AbstractAffectFeedForward
                 values[ix] = get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "LowerBoundFeedForward is only compatible with VariableType affected values",
+                    "LowerBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
@@ -62,16 +62,16 @@ struct LowerBoundFeedForward <: AbstractAffectFeedForward
     end
 end
 
-get_default_parameter_type(::LowerBoundFeedForward, _) = LowerBoundValueParameter()
-get_optimization_container_key(ff::LowerBoundFeedForward) = ff.optimization_container_key
+get_default_parameter_type(::LowerBoundFeedforward, _) = LowerBoundValueParameter()
+get_optimization_container_key(ff::LowerBoundFeedforward) = ff.optimization_container_key
 
 """
 Adds a constraint to make the bounds of a variable 0.0. Effectively allows to "turn off" a value.
 """
-struct SemiContinuousFeedForward <: AbstractAffectFeedForward
+struct SemiContinuousFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector{<:OptimizationContainerKey}
-    function SemiContinuousFeedForward(;
+    function SemiContinuousFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
@@ -83,7 +83,7 @@ struct SemiContinuousFeedForward <: AbstractAffectFeedForward
                 values[ix] = get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "SemiContinuousFeedForward is only compatible with VariableType affected values",
+                    "SemiContinuousFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
@@ -91,17 +91,17 @@ struct SemiContinuousFeedForward <: AbstractAffectFeedForward
     end
 end
 
-get_default_parameter_type(::SemiContinuousFeedForward, _) = OnStatusParameter()
-get_optimization_container_key(f::SemiContinuousFeedForward) = f.optimization_container_key
+get_default_parameter_type(::SemiContinuousFeedforward, _) = OnStatusParameter()
+get_optimization_container_key(f::SemiContinuousFeedforward) = f.optimization_container_key
 
 """
 Adds a constraint to limit the sum of a variable over the number of periods to the source value
 """
-struct IntegralLimitFeedForward <: AbstractAffectFeedForward
+struct IntegralLimitFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector{<:OptimizationContainerKey}
     number_of_periods::Int
-    function IntegralLimitFeedForward(;
+    function IntegralLimitFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
@@ -114,7 +114,7 @@ struct IntegralLimitFeedForward <: AbstractAffectFeedForward
                 values[ix] = get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "IntegralLimitFeedForward is only compatible with VariableType or ParamterType affected values",
+                    "IntegralLimitFeedforward is only compatible with VariableType or ParamterType affected values",
                 )
             end
         end
@@ -126,16 +126,16 @@ struct IntegralLimitFeedForward <: AbstractAffectFeedForward
     end
 end
 
-get_default_parameter_type(::IntegralLimitFeedForward, _) = IntegralLimitParameter()
+get_default_parameter_type(::IntegralLimitFeedforward, _) = IntegralLimitParameter()
 
 """
 Fixes a Variable or Parameter Value in the model. Is the only Feed Forward that can be used
 with a Parameter or a Variable as the affected value.
 """
-struct FixValueFeedForward <: AbstractAffectFeedForward
+struct FixValueFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector
-    function FixValueFeedForward(;
+    function FixValueFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
@@ -147,7 +147,7 @@ struct FixValueFeedForward <: AbstractAffectFeedForward
                 values[ix] = get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "UpperBoundFeedForward is only compatible with VariableType affected values",
+                    "UpperBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
@@ -155,18 +155,18 @@ struct FixValueFeedForward <: AbstractAffectFeedForward
     end
 end
 
-get_default_parameter_type(::FixValueFeedForward, _) = FixValueParameter()
-get_optimization_container_key(ff::FixValueFeedForward) = ff.optimization_container_key
+get_default_parameter_type(::FixValueFeedforward, _) = FixValueParameter()
+get_optimization_container_key(ff::FixValueFeedforward) = ff.optimization_container_key
 
 """
 Adds a constraint to enforce a minimum energy level target with a slack variable associated witha penalty term.
 """
-struct EnergyTargetFeedForward <: AbstractAffectFeedForward
+struct EnergyTargetFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector{<:OptimizationContainerKey}
     target_period::Int
     penalty_cost::Float64
-    function EnergyTargetFeedForward(;
+    function EnergyTargetFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
@@ -180,7 +180,7 @@ struct EnergyTargetFeedForward <: AbstractAffectFeedForward
                 values[ix] = get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "EnergyTargetFeedForward is only compatible with VariableType or ParamterType affected values",
+                    "EnergyTargetFeedforward is only compatible with VariableType or ParamterType affected values",
                 )
             end
         end
@@ -193,5 +193,5 @@ struct EnergyTargetFeedForward <: AbstractAffectFeedForward
     end
 end
 
-get_default_parameter_type(::EnergyTargetFeedForward, _) = EnergyTargetParameter()
-get_optimization_container_key(ff::EnergyTargetFeedForward) = ff.optimization_container_key
+get_default_parameter_type(::EnergyTargetFeedforward, _) = EnergyTargetParameter()
+get_optimization_container_key(ff::EnergyTargetFeedforward) = ff.optimization_container_key

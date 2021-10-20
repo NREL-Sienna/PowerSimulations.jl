@@ -27,7 +27,7 @@ function add_feedforward_arguments!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::AbstractAffectFeedForward,
+    ff::AbstractAffectFeedforward,
 ) where {T <: PSY.Component}
     parameter_type = get_default_parameter_type(ff, T)
     for var_key in get_affected_values(ff)
@@ -40,7 +40,7 @@ function add_feedforward_arguments!(
     container::OptimizationContainer,
     model::ServiceModel{SR},
     contributing_devices::Vector{T},
-    ff::AbstractAffectFeedForward,
+    ff::AbstractAffectFeedforward,
 ) where {T <: PSY.Component, SR <: PSY.AbstractReserve}
     parameter_type = get_default_parameter_type(ff, SR)
     for var_key in get_affected_values(ff)
@@ -78,7 +78,7 @@ function add_feedforward_arguments!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::SemiContinuousFeedForward,
+    ff::SemiContinuousFeedforward,
 ) where {T <: PSY.Component}
     parameter_type = get_default_parameter_type(ff, T)
     for var_key in get_affected_values(ff)
@@ -93,7 +93,7 @@ function add_feedforward_arguments!(
             )
         else
             error(
-                "SemiContinuousFeedForward not implemented for variable $(get_entry_type(var_key))",
+                "SemiContinuousFeedforward not implemented for variable $(get_entry_type(var_key))",
             )
         end
     end
@@ -104,7 +104,7 @@ function add_feedforward_arguments!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::EnergyTargetFeedForward,
+    ff::EnergyTargetFeedforward,
 ) where {T <: PSY.Component}
     parameter_type = get_default_parameter_type(ff, T)
     for var_key in get_affected_values(ff)

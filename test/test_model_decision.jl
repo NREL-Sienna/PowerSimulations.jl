@@ -59,7 +59,7 @@ end
     results_dir = joinpath(output_dir, "results")
     @test isfile(joinpath(results_dir, "optimizer_stats.csv"))
     variables_dir = joinpath(results_dir, "variables")
-    @test isfile(joinpath(variables_dir, "ActivePowerVariable_ThermalStandard.csv"))
+    @test isfile(joinpath(variables_dir, "ActivePowerVariable__ThermalStandard.csv"))
 end
 
 @testset "Test optimization debugging functions" begin
@@ -198,7 +198,7 @@ end
     dual_results = PSI.read_duals(container)[constraint_key]
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
-        @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint_System])
+        @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint__System])
     end
 
     # system = PSI.get_system(model)
@@ -314,7 +314,7 @@ end
     results1 = ProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
-    var1_b = read_variable(results1, "ActivePowerVariable_ThermalStandard")
+    var1_b = read_variable(results1, "ActivePowerVariable__ThermalStandard")
 
     # Results were automatically serialized here.
     results2 = ProblemResults(PSI.get_output_dir(model))
@@ -333,7 +333,7 @@ end
     @test get_system(results3) !== nothing
 
     exp_file =
-        joinpath(path, "results", "variables", "ActivePowerVariable_ThermalStandard.csv")
+        joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
     var4 = PSI.read_dataframe(exp_file)
     @test var1_a == var4
 end
@@ -351,13 +351,13 @@ end
 
     model_bounds = PSI.get_detailed_constraint_numerical_bounds(model)
     valid_model_bounds = Dict(
-        :CopperPlateBalanceConstraint_System => (
+        :CopperPlateBalanceConstraint__System => (
             coefficient = (min = 1.0, max = 1.0),
             rhs = (min = 6.434489705000001, max = 9.930296584),
         ),
-        :ActivePowerVariableLimitsConstraint_ThermalStandard_lb =>
+        :ActivePowerVariableLimitsConstraint__ThermalStandard__lb =>
             (coefficient = (min = 1.0, max = 1.0), rhs = (min = Inf, max = -Inf)),
-        :ActivePowerVariableLimitsConstraint_ThermalStandard_ub =>
+        :ActivePowerVariableLimitsConstraint__ThermalStandard__ub =>
             (coefficient = (min = 1.0, max = 1.0), rhs = (min = 0.4, max = 6.0)),
     )
     for (constriant_key, constriant_bounds) in model_bounds
@@ -380,10 +380,10 @@ end
 
     model_bounds = PSI.get_detailed_variable_numerical_bounds(model)
     valid_model_bounds = Dict(
-        :StopVariable_ThermalStandard => (min = 0.0, max = 1.0),
-        :StartVariable_ThermalStandard => (min = 0.0, max = 1.0),
-        :ActivePowerVariable_ThermalStandard => (min = 0.4, max = 6.0),
-        :OnVariable_ThermalStandard => (min = 0.0, max = 1.0),
+        :StopVariable__ThermalStandard => (min = 0.0, max = 1.0),
+        :StartVariable__ThermalStandard => (min = 0.0, max = 1.0),
+        :ActivePowerVariable__ThermalStandard => (min = 0.4, max = 6.0),
+        :OnVariable__ThermalStandard => (min = 0.0, max = 1.0),
     )
     for (variable_key, variable_bounds) in model_bounds
         _check_variable_bounds(

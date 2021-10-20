@@ -17,24 +17,24 @@ end
     )
 end
 
-@testset "FeedForward Struct Tests" begin
+@testset "Feedforward Struct Tests" begin
     ffs = [
-        UpperBoundFeedForward(
+        UpperBoundFeedforward(
             component_type = RenewableDispatch,
             source = ActivePowerVariable,
             affected_values = [ActivePowerVariable],
         ),
-        LowerBoundFeedForward(
+        LowerBoundFeedforward(
             component_type = RenewableDispatch,
             source = ActivePowerVariable,
             affected_values = [ActivePowerVariable],
         ),
-        SemiContinuousFeedForward(
+        SemiContinuousFeedforward(
             component_type = ThermalMultiStart,
             source = OnVariable,
             affected_values = [ActivePowerVariable, ReactivePowerVariable],
         ),
-        IntegralLimitFeedForward(
+        IntegralLimitFeedforward(
             component_type = GenericBattery,
             source = EnergyVariable,
             affected_values = [EnergyVariable],
@@ -48,7 +48,7 @@ end
         end
     end
 
-    ff = FixValueFeedForward(
+    ff = FixValueFeedforward(
         component_type = HydroDispatch,
         source = OnVariable,
         affected_values = [OnStatusParameter],
@@ -58,26 +58,26 @@ end
         @test isa(av, PSI.ParameterKey)
     end
 
-    @test_throws ErrorException IntegralLimitFeedForward(
+    @test_throws ErrorException IntegralLimitFeedforward(
         component_type = GenericBattery,
         source = EnergyVariable,
         affected_values = [OnStatusParameter],
         number_of_periods = 10,
     )
 
-    @test_throws ErrorException UpperBoundFeedForward(
+    @test_throws ErrorException UpperBoundFeedforward(
         component_type = RenewableDispatch,
         source = ActivePowerVariable,
         affected_values = [OnStatusParameter],
     )
 
-    @test_throws ErrorException LowerBoundFeedForward(
+    @test_throws ErrorException LowerBoundFeedforward(
         component_type = RenewableDispatch,
         source = ActivePowerVariable,
         affected_values = [OnStatusParameter],
     )
 
-    @test_throws ErrorException SemiContinuousFeedForward(
+    @test_throws ErrorException SemiContinuousFeedforward(
         component_type = ThermalMultiStart,
         source = OnVariable,
         affected_values = [ActivePowerVariable, OnStatusParameter],

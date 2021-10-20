@@ -369,7 +369,7 @@ function Base.show(io::IO, sequence::SimulationSequence)
     for (k, v) in sequence.feedforward
         println(io, "$(k): $(typeof(v)) -> $(v.device_type)\n")
         to = string.(v.affected_variables)
-        if isa(v, SemiContinuousFeedForward)
+        if isa(v, SemiContinuousFeedforward)
             from = string.(v.binary_source_problem)
         else
             from = string.(v.variable_source_problem)

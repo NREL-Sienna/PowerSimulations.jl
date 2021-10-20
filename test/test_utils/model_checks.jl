@@ -93,7 +93,7 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
         Array,
         duals[PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)][
             :,
-            :CopperPlateBalanceConstraint_System,
+            :CopperPlateBalanceConstraint__System,
         ],
     )
 

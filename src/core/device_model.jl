@@ -22,7 +22,7 @@ feedforward to enable passing values between operation model at simulation time
 -`::Type{B}`: Abstract Device Formulation
 
 # Accepted Key Words
-- `feedforward::Array{<:AbstractAffectFeedForward}` : use to pass parameters between models
+- `feedforward::Array{<:AbstractAffectFeedforward}` : use to pass parameters between models
 
 # Example
 ```julia
@@ -30,7 +30,7 @@ thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
 ```
 """
 mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
-    feedforwards::Vector{<:AbstractAffectFeedForward}
+    feedforwards::Vector{<:AbstractAffectFeedforward}
     use_slacks::Bool
     duals::Vector{DataType}
     services::Vector{ServiceModel}
@@ -40,7 +40,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     function DeviceModel(
         ::Type{D},
         ::Type{B};
-        feedforwards = Vector{AbstractAffectFeedForward}(),
+        feedforwards = Vector{AbstractAffectFeedforward}(),
         use_slacks = false,
         duals = Vector{DataType}(),
         time_series_names = get_default_time_series_names(D, B),

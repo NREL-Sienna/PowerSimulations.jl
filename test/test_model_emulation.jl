@@ -339,21 +339,21 @@ end
     results = ProblemResults(model)
     @test list_aux_variable_names(results) == []
     @test list_aux_variable_keys(results) == []
-    @test list_variable_names(results) == ["ActivePowerVariable_ThermalStandard"]
+    @test list_variable_names(results) == ["ActivePowerVariable__ThermalStandard"]
     @test list_variable_keys(results) ==
           [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]
     @test list_dual_names(results) == []
     @test list_dual_keys(results) == []
-    @test list_parameter_names(results) == ["ActivePowerTimeSeriesParameter_PowerLoad"]
+    @test list_parameter_names(results) == ["ActivePowerTimeSeriesParameter__PowerLoad"]
     @test list_parameter_keys(results) ==
           [PSI.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad)]
 
-    @test read_variable(results, "ActivePowerVariable_ThermalStandard") isa DataFrame
+    @test read_variable(results, "ActivePowerVariable__ThermalStandard") isa DataFrame
     @test read_variable(results, ActivePowerVariable, ThermalStandard) isa DataFrame
     @test read_variable(results, PSI.VariableKey(ActivePowerVariable, ThermalStandard)) isa
           DataFrame
 
-    @test read_parameter(results, "ActivePowerTimeSeriesParameter_PowerLoad") isa DataFrame
+    @test read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad") isa DataFrame
     @test read_parameter(results, ActivePowerTimeSeriesParameter, PowerLoad) isa DataFrame
     @test read_parameter(
         results,
@@ -406,7 +406,7 @@ end
     results1 = ProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
-    var1_b = read_variable(results1, "ActivePowerVariable_ThermalStandard")
+    var1_b = read_variable(results1, "ActivePowerVariable__ThermalStandard")
     @test var1_a == var1_b
 
     # Results were automatically serialized here.
@@ -427,7 +427,7 @@ end
     @test get_system(results3) !== nothing
 
     exp_file =
-        joinpath(path, "results", "variables", "ActivePowerVariable_ThermalStandard.csv")
+        joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
     var4 = PSI.read_dataframe(exp_file)
     @test var1_a == var4
 end

@@ -31,7 +31,7 @@ function get_execution_wait_count(trigger::UpdateTrigger)
     return trigger.execution_wait_count
 end
 
-############################ Chronologies For FeedForward ###################################
+############################ Chronologies For Feedforward ###################################
 @doc raw"""
     Synchronize(periods::Int)
 Defines the co-ordination of time between Two problems.
@@ -39,7 +39,7 @@ Defines the co-ordination of time between Two problems.
 # Arguments
 - `periods::Int`: Number of time periods to grab data from
 """
-mutable struct Synchronize <: FeedForwardChronology
+mutable struct Synchronize <: FeedforwardChronology
     periods::Int
     current::Int
     trigger::UpdateTrigger
@@ -51,7 +51,7 @@ end
 """
     RecedingHorizon(period::Int)
 """
-mutable struct RecedingHorizon <: FeedForwardChronology
+mutable struct RecedingHorizon <: FeedforwardChronology
     periods::Int
     trigger::UpdateTrigger
     function RecedingHorizon(; periods::Int = 1)
@@ -59,21 +59,21 @@ mutable struct RecedingHorizon <: FeedForwardChronology
     end
 end
 
-mutable struct Consecutive <: FeedForwardChronology
+mutable struct Consecutive <: FeedforwardChronology
     trigger::UpdateTrigger
     function Consecutive()
         new(UpdateTrigger(-1, -1))
     end
 end
 
-mutable struct FullHorizon <: FeedForwardChronology
+mutable struct FullHorizon <: FeedforwardChronology
     trigger::UpdateTrigger
     function FullHorizon()
         new(UpdateTrigger(-1, -1))
     end
 end
 
-mutable struct Range <: FeedForwardChronology
+mutable struct Range <: FeedforwardChronology
     range::UnitRange{Int}
     trigger::UpdateTrigger
     function Range(; range::UnitRange{Int})

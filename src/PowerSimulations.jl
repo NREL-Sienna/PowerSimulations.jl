@@ -84,12 +84,12 @@ export FullHorizon
 export Range
 
 # feedforward models
-export UpperBoundFeedForward
-export LowerBoundFeedForward
-export SemiContinuousFeedForward
-export IntegralLimitFeedForward
-export FixValueFeedForward
-export EnergyTargetFeedForward
+export UpperBoundFeedforward
+export LowerBoundFeedforward
+export SemiContinuousFeedforward
+export IntegralLimitFeedforward
+export FixValueFeedforward
+export EnergyTargetFeedforward
 
 # InitialConditions chrons
 export InterProblemChronology
@@ -311,7 +311,7 @@ export RequirementTimeSeriesParameter
 export EnergyTargetTimeSeriesParameter
 export EnergyBudgetTimeSeriesParameter
 
-# FeedForward Parameters
+# Feedforward Parameters
 export OnStatusParameter
 export UpperBoundValueParameter
 

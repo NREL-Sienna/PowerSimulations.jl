@@ -101,7 +101,7 @@ function ParameterUpdateEvent(
     )
 end
 
-struct FeedForwardUpdateEvent <: IS.AbstractRecorderEvent
+struct FeedforwardUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     category::String
     simulation_time::Dates.DateTime
@@ -113,7 +113,7 @@ struct FeedForwardUpdateEvent <: IS.AbstractRecorderEvent
     source::Int
 end
 
-function FeedForwardUpdateEvent(
+function FeedforwardUpdateEvent(
     category::String,
     simulation_time::Dates.DateTime,
     parameter::VariableValueParameter,
@@ -123,8 +123,8 @@ function FeedForwardUpdateEvent(
     destination_model::DecisionModel,
     source_model::DecisionModel,
 )
-    return FeedForwardUpdateEvent(
-        IS.RecorderEventCommon("FeedForwardUpdateEvent"),
+    return FeedforwardUpdateEvent(
+        IS.RecorderEventCommon("FeedforwardUpdateEvent"),
         category,
         simulation_time,
         parameter,

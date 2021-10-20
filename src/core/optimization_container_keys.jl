@@ -1,6 +1,6 @@
 abstract type OptimizationContainerKey end
 
-const _DELIMITER = "_"
+const _DELIMITER = "__"
 
 function make_key(::Type{T}, args...) where {T <: OptimizationContainerKey}
     return T(args...)
@@ -28,12 +28,4 @@ function check_meta_chars(meta)
     if occursin(_DELIMITER, meta)
         throw(IS.InvalidValue("'$_DELIMITER' is not allowed in meta"))
     end
-end
-
-function remove_delimiter!(name)
-    # TODO: Replace this temporary hack to remove _ from service names
-    if occursin(_DELIMITER, name)
-        name = replace(name, _DELIMITER => " ")
-    end
-    return name
 end

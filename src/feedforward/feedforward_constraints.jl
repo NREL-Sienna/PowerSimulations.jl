@@ -60,7 +60,7 @@ function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::SemiContinuousFeedForward,
+    ff::SemiContinuousFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     for var in get_affected_values(ff)
@@ -106,7 +106,7 @@ function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::UpperBoundFeedForward,
+    ff::UpperBoundFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
@@ -165,7 +165,7 @@ function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::LowerBoundFeedForward,
+    ff::LowerBoundFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
@@ -201,7 +201,7 @@ function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::ServiceModel,
     contributing_devices::Vector{T},
-    ff::LowerBoundFeedForward,
+    ff::LowerBoundFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
@@ -253,14 +253,14 @@ The Parameters are initialized using the upper boundary values of the provided v
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * model::DeviceModel : the device model
 * devices::IS.FlattenIteratorWrapper{T} : list of devices
-* ff::FixValueFeedForward : a instance of the FixValue FeedForward
+* ff::FixValueFeedforward : a instance of the FixValue Feedforward
 """
 
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::IntegralLimitFeedForward,
+    ff::IntegralLimitFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
@@ -298,7 +298,7 @@ end
             container::OptimizationContainer,
             ::DeviceModel,
             devices::IS.FlattenIteratorWrapper{T},
-            ff::FixValueFeedForward,
+            ff::FixValueFeedforward,
         ) where {T <: PSY.Component}
 
 Constructs a equality constraint to a fix a variable in one model using the variable value from other model results.
@@ -314,14 +314,14 @@ Constructs a equality constraint to a fix a variable in one model using the vari
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * model::DeviceModel : the device model
 * devices::IS.FlattenIteratorWrapper{T} : list of devices
-* ff::FixValueFeedForward : a instance of the FixValue FeedForward
+* ff::FixValueFeedforward : a instance of the FixValue Feedforward
 """
 
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::FixValueFeedForward,
+    ff::FixValueFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
@@ -345,7 +345,7 @@ end
             container::OptimizationContainer,
             ::DeviceModel,
             devices::IS.FlattenIteratorWrapper{T},
-            ff::EnergyTargetFeedForward,
+            ff::EnergyTargetFeedforward,
         ) where {T <: PSY.Component}
 
 Constructs a equality constraint to a fix a variable in one model using the variable value from other model results.
@@ -361,13 +361,13 @@ Constructs a equality constraint to a fix a variable in one model using the vari
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * model::DeviceModel : the device model
 * devices::IS.FlattenIteratorWrapper{T} : list of devices
-* ff::EnergyTargetFeedForward : a instance of the FixValue FeedForward
+* ff::EnergyTargetFeedforward : a instance of the FixValue Feedforward
 """
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::EnergyTargetFeedForward,
+    ff::EnergyTargetFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)

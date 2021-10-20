@@ -10,7 +10,7 @@ mutable struct SimulationInfo
     caches::Set{CacheKey}
     end_of_interval_step::Int
     # JD: Will probably go away
-    chronolgy_dict::Dict{Int, <:FeedForwardChronology}
+    chronolgy_dict::Dict{Int, <:FeedforwardChronology}
     requires_rebuild::Bool
     sequence_uuid::Base.UUID
 end

@@ -164,12 +164,12 @@ end
     psi_checksolve_test(model, [MOI.OPTIMAL], -1825.0, 10.0)
 end
 
-### FeedForward Test ###
+### Feedforward Test ###
 
-@testset "Test EnergyTargetFeedForward to GenericBattery with BookKeeping model" begin
+@testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
     device_model = DeviceModel(GenericBattery, BookKeeping)
 
-    ff_et = EnergyTargetFeedForward(
+    ff_et = EnergyTargetFeedforward(
         component_type = GenericBattery,
         source = EnergyVariable,
         affected_values = [EnergyVariable],
@@ -184,10 +184,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedForward to GenericBattery with BookKeeping model" begin
+@testset "Test IntegralLimitFeedforward to GenericBattery with BookKeeping model" begin
     device_model = DeviceModel(GenericBattery, BookKeeping)
 
-    ff_il = IntegralLimitFeedForward(
+    ff_il = IntegralLimitFeedforward(
         component_type = GenericBattery,
         source = ActivePowerOutVariable,
         affected_values = [ActivePowerOutVariable],
@@ -201,10 +201,10 @@ end
     moi_tests(model, true, 96, 0, 73, 72, 24, true)
 end
 
-@testset "Test EnergyTargetFeedForward to GenericBattery with BookKeeping model" begin
+@testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
     device_model = DeviceModel(GenericBattery, BatteryAncillaryServices)
 
-    ff_et = EnergyTargetFeedForward(
+    ff_et = EnergyTargetFeedforward(
         component_type = GenericBattery,
         source = EnergyVariable,
         affected_values = [EnergyVariable],
@@ -219,10 +219,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedForward to GenericBattery with BatteryAncillaryServices model" begin
+@testset "Test IntegralLimitFeedforward to GenericBattery with BatteryAncillaryServices model" begin
     device_model = DeviceModel(GenericBattery, BatteryAncillaryServices)
 
-    ff_il = IntegralLimitFeedForward(
+    ff_il = IntegralLimitFeedforward(
         component_type = GenericBattery,
         source = ActivePowerOutVariable,
         affected_values = [ActivePowerOutVariable],
@@ -236,10 +236,10 @@ end
     moi_tests(model, true, 96, 0, 73, 72, 24, true)
 end
 
-@testset "Test EnergyTargetFeedForward to GenericBattery with BookKeeping model" begin
+@testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
     device_model = DeviceModel(BatteryEMS, BookKeeping)
 
-    ff_et = EnergyTargetFeedForward(
+    ff_et = EnergyTargetFeedforward(
         component_type = BatteryEMS,
         source = EnergyVariable,
         affected_values = [EnergyVariable],
@@ -254,10 +254,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedForward to BatteryEMS with BookKeeping model" begin
+@testset "Test IntegralLimitFeedforward to BatteryEMS with BookKeeping model" begin
     device_model = DeviceModel(BatteryEMS, BookKeeping)
 
-    ff_il = IntegralLimitFeedForward(
+    ff_il = IntegralLimitFeedforward(
         component_type = BatteryEMS,
         source = ActivePowerOutVariable,
         affected_values = [ActivePowerOutVariable],
@@ -271,10 +271,10 @@ end
     moi_tests(model, true, 96, 0, 73, 72, 24, true)
 end
 
-@testset "Test EnergyTargetFeedForward to GenericBattery with BatteryAncillaryServices model" begin
+@testset "Test EnergyTargetFeedforward to GenericBattery with BatteryAncillaryServices model" begin
     device_model = DeviceModel(BatteryEMS, BatteryAncillaryServices)
 
-    ff_et = EnergyTargetFeedForward(
+    ff_et = EnergyTargetFeedforward(
         component_type = BatteryEMS,
         source = EnergyVariable,
         affected_values = [EnergyVariable],
@@ -289,10 +289,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedForward to BatteryEMS with BatteryAncillaryServices model" begin
+@testset "Test IntegralLimitFeedforward to BatteryEMS with BatteryAncillaryServices model" begin
     device_model = DeviceModel(BatteryEMS, BatteryAncillaryServices)
 
-    ff_il = IntegralLimitFeedForward(
+    ff_il = IntegralLimitFeedforward(
         component_type = BatteryEMS,
         source = ActivePowerOutVariable,
         affected_values = [ActivePowerOutVariable],

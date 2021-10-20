@@ -321,7 +321,7 @@ returned by this function it will return from memory. Otherwise, it will read fr
 # Examples
 ```julia
 julia> read_variables(res, [(ActivePowerVariable, ThermalStandard)])
-julia> read_variables(res, ["ActivePowerVariable_ThermalStandard")])
+julia> read_variables(res, ["ActivePowerVariable__ThermalStandard")])
 ```
 """
 # TODO: the read.*internal functions can likely be deleted.
@@ -475,7 +475,7 @@ Return the values for the requested variable. It keeps requests when performing 
 # Examples
 ```julia
 read_variable(results, ActivePowerVariable, ThermalStandard)
-read_variable(results, "ActivePowerVariable_ThermalStandard")
+read_variable(results, "ActivePowerVariable__ThermalStandard")
 ```
 """
 function read_variable(

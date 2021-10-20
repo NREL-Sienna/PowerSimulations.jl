@@ -90,8 +90,8 @@ function test_simulation_results_simple(file_path::String, export_path; in_memor
     results = SimulationResults(sim)
     @test list_problems(results) == ["ED"]
     results_ed = get_problem_results(results, "ED")
-    @test list_variable_names(results_ed) == ["ActivePowerVariable_ThermalStandard"]
-    var1 = read_variable(results_ed, "ActivePowerVariable_ThermalStandard")
+    @test list_variable_names(results_ed) == ["ActivePowerVariable__ThermalStandard"]
+    var1 = read_variable(results_ed, "ActivePowerVariable__ThermalStandard")
     var2 = read_variable(results_ed, ActivePowerVariable, ThermalStandard)
     @test var1 == var2
 end
@@ -129,12 +129,12 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                 "ED" => (Hour(1), Consecutive()),
             ),
             feedforward = Dict(
-                "ED" => SemiContinuousFeedForward(
+                "ED" => SemiContinuousFeedforward(
                     device_type = ThermalStandard,
                     binary_source_problem = OnVariable,
                     affected_variables = [ActivePowerVariable],
                 ),
-                "ED" => IntegralLimitFeedForward(
+                "ED" => IntegralLimitFeedforward(
                     device_type = HydroEnergyReservoir,
                     variable_source_problem = ActivePowerVariable,
                     affected_variables = [ActivePowerVariable],
@@ -183,23 +183,23 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         results_ed = get_problem_results(results, "ED")
 
         ed_expected_vars = [
-            "WaterSpillageVariable_HydroEnergyReservoir",
-            "ActivePowerVariable_ThermalStandard",
-            "ActivePowerVariable_RenewableDispatch",
-            "EnergyVariable_HydroEnergyReservoir",
-            "ActivePowerVariable_InterruptibleLoad",
-            "ActivePowerVariable_HydroEnergyReservoir",
+            "WaterSpillageVariable__HydroEnergyReservoir",
+            "ActivePowerVariable__ThermalStandard",
+            "ActivePowerVariable__RenewableDispatch",
+            "EnergyVariable__HydroEnergyReservoir",
+            "ActivePowerVariable__InterruptibleLoad",
+            "ActivePowerVariable__HydroEnergyReservoir",
         ]
 
         uc_expected_vars = [
             "WaterSpillageVariable_HydroEnergyReservoir",
-            "ActivePowerVariable_ThermalStandard",
-            "ActivePowerVariable_RenewableDispatch",
-            "StartVariable_ThermalStandard",
-            "StopVariable_ThermalStandard",
-            "EnergyVariable_HydroEnergyReservoir",
-            "ActivePowerVariable_HydroEnergyReservoir",
-            "OnVariable_ThermalStandard",
+            "ActivePowerVariable__ThermalStandard",
+            "ActivePowerVariable__RenewableDispatch",
+            "StartVariable__ThermalStandard",
+            "StopVariable__ThermalStandard",
+            "EnergyVariable__HydroEnergyReservoir",
+            "ActivePowerVariable__HydroEnergyReservoir",
+            "OnVariable__ThermalStandard",
         ]
         if in_memory
             @test IS.get_uuid(get_system(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
@@ -236,7 +236,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         ren_dispatch_params = read_parameter(
             results_ed,
-            "ActivePowerTimeSeriesParameter_max_active_power_RenewableDispatch",
+            "ActivePowerTimeSeriesParameter__max_active_power_RenewableDispatch",
         )
         @test length(keys(ren_dispatch_params)) == 48
         for v in values(ren_dispatch_params)
@@ -454,13 +454,13 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         uc_expected_vars = [
             "WaterSpillageVariable__HydroEnergyReservoir",
-            "ActivePowerVariable_ThermalStandard",
+            "ActivePowerVariable__ThermalStandard",
             "ActivePowerVariable_RenewableDispatch",
-            "StartVariable_ThermalStandard",
-            "StopVariable_ThermalStandard",
+            "StartVariable__ThermalStandard",
+            "StopVariable__ThermalStandard",
             "EnergyVariable_HydroEnergyReservoir",
             "ActivePowerVariable_HydroEnergyReservoir",
-            "OnVariable_ThermalStandard",
+            "OnVariable__ThermalStandard",
         ]
         @test isempty(setdiff(uc_expected_vars, list_variable_names(results_rh)))
 

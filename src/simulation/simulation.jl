@@ -378,7 +378,7 @@ function check_chronology!(
     sim::Simulation,
     key::Pair,
     ::T,
-) where {T <: FeedForwardChronology}
+) where {T <: FeedforwardChronology}
     error("Chronology $(T) not implemented")
     return
 end
@@ -611,7 +611,7 @@ function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Assign FeedForward" begin
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Assign Feedforward" begin
         for (ix, model) in enumerate(get_models(sim))
             name = get_name(model)
             problem_interval = get_interval(sequence, name)

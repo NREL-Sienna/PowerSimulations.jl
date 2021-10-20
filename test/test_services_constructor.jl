@@ -22,10 +22,10 @@
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 648, 0, 120, 216, 72, false)
     reserve_variables = [
-        :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1
-        :ActivePowerReserveVariable_ReserveDemandCurve_ReserveUp_ORDC1
-        :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2
-        :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11
+        :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve1
+        :ActivePowerReserveVariable__ReserveDemandCurve_ReserveUp_ORDC1
+        :ActivePowerReserveVariable__VariableReserve_ReserveDown_Reserve2
+        :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve11
     ]
     for (k, var_array) in model.internal.container.variables
         if PSI.encode_key(k) in reserve_variables
@@ -57,9 +57,9 @@ end
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 384, 0, 336, 192, 24, false)
     reserve_variables = [
-        :ActivePowerReserveVariable_VariableReserve_ReserveDown_Reserve2,
-        :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve1,
-        :ActivePowerReserveVariable_VariableReserve_ReserveUp_Reserve11,
+        :ActivePowerReserveVariable__VariableReserve_ReserveDown_Reserve2,
+        :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve1,
+        :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve11,
     ]
     for (k, var_array) in model.internal.container.variables
         if PSI.encode_key(k) in reserve_variables
@@ -333,10 +333,10 @@ end
     @test typeof(model) <: DecisionModel{<:PSI.DecisionProblem}
 end
 
-@testset "Test Reserves with FeedForwards" begin
+@testset "Test Reserves with Feedforwards" begin
     template = get_thermal_dispatch_template_network()
     service_model = ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1")
-    ff_lb = LowerBoundFeedForward(
+    ff_lb = LowerBoundFeedforward(
         component_type = VariableReserve{ReserveUp},
         source = ActivePowerReserveVariable,
         affected_values = [ActivePowerReserveVariable],

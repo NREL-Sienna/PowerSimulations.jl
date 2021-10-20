@@ -471,11 +471,11 @@ end
     psi_checksolve_test(model, [MOI.OPTIMAL], -17179.0)
 end
 
-### FeedForward Test ### 
+### Feedforward Test ###
 
-@testset "Test SemiContinuousFeedForward to HydroDispatch with HydroCommitmentRunOfRiver model" begin
+@testset "Test SemiContinuousFeedforward to HydroDispatch with HydroCommitmentRunOfRiver model" begin
     device_model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
-    ff_sc = SemiContinuousFeedForward(
+    ff_sc = SemiContinuousFeedforward(
         component_type = HydroDispatch,
         source = OnVariable,
         affected_values = [ActivePowerVariable],
@@ -488,9 +488,9 @@ end
     moi_tests(model, true, 48, 0, 48, 24, 0, true)
 end
 
-@testset "Test UpperBoundFeedForward to HydroDispatch with HydroCommitmentRunOfRiver model" begin
+@testset "Test UpperBoundFeedforward to HydroDispatch with HydroCommitmentRunOfRiver model" begin
     device_model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
-    ff_ub = UpperBoundFeedForward(
+    ff_ub = UpperBoundFeedforward(
         component_type = HydroDispatch,
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
@@ -502,9 +502,9 @@ end
     moi_tests(model, true, 48, 0, 72, 24, 0, true)
 end
 
-@testset "Test LowerBoundFeedForward to HydroDispatch with HydroCommitmentRunOfRiver model" begin
+@testset "Test LowerBoundFeedforward to HydroDispatch with HydroCommitmentRunOfRiver model" begin
     device_model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
-    ff_ub = LowerBoundFeedForward(
+    ff_ub = LowerBoundFeedforward(
         component_type = HydroDispatch,
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
@@ -516,10 +516,10 @@ end
     moi_tests(model, true, 48, 0, 48, 48, 0, true)
 end
 
-@testset "Test UpperBoundFeedForward to HydroDispatch with HydroDispatchRunOfRiver model" begin
+@testset "Test UpperBoundFeedforward to HydroDispatch with HydroDispatchRunOfRiver model" begin
     device_model = DeviceModel(HydroDispatch, HydroDispatchRunOfRiver)
 
-    ff_ub = UpperBoundFeedForward(
+    ff_ub = UpperBoundFeedforward(
         component_type = HydroDispatch,
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
@@ -532,10 +532,10 @@ end
     moi_tests(model, true, 24, 0, 72, 24, 0, false)
 end
 
-@testset "Test LowerBoundFeedForward to HydroDispatch with HydroDispatchRunOfRiver model" begin
+@testset "Test LowerBoundFeedforward to HydroDispatch with HydroDispatchRunOfRiver model" begin
     device_model = DeviceModel(HydroDispatch, HydroDispatchRunOfRiver)
 
-    ff_ub = LowerBoundFeedForward(
+    ff_ub = LowerBoundFeedforward(
         component_type = HydroDispatch,
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
@@ -548,9 +548,9 @@ end
     moi_tests(model, true, 24, 0, 48, 48, 0, false)
 end
 
-@testset "Test IntegralLimitFeedForward to HydroEnergyReservoir with HydroDispatchReservoirBudget model" begin
+@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirBudget model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    ff_il = IntegralLimitFeedForward(
+    ff_il = IntegralLimitFeedforward(
         component_type = HydroEnergyReservoir,
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
@@ -564,9 +564,9 @@ end
     moi_tests(model, true, 24, 0, 26, 24, 0, false)
 end
 
-@testset "Test IntegralLimitFeedForward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
+@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    ff_il = IntegralLimitFeedForward(
+    ff_il = IntegralLimitFeedforward(
         component_type = HydroEnergyReservoir,
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
@@ -580,9 +580,9 @@ end
     moi_tests(model, true, 120, 0, 25, 24, 48, false)
 end
 
-@testset "Test LowerBoundFeedForward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
+@testset "Test LowerBoundFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    ff_il = LowerBoundFeedForward(
+    ff_il = LowerBoundFeedforward(
         component_type = HydroEnergyReservoir,
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
@@ -595,9 +595,9 @@ end
     moi_tests(model, true, 120, 0, 24, 48, 48, false)
 end
 
-@testset "Test IntegralLimitFeedForward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
+@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    ff_il = IntegralLimitFeedForward(
+    ff_il = IntegralLimitFeedforward(
         component_type = HydroEnergyReservoir,
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
@@ -610,9 +610,9 @@ end
     moi_tests(model, true, 144, 0, 25, 24, 48, true)
 end
 
-@testset "Test SemiContinuousFeedForward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
+@testset "Test SemiContinuousFeedforward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    ff_sc = SemiContinuousFeedForward(
+    ff_sc = SemiContinuousFeedforward(
         component_type = HydroEnergyReservoir,
         source = OnVariable,
         affected_values = [ActivePowerVariable],
@@ -624,10 +624,10 @@ end
     moi_tests(model, true, 144, 0, 24, 24, 48, true)
 end
 
-@testset "Test IntegralLimitFeedForward to HydroEnergyReservoir models" begin
+@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir models" begin
     device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
 
-    ff_il = IntegralLimitFeedForward(
+    ff_il = IntegralLimitFeedforward(
         component_type = HydroPumpedStorage,
         source = ActivePowerOutVariable,
         affected_values = [ActivePowerOutVariable],
@@ -641,10 +641,10 @@ end
     moi_tests(model, true, 72, 0, 25, 24, 24, true)
 end
 
-@testset "Test EnergyTargetFeedForward to HydroEnergyReservoir models" begin
+@testset "Test EnergyTargetFeedforward to HydroEnergyReservoir models" begin
     device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
 
-    ff_up = EnergyTargetFeedForward(
+    ff_up = EnergyTargetFeedforward(
         component_type = HydroPumpedStorage,
         source = EnergyVariableUp,
         affected_values = [EnergyVariableUp],

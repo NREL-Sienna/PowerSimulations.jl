@@ -170,7 +170,7 @@ function add_parameters!(
 } where {D <: PSY.Component}
     @debug "adding" T D V
 
-    # We do this to handle cases where the same parameter is also added as a FeedForward.
+    # We do this to handle cases where the same parameter is also added as a Feedforward.
     # When the OnStatusParameter is added without a feedforward it takes a Float value.
     # This is used to handle the special case of compact formulations.
     !isempty(get_feedforwards(model)) && return
