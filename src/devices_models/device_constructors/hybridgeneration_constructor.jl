@@ -52,6 +52,8 @@ function construct_device!(
         model,
         S,
     )
+    add_feedforward_arguments!(container, model, devices)
+
     if has_service_model(model)
         add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
         add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
@@ -99,7 +101,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -108,7 +109,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -117,7 +117,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -126,7 +125,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -135,7 +133,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     add_constraints!(
@@ -144,7 +141,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -152,7 +148,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     if has_service_model(model)
@@ -162,7 +157,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -170,7 +164,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -178,7 +171,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -186,14 +178,13 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S)
 
     return
 end
@@ -258,6 +249,9 @@ function construct_device!(
         model,
         S,
     )
+
+    add_feedforward_arguments!(container, model, devices)
+
     if has_service_model(model)
         add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
         add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
@@ -299,7 +293,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -308,7 +301,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -317,7 +309,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -326,7 +317,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -335,7 +325,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # Reactive power Constraints
@@ -346,7 +335,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -355,7 +343,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # Constraints
@@ -365,7 +352,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -373,7 +359,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -381,7 +366,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -389,7 +373,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     if has_service_model(model)
         add_constraints!(
@@ -398,7 +381,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -406,7 +388,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -414,7 +395,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -422,13 +402,12 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S, )
 
     return
 end
@@ -487,6 +466,9 @@ function construct_device!(
         model,
         S,
     )
+
+    add_feedforward_arguments!(container, model, devices)
+
     if has_service_model(model)
         add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
         add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
@@ -532,7 +514,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -541,7 +522,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -550,7 +530,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -559,7 +538,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -568,7 +546,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     add_constraints!(
@@ -577,7 +554,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -585,7 +561,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     if has_service_model(model)
@@ -595,7 +570,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -603,7 +577,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -611,7 +584,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -619,14 +591,13 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S,)
 
     return
 end
@@ -691,6 +662,9 @@ function construct_device!(
         model,
         S,
     )
+
+    add_feedforward_arguments!(container, model, devices)
+
     if has_service_model(model)
         add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
         add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
@@ -731,7 +705,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -740,7 +713,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -749,7 +721,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -758,7 +729,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -767,7 +737,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # Reactive power Constraints
@@ -778,7 +747,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -787,7 +755,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     # Constraints
@@ -797,7 +764,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -805,7 +771,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -813,7 +778,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
         container,
@@ -821,7 +785,6 @@ function construct_device!(
         devices,
         model,
         S,
-        get_feedforward(model),
     )
 
     if has_service_model(model)
@@ -831,7 +794,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -839,7 +801,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -847,7 +808,6 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
         add_constraints!(
             container,
@@ -855,14 +815,13 @@ function construct_device!(
             devices,
             model,
             S,
-            get_feedforward(model),
         )
     end
 
-    feedforward!(container, devices, model, get_feedforward(model))
+    add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
-    cost_function!(container, devices, model, S, get_feedforward(model))
+    cost_function!(container, devices, model, S,)
 
     return
 end

@@ -182,7 +182,7 @@ function add_variable!(
     binary = get_variable_binary(variable_type, D, formulation)
     subcomp_types = get_subcomponent_var_types(T)
 
-    variable = add_var_container!(
+    variable = add_variable_container!(
         container,
         variable_type,
         D,

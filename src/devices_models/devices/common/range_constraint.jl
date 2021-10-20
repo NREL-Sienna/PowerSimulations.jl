@@ -87,7 +87,6 @@ function add_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     variable = U()
     component_type = V
@@ -100,7 +99,6 @@ function add_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
     add_upper_bound_range_constraints_impl!(
         container,
@@ -109,7 +107,6 @@ function add_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
     add_parameterized_upper_bound_range_constraints_impl!(
         container,
@@ -119,7 +116,6 @@ function add_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -130,7 +126,6 @@ function add_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
@@ -142,7 +137,6 @@ function add_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -153,7 +147,6 @@ function add_range_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     expression = U()
     component_type = V
@@ -165,7 +158,6 @@ function add_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
     add_parameterized_upper_bound_range_constraints_impl!(
         container,
@@ -175,7 +167,6 @@ function add_range_constraints!(
         devices,
         model,
         X,
-        feedforward,
     )
 end
 
@@ -248,7 +239,6 @@ function add_lower_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
@@ -257,7 +247,7 @@ function add_lower_bound_range_constraints_impl!(
     device_names =
         [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
 
-    con_lb = add_cons_container!(
+    con_lb = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -284,7 +274,6 @@ function add_upper_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
     constraint = T()
@@ -293,7 +282,7 @@ function add_upper_bound_range_constraints_impl!(
     device_names =
         [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
 
-    con_ub = add_cons_container!(
+    con_ub = add_constraints_container!(
         container,
         constraint,
         component_type,
@@ -934,7 +923,6 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     constraint = T()
@@ -942,7 +930,7 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     names =
         [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.RenewableGen)]
 
-    constraint = add_cons_container!(
+    constraint = add_constraints_container!(
         container,
         constraint,
         component_type,

@@ -172,9 +172,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 function add_constraints!(
@@ -184,9 +183,8 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
-    add_range_constraints!(container, T, U, devices, model, X, feedforward)
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
 function add_constraints!(
@@ -196,12 +194,11 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     if get_attribute(model, "reservation")
-        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_range_constraints!(container, T, U, devices, model, X,)
     end
 end
 
@@ -212,12 +209,11 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     if get_attribute(model, "reservation")
-        add_reserve_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_reserve_range_constraints!(container, T, U, devices, model, X,)
     else
-        add_range_constraints!(container, T, U, devices, model, X, feedforward)
+        add_range_constraints!(container, T, U, devices, model, X,)
     end
 end
 
@@ -228,14 +224,13 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     time_steps = get_time_steps(container)
     var = get_variable(container, ComponentReactivePowerVariable(), V)
     device_names = [PSY.get_name(d) for d in devices]
     subcomp_types = get_subcomponent_var_types(U)
 
-    constraint_ub = add_cons_container!(
+    constraint_ub = add_constraints_container!(
         container,
         ReactiveRangeConstraint(),
         V,
@@ -245,7 +240,7 @@ function add_constraints!(
         meta = "ub",
         sparse = true,
     )
-    constraint_lb = add_cons_container!(
+    constraint_lb = add_constraints_container!(
         container,
         ReactiveRangeConstraint(),
         V,
@@ -274,7 +269,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
@@ -286,7 +280,7 @@ function add_constraints!(
     powerout_var = get_variable(container, ActivePowerOutVariable(), V)
 
     constraint =
-        add_cons_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
+        add_constraints_container!(container, EnergyBalanceConstraint(), V, names, time_steps)
 
     for ic in initial_conditions
         device = get_component(ic)
@@ -325,7 +319,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, D},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, D <: AbstractHybridFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
@@ -335,7 +328,7 @@ function add_constraints!(
     var_out = get_variable(container, ActivePowerOutVariable(), V)
     var_in = get_variable(container, ActivePowerInVariable(), V)
 
-    constraint = add_cons_container!(
+    constraint = add_constraints_container!(
         container,
         PowerOutputRangeConstraint(),
         V,
@@ -364,7 +357,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, D},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, D <: AbstractHybridFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
@@ -373,7 +365,7 @@ function add_constraints!(
     var_sub_q = get_variable(container, ComponentReactivePowerVariable(), V)
 
     constraint =
-        add_cons_container!(container, ReactivePowerConstraint(), V, name_index, time_steps)
+        add_constraints_container!(container, ReactivePowerConstraint(), V, name_index, time_steps)
 
     for d in devices, t in time_steps
         name = PSY.get_name(d)
@@ -395,7 +387,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, D},
     ::Type{X},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {V <: PSY.HybridSystem, D <: AbstractHybridFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
@@ -403,7 +394,7 @@ function add_constraints!(
     var_q = get_variable(container, ReactivePowerVariable(), V)
     var_p = get_variable(container, ActivePowerVariable(), V)
 
-    constraint = add_cons_container!(
+    constraint = add_constraints_container!(
         container,
         InterConnectionLimitConstraint(),
         V,
@@ -428,14 +419,13 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation}
     time_steps = get_time_steps(container)
     var_e = get_variable(container, EnergyVariable(), T)
     r_up = get_variable(container, ComponentActivePowerReserveUpVariable(), T)
     r_dn = get_variable(container, ComponentActivePowerReserveDownVariable(), T)
     names = [PSY.get_name(x) for x in devices if check_subcomponent_exist(d, PSY.Storage)]
-    con_up = add_cons_container!(
+    con_up = add_constraints_container!(
         container,
         ReserveEnergyConstraint(),
         T,
@@ -443,7 +433,7 @@ function add_constraints!(
         time_steps,
         meta = "up",
     )
-    con_dn = add_cons_container!(
+    con_dn = add_constraints_container!(
         container,
         ReserveEnergyConstraint(),
         T,
@@ -475,7 +465,6 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation}
     time_steps = get_time_steps(container)
     var_in = get_variable(container, ActivePowerInVariable(), T)
@@ -483,7 +472,7 @@ function add_constraints!(
     r_up = get_variable(container, ComponentActivePowerReserveUpVariable(), T)
     r_dn = get_variable(container, ComponentActivePowerReserveDownVariable(), T)
     names = [PSY.get_name(x) for x in devices]
-    con_up = add_cons_container!(
+    con_up = add_constraints_container!(
         container,
         RangeLimitConstraint(),
         T,
@@ -491,7 +480,7 @@ function add_constraints!(
         time_steps,
         meta = "up",
     )
-    con_dn = add_cons_container!(
+    con_dn = add_constraints_container!(
         container,
         RangeLimitConstraint(),
         T,
@@ -523,13 +512,12 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation}
     time_steps = get_time_steps(container)
     sub_r_up = get_variable(container, ComponentActivePowerReserveUpVariable(), T)
     sub_expr_up = get_expression(container, ComponentReserveUpBalanceExpression(), T)
     names = [PSY.get_name(x) for x in devices]
-    con_up = add_cons_container!(
+    con_up = add_constraints_container!(
         container,
         ComponentReserveUpBalance(),
         T,
@@ -553,13 +541,12 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
-    ::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation}
     time_steps = get_time_steps(container)
     sub_r_dn = get_variable(container, ComponentActivePowerReserveDownVariable(), T)
     sub_expr_dn = get_expression(container, ComponentReserveDownBalanceExpression(), T)
     names = [PSY.get_name(x) for x in devices]
-    con_dn = add_cons_container!(
+    con_dn = add_constraints_container!(
         container,
         ComponentReserveDownBalance(),
         T,
