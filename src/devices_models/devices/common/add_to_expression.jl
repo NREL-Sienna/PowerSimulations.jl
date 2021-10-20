@@ -61,6 +61,15 @@ end
 function add_to_jump_expression!(
     expression::T,
     value::Float64,
+    multiplier::Float64,
+) where {T <: JuMP.AbstractJuMPScalar}
+    JuMP.add_to_expression!(expression, multiplier*value)
+    return
+end
+
+function add_to_jump_expression!(
+    expression::T,
+    value::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
     JuMP.add_to_expression!(expression, value)
     return
@@ -457,7 +466,7 @@ function add_to_expression!(
     expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container), sub_comp in [PSY.ThermalGen, PSY.RenewableGen]
         name = PSY.get_name(d)
-        add_to_jump_expression!(expression, variable[name, sub_comp, t], 1.0, name, sub_comp, t)
+        add_to_jump_expression!(expression[name, sub_comp, t], variable[name, sub_comp, t], 1.0)
     end
     return
 end

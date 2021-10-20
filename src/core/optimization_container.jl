@@ -924,7 +924,7 @@ function _add_expression_container!(
     sparse = false,
 ) where {T <: JuMP.AbstractJuMPScalar}
     if sparse
-        expr_container = sparse_container_spec(T, axs...)
+        expr_container = sparse_expressions_container_spec(T, axs...)
     else
         expr_container = container_spec(T, axs...)
     end
