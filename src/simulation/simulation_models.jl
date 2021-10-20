@@ -7,10 +7,13 @@ mutable struct SimulationModels
     decision_models::Vector{<:DecisionModel}
     emulation_model::Union{Nothing, EmulationModel}
 
-    function SimulationModels(decision_models::Vector, emulation_model::Union{Nothing, EmulationModel}=nothing)
+    function SimulationModels(
+        decision_models::Vector,
+        emulation_model::Union{Nothing, EmulationModel} = nothing,
+    )
         all_names = [get_name(x) for x in decision_models]
         emulation_model !== nothing && push!(all_names, get_name(emulation_model))
-        if length(Set(all_names)) != length(decision_models)
+        if length(Set(all_names)) != length(decision_models) + 1
             error("All model names must be unique: $all_names")
         end
 
@@ -18,11 +21,17 @@ mutable struct SimulationModels
     end
 end
 
-function SimulationModels(decision_models::DecisionModel, emulation_model::Union{Nothing, EmulationModel}=nothing)
+function SimulationModels(
+    decision_models::DecisionModel,
+    emulation_model::Union{Nothing, EmulationModel} = nothing,
+)
     return SimulationModels([decision_models], emulation_model)
 end
 
-function SimulationModels(;decision_models, emulation_model::Union{Nothing, EmulationModel}=nothing)
+function SimulationModels(;
+    decision_models,
+    emulation_model::Union{Nothing, EmulationModel} = nothing,
+)
     return SimulationModels(decision_models, emulation_model)
 end
 
@@ -58,13 +67,7 @@ end
 
 function initialize_simulation_internals!(models::SimulationModels, uuid::Base.UUID)
     for (ix, model) in enumerate(models.decision_models)
-        info = SimulationInfo(
-            ix,
-            get_name(model),
-            0,
-            false,
-            uuid,
-        )
+        info = SimulationInfo(ix, get_name(model), 0, false, uuid)
         set_simulation_info!(model, info)
     end
 end

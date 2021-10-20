@@ -12,6 +12,6 @@ set_service_model!(
 )
 UC = DecisionModel(template_dm, c_sys5_uc_re; name = "UC", optimizer = GLPK_optimizer)
 
-template_em =  get_thermal_dispatch_template_network()
+template_em = get_thermal_dispatch_template_network()
 set_device_model!(template_em, RenewableDispatch, RenewableFullDispatch)
 ED = EmulationModel(template_em, c_sys5_uc_re; name = "ED", optimizer = GLPK_optimizer)

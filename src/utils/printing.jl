@@ -52,6 +52,10 @@ function Base.show(io::IO, m::MIME"text/plain", model::OperationModel)
     show(io, m, model.template)
 end
 
+function Base.show(io::IO, ::MIME"text/plain", sim_models::SimulationModels)
+    println(io, "Simulation Models")
+end
+
 function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
     println(io, "\nOperations Problem Specification")
     println(io, "============================================")
