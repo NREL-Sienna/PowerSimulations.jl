@@ -2,6 +2,7 @@
 # models. Please refer to the documentation.
 
 struct MockOperationProblem <: PSI.DecisionProblem end
+struct MockEmulationProblem <: PSI.EmulationProblem end
 
 function PSI.DecisionModel(
     ::Type{MockOperationProblem},
@@ -22,12 +23,23 @@ end
 
 function make_mock_forecast(horizon, resolution, interval, steps)
     init_time = DateTime("2024-01-01")
-    forecast_timestamps = collect(range(init_time, length = horizon, step = resolution))
-    Iload_timeseries_DA = []
+    timeseries_data = Dict{Dates.DateTime, Vector{Float64}}()
     for i in 1:steps
-        push!(Iload_timeseries_DA + interval*i, TimeArray(forecast_timestamps, rand(horizon)))
+        forecast_timestamps = init_time + interval * i
+        timeseries_data[forecast_timestamps] = rand(horizon)
     end
-    return Deterministic("mock_forecast", Iload_timeseries_DA)
+    return Deterministic(
+        name = "mock_forecast",
+        data = timeseries_data,
+        resolution = resolution,
+    )
+end
+
+function make_mock_singletimeseries(horizon, resolution)
+    init_time = DateTime("2024-01-01")
+    tstamps = collect(range(init_time, length = horizon, step = resolution))
+    timeseries_data = TimeArray(tstamps, rand(horizon))
+    return SingleTimeSeries(name = "mock_timeseries", data = timeseries_data)
 end
 
 function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs...)
@@ -36,13 +48,38 @@ function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs.
     l = PowerLoad(nothing)
     set_bus!(l, get_component(Bus, sys, "init"))
     add_component!(sys, l; skip_validation = true)
-    forecast
-
-    add_time_series!(sys, l,
-
+    forecast = make_mock_forecast(
+        get(kwargs, :horizon, 24),
+        get(kwargs, :resolution, Hour(1)),
+        get(kwargs, :interval, Hour(1)),
+        get(kwargs, :steps, 1),
+    )
+    add_time_series!(sys, l, forecast)
 
     settings = PSI.Settings(sys; kwargs...)
     return DecisionModel{MockOperationProblem}(
+        ProblemTemplate(CopperPlatePowerModel),
+        sys,
+        settings,
+        nothing,
+        name = name,
+    )
+end
+
+function PSI.EmulationModel(::Type{MockEmulationProblem}; name = nothing, kwargs...)
+    sys = System(100.0)
+    add_component!(sys, Bus(nothing); skip_validation = true)
+    l = PowerLoad(nothing)
+    set_bus!(l, get_component(Bus, sys, "init"))
+    add_component!(sys, l; skip_validation = true)
+    single_ts = make_mock_singletimeseries(
+        get(kwargs, :horizon, 24),
+        get(kwargs, :resolution, Hour(1)),
+    )
+    add_time_series!(sys, l, single_ts)
+
+    settings = PSI.Settings(sys; kwargs...)
+    return EmulationModel{MockEmulationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,
         settings,
