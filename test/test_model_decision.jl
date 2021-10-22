@@ -292,7 +292,7 @@ end
     @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC) == RunStatus.SUCCESSFUL
     res = ProblemResults(UC)
-    @test isapprox(get_objective_value(res), 259346.0; atol = 10000.0)
+    @test isapprox(get_objective_value(res), 247448.0; atol = 10000.0)
     vars = res.variable_values
     service_key = PSI.VariableKey(
         ActivePowerReserveVariable,

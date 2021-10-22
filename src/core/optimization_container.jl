@@ -616,7 +616,6 @@ function get_variable(container::OptimizationContainer, key::VariableKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_variable_keys(container))
-        @error "$name is not stored" sort!(keys)
         throw(IS.InvalidValue("variable $name is not stored"))
     end
     return var
@@ -662,7 +661,6 @@ function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
     if aux === nothing
         name = encode_key(key)
         keys = encode_key.(get_variable_keys(container))
-        @error "$name is not stored" sort!(keys)
         throw(IS.InvalidValue("Auxiliary variable $name is not stored"))
     end
     return aux
@@ -743,7 +741,6 @@ function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_constraint_keys(container))
-        @error "$name is not stored" (keys)
         throw(IS.InvalidValue("constraint $name is not stored"))
     end
 
@@ -847,7 +844,6 @@ function get_parameter(container::OptimizationContainer, key::ParameterKey)
     if param_container === nothing
         name = encode_key(key)
         keys = encode_key.(get_parameter_keys(container))
-        @error "$name is not stored" keys
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
     return param_container
@@ -978,7 +974,6 @@ end
 function get_expression(container::OptimizationContainer, key::ExpressionKey)
     var = get(container.expressions, key, nothing)
     if var === nothing
-        @error "$key is not stored" (get_expression_keys(container))
         throw(IS.InvalidValue("constraint $key is not stored"))
     end
 
