@@ -30,7 +30,6 @@ makedocs(
         prettyurls = get(ENV, "CI", nothing) == "true",
     ),
     modules = [PowerSimulations],
-    strict = true,
     authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
     pages = Any[
         "Introduction" => "index.md",
