@@ -89,7 +89,7 @@
 end
 
 @testset "Simulation Sequence invalid sequences" begin
-    @test_throws ArgumentError SimulationSequence(
+    @test_throws Union{ArgumentError, MethodError} SimulationSequence(
         problems = mock_uc_ed_simulation_problems(48, 12),
         intervals = Dict(
             "UC" => (Hour(24), Consecutive()),
