@@ -52,7 +52,7 @@ function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs.
         get(kwargs, :horizon, 24),
         get(kwargs, :resolution, Hour(1)),
         get(kwargs, :interval, Hour(1)),
-        get(kwargs, :steps, 1),
+        get(kwargs, :steps, 2),
     )
     add_time_series!(sys, l, forecast)
 
@@ -148,8 +148,9 @@ end
 
 function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
     return SimulationModels(
-        DecisionModel(MockOperationProblem; horizon = uc_horizon, name = "UC"),
-        DecisionModel(MockOperationProblem; horizon = ed_horizon, name = "ED"),
+        [DecisionModel(MockOperationProblem; horizon = uc_horizon, name = "UC"),
+        DecisionModel(MockOperationProblem; horizon = ed_horizon, resolution = Minute(5), name = "ED")
+        ]
     )
 end
 
