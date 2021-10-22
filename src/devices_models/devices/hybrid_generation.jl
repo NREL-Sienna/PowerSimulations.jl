@@ -70,13 +70,13 @@ get_multiplier_value( ::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::A
 #! format: on
 
 does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) =
-    isnothing(PSY.get_thermal_unit(v)) ? false : true
+    !isnothing(PSY.get_thermal_unit(v))
 does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.RenewableGen}) =
-    isnothing(PSY.get_renewable_unit(v)) ? false : true
+    !isnothing(PSY.get_renewable_unit(v))
 does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) =
-    isnothing(PSY.get_electric_load(v)) ? false : true
+    !isnothing(PSY.get_electric_load(v))
 does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.Storage}) =
-    isnothing(PSY.get_storage(v)) ? false : true
+    !isnothing(PSY.get_storage(v))
 
 function get_default_time_series_names(
     ::Type{<:PSY.HybridSystem},

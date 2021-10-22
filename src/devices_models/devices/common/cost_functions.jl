@@ -104,7 +104,7 @@ function add_to_cost_expression!(
     else
         JuMP.add_to_expression!(container.cost_function, cost_expression)
     end
-    if has_expression(container, ProductionCostExpression(), T)
+    if has_expression(container, ProductionCostExpression, T)
         device_cost_expression = get_expression(container, ProductionCostExpression(), T)
         component_name = PSY.get_name(component)
         device_cost_expression[component_name, time_period] = cost_expression

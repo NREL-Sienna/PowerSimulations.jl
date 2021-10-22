@@ -996,7 +996,7 @@ end
 
 function has_expression(
     container::OptimizationContainer,
-    ::T,
+    ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
