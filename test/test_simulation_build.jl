@@ -4,8 +4,8 @@
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
+            "UC" => (Hour(24), 0),
+            "ED" => (Hour(1), 0),
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
@@ -44,8 +44,8 @@ end
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
+            "UC" => (Hour(24), 0),
+            "ED" => (Hour(1), 0),
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
@@ -78,8 +78,8 @@ end
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
+            "UC" => (Hour(24), 0),
+            "ED" => (Hour(1), 0),
         ),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
@@ -177,9 +177,9 @@ end
     )
     ini_cond_chronology = InterProblemChronology()
     intervals = Dict(
-        "MD" => (Hour(48), Consecutive()),
-        "UC" => (Hour(24), Consecutive()),
-        "ED" => (Hour(1), Consecutive()),
+        "MD" => (Hour(48), 0),
+        "UC" => (Hour(24), 0),
+        "ED" => (Hour(1), 0),
     )
     feedforward = Dict(
         ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFeedforward(
@@ -222,8 +222,8 @@ end
 #         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
 #         horizons = Dict("UC" => 24, "ED" => 12),
 #         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
+#             "UC" => (Hour(24), 0),
+#             "ED" => (Hour(1), 0),
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFeedforward(
@@ -251,8 +251,8 @@ end
 #         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
 #         horizons = Dict("UC" => 24, "ED" => 12),
 #         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
+#             "UC" => (Hour(24), 0),
+#             "ED" => (Hour(1), 0),
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFeedforward(
@@ -283,8 +283,8 @@ end
 #         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
 #         horizons = Dict("UC" => 24, "ED" => 12),
 #         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
+#             "UC" => (Hour(24), 0),
+#             "ED" => (Hour(1), 0),
 #         ),
 #         feedforward = Dict(
 #             ("ED", :devices, :Generators) => SemiContinuousFeedforward(
