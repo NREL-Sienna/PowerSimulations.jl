@@ -1234,7 +1234,7 @@ end
 
 struct SimulationSerializationWrapper
     steps::Int
-    problems::Vector{Symbol}
+    models::Vector{Symbol}
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String

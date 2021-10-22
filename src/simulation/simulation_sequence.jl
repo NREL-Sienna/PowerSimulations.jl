@@ -1,21 +1,17 @@
 """
-    _calculate_interval_inner_counts(order::Dict{Int,String},
-                                          intervals::OrderedDict{String,<:Dates.TimePeriod},
-                                          step_resolution::Dates.TimePeriod)
+_calculate_interval_inner_counts(intervals::OrderedDict{String,<:Dates.TimePeriod})
 
 Calculates how many times a problem is executed for every interval of the previous problem
 """
-function _calculate_interval_inner_counts(
-    intervals::OrderedDict{Symbol, Tuple{Dates.TimePeriod, <:FeedforwardChronology}},
-)
+function _calculate_interval_inner_counts(intervals::OrderedDict{Symbol, Dates.Period})
     order = collect(keys(intervals))
     reverse_order = length(intervals):-1:1
     interval_run_counts = Dict{Int, Int}(1 => 1)
     for k in reverse_order[1:(end - 1)]
         problem_name = order[k]
         previous_problem_name = order[k - 1]
-        problem_interval = intervals[problem_name][1]
-        previous_problem_interval = intervals[previous_problem_name][1]
+        problem_interval = intervals[problem_name]
+        previous_problem_interval = intervals[previous_problem_name]
         if Dates.Millisecond(previous_problem_interval % problem_interval) !=
            Dates.Millisecond(0)
             throw(
@@ -65,9 +61,7 @@ function _fill_execution_order(
     return
 end
 
-function _get_execution_order_vector(
-    intervals::OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedforwardChronology}},
-)
+function _get_execution_order_vector(intervals::OrderedDict{Symbol, Dates.Period})
     length(intervals) == 1 && return [1]
     interval_run_counts = _calculate_interval_inner_counts(intervals)
     execution_order_vector = _allocate_execution_order(interval_run_counts)
@@ -76,46 +70,14 @@ function _get_execution_order_vector(
     return execution_order_vector
 end
 
-function _check_feedforward(feedforward, feedforward_chronologies)
-    isempty(feedforward) && return
-    for problem_key in keys(feedforward)
-        if problem_key ∉ [k.second for k in keys(feedforward_chronologies)]
-            throw(
-                ArgumentError(
-                    "No valid Chronology has been defined for the feedforward added to $(problem_key)",
-                ),
-            )
-        end
-    end
-    return
-end
-
-function _check_chronology_consistency(
-    problems::SimulationModels,
-    feedforward_chronologies,
-    ini_cond_chronology::InitialConditionChronology,
+function _get_num_executions_by_problem(
+    models::SimulationModels,
+    execution_order::Vector{Int},
 )
-    if isempty(feedforward_chronologies)
-        @warn(
-            "No Feedforward Chronologies have been defined. This configuration assummes that there is no information passing between problems"
-        )
-    end
-    if length(problems) == 1
-        if isa(ini_cond_chronology, InterProblemChronology)
-            @warn(
-                "Single problem detected, the default Initial Condition Chronology is IntraProblemChronology(), other values will be ignored."
-            )
-        end
-    end
-    # TODO: Add more consistency checks
-    return
-end
-
-function _get_num_executions_by_problem(problems, execution_order)
-    problem_names = get_model_names(problems)
-    executions_by_problem = Dict(x => 0 for x in problem_names)
-    for problem_number in execution_order
-        executions_by_problem[problem_names[problem_number]] += 1
+    model_names = get_decision_model_names(models)
+    executions_by_problem = Dict(x => 0 for x in model_names)
+    for number in execution_order
+        executions_by_problem[model_names[number]] += 1
     end
     return executions_by_problem
 end
@@ -130,6 +92,7 @@ end
 """
 mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Int}
+    intervals::OrderedDict{Symbol, Dates.Period}
     feedforwards::Dict{<:Tuple, <:AbstractAffectFeedforward}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}
@@ -143,42 +106,20 @@ mutable struct SimulationSequence
         ini_cond_chronology = InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.
-        intervals = Dict(Symbol(k) => v for (k, v) in intervals)
-        if eltype(feedforward_chronologies).parameters[1] != Pair{Symbol, Symbol}
-            feedforward_chronologies = Dict(
-                Pair(Symbol(k.first), Symbol(k.second)) => v for
-                (k, v) in feedforward_chronologies
-            )
-        end
-        if eltype(feedforward).parameters[1] != Symbol
-            feedforward = Dict(Symbol(k) => v for (k, v) in feedforward)
-        end
-        horizons = determine_horizons!(models)
-        _intervals =
-            OrderedDict{Symbol, Tuple{<:Dates.TimePeriod, <:FeedforwardChronology}}()
-        for name in get_model_names(models)
-            # JDNOTE: Temporary conversion while we re-define how to do this
-            if !(name in keys(intervals))
-                throw(IS.ConflictingInputsError("Interval not defined for problem $name"))
-            end
-            _intervals[name] =
-                (IS.time_period_conversion(intervals[name][1]), intervals[name][2])
-        end
-        step_resolution = determine_step_resolution(_intervals)
-        _check_feedforward(feedforward, feedforward_chronologies)
-        _check_chronology_consistency(models, feedforward_chronologies, ini_cond_chronology)
-        _check_cache_definition(cache)
-        if length(models) == 1
+        intervals = PSI.determine_intervals(models)
+        horizons = PSI.determine_horizons!(models)
+        step_resolution = first(intervals)[2]
+        if length(models.decision_models) == 1
             ini_cond_chronology = IntraProblemChronology()
         end
-        execution_order = _get_execution_order_vector(_intervals)
-        executions_by_problem = _get_num_executions_by_problem(models, execution_order)
+        execution_order = PSI._get_execution_order_vector(intervals)
+        executions_by_problem = PSI._get_num_executions_by_problem(models, execution_order)
         sequence_uuid = IS.make_uuid()
         initialize_simulation_internals!(models, sequence_uuid)
         new(
             horizons,
             step_resolution,
-            _intervals,
+            intervals,
             feedforward,
             ini_cond_chronology,
             execution_order,
