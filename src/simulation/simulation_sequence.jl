@@ -4,6 +4,15 @@ function check_simulation_chronology(
     resolutions::OrderedDict{Symbol, Dates.Period},
 )
     models = collect(keys(resolutions))
+
+    for (model, horizon) in horizons
+        horizon_time = resolutions[model] * horizon
+        if horizon_time < intervals[model]
+            throw(IS.ConflictingInputsError("horizon ($horizon_time) is
+                                shorter than interval ($interval) for $(model)"))
+        end
+    end
+
     for i in 2:length(models)
         upper_level_model = models[i - 1]
         lower_level_model = models[i]
@@ -111,6 +120,21 @@ function _get_num_executions_by_problem(
     end
     return executions_by_problem
 end
+
+# To be implemented
+#function _attach_feedforward!(sim::Simulation, model_name::Symbol)
+#    model = get_model(sim, model_name)
+#    # JDNOTES: making a conversion here isn't great. Needs refactor
+#    feedforward = filter(p -> (p.first == model_name), get_sequence(sim).feedforward)
+#    for (key, ff) in feedforward
+#        device_model = get_model(model.template, get_component_type(ff))
+#        device_model === nothing && throw(
+#            IS.ConflictingInputsError("Device model $key not found in model $model_name"),
+#        )
+#        attach_feedforward(device_model, ff)
+#    end
+#    return
+#end
 
 function _check_feedforwards(
     models::SimulationModels,

@@ -2,10 +2,8 @@
     problems = create_simulation_build_test_problems(get_template_basic_uc_simulation())
     sequence = SimulationSequence(
         problems = problems,
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
+            "ED" => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
                 affected_variables = [ActivePowerVariable],
             ),

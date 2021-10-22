@@ -1,215 +1,7 @@
-# Default disable of progress bar when the simulation environment is an HPC or CI
-const _PROGRESS_METER_ENABLED =
-    !(isa(stderr, Base.TTY) == false || (get(ENV, "CI", nothing) == "true"))
-
-const RESULTS_DIR = "results"
-
-mutable struct SimulationInternal
-    sim_files_dir::String
-    store_dir::String
-    logs_dir::String
-    models_dir::String
-    recorder_dir::String
-    results_dir::String
-    run_count::Dict{Int, Dict{Int, Int}}
-    date_ref::Dict{Int, Dates.DateTime}
-    current_time::Dates.DateTime
-    status::Union{Nothing, RunStatus}
-    build_status::BuildStatus
-    simulation_cache::Dict{<:CacheKey, AbstractCache}
-    store::Union{Nothing, SimulationStore}
-    recorders::Vector{Symbol}
-    console_level::Base.CoreLogging.LogLevel
-    file_level::Base.CoreLogging.LogLevel
+function progress_meter_enabled()
+    return isa(stderr, Base.TTY) || (get(ENV, "CI", nothing) == "true")
 end
 
-function SimulationInternal(
-    steps::Int,
-    model_count::Int,
-    sim_dir,
-    name;
-    output_dir = nothing,
-    recorders = [],
-    console_level = Logging.Error,
-    file_level = Logging.Info,
-)
-    count_dict = Dict{Int, Dict{Int, Int}}()
-
-    for s in 1:steps
-        count_dict[s] = Dict{Int, Int}()
-        for st in 1:model_count
-            count_dict[s][st] = 0
-        end
-    end
-
-    base_dir = joinpath(sim_dir, name)
-    mkpath(base_dir)
-
-    output_dir = _get_output_dir_name(base_dir, output_dir)
-    simulation_dir = joinpath(base_dir, output_dir)
-    if isdir(simulation_dir)
-        error("$simulation_dir already exists. Delete it or pass a different output_dir.")
-    end
-
-    sim_files_dir = joinpath(simulation_dir, "simulation_files")
-    store_dir = joinpath(simulation_dir, "data_store")
-    logs_dir = joinpath(simulation_dir, "logs")
-    models_dir = joinpath(simulation_dir, "problems")
-    recorder_dir = joinpath(simulation_dir, "recorder")
-    results_dir = joinpath(simulation_dir, RESULTS_DIR)
-
-    for path in (
-        simulation_dir,
-        sim_files_dir,
-        logs_dir,
-        models_dir,
-        recorder_dir,
-        results_dir,
-        store_dir,
-    )
-        mkpath(path)
-    end
-
-    unique_recorders = Set(REQUIRED_RECORDERS)
-    foreach(x -> push!(unique_recorders, x), recorders)
-
-    init_time = Dates.now()
-    return SimulationInternal(
-        sim_files_dir,
-        store_dir,
-        logs_dir,
-        models_dir,
-        recorder_dir,
-        results_dir,
-        count_dict,
-        Dict{Int, Dates.DateTime}(),
-        init_time,
-        nothing,
-        BuildStatus.EMPTY,
-        Dict{CacheKey, AbstractCache}(),
-        nothing,
-        collect(unique_recorders),
-        console_level,
-        file_level,
-    )
-end
-
-function configure_logging(internal::SimulationInternal, file_mode)
-    return IS.configure_logging(
-        console = true,
-        console_stream = stderr,
-        console_level = internal.console_level,
-        file = true,
-        filename = joinpath(internal.logs_dir, SIMULATION_LOG_FILENAME),
-        file_level = internal.file_level,
-        file_mode = file_mode,
-        tracker = nothing,
-        set_global = false,
-    )
-end
-
-function register_recorders!(internal::SimulationInternal, file_mode)
-    for name in internal.recorders
-        IS.register_recorder!(name; mode = file_mode, directory = internal.recorder_dir)
-    end
-end
-
-function unregister_recorders!(internal::SimulationInternal)
-    for name in internal.recorders
-        IS.unregister_recorder!(name)
-    end
-end
-
-function _add_initial_condition_caches(
-    sim::SimulationInternal,
-    model::DecisionModel,
-    caches::Union{Nothing, Vector{<:AbstractCache}},
-)
-    for (ic_key, init_conds) in get_initial_conditions(get_optimization_container(model))
-        _create_cache(ic_key, caches)
-    end
-    return
-end
-
-function _create_cache(ic_key::ICKey, caches::Union{Nothing, Vector{<:AbstractCache}})
-    return
-end
-
-function _create_cache(
-    ic_key::ICKey{InitialTimeDurationOn, T},
-    caches::Union{Nothing, Vector{<:AbstractCache}},
-) where {T <: PSY.Device}
-    cache_keys = CacheKey.(caches)
-    if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
-        cache = TimeStatusChange(T, OnVariable())
-        push!(caches, cache)
-    end
-    return
-end
-
-function _create_cache(
-    ic_key::ICKey{InitialTimeDurationOff, T},
-    caches::Vector{<:AbstractCache},
-) where {T <: PSY.Device}
-    cache_keys = CacheKey.(caches)
-    if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
-        cache = TimeStatusChange(T, OnVariable)
-        push!(caches, cache)
-    end
-    return
-end
-
-function _create_cache(
-    ic_key::ICKey{InitialEnergyLevel, T},
-    caches::Vector{<:AbstractCache},
-) where {T <: PSY.Device}
-    cache_keys = CacheKey.(caches)
-    if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
-        cache = StoredEnergy(T, EnergyVariable)
-        push!(caches, cache)
-    end
-    return
-end
-
-function _set_internal_caches(
-    internal::SimulationInternal,
-    model::DecisionModel,
-    caches::Vector{<:AbstractCache},
-)
-    for c in caches
-        cache_key = CacheKey(c)
-        caches = get_caches(model)
-        push!(caches, cache_key)
-        if !haskey(internal.simulation_cache, cache_key)
-            @debug "Cache $(cache_key) added to the simulation"
-            internal.simulation_cache[cache_key] = c
-        end
-        internal.simulation_cache[cache_key].value = get_initial_cache(c, model)
-    end
-    return
-end
-
-function _get_output_dir_name(path, output_dir)
-    if !(output_dir === nothing)
-        # The user wants a custom name.
-        return output_dir
-    end
-
-    # Return the next highest integer.
-    output_dir = 1
-    for name in readdir(path)
-        if occursin(r"^\d+$", name)
-            num = parse(Int, name)
-            if num >= output_dir
-                output_dir = num + 1
-            end
-        end
-    end
-
-    return string(output_dir)
-end
-
-# TODO: Add DocString
 """
     Simulation(
         steps::Int
@@ -323,81 +115,6 @@ set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
     sim.internal.build_status = status
 set_current_time!(sim::Simulation, val) = sim.internal.current_time = val
 
-function get_model_cache_definition(sim::Simulation, model::Symbol)
-    caches = get_sequence(sim).cache
-    cache_ref = Array{AbstractCache, 1}()
-    for model_names in keys(caches)
-        if model in model_names
-            push!(cache_ref, caches[model_names])
-        end
-    end
-    return cache_ref
-end
-
-function get_cache(simulation_cache::Dict{<:CacheKey, AbstractCache}, key::CacheKey)
-    c = get(simulation_cache, key, nothing)
-    c === nothing && @debug("Cache with key $(key) not present in the simulation")
-    return c
-end
-
-function get_cache(
-    simulation_cache::Dict{<:CacheKey, AbstractCache},
-    ::Type{T},
-    ::Type{D},
-) where {T <: AbstractCache, D <: PSY.Device}
-    return get_cache(simulation_cache, CacheKey(T, D))
-end
-
-function get_cache(
-    sim::Simulation,
-    ::Type{T},
-    ::Type{D},
-) where {T <: AbstractCache, D <: PSY.Device}
-    return get_cache(sim.internal.simulation_cache, CacheKey(T, D))
-end
-
-function _check_forecasts_sequence(sim::Simulation)
-    for model in get_models(sim)
-        sequence = get_sequence(sim)
-        resolution = get_resolution(model)
-        horizon = get_horizon(model)
-        # JDNOTE: To be refactored when fixing interval in sequence
-        interval = get_interval(sequence, get_name(model))
-        horizon_time = resolution * horizon
-        if horizon_time < interval
-            throw(IS.ConflictingInputsError("horizon ($horizon_time) is
-                                shorter than interval ($interval) for $(get_name(model))"))
-        end
-    end
-end
-
-function _check_feedforward_chronologies(sim::Simulation)
-    for (key, chron) in get_sequence(sim).feedforward_chronologies
-        check_chronology!(sim, key, chron)
-    end
-    return
-end
-
-function _assign_feedforward_chronologies(sim::Simulation)
-    sequence = get_sequence(sim)
-    # JDNOTE: this is limiting since it only allows updating from one problem
-    for (key, chron) in get_sequence(sim).feedforward_chronologies
-        destination_model = get_model(sim, key.second)
-        destination_model_interval_ = get_interval(sequence, key.second)
-        destination_model_interval = IS.time_period_conversion(destination_model_interval_)
-        source_model = get_model(sim, key.first)
-        source_model_number = get_simulation_number(source_model)
-        sim_info = get_simulation_info(destination_model)
-        sim_info.chronolgy_dict[source_model_number] = chron
-        source_model_resolution_ = PSY.get_time_series_resolution(source_model.sys)
-        source_model_resolution = IS.time_period_conversion(source_model_resolution_)
-        execution_wait_count = Int(source_model_resolution / destination_model_interval)
-        set_execution_wait_count!(get_trigger(chron), execution_wait_count)
-        initialize_trigger_count!(get_trigger(chron))
-    end
-    return
-end
-
 function _get_simulation_initial_times!(sim::Simulation)
     model_initial_times = Dict{Int, Vector{Dates.DateTime}}()
     sim_ini_time = get_initial_time(sim)
@@ -447,20 +164,6 @@ Manually provided initial times have to be compatible with the specified interva
     return model_initial_times
 end
 
-function _attach_feedforward!(sim::Simulation, model_name::Symbol)
-    model = get_model(sim, model_name)
-    # JDNOTES: making a conversion here isn't great. Needs refactor
-    feedforward = filter(p -> (p.first == model_name), get_sequence(sim).feedforward)
-    for (key, ff) in feedforward
-        device_model = get_model(model.template, get_component_type(ff))
-        device_model === nothing && throw(
-            IS.ConflictingInputsError("Device model $key not found in model $model_name"),
-        )
-        attach_feedforward(device_model, ff)
-    end
-    return
-end
-
 function _check_steps(
     sim::Simulation,
     model_initial_times::Dict{Int, Vector{Dates.DateTime}},
@@ -486,35 +189,6 @@ desired amount of simulation steps ($(sim.steps*get_execution_count(model))).",
     return
 end
 
-function _check_required_ini_cond_caches(sim::Simulation)
-    for model in get_models(sim)
-        container = get_optimization_container(model)
-        for (k, v) in iterate_initial_conditions(container)
-            # No cache needed for the initial condition -> continue
-            v[1].cache_type === nothing && continue
-            c = get_cache(sim, v[1].cache_type, get_component_type(k))
-            if c === nothing
-                throw(
-                    ArgumentError(
-                        "Cache $(v[1].cache_type) not defined for initial condition $(k) in problem $(get_name(model))",
-                    ),
-                )
-            end
-            @debug "found cache $(v[1].cache_type) for initial condition $(k) in problem $(get_name(model))"
-        end
-    end
-    return
-end
-
-function _populate_caches!(sim::Simulation, model_name::Symbol)
-    caches = get_model_cache_definition(sim, model_name)
-    model = get_model(sim, model_name)
-    # JDNOTES: Why passing here the internal and not the simulation cache ?
-    _add_initial_condition_caches(sim.internal, model, caches)
-    _set_internal_caches(sim.internal, model, caches)
-    return
-end
-
 function _check_folder(sim::Simulation)
     folder = get_simulation_folder(sim)
     !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
@@ -530,7 +204,6 @@ function _build_problems!(sim::Simulation, serialize)
     for (model_number, model) in enumerate(get_models(sim))
         name = get_name(model)
         @info("Building problem $(model_number)-$(name)")
-        problem_chronology = get_problem_interval_chronology(get_sequence(sim), name)
         initial_time = get_initial_time(sim)
         set_initial_time!(model, initial_time)
         output_dir = joinpath(get_models_dir(sim))
@@ -543,7 +216,6 @@ function _build_problems!(sim::Simulation, serialize)
         _populate_caches!(sim, name)
         sim.internal.date_ref[model_number] = initial_time
     end
-    _check_required_ini_cond_caches(sim)
     return
 end
 
@@ -551,27 +223,25 @@ function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Assign Feedforward" begin
-        for (ix, model) in enumerate(get_models(sim))
-            name = get_name(model)
-            problem_interval = get_interval(sequence, name)
-            # Note to devs: Here we are setting the number of operations problem executions we
-            # will see for every step of the simulation
-            if ix == 1
-                set_executions!(model, 1)
-            else
-                step_resolution = get_step_resolution(sequence)
-                set_executions!(model, Int(step_resolution / problem_interval))
-            end
-            _attach_feedforward!(sim, name)
+    for (ix, model) in enumerate(get_models(sim))
+        name = get_name(model)
+        problem_interval = get_interval(sequence, name)
+        # Note to devs: Here we are setting the number of operations problem executions we
+        # will see for every step of the simulation
+        if ix == 1
+            set_executions!(model, 1)
+        else
+            step_resolution = get_step_resolution(sequence)
+            set_executions!(model, Int(step_resolution / problem_interval))
         end
-        _assign_feedforward_chronologies(sim)
     end
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Check Steps" begin
         _check_steps(sim, problem_initial_times)
     end
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problems" begin
         _build_problems!(sim, serialize)
+        # Make EmulationModel
+        # Make SimulationState here
     end
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
@@ -609,8 +279,6 @@ function build!(
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Simulation" begin
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation" begin
-            _check_forecasts_sequence(sim)
-            _check_feedforward_chronologies(sim)
             _check_folder(sim)
             sim.internal = SimulationInternal(
                 sim.steps,
@@ -646,153 +314,6 @@ function build!(
     return get_simulation_build_status(sim)
 end
 
-# Defined here because it requires problem and Simulation to defined
-
-############################# Interfacing Functions ##########################################
-# These are the functions that the user will have to implement to update a custom IC Chron #
-# or custom InitialConditionType #
-
-""" Updates the initial conditions of the problem"""
-function initial_condition_update!(
-    model::DecisionModel,
-    ini_cond_key::ICKey,
-    initial_conditions::Vector{InitialCondition},
-    ::IntraProblemChronology,
-    sim::Simulation,
-)
-    # TODO: Replace this convoluted way to get information with access to data store
-    execution_count = get_execution_count(problem)
-    execution_count == 0 && return
-    simulation_cache = sim.internal.simulation_cache
-    for ic in initial_conditions
-        name = get_component_name(ic)
-        interval_chronology = get_model_interval_chronology(sim.sequence, get_name(model))
-        var_value = get_model_variable(
-            interval_chronology,
-            (problem => problem),
-            name,
-            ic.update_ref,
-        )
-        # We pass the simulation cache instead of the whole simulation to avoid definition dependencies.
-        # All the inputs to calculate_ic_quantity are defined before the simulation object
-        quantity = calculate_ic_quantity(
-            ini_cond_key,
-            ic,
-            var_value,
-            simulation_cache,
-            get_resolution(model),
-        )
-        previous_value = get_condition(ic)
-        PJ.set_value(ic.value, quantity)
-        IS.@record :execution InitialConditionUpdateEvent(
-            get_current_time(sim),
-            ini_cond_key,
-            ic,
-            quantity,
-            previous_value,
-            get_simulation_number(model),
-        )
-    end
-end
-
-""" Updates the initial conditions of the problem"""
-function initial_condition_update!(
-    model::DecisionModel,
-    ini_cond_key::ICKey,
-    initial_conditions::Vector{InitialCondition},
-    ::InterProblemChronology,
-    sim::Simulation,
-)
-    # TODO: Replace this convoluted way to get information with access to data store
-    simulation_cache = sim.internal.simulation_cache
-    execution_index = get_execution_order(sim)
-    execution_count = get_execution_count(model)
-    model_name = get_name(model)
-    sequence = get_sequence(sim)
-    interval = get_interval(sequence, model_name)
-    for ic in initial_conditions
-        name = get_component_name(ic)
-        current_ix = get_current_execution_index(sim)
-        source_model_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
-        source_model = get_model(sim, execution_index[source_model_ix])
-        source_model_name = get_name(source_model)
-
-        # If the model that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
-        if get_simulation_number(source_model) >= get_simulation_number(model)
-            interval_chronology = get_model_interval_chronology(sequence, source_model_name)
-        elseif get_simulation_number(source_model) < get_simulation_number(model)
-            interval_chronology = 0
-        end
-        var_value = get_model_variable(
-            interval_chronology,
-            (source_model => model),
-            model_name,
-            ic.update_ref,
-        )
-        quantity =
-            calculate_ic_quantity(ini_cond_key, ic, var_value, simulation_cache, interval)
-        previous_value = get_condition(ic)
-        PJ.set_value(ic.value, quantity)
-        IS.@record :execution InitialConditionUpdateEvent(
-            get_current_time(sim),
-            ini_cond_key,
-            ic,
-            quantity,
-            previous_value,
-            get_simulation_number(model),
-        )
-    end
-    return
-end
-
-function _update_caches!(sim::Simulation, model::DecisionModel)
-    for cache in get_caches(model)
-        update_cache!(sim, cache, model)
-    end
-    return
-end
-
-################################ Cache Update ################################################
-# TODO: Need to be careful here if 2 problems modify the same cache. This function might need
-# dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
-function update_cache!(
-    sim::Simulation,
-    ::CacheKey{TimeStatusChange, D},
-    model::DecisionModel,
-) where {D <: PSY.Device}
-    # TODO: Remove debug statements and use recorder here
-    c = get_cache(sim, TimeStatusChange, D)
-    increment = get_increment(sim, model, c)
-    variable = get_variable(model.internal.container, c.ref)
-    t_range = 1:get_end_of_interval_step(model)
-    for name in variable.axes[1]
-        # Store the initial condition
-        c.value[name][:series] = Vector{Float64}(undef, length(t_range) + 1)
-        c.value[name][:series][1] = c.value[name][:status]
-        c.value[name][:current] = 1
-        c.value[name][:elapsed] = Dates.Second(0)
-        for t in t_range
-            # Implemented this way because JuMPDenseAxisArrays doesn't support pasing a ranges Array[name, 1:n]
-            device_status = JuMP.value.(variable[name, t])
-            c.value[name][:series][t + 1] = device_status
-            if c.value[name][:status] == device_status
-                c.value[name][:count] += increment
-                @debug(
-                    "Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])"
-                )
-            else
-                c.value[name][:count] = increment
-                c.value[name][:status] = device_status
-                @debug(
-                    "Cache value TimeStatus for device $name set to $device_status and count to 1.0"
-                )
-            end
-        end
-    end
-
-    return
-end
-
 function get_increment(sim::Simulation, model::DecisionModel, cache::TimeStatusChange)
     units = cache.units
     name = get_name(model)
@@ -800,24 +321,6 @@ function get_increment(sim::Simulation, model::DecisionModel, cache::TimeStatusC
     interval = get_interval(sequence, name)
     resolution = interval / units
     return resolution
-end
-
-function update_cache!(
-    sim::Simulation,
-    ::CacheKey{StoredEnergy, D},
-    model::DecisionModel,
-) where {D <: PSY.Device}
-    c = get_cache(sim, StoredEnergy, D)
-    variable = get_variable(model.internal.container, c.ref)
-    t = get_end_of_interval_step(model)
-    for name in variable.axes[1]
-        device_energy = JuMP.value(variable[name, t])
-        @debug name, device_energy
-        c.value[name] = device_energy
-        @debug("Cache value StoredEnergy for device $name set to $(c.value[name])")
-    end
-
-    return
 end
 
 function _update_initial_conditions!(model::DecisionModel, sim::Simulation)
@@ -930,7 +433,7 @@ function _execute!(
     cache_size_mib = 1024,
     min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
     exports = nothing,
-    enable_progress_bar = _PROGRESS_METER_ENABLED,
+    enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
 )
     @assert sim.internal !== nothing
@@ -1142,34 +645,6 @@ function _initialize_problem_storage!(
     store = get_simulation_store(sim)
     initialize_problem_storage!(store, store_params, problem_reqs, rules)
     return store_params
-end
-
-function _calc_dimensions(array::JuMP.Containers.DenseAxisArray, name, num_rows, horizon)
-    ax = axes(array)
-    # Two use cases for read:
-    # 1. Read data for one execution for one device.
-    # 2. Read data for one execution for all devices.
-    # This will ensure that data on disk is contiguous in both cases.
-    if length(ax) == 1
-        columns = [name]
-        dims = (horizon, 1, num_rows)
-    elseif length(ax) == 2
-        columns = collect(axes(array)[1])
-        dims = (horizon, length(columns), num_rows)
-        # elseif length(ax) == 3
-        #     # TODO: untested
-        #     dims = (length(ax[2]), horizon, length(columns), num_rows)
-    else
-        error("unsupported data size $(length(ax))")
-    end
-
-    return Dict("columns" => columns, "dims" => dims)
-end
-
-function _calc_dimensions(array::JuMP.Containers.SparseAxisArray, name, num_rows, horizon)
-    columns = unique([(k[1], k[3]) for k in keys(array.data)])
-    dims = (horizon, length(columns), num_rows)
-    return Dict("columns" => columns, "dims" => dims)
 end
 
 struct SimulationSerializationWrapper
