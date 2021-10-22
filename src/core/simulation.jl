@@ -293,6 +293,7 @@ get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
 get_current_time(sim::Simulation) = sim.internal.current_time
 get_problems(sim::Simulation) = sim.problems
+get_current_step(sim::Simulation) = maximum(sim.internal.run_count)[1]
 
 function get_problem(sim::Simulation, ix::Int)
     problems = get_problems(sim)
@@ -696,7 +697,7 @@ function initial_condition_update!(
 )
     # TODO: Replace this convoluted way to get information with access to data store
     execution_count = get_execution_count(problem)
-    execution_count == 0 && return
+    (get_current_step(sim) == 1 && execution_count == 0) && return
     simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
         name = get_device_name(ic)

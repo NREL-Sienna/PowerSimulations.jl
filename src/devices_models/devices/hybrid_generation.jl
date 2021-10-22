@@ -772,28 +772,13 @@ function AddCostSpec(
     )
 end
 
-
-function cost_function!(
-    psi_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    device_model::DeviceModel{T, PhysicalCoupling},
-    network_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
-) where {T <: PSY.HybridSystem}
-    for d in devices
-        cost_function!(psi_container, d, device_model, network_formulation, feedforward)
-    end
-    return
-end
-
 function cost_function!(
     psi_container::OptimizationContainer,
     device::PSY.HybridSystem,
-    ::DeviceModel{T, U},
+    ::DeviceModel{T, PhysicalCoupling},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward} = nothing,
-) where {T <: PSY.HybridSystem, U <: AbstractHybridFormulation} 
-
+) where {T <: PSY.HybridSystem} 
     components = _get_components(device)
     for comp in components
         if has_cost_data(comp) 
