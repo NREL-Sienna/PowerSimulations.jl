@@ -1,3 +1,26 @@
+function check_simulation_chronology(horizons::OrderedDict{Symbol,Int}, intervals::OrderedDict{Symbol, Dates.Period}, resolutions::OrderedDict{Symbol, Dates.Period})
+    models = collect(keys(resolutions))
+    for i in 2:length(models)
+        upper_level_model = models[i-1]
+        lower_level_model = models[i]
+        if horizons[lower_level_model] * resolutions[lower_level_model] > horizons[upper_level_model] * resolutions[upper_level_model]
+            throw(
+                IS.ConflictingInputsError(
+                    "The lookahead length $(horizons[upper_level_model]) in model $(upper_level_model) is insufficient to syncronize with $(lower_level_model)",
+                ),
+            )
+        end
+        if (intervals[upper_level_model] % intervals[lower_level_model]) != Dates.Millisecond(0)
+            throw(
+                IS.ConflictingInputsError(
+                    "The system's intervals are not compatible for simulation. The interval in model $(upper_level_model) needs to be a mutiple of the interval $(lower_level_model) for a consistent time coordination.",
+                ),
+            )
+        end
+    end
+     return
+end
+
 """
 _calculate_interval_inner_counts(intervals::OrderedDict{String,<:Dates.TimePeriod})
 
@@ -6,7 +29,8 @@ Calculates how many times a problem is executed for every interval of the previo
 function _calculate_interval_inner_counts(intervals::OrderedDict{Symbol, Dates.Period})
     order = collect(keys(intervals))
     reverse_order = length(intervals):-1:1
-    interval_run_counts = Dict{Int, Int}(1 => 1)
+    interval_run_counts = Vector{Int}(undef, length(keys(intervals)))
+    interval_run_counts[1] = 1
     for k in reverse_order[1:(end - 1)]
         problem_name = order[k]
         previous_problem_name = order[k - 1]
@@ -27,9 +51,9 @@ function _calculate_interval_inner_counts(intervals::OrderedDict{Symbol, Dates.P
 end
 
 """ Function calculates the total number of problem executions in the simulation and allocates the appropiate vector"""
-function _allocate_execution_order(interval_run_counts::Dict{Int, Int})
+function _allocate_execution_order(interval_run_counts::Vector{Int})
     total_size_of_vector = 0
-    for (k, counts) in interval_run_counts
+    for k in eachindex(interval_run_counts)
         mult = 1
         for i in 1:k
             mult *= interval_run_counts[i]
@@ -41,7 +65,7 @@ end
 
 function _fill_execution_order(
     execution_order::Vector{Int},
-    interval_run_counts::Dict{Int, Int},
+    interval_run_counts::Vector{Int},
 )
     function _fill_problem(index::Int, problem::Int)
         if problem < last_problem
@@ -74,12 +98,25 @@ function _get_num_executions_by_problem(
     models::SimulationModels,
     execution_order::Vector{Int},
 )
-    model_names = get_decision_model_names(models)
+    model_names = get_model_names(models)
     executions_by_problem = Dict(x => 0 for x in model_names)
     for number in execution_order
         executions_by_problem[model_names[number]] += 1
     end
     return executions_by_problem
+end
+
+function _check_feedforwards(models::SimulationModels, feedforwards::Dict{String, <:AbstractAffectFeedforward})
+    names = string.(get_model_names(models))
+    ff_dict = Dict{Symbol, AbstractAffectFeedforward}()
+    for (k, v) in feedforwards
+        if k ∈ names
+            ff_dict[Symbol(k)] = v
+        else
+            error("Model $k not present in the SimulationModels")
+        end
+    end
+    return ff_dict
 end
 
 @doc raw"""
@@ -93,7 +130,7 @@ end
 mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Int}
     intervals::OrderedDict{Symbol, Dates.Period}
-    feedforwards::Dict{<:Tuple, <:AbstractAffectFeedforward}
+    feedforwards::Dict{Symbol, <:AbstractAffectFeedforward}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}
     executions_by_problem::Dict{Symbol, Int}
@@ -102,25 +139,25 @@ mutable struct SimulationSequence
 
     function SimulationSequence(;
         models::SimulationModels,
-        feedforward = Dict{Symbol, AbstractAffectFeedforward}(),
+        feedforwards = Dict{String, AbstractAffectFeedforward}(),
         ini_cond_chronology = InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.
-        intervals = PSI.determine_intervals(models)
-        horizons = PSI.determine_horizons!(models)
-        step_resolution = first(intervals)[2]
+        intervals = determine_intervals(models)
+        horizons = determine_horizons!(models)
+        resolutions = determine_resolutions(models)
+        check_simulation_chronology(horizons, intervals, resolutions)
         if length(models.decision_models) == 1
             ini_cond_chronology = IntraProblemChronology()
         end
-        execution_order = PSI._get_execution_order_vector(intervals)
-        executions_by_problem = PSI._get_num_executions_by_problem(models, execution_order)
+        execution_order = _get_execution_order_vector(intervals)
+        executions_by_problem = _get_num_executions_by_problem(models, execution_order)
         sequence_uuid = IS.make_uuid()
         initialize_simulation_internals!(models, sequence_uuid)
         new(
             horizons,
-            step_resolution,
             intervals,
-            feedforward,
+            _check_feedforwards(models, feedforwards),
             ini_cond_chronology,
             execution_order,
             executions_by_problem,

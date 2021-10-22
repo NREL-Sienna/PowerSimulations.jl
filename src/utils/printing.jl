@@ -370,15 +370,15 @@ function Base.show(io::IO, sequence::SimulationSequence)
     println(io, "-----------------------\n")
     to = []
     from = ""
-    for (k, v) in sequence.feedforward
-        println(io, "$(k): $(typeof(v)) -> $(v.device_type)\n")
-        to = string.(v.affected_variables)
-        if isa(v, SemiContinuousFeedforward)
-            from = string.(v.binary_source_problem)
-        else
-            from = string.(v.variable_source_problem)
-        end
-        _print_feedforward(io, sequence.feedforward_chronologies, to, from)
+    for (k, v) in sequence.feedforwards
+        #println(io, "$(k): $(typeof(v)) -> $(v.device_type)\n")
+        #to = string.(v.affected_variables)
+        #if isa(v, SemiContinuousFeedforward)
+        #    from = string.(v.binary_source_problem)
+        #else
+        #    from = string.(v.variable_source_problem)
+        #end
+        #_print_feedforward(io, sequence.feedforward_chronologies, to, from)
     end
     println(io, "Initial Condition Chronology")
     println(io, "----------------------------\n")
