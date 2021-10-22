@@ -16,9 +16,11 @@ function calculate_ic_quantity(
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     @debug last_status, var_status, abs(last_status - var_status)
-    @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
+    # Commenting out this as when going from UC -> 1st ED solve, 
+    # its comparing the last_status(t=24) to the 1st variable value (t=1)
+    # @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
-    return last_status >= 1.0 ? current_counter : 0.0
+    return var_status >= 1.0 ? current_counter : 0.0
 end
 
 function calculate_ic_quantity(
@@ -36,9 +38,11 @@ function calculate_ic_quantity(
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     @debug last_status, var_status, abs(last_status - var_status)
-    @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
+    # Commenting out this as when going from UC -> 1st ED solve, 
+    # its comparing the last_status(t=24) to the 1st variable value (t=1)
+    # @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
-    return last_status >= 1.0 ? 0.0 : current_counter
+    return var_status >= 1.0 ? 0.0 : current_counter
 end
 
 function calculate_ic_quantity(
