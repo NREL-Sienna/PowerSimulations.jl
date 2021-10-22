@@ -1,11 +1,29 @@
 @testset "Simulation Sequence Correct Execution Order" begin
     models = SimulationModels(
         [
-            DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC"),
-            DecisionModel(MockOperationProblem; horizon = 24, name = "HAUC"),
-            DecisionModel(MockOperationProblem; horizon = 12, name = "ED"),
+            DecisionModel(
+                MockOperationProblem;
+                horizon = 48,
+                interval = Hour(24),
+                steps = 2,
+                name = "DAUC",
+            ),
+            DecisionModel(
+                MockOperationProblem;
+                horizon = 24,
+                interval = Hour(1),
+                steps = 2 * 24,
+                name = "HAUC",
+            ),
+            DecisionModel(
+                MockOperationProblem;
+                horizon = 12,
+                interval = Minute(5),
+                steps = 2 * 24 * 12,
+                name = "ED",
+            ),
         ],
-        EmulationModel(MockEmulationProblem; name = "AGC"),
+        EmulationModel(MockEmulationProblem; resolution = Minute(1), name = "AGC"),
     )
 
     ini_cond_chronology = InterProblemChronology()

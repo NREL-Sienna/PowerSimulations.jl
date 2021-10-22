@@ -56,7 +56,7 @@ function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs.
     )
     add_time_series!(sys, l, forecast)
 
-    settings = PSI.Settings(sys; kwargs...)
+    settings = PSI.Settings(sys; horizon = get(kwargs, :horizon, 24))
     return DecisionModel{MockOperationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,
@@ -78,7 +78,7 @@ function PSI.EmulationModel(::Type{MockEmulationProblem}; name = nothing, kwargs
     )
     add_time_series!(sys, l, single_ts)
 
-    settings = PSI.Settings(sys; kwargs...)
+    settings = PSI.Settings(sys; horizon = get(kwargs, :horizon, 24))
     return EmulationModel{MockEmulationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,
