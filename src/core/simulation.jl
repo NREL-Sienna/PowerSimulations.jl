@@ -293,7 +293,7 @@ get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
 get_current_time(sim::Simulation) = sim.internal.current_time
 get_problems(sim::Simulation) = sim.problems
-get_current_step(sim::Simulation) = maximum(sim.internal.run_count)[1]
+get_current_step(sim::Simulation) = maximum(collect(keys(sim.internal.run_count)))
 
 function get_problem(sim::Simulation, ix::Int)
     problems = get_problems(sim)
