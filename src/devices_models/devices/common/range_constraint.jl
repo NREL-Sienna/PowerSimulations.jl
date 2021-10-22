@@ -150,7 +150,6 @@ function add_lower_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
@@ -181,7 +180,6 @@ function add_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
@@ -212,12 +210,11 @@ function add_lower_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
     device_names =
-        [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
+        [PSY.get_name(d) for d in devices if does_subcomponent_exist(d, PSY.ThermalGen)]
 
     con_lb = add_constraints_container!(
         container,
@@ -229,7 +226,7 @@ function add_lower_bound_range_constraints_impl!(
     )
 
     for (i, device) in enumerate(devices), t in time_steps
-        !check_subcomponent_exist(device, PSY.ThermalGen) && continue
+        !does_subcomponent_exist(device, PSY.ThermalGen) && continue
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] = JuMP.@constraint(
@@ -247,12 +244,11 @@ function add_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
     device_names =
-        [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.ThermalGen)]
+        [PSY.get_name(d) for d in devices if does_subcomponent_exist(d, PSY.ThermalGen)]
 
     con_ub = add_constraints_container!(
         container,
@@ -264,7 +260,7 @@ function add_upper_bound_range_constraints_impl!(
     )
 
     for (i, device) in enumerate(devices), t in time_steps
-        !check_subcomponent_exist(device, PSY.ThermalGen) && continue
+        !does_subcomponent_exist(device, PSY.ThermalGen) && continue
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_ub[ci_name, t] = JuMP.@constraint(
@@ -377,7 +373,6 @@ function add_semicontinuous_lower_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
@@ -414,7 +409,6 @@ function add_semicontinuous_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
@@ -498,7 +492,6 @@ function add_reserve_lower_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
@@ -538,7 +531,6 @@ function add_reserve_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = V
     time_steps = get_time_steps(container)
@@ -653,7 +645,6 @@ function add_reserve_lower_bound_range_constraints_impl!(
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
 }
-    use_parameters = built_for_recurrent_solves(container)
     constraint = T()
     component_type = W
     time_steps = get_time_steps(container)
@@ -900,7 +891,7 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     constraint = T()
     component_type = V
     names =
-        [PSY.get_name(d) for d in devices if check_subcomponent_exist(d, PSY.RenewableGen)]
+        [PSY.get_name(d) for d in devices if does_subcomponent_exist(d, PSY.RenewableGen)]
 
     constraint = add_constraints_container!(
         container,
@@ -914,7 +905,7 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     parameter = get_parameter_array(container, P(), V)
     multiplier = get_parameter_multiplier_array(container, P(), V)
     for (i, device) in enumerate(devices), t in time_steps
-        !check_subcomponent_exist(device, PSY.RenewableGen) && continue
+        !does_subcomponent_exist(device, PSY.RenewableGen) && continue
         name = PSY.get_name(device)
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,

@@ -67,7 +67,6 @@ struct StartupInitialConditionConstraint <: ConstraintType end
 struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
-struct EnergyVariableLimitConstraint <: ConstraintType end
 struct EnergyVariableLimitUpConstraint <: ConstraintType end
 struct EnergyVariableLimitDownConstraint <: ConstraintType end
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end

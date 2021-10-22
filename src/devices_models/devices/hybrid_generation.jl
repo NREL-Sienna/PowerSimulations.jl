@@ -69,13 +69,13 @@ get_multiplier_value( ::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::A
 
 #! format: on
 
-check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) =
+does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) =
     isnothing(PSY.get_thermal_unit(v)) ? false : true
-check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.RenewableGen}) =
+does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.RenewableGen}) =
     isnothing(PSY.get_renewable_unit(v)) ? false : true
-check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) =
+does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) =
     isnothing(PSY.get_electric_load(v)) ? false : true
-check_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.Storage}) =
+does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.Storage}) =
     isnothing(PSY.get_storage(v)) ? false : true
 
 function get_default_time_series_names(
@@ -84,7 +84,6 @@ function get_default_time_series_names(
 )
     return Dict{Type{<:TimeSeriesParameter}, String}(
         ActivePowerTimeSeriesParameter => "max_active_power",
-        # EnergyTargetTimeSeriesParameter => "storage_target",
     )
 end
 
@@ -228,7 +227,7 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     var = get_variable(container, ComponentReactivePowerVariable(), V)
     device_names = [PSY.get_name(d) for d in devices]
-    subcomp_types = get_subcomponent_var_types(U)
+    subcomp_types = get_subcomponent_types(U)
 
     constraint_ub = add_constraints_container!(
         container,
@@ -252,7 +251,7 @@ function add_constraints!(
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types
-        !check_subcomponent_exist(d, subcomp) && continue
+        !does_subcomponent_exist(d, subcomp) && continue
         name = PSY.get_name(d)
         limits = get_min_max_limits(d, subcomp, T, W)
         constraint_ub[name, subcomp, t] =
@@ -434,7 +433,7 @@ function add_constraints!(
     var_e = get_variable(container, EnergyVariable(), T)
     r_up = get_variable(container, ComponentActivePowerReserveUpVariable(), T)
     r_dn = get_variable(container, ComponentActivePowerReserveDownVariable(), T)
-    names = [PSY.get_name(x) for x in devices if check_subcomponent_exist(d, PSY.Storage)]
+    names = [PSY.get_name(x) for x in devices if does_subcomponent_exist(d, PSY.Storage)]
     con_up = add_constraints_container!(
         container,
         ReserveEnergyConstraint(),
@@ -453,7 +452,7 @@ function add_constraints!(
     )
 
     for d in devices, t in time_steps
-        !check_subcomponent_exist(d, PSY.Storage) && continue
+        !does_subcomponent_exist(d, PSY.Storage) && continue
         name = PSY.get_name(d)
         limits = PSY.get_state_of_charge_limits(PSY.get_storage(d))
         efficiency = PSY.get_efficiency(d)

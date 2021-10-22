@@ -35,13 +35,13 @@ function add_variables!(
     add_variable!(container, T(), devices, formulation)
 end
 
-get_subcomponent_var_types(::Type{ComponentActivePowerVariable}) =
+get_subcomponent_types(::Type{ComponentActivePowerVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen]
-get_subcomponent_var_types(::Type{ComponentActivePowerReserveUpVariable}) =
+get_subcomponent_types(::Type{ComponentActivePowerReserveUpVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
-get_subcomponent_var_types(::Type{ComponentActivePowerReserveDownVariable}) =
+get_subcomponent_types(::Type{ComponentActivePowerReserveDownVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
-get_subcomponent_var_types(::Type{ComponentReactivePowerVariable}) =
+get_subcomponent_types(::Type{ComponentReactivePowerVariable}) =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
 
 @doc raw"""
@@ -180,7 +180,7 @@ function add_variable!(
     time_steps = get_time_steps(container)
     settings = get_settings(container)
     binary = get_variable_binary(variable_type, D, formulation)
-    subcomp_types = get_subcomponent_var_types(T)
+    subcomp_types = get_subcomponent_types(T)
 
     variable = add_variable_container!(
         container,
@@ -193,7 +193,7 @@ function add_variable!(
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types
-        !check_subcomponent_exist(d, subcomp) && continue
+        !does_subcomponent_exist(d, subcomp) && continue
 
         name = PSY.get_name(d)
         variable[name, subcomp, t] = JuMP.@variable(
