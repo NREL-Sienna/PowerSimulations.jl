@@ -154,6 +154,12 @@ function slope_convexity_check(slopes::Vector{Float64})
     return flag
 end
 
+function _convert_variable_cost(var_cost::Vector{NTuple{2, Float64}})
+    no_load_cost, p_min = var_cost[1]
+    var_cost = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+    return var_cost, no_load_cost
+end
+
 @doc raw"""
 Returns True/False depending on compatibility of the cost data with the linear implementation method
 
@@ -552,7 +558,12 @@ function add_to_cost!(
     )
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     for t in time_steps
-        variable_cost!(container, spec, component, variable_cost_forecast_values[t], t)
+        if spec.uses_compact_power
+            variable_cost, _ = _convert_variable_cost(variable_cost_forecast_values[t])
+        else
+            variable_cost = variable_cost_forecast_values[t]
+        end
+        variable_cost!(container, spec, component, variable_cost, t)
     end
 
     if !(spec.start_up_cost === nothing)
@@ -640,7 +651,12 @@ function add_to_cost!(
     )
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     for t in time_steps
-        variable_cost!(container, spec, component, variable_cost_forecast_values[t], t)
+        if spec.uses_compact_power
+            variable_cost, _ = _convert_variable_cost(variable_cost_forecast_values[t])
+        else
+            variable_cost = variable_cost_forecast_values[t]
+        end
+        variable_cost!(container, spec, component, variable_cost, t)
     end
 
     if !(spec.start_up_cost === nothing)
@@ -753,7 +769,7 @@ function add_to_cost!(
     component::PSY.Component,
 )
     component_name = PSY.get_name(component)
-    @debug "Energy Target Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    @debug "Storage Management Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     time_steps = get_time_steps(container)

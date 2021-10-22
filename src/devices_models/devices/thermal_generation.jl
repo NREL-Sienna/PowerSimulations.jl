@@ -1412,5 +1412,9 @@ function cost_function!(
     ::DeviceModel{PSY.ThermalMultiStart, ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
 )
-    error("DispatchNoMin is not compatible with ThermalMultiStart")
+    throw(
+        IS.ConflictingInputsError(
+            "ThermalDispatchNoMin cost function is not compatible with ThermalMultiStart formulation.",
+        ),
+    )
 end
