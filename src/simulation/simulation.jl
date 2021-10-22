@@ -323,66 +323,6 @@ set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
     sim.internal.build_status = status
 set_current_time!(sim::Simulation, val) = sim.internal.current_time = val
 
-function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
-    source_model = get_model(sim, key.first)
-    source_model_horizon = get_horizon(source_model)
-    sequence = get_sequence(sim)
-    destination_model_interval = get_interval(sequence, key.second)
-
-    source_model_resolution = get_resolution(source_model)
-    @debug source_model_resolution, destination_model_interval
-    # How many times the second model executes per solution retireved from the source_model.
-    # E.g. source_model_resolution = 1 Hour, destination_model_interval = 5 minutes => 12 executions per solution
-    destination_model_executions_per_solution =
-        Int(source_model_resolution / destination_model_interval)
-    # Number of periods in the horizon that will be synchronized between the source_model and the destination_model
-    source_model_sync = sync.periods
-
-    if source_model_sync > source_model_horizon
-        throw(
-            IS.ConflictingInputsError(
-                "The lookahead length $(source_model_horizon) in model is insufficient to syncronize with $(source_model_sync) feedforward periods",
-            ),
-        )
-    end
-
-    if (source_model_sync % destination_model_executions_per_solution) != 0
-        throw(
-            IS.ConflictingInputsError(
-                "The current configuration implies $(source_model_sync / destination_model_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in model $(key.first) needs to be a mutiple of the number of model $(key.second) execution for every model $(key.first) interval.",
-            ),
-        )
-    end
-
-    return
-end
-
-function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
-    source_model = get_model(sim, key.first)
-    source_model_horizon = get_horizon(source_model)
-    if source_model_horizon != source_model_interval
-        @warn(
-            "Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(source_model_horizon) in model $(key.first) will be replaced with $(source_model_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon"
-        )
-    end
-    get_sequence(sim).horizons[key.first] = get_interval(sim, key.first)
-    return
-end
-
-check_chronology!(sim::Simulation, key::Pair, ::RecedingHorizon) = nothing
-check_chronology!(sim::Simulation, key::Pair, ::FullHorizon) = nothing
-# TODO: Add missing check
-check_chronology!(sim::Simulation, key::Pair, ::Range) = nothing
-
-function check_chronology!(
-    sim::Simulation,
-    key::Pair,
-    ::T,
-) where {T <: FeedforwardChronology}
-    error("Chronology $(T) not implemented")
-    return
-end
-
 function get_model_cache_definition(sim::Simulation, model::Symbol)
     caches = get_sequence(sim).cache
     cache_ref = Array{AbstractCache, 1}()
@@ -781,7 +721,7 @@ function initial_condition_update!(
         if get_simulation_number(source_model) >= get_simulation_number(model)
             interval_chronology = get_model_interval_chronology(sequence, source_model_name)
         elseif get_simulation_number(source_model) < get_simulation_number(model)
-            interval_chronology = RecedingHorizon()
+            interval_chronology = 0
         end
         var_value = get_model_variable(
             interval_chronology,

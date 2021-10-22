@@ -76,13 +76,6 @@ export ThermalCompactDispatch
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
-# feedforward chrons
-export RecedingHorizon
-export Synchronize
-export Consecutive
-export FullHorizon
-export Range
-
 # feedforward models
 export UpperBoundFeedforward
 export LowerBoundFeedforward
@@ -450,7 +443,6 @@ include("initial_conditions/calculate_initial_condition.jl")
 include("parameters/add_parameters.jl")
 include("parameters/update_parameters.jl")
 
-include("feedforward/feedforward_chronologies.jl")
 include("feedforward/feedforwards.jl")
 include("feedforward/feedforward_arguments.jl")
 include("feedforward/feedforward_constraints.jl")
