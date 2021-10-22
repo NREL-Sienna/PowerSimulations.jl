@@ -1,16 +1,22 @@
-function check_simulation_chronology(horizons::OrderedDict{Symbol,Int}, intervals::OrderedDict{Symbol, Dates.Period}, resolutions::OrderedDict{Symbol, Dates.Period})
+function check_simulation_chronology(
+    horizons::OrderedDict{Symbol, Int},
+    intervals::OrderedDict{Symbol, Dates.Period},
+    resolutions::OrderedDict{Symbol, Dates.Period},
+)
     models = collect(keys(resolutions))
     for i in 2:length(models)
-        upper_level_model = models[i-1]
+        upper_level_model = models[i - 1]
         lower_level_model = models[i]
-        if horizons[lower_level_model] * resolutions[lower_level_model] > horizons[upper_level_model] * resolutions[upper_level_model]
+        if horizons[lower_level_model] * resolutions[lower_level_model] >
+           horizons[upper_level_model] * resolutions[upper_level_model]
             throw(
                 IS.ConflictingInputsError(
                     "The lookahead length $(horizons[upper_level_model]) in model $(upper_level_model) is insufficient to syncronize with $(lower_level_model)",
                 ),
             )
         end
-        if (intervals[upper_level_model] % intervals[lower_level_model]) != Dates.Millisecond(0)
+        if (intervals[upper_level_model] % intervals[lower_level_model]) !=
+           Dates.Millisecond(0)
             throw(
                 IS.ConflictingInputsError(
                     "The system's intervals are not compatible for simulation. The interval in model $(upper_level_model) needs to be a mutiple of the interval $(lower_level_model) for a consistent time coordination.",
@@ -18,7 +24,7 @@ function check_simulation_chronology(horizons::OrderedDict{Symbol,Int}, interval
             )
         end
     end
-     return
+    return
 end
 
 """
@@ -106,7 +112,10 @@ function _get_num_executions_by_problem(
     return executions_by_problem
 end
 
-function _check_feedforwards(models::SimulationModels, feedforwards::Dict{String, <:AbstractAffectFeedforward})
+function _check_feedforwards(
+    models::SimulationModels,
+    feedforwards::Dict{String, <:AbstractAffectFeedforward},
+)
     names = string.(get_model_names(models))
     ff_dict = Dict{Symbol, AbstractAffectFeedforward}()
     for (k, v) in feedforwards

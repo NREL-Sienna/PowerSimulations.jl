@@ -124,10 +124,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         sequence_cache = SimulationSequence(
             models = models,
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-            intervals = Dict(
-                "UC" => (Hour(24), 0),
-                "ED" => (Hour(1), 0),
-            ),
+            intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
             feedforward = Dict(
                 "ED" => SemiContinuousFeedforward(
                     device_type = ThermalStandard,

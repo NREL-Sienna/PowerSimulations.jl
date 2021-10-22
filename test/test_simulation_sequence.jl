@@ -26,14 +26,17 @@
         EmulationModel(MockEmulationProblem; resolution = Minute(1), name = "AGC"),
     )
 
-    test_sequence =
-        SimulationSequence(models = models, feedforwards = Dict(
+    test_sequence = SimulationSequence(
+        models = models,
+        feedforwards = Dict(
             "ED" => SemiContinuousFeedforward(
                 component_type = ThermalStandard,
                 source = OnVariable,
                 affected_values = [ActivePowerVariable],
             ),
-        ), ini_cond_chronology = InterProblemChronology())
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
 
     @test length(findall(x -> x == 4, test_sequence.execution_order)) == 24 * 60
     @test length(findall(x -> x == 3, test_sequence.execution_order)) == 24 * 12
@@ -57,63 +60,60 @@
 end
 
 @testset "Simulation Sequence invalid sequences" begin
-    models = SimulationModels(
-        [
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 48,
-                interval = Hour(24),
-                steps = 2,
-                name = "DAUC",
-            ),
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 24,
-                interval = Hour(5),
-                steps = 2 * 24,
-                name = "HAUC",
-            ),]
-    )
+    models = SimulationModels([
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 48,
+            interval = Hour(24),
+            steps = 2,
+            name = "DAUC",
+        ),
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 24,
+            interval = Hour(5),
+            steps = 2 * 24,
+            name = "HAUC",
+        ),
+    ])
 
     @test_throws IS.ConflictingInputsError SimulationSequence(models = models)
 
-    models = SimulationModels(
-        [
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 2,
-                interval = Hour(1),
-                steps = 2,
-                name = "DAUC",
-            ),
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 24,
-                interval = Hour(1),
-                steps = 2 * 24,
-                name = "HAUC",
-            ),]
-    )
+    models = SimulationModels([
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 2,
+            interval = Hour(1),
+            steps = 2,
+            name = "DAUC",
+        ),
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 24,
+            interval = Hour(1),
+            steps = 2 * 24,
+            name = "HAUC",
+        ),
+    ])
 
     @test_throws IS.ConflictingInputsError SimulationSequence(models = models)
 
-    models = SimulationModels(
-        [
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 24,
-                interval = Hour(1),
-                steps = 2,
-                name = "DAUC",
-            ),
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 24,
-                interval = Minute(22),
-                steps = 2 * 24,
-                name = "HAUC",
-            ),]
-    )
+    models = SimulationModels([
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 24,
+            interval = Hour(1),
+            steps = 2,
+            name = "DAUC",
+        ),
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 24,
+            interval = Minute(22),
+            steps = 2 * 24,
+            name = "HAUC",
+        ),
+    ])
 
     @test_throws IS.ConflictingInputsError SimulationSequence(models = models)
 end

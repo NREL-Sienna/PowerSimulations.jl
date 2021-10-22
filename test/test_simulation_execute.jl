@@ -52,10 +52,7 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), 0),
-            "ED" => (Hour(1), 0),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -122,10 +119,7 @@ end
     sequence_cache = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), 0),
-            "ED" => (Hour(1), 0),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -174,10 +168,7 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => 0),
-        intervals = Dict(
-            "UC" => (Hour(24), 0),
-            "ED" => (Minute(60), 0),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Minute(60), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -226,10 +217,7 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), 0),
-            "ED" => (Hour(1), 0),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,

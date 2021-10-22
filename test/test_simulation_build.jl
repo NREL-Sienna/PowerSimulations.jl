@@ -3,10 +3,7 @@
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), 0),
-            "ED" => (Hour(1), 0),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -43,10 +40,7 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), 0),
-            "ED" => (Hour(1), 0),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -77,10 +71,7 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), 0),
-            "ED" => (Hour(1), 0),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -176,11 +167,7 @@ end
         ("UC" => "ED") => Synchronize(periods = 24),
     )
     ini_cond_chronology = InterProblemChronology()
-    intervals = Dict(
-        "MD" => (Hour(48), 0),
-        "UC" => (Hour(24), 0),
-        "ED" => (Hour(1), 0),
-    )
+    intervals = Dict("MD" => (Hour(48), 0), "UC" => (Hour(24), 0), "ED" => (Hour(1), 0))
     feedforward = Dict(
         ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFeedforward(
             variable_source_problem = ActivePowerVariable,

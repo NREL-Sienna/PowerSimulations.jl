@@ -13,7 +13,9 @@ mutable struct SimulationModels
     )
         all_names = [get_name(x) for x in decision_models]
         emulation_model !== nothing && push!(all_names, get_name(emulation_model))
-        model_count = emulation_model === nothing ? length(decision_models) : length(decision_models) + 1
+        model_count =
+            emulation_model === nothing ? length(decision_models) :
+            length(decision_models) + 1
         if length(Set(all_names)) != model_count
             error("All model names must be unique: $all_names")
         end
@@ -94,7 +96,9 @@ function determine_resolutions(models::SimulationModels)
         system = get_system(model)
         resolution = PSY.get_time_series_resolution(system)
         if resolution == Dates.Millisecond(0)
-            throw(IS.InvalidValue("Resolution of model $(get_name(model)) not set correctly"))
+            throw(
+                IS.InvalidValue("Resolution of model $(get_name(model)) not set correctly"),
+            )
         end
         resolutions[get_name(model)] = IS.time_period_conversion(resolution)
     end

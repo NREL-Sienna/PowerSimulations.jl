@@ -147,11 +147,15 @@ function mock_construct_network!(problem::PSI.DecisionModel{MockOperationProblem
 end
 
 function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
-    return SimulationModels(
-        [DecisionModel(MockOperationProblem; horizon = uc_horizon, name = "UC"),
-        DecisionModel(MockOperationProblem; horizon = ed_horizon, resolution = Minute(5), name = "ED")
-        ]
-    )
+    return SimulationModels([
+        DecisionModel(MockOperationProblem; horizon = uc_horizon, name = "UC"),
+        DecisionModel(
+            MockOperationProblem;
+            horizon = ed_horizon,
+            resolution = Minute(5),
+            name = "ED",
+        ),
+    ])
 end
 
 function create_simulation_build_test_problems(
