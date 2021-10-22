@@ -44,55 +44,31 @@ function construct_device!(
     D <: AbstractStandardUnitCommitment,
     S <: PM.AbstractPowerModel,
 }
-    devices = get_available_components(T, sys)
-
-    add_variables!(container, ActivePowerVariable, devices, D())
-    add_variables!(container, ReactivePowerVariable, devices, D())
-    add_variables!(container, OnVariable, devices, D())
-    add_variables!(container, StartVariable, devices, D())
-    add_variables!(container, StopVariable, devices, D())
-
-    add_variables!(container, TimeDurationOn, devices, D())
-    add_variables!(container, TimeDurationOff, devices, D())
-
-    initial_conditions!(container, devices, D())
-
-    add_to_expression!(
+    automated_construct_device!(
         container,
-        ActivePowerBalance,
-        ActivePowerVariable,
-        devices,
+        sys,
         model,
         S,
-    )
-    add_to_expression!(
-        container,
-        ReactivePowerBalance,
-        ReactivePowerVariable,
-        devices,
-        model,
-        S,
+        variables = [
+            ActivePowerVariable,
+            ReactivePowerVariable,
+            OnVariable,
+            StartVariable,
+            StopVariable,
+            TimeDurationOn,
+            TimeDurationOff,
+        ],
+        to_expressions = [
+            (ActivePowerBalance, ActivePowerVariable),
+            (ReactivePowerBalance, ReactivePowerVariable),
+            (ActivePowerRangeExpressionLB, ActivePowerVariable),
+            (ActivePowerRangeExpressionUB, ActivePowerVariable),
+        ],
+        expressions = [ProductionCostExpression],
+        add_initial_conditions = true,
+        add_feedforward_arguments = true,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-
-    add_to_expression!(
-        container,
-        ActivePowerRangeExpressionLB,
-        ActivePowerVariable,
-        devices,
-        model,
-        S,
-    )
-    add_to_expression!(
-        container,
-        ActivePowerRangeExpressionUB,
-        ActivePowerVariable,
-        devices,
-        model,
-        S,
-    )
-    add_feedforward_arguments!(container, model, devices)
     return
 end
 

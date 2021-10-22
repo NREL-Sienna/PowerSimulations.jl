@@ -508,6 +508,7 @@ include("network_models/area_balance_model.jl")
 include("initial_conditions/initialization.jl")
 
 # Device constructors
+include("devices_models/device_constructors/common/constructor.jl")
 include("devices_models/device_constructors/common/constructor_validations.jl")
 include("devices_models/device_constructors/thermalgeneration_constructor.jl")
 include("devices_models/device_constructors/hydrogeneration_constructor.jl")
