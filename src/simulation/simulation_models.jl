@@ -13,7 +13,8 @@ mutable struct SimulationModels
     )
         all_names = [get_name(x) for x in decision_models]
         emulation_model !== nothing && push!(all_names, get_name(emulation_model))
-        if length(Set(all_names)) != length(decision_models) + 1
+        model_count = emulation_model === nothing ? length(decision_models) : length(decision_models) + 1
+        if length(Set(all_names)) != model_count
             error("All model names must be unique: $all_names")
         end
 
@@ -45,6 +46,9 @@ end
 #     error("$name is not stored")
 # end
 
+get_decision_models(models::SimulationModels) = models.decision_models
+get_emulation_model(models::SimulationModels) = models.emulation_model
+
 function determine_horizons!(models::SimulationModels)
     horizons = OrderedDict{Symbol, Int}()
     for model in models.decision_models
@@ -58,6 +62,10 @@ function determine_horizons!(models::SimulationModels)
         end
         horizons[get_name(model)] = horizon
     end
+    em = models.emulation_model
+    if em !== nothing
+        horizons[get_name(em)] = 1
+    end
     return horizons
 end
 
@@ -66,6 +74,9 @@ function determine_intervals(models::SimulationModels)
     for model in models.decision_models
         system = get_system(model)
         interval = PSY.get_forecast_interval(system)
+        if interval == Dates.Millisecond(0)
+            throw(IS.InvalidValue("Interval of model $(get_name(model)) not set correctly"))
+        end
         intervals[get_name(model)] = IS.time_period_conversion(interval)
     end
     em = models.emulation_model
@@ -77,6 +88,25 @@ function determine_intervals(models::SimulationModels)
     return intervals
 end
 
+function determine_resolutions(models::SimulationModels)
+    resolutions = OrderedDict{Symbol, Dates.Period}()
+    for model in models.decision_models
+        system = get_system(model)
+        resolution = PSY.get_time_series_resolution(system)
+        if resolution == Dates.Millisecond(0)
+            throw(IS.InvalidValue("Resolution of model $(get_name(model)) not set correctly"))
+        end
+        resolutions[get_name(model)] = IS.time_period_conversion(resolution)
+    end
+    em = models.emulation_model
+    if em !== nothing
+        emulator_system = get_system(em)
+        emulator_resolution = PSY.get_time_series_resolution(emulator_system)
+        resolutions[get_name(em)] = IS.time_period_conversion(emulator_resolution)
+    end
+    return resolutions
+end
+
 function initialize_simulation_internals!(models::SimulationModels, uuid::Base.UUID)
     for (ix, model) in enumerate(models.decision_models)
         info = SimulationInfo(ix, get_name(model), 0, false, uuid)
@@ -84,7 +114,7 @@ function initialize_simulation_internals!(models::SimulationModels, uuid::Base.U
     end
 end
 
-function get_decision_model_names(models::SimulationModels)
+function get_model_names(models::SimulationModels)
     all_names = get_name.(models.decision_models)
     em = models.emulation_model
     if em !== nothing
