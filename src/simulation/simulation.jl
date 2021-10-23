@@ -1,7 +1,3 @@
-function progress_meter_enabled()
-    return isa(stderr, Base.TTY) || (get(ENV, "CI", nothing) == "true")
-end
-
 """
     Simulation(
         steps::Int

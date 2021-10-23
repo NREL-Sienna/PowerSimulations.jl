@@ -391,6 +391,11 @@ const MOPFM = MOI.FileFormats.Model
 const TS = TimeSeries
 
 ################################################################################
+
+function progress_meter_enabled()
+    return isa(stderr, Base.TTY) || (get(ENV, "CI", nothing) == "true")
+end
+
 # Includes
 
 include("core/definitions.jl")

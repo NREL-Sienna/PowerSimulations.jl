@@ -363,7 +363,7 @@ end
 function run_impl(
     model::EmulationModel;
     optimizer = nothing,
-    enable_progress_bar = _PROGRESS_METER_ENABLED,
+    enable_progress_bar = progress_meter_enabled(),
     kwargs...,
 )
     _pre_solve_model_checks(model, optimizer)
