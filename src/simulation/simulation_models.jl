@@ -38,15 +38,21 @@ function SimulationModels(;
     return SimulationModels(decision_models, emulation_model)
 end
 
-# function get_decision_model(sim_models::SimulationModels, name)
-#     for model in sim_models.decision_models
-#         if get_name(model) == name
-#             return model
-#         end
-#     end
-#
-#     error("$name is not stored")
-# end
+function get_simulation_model(models::SimulationModels, name::Symbol)
+    for model in models.decision_models
+        if get_name(model) == name
+            return model
+        end
+    end
+    em = models.emulation_model
+    if em !== nothing
+        if get_name(em) == name
+            return em
+        end
+    end
+
+    error("Model $name not stored in SimulationModels")
+end
 
 get_decision_models(models::SimulationModels) = models.decision_models
 get_emulation_model(models::SimulationModels) = models.emulation_model

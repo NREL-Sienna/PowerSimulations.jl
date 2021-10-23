@@ -1,41 +1,53 @@
 @testset "Simulation Sequence Correct Execution Order" begin
+    models_array = [
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 48,
+            interval = Hour(24),
+            steps = 2,
+            name = "DAUC",
+        ),
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 24,
+            interval = Hour(1),
+            steps = 2 * 24,
+            name = "HAUC",
+        ),
+        DecisionModel(
+            MockOperationProblem;
+            horizon = 12,
+            interval = Minute(5),
+            steps = 2 * 24 * 12,
+            name = "ED",
+        ),
+    ]
+    set_device_model!(
+        PSI.get_template(models_array[3]),
+        ThermalStandard,
+        ThermalBasicDispatch,
+    )
     models = SimulationModels(
-        [
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 48,
-                interval = Hour(24),
-                steps = 2,
-                name = "DAUC",
-            ),
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 24,
-                interval = Hour(1),
-                steps = 2 * 24,
-                name = "HAUC",
-            ),
-            DecisionModel(
-                MockOperationProblem;
-                horizon = 12,
-                interval = Minute(5),
-                steps = 2 * 24 * 12,
-                name = "ED",
-            ),
-        ],
+        models_array,
         EmulationModel(MockEmulationProblem; resolution = Minute(1), name = "AGC"),
     )
 
     test_sequence = SimulationSequence(
         models = models,
         feedforwards = Dict(
-            "ED" => SemiContinuousFeedforward(
-                component_type = ThermalStandard,
-                source = OnVariable,
-                affected_values = [ActivePowerVariable],
-            ),
+            "ED" => [
+                SemiContinuousFeedforward(
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+            ],
         ),
         ini_cond_chronology = InterProblemChronology(),
+    )
+
+    @test !isempty(
+        PSI.get_model(PSI.get_template(models_array[3]), ThermalStandard).feedforwards,
     )
 
     @test length(findall(x -> x == 4, test_sequence.execution_order)) == 24 * 60

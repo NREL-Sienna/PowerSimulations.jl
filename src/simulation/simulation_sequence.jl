@@ -136,15 +136,25 @@ end
 #    return
 #end
 
-function _check_feedforwards(
-    models::SimulationModels,
-    feedforwards::Dict{String, <:AbstractAffectFeedforward},
-)
+function _check_feedforwards(models::SimulationModels, feedforwards)
     names = string.(get_model_names(models))
-    ff_dict = Dict{Symbol, AbstractAffectFeedforward}()
-    for (k, v) in feedforwards
-        if k ∈ names
-            ff_dict[Symbol(k)] = v
+    ff_dict = Dict{Symbol, Vector}()
+    for (model_name, model_feedforwards) in feedforwards
+        if model_name ∈ names
+            model_name_symbol = Symbol(model_name)
+            ff_dict[model_name_symbol] = model_feedforwards
+            for ff in model_feedforwards
+                sim_model = get_simulation_model(models, model_name_symbol)
+                device_model = get_model(get_template(sim_model), get_component_type(ff))
+                if device_model === nothing
+                    throw(
+                        IS.ConflictingInputsError(
+                            "Device model $(get_component_type(ff)) not found in model $model_name",
+                        ),
+                    )
+                end
+                attach_feedforward(device_model, ff)
+            end
         else
             error("Model $k not present in the SimulationModels")
         end
@@ -163,7 +173,7 @@ end
 mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Int}
     intervals::OrderedDict{Symbol, Dates.Period}
-    feedforwards::Dict{Symbol, <:AbstractAffectFeedforward}
+    feedforwards::Dict{Symbol, Vector{<:AbstractAffectFeedforward}}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}
     executions_by_problem::Dict{Symbol, Int}
@@ -172,7 +182,7 @@ mutable struct SimulationSequence
 
     function SimulationSequence(;
         models::SimulationModels,
-        feedforwards = Dict{String, AbstractAffectFeedforward}(),
+        feedforwards = Dict{String, Vector{<:AbstractAffectFeedforward}}(),
         ini_cond_chronology = InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.

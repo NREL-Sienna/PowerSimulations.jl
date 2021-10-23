@@ -7,6 +7,10 @@ function attach_feedforward(model, ff::AbstractAffectFeedforward)
     return
 end
 
+function get_component_type(ff::AbstractAffectFeedforward)
+    return get_component_type(get_optimization_container_key(ff))
+end
+
 """
 Adds an upper bound constraint to a variable.
 """
