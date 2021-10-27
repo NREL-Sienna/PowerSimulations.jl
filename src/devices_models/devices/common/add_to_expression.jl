@@ -406,7 +406,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
     V <: PSY.DCBranch,
-    W <: AbstractDCLineFormulation,
+    W <: AbstractBranchFormulation,
     X <: PM.AbstractActivePowerModel,
 }
     var = get_variable(container, U(), V)
