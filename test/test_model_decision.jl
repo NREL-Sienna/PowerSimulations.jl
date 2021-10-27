@@ -201,16 +201,15 @@ end
         @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint__System])
     end
 
-    # system = PSI.get_system(model)
-    # params = PSI.get_parameter_values(container)[:P__max_active_power__PowerLoad]
-    # param_vals = PSI.axis_array_to_dataframe(params.parameter_array)
-    # param_mult = PSI.axis_array_to_dataframe(params.multiplier_array)
-    # for load in get_components(PowerLoad, system)
-    #     name = get_name(load)
-    #     vals = get_time_series_values(Deterministic, load, "max_active_power")
-    #     @test all([-1 * x == get_max_active_power(load) for x in param_mult[!, name]])
-    #     @test all(vals .== param_vals[!, name])
-    # end
+    system = PSI.get_system(model)
+    parameter_key = PSI.ParameterKey(ActivePowerTimeSeriesParameter, PSY.PowerLoad)
+    param_vals = PSI.read_parameters(container)[parameter_key]
+    for load in get_components(PowerLoad, system)
+        name = get_name(load)
+        vals = get_time_series_values(Deterministic, load, "max_active_power")
+        vals = vals .* get_max_active_power(load) * -1.0
+        @test all(vals .== param_vals[!, name])
+    end
 
     res = ProblemResults(model)
     @test length(list_variable_names(res)) == 1
