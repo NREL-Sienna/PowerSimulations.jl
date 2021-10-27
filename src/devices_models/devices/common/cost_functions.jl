@@ -118,7 +118,7 @@ function has_on_variable(
     variable_type = OnVariable,
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
-    return !(get(container.variables, VariableKey(variable_type, T), nothing) === nothing)
+    return haskey(container.variables, VariableKey(variable_type, T))
 end
 
 function has_on_parameter(
@@ -128,19 +128,15 @@ function has_on_parameter(
     if !built_for_recurrent_solves(container)
         return false
     end
+    # get_parameter can't be used because the default behavior is to error if variables is not present
     return haskey(container.parameters, ParameterKey(OnStatusParameter, T))
 end
 
-# TODO: Function is broken
-function _get_pwl_variables_container(container::OptimizationContainer)
-    if !haskey(container.variables, :PWL_cost_vars)
-        contents = Dict{Tuple{String, Int, Int}, Any}()
-        container = JuMP.Containers.SparseAxisArray(contents)
-        # assign_variable!(container, :PWL_cost_vars, container)
-    else
-        container = get_variable(container, :PWL_cost_vars)
-    end
-    return container
+# TODO: Using this function disables registering the PWL variables. This is not a big problem
+# Since PWL vars aren't stored by default
+function _get_pwl_variables_container(::OptimizationContainer)
+    contents = Dict{Tuple{String, Int, Int}, Any}()
+    return JuMP.Containers.SparseAxisArray(contents)
 end
 
 function slope_convexity_check(slopes::Vector{Float64})
@@ -240,8 +236,10 @@ function pwl_gencost_sos!(
     time_period::Int,
 )
     base_power = get_base_power(container)
-    var_key = VariableKey(spec.variable_type, spec.component_type)
-    variable = get_variable(container, var_key)[component_name, time_period]
+    variable = get_variable(container, spec.variable_type, spec.component_type)[
+        component_name,
+        time_period,
+    ]
     export_pwl_vars = get_export_pwl_vars(container.settings)
     @debug export_pwl_vars _group = LOG_GROUP_COST_FUNCTIONS
     total_gen_cost = JuMP.AffExpr(0.0)
@@ -257,9 +255,11 @@ function pwl_gencost_sos!(
         @debug "Using Piecewise Linear cost function with parameter $(param_key)" _group =
             LOG_GROUP_COST_FUNCTIONS
     elseif spec.sos_status == SOSStatusVariable.VARIABLE
-        var_key = VariableKey(OnVariable, spec.component_type)
-        bin = get_variable(container, var_key)[component_name, time_period]
-        @debug "Using Piecewise Linear cost function with variable $(var_key)" _group =
+        bin = get_variable(container, OnVariable, spec.component_type)[
+            component_name,
+            time_period,
+        ]
+        @debug "Using Piecewise Linear cost function with variable $(OnVariable)" _group =
             LOG_GROUP_COST_FUNCTIONS
     else
         @assert false
@@ -270,6 +270,7 @@ function pwl_gencost_sos!(
     for i in 1:length(cost_data)
         pwlvars[i] = JuMP.@variable(
             container.JuMPmodel,
+            # TODO: Redefine the base_name for PWL vars.
             # base_name = "{$(variable)}_{sos}",
             start = 0.0,
             lower_bound = 0.0,
@@ -327,8 +328,10 @@ function pwl_gencost_linear!(
     time_period::Int,
 )
     base_power = get_base_power(container)
-    var_key = VariableKey(spec.variable_type, spec.component_type)
-    variable = get_variable(container, var_key)[component_name, time_period]
+    variable = get_variable(container, spec.variable_type, spec.component_type)[
+        component_name,
+        time_period,
+    ]
     export_pwl_vars = get_export_pwl_vars(container.settings)
     @debug export_pwl_vars _group = LOG_GROUP_COST_FUNCTIONS
     total_gen_cost = JuMP.AffExpr(0.0)
@@ -338,6 +341,7 @@ function pwl_gencost_linear!(
     for i in 1:length(cost_data)
         pwlvar = JuMP.@variable(
             container.JuMPmodel,
+            # TODO: Redefine the base_name for PWL vars.
             # base_name = "{$(variable)}_{pwl_$(i)}",
             lower_bound = 0.0,
             upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i] / base_power
@@ -446,16 +450,6 @@ function add_to_cost!(
     end
 
     return
-end
-
-function check_single_start(container::OptimizationContainer, spec::AddCostSpec)
-    for (st, var_type) in enumerate(START_VARIABLES)
-        var_name = VariableKey(var_type, spec.component_type)
-        if !haskey(container.variables, var_key)
-            return true
-        end
-    end
-    return false
 end
 
 """
