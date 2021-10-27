@@ -189,10 +189,15 @@ mutable struct SimulationSequence
         intervals = determine_intervals(models)
         horizons = determine_horizons!(models)
         resolutions = determine_resolutions(models)
-        check_simulation_chronology(horizons, intervals, resolutions)
+
+        if length(models.decision_models) > 1
+            check_simulation_chronology(horizons, intervals, resolutions)
+        end
+
         if length(models.decision_models) == 1
             ini_cond_chronology = IntraProblemChronology()
         end
+
         execution_order = _get_execution_order_vector(intervals)
         executions_by_problem = _get_num_executions_by_problem(models, execution_order)
         sequence_uuid = IS.make_uuid()
