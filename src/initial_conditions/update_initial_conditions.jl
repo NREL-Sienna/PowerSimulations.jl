@@ -70,7 +70,8 @@ function update_initial_conditions!(
 } where {S <: Union{Float64, PJ.ParameterRef}}
     index = store.data.last_recorded_row
     for ic in ic_vector
-        values = get_variable_value(store, PowerAboveMinimumVariable(), get_component_type(ic))
+        values =
+            get_variable_value(store, PowerAboveMinimumVariable(), get_component_type(ic))
         set_ic_quantity!(ic, values[index, get_component_name(ic)])
     end
     return
