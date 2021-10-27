@@ -141,6 +141,7 @@ function construct_network!(
         )
     end
 
+    # TODO: need to implement slacks for PowerModels with losses
     # get_use_slacks(model) && add_slacks!(container, T)
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -168,7 +169,7 @@ function construct_network!(
         )
     end
 
-    # need to implement slacks for PM constraint_dcline_power_losses
+    # TODO: need to implement slacks PM.AbstractBFModel
     # get_use_slacks(model) && add_slacks!(container, T)
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -195,7 +196,7 @@ function construct_network!(
         )
     end
 
-    # need to implement slacks for PM constraint_dcline_power_losses
+    # TODO: need to implement slacks for PM.AbstractIVRModel
     # get_use_slacks(model) && add_slacks!(container, T)
 
     @debug "Building the $T network with $instantiate_model method" _group =
