@@ -91,7 +91,7 @@ function OptimizationContainer(
     )
 end
 
-# This is broken with the addition of the default_time_series field
+# TODO: This constructor need to be re-enabled for the deserialization of OptimizationContainer from JSON
 # function OptimizationContainer(filename::AbstractString)
 #     return OptimizationContainer(
 #         jump_model === nothing ? _make_jump_model(settings) :
@@ -170,13 +170,13 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
         )
     end
 
-    #if get_optimizer_log_print(settings)
-    #    JuMP.unset_silent(JuMPmodel)
-    #    @debug "optimizer unset to silent"
-    #else
-    #    JuMP.set_silent(JuMPmodel)
-    #    @debug "optimizer set to silent"
-    #end
+    if get_optimizer_log_print(settings)
+        JuMP.unset_silent(JuMPmodel)
+        @debug "optimizer unset to silent"
+    else
+        JuMP.set_silent(JuMPmodel)
+        @debug "optimizer set to silent"
+    end
     return JuMPmodel
 end
 
