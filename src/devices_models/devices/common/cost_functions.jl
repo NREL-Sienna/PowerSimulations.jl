@@ -236,7 +236,7 @@ function pwl_gencost_sos!(
     time_period::Int,
 )
     base_power = get_base_power(container)
-    variable = get_variable(container, spec.variable_type, spec.component_type)[
+    variable = get_variable(container, spec.variable_type(), spec.component_type)[
         component_name,
         time_period,
     ]
@@ -255,7 +255,7 @@ function pwl_gencost_sos!(
         @debug "Using Piecewise Linear cost function with parameter $(param_key)" _group =
             LOG_GROUP_COST_FUNCTIONS
     elseif spec.sos_status == SOSStatusVariable.VARIABLE
-        bin = get_variable(container, OnVariable, spec.component_type)[
+        bin = get_variable(container, OnVariable(), spec.component_type)[
             component_name,
             time_period,
         ]
@@ -328,7 +328,7 @@ function pwl_gencost_linear!(
     time_period::Int,
 )
     base_power = get_base_power(container)
-    variable = get_variable(container, spec.variable_type, spec.component_type)[
+    variable = get_variable(container, spec.variable_type(), spec.component_type)[
         component_name,
         time_period,
     ]
