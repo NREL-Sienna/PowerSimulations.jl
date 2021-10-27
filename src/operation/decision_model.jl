@@ -37,10 +37,10 @@ OpModel = DecisionModel(MockOperationProblem, template, system)
 - `horizon::Int`: Manually specify the length of the forecast Horizon
 - `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
-- `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default to false.
+- `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default is false.
 - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
-- `optimizer_log_print::Bool`: True to print the optimizer solve log. Default to false.
-- `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default to false.
+- `optimizer_log_print::Bool`: True to print the optimizer solve log. Default is false.
+- `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default is false.
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
@@ -317,7 +317,7 @@ function calculate_dual_variables!(model::DecisionModel)
     return
 end
 
-function solve_impl(model::DecisionModel; optimizer = nothing, kwargs...)
+function solve_impl!(model::DecisionModel; optimizer = nothing, kwargs...)
     _pre_solve_model_checks(model, optimizer)
     container = get_optimization_container(model)
     solve_impl!(container, get_system(model), get_solve_timed_log(model))
@@ -369,7 +369,7 @@ function solve!(
     try
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
-                solve_impl(model; kwargs...)
+                solve_impl!(model; kwargs...)
                 # results requires RunStatus.SUCCESSFUL to run
                 set_run_status!(model, RunStatus.SUCCESSFUL)
             end

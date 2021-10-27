@@ -12,7 +12,7 @@ end
 """
     EconomicDispatchProblem(system::PSY.System; kwargs...)
 
-Creates an `ProblemTemplate` with default DeviceModels for an EconomicDispatch
+Creates a `ProblemTemplate` with default DeviceModels for an EconomicDispatch
 problem. Uses the template to create an `DecisionProblem`.
 
 # Example
@@ -33,7 +33,7 @@ function EconomicDispatchProblem(system::PSY.System; kwargs...)
     model = DecisionModel(EconomicDispatchProblem, template, system; problem_kwargs...)
     res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
-        error("The EconomicDispatch problem didn't build succesfully")
+        error("The EconomicDispatch problem didn't build successfully")
     end
     return model
 end
@@ -41,7 +41,7 @@ end
 """
     UnitCommitmentProblem(system::PSY.System; kwargs...)
 
-Creates an `ProblemTemplate` with default DeviceModels for a Unit Commitment
+Creates a `ProblemTemplate` with default DeviceModels for a Unit Commitment
 problem. Uses the template to create an `DecisionProblem`.
 
 # Example
@@ -62,7 +62,7 @@ function UnitCommitmentProblem(system::PSY.System; kwargs...)
     model = DecisionModel(UnitCommitmentProblem, template, system; problem_kwargs...)
     res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
-        error("The EconomicDispatch problem didn't build succesfully")
+        error("The EconomicDispatch problem didn't build successfully")
     end
     return model
 end
@@ -70,7 +70,7 @@ end
 """
     AGCReserveDeployment(system::PSY.System; kwargs...)
 
-Creates an `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyoment Problem.
+Creates a `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyoment Problem.
 Uses the template to create an `DecisionProblem`.
 
 # Example
@@ -88,7 +88,7 @@ function AGCReserveDeployment(system::PSY.System; kwargs...)
     model = DecisionModel(UnitCommitmentProblem, template, system; problem_kwargs...)
     res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
-        error("The EconomicDispatch problem didn't build succesfully")
+        error("The EconomicDispatch problem didn't build successfully")
     end
     return model
 end
@@ -96,7 +96,7 @@ end
 """
     run_unit_commitment(system::PSY.System; kwargs...)
 
-Creates an `ProblemTemplate` with default DeviceModels for a Unit Commitment
+Creates a `ProblemTemplate` with default DeviceModels for a Unit Commitment
 problem. Uses the template to create an `DecisionProblem`. Solves the created operations problem.
 
 # Example
@@ -122,7 +122,7 @@ end
 """
     run_economic_dispatch(system::PSY.System; kwargs...)
 
-Creates an `ProblemTemplate` with default DeviceModels for an EconomicDispatch
+Creates a `ProblemTemplate` with default DeviceModels for an EconomicDispatch
 problem. Uses the template to create an `DecisionProblem`.
 
 # Example
