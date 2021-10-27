@@ -13,7 +13,7 @@ function make_reactive_power_constraints_inputs(
 end
 
 """
-Default implementation to add active_power constraints.
+Default implementation to add reactive_power constraints.
 
 Users of this function must implement a method for
 [`make_reactive_power_constraints_inputs`](@ref) for their specific types.
@@ -26,8 +26,6 @@ function reactive_power_constraints!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     use_parameters = built_for_recurrent_solves(container)
-    # TODO: this function does not define use_forecasts
-    @assert !(use_parameters && !use_forecasts)
     inputs =
         make_reactive_power_constraints_inputs(T, U, PM.AbstractPowerModel, use_parameters)
     device_range_constraints!(container, devices, model, feedforward, inputs)
