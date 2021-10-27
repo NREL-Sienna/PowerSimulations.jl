@@ -438,7 +438,6 @@ function run!(
         Logging.with_logger(logger) do
             TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
                 run_impl(model; kwargs...)
-                # results requires RunStatus.SUCCESSFUL to run
                 set_run_status!(model, RunStatus.SUCCESSFUL)
             end
             if serialize
@@ -457,6 +456,7 @@ function run!(
         end
     catch e
         @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
+        # TODO: Here run IIS if failed
         set_run_status!(model, RunStatus.FAILED)
         return get_run_status(model)
     finally

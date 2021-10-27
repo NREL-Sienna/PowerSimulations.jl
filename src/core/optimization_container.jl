@@ -492,7 +492,6 @@ function solve_impl!(
         @timed calculate_aux_variables!(container, system)
     _, log[:timed_calculate_dual_variables] =
         @timed calculate_dual_variables!(container, system)
-    # TODO: Run IIS here if supported by the solver
     return
 end
 

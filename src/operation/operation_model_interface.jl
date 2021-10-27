@@ -133,6 +133,10 @@ function initialize!(model::OperationModel)
     return
 end
 
+# TODO: Document requirements for solve_impl
+# function solve_impl!(model::OperationModel)
+# end
+
 function build_impl!(model::OperationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
         try
