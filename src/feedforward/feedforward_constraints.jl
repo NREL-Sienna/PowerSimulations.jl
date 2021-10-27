@@ -4,7 +4,7 @@ function add_feedforward_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     for ff in get_feedforwards(model)
-        @debug "constraints" ff V
+        @debug "constraints" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         add_feedforward_constraints!(container, model, devices, ff)
     end
     return
@@ -16,7 +16,7 @@ function add_feedforward_constraints!(
     service::V,
 ) where {V <: PSY.AbstractReserve}
     for ff in get_feedforwards(model)
-        @debug "constraints" ff V
+        @debug "constraints" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         contributing_devices = get_contributing_devices(model)
         add_feedforward_constraints!(container, model, contributing_devices, ff)
     end
@@ -71,7 +71,7 @@ function add_feedforward_constraints!(
         # # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
         for v in variable
             if JuMP.has_lower_bound(v)
-                @debug "lb reset" v
+                @debug "lb reset" v _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
                 JuMP.set_lower_bound(v, 0.0)
             end
         end

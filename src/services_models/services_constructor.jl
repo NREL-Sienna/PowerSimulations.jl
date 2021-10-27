@@ -55,7 +55,7 @@ function populate_contributing_devices!(template, sys::PSY.System)
         service = PSY.get_component(S, sys, get_service_name(service_model))
         if service === nothing
             @warn "The data doesn't include services of type $(S) and name $(get_service_name(service_model)), consider changing the service models" _group =
-                :ConstructGroup
+                LOG_GROUP_SERVICE_CONSTUCTORS
             continue
         end
         contributing_devices_ =
@@ -66,7 +66,7 @@ function populate_contributing_devices!(template, sys::PSY.System)
         ]
         if isempty(contributing_devices)
             @warn "The contributing devices for service $(PSY.get_name(service)) is empty, consider removing the service from the system" _group =
-                :ConstructGroup
+                LOG_GROUP_SERVICE_CONSTUCTORS
             continue
         end
         map_contributing_devices_by_type!(service_model, contributing_devices)

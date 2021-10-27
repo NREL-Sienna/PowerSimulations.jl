@@ -67,7 +67,7 @@ function log_values(settings::Settings)
         push!(text, "$name = $val")
     end
 
-    @debug "Settings: $(join(text, ", "))"
+    @debug "Settings: $(join(text, ", "))" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
 end
 
 function copy_for_serialization(settings::Settings)

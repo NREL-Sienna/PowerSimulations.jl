@@ -96,7 +96,7 @@ function construct_device!(
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
-    @debug "construct_device" _group = :BranchGroup
+    @debug "construct_device" _group = LOG_GROUP_BRANCH_CONSTRUCTIONS
 
     devices = get_available_components(B, sys)
     add_constraints!(container, RateLimitConstraint, devices, model, S)
@@ -331,7 +331,7 @@ function construct_device!(
     U <: AbstractDCLineFormulation,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
-    @debug "construct_device" _group = :BranchGroup
+    @debug "construct_device" _group = LOG_GROUP_BRANCH_CONSTRUCTIONS
 
     devices = get_available_components(B, sys)
 

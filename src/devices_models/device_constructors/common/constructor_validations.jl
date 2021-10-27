@@ -5,8 +5,7 @@ function validate_available_devices(
     devices = get_available_components(T, system)
     if isempty(devices)
         @warn "The data doesn't include devices of type $(T), consider changing the device models" _group =
-            :ConstructGroup
-
+            LOG_GROUP_MODELS_VALIDATION
         return false
     end
     PSY.check_components(system, devices)
@@ -21,7 +20,7 @@ function validate_service!(
     service = PSY.get_component(S, sys, get_service_name(model))
     if service === nothing
         @warn "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
-            :ConstructGroup
+            LOG_GROUP_MODELS_VALIDATION
         return false
     end
 
@@ -36,7 +35,7 @@ function validate_service!(
     ]
     if isempty(contributing_devices)
         @warn "The contributing devices for service $(PSY.get_name(service)) is empty, consider removing the service from the system" _group =
-            :ConstructGroup
+            LOG_GROUP_MODELS_VALIDATION
         return false
     end
 
@@ -52,7 +51,7 @@ function validate_services!(
     service = PSY.get_component(S, sys, get_service_name(model))
     if service === nothing
         @warn "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
-            :ConstructGroup
+            LOG_GROUP_MODELS_VALIDATION
         return false
     end
 
@@ -60,7 +59,7 @@ function validate_services!(
     contributing_services = PSY.get_contributing_services(s)
     if isempty(contributing_services)
         @warn "The contributing services for group service $(PSY.get_name(service)) is empty, consider removing the group service from the system" _group =
-            :ConstructGroup
+            LOG_GROUP_MODELS_VALIDATION
         return false
     end
 
