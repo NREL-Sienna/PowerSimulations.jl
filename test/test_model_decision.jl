@@ -95,6 +95,7 @@ end
     @test get_variable_index(model, length(var_index) + 1) === nothing
 end
 
+# TODO: Enable for test coverage later
 # @testset "Test print methods" begin
 #     template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 #     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
