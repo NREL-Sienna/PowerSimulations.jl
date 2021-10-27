@@ -26,6 +26,7 @@ get_variable_lower_bound(
     d::PSY.DCBranch,
     ::AbstractDCLineFormulation,
 ) = max(PSY.get_active_power_limits_from(d).min, PSY.get_active_power_limits_to(d).min)
+
 get_variable_upper_bound(
     ::FlowActivePowerVariable,
     d::PSY.DCBranch,
@@ -115,15 +116,6 @@ function add_constraints!(
             container.JuMPmodel,
             min_rate <= var[PSY.get_name(d), t] <= max_rate
         )
-        # Needs refactoring. This add to expression model doesn't work anymore
-        # add_to_expression!(
-        #     container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)],
-        #     PSY.get_number(PSY.get_arc(d).to),
-        #     t,
-        #     var[PSY.get_name(d), t],
-        #     -PSY.get_loss(d).l1,
-        #     -PSY.get_loss(d).l0,
-        # )
     end
     return
 end

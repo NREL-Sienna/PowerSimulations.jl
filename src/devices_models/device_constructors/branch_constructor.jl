@@ -237,7 +237,12 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{B, <:AbstractDCLineFormulation},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel} end
+) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
+    # TODO: Review construction process of DC Lines. These functions wont work properly
+    # Since the variable FlowActivePowerVariable hasn't been created yet.
+    # devices = get_available_components(T, sys)
+    # add_to_expression!(container, ActivePowerBalance, devices, model, S)
+end
 
 function construct_device!(
     container::OptimizationContainer,

@@ -400,6 +400,35 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerVariable,
+    V <: PSY.DCBranch,
+    W <: AbstractDCLineFormulation,
+    X <: PM.AbstractActivePowerModel,
+}
+    var = get_variable(container, U(), V)
+    expression = get_expression(container, T(), X)
+    for d in devices
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            add_to_jump_expression!(
+                expression[PSY.get_number(PSY.get_arc(d).to), t],
+                flow_variable,
+                -PSY.get_loss(d).l1,
+                -PSY.get_loss(d).l0,
+            )
+        end
+    end
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
