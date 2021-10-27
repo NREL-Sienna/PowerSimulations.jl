@@ -4,7 +4,7 @@ function add_feedforward_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     for ff in get_feedforwards(model)
-        @debug "constraints" ff V
+        @debug "constraints" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         add_feedforward_constraints!(container, model, devices, ff)
     end
     return
@@ -16,7 +16,7 @@ function add_feedforward_constraints!(
     service::V,
 ) where {V <: PSY.AbstractReserve}
     for ff in get_feedforwards(model)
-        @debug "constraints" ff V
+        @debug "constraints" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         contributing_devices = get_contributing_devices(model)
         add_feedforward_constraints!(container, model, contributing_devices, ff)
     end
@@ -66,12 +66,12 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
-        @assert axes[1] == [PSY.get_name(d) for d in devices]
-        @assert axes[2] == time_steps
+        IS.@assert_op axes[1] == [PSY.get_name(d) for d in devices]
+        IS.@assert_op axes[2] == time_steps
         # # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
         for v in variable
             if JuMP.has_lower_bound(v)
-                @debug "lb reset" v
+                @debug "lb reset" v _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
                 JuMP.set_lower_bound(v, 0.0)
             end
         end
@@ -210,7 +210,7 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
-        @assert set_name == [PSY.get_name(d) for d in contributing_devices]
+        IS.@assert_op set_name == [PSY.get_name(d) for d in contributing_devices]
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)

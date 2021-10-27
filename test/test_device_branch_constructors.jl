@@ -260,6 +260,7 @@ end
 end
 
 #= This Test is Broken to do a missing implementation of add_variable
+# TODO: re-enable once DC Line modeling is resolved
 @testset "DC Power Flow Models for HVDCLine Dispatch and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_names = [
         :RateLimitFT__Transformer2W,

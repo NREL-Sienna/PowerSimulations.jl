@@ -135,7 +135,6 @@ function add_constraints!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     initial_time = get_initial_time(container)
-    @debug initial_time
     time_steps = get_time_steps(container)
     names = [PSY.get_name(s) for s in [service]]
     name = PSY.get_name(service)

@@ -149,30 +149,3 @@ function _gen_parameter_update_event(
         problem_number,
     )
 end
-
-# Old update parameter code for reference
-#=
-"""Updates the forecast parameter value"""
-function update_parameter!(
-    param_reference::UpdateRef{JuMP.VariableRef},
-    container::ParameterContainer,
-    model::DecisionModel,
-    sim::Simulation,
-)
-    param_array = get_parameter_array(container)
-    simulation_info = get_simulation_info(model)
-    for (k, chronology) in simulation_info.chronolgy_dict
-        source_model = get_model(sim, k)
-        feedforward_update!(
-            problem,
-            source_model,
-            chronology,
-            param_reference,
-            param_array,
-            get_current_time(sim),
-        )
-    end
-
-    return
-end
-=#

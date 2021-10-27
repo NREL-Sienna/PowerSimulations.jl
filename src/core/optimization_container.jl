@@ -91,7 +91,7 @@ function OptimizationContainer(
     )
 end
 
-# This is broken with the addition of the default_time_series field
+# TODO: This constructor need to be re-enabled for the deserialization of OptimizationContainer from JSON
 # function OptimizationContainer(filename::AbstractString)
 #     return OptimizationContainer(
 #         jump_model === nothing ? _make_jump_model(settings) :
@@ -172,17 +172,18 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
 
     if get_optimizer_log_print(settings)
         JuMP.unset_silent(JuMPmodel)
-        @debug "optimizer unset to silent"
+        @debug "optimizer unset to silent" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     else
         JuMP.set_silent(JuMPmodel)
-        @debug "optimizer set to silent"
+        @debug "optimizer set to silent" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     end
     return JuMPmodel
 end
 
 function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Settings)
     if !haskey(JuMPmodel.ext, :ParameterJuMP)
-        @debug("Model doesn't have Parameters enabled. Parameters will be enabled")
+        @debug "Model doesn't have Parameters enabled. Parameters will be enabled" _group =
+            LOG_GROUP_OPTIMIZATION_CONTAINER
         PJ.enable_parameters(JuMPmodel)
         JuMP.set_optimizer(JuMPmodel, optimizer)
     end
@@ -190,13 +191,14 @@ function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Se
 end
 
 function _make_jump_model(settings::Settings)
-    @debug "Instantiating the JuMP model"
+    @debug "Instantiating the JuMP model" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     optimizer = get_optimizer(settings)
     if get_direct_mode_optimizer(settings)
         JuMPmodel = JuMP.direct_model(MOI.instantiate(optimizer))
     elseif optimizer === nothing
         JuMPmodel = JuMP.Model()
-        @debug "The optimization model has no optimizer attached"
+        @debug "The optimization model has no optimizer attached" _group =
+            LOG_GROUP_OPTIMIZATION_CONTAINER
     else
         JuMPmodel = JuMP.Model(optimizer)
     end
@@ -248,7 +250,7 @@ end
 function add_to_setting_ext!(container::OptimizationContainer, key::String, value)
     settings = get_settings(container)
     push!(get_ext(settings), key => value)
-    @debug "Add to settings ext" key value
+    @debug "Add to settings ext" key value _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     return
 end
 
@@ -360,7 +362,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     # Order is required
     for device_model in values(template.devices)
         @debug "Building Arguments for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
-            :ConstructGroup
+            LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             if validate_available_devices(device_model, sys)
                 construct_device!(
@@ -371,7 +373,8 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
                     transmission,
                 )
             end
-            @debug get_problem_size(container)
+            @debug "Problem size:" get_problem_size(container) _group =
+                LOG_GROUP_OPTIMIZATION_CONTAINER
         end
     end
 
@@ -383,12 +386,11 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             get_service_models(template),
             get_device_models(template),
         )
-        #  TODO: Add dual variable container for services
     end
 
     for branch_model in values(template.branches)
         @debug "Building Arguments for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
-            :ConstructGroup
+            LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
             if validate_available_devices(branch_model, sys)
                 construct_device!(
@@ -399,7 +401,8 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
                     transmission_model,
                 )
             end
-            @debug get_problem_size(container)
+            @debug "Problem size:" get_problem_size(container) _group =
+                LOG_GROUP_OPTIMIZATION_CONTAINER
         end
     end
 
@@ -415,7 +418,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
 
     for device_model in values(template.devices)
         @debug "Building Model for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
-            :ConstructGroup
+            LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             if validate_available_devices(device_model, sys)
                 construct_device!(
@@ -426,20 +429,23 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
                     transmission,
                 )
             end
-            @debug get_problem_size(container)
+            @debug "Problem size:" get_problem_size(container) _group =
+                LOG_GROUP_OPTIMIZATION_CONTAINER
         end
     end
 
     # This function should be called after construct_device ModelConstructStage
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
-        @debug "Building $(transmission) network formulation"
+        @debug "Building $(transmission) network formulation" _group =
+            LOG_GROUP_OPTIMIZATION_CONTAINER
         construct_network!(container, sys, transmission_model, template)
-        @debug get_problem_size(container)
+        @debug "Problem size:" get_problem_size(container) _group =
+            LOG_GROUP_OPTIMIZATION_CONTAINER
     end
 
     for branch_model in values(template.branches)
         @debug "Building Model for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
-            :ConstructGroup
+            LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
             if validate_available_devices(branch_model, sys)
                 construct_device!(
@@ -450,15 +456,17 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
                     transmission_model,
                 )
             end
-            @debug get_problem_size(container)
+            @debug "Problem size:" get_problem_size(container) _group =
+                LOG_GROUP_OPTIMIZATION_CONTAINER
         end
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Objective" begin
-        @debug "Building Objective"
+        @debug "Building Objective" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
         JuMP.@objective(container.JuMPmodel, MOI.MIN_SENSE, container.cost_function)
     end
-    @debug "Total operation count $(container.JuMPmodel.operator_counter)"
+    @debug "Total operation count $(container.JuMPmodel.operator_counter)" _group =
+        LOG_GROUP_OPTIMIZATION_CONTAINER
 
     check_optimization_container(container)
     return
@@ -484,7 +492,6 @@ function solve_impl!(
         @timed calculate_aux_variables!(container, system)
     _, log[:timed_calculate_dual_variables] =
         @timed calculate_dual_variables!(container, system)
-    # TODO: Run IIS here if supported by the solver
     return
 end
 
@@ -616,7 +623,6 @@ function get_variable(container::OptimizationContainer, key::VariableKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_variable_keys(container))
-        @error "$name is not stored" sort!(keys)
         throw(IS.InvalidValue("variable $name is not stored"))
     end
     return var
@@ -662,7 +668,6 @@ function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
     if aux === nothing
         name = encode_key(key)
         keys = encode_key.(get_variable_keys(container))
-        @error "$name is not stored" sort!(keys)
         throw(IS.InvalidValue("Auxiliary variable $name is not stored"))
     end
     return aux
@@ -743,7 +748,6 @@ function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_constraint_keys(container))
-        @error "$name is not stored" (keys)
         throw(IS.InvalidValue("constraint $name is not stored"))
     end
 
@@ -847,7 +851,6 @@ function get_parameter(container::OptimizationContainer, key::ParameterKey)
     if param_container === nothing
         name = encode_key(key)
         keys = encode_key.(get_parameter_keys(container))
-        @error "$name is not stored" keys
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
     return param_container
@@ -978,7 +981,6 @@ end
 function get_expression(container::OptimizationContainer, key::ExpressionKey)
     var = get(container.expressions, key, nothing)
     if var === nothing
-        @error "$key is not stored" (get_expression_keys(container))
         throw(IS.InvalidValue("constraint $key is not stored"))
     end
 
@@ -1057,7 +1059,7 @@ function add_initial_condition_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     ic_key = ICKey(T, U, meta)
-    @debug "add_initial_condition_container" ic_key
+    @debug "add_initial_condition_container" ic_key _group = LOG_GROUP_SERVICE_CONSTUCTORS
     return _add_initial_condition_container!(container, ic_key, length(axs))
 end
 
@@ -1089,7 +1091,7 @@ function get_initial_conditions_keys(container::OptimizationContainer)
     return collect(keys(container.initial_conditions))
 end
 
-# TODO: This code is very simular to the in_memory_model_store function in line 100. Maybe we can do some consolidation
+# TODO: This code is very similar to the in_memory_model_store function in line 100. Maybe we can do some consolidation
 function write_initial_conditions_data(
     container::OptimizationContainer,
     ic_container::OptimizationContainer,
@@ -1106,7 +1108,8 @@ function write_initial_conditions_data(
         isempty(ic_container_dict) && continue
         ic_data_dict = getfield(get_initial_conditions_data(container), field)
         for (key, field_container) in ic_container_dict
-            @debug "Adding $(encode_key_as_string(key)) to InitialConditionsData"
+            @debug "Adding $(encode_key_as_string(key)) to InitialConditionsData" _group =
+                LOG_GROUP_SERVICE_CONSTUCTORS
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else

@@ -5,8 +5,6 @@ warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
     get_optimization_container(model).built_for_recurrent_solves
-#get_caches(x::OperationModel) =
-#    built_for_recurrent_solves(x) ? get_simulation_info(x).caches : nothing
 get_constraints(model::OperationModel) = get_internal(model).container.constraints
 get_execution_count(model::OperationModel) = get_internal(model).execution_count
 get_executions(model::OperationModel) = get_internal(model).executions
@@ -89,6 +87,7 @@ set_output_dir!(model::OperationModel, path::AbstractString) =
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
     internal.execution_count += 1
+    # TODO: Will be refactored when simulation is re-enabled
     # Reset execution count at the end of step
     #if get_execution_count(model) == get_executions(model)
     #    internal.execution_count = 0
@@ -102,7 +101,8 @@ function build_initial_conditions!(model::OperationModel)
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
         if requires_init
-            @debug "initial_conditions required for $device_type"
+            @debug "initial_conditions required for $device_type" _group =
+                LOG_GROUP_BUILD_INITIAL_CONDITIONS
             build_initial_conditions_problem!(model)
             break
         end
@@ -132,6 +132,10 @@ function initialize!(model::OperationModel)
     write_initial_conditions_data(container, model.internal.ic_model_container)
     return
 end
+
+# TODO: Document requirements for solve_impl
+# function solve_impl!(model::OperationModel)
+# end
 
 function build_impl!(model::OperationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin

@@ -1,7 +1,7 @@
 # So far just the EmulationStore is implemented.
 
 """
-Stores results data for one EmulationModel
+Stores results data for one DecisionModel
 """
 mutable struct DecisionModelOptimizerResults <: AbstractModelOptimizerResults
     duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
@@ -77,7 +77,7 @@ function Base.empty!(
     store::InMemoryModelStore{T},
 ) where {T <: AbstractModelOptimizerResults}
     store.data = T()
-    @debug "Emptied the store with data T"
+    @debug "Emptied the store with data $T" _group = LOG_GROUP_IN_MEMORY_MODEL_STORE
 end
 
 Base.isopen(store::InMemoryModelStore) = true
@@ -94,32 +94,19 @@ function read_optimizer_stats(store::InMemoryModelStore)
     return DataFrames.DataFrame(stats)
 end
 
-# Not sure if needed
-# function open_store(
-#     func::Function,
-#     ::Type{InMemoryModelStore},
-#     ::AbstractString,  # Unused. Need to match the interface.
-#     mode = nothing,
-#     filename = nothing,
-# )
-#     store = InMemoryModelStore()
-#     return func(store)
-# end
-
 function initialize_storage!(
     store::InMemoryModelStore,
     container::OptimizationContainer,
     params::ModelStoreParams,
 )
-    @debug "initialize_storage"
-
     num_of_executions = get_num_executions(params)
     for type in STORE_CONTAINERS
         field_containers = getfield(container, type)
         store_container = getfield(store.data, type)
         for (key, field_container) in field_containers
             container_axes = axes(field_container)
-            @debug "Adding $(encode_key_as_string(key)) to InMemoryModelStore"
+            @debug "Adding $(encode_key_as_string(key)) to InMemoryModelStore" _group =
+                LOG_GROUP_IN_MEMORY_MODEL_STORE
             if length(container_axes) == 2
                 if type == STORE_CONTAINER_PARAMETERS
                     column_names = string.(get_parameter_array(field_container).axes[1])
@@ -140,7 +127,8 @@ function initialize_storage!(
     end
 
     store.optimizer_stats = OrderedDict{Dates.DateTime, OptimizerStats}()
-    @debug "Initialized optimizer_stats_datasets $(get_name(model))"
+    @debug "Initialized optimizer_stats_datasets $(get_name(model))" _group =
+        LOG_GROUP_IN_MEMORY_MODEL_STORE
 end
 
 function list_keys(store::InMemoryModelStore, container_type)

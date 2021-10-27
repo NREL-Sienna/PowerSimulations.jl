@@ -301,6 +301,7 @@ end
     #     end
     # end
 
+    # TODO: Enable for test coverage later
     # @testset "Test print methods" begin
     #     list = [sim, sim.sequence, sim.stages["UC"]]
     #     _test_plain_print_methods(list)

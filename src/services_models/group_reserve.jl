@@ -30,7 +30,6 @@ function add_constraints!(
     model::ServiceModel{SR, GroupReserve},
 ) where {SR <: PSY.StaticReserveGroup}
     initial_time = get_initial_time(container)
-    @debug initial_time
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     add_constraints_container!(

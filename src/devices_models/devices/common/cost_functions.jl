@@ -118,7 +118,7 @@ function has_on_variable(
     variable_type = OnVariable,
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
-    return !(get(container.variables, VariableKey(variable_type, T), nothing) === nothing)
+    return haskey(container.variables, VariableKey(variable_type, T))
 end
 
 function has_on_parameter(
@@ -128,19 +128,15 @@ function has_on_parameter(
     if !built_for_recurrent_solves(container)
         return false
     end
+    # get_parameter can't be used because the default behavior is to error if variables is not present
     return haskey(container.parameters, ParameterKey(OnStatusParameter, T))
 end
 
-# TODO: Function is broken
-function _get_pwl_variables_container(container::OptimizationContainer)
-    if !haskey(container.variables, :PWL_cost_vars)
-        contents = Dict{Tuple{String, Int, Int}, Any}()
-        container = JuMP.Containers.SparseAxisArray(contents)
-        # assign_variable!(container, :PWL_cost_vars, container)
-    else
-        container = get_variable(container, :PWL_cost_vars)
-    end
-    return container
+# TODO: Using this function disables registering the PWL variables. This is not a big problem
+# Since PWL vars aren't stored by default
+function _get_pwl_variables_container(::OptimizationContainer)
+    contents = Dict{Tuple{String, Int, Int}, Any}()
+    return JuMP.Containers.SparseAxisArray(contents)
 end
 
 function slope_convexity_check(slopes::Vector{Float64})
@@ -152,6 +148,12 @@ function slope_convexity_check(slopes::Vector{Float64})
         end
     end
     return flag
+end
+
+function _convert_variable_cost(var_cost::Vector{NTuple{2, Float64}})
+    no_load_cost, p_min = var_cost[1]
+    var_cost = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+    return var_cost, no_load_cost
 end
 
 @doc raw"""
@@ -234,8 +236,10 @@ function pwl_gencost_sos!(
     time_period::Int,
 )
     base_power = get_base_power(container)
-    var_key = VariableKey(spec.variable_type, spec.component_type)
-    variable = get_variable(container, var_key)[component_name, time_period]
+    variable = get_variable(container, spec.variable_type(), spec.component_type)[
+        component_name,
+        time_period,
+    ]
     export_pwl_vars = get_export_pwl_vars(container.settings)
     @debug export_pwl_vars _group = LOG_GROUP_COST_FUNCTIONS
     total_gen_cost = JuMP.AffExpr(0.0)
@@ -251,9 +255,11 @@ function pwl_gencost_sos!(
         @debug "Using Piecewise Linear cost function with parameter $(param_key)" _group =
             LOG_GROUP_COST_FUNCTIONS
     elseif spec.sos_status == SOSStatusVariable.VARIABLE
-        var_key = VariableKey(OnVariable, spec.component_type)
-        bin = get_variable(container, var_key)[component_name, time_period]
-        @debug "Using Piecewise Linear cost function with variable $(var_key)" _group =
+        bin = get_variable(container, OnVariable(), spec.component_type)[
+            component_name,
+            time_period,
+        ]
+        @debug "Using Piecewise Linear cost function with variable $(OnVariable)" _group =
             LOG_GROUP_COST_FUNCTIONS
     else
         @assert false
@@ -264,6 +270,7 @@ function pwl_gencost_sos!(
     for i in 1:length(cost_data)
         pwlvars[i] = JuMP.@variable(
             container.JuMPmodel,
+            # TODO: Redefine the base_name for PWL vars.
             # base_name = "{$(variable)}_{sos}",
             start = 0.0,
             lower_bound = 0.0,
@@ -321,8 +328,10 @@ function pwl_gencost_linear!(
     time_period::Int,
 )
     base_power = get_base_power(container)
-    var_key = VariableKey(spec.variable_type, spec.component_type)
-    variable = get_variable(container, var_key)[component_name, time_period]
+    variable = get_variable(container, spec.variable_type(), spec.component_type)[
+        component_name,
+        time_period,
+    ]
     export_pwl_vars = get_export_pwl_vars(container.settings)
     @debug export_pwl_vars _group = LOG_GROUP_COST_FUNCTIONS
     total_gen_cost = JuMP.AffExpr(0.0)
@@ -332,6 +341,7 @@ function pwl_gencost_linear!(
     for i in 1:length(cost_data)
         pwlvar = JuMP.@variable(
             container.JuMPmodel,
+            # TODO: Redefine the base_name for PWL vars.
             # base_name = "{$(variable)}_{pwl_$(i)}",
             lower_bound = 0.0,
             upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i] / base_power
@@ -365,17 +375,8 @@ function add_to_cost!(
     @debug "TwoPartCost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     if !(spec.variable_cost === nothing)
         variable_cost = spec.variable_cost(cost_data)
-        if spec.uses_compact_power &&
-           variable_cost == PSY.VariableCost{Vector{NTuple{2, Float64}}}
-            var_cost = PSY.get_cost(spec.variable_cost(cost_data))
-            no_load_cost, p_min = var_cost[1]
-            variable_cost_data =
-                PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
-        else
-            variable_cost_data = spec.variable_cost(cost_data)
-        end
         for t in time_steps
-            variable_cost!(container, spec, component, variable_cost_data, t)
+            variable_cost!(container, spec, component, variable_cost, t)
         end
     else
         @warn "No variable cost defined for $component_name"
@@ -404,18 +405,9 @@ function add_to_cost!(
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     variable_cost = spec.variable_cost(cost_data)
-    if spec.uses_compact_power &&
-       variable_cost == PSY.VariableCost{Vector{NTuple{2, Float64}}}
-        var_cost = PSY.get_cost(spec.variable_cost(cost_data))
-        no_load_cost, p_min = var_cost[1]
-        variable_cost_data =
-            PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
-    else
-        variable_cost_data = spec.variable_cost(cost_data)
-    end
     time_steps = get_time_steps(container)
     for t in time_steps
-        variable_cost!(container, spec, component, variable_cost_data, t)
+        variable_cost!(container, spec, component, variable_cost, t)
     end
 
     if !(spec.start_up_cost === nothing)
@@ -460,16 +452,6 @@ function add_to_cost!(
     return
 end
 
-function check_single_start(container::OptimizationContainer, spec::AddCostSpec)
-    for (st, var_type) in enumerate(START_VARIABLES)
-        var_name = VariableKey(var_type, spec.component_type)
-        if !haskey(container.variables, var_key)
-            return true
-        end
-    end
-    return false
-end
-
 """
 Adds to the models costs represented by PowerSystems Multi-Start costs.
 """
@@ -511,19 +493,7 @@ function add_to_cost!(
     end
 
     # Original implementation had SOS by default, here it detects if that's needed
-    if spec.uses_compact_power
-        variable_cost_data = spec.variable_cost(cost_data)
-    else
-        base_power = get_base_power(container)
-        min_gen_cost = PSY.get_no_load(cost_data)
-        min_gen = PSY.get_active_power_limits(component).min
-        variable_cost_data_ = PSY.get_cost(spec.variable_cost(cost_data))
-        variable_cost_data_ = [
-            (v[1] + min_gen_cost, v[2] + min_gen * base_power) for v in variable_cost_data_
-        ]
-        variable_cost_data = PSY.VariableCost(variable_cost_data_)
-    end
-
+    variable_cost_data = spec.variable_cost(cost_data)
     for t in time_steps
         variable_cost!(container, spec, component, variable_cost_data, t)
     end
@@ -582,7 +552,12 @@ function add_to_cost!(
     )
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     for t in time_steps
-        variable_cost!(container, spec, component, variable_cost_forecast_values[t], t)
+        if spec.uses_compact_power
+            variable_cost, _ = _convert_variable_cost(variable_cost_forecast_values[t])
+        else
+            variable_cost = variable_cost_forecast_values[t]
+        end
+        variable_cost!(container, spec, component, variable_cost, t)
     end
 
     if !(spec.start_up_cost === nothing)
@@ -670,7 +645,12 @@ function add_to_cost!(
     )
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     for t in time_steps
-        variable_cost!(container, spec, component, variable_cost_forecast_values[t], t)
+        if spec.uses_compact_power
+            variable_cost, _ = _convert_variable_cost(variable_cost_forecast_values[t])
+        else
+            variable_cost = variable_cost_forecast_values[t]
+        end
+        variable_cost!(container, spec, component, variable_cost, t)
     end
 
     if !(spec.start_up_cost === nothing)
@@ -783,7 +763,7 @@ function add_to_cost!(
     component::PSY.Component,
 )
     component_name = PSY.get_name(component)
-    @debug "Energy Target Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    @debug "Storage Management Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     time_steps = get_time_steps(container)

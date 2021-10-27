@@ -207,7 +207,7 @@ function _build_problems!(sim::Simulation, serialize)
         initialize_simulation_info!(model, problem_chronology)
         problem_build_status = _build!(model, serialize)
         if problem_build_status != BuildStatus.BUILT
-            error("Problem $(name) failed to build succesfully")
+            error("Problem $(name) failed to build successfully")
         end
         _populate_caches!(sim, name)
         sim.internal.date_ref[model_number] = initial_time
