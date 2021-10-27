@@ -307,6 +307,7 @@ function construct_service!(
     add_variables!(container, ActivePowerVariable, areas, T())
     add_variables!(container, DeltaActivePowerUpVariable, areas, T())
     add_variables!(container, DeltaActivePowerDownVariable, areas, T())
+    # TODO: Re-enable full support for AGC models
     # add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas)
     # add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas)
     balancing_auxiliary_variables!(container, sys)
