@@ -635,8 +635,9 @@ function calculate_aux_variable_value!(
 
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
         IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                JuMP.axes(on_variable_results)[1][ix]
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] == get_component_name(ini_cond[ix])
+                      JuMP.axes(on_variable_results)[1][ix]
+        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
+                      get_component_name(ini_cond[ix])
         on_var = JuMP.value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
@@ -678,8 +679,9 @@ function calculate_aux_variable_value!(
 
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
         IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                JuMP.axes(on_variable_results)[1][ix]
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] == get_component_name(ini_cond[ix])
+                      JuMP.axes(on_variable_results)[1][ix]
+        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
+                      get_component_name(ini_cond[ix])
         on_var = JuMP.value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
