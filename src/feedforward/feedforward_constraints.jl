@@ -66,8 +66,8 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
-        @assert axes[1] == [PSY.get_name(d) for d in devices]
-        @assert axes[2] == time_steps
+        IS.@assert_op axes[1] == [PSY.get_name(d) for d in devices]
+        IS.@assert_op axes[2] == time_steps
         # # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
         for v in variable
             if JuMP.has_lower_bound(v)
@@ -210,7 +210,7 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
-        @assert set_name == [PSY.get_name(d) for d in contributing_devices]
+        IS.@assert_op set_name == [PSY.get_name(d) for d in contributing_devices]
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)

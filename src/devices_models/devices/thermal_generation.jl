@@ -634,9 +634,9 @@ function calculate_aux_variable_value!(
     minutes_per_period = Dates.value(Dates.Minute(resolution))
 
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
-        @assert JuMP.axes(aux_variable_container)[1][ix] ==
+        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
                 JuMP.axes(on_variable_results)[1][ix]
-        @assert JuMP.axes(aux_variable_container)[1][ix] == get_component_name(ini_cond[ix])
+        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] == get_component_name(ini_cond[ix])
         on_var = JuMP.value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
@@ -677,9 +677,9 @@ function calculate_aux_variable_value!(
     minutes_per_period = Dates.value(Dates.Minute(resolution))
 
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
-        @assert JuMP.axes(aux_variable_container)[1][ix] ==
+        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
                 JuMP.axes(on_variable_results)[1][ix]
-        @assert JuMP.axes(aux_variable_container)[1][ix] == get_component_name(ini_cond[ix])
+        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] == get_component_name(ini_cond[ix])
         on_var = JuMP.value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
@@ -1081,13 +1081,13 @@ function _get_data_for_tdc(
     fraction_of_hour = 1 / steps_per_hour
     lenght_devices_on = length(initial_conditions_on)
     lenght_devices_off = length(initial_conditions_off)
-    @assert lenght_devices_off == lenght_devices_on
+    IS.@assert_op lenght_devices_off == lenght_devices_on
     time_params = Vector{UpDown}(undef, lenght_devices_on)
     ini_conds = Matrix{InitialCondition}(undef, lenght_devices_on, 2)
     idx = 0
     for (ix, ic) in enumerate(initial_conditions_on)
         g = get_component(ic)
-        @assert g == get_component(initial_conditions_off[ix])
+        IS.@assert_op g == get_component(initial_conditions_off[ix])
         time_limits = PSY.get_time_limits(g)
         name = PSY.get_name(g)
         if !(time_limits === nothing)
