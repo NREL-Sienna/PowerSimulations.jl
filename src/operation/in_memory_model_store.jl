@@ -94,18 +94,6 @@ function read_optimizer_stats(store::InMemoryModelStore)
     return DataFrames.DataFrame(stats)
 end
 
-# Not sure if needed
-# function open_store(
-#     func::Function,
-#     ::Type{InMemoryModelStore},
-#     ::AbstractString,  # Unused. Need to match the interface.
-#     mode = nothing,
-#     filename = nothing,
-# )
-#     store = InMemoryModelStore()
-#     return func(store)
-# end
-
 function initialize_storage!(
     store::InMemoryModelStore,
     container::OptimizationContainer,
