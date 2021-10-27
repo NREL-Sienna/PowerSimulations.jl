@@ -90,7 +90,7 @@ function SimulationInternal(
 end
 
 function _get_output_dir_name(path, output_dir)
-    if !(output_dir === nothing)
+    if output_dir !== nothing
         # The user wants a custom name.
         return output_dir
     end

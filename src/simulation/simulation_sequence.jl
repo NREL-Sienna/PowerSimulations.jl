@@ -44,7 +44,7 @@ Calculates how many times a problem is executed for every interval of the previo
 function _calculate_interval_inner_counts(intervals::OrderedDict{Symbol, Dates.Period})
     order = collect(keys(intervals))
     reverse_order = length(intervals):-1:1
-    interval_run_counts = Vector{Int}(undef, length(keys(intervals)))
+    interval_run_counts = Vector{Int}(undef, length(intervals))
     interval_run_counts[1] = 1
     for k in reverse_order[1:(end - 1)]
         problem_name = order[k]
@@ -137,7 +137,7 @@ end
 #end
 
 function _check_feedforwards(models::SimulationModels, feedforwards)
-    names = string.(get_model_names(models))
+    names = Set(string.(get_model_names(models)))
     ff_dict = Dict{Symbol, Vector}()
     for (model_name, model_feedforwards) in feedforwards
         if model_name ∈ names
