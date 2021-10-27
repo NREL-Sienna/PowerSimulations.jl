@@ -1,7 +1,7 @@
 # So far just the EmulationStore is implemented.
 
 """
-Stores results data for one EmulationModel
+Stores results data for one DecisionModel
 """
 mutable struct DecisionModelOptimizerResults <: AbstractModelOptimizerResults
     duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
