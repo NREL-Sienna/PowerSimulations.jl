@@ -12,7 +12,6 @@ function update_parameter_values!(
 ) where {T <: PSY.AbstractDeterministic, U <: PSY.Device}
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_container(model))[end]
-    # TODO: Can we avoid calling get_available_components ?
     components = get_available_components(U, get_system(model))
     for component in components
         ts_vector = get_time_series_values!(
@@ -37,7 +36,6 @@ function update_parameter_values(
 ) where {T <: PSY.AbstractDeterministic, U <: PSY.Device}
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_container(model))[end]
-    # TODO: Can we avoid calling get_available_components ?
     components = get_available_components(U, get_system(model))
     for component in components
         ts_vector = get_time_series_values!(
@@ -60,7 +58,6 @@ function update_parameter_values!(
     model::EmulationModel,
 ) where {T <: PSY.SingleTimeSeries, U <: PSY.Device}
     initial_forecast_time = get_current_time(model)
-    # TODO: Can we avoid calling get_available_components ?
     components = get_available_components(U, get_system(model))
     for component in components
         # Note: This interface reads one single value per component at a time.
@@ -83,7 +80,7 @@ function update_parameter_values(
     model::EmulationModel,
 ) where {T <: PSY.SingleTimeSeries, U <: PSY.Device}
     initial_forecast_time = get_current_time(model)
-    # TODO: Can we avoid calling get_available_components ?
+    # TODO: Can we avoid calling get_available_components and cache the component to avoid the filtering in PSY.get_components
     components = get_available_components(U, get_system(model))
     for component in components
         # Note: This interface reads one single value per component at a time.

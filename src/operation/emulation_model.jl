@@ -555,3 +555,17 @@ function _write_model_expression_results!(store, container, execution)
         write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, execution, expression)
     end
 end
+
+# Move to emulation model
+list_aux_variable_keys(x::EmulationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
+list_aux_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
+list_variable_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
+list_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
+list_parameter_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
+list_parameter_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
+list_dual_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
+list_dual_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_DUALS)
+list_expression_keys(x::EmulationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
+list_expression_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)

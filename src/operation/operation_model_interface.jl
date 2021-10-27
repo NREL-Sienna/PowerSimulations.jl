@@ -224,22 +224,6 @@ function _pre_solve_model_checks(model::OperationModel, optimizer)
     return
 end
 
-# TODO v015: DecisionModel needs to implement a store and the method get_store
-# in order for the methods below to work.
-
-list_aux_variable_keys(x::OperationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
-list_aux_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
-list_variable_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
-list_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
-list_parameter_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
-list_parameter_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
-list_dual_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
-list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
-list_expression_keys(x::OperationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
-list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)
-
 function _list_names(model::OperationModel, container_type)
     return encode_keys_as_strings(list_keys(get_store(model), container_type))
 end
