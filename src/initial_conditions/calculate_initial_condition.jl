@@ -17,7 +17,7 @@ function set_ic_quantity!(
     var_value::Float64,
 ) where {T <: InitialConditionType}
     @debug "Initial condition value set with Float64. Won't update the model until rebuild" _group =
-        LOG_GROUP_INITIAL_CONDITIONS
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     ic.value = var_value
     return
 end
