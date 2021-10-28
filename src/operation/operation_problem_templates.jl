@@ -35,7 +35,7 @@ end
 """
     template_unit_commitment(; kwargs...)
 
-Creates an `ProblemTemplate` with default DeviceModels for a Unit Commitment
+Creates a `ProblemTemplate` with default DeviceModels for a Unit Commitment
 problem.
 
 # Example
@@ -64,7 +64,7 @@ end
 """
     template_economic_dispatch(; kwargs...)
 
-Creates an `ProblemTemplate` with default DeviceModels for an Economic Dispatch
+Creates a `ProblemTemplate` with default DeviceModels for an Economic Dispatch
 problem.
 
 # Example
@@ -94,7 +94,7 @@ end
 """
     template_agc_reserve_deployment(; kwargs...)
 
-Creates an `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn't support customization
+Creates a `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn't support customization
 
 # Example
 ```julia

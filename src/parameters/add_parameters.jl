@@ -66,7 +66,7 @@ function add_parameters!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     ts_name = get_time_series_names(model)[T]
-    @debug "adding" T name ts_type
+    @debug "adding" T name ts_type _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container =
         add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
     jump_model = get_jump_model(container)
@@ -117,7 +117,7 @@ function add_parameters!(
     ts_name = get_time_series_names(model)[T]
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    @debug "adding" parameter_type
+    @debug "adding" parameter_type U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container = add_param_container!(
         container,
         T(),
@@ -150,7 +150,7 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    @debug "adding" T D U
+    @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
     parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
@@ -182,7 +182,7 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    @debug "adding" T D V
+    @debug "adding" T D V _group = LOG_GROUP_OPTIMIZATION_CONTAINER
 
     # We do this to handle cases where the same parameter is also added as a Feedforward.
     # When the OnStatusParameter is added without a feedforward it takes a Float value.
@@ -229,7 +229,7 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}
-    @debug "adding" T D U
+    @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
     parameter_container = add_param_container!(container, T(), D, key, names, time_steps)

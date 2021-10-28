@@ -279,7 +279,7 @@ function device_duration_parameters!(
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
             name = get_component_name(ic)
-            @assert typeof(get_value(ic)) == PJ.ParameterRef
+            IS.@assert_op typeof(get_value(ic)) == PJ.ParameterRef
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
@@ -304,7 +304,7 @@ function device_duration_parameters!(
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
-            @assert typeof(get_value(ic)) == PJ.ParameterRef
+            IS.@assert_op typeof(get_value(ic)) == PJ.ParameterRef
             name = get_component_name(ic)
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)

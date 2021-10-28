@@ -275,8 +275,6 @@ end
     moi_tests(model, false, 648, 0, 120, 240, 72, false)
 end
 
-# TODO: Test is broken
-#=
 @testset "Test GroupReserve Errors" begin
     template = get_thermal_dispatch_template_network()
     set_service_model!(template, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
@@ -309,14 +307,13 @@ end
     off_service = VariableReserve{ReserveUp}("Reserveoff", true, 0.6, 10)
     push!(groupservice.contributing_services, off_service)
 
-    model = DecisionModel(template, c_sys5_uc; use_parameters = false)
-    @test_logs(
-        (:error, r"is not stored"),
-        match_mode = :any,
-        @test_throws InfrastructureSystems.InvalidValue build!(model; output_dir = mktempdir(cleanup = true))
-    )
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(
+        model;
+        output_dir = mktempdir(cleanup = true),
+        console_level = Logging.AboveMaxLevel,
+    ) == BuildStatus.FAILED
 end
-=#
 
 @testset "Test StaticReserve" begin
     template = get_thermal_dispatch_template_network()

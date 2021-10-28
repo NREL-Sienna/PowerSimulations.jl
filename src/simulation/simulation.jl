@@ -598,7 +598,7 @@ function _build_problems!(sim::Simulation, serialize)
         initialize_simulation_info!(model, problem_chronology)
         problem_build_status = _build!(model, serialize)
         if problem_build_status != BuildStatus.BUILT
-            error("Problem $(name) failed to build succesfully")
+            error("Problem $(name) failed to build successfully")
         end
         _populate_caches!(sim, name)
         sim.internal.date_ref[model_number] = initial_time
@@ -688,14 +688,17 @@ function build!(
         register_recorders!(sim.internal, file_mode)
         try
             Logging.with_logger(logger) do
-                _build!(sim, serialize)
-                set_simulation_build_status!(sim, BuildStatus.BUILT)
-                set_simulation_status!(sim, RunStatus.READY)
+                try
+                    _build!(sim, serialize)
+                    set_simulation_build_status!(sim, BuildStatus.BUILT)
+                    set_simulation_status!(sim, RunStatus.READY)
+                catch e
+                    @error "Simulation build failed" exception = (e, catch_backtrace())
+                    set_simulation_build_status!(sim, BuildStatus.FAILED)
+                    set_simulation_status!(sim, nothing)
+                    rethrow(e)
+                end
             end
-        catch e
-            set_simulation_build_status!(sim, BuildStatus.FAILED)
-            set_simulation_status!(sim, nothing)
-            rethrow(e)
         finally
             unregister_recorders!(sim.internal)
             close(logger)
@@ -958,19 +961,21 @@ function execute!(sim::Simulation; kwargs...)
             set_simulation_store!(sim, store)
             # TODO: return file name for hash calculation instead of hard code
             Logging.with_logger(logger) do
-                TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-                    _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
+                try
+                    TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
+                        _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
+                    end
+                    @info ("\n$(RUN_SIMULATION_TIMER)\n")
+                    set_simulation_status!(sim, RunStatus.SUCCESSFUL)
+                    log_cache_hit_percentages(store)
+                catch e
+                    # TODO: Add Fallback when run_problem fails
+                    set_simulation_status!(sim, RunStatus.FAILED)
+                    @error "simulation failed" exception = (e, catch_backtrace())
                 end
-                @info ("\n$(RUN_SIMULATION_TIMER)\n")
-                set_simulation_status!(sim, RunStatus.SUCCESSFUL)
-                log_cache_hit_percentages(store)
             end
         end
-    catch e
-        # TODO: Add Fallback when run_problem fails
-        set_simulation_status!(sim, RunStatus.FAILED)
-        @error "simulation failed" exception = (e, catch_backtrace())
     finally
         _empty_problem_caches!(sim)
         unregister_recorders!(sim.internal)

@@ -4,7 +4,7 @@ function add_feedforward_arguments!(
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     for ff in get_feedforwards(model)
-        @debug "arguments" ff V
+        @debug "arguments" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         add_feedforward_arguments!(container, model, devices, ff)
     end
     return
@@ -16,7 +16,7 @@ function add_feedforward_arguments!(
     service::V,
 ) where {V <: PSY.AbstractReserve}
     for ff in get_feedforwards(model)
-        @debug "arguments" ff V
+        @debug "arguments" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         contributing_devices = get_contributing_devices(model)
         add_feedforward_arguments!(container, model, contributing_devices, ff)
     end

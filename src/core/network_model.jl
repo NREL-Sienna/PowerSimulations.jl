@@ -48,5 +48,5 @@ get_network_formulation(::NetworkModel{T}) where {T <: PM.AbstractPowerModel} = 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
     push!(model.duals, dual)
-    @debug "Added dual" dual
+    @debug "Added dual" dual _group = LOG_GROUP_NETWORK_CONSTRUCTION
 end

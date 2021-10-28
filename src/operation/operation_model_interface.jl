@@ -5,8 +5,6 @@ warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
     get_optimization_container(model).built_for_recurrent_solves
-#get_caches(x::OperationModel) =
-#    built_for_recurrent_solves(x) ? get_simulation_info(x).caches : nothing
 get_constraints(model::OperationModel) = get_internal(model).container.constraints
 get_execution_count(model::OperationModel) = get_internal(model).execution_count
 get_executions(model::OperationModel) = get_internal(model).executions
@@ -89,6 +87,7 @@ set_output_dir!(model::OperationModel, path::AbstractString) =
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
     internal.execution_count += 1
+    # TODO: Will be refactored when simulation is re-enabled
     # Reset execution count at the end of step
     #if get_execution_count(model) == get_executions(model)
     #    internal.execution_count = 0
@@ -102,7 +101,8 @@ function build_initial_conditions!(model::OperationModel)
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
         if requires_init
-            @debug "initial_conditions required for $device_type"
+            @debug "initial_conditions required for $device_type" _group =
+                LOG_GROUP_BUILD_INITIAL_CONDITIONS
             build_initial_conditions_problem!(model)
             break
         end
@@ -133,23 +133,19 @@ function initialize!(model::OperationModel)
     return
 end
 
+# TODO: Document requirements for solve_impl
+# function solve_impl!(model::OperationModel)
+# end
+
 function build_impl!(model::OperationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-        try
-            build_pre_step!(model)
-            build_problem!(model)
-            init_model_store!(model)
-            serialize_metadata!(get_optimization_container(model), get_output_dir(model))
-            set_status!(model, BuildStatus.BUILT)
-            log_values(get_settings(model))
-            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
-        catch e
-            set_status!(model, BuildStatus.FAILED)
-            bt = catch_backtrace()
-            @error "Operation Problem Build Failed" exception = e, bt
-        end
+        build_pre_step!(model)
+        build_problem!(model)
+        init_model_store!(model)
+        serialize_metadata!(get_optimization_container(model), get_output_dir(model))
+        log_values(get_settings(model))
+        !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
     end
-    return get_status(model)
 end
 
 function build_if_not_already_built!(model; kwargs...)
@@ -219,22 +215,6 @@ function _pre_solve_model_checks(model::OperationModel, optimizer)
 
     return
 end
-
-# TODO v015: DecisionModel needs to implement a store and the method get_store
-# in order for the methods below to work.
-
-list_aux_variable_keys(x::OperationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
-list_aux_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
-list_variable_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
-list_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
-list_parameter_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
-list_parameter_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
-list_dual_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
-list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
-list_expression_keys(x::OperationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
-list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)
 
 function _list_names(model::OperationModel, container_type)
     return encode_keys_as_strings(list_keys(get_store(model), container_type))

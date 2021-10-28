@@ -278,6 +278,8 @@ export FlowReactivePowerConstraint
 export FlowReactivePowerFromToConstraint
 export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
+export HVDCPowerBalance
+export HVDCTotalPowerDeliveredVariable
 export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
 export InputPowerRangeConstraint
@@ -401,6 +403,15 @@ const MOPFM = MOI.FileFormats.Model
 const TS = TimeSeries
 
 ################################################################################
+
+using DocStringExtensions
+
+@template DEFAULT = """
+                    $(TYPEDSIGNATURES)
+                    $(DOCSTRING)
+                    $(METHODLIST)
+                    """
+
 # Includes
 
 include("core/definitions.jl")

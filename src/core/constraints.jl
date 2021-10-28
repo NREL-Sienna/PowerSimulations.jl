@@ -36,6 +36,7 @@ struct FlowRateConstraintToFrom <: ConstraintType end
 struct FlowReactivePowerConstraint <: ConstraintType end
 struct FlowReactivePowerFromToConstraint <: ConstraintType end
 struct FlowReactivePowerToFromConstraint <: ConstraintType end
+struct HVDCPowerBalance <: ConstraintType end
 struct FrequencyResponseConstraint <: ConstraintType end
 struct InflowRangeConstraint <: ConstraintType end
 struct InputPowerRangeConstraint <: ConstraintType end

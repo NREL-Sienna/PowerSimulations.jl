@@ -36,10 +36,10 @@ OpModel = EmulationModel(MockEmulationProblem, template, system)
 - `optimizer`: The optimizer that will be used in the optimization model.
 - `warm_start::Bool`: True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
-- `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default to false.
+- `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default is false.
 - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
-- `optimizer_log_print::Bool`: True to print the optimizer solve log. Default to false.
-- `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default to false.
+- `optimizer_log_print::Bool`: True to print the optimizer solve log. Default is false.
+- `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default is false.
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
@@ -286,13 +286,21 @@ function build!(
     logger = configure_logging(model.internal, file_mode)
     try
         Logging.with_logger(logger) do
-            set_executions!(model, executions)
-            return build_impl!(model)
+            try
+                set_executions!(model, executions)
+                build_impl!(model)
+                set_status!(model, BuildStatus.BUILT)
+            catch e
+                set_status!(model, BuildStatus.FAILED)
+                bt = catch_backtrace()
+                @error "EmulationModel Build Failed" exception = e, bt
+            end
         end
     finally
         unregister_recorders!(model)
         close(logger)
     end
+    return get_status(model)
 end
 
 """
@@ -436,29 +444,30 @@ function run!(
     logger = configure_logging(model.internal, file_mode)
     try
         Logging.with_logger(logger) do
-            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
-                run_impl(model; kwargs...)
-                # results requires RunStatus.SUCCESSFUL to run
-                set_run_status!(model, RunStatus.SUCCESSFUL)
-            end
-            if serialize
-                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
-                    optimizer = get(kwargs, :optimizer, nothing)
-                    serialize_problem(model, optimizer = optimizer)
-                    serialize_optimization_model(model)
+            try
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
+                    run_impl(model; kwargs...)
+                    set_run_status!(model, RunStatus.SUCCESSFUL)
                 end
+                if serialize
+                    TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
+                        optimizer = get(kwargs, :optimizer, nothing)
+                        serialize_problem(model, optimizer = optimizer)
+                        serialize_optimization_model(model)
+                    end
+                end
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
+                    results = ProblemResults(model)
+                    serialize_results(results, get_output_dir(model))
+                    export_problem_results && export_results(results)
+                end
+                @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
+            catch e
+                @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
+                # TODO: Here run IIS if failed
+                set_run_status!(model, RunStatus.FAILED)
             end
-            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
-                results = ProblemResults(model)
-                serialize_results(results, get_output_dir(model))
-                export_problem_results && export_results(results)
-            end
-            @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
         end
-    catch e
-        @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
-        set_run_status!(model, RunStatus.FAILED)
-        return get_run_status(model)
     finally
         unregister_recorders!(model)
         close(logger)
@@ -555,3 +564,17 @@ function _write_model_expression_results!(store, container, execution)
         write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, execution, expression)
     end
 end
+
+# Move to emulation model
+list_aux_variable_keys(x::EmulationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
+list_aux_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
+list_variable_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
+list_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
+list_parameter_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
+list_parameter_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
+list_dual_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
+list_dual_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_DUALS)
+list_expression_keys(x::EmulationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
+list_expression_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)

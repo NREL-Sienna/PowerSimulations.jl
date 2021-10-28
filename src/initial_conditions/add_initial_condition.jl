@@ -20,7 +20,7 @@ function _get_initial_conditions_value(
         val = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
-        :ConstructGroup
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, val)
 end
 
@@ -46,7 +46,7 @@ function _get_initial_conditions_value(
         val = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
-        :ConstructGroup
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
@@ -76,7 +76,7 @@ function _get_initial_conditions_value(
         end
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
-        :ConstructGroup
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, val)
 end
 
@@ -106,7 +106,7 @@ function _get_initial_conditions_value(
         end
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
-        :ConstructGroup
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
@@ -136,7 +136,7 @@ function _get_initial_conditions_value(
         end
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
-        :ConstructGroup
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, val)
 end
 
@@ -166,7 +166,7 @@ function _get_initial_conditions_value(
         end
     end
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
-        :ConstructGroup
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
@@ -193,7 +193,7 @@ function _get_initial_conditions_value(
     ic_data = get_initial_conditions_data(container)
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
-        :ConstructGroup
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
 
@@ -220,7 +220,7 @@ function _get_initial_conditions_value(
     ic_data = get_initial_conditions_data(container)
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
-        :ConstructGroup
+        LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, val)
 end
 

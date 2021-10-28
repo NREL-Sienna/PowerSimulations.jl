@@ -304,38 +304,20 @@ end
     psi_checkobjfun_test(model, GQEVF)
 end
 
-# This Formulation is currently broken
-#=
 @testset "Thermal Dispatch NoMin With DC - PF" begin
-    model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
+    device_model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
-        model = DecisionModel(
-            MockOperationProblem,
-            DCPPowerModel,
-            c_sys5;
-
-        )
-        mock_construct_device!(model, model)
-        moi_tests(model, false, 240, 0, 48, 48, 48, false)
-        moi_lbvalue_test(model, :P_lb__ThermalMultiStart__RangeConstraint, 0.0)
-        psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    @test_throws IS.ConflictingInputsError mock_construct_device!(model, device_model)
 end
 
 @testset "ThermalMultiStart Dispatch NoMin With AC - PF" begin
-    model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
+    device_model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
-        model = DecisionModel(
-            MockOperationProblem,
-            ACPPowerModel,
-            c_sys5;
-
-        )
-        mock_construct_device!(model, model)
-        moi_tests(model, false, 288, 0, 96, 96, 48, false)
-        moi_lbvalue_test(model, :P_lb__ThermalMultiStart__RangeConstraint, 0.0)
-        psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5;)
+    @test_throws IS.ConflictingInputsError mock_construct_device!(model, device_model)
 end
-=#
+
 ################################## Ramp Limited Testing ##################################
 @testset "ThermalStandard with  ThermalStandardDispatch With DC - PF" begin
     constraint_keys = [
@@ -614,7 +596,7 @@ end
     moi_tests(UC, false, 38, 0, 16, 8, 13, true)
 end
 
-@testset "Operation ModelThermalDispatchNoMin - and PWL Non Convex" begin
+@testset "Operation Model ThermalDispatchNoMin - and PWL Non Convex" begin
     c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
     template = get_thermal_dispatch_template_network()
     set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))

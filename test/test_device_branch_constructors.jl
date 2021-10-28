@@ -201,6 +201,7 @@ end
         PSI.ConstraintKey(RateLimitConstraintToFrom, TapTransformer),
         PSI.ConstraintKey(FlowRateConstraintFromTo, HVDCLine),
         PSI.ConstraintKey(FlowRateConstraintToFrom, HVDCLine),
+        PSI.ConstraintKey(HVDCPowerBalance, HVDCLine),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -259,15 +260,15 @@ end
     )
 end
 
-#= This Test is Broken to do a missing implementation of add_variable
 @testset "DC Power Flow Models for HVDCLine Dispatch and TapTransformer & Transformer2W Unbounded" begin
-    ratelimit_constraint_names = [
-        :RateLimitFT__Transformer2W,
-        :RateLimitTF__Transformer2W,
-        :RateLimitFT__TapTransformer,
-        :RateLimitTF__TapTransformer,
-        :RateLimitFT__HVDCLine,
-        :RateLimitTF__HVDCLine,
+    ratelimit_constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, Line, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, HVDCLine),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -284,43 +285,41 @@ end
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
     rate_limit2w = PSY.get_rate(tap_transformer)
 
-    template = get_template_dispatch_with_network(StandardPTDFModel)
+    template = get_template_dispatch_with_network(
+        NetworkModel(StandardPTDFModel; PTDF = PSY.PTDF(system)),
+    )
     set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
-    model_m = DecisionModel(template, system; PTDF = PSY.PTDF(system), optimizer = ipopt_optimizer)
-    @test build!(model_m; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
+    @test build!(model_m; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
 
-    check_variable_bounded(model_m, FlowReactivePowerToFromVariable,HVDCLine)
-    check_variable_bounded(model_m, FlowActivePowerToFromVariable,HVDCLine)
-    @test check_variable_bounded(model_m, FlowActivePowerFromToVariable,TapTransformer)
-    @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable,TapTransformer)
-    @test check_variable_bounded(model_m, FlowActivePowerToFromVariable,Transformer2W)
-    @test check_variable_unbounded(model_m, FlowReactivePowerToFromVariable,Transformer2W)
+    @test check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
+    @test !check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
+    @test !check_variable_bounded(model_m, FlowActivePowerVariable, Transformer2W)
+    @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
 
-    psi_constraint_test(model_m, ratelimit_constraint_names)
+    psi_constraint_test(model_m, ratelimit_constraint_keys)
 
     @test solve!(model_m) == RunStatus.SUCCESSFUL
 
     @test check_flow_variable_values(
         model_m,
-        FlowActivePowerToFromVariable,HVDCLine,
-        FlowReactivePowerToFromVariable,HVDCLine,
+        FlowActivePowerVariable,
+        HVDCLine,
         "DCLine3",
         limits_max,
     )
     @test check_flow_variable_values(
         model_m,
-        FlowActivePowerFromToVariable,TapTransformer,
-        FlowReactivePowerFromToVariable,TapTransformer,
+        FlowActivePowerVariable,
+        TapTransformer,
         "Trans3",
         rate_limit,
     )
     @test check_flow_variable_values(
         model_m,
-        FlowActivePowerToFromVariable,Transformer2W,
-        FlowReactivePowerToFromVariable,Transformer2W,
+        FlowActivePowerVariable,
+        Transformer2W,
         "Trans4",
         rate_limit2w,
     )
 end
-=#
