@@ -1,3 +1,5 @@
+abstract type SubComponentVariableType <: VariableType end
+
 struct VariableKey{T <: VariableType, U <: Union{PSY.Component, PSY.System}} <:
        OptimizationContainerKey
     meta::String
@@ -112,6 +114,15 @@ struct FlowReactivePowerToFromVariable <: VariableType end
 
 struct VariableNotDefined <: VariableType end
 
-###############################
+struct ComponentActivePowerVariable <: SubComponentVariableType end
+
+struct ComponentReactivePowerVariable <: SubComponentVariableType end
+
+struct ComponentActivePowerReserveUpVariable <: SubComponentVariableType end
+
+struct ComponentActivePowerReserveDownVariable <: SubComponentVariableType end
+
+# Necessary as a work around ofr HVDC models with losses
+struct HVDCTotalPowerDeliveredVariable <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)

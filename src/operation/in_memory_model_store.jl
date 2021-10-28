@@ -165,7 +165,7 @@ function read_results(
     return copy(container[key], copycols = true)
 end
 
-function get_variable(
+function get_variable_value(
     store::InMemoryModelStore,
     ::T,
     ::Type{U},
@@ -173,7 +173,7 @@ function get_variable(
     return store.data.variables[VariableKey(T, U)]
 end
 
-function get_aux_variable(
+function get_aux_variable_value(
     store::InMemoryModelStore,
     ::T,
     ::Type{U},
@@ -181,7 +181,7 @@ function get_aux_variable(
     return store.data.aux_variables[AuxVarKey(T, U)]
 end
 
-function get_dual(
+function get_dual_value(
     store::InMemoryModelStore,
     ::T,
     ::Type{U},
@@ -189,7 +189,7 @@ function get_dual(
     return store.data.duals[ConstraintKey(T, U)]
 end
 
-function get_parameter(
+function get_parameter_value(
     store::InMemoryModelStore,
     ::T,
     ::Type{U},

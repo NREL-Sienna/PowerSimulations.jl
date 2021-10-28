@@ -51,16 +51,32 @@ construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<:PSY.DCBranch, <:AbstractDCLineFormulation},
-    ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
+    ::DeviceModel{<:PSY.DCBranch, HVDCDispatch},
+    ::NetworkModel{CopperPlatePowerModel},
 ) = nothing
 
 construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ModelConstructStage,
-    ::DeviceModel{<:PSY.DCBranch, <:AbstractDCLineFormulation},
-    ::Union{NetworkModel{CopperPlatePowerModel}, NetworkModel{AreaBalancePowerModel}},
+    ::DeviceModel{<:PSY.DCBranch, HVDCDispatch},
+    ::NetworkModel{CopperPlatePowerModel},
+) = nothing
+
+construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
+    ::ArgumentConstructStage,
+    ::DeviceModel{<:PSY.DCBranch, HVDCLossless},
+    ::NetworkModel{CopperPlatePowerModel},
+) = nothing
+
+construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
+    ::ModelConstructStage,
+    ::DeviceModel{<:PSY.DCBranch, HVDCLossless},
+    ::NetworkModel{CopperPlatePowerModel},
 ) = nothing
 
 construct_device!(
@@ -235,31 +251,55 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{B, <:AbstractDCLineFormulation},
+    model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
-    # TODO: Review construction process of DC Lines. These functions wont work properly
-    # Since the variable FlowActivePowerVariable hasn't been created yet.
-    # devices = get_available_components(T, sys)
-    # add_to_expression!(container, ActivePowerBalance, devices, model, S)
+) where {B <: PSY.DCBranch, F <: HVDCLossless, S <: PM.AbstractPowerModel} end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{B, F},
+    ::NetworkModel{S},
+) where {B <: PSY.DCBranch, F <: HVDCUnbounded, S <: PM.AbstractPowerModel} end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{B, F},
+    ::NetworkModel{S},
+) where {B <: PSY.DCBranch, F <: HVDCDispatch, S <: PM.AbstractPowerModel}
+    devices = get_available_components(B, sys)
+    add_variables!(container, HVDCTotalPowerDeliveredVariable, devices, F())
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCTotalPowerDeliveredVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{B, <:AbstractDCLineFormulation},
+    model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
+) where {B <: PSY.DCBranch, F <: HVDCDispatch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
 
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
+    add_constraints!(container, HVDCPowerBalance, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
 end
 
+# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -268,7 +308,7 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: Union{HVDCLossless, HVDCUnbounded},
+    U <: HVDCLossless,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
@@ -284,6 +324,32 @@ function construct_device!(
     )
 end
 
+# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{B, U},
+    ::NetworkModel{S},
+) where {
+    B <: PSY.DCBranch,
+    U <: HVDCUnbounded,
+    S <: Union{StandardPTDFModel, PTDFPowerModel},
+}
+    devices = get_available_components(B, sys)
+
+    add_variables!(container, FlowActivePowerVariable, devices, U())
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+end
+
+# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -292,7 +358,26 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: Union{HVDCLossless, HVDCUnbounded},
+    U <: HVDCUnbounded,
+    S <: Union{StandardPTDFModel, PTDFPowerModel},
+}
+    devices = get_available_components(B, sys)
+
+    add_constraints!(container, FlowRateConstraint, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{B, U},
+    ::NetworkModel{S},
+) where {
+    B <: PSY.DCBranch,
+    U <: HVDCLossless,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
@@ -305,12 +390,31 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{B, U},
+    ::NetworkModel{S},
+) where {
+    B <: PSY.DCBranch,
+    U <: Union{HVDCLossless, HVDCUnbounded},
+    S <: PM.AbstractPowerModel,
+}
+    devices = get_available_components(B, sys)
+
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{B, U},
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: AbstractDCLineFormulation,
+    U <: HVDCDispatch,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
@@ -328,11 +432,9 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: AbstractDCLineFormulation,
+    U <: HVDCDispatch,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
-    @debug "construct_device" _group = LOG_GROUP_BRANCH_CONSTRUCTIONS
-
     devices = get_available_components(B, sys)
 
     add_constraints!(container, FlowRateConstraint, devices, model, S)

@@ -119,3 +119,26 @@ function add_constraints!(
     end
     return
 end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    cons_type::Type{HVDCPowerBalance},
+    devices::IS.FlattenIteratorWrapper{B},
+    ::DeviceModel{B, <:AbstractDCLineFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+) where {B <: PSY.DCBranch}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+
+    delivered_power_var = get_variable(container, HVDCTotalPowerDeliveredVariable(), B)
+    flow_var = get_variable(container, FlowActivePowerVariable(), B)
+    constraint = add_constraints_container!(container, cons_type(), B, names, time_steps)
+    for t in get_time_steps(container), d in devices
+        constraint[PSY.get_name(d), t] = JuMP.@constraint(
+            container.JuMPmodel,
+            delivered_power_var[PSY.get_name(d), t] ==
+            -PSY.get_loss(d).l1 * flow_var[PSY.get_name(d), t] - PSY.get_loss(d).l0,
+        )
+    end
+    return
+end

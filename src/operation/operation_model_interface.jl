@@ -139,21 +139,13 @@ end
 
 function build_impl!(model::OperationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-        try
-            build_pre_step!(model)
-            build_problem!(model)
-            init_model_store!(model)
-            serialize_metadata!(get_optimization_container(model), get_output_dir(model))
-            set_status!(model, BuildStatus.BUILT)
-            log_values(get_settings(model))
-            !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
-        catch e
-            set_status!(model, BuildStatus.FAILED)
-            bt = catch_backtrace()
-            @error "Operation Problem Build Failed" exception = e, bt
-        end
+        build_pre_step!(model)
+        build_problem!(model)
+        init_model_store!(model)
+        serialize_metadata!(get_optimization_container(model), get_output_dir(model))
+        log_values(get_settings(model))
+        !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
     end
-    return get_status(model)
 end
 
 function build_if_not_already_built!(model; kwargs...)

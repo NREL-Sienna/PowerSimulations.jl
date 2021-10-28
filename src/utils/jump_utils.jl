@@ -95,7 +95,14 @@ end
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     indexes = Base.Iterators.product(axs...)
-    contents = Dict{eltype(indexes), Any}(indexes .=> 0)
+    contents = Dict{eltype(indexes), Any}(indexes .=> 0.0)
+    return JuMP.Containers.SparseAxisArray(contents)
+end
+
+""" Returns the correct container spec for the selected type of JuMP Model"""
+function sparse_expressions_container_spec(::Type{T}, axs...) where {T <: Any}
+    indexes = Base.Iterators.product(axs...)
+    contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
     return JuMP.Containers.SparseAxisArray(contents)
 end
 
@@ -147,4 +154,4 @@ function _calc_dimensions(
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
-end
+
