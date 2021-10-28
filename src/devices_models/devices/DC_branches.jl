@@ -133,7 +133,6 @@ function add_constraints!(
     delivered_power_var = get_variable(container, HVDCTotalPowerDeliveredVariable(), B)
     flow_var = get_variable(container, FlowActivePowerVariable(), B)
     constraint = add_constraints_container!(container, cons_type(), B, names, time_steps)
-    @show cons_type
     for t in get_time_steps(container), d in devices
         constraint[PSY.get_name(d), t] = JuMP.@constraint(
             container.JuMPmodel,
