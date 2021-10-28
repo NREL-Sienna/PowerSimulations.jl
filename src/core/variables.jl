@@ -112,6 +112,8 @@ struct FlowReactivePowerToFromVariable <: VariableType end
 
 struct VariableNotDefined <: VariableType end
 
+# Necessary as a work around ofr HVDC models with losses
+struct HVDCTotalPowerDeliveredVariable <: VariableType end
 ###############################
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
