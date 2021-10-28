@@ -299,6 +299,7 @@ function construct_device!(
     return
 end
 
+# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -357,12 +358,50 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
+    U <: HVDCUnbounded,
+    S <: Union{StandardPTDFModel, PTDFPowerModel},
+}
+    devices = get_available_components(B, sys)
+
+    add_constraints!(container, FlowRateConstraint, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{B, U},
+    ::NetworkModel{S},
+) where {
+    B <: PSY.DCBranch,
+    U <: HVDCLossless,
+    S <: Union{StandardPTDFModel, PTDFPowerModel},
+}
+    devices = get_available_components(B, sys)
+
+    add_constraints!(container, FlowRateConstraint, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{B, U},
+    ::NetworkModel{S},
+) where {
+    B <: PSY.DCBranch,
     U <: Union{HVDCLossless, HVDCUnbounded},
     S <: PM.AbstractPowerModel,
 }
     devices = get_available_components(B, sys)
 
-    add_constraints!(container, FlowRateConstraint, devices, model, S)
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -396,8 +435,6 @@ function construct_device!(
     U <: HVDCDispatch,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
-    @debug "construct_device" _group = LOG_GROUP_BRANCH_CONSTRUCTIONS
-
     devices = get_available_components(B, sys)
 
     add_constraints!(container, FlowRateConstraint, devices, model, S)
