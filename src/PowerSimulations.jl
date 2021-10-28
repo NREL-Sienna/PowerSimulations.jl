@@ -76,6 +76,10 @@ export ThermalCompactDispatch
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
+######## Hybrid Formulations ########
+export BasicHybridDispatch
+export StandardHybridDispatch
+
 # feedforward chrons
 export RecedingHorizon
 export Synchronize
@@ -284,7 +288,7 @@ export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
-export OutputPowerRangeConstraint
+export PowerOutputRangeConstraint
 export ParticipationAssignmentConstraint
 export RampConstraint
 export RampLimitConstraint
@@ -292,7 +296,6 @@ export RangeLimitConstraint
 export RateLimitConstraint
 export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
-export ReactiveConstraint
 export ReactivePowerVariableLimitsConstraint
 export ReactiveRangeConstraint
 export RegulationLimitsDownConstraint
@@ -501,6 +504,7 @@ include("devices_models/devices/DC_branches.jl")
 include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
+include("devices_models/devices/hybrid_generation.jl")
 
 # Services Models
 include("services_models/agc.jl")
@@ -527,7 +531,7 @@ include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")
 include("devices_models/device_constructors/storage_constructor.jl")
 include("devices_models/device_constructors/regulationdevice_constructor.jl")
-
+include("devices_models/device_constructors/hybridgeneration_constructor.jl")
 # Network constructors
 include("network_models/network_constructor.jl")
 

@@ -43,7 +43,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{ExpressionKey, JuMP.Containers.DenseAxisArray}
+    expressions::Dict{ExpressionKey, AbstractArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
     initial_conditions_data::InitialConditionsData
@@ -927,7 +927,7 @@ function _add_expression_container!(
     sparse = false,
 ) where {T <: JuMP.AbstractJuMPScalar}
     if sparse
-        expr_container = sparse_container_spec(T, axs...)
+        expr_container = sparse_expressions_container_spec(T, axs...)
     else
         expr_container = container_spec(T, axs...)
     end
@@ -998,7 +998,7 @@ end
 
 function has_expression(
     container::OptimizationContainer,
-    ::T,
+    ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}

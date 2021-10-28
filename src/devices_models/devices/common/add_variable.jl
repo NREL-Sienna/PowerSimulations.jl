@@ -23,6 +23,27 @@ function add_variables!(
     add_service_variable!(container, T(), service, contributing_devices, formulation)
 end
 
+"""
+Add variables to the OptimizationContainer for a Sub-Component of a hybrid systems.
+"""
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    formulation::AbstractDeviceFormulation,
+) where {T <: SubComponentVariableType, U <: PSY.Component}
+    add_variable!(container, T(), devices, formulation)
+end
+
+get_subcomponent_types(::Type{ComponentActivePowerVariable}) =
+    [PSY.ThermalGen, PSY.RenewableGen]
+get_subcomponent_types(::Type{ComponentActivePowerReserveUpVariable}) =
+    [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
+get_subcomponent_types(::Type{ComponentActivePowerReserveDownVariable}) =
+    [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
+get_subcomponent_types(::Type{ComponentReactivePowerVariable}) =
+    [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
+
 @doc raw"""
 Adds a variable to the optimization model and to the affine expressions contained
 in the optimization_container model according to the specified sign. Based on the inputs, the variable can
@@ -141,6 +162,56 @@ function add_service_variable!(
 
         init = get_variable_warm_start_value(variable_type, d, container.settings)
         !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
+    end
+
+    return
+end
+
+function add_variable!(
+    container::OptimizationContainer,
+    variable_type::T,
+    devices::U,
+    formulation,
+) where {
+    T <: SubComponentVariableType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+    settings = get_settings(container)
+    binary = get_variable_binary(variable_type, D, formulation)
+    subcomp_types = get_subcomponent_types(T)
+
+    variable = add_variable_container!(
+        container,
+        variable_type,
+        D,
+        [PSY.get_name(d) for d in devices],
+        subcomp_types,
+        time_steps;
+        sparse = true,
+    )
+
+    for t in time_steps, d in devices, subcomp in subcomp_types
+        !does_subcomponent_exist(d, subcomp) && continue
+
+        name = PSY.get_name(d)
+        variable[name, subcomp, t] = JuMP.@variable(
+            container.JuMPmodel,
+            base_name = "$(variable_type)_$(D)_$(subcomp)_{$(name), $(t)}",
+            binary = binary
+        )
+
+        ub = get_variable_upper_bound(variable_type, d, formulation)
+        !(ub === nothing) && JuMP.set_upper_bound(variable[name, subcomp, t], ub)
+
+        lb = get_variable_lower_bound(variable_type, d, formulation)
+        !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, subcomp, t], lb)
+
+        if get_warm_start(settings)
+            init = get_variable_warm_start_value(variable_type, d, formulation)
+            !(init === nothing) && JuMP.set_start_value(variable[name, subcomp, t], init)
+        end
     end
 
     return

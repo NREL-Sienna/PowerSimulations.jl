@@ -269,7 +269,7 @@ function add_constraints!(
         )
         con_dn[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            -expr_dn[name, t] <= (limits.max - var_e[name, t]) / efficiency.in
+            expr_dn[name, t] <= (limits.max - var_e[name, t]) / efficiency.in
         )
     end
     return
@@ -315,7 +315,7 @@ function add_constraints!(
         )
         con_dn[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            -expr_dn[name, t] <= var_out[name, t] + (in_limits.max - var_in[name, t])
+            expr_dn[name, t] <= var_out[name, t] + (in_limits.max - var_in[name, t])
         )
     end
     return
