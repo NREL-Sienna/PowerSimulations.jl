@@ -404,10 +404,10 @@ function add_to_expression!(
     ::Type{X},
 ) where {
     T <: ActivePowerBalance,
-    U <: FlowActivePowerVariable,
+    U <: HVDCTotalPowerDeliveredVariable,
     V <: PSY.DCBranch,
     W <: AbstractBranchFormulation,
-    X <: PM.AbstractActivePowerModel,
+    X <: PM.AbstractPowerModel,
 }
     var = get_variable(container, U(), V)
     expression = get_expression(container, T(), X)
@@ -417,8 +417,7 @@ function add_to_expression!(
             add_to_jump_expression!(
                 expression[PSY.get_number(PSY.get_arc(d).to), t],
                 flow_variable,
-                -PSY.get_loss(d).l1,
-                -PSY.get_loss(d).l0,
+                1.0,
             )
         end
     end

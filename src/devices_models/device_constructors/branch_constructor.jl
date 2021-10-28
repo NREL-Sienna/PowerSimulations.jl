@@ -235,26 +235,33 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{B, <:AbstractDCLineFormulation},
+    model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
-    # TODO: Review construction process of DC Lines. These functions wont work properly
-    # Since the variable FlowActivePowerVariable hasn't been created yet.
-    # devices = get_available_components(T, sys)
-    # add_to_expression!(container, ActivePowerBalance, devices, model, S)
+) where {B <: PSY.DCBranch, F <: HVDCDispatch, S <: PM.AbstractPowerModel}
+    devices = get_available_components(B, sys)
+    add_variables!(container, HVDCTotalPowerDeliveredVariable, devices, F())
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCTotalPowerDeliveredVariable,
+        devices,
+        model,
+        S,
+    )
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{B, <:AbstractDCLineFormulation},
+    model::DeviceModel{B, <:HVDCDispatch},
     ::NetworkModel{S},
 ) where {B <: PSY.DCBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
 
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
+    add_constraints!(container, HVDCPowerBalance, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
