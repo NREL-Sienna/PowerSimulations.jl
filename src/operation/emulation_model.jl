@@ -286,13 +286,21 @@ function build!(
     logger = configure_logging(model.internal, file_mode)
     try
         Logging.with_logger(logger) do
-            set_executions!(model, executions)
-            return build_impl!(model)
+            try
+                set_executions!(model, executions)
+                build_impl!(model)
+                set_status!(model, BuildStatus.BUILT)
+            catch e
+                set_status!(model, BuildStatus.FAILED)
+                bt = catch_backtrace()
+                @error "EmulationModel Build Failed" exception = e, bt
+            end
         end
     finally
         unregister_recorders!(model)
         close(logger)
     end
+    return get_status(model)
 end
 
 """
@@ -436,29 +444,30 @@ function run!(
     logger = configure_logging(model.internal, file_mode)
     try
         Logging.with_logger(logger) do
-            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
-                run_impl(model; kwargs...)
-                set_run_status!(model, RunStatus.SUCCESSFUL)
-            end
-            if serialize
-                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
-                    optimizer = get(kwargs, :optimizer, nothing)
-                    serialize_problem(model, optimizer = optimizer)
-                    serialize_optimization_model(model)
+            try
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
+                    run_impl(model; kwargs...)
+                    set_run_status!(model, RunStatus.SUCCESSFUL)
                 end
+                if serialize
+                    TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
+                        optimizer = get(kwargs, :optimizer, nothing)
+                        serialize_problem(model, optimizer = optimizer)
+                        serialize_optimization_model(model)
+                    end
+                end
+                TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
+                    results = ProblemResults(model)
+                    serialize_results(results, get_output_dir(model))
+                    export_problem_results && export_results(results)
+                end
+                @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
+            catch e
+                @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
+                # TODO: Here run IIS if failed
+                set_run_status!(model, RunStatus.FAILED)
             end
-            TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
-                results = ProblemResults(model)
-                serialize_results(results, get_output_dir(model))
-                export_problem_results && export_results(results)
-            end
-            @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
         end
-    catch e
-        @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
-        # TODO: Here run IIS if failed
-        set_run_status!(model, RunStatus.FAILED)
-        return get_run_status(model)
     finally
         unregister_recorders!(model)
         close(logger)
