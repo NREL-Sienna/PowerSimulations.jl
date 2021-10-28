@@ -80,13 +80,6 @@ export ReserveLimitedRegulation
 export BasicHybridDispatch
 export StandardHybridDispatch
 
-# feedforward chrons
-export RecedingHorizon
-export Synchronize
-export Consecutive
-export FullHorizon
-export Range
-
 # feedforward models
 export UpperBoundFeedforward
 export LowerBoundFeedforward
@@ -404,6 +397,10 @@ const TS = TimeSeries
 
 ################################################################################
 
+function progress_meter_enabled()
+    return isa(stderr, Base.TTY) || (get(ENV, "CI", nothing) == "true")
+end
+
 using DocStringExtensions
 
 @template DEFAULT = """
@@ -411,7 +408,6 @@ using DocStringExtensions
                     $(DOCSTRING)
                     $(METHODLIST)
                     """
-
 # Includes
 
 include("core/definitions.jl")
@@ -464,19 +460,20 @@ include("initial_conditions/calculate_initial_condition.jl")
 include("parameters/add_parameters.jl")
 include("parameters/update_parameters.jl")
 
-include("feedforward/feedforward_chronologies.jl")
 include("feedforward/feedforwards.jl")
 include("feedforward/feedforward_arguments.jl")
 include("feedforward/feedforward_constraints.jl")
 
 include("simulation/param_result_cache.jl")
 include("simulation/result_cache.jl")
+include("simulation/simulation_state.jl")
 include("simulation/simulation_store_params.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
 include("simulation/simulation_problem_results.jl")
 include("simulation/simulation_models.jl")
 include("simulation/simulation_sequence.jl")
+include("simulation/simulation_internal.jl")
 include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")

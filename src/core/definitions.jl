@@ -70,6 +70,7 @@ const KNOWN_SIMULATION_PATHS = [
     "results",
     "simulation_files",
 ]
+const RESULTS_DIR = "results"
 
 # Enums
 IS.@scoped_enum(BuildStatus, IN_PROGRESS = -1, BUILT = 0, FAILED = 1, EMPTY = 2,)

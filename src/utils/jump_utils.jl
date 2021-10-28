@@ -118,7 +118,40 @@ function remove_undef!(expression_array::AbstractArray)
     return expression_array
 end
 
-function remove_undef!(expression_array::JuMP.Containers.SparseAxisArray)
-    # Sparse Container arrays are already assigned a Int64 (0) for keys that are not used 
-    # No need to remove undef for Sparse Axis Arrays
+function _calc_dimensions(
+    array::JuMP.Containers.DenseAxisArray,
+    name,
+    num_rows::Int,
+    horizon::Int,
+)
+    ax = axes(array)
+    # Two use cases for read:
+    # 1. Read data for one execution for one device.
+    # 2. Read data for one execution for all devices.
+    # This will ensure that data on disk is contiguous in both cases.
+    if length(ax) == 1
+        columns = [name]
+        dims = (horizon, 1, num_rows)
+    elseif length(ax) == 2
+        columns = collect(axes(array)[1])
+        dims = (horizon, length(columns), num_rows)
+        # elseif length(ax) == 3
+        #     # TODO: untested
+        #     dims = (length(ax[2]), horizon, length(columns), num_rows)
+    else
+        error("unsupported data size $(length(ax))")
+    end
+
+    return Dict("columns" => columns, "dims" => dims)
 end
+
+function _calc_dimensions(
+    array::JuMP.Containers.SparseAxisArray,
+    name,
+    num_rows::Int,
+    horizon::Int,
+)
+    columns = unique([(k[1], k[3]) for k in keys(array.data)])
+    dims = (horizon, length(columns), num_rows)
+    return Dict("columns" => columns, "dims" => dims)
+

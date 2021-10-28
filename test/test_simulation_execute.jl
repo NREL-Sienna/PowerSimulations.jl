@@ -6,7 +6,7 @@
     ])
     test_sequence = SimulationSequence(
         models = models,
-        intervals = Dict("ED" => (Hour(24), Consecutive())),
+        intervals = Dict("ED" => (Hour(24), 0)),
         ini_cond_chronology = InterProblemChronology(),
     )
     sim_single = Simulation(
@@ -52,10 +52,7 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -91,7 +88,7 @@ end
 
     single_sequence = SimulationSequence(
         problems = problems,
-        intervals = Dict("ED" => (Hour(1), Consecutive())),
+        intervals = Dict("ED" => (Hour(1), 0)),
         cache = Dict(("ED",) => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY)),
         ini_cond_chronology = IntraProblemChronology(),
     )
@@ -122,10 +119,7 @@ end
     sequence_cache = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -173,11 +167,8 @@ end
 
     sequence = SimulationSequence(
         problems = problems,
-        feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon()),
-        intervals = Dict(
-            "UC" => (Hour(24), RecedingHorizon()),
-            "ED" => (Minute(60), RecedingHorizon()),
-        ),
+        feedforward_chronologies = Dict(("UC" => "ED") => 0),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Minute(60), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,
@@ -226,10 +217,7 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
             ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
                 binary_source_problem = OnVariable,

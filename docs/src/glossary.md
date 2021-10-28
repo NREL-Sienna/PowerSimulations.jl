@@ -38,7 +38,7 @@
 
 
 **intervals:** The increment of time per stage in each simulation solve, and how results get fed forward into initial conditions between intervals.
-- Example: `intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive()))`
+- Example: `intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0))`
 
 **Operations Problem** A single-step optimization problem.
 

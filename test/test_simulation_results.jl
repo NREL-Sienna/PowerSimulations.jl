@@ -60,7 +60,7 @@ function test_simulation_results_simple(file_path::String, export_path; in_memor
     ])
     test_sequence = SimulationSequence(
         models = models,
-        intervals = Dict("ED" => (Hour(24), Consecutive())),
+        intervals = Dict("ED" => (Hour(24), 0)),
         ini_cond_chronology = InterProblemChronology(),
     )
     sim = Simulation(
@@ -124,10 +124,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         sequence_cache = SimulationSequence(
             models = models,
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-            intervals = Dict(
-                "UC" => (Hour(24), Consecutive()),
-                "ED" => (Hour(1), Consecutive()),
-            ),
+            intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
             feedforward = Dict(
                 "ED" => SemiContinuousFeedforward(
                     device_type = ThermalStandard,
@@ -423,7 +420,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         sequence_rh = SimulationSequence(
             problems = problems,
-            intervals = Dict("UC" => (Hour(24), RecedingHorizon())),
+            intervals = Dict("UC" => (Hour(24), 0)),
             ini_cond_chronology = InterProblemChronology(),
         )
         sim = Simulation(
