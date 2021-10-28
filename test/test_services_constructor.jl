@@ -308,7 +308,11 @@ end
     push!(groupservice.contributing_services, off_service)
 
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.FAILED
+    @test build!(
+        model;
+        output_dir = mktempdir(cleanup = true),
+        console_level = Logging.AboveMaxLevel,
+    ) == BuildStatus.FAILED
 end
 
 @testset "Test StaticReserve" begin
