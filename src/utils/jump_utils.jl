@@ -93,7 +93,10 @@ function container_spec(::Type{Float64}, axs...)
 end
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
-function sparse_container_spec(::Type{T}, axs...) where {T <: Union{JuMP.AbstractJuMPScalar, Float64}}
+function sparse_container_spec(
+    ::Type{T},
+    axs...,
+) where {T <: Union{JuMP.AbstractJuMPScalar, Float64}}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
     return JuMP.Containers.SparseAxisArray(contents)
@@ -117,8 +120,7 @@ function remove_undef!(expression_array::AbstractArray)
     return expression_array
 end
 
-function remove_undef!(expression_array::JuMP.Containers.SparseAxisArray)
-end
+remove_undef!(expression_array::JuMP.Containers.SparseAxisArray) = expression_array
 
 function _calc_dimensions(
     array::JuMP.Containers.DenseAxisArray,
