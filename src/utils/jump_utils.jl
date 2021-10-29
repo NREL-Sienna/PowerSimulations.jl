@@ -99,13 +99,6 @@ function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     return JuMP.Containers.SparseAxisArray(contents)
 end
 
-""" Returns the correct container spec for the selected type of JuMP Model"""
-function sparse_expressions_container_spec(::Type{T}, axs...) where {T <: Any}
-    indexes = Base.Iterators.product(axs...)
-    contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
-    return JuMP.Containers.SparseAxisArray(contents)
-end
-
 function remove_undef!(expression_array::AbstractArray)
     # iteration is deliberately unsupported for CartesianIndex
     # Makes this code a bit hacky to be able to use isassigned with an array of arbitrary size.
@@ -116,6 +109,9 @@ function remove_undef!(expression_array::AbstractArray)
     end
 
     return expression_array
+end
+
+function remove_undef!(expression_array::JuMP.Containers.SparseAxisArray)
 end
 
 function _calc_dimensions(
