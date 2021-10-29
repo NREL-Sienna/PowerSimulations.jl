@@ -93,9 +93,15 @@ function container_spec(::Type{Float64}, axs...)
 end
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
-function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
+function sparse_container_spec(::Type{T}, axs...) where {T <: Union{JuMP.AbstractJuMPScalar, Float64}}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
+    return JuMP.Containers.SparseAxisArray(contents)
+end
+
+function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
+    indexes = Base.Iterators.product(axs...)
+    contents = Dict{eltype(indexes), Any}(indexes .=> 0.0)
     return JuMP.Containers.SparseAxisArray(contents)
 end
 
