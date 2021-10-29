@@ -1,5 +1,5 @@
 function get_incompatible_devices(devices_template::Dict)
-    incompatible_device_types = Vector{DataType}()
+    incompatible_device_types = Set{DataType}()
     for model in values(devices_template)
         formulation = get_formulation(model)
         if formulation == FixedOutput
@@ -12,307 +12,469 @@ function get_incompatible_devices(devices_template::Dict)
     return incompatible_device_types
 end
 
+function map_contributing_devices_by_type!(
+    service_model::ServiceModel,
+    contributing_devices,
+)
+    types = unique(typeof.(contributing_devices))
+    for S in types
+        _devices = filter(x -> typeof(x) == S, contributing_devices)
+        add_contributing_devices_map!(service_model, S, _devices)
+    end
+    return
+end
+
+function populate_aggregated_service_model!(template, sys::PSY.System)
+    services_template = get_service_models(template)
+    for (key, service_model) in services_template
+        attributes = get_attributes(service_model)
+        if get(attributes, "aggregated_service_model", false)
+            delete!(services_template, key)
+            D = get_component_type(service_model)
+            B = get_formulation(service_model)
+            for service in PSY.get_components(D, sys)
+                new_key = (PSY.get_name(service), Symbol(D))
+                if !haskey(services_template, new_key)
+                    set_service_model!(template, ServiceModel(D, B, PSY.get_name(service)))
+                end
+            end
+        end
+    end
+    return
+end
+
+function populate_contributing_devices!(template, sys::PSY.System)
+    service_models = get_service_models(template)
+    isempty(service_models) && return
+
+    device_models = get_device_models(template)
+    incompatible_device_types = get_incompatible_devices(device_models)
+    services_mapping = PSY.get_contributing_device_mapping(sys)
+    for (service_key, service_model) in service_models
+        S = get_component_type(service_model)
+        service = PSY.get_component(S, sys, get_service_name(service_model))
+        if service === nothing
+            @warn "The data doesn't include services of type $(S) and name $(get_service_name(service_model)), consider changing the service models" _group =
+                LOG_GROUP_SERVICE_CONSTUCTORS
+            continue
+        end
+        contributing_devices_ =
+            services_mapping[(type = S, name = PSY.get_name(service))].contributing_devices
+        contributing_devices = [
+            d for d in contributing_devices_ if
+            typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
+        ]
+        if isempty(contributing_devices)
+            @warn "The contributing devices for service $(PSY.get_name(service)) is empty, consider removing the service from the system" _group =
+                LOG_GROUP_SERVICE_CONSTUCTORS
+            continue
+        end
+        map_contributing_devices_by_type!(service_model, contributing_devices)
+    end
+    return
+end
+
 function construct_services!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    stage::ArgumentConstructStage,
     services_template::ServicesModelContainer,
     devices_template::DevicesModelContainer,
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
 
-    function _construct_valid_services!(service_model::ServiceModel)
-        @debug "Building $(service_model.component_type) with $(service_model.formulation) formulation"
-        services = service_model.component_type[]
-        if validate_services!(
-            service_model.component_type,
-            services,
-            incompatible_device_types,
-            sys,
-        )
-            construct_service!(
-                optimization_container,
-                services,
-                sys,
-                service_model,
-                devices_template,
-                incompatible_device_types,
-            )
-        end
-    end
-
     groupservice = nothing
 
     for (key, service_model) in services_template
-        if service_model.formulation === GroupReserve  # group service needs to be constructed last
+        if get_formulation(service_model) === GroupReserve  # group service needs to be constructed last
             groupservice = key
             continue
         end
-        _construct_valid_services!(service_model)
+        isempty(get_contributing_devices(service_model)) && continue
+        construct_service!(
+            container,
+            sys,
+            stage,
+            service_model,
+            devices_template,
+            incompatible_device_types,
+        )
     end
-    groupservice === nothing || _construct_valid_services!(services_template[groupservice])
+    groupservice === nothing || construct_service!(
+        container,
+        sys,
+        stage,
+        services_template[groupservice],
+        devices_template,
+        incompatible_device_types,
+    )
+    return
+end
+
+function construct_services!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    stage::ModelConstructStage,
+    services_template::ServicesModelContainer,
+    devices_template::DevicesModelContainer,
+)
+    isempty(services_template) && return
+    incompatible_device_types = get_incompatible_devices(devices_template)
+
+    groupservice = nothing
+    for (key, service_model) in services_template
+        if get_formulation(service_model) === GroupReserve  # group service needs to be constructed last
+            groupservice = key
+            continue
+        end
+        isempty(get_contributing_devices(service_model)) && continue
+        construct_service!(
+            container,
+            sys,
+            stage,
+            service_model,
+            devices_template,
+            incompatible_device_types,
+        )
+    end
+    groupservice === nothing || construct_service!(
+        container,
+        sys,
+        stage,
+        services_template[groupservice],
+        devices_template,
+        incompatible_device_types,
+    )
     return
 end
 
 function construct_service!(
-    optimization_container::OptimizationContainer,
-    services::Vector{SR},
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.Reserve}
-    services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
-    names = [PSY.get_name(s) for s in services]
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+    contributing_devices = get_contributing_devices(model)
 
-    if model_has_parameters(optimization_container)
-        add_param_container!(
-            optimization_container,
-            UpdateRef{SR}("service_requirement", "requirement"),
-            names,
-            time_steps,
-        )
-    end
-
-    add_cons_container!(
-        optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
-        names,
-        time_steps,
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
+        RangeReserve(),
     )
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
+    return
+end
 
-    for service in services
-        contributing_devices =
-            services_mapping[(type = SR, name = PSY.get_name(service))].contributing_devices
-        if !isempty(incompatible_device_types)
-            contributing_devices = [
-                d for d in contributing_devices if
-                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-            ]
-        end
-        # Services without contributing devices should have been filtered out in the validation
-        @assert !isempty(contributing_devices)
-        # Variables
-        add_variables!(
-            optimization_container,
-            ActiveServiceVariable,
-            service,
-            contributing_devices,
-            RangeReserve(),
-        )
-        # Constraints
-        service_requirement_constraint!(optimization_container, service, model)
-        modify_device_model!(devices_template, model, contributing_devices)
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, RangeReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.Reserve}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
 
-        # Cost Function
-        cost_function!(optimization_container, service, model)
-    end
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
 
-    if get_feedforward(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
-    end
+    cost_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
 
     return
 end
 
 function construct_service!(
-    optimization_container::OptimizationContainer,
-    services::Vector{SR},
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, RangeReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.StaticReserve}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
+        RangeReserve(),
+    )
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, RangeReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.StaticReserve}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+
+    cost_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
+
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
     model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
+    incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.Reserve}
-    services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
-    names = [PSY.get_name(s) for s in services]
-    # Does not use the standard implementation of add_variable!()
-    add_variable!(
-        optimization_container,
-        ServiceRequirementVariable(),
-        services,
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+    add_variable!(container, ServiceRequirementVariable(), [service], StepwiseCostReserve())
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
         StepwiseCostReserve(),
     )
-    add_cons_container!(
-        optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
-        names,
-        time_steps,
-    )
-
-    for service in services
-        contributing_devices =
-            services_mapping[(
-                type = typeof(service),
-                name = PSY.get_name(service),
-            )].contributing_devices
-        if !isempty(incompatible_device_types)
-            contributing_devices = [
-                d for d in contributing_devices if
-                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-            ]
-        end
-        # Variables
-        add_variables!(
-            optimization_container,
-            ActiveServiceVariable,
-            service,
-            contributing_devices,
-            StepwiseCostReserve(),
-        )
-        # Constraints
-        service_requirement_constraint!(optimization_container, service, model)
-        modify_device_model!(devices_template, model, contributing_devices)
-        # Cost Function
-        cost_function!(optimization_container, service, model)
-    end
-
-    if get_feedforward(model) !== nothing
-        feedforward!(optimization_container, PSY.Device[], model, get_feedforward(model))
-    end
-
-    return
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_expressions!(container, ProductionCostExpression, [service], model)
 end
 
 function construct_service!(
-    optimization_container::OptimizationContainer,
-    services::Vector{PSY.AGC},
+    container::OptimizationContainer,
     sys::PSY.System,
-    ::ServiceModel{PSY.AGC, T},
+    ::ModelConstructStage,
+    model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
-    ::Vector{<:DataType},
-) where {T <: AbstractAGCFormulation}
-    # Order is important in the addition of these variables
-    # for device_model in devices_template
-    # TODO: make a check for the devices' models
-    #end
-    agc_areas = [PSY.get_area(agc) for agc in services]
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.Reserve}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+
+    cost_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{S, T},
+    devices_template::Dict{Symbol, DeviceModel},
+    ::Set{<:DataType},
+) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
+    name = get_service_name(model)
+    service = PSY.get_component(S, sys, name)
+    agc_area = PSY.get_area(service)
     areas = PSY.get_components(PSY.Area, sys)
     for area in areas
-        if area ∉ agc_areas
+        if area != agc_area
             #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
         end
     end
-    add_variables!(optimization_container, SteadyStateFrequencyDeviation)
-    add_variables!(optimization_container, AreaMismatchVariable, areas, T())
-    add_variables!(optimization_container, SmoothACE, areas, T())
-    add_variables!(optimization_container, LiftVariable, areas, T())
-    add_variables!(optimization_container, ActivePowerVariable, areas, T())
-    add_variables!(optimization_container, DeltaActivePowerUpVariable, areas, T())
-    add_variables!(optimization_container, DeltaActivePowerDownVariable, areas, T())
-    # add_variables!(optimization_container, AdditionalDeltaActivePowerUpVariable, areas)
-    # add_variables!(optimization_container, AdditionalDeltaActivePowerDownVariable, areas)
-    balancing_auxiliary_variables!(optimization_container, sys)
 
-    absolute_value_lift(optimization_container, areas)
-    frequency_response_constraint!(optimization_container, sys)
-    area_control_initial_condition!(optimization_container, services, T())
-    smooth_ace_pid!(optimization_container, services)
-    aux_constraints!(optimization_container, sys)
+    add_variables!(container, SteadyStateFrequencyDeviation)
+    add_variables!(container, AreaMismatchVariable, areas, T())
+    add_variables!(container, SmoothACE, areas, T())
+    add_variables!(container, LiftVariable, areas, T())
+    add_variables!(container, ActivePowerVariable, areas, T())
+    add_variables!(container, DeltaActivePowerUpVariable, areas, T())
+    add_variables!(container, DeltaActivePowerDownVariable, areas, T())
+    # TODO: Re-enable full support for AGC models
+    # add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas)
+    # add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas)
+    balancing_auxiliary_variables!(container, sys)
+    add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{S, T},
+    devices_template::Dict{Symbol, DeviceModel},
+    ::Set{<:DataType},
+) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
+    name = get_service_name(model)
+    service = PSY.get_component(S, sys, name)
+    agc_area = PSY.get_area(service)
+    areas = PSY.get_components(PSY.Area, sys)
+
+    absolute_value_lift(container, areas)
+    frequency_response_constraint!(container, sys)
+    add_initial_condition!(container, [service], T(), AreaControlError())
+    smooth_ace_pid!(container, [service])
+    aux_constraints!(container, sys)
+
+    add_feedforward_constraints!(container, model, service)
+
+    return
 end
 
 """
     Constructs a service for StaticReserveGroup.
 """
 function construct_service!(
-    optimization_container::OptimizationContainer,
-    services::Vector{SR},
-    ::PSY.System,
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
-    ::Vector{<:DataType},
+    ::Set{<:DataType},
 ) where {SR <: PSY.StaticReserveGroup}
-    time_steps = model_time_steps(optimization_container)
-    names = [PSY.get_name(s) for s in services]
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_services = PSY.get_contributing_services(service)
+    # check if variables exist
+    check_activeservice_variables(container, contributing_services)
 
-    if model_has_parameters(optimization_container)
-        add_param_container!(
-            optimization_container,
-            UpdateRef{SR}("service_requirement", "requirement"),
-            names,
-            time_steps,
-        )
-    end
-
-    add_cons_container!(
-        optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
-        names,
-        time_steps,
-    )
-
-    for service in services
-        contributing_services = PSY.get_contributing_services(service)
-
-        # check if variables exist
-        check_activeservice_variables(optimization_container, contributing_services)
-        # Constraints
-        service_requirement_constraint!(
-            optimization_container,
-            service,
-            model,
-            contributing_services,
-        )
-    end
     return
 end
 
 function construct_service!(
-    optimization_container::OptimizationContainer,
-    services::Vector{SR},
+    container::OptimizationContainer,
     sys::PSY.System,
-    model::ServiceModel{SR, RampReserve},
-    devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Vector{<:DataType},
-) where {SR <: PSY.Reserve}
-    services_mapping = PSY.get_contributing_device_mapping(sys)
-    time_steps = model_time_steps(optimization_container)
-    names = [PSY.get_name(s) for s in services]
+    ::ModelConstructStage,
+    model::ServiceModel{SR, GroupReserve},
+    ::Dict{Symbol, DeviceModel},
+    ::Set{<:DataType},
+) where {SR <: PSY.StaticReserveGroup}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_services = PSY.get_contributing_services(service)
 
-    if model_has_parameters(optimization_container)
-        add_param_container!(
-            optimization_container,
-            UpdateRef{SR}("service_requirement", "requirement"),
-            names,
-            time_steps,
-        )
-    end
-
-    add_cons_container!(
-        optimization_container,
-        make_constraint_name(REQUIREMENT, SR),
-        names,
-        time_steps,
+    add_constraints!(
+        container,
+        RequirementConstraint,
+        service,
+        contributing_services,
+        model,
     )
 
-    for service in services
-        contributing_devices =
-            services_mapping[(
-                type = typeof(service),
-                name = PSY.get_name(service),
-            )].contributing_devices
-        if !isempty(incompatible_device_types)
-            contributing_devices = [
-                d for d in contributing_devices if
-                typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
-            ]
-        end
-        # Variables
-        add_variables!(
-            optimization_container,
-            ActiveServiceVariable,
-            service,
-            contributing_devices,
-            RampReserve(),
-        )
-        # Constraints
-        service_requirement_constraint!(optimization_container, service, model)
-        ramp_constraints!(optimization_container, service, contributing_devices, model)
-        modify_device_model!(devices_template, model, contributing_devices)
+    return
+end
 
-        # Cost Function
-        cost_function!(optimization_container, service, model)
-    end
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, RampReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.Reserve}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
+        RampReserve(),
+    )
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, RampReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.Reserve}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+    add_constraints!(container, RampConstraint, service, contributing_devices, model)
+
+    cost_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, NonSpinningReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.ReserveNonSpinning}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
+        NonSpinningReserve(),
+    )
+    add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, NonSpinningReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.ReserveNonSpinning}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ReservePowerConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
+
+    cost_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
     return
 end

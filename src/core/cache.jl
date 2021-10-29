@@ -14,12 +14,12 @@ mutable struct TimeStatusChange <: AbstractCache
     device_type::Type{<:PSY.Device}
     value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}}
     units::Dates.TimePeriod
-    ref::UpdateRef
+    ref::Any
 
     function TimeStatusChange(
         device_type::Type{<:PSY.Device},
         value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}},
-        ref::UpdateRef,
+        ref,
         units::Dates.TimePeriod = Dates.Hour(1),
     )
         units = IS.time_period_conversion(units)
@@ -27,20 +27,26 @@ mutable struct TimeStatusChange <: AbstractCache
     end
 end
 
-function TimeStatusChange(::Type{T}, name::AbstractString) where {T <: PSY.Device}
+function TimeStatusChange(
+    ::Type{T},
+    ::Type{U} = OnVariable,
+) where {T <: PSY.Device, U <: VariableType}
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}}(undef, 1)
-    return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
+    return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, U))
 end
 
 mutable struct StoredEnergy <: AbstractCache
     device_type::Type{<:PSY.Device}
     value::JuMP.Containers.DenseAxisArray{Float64}
-    ref::UpdateRef
+    ref::Any
 end
 
-function StoredEnergy(::Type{T}, name::AbstractString) where {T <: PSY.Device}
+function StoredEnergy(
+    ::Type{T},
+    ::Type{U} = EnergyVariable,
+) where {T <: PSY.Device, U <: VariableType}
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, 1)
-    return StoredEnergy(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
+    return StoredEnergy(T, value_array, UpdateRef{JuMP.VariableRef}(T, U))
 end
 
 cache_value(cache::AbstractCache, key) = cache.value[key]

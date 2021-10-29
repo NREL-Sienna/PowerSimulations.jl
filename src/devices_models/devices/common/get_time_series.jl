@@ -1,29 +1,63 @@
-function get_time_series(
-    optimization_container::OptimizationContainer,
+function _get_time_series(
+    container::OptimizationContainer,
     component::PSY.Component,
-    forecast_label::String,
+    parameter_attributes::TimeSeriesAttributes{T},
+) where {T <: PSY.TimeSeriesData}
+    initial_time = get_initial_time(container)
+    time_steps = get_time_steps(container)
+    forecast = PSY.get_time_series(
+        T,
+        component,
+        get_name(parameter_attributes);
+        start_time = initial_time,
+        count = 1,
+    )
+    ts_vector = IS.get_time_series_values(
+        component,
+        forecast,
+        initial_time;
+        len = length(time_steps),
+        ignore_scaling_factors = true,
+    )
+    return ts_vector
+end
+
+function get_time_series(
+    container::OptimizationContainer,
+    component::T,
+    parameter::TimeSeriesParameter,
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: PSY.Component}
+    parameter_container = get_parameter(container, parameter, T, meta)
+    parameter_container.attributes
+    return _get_time_series(container, component, parameter_container.attributes)
+end
+
+function get_time_series(
+    container::OptimizationContainer,
+    component::T,
+    parameter::ActivePowerTimeSeriesParameter,
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: PSY.HybridSystem}
+    parameter_container = get_parameter(container, parameter, T, meta)
+    parameter_container.attributes
+    return _get_time_series(
+        container,
+        PSY.get_renewable_unit(component),
+        parameter_container.attributes,
+    )
+end
+
+# This is just for temporary compatibility with current code. Needs to be eliminated once the time series
+# refactor is done.
+function get_time_series(
+    container::OptimizationContainer,
+    component::PSY.Component,
+    forecast_name::String,
 )
-    initial_time = model_initial_time(optimization_container)
-    @debug initial_time
-    use_forecast_data = model_uses_forecasts(optimization_container)
-    time_steps = model_time_steps(optimization_container)
-    if use_forecast_data
-        forecast = PSY.get_time_series(
-            PSY.Deterministic,
-            component,
-            forecast_label;
-            start_time = initial_time,
-            count = 1,
-        )
-        ts_vector = IS.get_time_series_values(
-            component,
-            forecast,
-            initial_time;
-            len = length(time_steps),
-            ignore_scaling_factors = true,
-        )
-        return ts_vector
-    else
-        return ones(time_steps[end])
-    end
+    return _get_time_series(
+        container,
+        component,
+        TimeSeriesAttributes{PSY.Deterministic}(forecast_name),
+    )
 end

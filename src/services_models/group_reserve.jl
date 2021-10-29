@@ -4,11 +4,16 @@ struct GroupReserve <: AbstractReservesFormulation end
 This function checks if the variables for reserves were created
 """
 function check_activeservice_variables(
-    optimization_container::OptimizationContainer,
-    contributing_services::Vector{<:PSY.Service},
-)
+    container::OptimizationContainer,
+    contributing_services::Vector{T},
+) where {T <: PSY.Service}
     for service in contributing_services
-        get_variable(optimization_container, PSY.get_name(service), typeof(service))
+        get_variable(
+            container,
+            ActivePowerReserveVariable(),
+            typeof(service),
+            PSY.get_name(service),
+        )
     end
     return
 end
@@ -17,23 +22,28 @@ end
 """
 This function creates the requirement constraint that will be attained by the apropriate services
 """
-function service_requirement_constraint!(
-    optimization_container::OptimizationContainer,
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{RequirementConstraint},
     service::SR,
-    ::ServiceModel{SR, GroupReserve},
     contributing_services::Vector{<:PSY.Service},
+    model::ServiceModel{SR, GroupReserve},
 ) where {SR <: PSY.StaticReserveGroup}
-    parameters = model_has_parameters(optimization_container)
-    initial_time = model_initial_time(optimization_container)
-    @debug initial_time
-    time_steps = model_time_steps(optimization_container)
+    initial_time = get_initial_time(container)
+    time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    constraint =
-        get_constraint(optimization_container, make_constraint_name(REQUIREMENT, SR))
-    use_slacks = get_services_slack_variables(optimization_container.settings)
+    add_constraints_container!(
+        container,
+        RequirementConstraint(),
+        SR,
+        [name],
+        time_steps;
+        meta = name,
+    )
+    constraint = get_constraint(container, RequirementConstraint(), SR, name)
+    use_slacks = get_use_slacks(model)
     reserve_variables = [
-        get_variable(optimization_container, PSY.get_name(r), typeof(r)) for
-        r in contributing_services
+        get_variable(container, ActivePowerReserveVariable(), typeof(r), PSY.get_name(r)) for r in contributing_services
     ]
 
     requirement = PSY.get_requirement(service)
@@ -45,10 +55,8 @@ function service_requirement_constraint!(
         if use_slacks
             resource_expression += slack_vars[t]
         end
-        constraint[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            resource_expression >= requirement
-        )
+        constraint[name, t] =
+            JuMP.@constraint(container.JuMPmodel, resource_expression >= requirement)
     end
 
     return

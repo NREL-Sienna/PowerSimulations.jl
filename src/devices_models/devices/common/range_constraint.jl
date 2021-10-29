@@ -1,27 +1,26 @@
-struct RangeConstraintSpecInternal
-    constraint_infos::Vector{<:AbstractRangeConstraintInfo}
-    constraint_name::Symbol
-    variable_name::Symbol
-    bin_variable_names::Vector{Symbol}
+######## CONSTRAINTS ############
+
+# Generic fallback functions
+function get_startup_shutdown(
+    device,
+    ::Type{<:VariableType},
+    ::Type{<:AbstractDeviceFormulation},
+) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
+    nothing
 end
 
-function RangeConstraintSpecInternal(
-    constraint_infos::Vector{DeviceRangeConstraintInfo},
-    constraint_name::Symbol,
-    variable_name::Symbol,
-)
-    return RangeConstraintSpecInternal(
-        constraint_infos,
-        constraint_name,
-        variable_name,
-        Vector{Symbol}(),
-    )
+function get_min_max_limits(
+    device,
+    ::Type{<:VariableType},
+    ::Type{<:AbstractDeviceFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    (min = 0.0, max = 0.0)
 end
 
 @doc raw"""
 Constructs min/max range constraint from device variable.
 
-# Constraints
+
 If min and max within an epsilon width:
 
 ``` variable[name, t] == limits.max ```
@@ -38,52 +37,243 @@ where limits in constraint_infos.
 
 `` limits^{min} \leq x \leq limits^{max}, \text{ otherwise } ``
 """
-function device_range!(
-    optimization_container::OptimizationContainer,
-    inputs::RangeConstraintSpecInternal,
-)
-    time_steps = model_time_steps(optimization_container)
-    variable = get_variable(optimization_container, inputs.variable_name)
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    component_type = V
+    array = get_variable(container, variable, component_type)
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
+end
 
-    for constraint_info in inputs.constraint_infos, t in time_steps
-        ci_name = get_component_name(constraint_info)
-        expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
-        for val in constraint_info.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[ci_name, t],
-            )
-        end
-        expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
-        for val in constraint_info.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(optimization_container, val)[ci_name, t],
-                -1.0,
-            )
-        end
-        con_ub[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_ub <= constraint_info.limits.max
-        )
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:RangeConstraintLBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
+end
+
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:RangeConstraintUBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
+end
+
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    component_type = V
+    array = get_variable(container, variable, component_type)
+
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+    )
+end
+
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    U::Type{<:RangeConstraintLBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
+end
+
+function add_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    U::Type{<:RangeConstraintUBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+    )
+end
+
+function add_lower_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    device_names = [PSY.get_name(d) for d in devices]
+
+    con_lb = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        device_names,
+        time_steps,
+        meta = "lb",
+    )
+
+    for (i, device) in enumerate(devices), t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        con_lb[ci_name, t] =
+            JuMP.@constraint(container.JuMPmodel, array[ci_name, t] >= limits.min)
+    end
+end
+
+function add_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    device_names = [PSY.get_name(d) for d in devices]
+
+    con_ub = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        device_names,
+        time_steps,
+        meta = "ub",
+    )
+
+    for (i, device) in enumerate(devices), t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        con_ub[ci_name, t] =
+            JuMP.@constraint(container.JuMPmodel, array[ci_name, t] <= limits.max)
+    end
+end
+
+function add_lower_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    device_names =
+        [PSY.get_name(d) for d in devices if does_subcomponent_exist(d, PSY.ThermalGen)]
+
+    con_lb = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        device_names,
+        time_steps,
+        meta = "lb",
+    )
+
+    for (i, device) in enumerate(devices), t in time_steps
+        !does_subcomponent_exist(device, PSY.ThermalGen) && continue
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_lb >= constraint_info.limits.min
+            container.JuMPmodel,
+            array[ci_name, PSY.ThermalGen, t] >= limits.min
         )
     end
+end
 
-    return
+function add_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    device_names =
+        [PSY.get_name(d) for d in devices if does_subcomponent_exist(d, PSY.ThermalGen)]
+
+    con_ub = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        device_names,
+        time_steps,
+        meta = "ub",
+    )
+
+    for (i, device) in enumerate(devices), t in time_steps
+        !does_subcomponent_exist(device, PSY.ThermalGen) && continue
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
+        con_ub[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[ci_name, PSY.ThermalGen, t] <= limits.max
+        )
+    end
 end
 
 @doc raw"""
 Constructs min/max range constraint from device variable and on/off decision variable.
 
-# Constraints
+
 If device min = 0:
 
 ``` varcts[name, t] <= limits.max*varbin[name, t]) ```
@@ -104,67 +294,153 @@ where limits in constraint_infos.
 
 `` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin}, \text{ otherwise } ``
 """
-function device_semicontinuousrange!(
-    optimization_container::OptimizationContainer,
-    inputs::RangeConstraintSpecInternal,
-)
-    time_steps = model_time_steps(optimization_container)
-    varcts = get_variable(optimization_container, inputs.variable_name)
-    @assert length(inputs.bin_variable_names) == 1
-    varbin = get_variable(optimization_container, inputs.bin_variable_names[1])
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = [get_component_name(x) for x in inputs.constraint_infos]
-    # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
-    # In the future this can be updated
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
-
-    for constraint_info in inputs.constraint_infos, t in time_steps
-        ci_name = get_component_name(constraint_info)
-        if JuMP.has_lower_bound(varcts[ci_name, t])
-            JuMP.set_lower_bound(varcts[ci_name, t], 0.0)
-        end
-        expression_ub = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
-        for val in constraint_info.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[ci_name, t],
-            )
-        end
-        expression_lb = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
-        for val in constraint_info.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(optimization_container, val)[ci_name, t],
-                -1.0,
-            )
-        end
-        con_ub[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_ub <= constraint_info.limits.max * varbin[ci_name, t]
-        )
-        con_lb[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_lb >= constraint_info.limits.min * varbin[ci_name, t]
-        )
-    end
-
-    return
+function add_semicontinuous_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    component_type = V
+    array = get_variable(container, variable, component_type)
+    add_semicontinuous_lower_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        devices,
+        model,
+        X,
+    )
+    add_semicontinuous_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        devices,
+        model,
+        X,
+    )
 end
 
-# This function looks suspicious and repetitive. Needs verification
+function add_semicontinuous_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:RangeConstraintLBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
+    add_semicontinuous_lower_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        devices,
+        model,
+        X,
+    )
+end
+
+function add_semicontinuous_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:RangeConstraintUBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = V
+    array = get_expression(container, expression, component_type)
+    add_semicontinuous_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        devices,
+        model,
+        X,
+    )
+end
+
+function add_semicontinuous_lower_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    binary_variables = [OnVariable()]
+
+    con_lb = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
+
+    @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
+    varbin = get_variable(container, only(binary_variables), component_type)
+
+    for (i, device) in enumerate(devices), t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        con_lb[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[ci_name, t] >= limits.min * varbin[ci_name, t]
+        )
+    end
+end
+
+function add_semicontinuous_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    binary_variables = [OnVariable()]
+
+    con_ub = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+
+    @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
+    varbin = get_variable(container, only(binary_variables), component_type)
+
+    for (i, device) in enumerate(devices), t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        con_ub[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[ci_name, t] <= limits.max * varbin[ci_name, t]
+        )
+    end
+end
+
 @doc raw"""
-Constructs min/max range constraint from device variable and on/off decision variable.
+Constructs min/max range constraint from device variable and reservation decision variable.
 
-# Constraints
-If device min = 0:
 
-``` varcts[name, t] <= limits.max * (1 - varbin[name, t]) ```
-
-``` varcts[name, t] >= 0.0 ```
-
-Otherwise:
 
 ``` varcts[name, t] <= limits.max * (1 - varbin[name, t]) ```
 
@@ -174,289 +450,466 @@ where limits in constraint_infos.
 
 # LaTeX
 
-`` 0 \leq x^{cts} \leq limits^{max} (1 - x^{bin} ), \text{ for } limits^{min} = 0 ``
+`` 0 \leq x^{cts} \leq limits^{max} (1 - x^{bin}), \text{ for } limits^{min} = 0 ``
 
-`` limits^{min} (1 - x^{bin} ) \leq x^{cts} \leq limits^{max} (1 - x^{bin} ), \text{ otherwise } ``
+`` limits^{min} (1 - x^{bin}) \leq x^{cts} \leq limits^{max} (1 - x^{bin}), \text{ otherwise } ``
 """
-function reserve_device_semicontinuousrange!(
-    optimization_container::OptimizationContainer,
-    inputs::RangeConstraintSpecInternal,
-)
-    time_steps = model_time_steps(optimization_container)
-    varcts = get_variable(optimization_container, inputs.variable_name)
-    @assert length(inputs.bin_variable_names) == 1
-    varbin = get_variable(optimization_container, inputs.bin_variable_names[1])
+function add_reserve_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{InputActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    component_type = V
+    array = get_variable(container, variable, component_type)
+    add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
+end
 
-    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-    names = [get_component_name(x) for x in inputs.constraint_infos]
+function add_reserve_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{InputActivePowerVariableLimitsConstraint},
+    U::Type{<:ExpressionType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    expression = U()
+    component_type = W
+    array = get_expression(container, expression, component_type)
+    add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model, X)
+    add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model, X)
+end
+
+function add_reserve_lower_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{InputActivePowerVariableLimitsConstraint},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    binary_variables = [ReservationVariable()]
+
+    IS.@assert_op length(binary_variables) == 1
+    varbin = get_variable(container, only(binary_variables), component_type)
+
+    names = [PSY.get_name(x) for x in devices]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
-    con_ub = add_cons_container!(optimization_container, ub_name, names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
+    con_lb = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
 
-    for constraint_info in inputs.constraint_infos, t in time_steps
-        ci_name = get_component_name(constraint_info)
-        if JuMP.has_lower_bound(varcts[ci_name, t])
-            JuMP.set_lower_bound(varcts[ci_name, t], 0.0)
-        end
-        expression_ub = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
-        for val in constraint_info.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_ub,
-                get_variable(optimization_container, val)[ci_name, t],
-            )
-        end
-        expression_lb = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)
-        for val in constraint_info.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_lb,
-                get_variable(optimization_container, val)[ci_name, t],
-                -1.0,
-            )
-        end
-        con_ub[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_ub <= constraint_info.limits.max * (1 - varbin[ci_name, t])
-        )
+    for device in devices, t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W)
         con_lb[ci_name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_lb >= constraint_info.limits.min * (1 - varbin[ci_name, t])
+            container.JuMPmodel,
+            array[ci_name, t] >= limits.min * (1 - varbin[ci_name, t])
         )
     end
-    return
+end
+
+function add_reserve_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{InputActivePowerVariableLimitsConstraint},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    constraint = T()
+    component_type = V
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    binary_variables = [ReservationVariable()]
+
+    IS.@assert_op length(binary_variables) == 1
+    varbin = get_variable(container, only(binary_variables), component_type)
+
+    names = [PSY.get_name(x) for x in devices]
+    # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
+    # In the future this can be updated
+    con_ub = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+
+    for device in devices, t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W)
+        con_ub[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[ci_name, t] <= limits.max * (1 - varbin[ci_name, t])
+        )
+    end
 end
 
 @doc raw"""
-Constructs min/max range constraint from device variable and on/off decision variable.
+Constructs min/max range constraint from device variable and reservation decision variable.
 
-# Constraints
 
-``` varcts[name, t] <= (limits.max-limits.min)*varbin[name, t])
-        - max(limits.max - lag_ramp_limits.startup, 0) * var_on[name, t] ```
 
-``` varcts[name, t] <= (limits.max-limits.min)*varbin[name, t])
-        - max(limits.max - lag_ramp_limits.shutdown, 0) * var_off[name, t] ```
+``` varcts[name, t] <= limits.max * varbin[name, t] ```
 
-where limits and lag_ramp_limits is in range_data.
+``` varcts[name, t] >= limits.min * varbin[name, t] ```
+
+where limits in constraint_infos.
 
 # LaTeX
 
-
-`` x^{cts} \leq (limits^{max}-limits^{min}) x^{bin} - max(limits^{max} - lag^{startup}, 0) x^{on} ``
-
-`` x^{cts} \leq (limits^{max}-limits^{min}) x^{bin} - max(limits^{max} - lag^{shutdown}, 0) x^{off}``
-
-# Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* range_data::Vector{DeviceRange} : contains names and vector of min/max
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
-* binvar_names::Symbol : the names of the binary variables
+`` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin},``
 """
-function device_multistart_range!(
-    optimization_container::OptimizationContainer,
-    inputs::RangeConstraintSpecInternal,
-)
-    time_steps = model_time_steps(optimization_container)
-    varp = get_variable(optimization_container, inputs.variable_name)
-    @assert length(inputs.bin_variable_names) == 3
-    varstatus = get_variable(optimization_container, inputs.bin_variable_names[1])
-    varon = get_variable(optimization_container, inputs.bin_variable_names[2])
-    varoff = get_variable(optimization_container, inputs.bin_variable_names[3])
-
-    on_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "on")
-    off_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "off")
-    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
-
-    names = [get_component_name(x) for x in inputs.constraint_infos]
-    con_on = add_cons_container!(optimization_container, on_name, names, time_steps)
-    con_off = add_cons_container!(optimization_container, off_name, names, time_steps)
-    con_lb = add_cons_container!(optimization_container, lb_name, names, time_steps)
-
-    for constraint_info in inputs.constraint_infos, t in time_steps
-        name = get_component_name(constraint_info)
-        limits = constraint_info.limits
-        lag_ramp_limits = constraint_info.lag_ramp_limits
-        if JuMP.has_lower_bound(varp[name, t])
-            JuMP.set_lower_bound(varp[name, t], 0.0)
-        end
-        expression_products = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
-        for val in constraint_info.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_products,
-                get_variable(optimization_container, val)[name, t],
-            )
-        end
-        con_on[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_products <=
-            (limits.max - limits.min) * varstatus[name, t] -
-            max(limits.max - lag_ramp_limits.startup, 0) * varon[name, t]
-        )
-        if t == length(time_steps)
-            continue
-        else
-            con_off[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                expression_products <=
-                (limits.max - limits.min) * varstatus[name, t] -
-                max(limits.max - lag_ramp_limits.shutdown, 0) * varoff[name, t + 1]
-            )
-        end
-
-        exp_lb = JuMP.AffExpr(0.0, varp[name, t] => 1.0)
-        for val in constraint_info.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_products,
-                get_variable(optimization_container, val)[name, t],
-                -1.0,
-            )
-        end
-        con_lb[name, t] = JuMP.@constraint(optimization_container.JuMPmodel, exp_lb >= 0)
-    end
-
-    return
+function add_reserve_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{U},
+    V::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{W},
+    model::DeviceModel{W, X},
+    Y::Type{<:PM.AbstractPowerModel},
+) where {
+    U <:
+    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    W <: PSY.Component,
+    X <: AbstractDeviceFormulation,
+}
+    variable = V()
+    component_type = W
+    array = get_variable(container, variable, component_type)
+    add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model, Y)
+    add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model, Y)
 end
 
 @doc raw"""
-Constructs min/max range constraint from device variable and on/off decision variable.
+Constructs min/max range constraint from device variable and reservation decision variable.
 
-# Constraints
 
-``` max(limits.max - lag_ramp_limits.shutdown, 0) var_off[name, 1] <= initial_power[ix].value
-        - (limits.max - limits.min)initial_status[ix].value  ```
 
-where limits in range_data.
+``` varcts[name, t] <= limits.max * varbin[name, t] ```
+
+``` varcts[name, t] >= limits.min * varbin[name, t] ```
+
+where limits in constraint_infos.
 
 # LaTeX
 
-`` max(limits^{max} - lag^{shutdown}, 0) x^{off} \leq initial_condition^{power} - (limits^{max} - limits^{min}) initial_condition^{status}``
-
-# Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* range_data::Vector{DeviceRange} : contains names and vector of min/max
-* initial_conditions::Matrix{InitialCondition} :
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol : name of the shutdown variable
+`` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin},``
 """
-function device_multistart_range_ic!(
-    optimization_container::OptimizationContainer,
-    range_data::Vector{DeviceMultiStartRangeConstraintsInfo},
-    initial_conditions::Matrix{InitialCondition},## 1 is initial power, 2 is initial status
-    cons_name::Symbol,
-    var_name::Symbol,
-)
-    varstop = get_variable(optimization_container, var_name)
-
-    set_name = [get_device_name(ic) for ic in initial_conditions[:, 1]]
-    con = add_cons_container!(optimization_container, cons_name, set_name)
-
-    for (ix, ic) in enumerate(initial_conditions[:, 1])
-        name = get_device_name(ic)
-        data = range_data[ix]
-        val = max(data.limits.max - data.lag_ramp_limits.shutdown, 0)
-        con[name] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            val * varstop[get_component_name(data), 1] <=
-            initial_conditions[ix, 2].value * (data.limits.max - data.limits.min) -
-            ic.value
-        )
-    end
-    return
+function add_reserve_range_constraints!(
+    container::OptimizationContainer,
+    T::Type{U},
+    V::Type{<:ExpressionType},
+    devices::IS.FlattenIteratorWrapper{W},
+    model::DeviceModel{W, X},
+    Y::Type{<:PM.AbstractPowerModel},
+) where {
+    U <:
+    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    W <: PSY.Component,
+    X <: AbstractDeviceFormulation,
+}
+    expression = V()
+    component_type = W
+    array = get_expression(container, expression, component_type)
+    add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model, Y)
+    add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model, Y)
 end
 
-function reserve_power_ub!(
-    optimization_container::OptimizationContainer,
-    charging_range_data::Vector{DeviceRangeConstraintInfo},
-    discharging_range_data::Vector{DeviceRangeConstraintInfo},
-    cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol},
-)
-    time_steps = model_time_steps(optimization_container)
-    var_in = get_variable(optimization_container, var_names[1])
-    var_out = get_variable(optimization_container, var_names[2])
-    rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
-    names = [get_component_name(x) for x in charging_range_data]
-    con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
-    con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
+function add_reserve_lower_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{U},
+    array,
+    devices::IS.FlattenIteratorWrapper{W},
+    model::DeviceModel{W, X},
+    Y::Type{<:PM.AbstractPowerModel},
+) where {
+    U <:
+    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    W <: PSY.Component,
+    X <: AbstractDeviceFormulation,
+}
+    constraint = T()
+    component_type = W
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    binary_variables = [ReservationVariable()]
 
-    for (up_info, dn_info) in zip(charging_range_data, discharging_range_data),
-        t in time_steps
+    con_lb = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
 
-        name = get_component_name(up_info)
-        expression_up = JuMP.AffExpr(0.0)
-        for val in up_info.additional_terms_ub
-            JuMP.add_to_expression!(
-                expression_up,
-                get_variable(optimization_container, val)[name, t],
-                1.0,
-            )
-        end
-        expression_dn = JuMP.AffExpr(0.0)
-        for val in dn_info.additional_terms_lb
-            JuMP.add_to_expression!(
-                expression_dn,
-                get_variable(optimization_container, val)[name, t],
-                1.0,
-            )
-        end
-        con_up[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_up <= var_in[name, t] + (up_info.limits.max - var_out[name, t])
-        )
-        con_dn[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_dn <= var_out[name, t] + (dn_info.limits.max - var_in[name, t])
+    @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
+    varbin = get_variable(container, only(binary_variables), component_type)
+
+    for (i, device) in enumerate(devices), t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, X) # depends on constraint type and formulation type
+        con_lb[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[ci_name, t] >= limits.min * varbin[ci_name, t]
         )
     end
-    return
 end
 
-function reserve_energy_ub!(
-    optimization_container::OptimizationContainer,
-    constraint_infos::Vector{ReserveRangeConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-)
-    time_steps = model_time_steps(optimization_container)
-    var_e = get_variable(optimization_container, var_name)
-    resolution = model_resolution(optimization_container)
-    rev_up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    rev_dn_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
-    names = [get_component_name(x) for x in constraint_infos]
-    con_up = add_cons_container!(optimization_container, rev_up_name, names, time_steps)
-    con_dn = add_cons_container!(optimization_container, rev_dn_name, names, time_steps)
+function add_reserve_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{U},
+    array,
+    devices::IS.FlattenIteratorWrapper{W},
+    model::DeviceModel{W, X},
+    Y::Type{<:PM.AbstractPowerModel},
+) where {
+    U <:
+    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    W <: PSY.Component,
+    X <: AbstractDeviceFormulation,
+}
+    constraint = T()
+    component_type = W
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    binary_variables = [ReservationVariable()]
 
-    for const_info in constraint_infos, t in time_steps
-        name = get_component_name(const_info)
-        expression_up = JuMP.AffExpr(0.0)
-        for val in const_info.additional_terms_up
-            JuMP.add_to_expression!(
-                expression_up,
-                get_variable(optimization_container, val)[name, t],
-                get_time_frame(const_info, val) / MINUTES_IN_HOUR,
-            )
-        end
-        expression_dn = JuMP.AffExpr(0.0)
-        for val in const_info.additional_terms_dn
-            JuMP.add_to_expression!(
-                expression_dn,
-                get_variable(optimization_container, val)[name, t],
-                get_time_frame(const_info, val) / MINUTES_IN_HOUR,
-            )
-        end
-        con_up[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_up <=
-            (var_e[name, t] - const_info.limits.min) * const_info.efficiency.out
-        )
-        con_dn[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            expression_dn <=
-            (const_info.limits.max - var_e[name, t]) / const_info.efficiency.in
+    con_ub = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+
+    @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
+    varbin = get_variable(container, only(binary_variables), component_type)
+
+    for device in devices, t in time_steps
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, X) # depends on constraint type and formulation type
+        con_ub[ci_name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[ci_name, t] <= limits.max * varbin[ci_name, t]
         )
     end
-    return
+end
+
+function add_parameterized_lower_bound_range_constraints(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:ExpressionType},
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    component_type = V
+    array = get_expression(container, variable, component_type)
+    add_parameterized_lower_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        P,
+        devices,
+        model,
+        X,
+    )
+end
+
+function add_parameterized_lower_bound_range_constraints(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    component_type = V
+    array = get_variable(container, variable, component_type)
+    add_parameterized_lower_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        P,
+        devices,
+        model,
+        X,
+    )
+end
+
+function add_parameterized_lower_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    array,
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    time_steps = get_time_steps(container)
+    constraint_type = T
+    constraint = T()
+    variable = U()
+    component_type = V
+    names = [PSY.get_name(d) for d in devices]
+
+    constraint = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "lb",
+    )
+
+    parameter = get_parameter_array(container, P(), V)
+    multiplier = get_parameter_multiplier_array(container, P(), V)
+    for (i, device) in enumerate(devices), t in time_steps
+        name = PSY.get_name(device)
+        constraint[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[name, t] >= multiplier[name, t] * parameter[name, t]
+        )
+    end
+end
+
+function add_parameterized_upper_bound_range_constraints(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:ExpressionType},
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    constraint_type = T
+    component_type = V
+    array = get_expression(container, variable, component_type)
+    add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        P,
+        devices,
+        model,
+        X,
+    )
+end
+
+function add_parameterized_upper_bound_range_constraints(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    variable = U()
+    constraint_type = T
+    component_type = V
+    array = get_variable(container, variable, component_type)
+    add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        P,
+        devices,
+        model,
+        X,
+    )
+end
+
+function add_parameterized_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    array,
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    time_steps = get_time_steps(container)
+    constraint = T()
+    component_type = V
+    names = [PSY.get_name(d) for d in devices]
+
+    constraint = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "ub",
+    )
+
+    parameter = get_parameter_array(container, P(), V)
+    multiplier = get_parameter_multiplier_array(container, P(), V)
+    for (i, device) in enumerate(devices), t in time_steps
+        name = PSY.get_name(device)
+        constraint[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[name, t] <= multiplier[name, t] * parameter[name, t]
+        )
+    end
+end
+
+function add_parameterized_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    array,
+    P::Type{<:ParameterType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HybridSystem, W <: AbstractDeviceFormulation}
+    time_steps = get_time_steps(container)
+    constraint = T()
+    component_type = V
+    names =
+        [PSY.get_name(d) for d in devices if does_subcomponent_exist(d, PSY.RenewableGen)]
+
+    constraint = add_constraints_container!(
+        container,
+        constraint,
+        component_type,
+        names,
+        time_steps,
+        meta = "re ub",
+    )
+
+    parameter = get_parameter_array(container, P(), V)
+    multiplier = get_parameter_multiplier_array(container, P(), V)
+    for (i, device) in enumerate(devices), t in time_steps
+        !does_subcomponent_exist(device, PSY.RenewableGen) && continue
+        name = PSY.get_name(device)
+        constraint[name, t] = JuMP.@constraint(
+            container.JuMPmodel,
+            array[name, PSY.RenewableGen, t] <= multiplier[name, t] * parameter[name, t]
+        )
+    end
 end

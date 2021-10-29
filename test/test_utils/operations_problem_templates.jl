@@ -1,13 +1,13 @@
 function get_thermal_standard_uc_template()
-    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
     return template
 end
 
 function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
-    template = OperationsProblemTemplate(network)
-    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    template = ProblemTemplate(network)
+    set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, MonitoredLine, StaticBranchBounds)
     set_device_model!(template, Line, StaticBranch)
@@ -18,7 +18,7 @@ function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
 end
 
 function get_template_basic_uc_simulation()
-    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad),
@@ -34,7 +34,7 @@ function get_template_standard_uc_simulation()
 end
 
 function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
-    template = OperationsProblemTemplate(network)
+    template = ProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad),
@@ -44,7 +44,7 @@ function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
 end
 
 function get_template_hydro_st_uc(network = CopperPlatePowerModel)
-    template = OperationsProblemTemplate(network)
+    template = ProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment),
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch),
     set_device_model!(template, PowerLoad, StaticPowerLoad),
@@ -53,9 +53,9 @@ function get_template_hydro_st_uc(network = CopperPlatePowerModel)
     return template
 end
 
-function get_template_hydro_st_ed(network = CopperPlatePowerModel)
-    template = OperationsProblemTemplate(network)
-    set_device_model!(template, ThermalStandard, ThermalDispatch)
+function get_template_hydro_st_ed(network = CopperPlatePowerModel, duals = [])
+    template = ProblemTemplate(network)
+    set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptibleLoad, DispatchablePowerLoad)
@@ -64,9 +64,9 @@ function get_template_hydro_st_ed(network = CopperPlatePowerModel)
 end
 
 function get_template_dispatch_with_network(network = StandardPTDFModel)
-    template = OperationsProblemTemplate(network)
+    template = ProblemTemplate(network)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, ThermalStandard, ThermalDispatch)
+    set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, Line, StaticBranch)
     set_device_model!(template, Transformer2W, StaticBranch)
     set_device_model!(template, TapTransformer, StaticBranch)

@@ -1,18 +1,18 @@
 @testset "Single stage sequential tests" begin
     template_ed = get_template_nomin_ed_simulation()
     c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    problems = SimulationProblems(
-        ED = OperationsProblem(template_ed, c_sys, optimizer = ipopt_optimizer),
-    )
+    models = SimulationModels([
+        DecisionModel(template_ed, c_sys, name = "ED", optimizer = ipopt_optimizer),
+    ])
     test_sequence = SimulationSequence(
-        problems = problems,
-        intervals = Dict("ED" => (Hour(24), Consecutive())),
+        models = models,
+        intervals = Dict("ED" => (Hour(24), 0)),
         ini_cond_chronology = InterProblemChronology(),
     )
     sim_single = Simulation(
         name = "consecutive",
         steps = 2,
-        problems = problems,
+        models = models,
         sequence = test_sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
@@ -23,24 +23,27 @@
 end
 
 @testset "All stages executed - No Cache" begin
-    duals = [:CopperPlateBalance]
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
+    set_network_model!(
+        template_ed,
+        CopperPlatePowerBalance,
+        duals = [CopperPlateBalanceConstraint],
+    )
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    problems = SimulationProblems(
-        UC = OperationsProblem(
+    problems = SimulationModels(
+        UC = DecisionModel(
             template_uc,
             c_sys5_hy_uc;
             optimizer = GLPK_optimizer,
             balance_slack_variables = true,
         ),
-        ED = OperationsProblem(
+        ED = DecisionModel(
             template_ed,
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,
-            constraint_duals = duals,
             # Needed do to inconsistency in the test data
             balance_slack_variables = true,
         ),
@@ -49,18 +52,15 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_problem = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFeedforward(
+                variable_source_problem = ActivePowerVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -82,13 +82,13 @@ end
 @testset "Simulation Single Stage with Cache" begin
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     template = get_template_hydro_st_ed()
-    problems = SimulationProblems(
-        ED = OperationsProblem(template, c_sys5_hy_ed; optimizer = ipopt_optimizer),
+    problems = SimulationModels(
+        ED = DecisionModel(template, c_sys5_hy_ed; optimizer = ipopt_optimizer),
     )
 
     single_sequence = SimulationSequence(
         problems = problems,
-        intervals = Dict("ED" => (Hour(1), Consecutive())),
+        intervals = Dict("ED" => (Hour(1), 0)),
         cache = Dict(("ED",) => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY)),
         ini_cond_chronology = IntraProblemChronology(),
     )
@@ -100,11 +100,10 @@ end
         sequence = single_sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
-    # Disabled due to https://github.com/NREL-SIIP/PowerSystemCaseBuilder.jl/issues/11
-    #build_out = build!(sim_single_wcache)
-    #@test build_out == PSI.BuildStatus.BUILT
-    #execute_out = execute!(sim_single_wcache)
-    #@test execute_out == PSI.RunStatus.SUCCESSFUL
+    build_out = build!(sim_single_wcache)
+    @test build_out == PSI.BuildStatus.BUILT
+    execute_out = execute!(sim_single_wcache)
+    @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
 @testset "Simulation with 2-Stages and Cache" begin
@@ -112,30 +111,27 @@ end
     template_ed = get_template_hydro_st_ed()
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
-    problems = SimulationProblems(
-        UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
-        ED = OperationsProblem(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),
+    problems = SimulationModels(
+        UC = DecisionModel(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
+        ED = DecisionModel(template_ed, c_sys5_hy_ed; optimizer = GLPK_optimizer),
     )
 
     sequence_cache = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_problem = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFeedforward(
+                variable_source_problem = ActivePowerVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         cache = Dict(
-            ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
+            ("UC",) => TimeStatusChange(PSY.ThermalStandard, OnVariable),
             ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -158,9 +154,9 @@ end
     template_ed = get_template_nomin_ed_simulation()
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    problems = SimulationProblems(
-        UC = OperationsProblem(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
-        ED = OperationsProblem(
+    problems = SimulationModels(
+        UC = DecisionModel(template_uc, c_sys5_hy_uc; optimizer = GLPK_optimizer),
+        ED = DecisionModel(
             template_ed,
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,
@@ -171,15 +167,12 @@ end
 
     sequence = SimulationSequence(
         problems = problems,
-        feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon()),
-        intervals = Dict(
-            "UC" => (Hour(24), RecedingHorizon()),
-            "ED" => (Minute(60), RecedingHorizon()),
-        ),
+        feedforward_chronologies = Dict(("UC" => "ED") => 0),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Minute(60), 0)),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -204,38 +197,35 @@ end
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    problems = SimulationProblems(
-        UC = OperationsProblem(
+    problems = SimulationModels(
+        UC = DecisionModel(
             template_uc,
             c_sys5_hy_uc;
             optimizer = GLPK_optimizer,
-            constraint_duals = [:CopperPlateBalance],
+            constraint_duals = [ConstraintKey(CopperPlateBalanceConstraint, PSY.System)],
         ),
-        ED = OperationsProblem(
+        ED = DecisionModel(
             template_ed,
             c_sys5_hy_ed;
             optimizer = ipopt_optimizer,
             # Added because of data issues
             balance_slack_variables = true,
-            constraint_duals = [:CopperPlateBalance],
+            constraint_duals = [ConstraintKey(CopperPlateBalanceConstraint, PSY.System)],
         ),
     )
 
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_source_problem = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFeedforward(
+                variable_source_problem = ActivePowerVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -311,6 +301,7 @@ end
     #     end
     # end
 
+    # TODO: Enable for test coverage later
     # @testset "Test print methods" begin
     #     list = [sim, sim.sequence, sim.stages["UC"]]
     #     _test_plain_print_methods(list)

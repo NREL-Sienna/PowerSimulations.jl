@@ -1,15 +1,17 @@
-#! format: off
-
-abstract type AuxVariableType end
-
 struct AuxVarKey{T <: AuxVariableType, U <: PSY.Component} <: OptimizationContainerKey
-    aux_var_type::Type{T}
-    device_type::Type{U}
+    meta::String
 end
 
-function encode_key(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component}
-    return Symbol("$(IS.strip_module_name(string(T)))_$(IS.strip_module_name(string(U)))")
+function AuxVarKey(
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: AuxVariableType, U <: PSY.Component}
+    return AuxVarKey{T, U}(meta)
 end
+
+get_entry_type(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = T
+get_component_type(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = U
 
 struct TimeDurationOn <: AuxVariableType end
 struct TimeDurationOff <: AuxVariableType end

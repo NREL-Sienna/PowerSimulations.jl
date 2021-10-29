@@ -2,7 +2,7 @@ const GAEVF = JuMP.GenericAffExpr{Float64, VariableRef}
 const GQEVF = JuMP.GenericQuadExpr{Float64, VariableRef}
 
 function moi_tests(
-    op_problem::OperationsProblem,
+    model::DecisionModel,
     params::Bool,
     vars::Int,
     interval::Int,
@@ -11,7 +11,7 @@ function moi_tests(
     equalto::Int,
     binary::Bool,
 )
-    JuMPmodel = PSI.get_jump_model(op_problem)
+    JuMPmodel = PSI.get_jump_model(model)
     @test (:ParameterJuMP in keys(JuMPmodel.ext)) == params
     @test JuMP.num_variables(JuMPmodel) == vars
     @test JuMP.num_constraints(JuMPmodel, GAEVF, MOI.Interval{Float64}) == interval
@@ -25,34 +25,34 @@ function moi_tests(
 end
 
 function psi_constraint_test(
-    op_problem::OperationsProblem,
-    constraint_names::Vector{Symbol},
+    model::DecisionModel,
+    constraint_keys::Vector{<:PSI.ConstraintKey},
 )
-    constraints = PSI.get_constraints(op_problem)
-    for con in constraint_names
-        @test !isnothing(get(constraints, con, nothing))
+    constraints = PSI.get_constraints(model)
+    for con in constraint_keys
+        @test get(constraints, con, nothing) !== nothing
     end
     return
 end
 
-function psi_aux_var_test(
-    op_problem::OperationsProblem,
+function psi_aux_variable_test(
+    model::DecisionModel,
     constraint_keys::Vector{<:PSI.AuxVarKey},
 )
-    op_container = PSI.get_optimization_container(op_problem)
+    op_container = PSI.get_optimization_container(model)
     vars = PSI.get_aux_variables(op_container)
     for key in constraint_keys
-        @test !isnothing(get(vars, key, nothing))
+        @test get(vars, key, nothing) !== nothing
     end
     return
 end
 
 function psi_checkbinvar_test(
-    op_problem::OperationsProblem,
-    bin_variable_names::Vector{Symbol},
+    model::DecisionModel,
+    bin_variable_keys::Vector{<:PSI.VariableKey},
 )
-    container = PSI.get_optimization_container(op_problem)
-    for variable in bin_variable_names
+    container = PSI.get_optimization_container(model)
+    for variable in bin_variable_keys
         for v in PSI.get_variable(container, variable)
             @test JuMP.is_binary(v)
         end
@@ -60,43 +60,44 @@ function psi_checkbinvar_test(
     return
 end
 
-function psi_checkobjfun_test(op_problem::OperationsProblem, exp_type)
-    model = PSI.get_jump_model(op_problem)
+function psi_checkobjfun_test(model::DecisionModel, exp_type)
+    model = PSI.get_jump_model(model)
     @test JuMP.objective_function_type(model) == exp_type
     return
 end
 
-function moi_lbvalue_test(op_problem::OperationsProblem, con_name::Symbol, value::Number)
-    for con in PSI.get_constraints(op_problem)[con_name]
+function moi_lbvalue_test(model::DecisionModel, con_key::PSI.ConstraintKey, value::Number)
+    for con in PSI.get_constraints(model)[con_key]
         @test JuMP.constraint_object(con).set.lower == value
     end
     return
 end
 
-function psi_checksolve_test(op_problem::OperationsProblem, status)
-    model = PSI.get_jump_model(op_problem)
+function psi_checksolve_test(model::DecisionModel, status)
+    model = PSI.get_jump_model(model)
     JuMP.optimize!(model)
     @test termination_status(model) in status
 end
 
-function psi_checksolve_test(
-    op_problem::OperationsProblem,
-    status,
-    expected_result,
-    tol = 0.0,
-)
-    res = solve!(op_problem)
-    model = PSI.get_jump_model(op_problem)
+function psi_checksolve_test(model::DecisionModel, status, expected_result, tol = 0.0)
+    res = solve!(model)
+    model = PSI.get_jump_model(model)
     @test termination_status(model) in status
     obj_value = JuMP.objective_value(model)
     @test isapprox(obj_value, expected_result, atol = tol)
 end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
-    duals = get_duals(res)
-    λ = convert(Array, duals[:CopperPlateBalance][:, :CopperPlateBalance])
+    duals = get_dual_values(res)
+    λ = convert(
+        Array,
+        duals[PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)][
+            :,
+            :CopperPlateBalanceConstraint__System,
+        ],
+    )
 
-    nf_duals = collect(keys(duals))[occursin.(PSI.NETWORK_FLOW, string.(keys(duals)))]
+    nf_duals = [k for k in keys(duals) if PSI.get_entry_type(k) == NetworkFlowConstraint]
     flow_duals =
         hcat([duals[k][:, propertynames(duals[k]) .!== :DateTime] for k in nf_duals]...)
     μ = Matrix(flow_duals[:, ptdf.axes[1]])
@@ -110,9 +111,17 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
     return lmp[!, sort(propertynames(lmp))]
 end
 
-function check_variable_unbounded(op_problem::OperationsProblem, var_name)
-    psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_name)
+function check_variable_unbounded(
+    model::DecisionModel,
+    ::Type{T},
+    ::Type{U},
+) where {T <: PSI.VariableType, U <: PSY.Component}
+    return check_variable_unbounded(model::DecisionModel, PSI.VariableKey(T, U))
+end
+
+function check_variable_unbounded(model::DecisionModel, var_key::PSI.VariableKey)
+    psi_cont = PSI.get_optimization_container(model)
+    variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
         if JuMP.has_lower_bound(var) || JuMP.has_upper_bound(var)
             return false
@@ -121,9 +130,17 @@ function check_variable_unbounded(op_problem::OperationsProblem, var_name)
     return true
 end
 
-function check_variable_bounded(op_problem::OperationsProblem, var_name)
-    psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_name)
+function check_variable_bounded(
+    model::DecisionModel,
+    ::Type{T},
+    ::Type{U},
+) where {T <: PSI.VariableType, U <: PSY.Component}
+    return check_variable_bounded(model, PSI.VariableKey(T, U))
+end
+
+function check_variable_bounded(model::DecisionModel, var_key::PSI.VariableKey)
+    psi_cont = PSI.get_optimization_container(model)
+    variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
         if !JuMP.has_lower_bound(var) || !JuMP.has_upper_bound(var)
             return false
@@ -133,13 +150,14 @@ function check_variable_bounded(op_problem::OperationsProblem, var_name)
 end
 
 function check_flow_variable_values(
-    op_problem::OperationsProblem,
-    var_name::Symbol,
+    model::DecisionModel,
+    ::Type{T},
+    ::Type{U},
     device_name::String,
     limit::Float64,
-)
-    psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_name)
+) where {T <: PSI.VariableType, U <: PSY.Component}
+    psi_cont = PSI.get_optimization_container(model)
+    variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
         if !(JuMP.value(var) <= (limit + 1e-2))
             return false
@@ -149,14 +167,15 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_problem::OperationsProblem,
-    var_name::Symbol,
+    model::DecisionModel,
+    ::Type{T},
+    ::Type{U},
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
-)
-    psi_cont = PSI.get_optimization_container(op_problem)
-    variable = PSI.get_variable(psi_cont, var_name)
+) where {T <: PSI.VariableType, U <: PSY.Component}
+    psi_cont = PSI.get_optimization_container(model)
+    variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
         if !(JuMP.value(var) <= (limit_max + 1e-2)) ||
            !(JuMP.value(var) >= (limit_min - 1e-2))
@@ -167,17 +186,18 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_problem::OperationsProblem,
-    pvar_name::Symbol,
-    qvar_name::Symbol,
+    model::DecisionModel,
+    ::Type{T},
+    ::Type{U},
+    ::Type{V},
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
-)
-    psi_cont = PSI.get_optimization_container(op_problem)
-    time_steps = PSI.model_time_steps(psi_cont)
-    pvariable = PSI.get_variable(psi_cont, pvar_name)
-    qvariable = PSI.get_variable(psi_cont, qvar_name)
+) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
+    psi_cont = PSI.get_optimization_container(model)
+    time_steps = PSI.get_time_steps(psi_cont)
+    pvariable = PSI.get_variable(psi_cont, T(), V)
+    qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
         fp = JuMP.value(pvariable[device_name, t])
         fq = JuMP.value(qvariable[device_name, t])
@@ -190,16 +210,17 @@ function check_flow_variable_values(
 end
 
 function check_flow_variable_values(
-    op_problem::OperationsProblem,
-    pvar_name::Symbol,
-    qvar_name::Symbol,
+    model::DecisionModel,
+    ::Type{T},
+    ::Type{U},
+    ::Type{V},
     device_name::String,
     limit::Float64,
-)
-    psi_cont = PSI.get_optimization_container(op_problem)
-    time_steps = PSI.model_time_steps(psi_cont)
-    pvariable = PSI.get_variable(psi_cont, pvar_name)
-    qvariable = PSI.get_variable(psi_cont, qvar_name)
+) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
+    psi_cont = PSI.get_optimization_container(model)
+    time_steps = PSI.get_time_steps(psi_cont)
+    pvariable = PSI.get_variable(psi_cont, T(), V)
+    qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
         fp = JuMP.value(pvariable[device_name, t])
         fq = JuMP.value(qvariable[device_name, t])
@@ -222,7 +243,7 @@ function _test_plain_print_methods(list::Array)
         io = IOBuffer()
         show(io, "text/plain", object)
         grabbed = String(take!(io))
-        @test !isnothing(grabbed)
+        @test grabbed !== nothing
     end
 end
 
@@ -232,6 +253,96 @@ function _test_html_print_methods(list::Array)
         io = IOBuffer()
         show(io, "text/html", object)
         grabbed = String(take!(io))
-        @test !isnothing(grabbed)
+        @test grabbed !== nothing
+    end
+end
+
+function _check_constraint_bounds(bounds::PSI.ConstraintBounds, valid_bounds::NamedTuple)
+    @test bounds.coefficient.min == valid_bounds.coefficient.min
+    @test bounds.coefficient.max == valid_bounds.coefficient.max
+    @test bounds.rhs.min == valid_bounds.rhs.min
+    @test bounds.rhs.max == valid_bounds.rhs.max
+end
+
+function _check_variable_bounds(bounds::PSI.VariableBounds, valid_bounds::NamedTuple)
+    @test bounds.bounds.min == valid_bounds.min
+    @test bounds.bounds.max == valid_bounds.max
+end
+
+function check_duration_on_initial_conditions_values(
+    model,
+    ::Type{T},
+) where {T <: PSY.Component}
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    duration_on_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialTimeDurationOn(),
+        T,
+    )
+    for ic in duration_on_data
+        name = PSY.get_name(ic.component)
+        on_var = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
+            1,
+            name,
+        ]
+        duration_on = JuMP.value(PSI.get_value(ic))
+        if on_var == 1.0 && PSY.get_status(ic.component)
+            @test duration_on == PSY.get_time_at_status(ic.component)
+        elseif on_var == 1.0 && !PSY.get_status(ic.component)
+            @test duration_on == 0.0
+        end
+    end
+end
+
+function check_duration_off_initial_conditions_values(
+    model,
+    ::Type{T},
+) where {T <: PSY.Component}
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    duration_off_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialTimeDurationOff(),
+        T,
+    )
+    for ic in duration_off_data
+        name = PSY.get_name(ic.component)
+        on_var = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
+            1,
+            name,
+        ]
+        duration_off = JuMP.value(PSI.get_value(ic))
+        if on_var == 0.0 && !PSY.get_status(ic.component)
+            @test duration_off == PSY.get_time_at_status(ic.component)
+        elseif on_var == 0.0 && PSY.get_status(ic.component)
+            @test duration_off == 0.0
+        end
+    end
+end
+
+function check_energy_initial_conditions_values(model, ::Type{T}) where {T <: PSY.Component}
+    ic_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialEnergyLevel(),
+        T,
+    )
+    for ic in ic_data
+        name = PSY.get_name(ic.component)
+        e_value = JuMP.value(PSI.get_value(ic))
+        @test PSY.get_initial_energy(ic.component) == e_value
+    end
+end
+
+function check_energy_initial_conditions_values(model, ::Type{T}) where {T <: PSY.HydroGen}
+    ic_data = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        InitialEnergyLevel(),
+        T,
+    )
+    for ic in ic_data
+        name = PSY.get_name(ic.component)
+        e_value = JuMP.value(PSI.get_value(ic))
+        @test PSY.get_initial_storage(ic.component) == e_value
     end
 end

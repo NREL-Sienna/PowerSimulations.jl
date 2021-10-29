@@ -1,11 +1,14 @@
-# All subtypes of AbstractAffectFeedForward must define the field affected_variables.
-# TODO: make a unit test that checks for this.
-abstract type AbstractAffectFeedForward end
+# Probably can be dropped or disconnected
+abstract type PSIResults <: IS.Results end
 
+################################ Abstract Types for Simulation #############################
+## Put in new file
+
+# Required methods: TBD
+
+# File on its own
+
+# This are bound go away. TBD location
 abstract type AbstractCache end
-abstract type FeedForwardChronology end
-
-get_trigger(val::FeedForwardChronology) = val.trigger
-
-abstract type AbstractOperationsProblem end
-abstract type PowerSimulationsOperationsProblem <: AbstractOperationsProblem end
+abstract type FeedforwardChronology end
+abstract type InitialConditionChronology end

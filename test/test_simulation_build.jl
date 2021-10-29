@@ -2,15 +2,10 @@
     problems = create_simulation_build_test_problems(get_template_basic_uc_simulation())
     sequence = SimulationSequence(
         problems = problems,
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+            "ED" => SemiContinuousFeedforward(
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -29,7 +24,7 @@
     @test isempty(values(sim.internal.simulation_cache))
     for field in fieldnames(SimulationSequence)
         if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
-            @test !isnothing(getfield(sim.sequence, field))
+            @test getfield(sim.sequence, field) !== nothing
         end
     end
     @test isa(sim.sequence, SimulationSequence)
@@ -43,14 +38,11 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -68,7 +60,7 @@ end
     @test build_out == PSI.BuildStatus.BUILT
 
     for (_, problem) in PSI.get_problems(sim)
-        @test PSI.get_initial_time(problem) == second_day
+        @test PSI.get_initial_time(model) == second_day
     end
 end
 
@@ -77,14 +69,11 @@ end
     sequence = SimulationSequence(
         problems = problems,
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
+        intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0)),
         feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+            ("ED", :devices, :ThermalStandard) => SemiContinuousFeedforward(
+                binary_source_problem = OnVariable,
+                affected_variables = [ActivePowerVariable],
             ),
         ),
         ini_cond_chronology = InterProblemChronology(),
@@ -160,15 +149,15 @@ end
 
     sys_ed = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_ed_sys")
 
-    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
 
-    problems = SimulationProblems(
-        MD = OperationsProblem(template, sys_md, system_to_file = false),
-        UC = OperationsProblem(template, sys_uc, system_to_file = false),
-        ED = OperationsProblem(template, sys_ed, system_to_file = false),
+    problems = SimulationModels(
+        MD = DecisionModel(template, sys_md, system_to_file = false),
+        UC = DecisionModel(template, sys_uc, system_to_file = false),
+        ED = DecisionModel(template, sys_ed, system_to_file = false),
     )
 
     feedforward_chronologies = Dict(
@@ -176,19 +165,15 @@ end
         ("UC" => "ED") => Synchronize(periods = 24),
     )
     ini_cond_chronology = InterProblemChronology()
-    intervals = Dict(
-        "MD" => (Hour(48), Consecutive()),
-        "UC" => (Hour(24), Consecutive()),
-        "ED" => (Hour(1), Consecutive()),
-    )
+    intervals = Dict("MD" => (Hour(48), 0), "UC" => (Hour(24), 0), "ED" => (Hour(1), 0))
     feedforward = Dict(
-        ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-            variable_source_problem = PSI.ACTIVE_POWER,
-            affected_variables = [PSI.ACTIVE_POWER],
+        ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFeedforward(
+            variable_source_problem = ActivePowerVariable,
+            affected_variables = [ActivePowerVariable],
         ),
-        ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-            variable_source_problem = PSI.ACTIVE_POWER,
-            affected_variables = [PSI.ACTIVE_POWER],
+        ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFeedforward(
+            variable_source_problem = ActivePowerVariable,
+            affected_variables = [ActivePowerVariable],
         ),
     )
     test_sequence = SimulationSequence(
@@ -222,13 +207,13 @@ end
 #         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
 #         horizons = Dict("UC" => 24, "ED" => 12),
 #         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
+#             "UC" => (Hour(24), 0),
+#             "ED" => (Hour(1), 0),
 #         ),
 #         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
+#             ("ED", :devices, :Generators) => SemiContinuousFeedforward(
+#                 binary_source_stage = OnVariable,
+#                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
 #         ini_cond_chronology = InterProblemChronology(),
@@ -251,16 +236,16 @@ end
 #         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
 #         horizons = Dict("UC" => 24, "ED" => 12),
 #         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
+#             "UC" => (Hour(24), 0),
+#             "ED" => (Hour(1), 0),
 #         ),
 #         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
+#             ("ED", :devices, :Generators) => SemiContinuousFeedforward(
+#                 binary_source_stage = OnVariable,
+#                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
-#         cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
+#         cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, OnVariable)),
 #         ini_cond_chronology = InterProblemChronology(),
 #     )
 #     sim = Simulation(
@@ -283,16 +268,16 @@ end
 #         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
 #         horizons = Dict("UC" => 24, "ED" => 12),
 #         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
+#             "UC" => (Hour(24), 0),
+#             "ED" => (Hour(1), 0),
 #         ),
 #         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
+#             ("ED", :devices, :Generators) => SemiContinuousFeedforward(
+#                 binary_source_stage = OnVariable,
+#                 affected_variables = [ActivePowerVariable],
 #             ),
 #         ),
-#         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
+#         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, OnVariable)),
 #         ini_cond_chronology = IntraProblemChronology(),
 #     )
 #

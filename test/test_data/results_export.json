@@ -1,27 +1,22 @@
 {
-  "problems": [
+  "models": [
     {
       "name": "ED",
       "variables": [
-        "P__ThermalStandard",
-        "E__HydroEnergyReservoir"
+        "ActivePowerVariable__ThermalStandard",
+        "EnergyVariable__HydroEnergyReservoir"
       ],
-      "parameters": [
-        "all"
-      ],
+      "store_all_parameters": true,
       "optimizer_stats": true
     },
     {
       "name": "UC",
       "variables": [
-        "On__ThermalStandard"
+        "OnVariable__ThermalStandard"
       ],
-      "parameters": [
-        "all"
-      ],
-      "duals": [
-        "all"
-      ],
+      "store_all_duals": true,
+      "store_all_parameters": true,
+      "store_all_aux_variables": true,
       "optimizer_stats": true
     }
   ],

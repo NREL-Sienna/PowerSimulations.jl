@@ -77,7 +77,7 @@ pass in the specific recorder names to be enabled when you call build.
 
 ```julia
 sim = Simulation(...)
-recorders = [:simulation]
+recorders = [:execution]
 build!(sim; recorders = recorders)
 execute!(sim)
 ```

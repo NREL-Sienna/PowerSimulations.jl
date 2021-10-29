@@ -1,78 +1,95 @@
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, D},
     ::Type{S},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
-    if !validate_available_devices(St, devices)
-        return
+    add_variables!(container, ActivePowerInVariable, devices, D())
+    add_variables!(container, ActivePowerOutVariable, devices, D())
+    add_variables!(container, ReactivePowerVariable, devices, D())
+    add_variables!(container, EnergyVariable, devices, D())
+    if get_attribute(model, "reservation")
+        add_variables!(container, ReservationVariable, devices, D())
     end
 
-    # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices, D())
-    add_variables!(optimization_container, ActivePowerOutVariable, devices, D())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, D())
-    add_variables!(optimization_container, EnergyVariable, devices, D())
+    initial_conditions!(container, devices, D())
 
-    # Initial Conditions
-    initial_conditions!(optimization_container, devices, D())
-
-    # Constraints
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
         ActivePowerInVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
         ReactivePowerVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    energy_capacity_constraints!(
-        optimization_container,
+    add_feedforward_arguments!(container, model, devices)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, D},
+    ::Type{S},
+) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
+    devices = get_available_components(St, sys)
+
+    add_constraints!(
+        container,
+        OutputActivePowerVariableLimitsConstraint,
+        ActivePowerOutVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    add_constraints!(
+        container,
+        InputActivePowerVariableLimitsConstraint,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ReactivePowerVariableLimitsConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        optimization_container,
-        EnergyBalanceConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, D},
     ::Type{S},
 ) where {
@@ -82,588 +99,427 @@ function construct_device!(
 }
     devices = get_available_components(St, sys)
 
-    if !validate_available_devices(St, devices)
-        return
+    add_variables!(container, ActivePowerInVariable, devices, D())
+    add_variables!(container, ActivePowerOutVariable, devices, D())
+    add_variables!(container, EnergyVariable, devices, D())
+    if get_attribute(model, "reservation")
+        add_variables!(container, ReservationVariable, devices, D())
     end
 
-    # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices, D())
-    add_variables!(optimization_container, ActivePowerOutVariable, devices, D())
-    add_variables!(optimization_container, EnergyVariable, devices, D())
+    initial_conditions!(container, devices, D())
 
-    # Initial Conditions
-    initial_conditions!(optimization_container, devices, D())
-
-    # Constraints
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
         ActivePowerInVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    energy_capacity_constraints!(
-        optimization_container,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
-
-    # Energy Balanace limits
-    add_constraints!(
-        optimization_container,
-        EnergyBalanceConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-
-    return
+    add_feedforward_arguments!(container, model, devices)
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{St, BookKeepingwReservation},
+    ::ModelConstructStage,
+    model::DeviceModel{St, D},
     ::Type{S},
-) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
+) where {
+    St <: PSY.Storage,
+    D <: AbstractStorageFormulation,
+    S <: PM.AbstractActivePowerModel,
+}
     devices = get_available_components(St, sys)
 
-    if !validate_available_devices(St, devices)
-        return
-    end
-
-    # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerInVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-    add_variables!(
-        optimization_container,
-        ActivePowerOutVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-    add_variables!(
-        optimization_container,
-        ReactivePowerVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-    add_variables!(
-        optimization_container,
-        ReserveVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-
-    # Initial Conditions
-    initial_conditions!(optimization_container, devices, BookKeepingwReservation())
-
-    # Constraints
     add_constraints!(
-        optimization_container,
-        RangeConstraint,
+        container,
+        OutputActivePowerVariableLimitsConstraint,
         ActivePowerOutVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
     add_constraints!(
-        optimization_container,
-        RangeConstraint,
+        container,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ReactivePowerVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    energy_capacity_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        optimization_container,
-        EnergyBalanceConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
 
+    add_feedforward_constraints!(container, model, devices)
+
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    model::DeviceModel{St, BookKeepingwReservation},
-    ::Type{S},
-) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(St, sys)
-
-    if !validate_available_devices(St, devices)
-        return
-    end
-
-    # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerInVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-    add_variables!(
-        optimization_container,
-        ActivePowerOutVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-    add_variables!(
-        optimization_container,
-        ReserveVariable,
-        devices,
-        BookKeepingwReservation(),
-    )
-
-    # Initial Conditions
-    initial_conditions!(optimization_container, devices, BookKeepingwReservation())
-
-    # Constraints
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ActivePowerInVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    energy_capacity_constraints!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
-
-    # Energy Balanace limits
-    add_constraints!(
-        optimization_container,
-        EnergyBalanceConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-
-    return
-end
-
-function construct_device!(
-    optimization_container::OptimizationContainer,
-    sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
-    if !validate_available_devices(St, devices)
-        return
+    add_variables!(container, ActivePowerInVariable, devices, EnergyTarget())
+    add_variables!(container, ActivePowerOutVariable, devices, EnergyTarget())
+    add_variables!(container, ReactivePowerVariable, devices, EnergyTarget())
+    add_variables!(container, EnergyVariable, devices, EnergyTarget())
+    add_variables!(container, EnergyShortageVariable, devices, EnergyTarget())
+    add_variables!(container, EnergySurplusVariable, devices, EnergyTarget())
+    if get_attribute(model, "reservation")
+        add_variables!(container, ReservationVariable, devices, EnergyTarget())
     end
 
-    # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, ActivePowerOutVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, ReactivePowerVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, EnergyVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, EnergyShortageVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, EnergySurplusVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, ReserveVariable, devices, EnergyTarget())
-    # Initial Conditions
-    initial_conditions!(optimization_container, devices, EnergyTarget())
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
 
-    # Constraints
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    initial_conditions!(container, devices, EnergyTarget())
+
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
         ActivePowerInVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
         ReactivePowerVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    energy_capacity_constraints!(
-        optimization_container,
+    add_feedforward_arguments!(container, model, devices)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, EnergyTarget},
+    ::Type{S},
+) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
+    devices = get_available_components(St, sys)
+
+    add_constraints!(
+        container,
+        OutputActivePowerVariableLimitsConstraint,
+        ActivePowerOutVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    add_constraints!(
+        container,
+        InputActivePowerVariableLimitsConstraint,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ReactivePowerVariableLimitsConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        optimization_container,
-        EnergyBalanceConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    energy_target_constraint!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
-
+    cost_function!(container, devices, model, S)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, EnergyTarget},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
 
-    if !validate_available_devices(St, devices)
-        return
+    add_variables!(container, ActivePowerInVariable, devices, EnergyTarget())
+    add_variables!(container, ActivePowerOutVariable, devices, EnergyTarget())
+    add_variables!(container, EnergyVariable, devices, EnergyTarget())
+    add_variables!(container, EnergyShortageVariable, devices, EnergyTarget())
+    add_variables!(container, EnergySurplusVariable, devices, EnergyTarget())
+    if get_attribute(model, "reservation")
+        add_variables!(container, ReservationVariable, devices, EnergyTarget())
     end
 
-    # Variables
-    add_variables!(optimization_container, ActivePowerInVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, ActivePowerOutVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, EnergyVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, EnergyShortageVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, EnergySurplusVariable, devices, EnergyTarget())
-    add_variables!(optimization_container, ReserveVariable, devices, EnergyTarget())
-    # Initial Conditions
-    initial_conditions!(optimization_container, devices, EnergyTarget())
+    add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
 
-    # Constraints
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    initial_conditions!(container, devices, EnergyTarget())
+
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
         ActivePowerInVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    energy_capacity_constraints!(
-        optimization_container,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    add_feedforward_arguments!(container, model, devices)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, EnergyTarget},
+    ::Type{S},
+) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(St, sys)
+
+    add_constraints!(
+        container,
+        OutputActivePowerVariableLimitsConstraint,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        InputActivePowerVariableLimitsConstraint,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        optimization_container,
-        EnergyBalanceConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    energy_target_constraint!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_feedforward_constraints!(container, model, devices)
 
-    # Cost Function
-    cost_function!(optimization_container, devices, model, S, get_feedforward(model))
-
+    cost_function!(container, devices, model, S)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
-    if !validate_available_devices(St, devices)
-        return
+    add_variables!(container, ActivePowerInVariable, devices, BatteryAncillaryServices())
+    add_variables!(container, ActivePowerOutVariable, devices, BatteryAncillaryServices())
+    add_variables!(container, ReactivePowerVariable, devices, BatteryAncillaryServices())
+    add_variables!(container, EnergyVariable, devices, BatteryAncillaryServices())
+    if get_attribute(model, "reservation")
+        add_variables!(container, ReservationVariable, devices, BatteryAncillaryServices())
     end
 
-    # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerInVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    add_variables!(
-        optimization_container,
-        ActivePowerOutVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    add_variables!(
-        optimization_container,
-        ReactivePowerVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    add_variables!(
-        optimization_container,
-        ReserveVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    # Initial Conditions
-    initial_conditions!(optimization_container, devices, BatteryAncillaryServices())
+    initial_conditions!(container, devices, BatteryAncillaryServices())
 
-    # Constraints
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
         ActivePowerInVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
         ReactivePowerVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    energy_capacity_constraints!(
-        optimization_container,
+    if has_service_model(model)
+        add_expressions!(container, ReserveRangeExpressionLB, devices, model)
+        add_expressions!(container, ReserveRangeExpressionUB, devices, model)
+    end
+    add_feedforward_arguments!(container, model, devices)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, BatteryAncillaryServices},
+    ::Type{S},
+) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
+    devices = get_available_components(St, sys)
+
+    add_constraints!(
+        container,
+        OutputActivePowerVariableLimitsConstraint,
+        ActivePowerOutVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    add_constraints!(
+        container,
+        InputActivePowerVariableLimitsConstraint,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ReactivePowerVariableLimitsConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        optimization_container,
-        EnergyBalanceConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    reserve_contribution_constraint!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    if has_service_model(model)
+        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, RangeLimitConstraint, devices, model, S)
+    end
+    add_feedforward_constraints!(container, model, devices)
+
+    add_constraint_dual!(container, sys, model)
 
     return
 end
 
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
     ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
 
-    if !validate_available_devices(St, devices)
-        return
+    add_variables!(container, ActivePowerInVariable, devices, BatteryAncillaryServices())
+    add_variables!(container, ActivePowerOutVariable, devices, BatteryAncillaryServices())
+    add_variables!(container, EnergyVariable, devices, BatteryAncillaryServices())
+    if get_attribute(model, "reservation")
+        add_variables!(container, ReservationVariable, devices, BatteryAncillaryServices())
     end
 
-    # Variables
-    add_variables!(
-        optimization_container,
-        ActivePowerInVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    add_variables!(
-        optimization_container,
-        ActivePowerOutVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    add_variables!(
-        optimization_container,
-        EnergyVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    add_variables!(
-        optimization_container,
-        ReserveVariable,
-        devices,
-        BatteryAncillaryServices(),
-    )
-    # Initial Conditions
-    initial_conditions!(optimization_container, devices, BatteryAncillaryServices())
+    initial_conditions!(container, devices, BatteryAncillaryServices())
 
-    # Constraints
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
         ActivePowerInVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    energy_capacity_constraints!(
-        optimization_container,
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerOutVariable,
         devices,
         model,
         S,
-        get_feedforward(model),
     )
-    feedforward!(optimization_container, devices, model, get_feedforward(model))
+    if has_service_model(model)
+        add_expressions!(container, ReserveRangeExpressionLB, devices, model)
+        add_expressions!(container, ReserveRangeExpressionUB, devices, model)
+    end
+    add_feedforward_arguments!(container, model, devices)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{St, BatteryAncillaryServices},
+    ::Type{S},
+) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(St, sys)
+
+    add_constraints!(
+        container,
+        OutputActivePowerVariableLimitsConstraint,
+        ActivePowerOutVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        InputActivePowerVariableLimitsConstraint,
+        ActivePowerInVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
 
     # Energy Balanace limits
-    add_constraints!(
-        optimization_container,
-        EnergyBalanceConstraint,
-        EnergyVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    reserve_contribution_constraint!(
-        optimization_container,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    if has_service_model(model)
+        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, RangeLimitConstraint, devices, model, S)
+    end
+
+    add_feedforward_constraints!(container, model, devices)
+
+    add_constraint_dual!(container, sys, model)
 
     return
 end
