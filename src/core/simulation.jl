@@ -697,6 +697,9 @@ function initial_condition_update!(
 )
     # TODO: Replace this convoluted way to get information with access to data store
     execution_count = get_execution_count(problem)
+    sequence = get_sequence(sim)
+    problem_name = get_name(problem)
+    interval = get_interval(sequence, problem_name)
     (get_current_step(sim) == 1 && execution_count == 0) && return
     simulation_cache = sim.internal.simulation_cache
     for ic in initial_conditions
@@ -717,7 +720,7 @@ function initial_condition_update!(
             ic,
             var_value,
             simulation_cache,
-            get_resolution(problem),
+            interval,
         )
         previous_value = get_condition(ic)
         PJ.set_value(ic.value, quantity)

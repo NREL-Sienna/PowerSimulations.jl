@@ -88,10 +88,11 @@ function calculate_ic_quantity(
         time_cache = cache_value(cache, name)
         series = time_cache[:series]
         elapsed_time = time_cache[:elapsed]
+        current_offset = Int64(elapsed_period/cache.units)
         if min_power > 0.0
             #off set by one since the first is the original initial conditions. Series is size
             # horizon + 1
-            current = min(time_cache[:current] + 1, length(series)) # HACK
+            current = min(time_cache[:current] + current_offset, length(series)) # HACK
             current_status = isapprox(series[current], 1.0; atol = ABSOLUTE_TOLERANCE)
             # exception for the first time period and last.
             if current == 1
