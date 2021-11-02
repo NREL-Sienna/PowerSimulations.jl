@@ -500,7 +500,6 @@ function add_to_expression!(
         sub_comp in [PSY.ThermalGen, PSY.RenewableGen]
 
         name = PSY.get_name(d)
-        !isa(variable[name, sub_comp, t], JuMP.VariableRef) && continue
         add_to_jump_expression!(
             expression[name, sub_comp, t],
             variable[name, sub_comp, t],
