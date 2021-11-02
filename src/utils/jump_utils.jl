@@ -96,7 +96,7 @@ end
 function sparse_container_spec(
     ::Type{T},
     axs...,
-) where {T <: Union{JuMP.AbstractJuMPScalar, Float64}}
+) where {T <: JuMP.AbstractJuMPScalar}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
     return JuMP.Containers.SparseAxisArray(contents)

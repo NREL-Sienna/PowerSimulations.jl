@@ -583,7 +583,7 @@ function _add_variable_container!(
     axs...,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     if sparse
-        var_container = sparse_container_spec(JuMP.VariableRef, axs...)
+        var_container = sparse_container_spec(Float64, axs...)
     else
         var_container = container_spec(JuMP.VariableRef, axs...)
     end
