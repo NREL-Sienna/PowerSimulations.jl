@@ -69,7 +69,7 @@ const DISABLED_TEST_FILES = [
     # "test_simulation_models.jl",
     # "test_simulation_sequence.jl",
     "test_device_hybrid_generation_constructors.jl",
-    "test_simulation_build.jl",
+    #"test_simulation_build.jl",
     "test_simulation_execute.jl",
     "test_simulation_results.jl",
     "test_simulation_results_export.jl",
