@@ -63,10 +63,10 @@ end
 
 function get_initial_conditions(
     model::OperationModel,
-    ic::InitialConditionType,
-    device::PSY.Device,
-)
-    return get_initial_conditions(get_optimization_container(model), ICKey(ic, device))
+    ::T,
+    ::U,
+) where {T <: InitialConditionType, U <: PSY.Device}
+    return get_initial_conditions(get_optimization_container(model), T, U)
 end
 
 set_console_level!(model::OperationModel, val) = get_internal(model).console_level = val
@@ -126,7 +126,7 @@ function initialize!(model::OperationModel)
     if model.internal.ic_model_container === nothing
         return
     end
-    @info "Solving initial_conditions Model"
+    @info "Solving Initialization Model for $(get_name(model))"
     solve_impl!(model.internal.ic_model_container, get_system(model), Dict{Symbol, Any}())
 
     write_initial_conditions_data(container, model.internal.ic_model_container)
@@ -138,14 +138,13 @@ end
 # end
 
 function build_impl!(model::OperationModel)
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-        build_pre_step!(model)
-        build_problem!(model)
-        init_model_store!(model)
-        serialize_metadata!(get_optimization_container(model), get_output_dir(model))
-        log_values(get_settings(model))
-        !built_for_recurrent_solves(model) && @info "\n$(BUILD_PROBLEMS_TIMER)\n"
-    end
+    build_pre_step!(model)
+    build_problem!(model)
+    init_model_store!(model)
+    serialize_metadata!(get_optimization_container(model), get_output_dir(model))
+    log_values(get_settings(model))
+
+    return
 end
 
 function build_if_not_already_built!(model; kwargs...)
@@ -161,7 +160,7 @@ function build_if_not_already_built!(model; kwargs...)
         end
     end
     if status != BuildStatus.BUILT
-        error("build! of the $(typeof(model)) failed: $status")
+        error("build! of the $(typeof(model)) $(get_name(model)) failed: $status")
     end
     return
 end
