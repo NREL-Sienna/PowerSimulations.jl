@@ -229,7 +229,7 @@ function _build_decision_models!(sim::Simulation)
     return
 end
 
-function _build_emulation_model(sim::Simulation)
+function _build_emulation_model!(sim::Simulation)
     model = get_emulation_model(get_models(sim))
 
     if model === nothing
@@ -237,7 +237,7 @@ function _build_emulation_model(sim::Simulation)
     end
 
     try
-        @show get_execution_count(model)
+        get_execution_count(model)
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
             build_impl!(model)
         end
@@ -288,7 +288,7 @@ function _build!(sim::Simulation, serialize::Bool)
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problems" begin
         _build_decision_models!(sim)
-        _build_emulation_model(sim)
+        _build_emulation_model!(sim)
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
