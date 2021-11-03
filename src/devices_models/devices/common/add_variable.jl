@@ -108,14 +108,14 @@ function add_variable!(
         )
 
         ub = get_variable_upper_bound(variable_type, d, formulation)
-        !(ub === nothing) && JuMP.set_upper_bound(variable[name, t], ub)
+        ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 
         lb = get_variable_lower_bound(variable_type, d, formulation)
-        !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
+        lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
         if get_warm_start(settings)
             init = get_variable_warm_start_value(variable_type, d, formulation)
-            !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
+            init !== nothing && JuMP.set_start_value(variable[name, t], init)
         end
     end
 
@@ -155,13 +155,13 @@ function add_service_variable!(
         )
 
         ub = get_variable_upper_bound(variable_type, service, d, container.settings)
-        !(ub === nothing) && JuMP.set_upper_bound(variable[name, t], ub)
+        ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 
         lb = get_variable_lower_bound(variable_type, service, d, container.settings)
-        !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, t], lb)
+        lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
         init = get_variable_warm_start_value(variable_type, d, container.settings)
-        !(init === nothing) && JuMP.set_start_value(variable[name, t], init)
+        init !== nothing && JuMP.set_start_value(variable[name, t], init)
     end
 
     return
@@ -203,14 +203,14 @@ function add_variable!(
         )
 
         ub = get_variable_upper_bound(variable_type, d, formulation)
-        !(ub === nothing) && JuMP.set_upper_bound(variable[name, subcomp, t], ub)
+        ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp, t], ub)
 
         lb = get_variable_lower_bound(variable_type, d, formulation)
-        !(lb === nothing) && !binary && JuMP.set_lower_bound(variable[name, subcomp, t], lb)
+        lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, subcomp, t], lb)
 
         if get_warm_start(settings)
             init = get_variable_warm_start_value(variable_type, d, formulation)
-            !(init === nothing) && JuMP.set_start_value(variable[name, subcomp, t], init)
+            init !== nothing && JuMP.set_start_value(variable[name, subcomp, t], init)
         end
     end
 

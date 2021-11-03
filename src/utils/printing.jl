@@ -171,7 +171,7 @@ function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     end
     println(io, "<p><b>Optimizer Log</b></p>")
     for (k, v) in results.optimizer_stats
-        if !(v === nothing)
+        if v !== nothing
             println(io, "<p>        $(k) = $(v)</p>")
         end
     end

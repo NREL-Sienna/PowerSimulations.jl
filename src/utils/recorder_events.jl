@@ -225,20 +225,20 @@ function list_simulation_events(
     step = nothing,
     problem = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
-    if !(problem === nothing) && step === nothing
+    if problem !== nothing && step === nothing
         throw(ArgumentError("step is required if problem is passed"))
     end
 
     recorder_file = _get_simulation_recorder_filename(output_dir)
     events = IS.list_recorder_events(T, recorder_file, filter_func)
 
-    if !(step === nothing)
+    if step !== nothing
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
         step_range = get_simulation_step_range(recorder_file, step)
         _filter_by_type_range!(events, step_range)
     end
 
-    if !(problem === nothing)
+    if problem !== nothing
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
         problem_range = get_simulation_problem_range(recorder_file, step, problem)
         _filter_by_type_range!(events, problem_range)

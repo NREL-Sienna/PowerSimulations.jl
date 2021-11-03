@@ -132,7 +132,7 @@ function _get_simulation_initial_times!(sim::Simulation)
                 )
             end
         end
-        if !(sim_ini_time === nothing) &&
+        if sim_init_time !== nothing &&
            !mapreduce(x -> x == sim_ini_time, |, model_initial_times[model_number])
             throw(
                 IS.ConflictingInputsError(
@@ -295,6 +295,7 @@ function _build!(sim::Simulation, serialize::Bool)
         _initialize_simulation_state(sim)
     end
 
+    # Here is check that store params are properly initialized
     # _initialize_problem_storage!(sim, cache_size_mib, min_cache_flush_size_mib)
 
     if serialize

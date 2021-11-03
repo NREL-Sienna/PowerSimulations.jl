@@ -212,7 +212,7 @@ function init_optimization_container!(
     ::Type{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    @assert !(container.JuMPmodel === nothing)
+    @assert container.JuMPmodel !== nothing
     PSY.set_units_base_system!(sys, "SYSTEM_BASE")
     # The order of operations matter
     settings = get_settings(container)
