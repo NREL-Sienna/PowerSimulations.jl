@@ -238,7 +238,7 @@ function build_pre_step!(model::EmulationModel)
             @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
-        # Temporary while are able to switch from PJ to POI
+        # TODO-PJ: Temporary while are able to switch from PJ to POI
         container = get_optimization_container(model)
         container.built_for_recurrent_solves = true
 

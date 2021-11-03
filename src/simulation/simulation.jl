@@ -214,7 +214,7 @@ function _build_decision_models!(sim::Simulation)
         set_output_dir!(model, output_dir)
         try
             TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-                # Temporary while are able to switch from PJ to POI
+                # TODO-PJ: Temporary while are able to switch from PJ to POI
                 container = get_optimization_container(model)
                 container.built_for_recurrent_solves = true
                 build_impl!(model)
