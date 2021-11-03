@@ -20,20 +20,24 @@ end
 
 function SimulationInternal(
     steps::Int,
-    model_count::Int,
-    sim_dir,
-    name;
-    output_dir = nothing,
-    recorders = [],
-    console_level = Logging.Error,
-    file_level = Logging.Info,
+    models::SimulationModels,
+    sim_dir::String,
+    name::String,
+    output_dir::Union{Nothing, String},
+    recorders,
+    console_level::Logging.LogLevel,
+    file_level::Logging.LogLevel,
 )
     count_dict = Dict{Int, Dict{Int, Int}}()
 
     for s in 1:steps
         count_dict[s] = Dict{Int, Int}()
+        model_count = length(get_decision_models(models))
         for st in 1:model_count
             count_dict[s][st] = 0
+        end
+        if get_emulation_model(models) !== nothing
+            count_dict[s][model_count + 1] = 0
         end
     end
 
@@ -81,7 +85,7 @@ function SimulationInternal(
         init_time,
         nothing,
         BuildStatus.EMPTY,
-        Dict{CacheKey, AbstractCache}(),
+        nothing,
         nothing,
         collect(unique_recorders),
         console_level,
