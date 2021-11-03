@@ -272,8 +272,11 @@ function build!(
     try
         Logging.with_logger(logger) do
             try
-                build_impl!(model)
+                TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+                    build_impl!(model)
+                end
                 set_status!(model, BuildStatus.BUILT)
+                @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             catch e
                 set_status!(model, BuildStatus.FAILED)
                 bt = catch_backtrace()
