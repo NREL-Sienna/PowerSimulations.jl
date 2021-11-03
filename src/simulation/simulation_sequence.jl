@@ -215,18 +215,14 @@ mutable struct SimulationSequence
     end
 end
 
-get_step_resolution(sequence::SimulationSequence) = sequence.step_resolution
-
-function get_problem_interval_chronology(sequence::SimulationSequence, problem)
-    return sequence.intervals[problem][2]
-end
+get_step_resolution(sequence::SimulationSequence) = first(values(sequence.intervals))
 
 function get_interval(sequence::SimulationSequence, problem::Symbol)
-    return sequence.intervals[problem][1]
+    return sequence.intervals[problem]
 end
 
-function get_interval(sequence::SimulationSequence, model)
-    return sequence.intervals[model][1]
+function get_interval(sequence::SimulationSequence, model::DecisionModel)
+    return sequence.intervals[get_name(model)]
 end
 
 get_execution_order(sequence::SimulationSequence) = sequence.execution_order
