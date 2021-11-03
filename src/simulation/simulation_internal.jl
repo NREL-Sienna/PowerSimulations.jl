@@ -1,4 +1,3 @@
-
 mutable struct SimulationInternal
     sim_files_dir::String
     store_dir::String
@@ -16,6 +15,8 @@ mutable struct SimulationInternal
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
+    #cache_size_mib::Int
+    #min_cache_flush_size_mib::Int
 end
 
 function SimulationInternal(
@@ -27,6 +28,8 @@ function SimulationInternal(
     recorders,
     console_level::Logging.LogLevel,
     file_level::Logging.LogLevel,
+    # cache_size_mib = 1024,
+    # min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
 )
     count_dict = Dict{Int, Dict{Int, Int}}()
 
@@ -90,6 +93,8 @@ function SimulationInternal(
         collect(unique_recorders),
         console_level,
         file_level,
+        #cache_size_mib::Int
+        #min_cache_flush_size_mib::Int
     )
 end
 

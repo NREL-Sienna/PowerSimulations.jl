@@ -295,6 +295,9 @@ function _build!(sim::Simulation, serialize::Bool)
         _initialize_simulation_state(sim)
     end
 
+
+    # _initialize_problem_storage!(sim, cache_size_mib, min_cache_flush_size_mib)
+
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
             serialize_simulation(sim)
