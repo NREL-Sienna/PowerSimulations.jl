@@ -1,19 +1,22 @@
 @testset "Simulation Build Tests" begin
-    problems = create_simulation_build_test_problems(get_template_basic_uc_simulation())
+    models = create_simulation_build_test_problems(get_template_basic_uc_simulation())
     sequence = SimulationSequence(
-        problems = problems,
-        feedforward = Dict(
-            "ED" => SemiContinuousFeedforward(
-                binary_source_problem = OnVariable,
-                affected_variables = [ActivePowerVariable],
-            ),
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+            ],
         ),
         ini_cond_chronology = InterProblemChronology(),
     )
     sim = Simulation(
         name = "test",
         steps = 1,
-        problems = problems,
+        models = models,
         sequence = sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
