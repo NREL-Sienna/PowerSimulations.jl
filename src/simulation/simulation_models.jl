@@ -118,13 +118,13 @@ function determine_resolutions(models::SimulationModels)
 end
 
 function initialize_simulation_internals!(models::SimulationModels, uuid::Base.UUID)
-    for (ix, model) in enumerate(get_decision_models(model))
+    for (ix, model) in enumerate(get_decision_models(models))
         info = SimulationInfo(ix, get_name(model), 0, false, uuid)
         set_simulation_info!(model, info)
     end
     em = get_emulation_model(models)
     if em !== nothing
-        ix = length(get_decision_models(model)) + 1
+        ix = length(get_decision_models(models)) + 1
         info = SimulationInfo(ix, get_name(em), 0, false, uuid)
         set_simulation_info!(em, info)
     end
