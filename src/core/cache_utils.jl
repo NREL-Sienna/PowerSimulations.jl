@@ -1,7 +1,8 @@
-const ParamCacheKey =
-    NamedTuple{(:model, :type, :name), Tuple{Symbol, Symbol, OptimizationContainerKey}}
 
-make_cache_key(model, type, name) = (model = model, type = type, name = name)
+struct OutputCacheKey
+    model::Symbol
+    key::OptimizationContainerKey
+end
 
 # Priority for keeping data in cache to serve reads. Currently unused.
 IS.@scoped_enum(CachePriority, LOW = 1, MEDIUM = 2, HIGH = 3,)
@@ -17,7 +18,7 @@ CacheFlushRule() = CacheFlushRule(false, CachePriority.LOW)
 Informs the flusher on what data to keep in cache.
 """
 struct CacheFlushRules
-    data::Dict{ParamCacheKey, CacheFlushRule}
+    data::Dict{OutputCacheKey, CacheFlushRule}
     min_flush_size::Int
     max_size::Int
 end
@@ -25,23 +26,22 @@ end
 const MIN_CACHE_FLUSH_SIZE_MiB = MiB
 
 function CacheFlushRules(; max_size = GiB, min_flush_size = MIN_CACHE_FLUSH_SIZE_MiB)
-    return CacheFlushRules(Dict{ParamCacheKey, CacheFlushRule}(), min_flush_size, max_size)
+    return CacheFlushRules(Dict{OutputCacheKey, CacheFlushRule}(), min_flush_size, max_size)
 end
 
 function add_rule!(
     rules::CacheFlushRules,
     model,
-    type,
-    container_key,
+    op_container_key,
     keep_in_cache,
     priority,
 )
-    key = make_cache_key(model, type, container_key)
+    key = OutputCacheKey(model, op_container_key)
     rules.data[key] = CacheFlushRule(keep_in_cache, priority)
 end
 
-get_rule(x::CacheFlushRules, model, type, name) =
-    get_rule(x, make_cache_key(model, type, name))
+get_rule(x::CacheFlushRules, model, op_container_key) =
+    get_rule(x, OutputCacheKey(model, op_container_key))
 get_rule(x::CacheFlushRules, key) = x.data[key]
 
 mutable struct CacheStats
