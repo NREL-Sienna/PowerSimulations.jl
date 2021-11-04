@@ -229,9 +229,9 @@ function _build_decision_models!(sim::Simulation)
             end
             sim.internal.date_ref[model_number] = initial_time
             set_status!(model, BuildStatus.BUILT)
-        catch e
+        catch
             set_status!(model, BuildStatus.FAILED)
-            rethrow(e)
+            rethrow()
         end
     end
     return
@@ -251,9 +251,9 @@ function _build_emulation_model!(sim::Simulation)
         end
         sim.internal.date_ref[model_number] = initial_time
         set_status!(model, BuildStatus.BUILT)
-    catch e
+    catch
         set_status!(model, BuildStatus.FAILED)
-        rethrow(e)
+        rethrow()
     end
     return
 end
