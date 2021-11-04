@@ -195,7 +195,7 @@ function get_current_time(model::DecisionModel)
     return initial_time + interval * execution_count
 end
 
-function init_model_store!(model::DecisionModel)
+function init_model_store_params!(model::DecisionModel)
     num_executions = get_executions(model)
     horizon = get_horizon(model)
     system = get_system(model)
@@ -232,7 +232,7 @@ function build_pre_step!(model::DecisionModel)
             get_system(model),
         )
         @info "Initializing ModelStoreParams"
-        init_model_store!(model)
+        init_model_store_params!(model)
 
         @info "Mapping Service Models"
         populate_aggregated_service_model!(get_template(model), get_system(model))

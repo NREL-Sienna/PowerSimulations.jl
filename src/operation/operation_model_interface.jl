@@ -140,10 +140,8 @@ end
 function build_impl!(model::OperationModel)
     build_pre_step!(model)
     build_problem!(model)
-    init_model_store!(model)
     serialize_metadata!(get_optimization_container(model), get_output_dir(model))
     log_values(get_settings(model))
-
     return
 end
 

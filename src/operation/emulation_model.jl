@@ -222,16 +222,6 @@ function init_model_store_params!(model::EmulationModel)
     )
 end
 
-function init_model_store!(model::EmulationModel)
-    init_model_store_params!(model)
-    initialize_storage!(
-        model.store,
-        get_optimization_container(model),
-        model.internal.store_parameters,
-    )
-    return
-end
-
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
@@ -249,7 +239,7 @@ function build_pre_step!(model::EmulationModel)
             get_system(model),
         )
         @info "Initializing ModelStoreParams"
-        init_model_store!(model)
+        init_model_store_params!(model)
 
         @info "Mapping Service Models"
         populate_aggregated_service_model!(get_template(model), get_system(model))
@@ -448,6 +438,11 @@ function run!(
     try
         Logging.with_logger(logger) do
             try
+                initialize_storage!(
+                    model.store,
+                    get_optimization_container(model),
+                    model.internal.store_parameters,
+                )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
                     run_impl(model; kwargs...)
                     set_run_status!(model, RunStatus.SUCCESSFUL)
