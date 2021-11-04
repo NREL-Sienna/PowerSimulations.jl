@@ -2,6 +2,7 @@ const HDF_FILENAME = "simulation_store.h5"
 const HDF_SIMULATION_ROOT_PATH = "simulation"
 const OPTIMIZER_STATS_PATH = "optimizer_stats"
 
+# Each row corresponds to a time stamp
 mutable struct Dataset
     dataset::HDF5.Dataset
     column_dataset::HDF5.Dataset
@@ -50,7 +51,7 @@ mutable struct HdfSimulationStore <: SimulationStore
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
-    cache::ResultCache
+    cache::OptimizationOutputCache
 end
 
 function HdfSimulationStore(
@@ -73,7 +74,7 @@ function HdfSimulationStore(
     end
 
     datasets = OrderedDict{Symbol, ProblemDatasets}()
-    cache = ResultCache()
+    cache = OptimizationOutputCache()
     store = HdfSimulationStore(
         file,
         SimulationStoreParams(),
@@ -527,7 +528,7 @@ function _serialize_attributes(store::HdfSimulationStore, problems_group, proble
     end
 end
 
-function _flush_data!(cache::ParamResultCache, store::HdfSimulationStore, key, discard)
+function _flush_data!(cache::ModelOutputCache, store::HdfSimulationStore, key, discard)
     !has_dirty(cache) && return 0
     dataset = _get_dataset(store, key)
     timestamps, data = get_data_to_flush!(cache, get_min_flush_size(store.cache))
@@ -548,7 +549,7 @@ function _flush_data!(cache::ParamResultCache, store::HdfSimulationStore, key, d
     return size_flushed
 end
 
-function _flush_data!(cache::ResultCache, store::HdfSimulationStore)
+function _flush_data!(cache::ModelOutputCache, store::HdfSimulationStore)
     # PERF: may need to optimize memory management
     # Do we need flush down to some ~70% watermark?
     # What are GC implications of doing replacing entries one at a time vs freeing large

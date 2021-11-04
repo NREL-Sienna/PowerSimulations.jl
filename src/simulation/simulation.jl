@@ -627,7 +627,7 @@ function _initialize_problem_storage!(
     intervals = sequence.intervals
 
     problems = OrderedDict{Symbol, ModelStoreParams}()
-    problem_reqs = Dict{Symbol, SimulationStoreProblemRequirements}()
+    problem_reqs = Dict{Symbol, StoreModelRequirements}()
     num_param_containers = 0
     rules = CacheFlushRules(
         max_size = cache_size_mib * MiB,
@@ -635,7 +635,7 @@ function _initialize_problem_storage!(
     )
     for model in get_models(sim)
         model_name = get_name(model)
-        reqs = SimulationStoreProblemRequirements()
+        reqs = StoreModelRequirements()
         container = get_optimization_container(model)
         duals = get_duals(container)
         parameters = get_parameters(container)
