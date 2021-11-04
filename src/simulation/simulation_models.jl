@@ -132,7 +132,7 @@ function initialize_simulation_internals!(models::SimulationModels, uuid::Base.U
 end
 
 function get_model_names(models::SimulationModels)
-    all_names = get_name.(get_decision_models(model))
+    all_names = get_name.(get_decision_models(models))
     em = get_emulation_model(models)
     if em !== nothing
         push!(all_names, get_name(em))
