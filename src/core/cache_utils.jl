@@ -34,9 +34,11 @@ function add_rule!(rules::CacheFlushRules, model, op_container_key, keep_in_cach
     rules.data[key] = CacheFlushRule(keep_in_cache, priority)
 end
 
-get_rule(x::CacheFlushRules, model, op_container_key) =
-    get_rule(x, OutputCacheKey(model, op_container_key))
-get_rule(x::CacheFlushRules, key) = x.data[key]
+function get_rule(x::CacheFlushRules, model, op_container_key)
+    return get_rule(x, OutputCacheKey(model, op_container_key))
+end
+
+get_rule(x::CacheFlushRules, key::OutputCacheKey) = x.data[key]
 
 mutable struct CacheStats
     hits::Int
@@ -46,8 +48,6 @@ end
 CacheStats() = CacheStats(0, 0)
 
 function get_cache_hit_percentage(x::CacheStats)
-    total = x.hits + x.misses
-    total == 0 && return 0.0
-
+    x.hits + x.misses == 0 && return 0.0
     return x.hits / (x.hits + x.misses) * 100
 end
