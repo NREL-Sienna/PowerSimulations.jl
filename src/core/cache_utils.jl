@@ -29,13 +29,7 @@ function CacheFlushRules(; max_size = GiB, min_flush_size = MIN_CACHE_FLUSH_SIZE
     return CacheFlushRules(Dict{OutputCacheKey, CacheFlushRule}(), min_flush_size, max_size)
 end
 
-function add_rule!(
-    rules::CacheFlushRules,
-    model,
-    op_container_key,
-    keep_in_cache,
-    priority,
-)
+function add_rule!(rules::CacheFlushRules, model, op_container_key, keep_in_cache, priority)
     key = OutputCacheKey(model, op_container_key)
     rules.data[key] = CacheFlushRule(keep_in_cache, priority)
 end
