@@ -25,18 +25,26 @@ mutable struct Simulation
         simulation_folder::String,
         initial_time = nothing,
     )
-        for model in models.decision_models
+        for model in get_decision_models(models)
             if model.internal.simulation_info.sequence_uuid != sequence.uuid
                 model_name = get_name(model)
                 throw(
                     IS.ConflictingInputsError(
-                        "The model definition for $model_name doesn't correspond to the simulation sequence",
+                        "The decision model definition for $model_name doesn't correspond to the simulation sequence",
                     ),
                 )
             end
         end
-        if models.emulation_model !== nothing
-            models.emulation_model.simulation_info.sequence_uuid = sequence.uuid
+        em = get_emulation_model(models)
+        if em !== nothing
+            if em.internal.simulation_info.sequence_uuid != sequence.uuid
+                model_name = get_name(em)
+                throw(
+                    IS.ConflictingInputsError(
+                        "The emulation model definition for $model_name doesn't correspond to the simulation sequence",
+                    ),
+                )
+            end
         end
         new(steps, models, initial_time, sequence, simulation_folder, name, nothing)
     end
