@@ -2,7 +2,6 @@ const HDF_FILENAME = "simulation_store.h5"
 const HDF_SIMULATION_ROOT_PATH = "simulation"
 const OPTIMIZER_STATS_PATH = "optimizer_stats"
 
-# Each row corresponds to a time stamp
 mutable struct Dataset
     dataset::HDF5.Dataset
     column_dataset::HDF5.Dataset
