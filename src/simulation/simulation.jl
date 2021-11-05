@@ -140,7 +140,7 @@ function _get_simulation_initial_times!(sim::Simulation)
                 )
             end
         end
-        if sim_init_time !== nothing &&
+        if sim_ini_time !== nothing &&
            !mapreduce(x -> x == sim_ini_time, |, model_initial_times[model_number])
             throw(
                 IS.ConflictingInputsError(
