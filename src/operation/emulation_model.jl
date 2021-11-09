@@ -222,23 +222,13 @@ function init_model_store_params!(model::EmulationModel)
     )
 end
 
-function init_model_store!(model::EmulationModel)
-    init_model_store_params!(model)
-    initialize_storage!(
-        model.store,
-        get_optimization_container(model),
-        model.internal.store_parameters,
-    )
-    return
-end
-
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
             @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
-        # Temporary while are able to switch from PJ to POI
+        # TODO-PJ: Temporary while are able to switch from PJ to POI
         container = get_optimization_container(model)
         container.built_for_recurrent_solves = true
 
@@ -249,7 +239,7 @@ function build_pre_step!(model::EmulationModel)
             get_system(model),
         )
         @info "Initializing ModelStoreParams"
-        init_model_store!(model)
+        init_model_store_params!(model)
 
         @info "Mapping Service Models"
         populate_aggregated_service_model!(get_template(model), get_system(model))
@@ -288,8 +278,11 @@ function build!(
         Logging.with_logger(logger) do
             try
                 set_executions!(model, executions)
-                build_impl!(model)
+                TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+                    build_impl!(model)
+                end
                 set_status!(model, BuildStatus.BUILT)
+                @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             catch e
                 set_status!(model, BuildStatus.FAILED)
                 bt = catch_backtrace()
@@ -445,6 +438,11 @@ function run!(
     try
         Logging.with_logger(logger) do
             try
+                initialize_storage!(
+                    model.store,
+                    get_optimization_container(model),
+                    model.internal.store_parameters,
+                )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
                     run_impl(model; kwargs...)
                     set_run_status!(model, RunStatus.SUCCESSFUL)

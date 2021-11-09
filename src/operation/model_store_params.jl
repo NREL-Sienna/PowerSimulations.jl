@@ -2,12 +2,16 @@ struct StoreModelRequirements
     duals::Dict{ConstraintKey, Dict{String, Any}}
     parameters::Dict{ParameterKey, Dict{String, Any}}
     variables::Dict{VariableKey, Dict{String, Any}}
+    aux_variables::Dict{VariableKey, Dict{String, Any}}
+    expressions::Dict{VariableKey, Dict{String, Any}}
 end
 
 function StoreModelRequirements()
     return StoreModelRequirements(
         Dict{ConstraintKey, Dict{String, Any}}(),
         Dict{ParameterKey, Dict{String, Any}}(),
+        Dict{VariableKey, Dict{String, Any}}(),
+        Dict{VariableKey, Dict{String, Any}}(),
         Dict{VariableKey, Dict{String, Any}}(),
     )
 end

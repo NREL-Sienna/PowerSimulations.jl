@@ -31,6 +31,8 @@ function build_initial_conditions_problem!(model::T) where {T <: OperationModel}
         get_network_formulation(get_template(model)),
         get_system(model),
     )
-    build_impl!(model.internal.ic_model_container, template, get_system(model))
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Initialization $(get_name(model))" begin
+        build_impl!(model.internal.ic_model_container, template, get_system(model))
+    end
     return
 end

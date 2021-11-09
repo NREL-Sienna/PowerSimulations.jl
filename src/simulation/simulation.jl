@@ -25,19 +25,23 @@ mutable struct Simulation
         simulation_folder::String,
         initial_time = nothing,
     )
-        for model in models
-            model_name = get_name(model)
-            if !built_for_recurrent_solves(model)
+        for model in get_decision_models(models)
+            if model.internal.simulation_info.sequence_uuid != sequence.uuid
+                model_name = get_name(model)
                 throw(
                     IS.ConflictingInputsError(
-                        "model $(model_name) is not part of any Simulation",
+                        "The decision model definition for $model_name doesn't correspond to the simulation sequence",
                     ),
                 )
             end
-            if model.internal.simulation_info.sequence_uuid != sequence.uuid
+        end
+        em = get_emulation_model(models)
+        if em !== nothing
+            if em.internal.simulation_info.sequence_uuid != sequence.uuid
+                model_name = get_name(em)
                 throw(
                     IS.ConflictingInputsError(
-                        "The model definition for $model_name doesn't correspond to the simulation sequence",
+                        "The emulation model definition for $model_name doesn't correspond to the simulation sequence",
                     ),
                 )
             end
@@ -112,39 +116,35 @@ set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
 set_current_time!(sim::Simulation, val) = sim.internal.current_time = val
 
 function _get_simulation_initial_times!(sim::Simulation)
-    model_initial_times = Dict{Int, Vector{Dates.DateTime}}()
+    model_initial_times = OrderedDict{Int, Vector{Dates.DateTime}}()
     sim_ini_time = get_initial_time(sim)
-    for (model_number, model) in enumerate(get_models(sim))
+    for (model_number, model) in enumerate(get_models(sim).decision_models)
         system = get_system(model)
-        system_interval = PSY.get_forecast_interval(system)
-        model_interval = get_interval(get_sequence(sim), get_name(model))
-        if system_interval != model_interval
-            throw(
-                IS.ConflictingInputsError(
-                    "Simulation interval ($model_interval) and forecast interval ($system_interval) definitions are not compatible",
-                ),
-            )
-        end
         model_horizon = get_horizon(model)
         system_horizon = PSY.get_forecast_horizon(system)
+        system_interval = PSY.get_forecast_interval(system)
         if model_horizon > system_horizon
             throw(
                 IS.ConflictingInputsError(
-                    "Simulation horizon ($model_horizon) and forecast horizon ($system_horizon) definitions are not compatible",
+                    "$(get_name(model)) model horizon ($model_horizon) and forecast horizon ($system_horizon) are not compatible",
                 ),
             )
         end
         model_initial_times[model_number] = PSY.get_forecast_initial_times(system)
         for (ix, element) in enumerate(model_initial_times[model_number][1:(end - 1)])
             if !(element + system_interval == model_initial_times[model_number][ix + 1])
-                throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
+                throw(
+                    IS.ConflictingInputsError(
+                        "The sequence of forecasts in the model's systems are invalid",
+                    ),
+                )
             end
         end
-        if !(sim_ini_time === nothing) &&
+        if sim_ini_time !== nothing &&
            !mapreduce(x -> x == sim_ini_time, |, model_initial_times[model_number])
             throw(
                 IS.ConflictingInputsError(
-                    "The specified simulation initial_time $sim_ini_time isn't contained in model $model_number.
+                    "The specified simulation initial_time $sim_ini_time isn't contained in model $(get_name(model)).
 Manually provided initial times have to be compatible with the specified interval and horizon in the models.",
                 ),
             )
@@ -155,18 +155,35 @@ Manually provided initial times have to be compatible with the specified interva
         @debug("Initial Simulation Time will be infered from the data.
                Initial Simulation Time set to $(sim.initial_time)")
     end
-
+    if get_models(sim).emulation_model !== nothing
+        em = get_models(sim).emulation_model
+        emulator_model_no = last(keys(model_initial_times))
+        system = get_system(get_models(sim).emulation_model)
+        ini_time, ts_length = PSY.check_time_series_consistency(sys, PSY.SingleTimeSeries)
+        resolution = PSY.get_time_series_resolution(system)
+        em_available_times = range(ini_time, step = resolution, length = ts_length)
+        if get_initial_time(sim) ∉ em_available_times
+            throw(
+                IS.ConflictingInputsError(
+                    "The simulation initial_time $sim_ini_time isn't contained in the
+                    emulation model $(get_name(em)).",
+                ),
+            )
+        else
+            model_initial_times[emulator_model_no + 1] = sim.initial_time
+        end
+    end
     sim.internal.current_time = sim.initial_time
     return model_initial_times
 end
 
 function _check_steps(
     sim::Simulation,
-    model_initial_times::Dict{Int, Vector{Dates.DateTime}},
+    model_initial_times::OrderedDict{Int, Vector{Dates.DateTime}},
 )
     sequence = get_sequence(sim)
     execution_order = get_execution_order(sequence)
-    for (model_number, model) in enumerate(get_models(sim))
+    for (model_number, model) in enumerate(get_models(sim).decision_models)
         execution_counts = get_executions(model)
         # Checks the consistency between two methods of calculating the number of executions
         total_model_executions = length(findall(x -> x == model_number, execution_order))
@@ -196,54 +213,124 @@ function _check_folder(sim::Simulation)
     end
 end
 
-function _build_problems!(sim::Simulation, serialize)
-    for (model_number, model) in enumerate(get_models(sim))
-        name = get_name(model)
-        @info("Building problem $(model_number)-$(name)")
+function _build_decision_models!(sim::Simulation)
+    for (model_number, model) in enumerate(get_decision_models(get_models(sim)))
+        @info("Building problem $(get_name(model))")
         initial_time = get_initial_time(sim)
         set_initial_time!(model, initial_time)
         output_dir = joinpath(get_models_dir(sim))
         set_output_dir!(model, output_dir)
-        initialize_simulation_info!(model, problem_chronology)
-        problem_build_status = _build!(model, serialize)
-        if problem_build_status != BuildStatus.BUILT
-            error("Problem $(name) failed to build successfully")
+        try
+            TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+                # TODO-PJ: Temporary while are able to switch from PJ to POI
+                container = get_optimization_container(model)
+                container.built_for_recurrent_solves = true
+                build_impl!(model)
+            end
+            sim.internal.date_ref[model_number] = initial_time
+            set_status!(model, BuildStatus.BUILT)
+        catch
+            set_status!(model, BuildStatus.FAILED)
+            rethrow()
         end
-        _populate_caches!(sim, name)
-        sim.internal.date_ref[model_number] = initial_time
     end
     return
 end
+
+function _build_emulation_model!(sim::Simulation)
+    model = get_emulation_model(get_models(sim))
+
+    if model === nothing
+        return
+    end
+
+    try
+        get_execution_count(model)
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+            build_impl!(model)
+        end
+        sim.internal.date_ref[model_number] = initial_time
+        set_status!(model, BuildStatus.BUILT)
+    catch
+        set_status!(model, BuildStatus.FAILED)
+        rethrow()
+    end
+    return
+end
+
+function _initialize_simulation_state(sim::Simulation) end
 
 function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
-    for (ix, model) in enumerate(get_models(sim))
-        name = get_name(model)
-        problem_interval = get_interval(sequence, name)
+    step_resolution = get_step_resolution(sequence)
+    simulation_models = get_models(sim)
+    for (ix, model) in enumerate(get_decision_models(simulation_models))
+        problem_interval = get_interval(sequence, model)
         # Note to devs: Here we are setting the number of operations problem executions we
-        # will see for every step of the simulation
+        # will see for every step of the simulation. The step of the simulation is determined
+        # by the first decision problem interval
         if ix == 1
             set_executions!(model, 1)
         else
-            step_resolution = get_step_resolution(sequence)
+            if step_resolution % problem_interval != Dates.Millisecond(0)
+                error(
+                    "The $(get_name(model)) problem interval is not an integer fraction of the simulation step",
+                )
+            end
             set_executions!(model, Int(step_resolution / problem_interval))
         end
     end
+
+    em = get_emulation_model(simulation_models)
+    if em !== nothing
+        system = get_system(em)
+        em_resolution = PSY.get_time_series_resolution(system)
+        set_executions!(em, Int(step_resolution / em_resolution))
+    end
+
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Check Steps" begin
         _check_steps(sim, problem_initial_times)
     end
+
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problems" begin
-        _build_problems!(sim, serialize)
-        # Make EmulationModel
-        # Make SimulationState here
+        _build_decision_models!(sim)
+        _build_emulation_model!(sim)
     end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
+        _initialize_simulation_state(sim)
+    end
+
+    # Here is check that store params are properly initialized
+    # _initialize_problem_storage!(sim, cache_size_mib, min_cache_flush_size_mib)
+
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
             serialize_simulation(sim)
         end
     end
+    return
+end
+
+function _set_simulation_internal!(
+    sim::Simulation,
+    output_dir,
+    recorders,
+    console_level,
+    file_level,
+)
+    sim.internal = SimulationInternal(
+        sim.steps,
+        get_models(sim),
+        get_simulation_folder(sim),
+        get_name(sim),
+        output_dir,
+        recorders,
+        console_level,
+        file_level,
+    )
     return
 end
 
@@ -274,18 +361,9 @@ function build!(
 )
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Simulation" begin
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation Internal" begin
             _check_folder(sim)
-            sim.internal = SimulationInternal(
-                sim.steps,
-                length(get_models(sim)),
-                get_simulation_folder(sim),
-                get_name(sim);
-                output_dir = output_dir,
-                recorders = recorders,
-                console_level = console_level,
-                file_level = file_level,
-            )
+            _set_simulation_internal!(sim, output_dir, recorders, console_level, file_level)
         end
         file_mode = "w"
         logger = configure_logging(sim.internal, file_mode)
@@ -557,7 +635,7 @@ function _initialize_problem_storage!(
     intervals = sequence.intervals
 
     problems = OrderedDict{Symbol, ModelStoreParams}()
-    problem_reqs = Dict{Symbol, SimulationStoreProblemRequirements}()
+    problem_reqs = Dict{Symbol, StoreModelRequirements}()
     num_param_containers = 0
     rules = CacheFlushRules(
         max_size = cache_size_mib * MiB,
@@ -565,7 +643,7 @@ function _initialize_problem_storage!(
     )
     for model in get_models(sim)
         model_name = get_name(model)
-        reqs = SimulationStoreProblemRequirements()
+        reqs = StoreModelRequirements()
         container = get_optimization_container(model)
         duals = get_duals(container)
         parameters = get_parameters(container)

@@ -50,7 +50,7 @@ mutable struct HdfSimulationStore <: SimulationStore
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
-    cache::ResultCache
+    cache::OptimizationResultCache
 end
 
 function HdfSimulationStore(
@@ -73,7 +73,7 @@ function HdfSimulationStore(
     end
 
     datasets = OrderedDict{Symbol, ProblemDatasets}()
-    cache = ResultCache()
+    cache = OptimizationResultCache()
     store = HdfSimulationStore(
         file,
         SimulationStoreParams(),
@@ -159,8 +159,8 @@ function Base.isopen(store::HdfSimulationStore)
 end
 
 function Base.flush(store::HdfSimulationStore)
-    for (key, param_cache) in store.cache.data
-        _flush_data!(param_cache, store, key, false)
+    for (key, output_cache) in store.cache.data
+        _flush_data!(output_cache, store, key, false)
     end
 
     flush(store.file)
@@ -252,8 +252,12 @@ function initialize_problem_storage!(
                 column_dataset = group[col]
                 datasets = getfield(store.datasets[problem], type)
                 datasets[key] = Dataset(dataset, column_dataset)
-                key = make_cache_key(problem, type, key)
-                add_param_cache!(store.cache, key, get_rule(flush_rules, key))
+                add_output_cache!(
+                    store.cache,
+                    problem,
+                    key,
+                    get_rule(flush_rules, problem, key),
+                )
             end
         end
 
@@ -285,12 +289,10 @@ function read_result(
     ::Type{DataFrames.DataFrame},
     store::HdfSimulationStore,
     problem_name,
-    type,
-    name,
+    key,
     timestamp::Dates.DateTime,
 )
-    key = make_cache_key(problem_name, type, name)
-    data, columns = _read_data_columns(store, key, timestamp)
+    data, columns = _read_data_columns(store, problem_name, key, timestamp)
     return DataFrames.DataFrame(data, Symbol.(columns))
 end
 
@@ -298,12 +300,10 @@ function read_result(
     ::Type{JuMP.Containers.DenseAxisArray},
     store::HdfSimulationStore,
     problem_name,
-    type,
-    name,
+    key,
     timestamp::Dates.DateTime,
 )
-    key = make_cache_key(problem_name, type, name)
-    data, columns = _read_data_columns(store, key, timestamp)
+    data, columns = _read_data_columns(store, problem_name, key, timestamp)
     return JuMP.Containers.DenseAxisArray(data, size(data[1]), columns)
 end
 
@@ -311,16 +311,14 @@ function read_result(
     ::Type{<:Array},
     store::HdfSimulationStore,
     problem_name,
-    type,
-    name,
+    key,
     timestamp::Dates.DateTime,
 )
-    key = make_cache_key(problem_name, type, name)
-    if is_cached(store.cache, key, timestamp)
-        data = read_result(store.cache, key, timestamp)
+    if is_cached(store.cache, problem_name, key, timestamp)
+        data = read_result(store.cache, problem_name, key, timestamp)
     else
         # PERF: If this will be commonly used then we need to remove reading of columns.
-        data, _ = read_result(store, key, timestamp)
+        data, _ = read_result(store, problem_name, key, timestamp)
     end
 end
 
@@ -374,24 +372,22 @@ Write a model result for a timestamp to the store.
 function write_result!(
     store::HdfSimulationStore,
     problem_name,
-    container_type,
-    name,
+    key::OptimizationContainerKey,
     timestamp,
     data,
     columns = nothing,  # Unused here. Matches the interface for InMemorySimulationStore.
 )
-    key = make_cache_key(problem_name, container_type, name)
-    param_cache = get_param_cache(store.cache, key)
+    output_cache = get_output_cache(store.cache, problem_name, key)
 
     cur_size = get_size(store.cache)
-    add_result!(param_cache, timestamp, to_array(data), is_full(store.cache, cur_size))
+    add_result!(output_cache, timestamp, to_array(data), is_full(store.cache, cur_size))
 
-    if get_dirty_size(param_cache) >= get_min_flush_size(store.cache)
-        discard = !should_keep_in_cache(param_cache)
+    if get_dirty_size(output_cache) >= get_min_flush_size(store.cache)
+        discard = !should_keep_in_cache(output_cache)
 
         # PERF: A potentially significant performance improvement would be to queue several
         # flushes and submit them in parallel.
-        size_flushed = _flush_data!(param_cache, store, key, discard)
+        size_flushed = _flush_data!(output_cache, store, problem_name, key, discard)
 
         @debug "flushed data" key size_flushed discard
     end
@@ -488,8 +484,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
                     item = Dataset(dataset, column_dataset)
                     container_key = deserialize_key(container_metadata, name)
                     getfield(store.datasets[problem_name], type)[container_key] = item
-                    key = make_cache_key(problem_name, type, container_key)
-                    add_param_cache!(store.cache, key, CacheFlushRule())
+                    add_output_cache!(store.cache, problem, key, get_rule(flush_rules, key))
                 end
             end
         end
@@ -527,17 +522,38 @@ function _serialize_attributes(store::HdfSimulationStore, problems_group, proble
     end
 end
 
-function _flush_data!(cache::ParamResultCache, store::HdfSimulationStore, key, discard)
+function _flush_data!(
+    cache::OptimzationResultCache,
+    store::HdfSimulationStore,
+    problem_name,
+    key::OptimizationContainerKey,
+    discard,
+)
+    return _flush_data!(
+        cache,
+        store,
+        OptimizationResultCacheKey(problem_name, key),
+        discard,
+    )
+end
+
+function _flush_data!(
+    cache::OptimzationResultCache,
+    store::HdfSimulationStore,
+    cache_key::OptimizationResultCacheKey,
+    discard,
+)
     !has_dirty(cache) && return 0
-    dataset = _get_dataset(store, key)
+    dataset = _get_dataset(store, cache_key)
     timestamps, data = get_data_to_flush!(cache, get_min_flush_size(store.cache))
     num_results = length(timestamps)
     @assert_op num_results == size(data)[end]
     end_index = dataset.write_index + length(timestamps) - 1
     write_range = (dataset.write_index):end_index
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write $(key.type) array to HDF" begin
-        _write_dataset!(dataset.dataset, data, write_range)
-    end
+    # Enable only for development and benchmarking
+    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write $(key.key) array to HDF" begin
+    _write_dataset!(dataset.dataset, data, write_range)
+    #end
 
     discard && discard_results!(cache, timestamps)
 
@@ -548,7 +564,7 @@ function _flush_data!(cache::ParamResultCache, store::HdfSimulationStore, key, d
     return size_flushed
 end
 
-function _flush_data!(cache::ResultCache, store::HdfSimulationStore)
+function _flush_data!(cache::OptimzationResultCache, store::HdfSimulationStore)
     # PERF: may need to optimize memory management
     # Do we need flush down to some ~70% watermark?
     # What are GC implications of doing replacing entries one at a time vs freeing large
@@ -567,8 +583,28 @@ function _get_dataset(store::HdfSimulationStore, problem_name::Symbol)
     return store.datasets[problem_name]
 end
 
-function _get_dataset(store::HdfSimulationStore, key)
-    return getfield(store.datasets[key.model], key.type)[key.name]
+function _get_dataset(store::HdfSimulationStore, model, opt_container_key::VariableKey)
+    return getfield(store.datasets[model], STORE_CONTAINER_VARIABLES)[opt_container_key]
+end
+
+function _get_dataset(store::HdfSimulationStore, model, opt_container_key::ConstraintKey)
+    return getfield(store.datasets[model], STORE_CONTAINER_DUALS)[opt_container_key]
+end
+
+function _get_dataset(store::HdfSimulationStore, model, opt_container_key::AuxVarKey)
+    return getfield(store.datasets[model], STORE_CONTAINER_AUX_ARIABLES)[opt_container_key]
+end
+
+function _get_dataset(store::HdfSimulationStore, opt_container_key::ParameterKey)
+    return getfield(store.datasets[model], STORE_CONTAINER_PARAMETERS)[opt_container_key]
+end
+
+function _get_dataset(store::HdfSimulationStore, opt_container_key::ExpressionKey)
+    return getfield(store.datasets[model], STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
+end
+
+function _get_dataset(store::HdfSimulationStore, key::OptimizationResultCacheKey)
+    return _get_dataset(store, key.model, key.key)
 end
 
 function _get_group_or_create(parent, group_name)
@@ -609,13 +645,13 @@ function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function _read_data_columns(store, key, timestamp)
-    if is_cached(store.cache, key, timestamp)
-        data = read_result(store.cache, key, timestamp)
-        column_dataset = _get_dataset(store, key).column_dataset
+function _read_data_columns(store, problem_name, key, timestamp)
+    if is_cached(store.cache, problem_name, key, timestamp)
+        data = read_result(store.cache, problem_name, key, timestamp)
+        column_dataset = _get_dataset(store, problem_name, key).column_dataset
         columns = column_dataset[:]
     else
-        data, columns = read_result(store, key, timestamp)
+        data, columns = read_result(store, problem_name, key, timestamp)
     end
 
     return data, columns

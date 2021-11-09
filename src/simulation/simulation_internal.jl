@@ -1,4 +1,3 @@
-
 mutable struct SimulationInternal
     sim_files_dir::String
     store_dir::String
@@ -16,24 +15,32 @@ mutable struct SimulationInternal
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
+    cache_size_mib::Int
+    min_cache_flush_size_mib::Int
 end
 
 function SimulationInternal(
     steps::Int,
-    model_count::Int,
-    sim_dir,
-    name;
-    output_dir = nothing,
-    recorders = [],
-    console_level = Logging.Error,
-    file_level = Logging.Info,
+    models::SimulationModels,
+    sim_dir::String,
+    name::String,
+    output_dir::Union{Nothing, String},
+    recorders,
+    console_level::Logging.LogLevel,
+    file_level::Logging.LogLevel,
+    cache_size_mib = 1024,
+    min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
 )
     count_dict = Dict{Int, Dict{Int, Int}}()
 
     for s in 1:steps
         count_dict[s] = Dict{Int, Int}()
+        model_count = length(get_decision_models(models))
         for st in 1:model_count
             count_dict[s][st] = 0
+        end
+        if get_emulation_model(models) !== nothing
+            count_dict[s][model_count + 1] = 0
         end
     end
 
@@ -81,11 +88,13 @@ function SimulationInternal(
         init_time,
         nothing,
         BuildStatus.EMPTY,
-        Dict{CacheKey, AbstractCache}(),
+        nothing,
         nothing,
         collect(unique_recorders),
         console_level,
         file_level,
+        cache_size_mib,
+        min_cache_flush_size_mib,
     )
 end
 

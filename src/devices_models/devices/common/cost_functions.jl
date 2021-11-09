@@ -373,7 +373,7 @@ function add_to_cost!(
     component_name = PSY.get_name(component)
     time_steps = get_time_steps(container)
     @debug "TwoPartCost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    if !(spec.variable_cost === nothing)
+    if spec.variable_cost !== nothing
         variable_cost = spec.variable_cost(cost_data)
         for t in time_steps
             variable_cost!(container, spec, component, variable_cost, t)
@@ -382,7 +382,7 @@ function add_to_cost!(
         @warn "No variable cost defined for $component_name"
     end
 
-    if !(spec.fixed_cost === nothing) && spec.has_status_variable
+    if spec.fixed_cost !== nothing && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(container, OnVariable(), component, spec.fixed_cost, t)
@@ -410,7 +410,7 @@ function add_to_cost!(
         variable_cost!(container, spec, component, variable_cost, t)
     end
 
-    if !(spec.start_up_cost === nothing)
+    if spec.start_up_cost !== nothing
         @debug "Start up cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -423,7 +423,7 @@ function add_to_cost!(
         end
     end
 
-    if !(spec.shut_down_cost === nothing)
+    if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -436,7 +436,7 @@ function add_to_cost!(
         end
     end
 
-    if !(spec.fixed_cost === nothing) && spec.has_status_variable
+    if spec.fixed_cost !== nothing && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -466,7 +466,7 @@ function add_to_cost!(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     time_steps = get_time_steps(container)
 
-    if !(spec.fixed_cost === nothing) && spec.has_status_variable
+    if spec.fixed_cost !== nothing && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -479,7 +479,7 @@ function add_to_cost!(
         end
     end
 
-    if !(spec.shut_down_cost === nothing)
+    if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -560,7 +560,7 @@ function add_to_cost!(
         variable_cost!(container, spec, component, variable_cost, t)
     end
 
-    if !(spec.start_up_cost === nothing)
+    if spec.start_up_cost !== nothing
         start_cost_data = spec.start_up_cost(cost_data)
         if spec.has_multistart_variables
             for (st, var_type) in enumerate(START_VARIABLES)
@@ -600,7 +600,7 @@ function add_to_cost!(
         end
     end
 
-    if !(spec.shut_down_cost === nothing)
+    if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -653,7 +653,7 @@ function add_to_cost!(
         variable_cost!(container, spec, component, variable_cost, t)
     end
 
-    if !(spec.start_up_cost === nothing)
+    if spec.start_up_cost !== nothing
         start_cost_data = spec.start_up_cost(cost_data)
         for t in time_steps
             linear_gen_cost!(
@@ -679,7 +679,7 @@ function add_to_cost!(
         end
     end
 
-    if !(spec.shut_down_cost === nothing)
+    if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -774,7 +774,7 @@ function add_to_cost!(
         variable_cost!(container, spec, component, variable_cost, t)
     end
 
-    if !(spec.fixed_cost === nothing) && spec.has_status_variable
+    if spec.fixed_cost !== nothing && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -787,7 +787,7 @@ function add_to_cost!(
         end
     end
 
-    if !(spec.start_up_cost === nothing)
+    if spec.start_up_cost !== nothing
         @debug "Start up cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(
@@ -800,7 +800,7 @@ function add_to_cost!(
         end
     end
 
-    if !(spec.shut_down_cost === nothing)
+    if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
             linear_gen_cost!(

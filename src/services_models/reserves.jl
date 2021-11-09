@@ -214,7 +214,7 @@ function _get_ramp_constraint_contributing_devices(
     filtered_device = Vector{D}()
     for d in contributing_devices
         ramp_limits = _get_ramp_limits(d)
-        if !(ramp_limits === nothing)
+        if ramp_limits !== nothing
             p_lims = PSY.get_active_power_limits(d)
             max_rate = abs(p_lims.min - p_lims.max) / time_frame
             if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)

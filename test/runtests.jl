@@ -52,6 +52,8 @@ include("test_utils/operations_problem_templates.jl")
 
 const LOG_FILE = "power-simulations-test.log"
 
+ENV["RUNNING_PSID_TESTS"] = "true"
+
 const DISABLED_TEST_FILES = [
     # "test_basic_model_structs.jl",
     # "test_device_branch_constructors.jl",
@@ -68,12 +70,12 @@ const DISABLED_TEST_FILES = [
     # "test_services_constructor.jl",
     # "test_simulation_models.jl",
     # "test_simulation_sequence.jl",
+    # "test_simulation_build.jl",
     # "test_device_hybrid_generation_constructors.jl",
-    "test_simulation_build.jl",
     "test_simulation_execute.jl",
     "test_simulation_results.jl",
     "test_simulation_results_export.jl",
-    "test_simulation_store.jl",
+    #"test_simulation_store.jl",
     "test_simulation_results.jl",
 ]
 

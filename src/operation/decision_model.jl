@@ -195,7 +195,7 @@ function get_current_time(model::DecisionModel)
     return initial_time + interval * execution_count
 end
 
-function init_model_store!(model::DecisionModel)
+function init_model_store_params!(model::DecisionModel)
     num_executions = get_executions(model)
     horizon = get_horizon(model)
     system = get_system(model)
@@ -232,7 +232,7 @@ function build_pre_step!(model::DecisionModel)
             get_system(model),
         )
         @info "Initializing ModelStoreParams"
-        init_model_store!(model)
+        init_model_store_params!(model)
 
         @info "Mapping Service Models"
         populate_aggregated_service_model!(get_template(model), get_system(model))
@@ -272,8 +272,11 @@ function build!(
     try
         Logging.with_logger(logger) do
             try
-                build_impl!(model)
+                TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+                    build_impl!(model)
+                end
                 set_status!(model, BuildStatus.BUILT)
+                @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             catch e
                 set_status!(model, BuildStatus.FAILED)
                 bt = catch_backtrace()

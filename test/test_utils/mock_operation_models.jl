@@ -171,8 +171,10 @@ function create_simulation_build_test_problems(
     sys_ed = PSB.build_system(PSITestSystems, "c_sys5_ed"),
 )
     return SimulationModels(
-        DecisionModel(template_uc, sys_uc; name = "UC", optimizer = GLPK_optimizer),
-        DecisionModel(template_ed, sys_ed; name = "ED", optimizer = GLPK_optimizer),
+        decision_models = [
+            DecisionModel(template_uc, sys_uc; name = "UC", optimizer = GLPK_optimizer),
+            DecisionModel(template_ed, sys_ed; name = "ED", optimizer = GLPK_optimizer),
+        ],
     )
 end
 

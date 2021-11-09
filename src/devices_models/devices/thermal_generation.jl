@@ -1092,7 +1092,7 @@ function _get_data_for_tdc(
         IS.@assert_op g == get_component(initial_conditions_off[ix])
         time_limits = PSY.get_time_limits(g)
         name = PSY.get_name(g)
-        if !(time_limits === nothing)
+        if time_limits !== nothing
             if (time_limits.up <= fraction_of_hour) & (time_limits.down <= fraction_of_hour)
                 @debug "Generator $(name) has a nonbinding time limits. Constraints Skipped"
                 continue

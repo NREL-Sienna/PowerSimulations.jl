@@ -109,7 +109,7 @@ function initialize_problem_storage!(
     store.params = params
     @debug "initialize_problem_storage"
 
-    for problem in keys(store.params.problems)
+    for problem in keys(store.params.models)
         store.data[problem] = ProblemData()
         for type in STORE_CONTAINERS
             for (name, reqs) in getfield(problem_reqs[problem], type)

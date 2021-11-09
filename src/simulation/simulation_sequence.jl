@@ -121,22 +121,7 @@ function _get_num_executions_by_problem(
     return executions_by_problem
 end
 
-# To be implemented
-#function _attach_feedforward!(sim::Simulation, model_name::Symbol)
-#    model = get_model(sim, model_name)
-#    # JDNOTES: making a conversion here isn't great. Needs refactor
-#    feedforward = filter(p -> (p.first == model_name), get_sequence(sim).feedforward)
-#    for (key, ff) in feedforward
-#        device_model = get_model(model.template, get_component_type(ff))
-#        device_model === nothing && throw(
-#            IS.ConflictingInputsError("Device model $key not found in model $model_name"),
-#        )
-#        attach_feedforward(device_model, ff)
-#    end
-#    return
-#end
-
-function _check_feedforwards(models::SimulationModels, feedforwards)
+function _attach_feedforwards(models::SimulationModels, feedforwards)
     names = Set(string.(get_model_names(models)))
     ff_dict = Dict{Symbol, Vector}()
     for (model_name, model_feedforwards) in feedforwards
@@ -205,7 +190,7 @@ mutable struct SimulationSequence
         new(
             horizons,
             intervals,
-            _check_feedforwards(models, feedforwards),
+            _attach_feedforwards(models, feedforwards),
             ini_cond_chronology,
             execution_order,
             executions_by_problem,
@@ -215,18 +200,14 @@ mutable struct SimulationSequence
     end
 end
 
-get_step_resolution(sequence::SimulationSequence) = sequence.step_resolution
-
-function get_problem_interval_chronology(sequence::SimulationSequence, problem)
-    return sequence.intervals[problem][2]
-end
+get_step_resolution(sequence::SimulationSequence) = first(values(sequence.intervals))
 
 function get_interval(sequence::SimulationSequence, problem::Symbol)
-    return sequence.intervals[problem][1]
+    return sequence.intervals[problem]
 end
 
-function get_interval(sequence::SimulationSequence, model)
-    return sequence.intervals[model][1]
+function get_interval(sequence::SimulationSequence, model::DecisionModel)
+    return sequence.intervals[get_name(model)]
 end
 
 get_execution_order(sequence::SimulationSequence) = sequence.execution_order
