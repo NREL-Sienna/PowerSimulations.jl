@@ -398,7 +398,9 @@ const TS = TimeSeries
 ################################################################################
 
 function progress_meter_enabled()
-    return isa(stderr, Base.TTY) || (get(ENV, "CI", nothing) == "true")
+    return isa(stderr, Base.TTY) &&
+           (get(ENV, "CI", nothing) != "true") &&
+           (get(ENV, "RUNNING_PSI_TESTS", nothing) != "true")
 end
 
 using DocStringExtensions

@@ -5,12 +5,12 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
+    @test_logs (:warn, warn_message) match_mode = :any mock_construct_device!(
         model,
         device_model,
     )
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
-    @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
+    @test_logs (:warn, warn_message) match_mode = :any mock_construct_device!(
         model,
         device_model,
     )

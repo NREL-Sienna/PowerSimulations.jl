@@ -3,6 +3,10 @@
     @test_throws ErrorException PSI.find_key_with_value(d, "fake")
 end
 
+@testset "Test ProgressMeter" begin
+    @test !PSI.progress_meter_enabled()
+end
+
 @testset "dense axis to dataframe" begin
     one = JuMP.Containers.DenseAxisArray{Float64}(undef, 1:2)
     fill!(one, 1.0)
