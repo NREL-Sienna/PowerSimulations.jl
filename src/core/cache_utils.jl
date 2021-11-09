@@ -1,5 +1,5 @@
 
-struct OutputCacheKey
+struct OptimizationResultCacheKey
     model::Symbol
     key::OptimizationContainerKey
 end
@@ -18,7 +18,7 @@ CacheFlushRule() = CacheFlushRule(false, CachePriority.LOW)
 Informs the flusher on what data to keep in cache.
 """
 struct CacheFlushRules
-    data::Dict{OutputCacheKey, CacheFlushRule}
+    data::Dict{OptimizationResultCacheKey, CacheFlushRule}
     min_flush_size::Int
     max_size::Int
 end
@@ -26,19 +26,23 @@ end
 const MIN_CACHE_FLUSH_SIZE_MiB = MiB
 
 function CacheFlushRules(; max_size = GiB, min_flush_size = MIN_CACHE_FLUSH_SIZE_MiB)
-    return CacheFlushRules(Dict{OutputCacheKey, CacheFlushRule}(), min_flush_size, max_size)
+    return CacheFlushRules(
+        Dict{OptimizationResultCacheKey, CacheFlushRule}(),
+        min_flush_size,
+        max_size,
+    )
 end
 
 function add_rule!(rules::CacheFlushRules, model, op_container_key, keep_in_cache, priority)
-    key = OutputCacheKey(model, op_container_key)
+    key = OptimizationResultCacheKey(model, op_container_key)
     rules.data[key] = CacheFlushRule(keep_in_cache, priority)
 end
 
 function get_rule(x::CacheFlushRules, model, op_container_key)
-    return get_rule(x, OutputCacheKey(model, op_container_key))
+    return get_rule(x, OptimizationResultCacheKey(model, op_container_key))
 end
 
-get_rule(x::CacheFlushRules, key::OutputCacheKey) = x.data[key]
+get_rule(x::CacheFlushRules, key::OptimizationResultCacheKey) = x.data[key]
 
 mutable struct CacheStats
     hits::Int

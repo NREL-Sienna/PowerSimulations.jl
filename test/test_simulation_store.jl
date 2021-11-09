@@ -177,9 +177,12 @@ end
     # _verify_read_results(path, sim, variables, model_defs, seed)
 end
 
-@testset "Test ModelOutputCache" begin
-    key = PSI.OutputCacheKey(:ED, PSI.VariableKey(ActivePowerVariable, InterruptibleLoad))
-    cache = PSI.ModelOutputCache(key, PSI.CacheFlushRule())
+@testset "Test OptimzationResultCache" begin
+    key = PSI.OptimizationResultCacheKey(
+        :ED,
+        PSI.VariableKey(ActivePowerVariable, InterruptibleLoad),
+    )
+    cache = PSI.OptimzationResultCache(key, PSI.CacheFlushRule())
     @test !PSI.has_clean(cache)
     @test !PSI.is_dirty(cache, Dates.now())
 

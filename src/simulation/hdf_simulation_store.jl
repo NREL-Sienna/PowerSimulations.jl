@@ -50,7 +50,7 @@ mutable struct HdfSimulationStore <: SimulationStore
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
-    cache::OptimizationOutputCache
+    cache::OptimizationResultCache
 end
 
 function HdfSimulationStore(
@@ -73,7 +73,7 @@ function HdfSimulationStore(
     end
 
     datasets = OrderedDict{Symbol, ProblemDatasets}()
-    cache = OptimizationOutputCache()
+    cache = OptimizationResultCache()
     store = HdfSimulationStore(
         file,
         SimulationStoreParams(),
@@ -523,19 +523,24 @@ function _serialize_attributes(store::HdfSimulationStore, problems_group, proble
 end
 
 function _flush_data!(
-    cache::ModelOutputCache,
+    cache::OptimzationResultCache,
     store::HdfSimulationStore,
     problem_name,
     key::OptimizationContainerKey,
     discard,
 )
-    return _flush_data!(cache, store, OutputCacheKey(problem_name, key), discard)
+    return _flush_data!(
+        cache,
+        store,
+        OptimizationResultCacheKey(problem_name, key),
+        discard,
+    )
 end
 
 function _flush_data!(
-    cache::ModelOutputCache,
+    cache::OptimzationResultCache,
     store::HdfSimulationStore,
-    cache_key::OutputCacheKey,
+    cache_key::OptimizationResultCacheKey,
     discard,
 )
     !has_dirty(cache) && return 0
@@ -559,7 +564,7 @@ function _flush_data!(
     return size_flushed
 end
 
-function _flush_data!(cache::ModelOutputCache, store::HdfSimulationStore)
+function _flush_data!(cache::OptimzationResultCache, store::HdfSimulationStore)
     # PERF: may need to optimize memory management
     # Do we need flush down to some ~70% watermark?
     # What are GC implications of doing replacing entries one at a time vs freeing large
@@ -598,7 +603,7 @@ function _get_dataset(store::HdfSimulationStore, opt_container_key::ExpressionKe
     return getfield(store.datasets[model], STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
 end
 
-function _get_dataset(store::HdfSimulationStore, key::OutputCacheKey)
+function _get_dataset(store::HdfSimulationStore, key::OptimizationResultCacheKey)
     return _get_dataset(store, key.model, key.key)
 end
 
