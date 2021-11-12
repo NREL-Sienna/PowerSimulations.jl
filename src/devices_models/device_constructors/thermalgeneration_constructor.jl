@@ -825,7 +825,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     add_variables!(
         container,
@@ -901,7 +901,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     add_constraints!(
         container,
@@ -951,7 +951,7 @@ function construct_device!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     add_variables!(
         container,
@@ -1009,7 +1009,7 @@ function construct_device!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
@@ -1052,7 +1052,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(
         container,
@@ -1116,7 +1116,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
@@ -1161,7 +1161,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(
         container,
@@ -1218,7 +1218,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
@@ -1255,7 +1255,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(
         container,
@@ -1317,7 +1317,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
@@ -1360,7 +1360,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(
         container,
@@ -1415,7 +1415,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
@@ -1450,7 +1450,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
     add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
@@ -1518,7 +1518,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
@@ -1561,7 +1561,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
 
@@ -1612,7 +1612,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,

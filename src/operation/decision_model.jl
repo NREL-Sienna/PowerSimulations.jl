@@ -48,7 +48,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
-    initialization_file::Union{AbstractString, Nothing}
+    initialization_file::String
     internal::Union{Nothing, ModelInternal}
     ext::Dict{String, Any}
 
@@ -57,7 +57,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         sys::PSY.System,
         settings::Settings,
         jump_model::Union{Nothing, JuMP.Model} = nothing;
-        initialization_file = nothing,
+        initialization_file = "",
         name = nothing,
     ) where {M <: DecisionProblem}
         if name === nothing
@@ -88,8 +88,8 @@ function DecisionModel{M}(
     warm_start = true,
     system_to_file = true,
     initialize_model = true,
-    initialization_file = nothing,
-    store_initial_conditions = false,
+    initialization_file = "",
+    serialize_initial_conditions = false,
     export_pwl_vars = false,
     allow_fails = false,
     optimizer_log_print = false,
@@ -106,7 +106,7 @@ function DecisionModel{M}(
         warm_start = warm_start,
         system_to_file = system_to_file,
         initialize_model = initialize_model,
-        store_initial_conditions = store_initial_conditions,
+        serialize_initial_conditions = serialize_initial_conditions,
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
         optimizer_log_print = optimizer_log_print,
@@ -255,10 +255,12 @@ function build_pre_step!(model::DecisionModel)
 
         run_initialization_step = get_initialize_model(get_settings(model))
         initialization_file = get_initialization_file(model)
-        if run_initialization_step
+        if run_initialization_step && isempty(initialization_file)
             @info "Make Initial Conditions  Model"
             build_initial_conditions!(model)
             initialize!(model)
+        elseif !isempty(initialization_file)
+            # De-serialize initialization file
         end
         set_status!(model, BuildStatus.IN_PROGRESS)
     end

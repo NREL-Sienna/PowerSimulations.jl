@@ -8,7 +8,7 @@ struct Settings
     optimizer_log_print::Bool
     system_to_file::Bool
     initialize_model::Bool
-    store_initial_conditions::Bool
+    serialize_initial_conditions::Bool
     export_pwl_vars::Bool
     allow_fails::Bool
     ext::Dict{String, Any}
@@ -25,7 +25,7 @@ function Settings(
     optimizer_log_print::Bool = false,
     system_to_file = true,
     initialize_model = true,
-    store_initial_conditions = false,
+    serialize_initial_conditions = false,
     export_pwl_vars = false,
     allow_fails = false,
     ext = Dict{String, Any}(),
@@ -46,9 +46,11 @@ function Settings(
         )
     end
 
-    if !initialize_model && store_initial_conditions
-        error(
-            "The provided combination of input for initialize_model, and store_initial_conditions is invalid.",
+    if !initialize_model && serialize_initial_conditions
+        throw(
+            IS.ConflictingInputsError(
+                "The provided combination of input for initialize_model, and serialize_initial_conditions is invalid.",
+            ),
         )
     end
 
@@ -62,7 +64,7 @@ function Settings(
         optimizer_log_print,
         system_to_file,
         initialize_model,
-        store_initial_conditions,
+        serialize_initial_conditions,
         export_pwl_vars,
         allow_fails,
         ext,
@@ -124,7 +126,7 @@ get_ext(settings::Settings) = settings.ext
 get_warm_start(settings::Settings) = settings.warm_start[]
 get_system_to_file(settings::Settings) = settings.system_to_file
 get_initialize_model(settings::Settings) = settings.initialize_model
-get_store_initial_conditions(settings::Settings) = settings.store_initial_conditions
+get_serialize_initial_conditions(settings::Settings) = settings.serialize_initial_conditions
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails
 get_optimizer_log_print(settings::Settings) = settings.optimizer_log_print
