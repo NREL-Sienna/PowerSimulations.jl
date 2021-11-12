@@ -47,6 +47,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
+    initialization_file::Union{AbstractString, Nothing}
     internal::ModelInternal
     store::InMemoryModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
@@ -56,6 +57,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         sys::PSY.System,
         settings::Settings,
         jump_model::Union{Nothing, JuMP.Model} = nothing;
+        initialization_file = nothing,
         name = nothing,
     ) where {M <: EmulationProblem}
         if name === nothing
@@ -76,6 +78,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
             name,
             template,
             sys,
+            initialization_file,
             internal,
             InMemoryModelStore(EmulationModelOptimizerResults),
             Dict{String, Any}(),
@@ -91,6 +94,9 @@ function EmulationModel{M}(
     optimizer = nothing,
     warm_start = true,
     system_to_file = true,
+    initialize_model = true,
+    store_initial_conditions = false,
+    initialization_file = nothing,
     export_pwl_vars = false,
     allow_fails = false,
     optimizer_log_print = false,
@@ -106,13 +112,22 @@ function EmulationModel{M}(
         time_series_cache_size = time_series_cache_size,
         warm_start = warm_start,
         system_to_file = system_to_file,
+        initialize_model = initialize_model,
+        store_initial_conditions = store_initial_conditions,
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
         optimizer_log_print = optimizer_log_print,
         direct_mode_optimizer = direct_mode_optimizer,
         horizon = horizon,
     )
-    return EmulationModel{M}(template, sys, settings, jump_model, name = name)
+    return EmulationModel{M}(
+        template,
+        sys,
+        settings,
+        jump_model,
+        name = name,
+        initialization_file = initialization_file,
+    )
 end
 
 """
@@ -246,9 +261,13 @@ function build_pre_step!(model::EmulationModel)
         populate_contributing_devices!(get_template(model), get_system(model))
         add_services_to_device_model!(get_template(model))
 
-        @info "Initial Conditions  Model"
-        build_initial_conditions!(model)
-        initialize!(model)
+        run_initialization_step = get_initialize_model(get_settings(model))
+        initialization_file = get_initialization_file(model)
+        if run_initialization_step
+            @info "Initial Conditions  Model"
+            build_initial_conditions!(model)
+            initialize!(model)
+        end
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
