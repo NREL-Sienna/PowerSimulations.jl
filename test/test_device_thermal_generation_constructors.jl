@@ -482,6 +482,43 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
+################################ Thermal Basic Compact UC Testing ################################
+@testset "Thermal Standard with Compact UC and DC - PF" begin
+    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicCompactUnitCommitment)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 480, 0, 240, 120, 120, true)
+    psi_checkobjfun_test(model, GAEVF)
+end
+
+@testset "Thermal MultiStart with Compact UC and DC - PF" begin
+    device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalBasicCompactUnitCommitment)
+    c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 384, 0, 96, 48, 96, true)
+    psi_checkobjfun_test(model, GAEVF)
+end
+
+@testset "Thermal Standard with Compact UC and AC - PF" begin
+    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicCompactUnitCommitment)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 600, 0, 360, 240, 120, true)
+    psi_checkobjfun_test(model, GAEVF)
+end
+
+@testset "Thermal MultiStart with Compact UC and AC - PF" begin
+    device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalBasicCompactUnitCommitment)
+    c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, false, 432, 0, 144, 96, 96, true)
+    psi_checkobjfun_test(model, GAEVF)
+end
+
 ############################ Thermal Compact Dispatch Testing ##############################
 
 @testset "Thermal Standard with Compact Dispatch and DC - PF" begin
@@ -591,7 +628,6 @@ end
         PSB.build_system(PSITestSystems, "c_market_bid_cost");
         optimizer = Cbc_optimizer,
         initialize_model = false,
-        store_initial_conditions = false,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     # changed from 18 to 16 as built_for_recurrent_solves/use_parameters is set to false, different duration constraint is used
