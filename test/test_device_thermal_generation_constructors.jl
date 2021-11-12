@@ -590,6 +590,8 @@ end
         template,
         PSB.build_system(PSITestSystems, "c_market_bid_cost");
         optimizer = Cbc_optimizer,
+        initialize_model = false,
+        store_initial_conditions = false,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     # changed from 18 to 16 as built_for_recurrent_solves/use_parameters is set to false, different duration constraint is used
