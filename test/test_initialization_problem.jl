@@ -404,7 +404,7 @@ end
     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
     set_device_model!(template, GenericBattery, BookKeeping)
 
-    sys_ercot = PSB.build_system(PSITestSystems, "tamu_ercot_da_system")
+    sys_ercot = PSB.build_system(PSITestSystems, "modified_tamu_ercot_da_system")
     for init_time in
         DateTime("2018-01-01T00:00:00"):Month(1):DateTime("2018-12-31T00:00:00")
         @info("Decision Model initial_conditions test with RTS-GMLC for $init_time")
@@ -527,7 +527,7 @@ end
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
     set_device_model!(template, GenericBattery, BookKeeping)
 
-    sys_ercot = PSB.build_system(PSITestSystems, "tamu_ercot_da_system")
+    sys_ercot = PSB.build_system(PSITestSystems, "modified_tamu_ercot_da_system")
     for init_time in
         DateTime("2018-01-01T00:00:00"):Month(1):DateTime("2018-12-31T00:00:00")
         @info("Decision Model initial_conditions test with RTS-GMLC for $init_time")
@@ -663,7 +663,7 @@ end
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
     set_device_model!(template, GenericBattery, BatteryAncillaryServices)
 
-    sys_ercot = PSB.build_system(PSITestSystems, "tamu_ercot_da_system")
+    sys_ercot = PSB.build_system(PSITestSystems, "modified_tamu_ercot_da_system")
     for init_time in
         DateTime("2018-01-01T00:00:00"):Month(1):DateTime("2018-12-31T00:00:00")
         @info("Decision Model initial_conditions test with RTS-GMLC for $init_time")
@@ -821,7 +821,7 @@ end
     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
     set_device_model!(template, GenericBattery, BookKeeping)
 
-    sys_ercot = PSB.build_system(PSITestSystems, "tamu_ercot_da_system")
+    sys_ercot = PSB.build_system(PSITestSystems, "modified_tamu_ercot_da_system")
     for init_time in
         DateTime("2018-01-01T00:00:00"):Month(1):DateTime("2018-12-31T00:00:00")
         @info("Decision Model initial_conditions test with RTS-GMLC for $init_time")
