@@ -17,6 +17,7 @@ struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 
 struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
+struct ThermalBasicCompactUnitCommitment <: AbstractCompactUnitCommitment end
 struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
 requires_initialization(::AbstractThermalFormulation) = false
@@ -99,6 +100,12 @@ function get_initial_conditions_device_model(
     model::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
     return DeviceModel(T, ThermalBasicUnitCommitment)
+end
+
+function get_initial_conditions_device_model(
+    model::DeviceModel{T, D},
+) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
+    return DeviceModel(T, ThermalBasicCompactUnitCommitment)
 end
 
 function get_default_time_series_names(
@@ -1399,7 +1406,12 @@ function cost_function!(
                     cost_function_data,
                     t,
                 )
-                add_to_cost_expression!(container, no_min_spec.multiplier * gen_cost * dt)
+                add_to_cost_expression!(
+                    container,
+                    no_min_spec.multiplier * gen_cost * dt,
+                    g,
+                    t,
+                )
             end
         else
             add_to_cost!(container, no_min_spec, op_cost, g)

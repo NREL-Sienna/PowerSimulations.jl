@@ -21,7 +21,7 @@ function get_template_basic_uc_simulation()
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    set_device_model!(template, PowerLoad, StaticPowerLoad),
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptibleLoad, StaticPowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
     return template
@@ -37,7 +37,7 @@ function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
     template = ProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    set_device_model!(template, PowerLoad, StaticPowerLoad),
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptibleLoad, DispatchablePowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
     return template

@@ -346,3 +346,195 @@ function check_energy_initial_conditions_values(model, ::Type{T}) where {T <: PS
         @test PSY.get_initial_storage(ic.component) == e_value
     end
 end
+
+function check_status_initial_conditions_values(model, ::Type{T}) where {T <: PSY.Component}
+    initial_conditions =
+        PSI.get_initial_condition(PSI.get_optimization_container(model), DeviceStatus(), T)
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    for ic in initial_conditions
+        name = PSY.get_name(ic.component)
+        status = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
+            1,
+            name,
+        ]
+        @test JuMP.value(PSI.get_value(ic)) == status
+    end
+end
+
+function check_active_power_initial_condition_values(
+    model,
+    ::Type{T},
+) where {T <: PSY.Component}
+    initial_conditions =
+        PSI.get_initial_condition(PSI.get_optimization_container(model), DevicePower(), T)
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    for ic in initial_conditions
+        name = PSY.get_name(ic.component)
+        power = PSI.get_initial_condition_value(
+            initial_conditions_data,
+            ActivePowerVariable(),
+            T,
+        )[
+            1,
+            name,
+        ]
+        @test JuMP.value(PSI.get_value(ic)) == power
+    end
+end
+
+function check_active_power_abovemin_initial_condition_values(
+    model,
+    ::Type{T},
+) where {T <: PSY.Component}
+    initial_conditions = PSI.get_initial_condition(
+        PSI.get_optimization_container(model),
+        PSI.DeviceAboveMinPower(),
+        T,
+    )
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    for ic in initial_conditions
+        name = PSY.get_name(ic.component)
+        power = PSI.get_initial_condition_value(
+            initial_conditions_data,
+            PSI.PowerAboveMinimumVariable(),
+            T,
+        )[
+            1,
+            name,
+        ]
+        @test JuMP.value(PSI.get_value(ic)) == power
+    end
+end
+
+function check_initialization_variable_count(
+    model,
+    ::S,
+    ::Type{T},
+) where {S <: PSI.VariableType, T <: PSY.Component}
+    container = model.internal.ic_model_container
+    no_component = length(PSY.get_components(T, model.sys, x -> x.available))
+    time_steps = PSI.get_time_steps(container)[end]
+    variable = PSI.get_variable(container, S(), T)
+    @test length(variable) == no_component * time_steps
+end
+
+function check_variable_count(
+    model,
+    ::S,
+    ::Type{T},
+) where {S <: PSI.VariableType, T <: PSY.Component}
+    no_component = length(PSY.get_components(T, model.sys, x -> x.available))
+    time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]
+    variable = PSI.get_variable(PSI.get_optimization_container(model), S(), T)
+    @test length(variable) == no_component * time_steps
+end
+
+function check_initialization_constraint_count(
+    model,
+    ::S,
+    ::Type{T};
+    filter_func = x -> x.available,
+    meta = PSI.CONTAINER_KEY_EMPTY_META,
+) where {S <: PSI.ConstraintType, T <: PSY.Component}
+    container = model.internal.ic_model_container
+    no_component = length(PSY.get_components(T, model.sys, filter_func))
+    time_steps = PSI.get_time_steps(container)[end]
+    constraint = PSI.get_constraint(container, S(), T, meta)
+    @test length(constraint) == no_component * time_steps
+end
+
+function check_constraint_count(
+    model,
+    ::S,
+    ::Type{T};
+    filter_func = x -> x.available,
+    meta = PSI.CONTAINER_KEY_EMPTY_META,
+) where {S <: PSI.ConstraintType, T <: PSY.Component}
+    no_component = length(PSY.get_components(T, model.sys, filter_func))
+    time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]
+    constraint = PSI.get_constraint(PSI.get_optimization_container(model), S(), T, meta)
+    @test length(constraint) == no_component * time_steps
+end
+
+function check_constraint_count(
+    model,
+    ::PSI.RampConstraint,
+    ::Type{T},
+) where {T <: PSY.Component}
+    container = PSI.get_optimization_container(model)
+    set_name =
+        PSY.get_name.(
+            PSI._get_ramp_constraint_devices(
+                container,
+                get_components(T, model.sys, x -> x.available),
+            ),
+        )
+    check_constraint_count(
+        model,
+        PSI.RampConstraint(),
+        T;
+        meta = "up",
+        filter_func = x -> x.name in set_name,
+    )
+    check_constraint_count(
+        model,
+        PSI.RampConstraint(),
+        T;
+        meta = "dn",
+        filter_func = x -> x.name in set_name,
+    )
+end
+
+function check_constraint_count(
+    model,
+    ::PSI.DurationConstraint,
+    ::Type{T},
+) where {T <: PSY.Component}
+    container = PSI.get_optimization_container(model)
+    resolution = get_resolution(container)
+    steps_per_hour = 60 / Dates.value(Dates.Minute(resolution))
+    fraction_of_hour = 1 / steps_per_hour
+    duration_devices = filter!(
+        x ->
+            !(
+                PSY.get_time_limits(x).up <= fraction_of_hour &&
+                PSY.get_time_limits(x).down <= fraction_of_hour
+            ),
+        collect(get_components(T, model.sys, x -> x.available)),
+    )
+    set_name = PSY.get_name.(duration_devices)
+    check_constraint_count(
+        model,
+        PSI.DurationConstraint(),
+        T;
+        meta = "up",
+        filter_func = x -> x.name in set_name,
+    )
+    check_constraint_count(
+        model,
+        PSI.DurationConstraint(),
+        T;
+        meta = "dn",
+        filter_func = x -> x.name in set_name,
+    )
+end
+
+function check_constraint_count(
+    model,
+    ::PSI.MustRunConstraint,
+    ::Type{T},
+) where {T <: PSY.Component}
+    container = PSI.get_optimization_container(model)
+    _devices =
+        filter!(x -> x.must_run, collect(get_components(T, model.sys, x -> x.available)))
+    set_name = PSY.get_name.(_devices)
+    check_constraint_count(
+        model,
+        PSI.MustRunConstraint(),
+        T,
+        filter_func = x -> x.name in set_name,
+    )
+end

@@ -29,6 +29,7 @@ get_simulation_number(model::OperationModel) = model.internal.simulation_info.nu
 get_status(model::OperationModel) = model.internal.status
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
+get_initialization_file(model::OperationModel) = model.initialization_file
 get_output_dir(model::OperationModel) = model.internal.output_dir
 get_recorder_dir(model::OperationModel) = joinpath(model.internal.output_dir, "recorder")
 get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
@@ -127,7 +128,16 @@ function initialize!(model::OperationModel)
         return
     end
     @info "Solving Initialization Model for $(get_name(model))"
-    solve_impl!(model.internal.ic_model_container, get_system(model), Dict{Symbol, Any}())
+    try
+        solve_impl!(
+            model.internal.ic_model_container,
+            get_system(model),
+            Dict{Symbol, Any}(),
+        )
+    catch e
+        @error exception = (e, catch_backtrace())
+        error("Model failed to initialize")
+    end
 
     write_initial_conditions_data(container, model.internal.ic_model_container)
     return

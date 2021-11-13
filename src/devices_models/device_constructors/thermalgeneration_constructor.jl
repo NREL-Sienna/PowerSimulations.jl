@@ -825,7 +825,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     add_variables!(
         container,
@@ -901,7 +901,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     add_constraints!(
         container,
@@ -951,7 +951,7 @@ function construct_device!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     add_variables!(
         container,
@@ -1009,7 +1009,7 @@ function construct_device!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
@@ -1052,7 +1052,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(
         container,
@@ -1116,7 +1116,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
@@ -1161,7 +1161,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(
         container,
@@ -1218,7 +1218,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
@@ -1252,10 +1252,205 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
+    model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    devices = get_available_components(T, sys)
+
+    add_variables!(
+        container,
+        PowerAboveMinimumVariable,
+        devices,
+        ThermalBasicCompactUnitCommitment(),
+    )
+    add_variables!(
+        container,
+        ReactivePowerVariable,
+        devices,
+        ThermalBasicCompactUnitCommitment(),
+    )
+    add_variables!(container, OnVariable, devices, ThermalBasicCompactUnitCommitment())
+    add_variables!(container, StartVariable, devices, ThermalBasicCompactUnitCommitment())
+    add_variables!(container, StopVariable, devices, ThermalBasicCompactUnitCommitment())
+
+    add_variables!(container, PowerOutput, devices, ThermalBasicCompactUnitCommitment())
+
+    initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    devices = get_available_components(T, sys)
+
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
+
+    add_constraints!(
+        container,
+        ReactivePowerVariableLimitsConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
+
+    cost_function!(container, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(T, sys)
+
+    add_variables!(
+        container,
+        PowerAboveMinimumVariable,
+        devices,
+        ThermalBasicCompactUnitCommitment(),
+    )
+    add_variables!(container, OnVariable, devices, ThermalBasicCompactUnitCommitment())
+    add_variables!(container, StartVariable, devices, ThermalBasicCompactUnitCommitment())
+    add_variables!(container, StopVariable, devices, ThermalBasicCompactUnitCommitment())
+
+    add_variables!(container, PowerOutput, devices, ThermalBasicCompactUnitCommitment())
+
+    initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+
+    add_expressions!(container, ProductionCostExpression, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+        S,
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(T, sys)
+
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        S,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        S,
+    )
+
+    add_constraints!(container, CommitmentConstraint, devices, model, S)
+
+    add_feedforward_constraints!(container, model, devices)
+
+    cost_function!(container, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
     add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
@@ -1323,7 +1518,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
@@ -1366,7 +1561,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
 
@@ -1417,7 +1612,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     add_constraints!(
         container,
