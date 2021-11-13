@@ -66,6 +66,14 @@ function OptimizationContainer(
         error("Default Time Series Type $V can't be abstract")
     end
 
+    if jump_model !== nothing && get_direct_mode_optimizer(settings)
+        throw(
+            IS.ConflictingInputsError(
+                "Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model",
+            ),
+        )
+    end
+
     return OptimizationContainer(
         jump_model === nothing ? _make_jump_model(settings) :
         _finalize_jump_model!(jump_model, settings),
@@ -161,14 +169,6 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     warm_start_enabled = get_warm_start(settings)
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
-
-    if get_direct_mode_optimizer(settings)
-        throw(
-            IS.ConflictingInputsError(
-                "Externally provided JuMP models are not compatible with the direct model keyword argument. Use JuMP.direct_model before passing the custom model",
-            ),
-        )
-    end
 
     if get_optimizer_log_print(settings)
         JuMP.unset_silent(JuMPmodel)
@@ -584,7 +584,7 @@ function _add_variable_container!(
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     if sparse
         var_container = sparse_container_spec(Float64, axs...)
-        # We initialize sparse containers with Floats64, not ideal and introduces type instability, 
+        # We initialize sparse containers with Floats64, not ideal and introduces type instability,
         # because JuMP.Containers.SparseAxisArrays can't be initialized with undef
     else
         var_container = container_spec(JuMP.VariableRef, axs...)

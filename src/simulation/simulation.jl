@@ -258,8 +258,6 @@ function _build_emulation_model!(sim::Simulation)
     return
 end
 
-function _initialize_simulation_state(sim::Simulation) end
-
 function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
@@ -300,7 +298,7 @@ function _build!(sim::Simulation, serialize::Bool)
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
-        _initialize_simulation_state(sim)
+        initialize_simulation_state(step_resolution, simulation_models)
     end
 
     # Here is check that store params are properly initialized

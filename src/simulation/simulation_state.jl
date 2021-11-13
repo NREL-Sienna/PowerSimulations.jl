@@ -1,9 +1,6 @@
 struct StateInfo
-    aux_variable_values::Dict{AuxVarKey, DataFrames.DataFrame}
-    variable_values::Dict{VariableKey, DataFrames.DataFrame}
-    dual_values::Dict{ConstraintKey, DataFrames.DataFrame}
-    parameter_values::Dict{ParameterKey, DataFrames.DataFrame}
-    expression_values::Dict{ExpressionKey, DataFrames.DataFrame}
+    aux_variable_values::Dict{AuxVarKey, Any}
+    variable_values::Dict{VariableKey, Any}
 end
 
 struct SimulationState
@@ -11,22 +8,24 @@ struct SimulationState
     system_state::StateInfo
 end
 
-#================================================================
-function update_cache!(
-    sim::Simulation,
-    ::CacheKey{StoredEnergy, D},
-    model::DecisionModel,
-) where {D <: PSY.Device}
-    c = get_cache(sim, StoredEnergy, D)
-    variable = get_variable(model.internal.container, c.ref)
-    t = get_end_of_interval_step(model)
-    for name in variable.axes[1]
-        device_energy = JuMP.value(variable[name, t])
-        @debug name, device_energy
-        c.value[name] = device_energy
-        @debug("Cache value StoredEnergy for device $name set to $(c.value[name])")
+function initialize_simulation_state(
+    simulation_step::Dates.Period,
+    models::SimulationModels,
+)
+    counts = Dict{Any, Dict}()
+    for model in get_decision_models(models)
+        container = get_optimization_container(model)
+        model_resolution = get_resolution(model)
+        value_counts = Int(simulation_step / model_resolution)
+        for type in STORE_CONTAINERS
+            container_counts = get!(counts, type, Dict{Any, Int}())
+            field_containers = getfield(container, type)
+            for (key, value) in field_containers
+                # TODO: Handle case of sparse_axis_array
+                # column_names =
+                container_counts[key] = value_counts
+            end
+        end
     end
-
     return
 end
-=#
