@@ -131,6 +131,7 @@ struct IntegralLimitFeedforward <: AbstractAffectFeedforward
 end
 
 get_default_parameter_type(::IntegralLimitFeedforward, _) = IntegralLimitParameter()
+get_optimization_container_key(ff) = ff.optimization_container_key
 
 """
 Fixes a Variable or Parameter Value in the model. Is the only Feed Forward that can be used
