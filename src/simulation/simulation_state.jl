@@ -1,6 +1,13 @@
 struct StateInfo
-    aux_variable_values::Dict{AuxVarKey, Any}
-    variable_values::Dict{VariableKey, Any}
+    aux_variables::Dict{AuxVarKey, JuMP.Containers.DenseAxisArray{Float64}}
+    variables::Dict{VariableKey, JuMP.Containers.DenseAxisArray{Float64}}
+end
+
+function StateInfo()
+    return StateInfo(
+        Dict{AuxVarKey, JuMP.Containers.DenseAxisArray{Float64}}(),
+        Dict{VariableKey, JuMP.Containers.DenseAxisArray{Float64}}(),
+    )
 end
 
 struct SimulationState
@@ -8,24 +15,47 @@ struct SimulationState
     system_state::StateInfo
 end
 
-function initialize_simulation_state(
+function SimulationState()
+    return SimulationState(StateInfo(), StateInfo())
+end
+
+get_decision_states(s::SimulationState) = s.decision_states
+get_system_state(s::SimulationState) = s.system_state
+
+function _initialize_model_states!(
+    states::StateInfo,
+    model::OperationModel,
     simulation_step::Dates.Period,
-    models::SimulationModels,
 )
-    counts = Dict{Any, Dict}()
-    for model in get_decision_models(models)
-        container = get_optimization_container(model)
-        model_resolution = get_resolution(model)
-        value_counts = Int(simulation_step / model_resolution)
-        for type in STORE_CONTAINERS
-            container_counts = get!(counts, type, Dict{Any, Int}())
-            field_containers = getfield(container, type)
-            for (key, value) in field_containers
-                # TODO: Handle case of sparse_axis_array
-                # column_names =
-                container_counts[key] = value_counts
-            end
+    container = get_optimization_container(model)
+    model_resolution = get_resolution(model)
+    value_counts = Int(simulation_step / model_resolution)
+    for type in [:variables, :aux_variables]
+        field_containers = getfield(container, type)
+        field_states = getfield(states, type)
+        for (key, value) in field_containers
+            # TODO: Handle case of sparse_axis_array
+            column_names, _ = axes(value)
+            field_states[key] =
+                JuMP.Containers.DenseAxisArray{Float64}(undef, column_names, 1:value_counts)
         end
+    end
+    return
+end
+
+function initialize_simulation_state!(
+    sim_state::SimulationState,
+    models::SimulationModels,
+    simulation_step::Dates.Period,
+)
+    decision_states = get_decision_states(sim_state)
+    emulator_states = get_system_state(sim_state)
+    for model in get_decision_models(models)
+        _initialize_model_states!(decision_states, model, simulation_step)
+    end
+    em = get_emulation_model(models)
+    if em !== nothing
+        _initialize_model_states!(emulator_states, model, simulation_step)
     end
     return
 end

@@ -10,7 +10,7 @@ mutable struct SimulationInternal
     current_time::Dates.DateTime
     status::Union{Nothing, RunStatus}
     build_status::BuildStatus
-    simulation_state::Union{Nothing, SimulationState}
+    simulation_state::SimulationState
     store::Union{Nothing, SimulationStore}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
@@ -88,7 +88,7 @@ function SimulationInternal(
         init_time,
         nothing,
         BuildStatus.EMPTY,
-        nothing,
+        SimulationState(),
         nothing,
         collect(unique_recorders),
         console_level,
