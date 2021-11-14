@@ -32,6 +32,20 @@
 
     @test length(findall(x -> x == 2, sequence.execution_order)) == 24
     @test length(findall(x -> x == 1, sequence.execution_order)) == 1
+
+    state = PSI.get_simulation_state(sim)
+
+    uc_vars = [OnVariable, StartVariable, StopVariable]
+    ed_vars = [ActivePowerVariable]
+    for (key, container) in state.decision_states.variables
+        if PSI.get_entry_type(key) ∈ uc_vars
+            _, count = size(container)
+            @test count == 24
+        elseif PSI.get_entry_type(key) ∈ ed_vars
+            _, count = size(container)
+            @test count == 288
+        end
+    end
 end
 
 @testset "Simulation with provided initial time" begin
