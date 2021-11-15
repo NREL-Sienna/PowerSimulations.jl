@@ -85,6 +85,7 @@ set_simulation_store!(sim::Simulation, store) = sim.internal.store = store
 get_simulation_store(sim::Simulation) = sim.internal.store
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 get_models_dir(sim::Simulation) = sim.internal.models_dir
+get_simulation_state(sim::Simulation) = sim.internal.simulation_state
 
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
@@ -258,8 +259,15 @@ function _build_emulation_model!(sim::Simulation)
     return
 end
 
-function _initialize_simulation_state(sim::Simulation) end
-
+function _initialize_simulation_state!(sim::Simulation)
+    step_resolution = get_step_resolution(get_sequence(sim))
+    simulation_models = get_models(sim)
+    initialize_simulation_state!(
+        get_simulation_state(sim),
+        simulation_models,
+        step_resolution,
+    )
+end
 function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
@@ -300,7 +308,7 @@ function _build!(sim::Simulation, serialize::Bool)
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
-        _initialize_simulation_state(sim)
+        _initialize_simulation_state!(sim)
     end
 
     # Here is check that store params are properly initialized
