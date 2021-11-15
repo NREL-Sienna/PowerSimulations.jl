@@ -29,7 +29,7 @@ function _initialize_model_states!(
 )
     container = get_optimization_container(model)
     model_resolution = get_resolution(model)
-    value_counts = Int(simulation_step / model_resolution)
+    value_counts = simulation_step ÷ model_resolution
     for type in [:variables, :aux_variables]
         field_containers = getfield(container, type)
         field_states = getfield(states, type)
