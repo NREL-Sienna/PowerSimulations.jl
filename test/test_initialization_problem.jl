@@ -21,7 +21,7 @@
             initial_time = init_time,
             horizon = horizon,
         )
-        @time build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
 
         ####### Check initialization problem
         check_initialization_variable_count(model, ActivePowerVariable(), ThermalStandard)
@@ -72,7 +72,7 @@
             meta = "ub",
         )
 
-        # @time solve!(model) == RunStatus.SUCCESSFUL
+        # @test solve!(model) == RunStatus.SUCCESSFUL
     end
 end
 
