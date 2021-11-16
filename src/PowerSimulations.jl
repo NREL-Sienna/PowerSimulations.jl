@@ -99,10 +99,6 @@ export InitialTimeDurationOn
 export InitialTimeDurationOff
 export InitialEnergyLevel
 
-# cache_models
-export TimeStatusChange
-export StoredEnergy
-
 # operation_models
 export GenericOpProblem
 export UnitCommitmentProblem
