@@ -109,16 +109,16 @@ function _get_execution_order_vector(intervals::OrderedDict{Symbol, Dates.Period
     return execution_order_vector
 end
 
-function _get_num_executions_by_problem(
+function _get_num_executions_by_model(
     models::SimulationModels,
     execution_order::Vector{Int},
 )
     model_names = get_model_names(models)
-    executions_by_problem = Dict(x => 0 for x in model_names)
+    executions_by_model = OrderedDict(x => 0 for x in model_names)
     for number in execution_order
-        executions_by_problem[model_names[number]] += 1
+        executions_by_model[model_names[number]] += 1
     end
-    return executions_by_problem
+    return executions_by_model
 end
 
 function _attach_feedforwards(models::SimulationModels, feedforwards)
@@ -161,7 +161,7 @@ mutable struct SimulationSequence
     feedforwards::Dict{Symbol, Vector{<:AbstractAffectFeedforward}}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}
-    executions_by_problem::Dict{Symbol, Int}
+    executions_by_model::OrderedDict{Symbol, Int}
     current_execution_index::Int64
     uuid::Base.UUID
 
@@ -184,7 +184,7 @@ mutable struct SimulationSequence
         end
 
         execution_order = _get_execution_order_vector(intervals)
-        executions_by_problem = _get_num_executions_by_problem(models, execution_order)
+        executions_by_model = _get_num_executions_by_model(models, execution_order)
         sequence_uuid = IS.make_uuid()
         initialize_simulation_internals!(models, sequence_uuid)
         new(
@@ -193,7 +193,7 @@ mutable struct SimulationSequence
             _attach_feedforwards(models, feedforwards),
             ini_cond_chronology,
             execution_order,
-            executions_by_problem,
+            executions_by_model,
             0,
             sequence_uuid,
         )
