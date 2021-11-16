@@ -4,7 +4,7 @@ import PowerSimulations:
     HDF_FILENAME,
     SimulationStoreParams,
     ModelStoreParams,
-    StoreModelRequirements,
+    SimulationModelStoreRequirements,
     CacheFlushRules,
     KiB,
     MiB,
@@ -20,7 +20,7 @@ import PowerSimulations:
 
 function _initialize!(store, sim, variables, model_defs, cache_rules)
     models = OrderedDict{Symbol, ModelStoreParams}()
-    model_reqs = Dict{Symbol, StoreModelRequirements}()
+    model_reqs = Dict{Symbol, SimulationModelStoreRequirements}()
     num_param_containers = 0
     for model in keys(model_defs)
         execution_count = model_defs[model]["execution_count"]
@@ -36,7 +36,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
             model_defs[model]["base_power"],
             model_defs[model]["system_uuid"],
         )
-        reqs = StoreModelRequirements()
+        reqs = SimulationModelStoreRequirements()
 
         for (key, array) in model_defs[model]["variables"]
             reqs.variables[key] = Dict(
