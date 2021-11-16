@@ -268,6 +268,7 @@ function _initialize_simulation_state!(sim::Simulation)
         step_resolution,
     )
 end
+
 function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
@@ -367,6 +368,7 @@ function build!(
     serialize = true,
     initialize_problem = false,
 )
+    @show get_simulation_build_status(sim)
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Simulation" begin
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation Internal" begin
@@ -639,99 +641,83 @@ function _initialize_problem_storage!(
     min_cache_flush_size_mib,
 )
     sequence = get_sequence(sim)
-    executions_by_problem = sequence.executions_by_problem
-    intervals = sequence.intervals
-
-    problems = OrderedDict{Symbol, ModelStoreParams}()
-    problem_reqs = Dict{Symbol, StoreModelRequirements}()
+    executions_by_model = sequence.executions_by_model
+    models = get_models(sim)
+    model_store_params = OrderedDict{Symbol, ModelStoreParams}()
+    model_req = Dict{Symbol, SimulationModelStoreRequirements}()
     num_param_containers = 0
     rules = CacheFlushRules(
         max_size = cache_size_mib * MiB,
         min_flush_size = min_cache_flush_size_mib,
     )
-    for model in get_models(sim)
+    for model in get_decision_models(models)
         model_name = get_name(model)
-        reqs = StoreModelRequirements()
+        model_store_params[model_name] = model.internal.store_parameters
+        horizon = get_horizon(model)
+        num_executions = executions_by_model[model_name]
+        reqs = SimulationModelStoreRequirements()
         container = get_optimization_container(model)
-        duals = get_duals(container)
-        parameters = get_parameters(container)
-        variables = get_variables(container)
-        aux_variables = get_aux_variables(container)
         num_rows = num_executions * get_steps(sim)
+
         # TODO: configuration of keep_in_cache and priority are not correct
-        for (key, array) in duals
+
+        for (key, array) in get_duals(container)
             reqs.duals[model] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(
-                rules,
-                model_name,
-                STORE_CONTAINER_DUALS,
-                key,
-                false,
-                CachePriority.LOW,
-            )
+            add_rule!(rules, model_name, key, false, CachePriority.LOW)
         end
 
-        if parameters !== nothing
-            for (key, param_container) in parameters
-                # TODO JD: this needs improvement
-                !isa(param_container.update_ref, UpdateRef{<:PSY.Component}) && continue
-                array = get_parameter_array(param_container)
-                reqs.parameters[key] =
-                    _calc_dimensions(array, encode_key(key), num_rows, horizon)
-                add_rule!(
-                    rules,
-                    Symbol(model_name),
-                    STORE_CONTAINER_PARAMETERS,
-                    key,
-                    false,
-                    CachePriority.LOW,
-                )
-            end
+        for (key, param_container) in get_parameters(container)
+            array = get_parameter_array(param_container)
+            reqs.parameters[key] =
+                _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            add_rule!(rules, model_name, key, false, CachePriority.LOW)
         end
 
-        for (key, array) in variables
+        for (key, array) in get_variables(container)
             reqs.variables[key] =
                 _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(
-                rules,
-                model_name,
-                STORE_CONTAINER_VARIABLES,
-                key,
-                false,
-                CachePriority.HIGH,
-            )
+            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
         end
 
-        for (key, array) in aux_variables
-            reqs.variables[key] =
-                _calc_dimensions(array, encode_key(name), num_rows, horizon)
-            add_rule!(
-                rules,
-                model_name,
-                STORE_CONTAINER_VARIABLES,
-                key,
-                false,
-                CachePriority.HIGH,
-            )
+        for (key, array) in get_aux_variables(container)
+            reqs.aux_variables[key] =
+                _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
         end
 
-        problems[model_name] = problem_params
-        problem_reqs[model_name] = reqs
+        # TODO: Do for expressions
+        #for (key, array) in get_expressions(model)
+        #    reqs.aux_variables[key] =
+        #        _calc_dimensions(array, encode_key(key), num_rows, horizon)
+        #    add_rule!(
+        #        rules,
+        #        model_name,
+        #        key,
+        #        false,
+        #        CachePriority.HIGH,
+        #    )
+        #end
+
+        model_req[model_name] = reqs
 
         num_param_containers +=
-            length(reqs.duals) + length(reqs.parameters) + length(reqs.variables)
+            length(reqs.duals) +
+            length(reqs.parameters) +
+            length(reqs.variables) +
+            length(reqs.aux_variables) +
+            length(reqs.expressions)
     end
 
-    store_params = SimulationStoreParams(
+    simulation_store_params = SimulationStoreParams(
         get_initial_time(sim),
-        sequence.step_resolution,
+        get_step_resolution(sequence),
         get_steps(sim),
-        problems,
+        model_store_params,
     )
-    @debug "initialized problem requirements" store_params
+    @debug "initialized problem requirements" simulation_store_params
     store = get_simulation_store(sim)
-    initialize_problem_storage!(store, store_params, problem_reqs, rules)
-    return store_params
+    initialize_problem_storage!(store, simulation_store_params, model_req, rules)
+    return simulation_store_params
 end
 
 struct SimulationSerializationWrapper
@@ -744,7 +730,8 @@ struct SimulationSerializationWrapper
 end
 
 function _empty_problem_caches!(sim::Simulation)
-    for model in get_models(sim)
+    models = get_models(sim)
+    for model in get_decision_models(models)
         empty_time_series_cache!(model)
     end
 end
