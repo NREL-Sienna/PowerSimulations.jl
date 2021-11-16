@@ -129,7 +129,6 @@ end
                 affected_variables = [ActivePowerVariable],
             ),
         ),
-
         ini_cond_chronology = InterProblemChronology(),
     )
     sim_cache = Simulation(

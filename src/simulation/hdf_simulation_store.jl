@@ -328,7 +328,11 @@ function read_result(
     end
 end
 
-function read_result(store::HdfSimulationStore, key::OptimizationContainerKey, timestamp::Dates.DateTime)
+function read_result(
+    store::HdfSimulationStore,
+    key::OptimizationContainerKey,
+    timestamp::Dates.DateTime,
+)
     simulation_step, execution_index = _get_indices(store, key.model, timestamp)
     return read_result(store, key, simulation_step, execution_index)
 end
@@ -537,12 +541,7 @@ function _flush_data!(
     key::OptimizationContainerKey,
     discard,
 )
-    return _flush_data!(
-        cache,
-        store,
-        OptimizationResultCacheKey(model_name, key),
-        discard,
-    )
+    return _flush_data!(cache, store, OptimizationResultCacheKey(model_name, key), discard)
 end
 
 function _flush_data!(
@@ -673,7 +672,12 @@ function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function _read_data_columns(store::HdfSimulationStore, model_name::Symbol, key::OptimizationContainerKey, timestamp)
+function _read_data_columns(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    timestamp,
+)
     if is_cached(store.cache, model_name, key, timestamp)
         data = read_result(store.cache, model_name, key, timestamp)
         column_dataset = _get_dataset(store, model_name, key).column_dataset
