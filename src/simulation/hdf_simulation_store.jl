@@ -28,7 +28,8 @@ mutable struct ProblemDatasets
     duals::Dict{ConstraintKey, Dataset}
     parameters::Dict{ParameterKey, Dataset}
     variables::Dict{VariableKey, Dataset}
-    # TODO v015: aux_variables?
+    aux_variables::Dict{AuxVarKey, Dataset}
+    expressions::Dict{ExpressionKey, Dataset}
 end
 
 function ProblemDatasets()
@@ -36,6 +37,8 @@ function ProblemDatasets()
         Dict{ConstraintKey, Dataset}(),
         Dict{ParameterKey, Dataset}(),
         Dict{VariableKey, Dataset}(),
+        Dict{AuxVarKey, Dataset}(),
+        Dict{ExpressionKey, Dataset}(),
     )
 end
 
@@ -209,7 +212,7 @@ function read_problem_optimizer_stats(
     execution_index,
 )
     optimizer_stats_write_index =
-        (simulation_step - 1) * store.params.problems[problem].num_executions + index
+        (simulation_step - 1) * store.params.models_params[problem].num_executions + index
     dataset = _get_dataset(OptimizerStats, store, problem)
     return OptimizerStats(dataset[:, optimizer_stats_write_index])
 end
@@ -237,7 +240,7 @@ function initialize_problem_storage!(
     set_min_flush_size!(store.cache, flush_rules.min_flush_size)
     @debug "initialize_problem_storage" store.cache
 
-    for problem in keys(store.params.problems)
+    for problem in keys(store.params.models_params)
         store.datasets[problem] = ProblemDatasets()
         problem_group = _get_group_or_create(problems_group, string(problem))
         for type in STORE_CONTAINERS
@@ -261,7 +264,7 @@ function initialize_problem_storage!(
             end
         end
 
-        num_stats = params.num_steps * params.problems[problem].num_executions
+        num_stats = params.num_steps * params.models_params[problem].num_executions
         columns = fieldnames(PSI.OptimizerStats)
         num_columns = length(columns)
         dataset = HDF5.create_dataset(
@@ -337,8 +340,8 @@ function read_result(
 
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
 
-    horizon = store.params.problems[key.model].horizon
-    num_executions = store.params.problems[key.model].num_executions
+    horizon = store.params.models_params[key.model].horizon
+    num_executions = store.params.models_params[key.model].num_executions
     if execution_index > num_executions
         throw(
             ArgumentError(
@@ -464,7 +467,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
         problem_name = Symbol(problem)
         container_metadata =
             deserialize_metadata(OptimizationContainerMetadata, problem_path, problem)
-        store.params.problems[problem_name] = ModelStoreParams(
+        store.params.models_params[problem_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
@@ -499,26 +502,28 @@ end
 function _serialize_attributes(store::HdfSimulationStore, problems_group, problem_reqs)
     params = store.params
     group = store.file["simulation"]
-    HDF5.attributes(group)["problem_order"] = [string(k) for k in keys(params.problems)]
+    HDF5.attributes(group)["problem_order"] =
+        [string(k) for k in keys(params.models_params)]
     HDF5.attributes(group)["initial_time"] = string(params.initial_time)
     HDF5.attributes(group)["step_resolution_ms"] =
         Dates.Millisecond(params.step_resolution).value
     HDF5.attributes(group)["num_steps"] = params.num_steps
 
-    for problem in keys(params.problems)
+    for problem in keys(params.models_params)
         problem_group = store.file["simulation/problems/$problem"]
         HDF5.attributes(problem_group)["num_executions"] =
-            params.problems[problem].num_executions
-        HDF5.attributes(problem_group)["horizon"] = params.problems[problem].horizon
+            params.models_params[problem].num_executions
+        HDF5.attributes(problem_group)["horizon"] = params.models_params[problem].horizon
         HDF5.attributes(problem_group)["resolution_ms"] =
-            Dates.Millisecond(params.problems[problem].resolution).value
+            Dates.Millisecond(params.models_params[problem].resolution).value
         HDF5.attributes(problem_group)["end_of_interval_step"] =
-            params.problems[problem].end_of_interval_step
+            params.models_params[problem].end_of_interval_step
         HDF5.attributes(problem_group)["interval_ms"] =
-            Dates.Millisecond(params.problems[problem].interval).value
-        HDF5.attributes(problem_group)["base_power"] = params.problems[problem].base_power
+            Dates.Millisecond(params.models_params[problem].interval).value
+        HDF5.attributes(problem_group)["base_power"] =
+            params.models_params[problem].base_power
         HDF5.attributes(problem_group)["system_uuid"] =
-            string(params.problems[problem].system_uuid)
+            string(params.models_params[problem].system_uuid)
     end
 end
 
@@ -628,7 +633,7 @@ function _get_indices(store::HdfSimulationStore, problem, timestamp)
             ArgumentError("timestamp = $timestamp is beyond the simulation: step = $step"),
         )
     end
-    problem_params = store.params.problems[problem]
+    problem_params = store.params.models_params[problem]
     initial_time = store.params.initial_time + (step - 1) * store.params.step_resolution
     time_diff = timestamp - initial_time
     if time_diff % problem_params.interval != Dates.Millisecond(0)
