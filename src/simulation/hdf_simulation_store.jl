@@ -584,28 +584,28 @@ function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, problem
     return store.optimizer_stats_datasets[problem_name]
 end
 
-function _get_dataset(store::HdfSimulationStore, problem_name::Symbol)
-    return store.datasets[problem_name]
+function _get_dataset(store::HdfSimulationStore, model_name::Symbol)
+    return store.datasets[model_name]
 end
 
-function _get_dataset(store::HdfSimulationStore, model, opt_container_key::VariableKey)
-    return getfield(store.datasets[model], STORE_CONTAINER_VARIABLES)[opt_container_key]
+function _get_dataset(store::HdfSimulationStore, model_name::Symbol, opt_container_key::VariableKey)
+    return getfield(store.datasets[model_name], STORE_CONTAINER_VARIABLES)[opt_container_key]
 end
 
-function _get_dataset(store::HdfSimulationStore, model, opt_container_key::ConstraintKey)
-    return getfield(store.datasets[model], STORE_CONTAINER_DUALS)[opt_container_key]
+function _get_dataset(store::HdfSimulationStore, model_name::Symbol, opt_container_key::ConstraintKey)
+    return getfield(store.datasets[model_name], STORE_CONTAINER_DUALS)[opt_container_key]
 end
 
-function _get_dataset(store::HdfSimulationStore, model, opt_container_key::AuxVarKey)
-    return getfield(store.datasets[model], STORE_CONTAINER_AUX_ARIABLES)[opt_container_key]
+function _get_dataset(store::HdfSimulationStore, model_name::Symbol, opt_container_key::AuxVarKey)
+    return getfield(store.datasets[model_name], STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
 end
 
-function _get_dataset(store::HdfSimulationStore, opt_container_key::ParameterKey)
-    return getfield(store.datasets[model], STORE_CONTAINER_PARAMETERS)[opt_container_key]
+function _get_dataset(store::HdfSimulationStore, model_name::Symbol, opt_container_key::ParameterKey)
+    return getfield(store.datasets[model_name], STORE_CONTAINER_PARAMETERS)[opt_container_key]
 end
 
-function _get_dataset(store::HdfSimulationStore, opt_container_key::ExpressionKey)
-    return getfield(store.datasets[model], STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
+function _get_dataset(store::HdfSimulationStore, model_name::Symbol, opt_container_key::ExpressionKey)
+    return getfield(store.datasets[model_name], STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
 end
 
 function _get_dataset(store::HdfSimulationStore, key::OptimizationResultCacheKey)
