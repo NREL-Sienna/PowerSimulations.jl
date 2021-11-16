@@ -368,7 +368,6 @@ function build!(
     serialize = true,
     initialize_problem = false,
 )
-    @show get_simulation_build_status(sim)
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Simulation" begin
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation Internal" begin
