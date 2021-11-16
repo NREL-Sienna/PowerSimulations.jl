@@ -432,7 +432,7 @@ function _apply_warm_start!(model::DecisionModel)
 end
 
 """ Required update problem function call"""
-function _update_problem!(model::DecisionModel, sim::Simulation)
+function _update_model!(model::DecisionModel, sim::Simulation)
     _update_parameters(model, sim)
     _update_initial_conditions!(model, sim)
     return
@@ -441,11 +441,11 @@ end
 ############################# Interfacing Functions##########################################
 ## These are the functions that the user will have to implement to update a custom problem ###
 """ Generic problem update function for most problems with no customization"""
-function update_problem!(
+function update_model!(
     model::DecisionModel{M},
     sim::Simulation,
 ) where {M <: DecisionProblem}  # DT This must remain problem
-    _update_problem!(model, sim)
+    _update_model!(model, sim)
     return
 end
 
@@ -493,7 +493,6 @@ function execute!(sim::Simulation; kwargs...)
                     set_simulation_status!(sim, RunStatus.SUCCESSFUL)
                     log_cache_hit_percentages(store)
                 catch e
-                    # TODO: Add Fallback when run_problem fails
                     set_simulation_status!(sim, RunStatus.FAILED)
                     @error "simulation failed" exception = (e, catch_backtrace())
                 end
@@ -568,10 +567,13 @@ function _execute!(
                     problem_interval = get_interval(sequence, model_name)
                     set_current_time!(sim, sim.internal.date_ref[model_number])
                     sequence.current_execution_index = ix
+
                     # Is first run of first problem? Yes -> don't update problem
+
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update $(model_name)" begin
-                        !(step == 1 && ix == 1) && update_problem!(model, sim)
+                        !(step == 1 && ix == 1) && update_model!(model, sim)
                     end
+
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run $(model_name)" begin
                         settings = get_settings(model)
                         status = solve!(
@@ -581,10 +583,6 @@ function _execute!(
                             store;
                             exports = exports,
                         )
-                        global_problem_execution_count =
-                            (step - 1) * length(execution_order) + ix
-                        sim.internal.run_count[step][model_number] += 1
-                        sim.internal.date_ref[model_number] += problem_interval
                         if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
                             continue
                         elseif !get_allow_fails(settings) &&
@@ -598,18 +596,27 @@ function _execute!(
                             @assert status == RunStatus.SUCCESSFUL
                         end
                     end # Run problem Timer
+
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Simulation State" begin
                         # _update_simulation_state!(sim, model)
                     end
+
+                    global_problem_execution_count =
+                        (step - 1) * length(execution_order) + ix
+                    sim.internal.run_count[step][model_number] += 1
+                    sim.internal.date_ref[model_number] += problem_interval
+
                     if warm_start_enabled(model)
                         _apply_warm_start!(model)
                     end
+
                     IS.@record :simulation_status ProblemExecutionEvent(
                         get_current_time(sim),
                         step,
                         model_number,
                         "done",
                     )
+
                     ProgressMeter.update!(
                         prog_bar,
                         global_problem_execution_count;
@@ -621,6 +628,7 @@ function _execute!(
                     )
                 end #execution problem timer
             end # execution order for loop
+
             IS.@record :simulation_status SimulationStepEvent(
                 get_current_time(sim),
                 step,

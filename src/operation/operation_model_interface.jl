@@ -104,7 +104,7 @@ function build_initial_conditions!(model::OperationModel)
         if requires_init
             @debug "initial_conditions required for $device_type" _group =
                 LOG_GROUP_BUILD_INITIAL_CONDITIONS
-            build_initial_conditions_problem!(model)
+            build_initial_conditions_model!(model)
             break
         end
     end
@@ -149,7 +149,7 @@ end
 
 function build_impl!(model::OperationModel)
     build_pre_step!(model)
-    build_problem!(model)
+    build_model!(model)
     serialize_metadata!(get_optimization_container(model), get_output_dir(model))
     log_values(get_settings(model))
     return
