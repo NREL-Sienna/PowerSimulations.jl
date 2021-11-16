@@ -3,6 +3,7 @@ function get_affected_values(ff::AbstractAffectFeedforward)
 end
 
 function attach_feedforward(model, ff::AbstractAffectFeedforward)
+    ff ∈ model.feedforwards && return
     push!(model.feedforwards, ff)
     return
 end
