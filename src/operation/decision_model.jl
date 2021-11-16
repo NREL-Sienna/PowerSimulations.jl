@@ -218,7 +218,7 @@ function init_model_store_params!(model::DecisionModel)
     end_of_interval_step = 1 # get_end_of_interval_step(get_internal(model)) #TODO: to be implemented when simulation is working
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    return ModelStoreParams(
+    model.internal.store_parameters = ModelStoreParams(
         num_executions,
         horizon,
         interval,
@@ -228,6 +228,7 @@ function init_model_store_params!(model::DecisionModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
+    return
 end
 
 function build_pre_step!(model::DecisionModel)
@@ -318,16 +319,20 @@ function build_problem!(model::DecisionModel)
 end
 
 function reset!(model::OperationModel)
-    if built_for_recurrent_solves(model)
+    # TODO-PJ: This is needed until we remove the ParameterJuMP dependency
+    # TODO: If the optimization container already has initial condition data, do not re-initialize
+    was_built_for_recurrent_solves = built_for_recurrent_solves(model)
+    if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
     end
-    container = OptimizationContainer(
+    model.internal.container = OptimizationContainer(
         get_system(model),
         get_settings(model),
         nothing,
         PSY.Deterministic,
     )
-    model.internal.container = container
+    model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
+    model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
     set_status!(model, BuildStatus.EMPTY)
     return

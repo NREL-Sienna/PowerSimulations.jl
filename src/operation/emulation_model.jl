@@ -235,6 +235,7 @@ function init_model_store_params!(model::EmulationModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
+    return
 end
 
 function build_pre_step!(model::EmulationModel)
