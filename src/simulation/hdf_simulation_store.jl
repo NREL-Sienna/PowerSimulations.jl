@@ -310,7 +310,7 @@ function read_result(
     timestamp::Dates.DateTime,
 )
     data, columns = _read_data_columns(store, model_name, key, timestamp)
-    return JuMP.Containers.DenseAxisArray(data, size(data[1]), columns)
+    return JuMP.Containers.DenseAxisArray(data, 1:size(data)[1], columns)
 end
 
 function read_result(
@@ -647,7 +647,7 @@ end
 
 _make_column_name(name) = string(name) * "__columns"
 
-function _get_indices(store::HdfSimulationStore, problem::Symbol, timestamp)
+function _get_indices(store::HdfSimulationStore, model_name::Symbol, timestamp)
     time_diff = Dates.Millisecond(timestamp - store.params.initial_time)
     step = time_diff ÷ store.params.step_resolution + 1
     if step > store.params.num_steps
@@ -655,7 +655,7 @@ function _get_indices(store::HdfSimulationStore, problem::Symbol, timestamp)
             ArgumentError("timestamp = $timestamp is beyond the simulation: step = $step"),
         )
     end
-    problem_params = store.params.models_params[problem]
+    problem_params = store.params.models_params[model_name]
     initial_time = store.params.initial_time + (step - 1) * store.params.step_resolution
     time_diff = timestamp - initial_time
     if time_diff % problem_params.interval != Dates.Millisecond(0)
