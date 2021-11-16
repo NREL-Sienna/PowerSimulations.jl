@@ -143,7 +143,7 @@ export get_dual_values
 export get_parameter_values
 export get_variable_values
 export get_timestamps
-export get_problem_name
+export get_model_name
 export get_problem_results
 export get_system
 export get_system!
@@ -432,7 +432,6 @@ include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
 include("core/expressions.jl")
 include("core/initial_conditions.jl")
-include("core/cache.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
 include("core/optimizer_stats.jl")
@@ -449,7 +448,6 @@ include("operation/emulation_model.jl")
 include("operation/problem_results_export.jl")
 include("operation/problem_results.jl")
 include("operation/operation_model_serialization.jl")
-include("operation/model_cache.jl")
 include("operation/time_series_interface.jl")
 include("operation/optimization_debugging.jl")
 include("operation/model_numerical_analysis_utils.jl")
