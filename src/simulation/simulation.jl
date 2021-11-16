@@ -400,15 +400,6 @@ function build!(
     return get_simulation_build_status(sim)
 end
 
-function get_increment(sim::Simulation, model::DecisionModel, cache::TimeStatusChange)
-    units = cache.units
-    name = get_name(model)
-    sequence = get_sequence(sim)
-    interval = get_interval(sequence, name)
-    resolution = interval / units
-    return resolution
-end
-
 function _update_initial_conditions!(model::DecisionModel, sim::Simulation)
     for key in keys(get_initial_conditions(model))
         update_initial_conditions!(model, key)
@@ -436,6 +427,26 @@ function _update_model!(model::DecisionModel, sim::Simulation)
     _update_parameters(model, sim)
     _update_initial_conditions!(model, sim)
     return
+end
+
+function _update_simulation_state!(sim::Simulation)
+    store = get_simulation_store(sim)
+    simulation_time = get_current_time(sim)
+    state = get_simulation_state(sim)
+    for model_name in list_models(store), type in [:variables, :aux_variables]
+        model_params = get_model_params(store, model_name)
+        for key in list_fields(store, model_name, type)
+            res = read_result(
+                JuMP.Containers.DenseAxisArray,
+                store,
+                model_name,
+                key,
+                simulation_time,
+            )
+            @show model_name key
+            # update_state_data(state, res, model_params)
+        end
+    end
 end
 
 ############################# Interfacing Functions##########################################
@@ -598,7 +609,7 @@ function _execute!(
                     end # Run problem Timer
 
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Simulation State" begin
-                        # _update_simulation_state!(sim, model)
+                        _update_simulation_state!(sim)
                     end
 
                     global_problem_execution_count =

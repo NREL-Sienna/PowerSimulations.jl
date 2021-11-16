@@ -178,7 +178,7 @@ end
 """
 Return the problem names in order of execution.
 """
-list_problems(store::HdfSimulationStore) = keys(store.datasets)
+list_models(store::HdfSimulationStore) = keys(store.datasets)
 
 """
 Return the fields stored for the `problem` and `container_type` (duals/parameters/variables).
@@ -330,25 +330,25 @@ end
 
 function read_result(
     store::HdfSimulationStore,
+    model_name::Symbol,
     key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
 )
-    simulation_step, execution_index = _get_indices(store, key.model, timestamp)
-    return read_result(store, key, simulation_step, execution_index)
+    simulation_step, execution_index = _get_indices(store, model_name, timestamp)
+    return read_result(store, model_name, key, simulation_step, execution_index)
 end
 
 function read_result(
     store::HdfSimulationStore,
-    key,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
     simulation_step::Int,
     execution_index::Int,
 )
-    @assert key.type in STORE_CONTAINERS "$(key.type)"
-
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
 
-    horizon = store.params.models_params[key.model].horizon
-    num_executions = store.params.models_params[key.model].num_executions
+    model_params = get_model_params(store, model_name)
+    num_executions = model_params.num_executions
     if execution_index > num_executions
         throw(
             ArgumentError(
@@ -357,7 +357,7 @@ function read_result(
         )
     end
 
-    dataset = _get_dataset(store, key)
+    dataset = _get_dataset(store, model_name, key)
     dset = dataset.dataset
     row_index = (simulation_step - 1) * num_executions + execution_index
     columns = dataset.column_dataset[:]
@@ -381,7 +381,7 @@ Write a model result for a timestamp to the store.
 """
 function write_result!(
     store::HdfSimulationStore,
-    model_name,
+    model_name::Symbol,
     key::OptimizationContainerKey,
     timestamp,
     data,
