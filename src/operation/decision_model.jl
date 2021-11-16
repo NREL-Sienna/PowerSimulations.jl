@@ -498,7 +498,7 @@ end
 
 function _write_model_dual_results!(store, model::DecisionModel, timestamp, exports)
     container = get_optimization_container(model)
-    problem_name = get_name(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "duals")
         mkpath(exports_path)
@@ -507,7 +507,7 @@ function _write_model_dual_results!(store, model::DecisionModel, timestamp, expo
     for (key, constraint) in get_duals(container)
         write_result!(
             store,
-            problem_name,
+            model_name,
             STORE_CONTAINER_DUALS,
             key,
             timestamp,
@@ -516,7 +516,7 @@ function _write_model_dual_results!(store, model::DecisionModel, timestamp, expo
         )
 
         if exports !== nothing &&
-           should_export_dual(exports[:exports], timestamp, problem_name, key)
+           should_export_dual(exports[:exports], timestamp, model_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
@@ -530,7 +530,7 @@ end
 
 function _write_model_parameter_results!(store, model::DecisionModel, timestamp, exports)
     container = get_optimization_container(model)
-    problem_name = get_name(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "parameters")
         mkpath(exports_path)
@@ -551,10 +551,10 @@ function _write_model_parameter_results!(store, model::DecisionModel, timestamp,
             data[r_ix, c_ix] = val1 * val2
         end
 
-        write_result!(store, problem_name, key, timestamp, data, param_array.axes[1])
+        write_result!(store, model_name, key, timestamp, data, param_array.axes[1])
 
         if exports !== nothing &&
-           should_export_parameter(exports[:exports], timestamp, problem_name, key)
+           should_export_parameter(exports[:exports], timestamp, model_name, key)
             resolution = exports[:resolution]
             file_type = exports[:file_type]
             df = DataFrames.DataFrame(data, param_array.axes[1])
@@ -567,17 +567,17 @@ end
 
 function _write_model_variable_results!(store, model::DecisionModel, timestamp, exports)
     container = get_optimization_container(model)
-    problem_name = get_name(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "variables")
         mkpath(exports_path)
     end
 
     for (key, variable) in get_variables(container)
-        write_result!(store, problem_name, key, timestamp, variable)
+        write_result!(store, model_name, key, timestamp, variable)
 
         if exports !== nothing &&
-           should_export_variable(exports[:exports], timestamp, problem_name, key)
+           should_export_variable(exports[:exports], timestamp, model_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
@@ -591,17 +591,17 @@ end
 
 function _write_model_aux_variable_results!(store, model::DecisionModel, timestamp, exports)
     container = get_optimization_container(model)
-    problem_name = get_name(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "aux_variables")
         mkpath(exports_path)
     end
 
     for (key, variable) in get_aux_variables(container)
-        write_result!(store, problem_name, key, timestamp, variable)
+        write_result!(store, model_name, key, timestamp, variable)
 
         if exports !== nothing &&
-           should_export_aux_variable(exports[:exports], timestamp, problem_name, key)
+           should_export_aux_variable(exports[:exports], timestamp, model_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
@@ -615,17 +615,17 @@ end
 
 function _write_model_expression_results!(store, model::DecisionModel, timestamp, exports)
     container = get_optimization_container(model)
-    problem_name = get_name(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "expressions")
         mkpath(exports_path)
     end
 
     for (key, expression) in get_expressions(container)
-        write_result!(store, problem_name, key, timestamp, expression)
+        write_result!(store, model_name, key, timestamp, expression)
 
         if exports !== nothing &&
-           should_export_expression(exports[:exports], timestamp, problem_name, key)
+           should_export_expression(exports[:exports], timestamp, model_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]

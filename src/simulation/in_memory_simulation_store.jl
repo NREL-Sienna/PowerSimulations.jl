@@ -125,14 +125,14 @@ end
 
 function write_result!(
     store::InMemorySimulationStore,
-    problem_name,
+    model_name,
     container_type,
     name,
     timestamp,
     array,
     columns = nothing,
 )
-    container = getfield(store.data[problem_name], container_type)
+    container = getfield(store.data[model_name], container_type)
     container[name][timestamp] = axis_array_to_dataframe(array, columns)
     return
 end
@@ -140,22 +140,22 @@ end
 function read_result(
     ::Type{DataFrames.DataFrame},
     store::InMemorySimulationStore,
-    problem_name,
+    model_name,
     container_type,
     name,
     timestamp::Dates.DateTime,
 )
-    return read_result(store, problem_name, container_type, name, timestamp)
+    return read_result(store, model_name, container_type, name, timestamp)
 end
 
 function read_result(
     store::InMemorySimulationStore,
-    problem_name,
+    model_name,
     container_type,
     name,
     timestamp::Dates.DateTime,
 )
-    container = getfield(store.data[Symbol(problem_name)], container_type)[name]
+    container = getfield(store.data[Symbol(model_name)], container_type)[name]
     _check_timestamp(container, timestamp)
     # Return a copy because callers may mutate it. SimulationProblemResults adds timestamps.
     return copy(container[timestamp], copycols = true)

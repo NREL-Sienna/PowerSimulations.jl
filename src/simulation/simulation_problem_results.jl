@@ -30,7 +30,7 @@ end
 
 function SimulationProblemResults(
     store::SimulationStore,
-    problem_name::AbstractString,
+    model_name::AbstractString,
     problem_params::ModelStoreParams,
     sim_params::SimulationStoreParams,
     path;
@@ -46,13 +46,13 @@ function SimulationProblemResults(
         length = problem_params.num_executions * sim_params.num_steps,
         step = problem_params.interval,
     )
-    name = Symbol(problem_name)
+    name = Symbol(model_name)
     variables = list_fields(store, name, STORE_CONTAINER_VARIABLES)
     parameters = list_fields(store, name, STORE_CONTAINER_PARAMETERS)
     duals = list_fields(store, name, STORE_CONTAINER_DUALS)
 
     return SimulationProblemResults(
-        problem_name,
+        model_name,
         problem_params.base_power,
         path,
         results_output_path,
@@ -86,7 +86,7 @@ Base.isempty(res::SimulationProblemResults) = all(isempty, _get_dicts(res))
 # This returns the number of timestamps stored in all containers.
 Base.length(res::SimulationProblemResults) = mapreduce(length, +, _get_dicts(res))
 
-get_problem_name(res::SimulationProblemResults) = res.problem
+get_model_name(res::SimulationProblemResults) = res.problem
 get_system(res::SimulationProblemResults) = res.system
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_forecast_horizon(res::SimulationProblemResults) = res.forecast_horizon
@@ -216,14 +216,14 @@ function _get_store_value(
 )
     results =
         Dict{OptimizationContainerKey, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
-    problem_name = Symbol(get_problem_name(res))
+    model_name = Symbol(get_model_name(res))
     problem_interval = get_interval(res)
     resolution = get_resolution(res)
     horizon = get_forecast_horizon(res)
     for name in names
         _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
         for ts in timestamps
-            out = read_result(DataFrames.DataFrame, store, problem_name, field, name, ts)
+            out = read_result(DataFrames.DataFrame, store, model_name, field, name, ts)
             time_col = range(ts, length = horizon, step = resolution)
             DataFrames.insertcols!(out, 1, :DateTime => time_col)
             _results[ts] = out

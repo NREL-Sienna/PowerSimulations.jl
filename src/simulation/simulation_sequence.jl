@@ -47,15 +47,15 @@ function _calculate_interval_inner_counts(intervals::OrderedDict{Symbol, Dates.P
     interval_run_counts = Vector{Int}(undef, length(intervals))
     interval_run_counts[1] = 1
     for k in reverse_order[1:(end - 1)]
-        problem_name = order[k]
-        previous_problem_name = order[k - 1]
-        problem_interval = intervals[problem_name]
-        previous_problem_interval = intervals[previous_problem_name]
+        model_name = order[k]
+        previous_model_name = order[k - 1]
+        problem_interval = intervals[model_name]
+        previous_problem_interval = intervals[previous_model_name]
         if Dates.Millisecond(previous_problem_interval % problem_interval) !=
            Dates.Millisecond(0)
             throw(
                 IS.ConflictingInputsError(
-                    "The interval configuration provided results in a fractional number of executions of problem $problem_name",
+                    "The interval configuration provided results in a fractional number of executions of problem $model_name",
                 ),
             )
         end

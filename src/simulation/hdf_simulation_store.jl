@@ -24,7 +24,7 @@ DEFAULT_MAX_CHUNK_BYTES = 128 * KiB
 """
 Stores HDF5 datasets for one problem.
 """
-mutable struct ProblemDatasets
+mutable struct ModelDatasets
     duals::Dict{ConstraintKey, Dataset}
     parameters::Dict{ParameterKey, Dataset}
     variables::Dict{VariableKey, Dataset}
@@ -32,8 +32,8 @@ mutable struct ProblemDatasets
     expressions::Dict{ExpressionKey, Dataset}
 end
 
-function ProblemDatasets()
-    return ProblemDatasets(
+function ModelDatasets()
+    return ModelDatasets(
         Dict{ConstraintKey, Dataset}(),
         Dict{ParameterKey, Dataset}(),
         Dict{VariableKey, Dataset}(),
@@ -49,7 +49,7 @@ mutable struct HdfSimulationStore <: SimulationStore
     file::HDF5.File
     params::SimulationStoreParams
     # The key order is the problem execution order.
-    datasets::OrderedDict{Symbol, ProblemDatasets}
+    datasets::OrderedDict{Symbol, ModelDatasets}
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
@@ -75,7 +75,7 @@ function HdfSimulationStore(
         @debug "Created store" file_path
     end
 
-    datasets = OrderedDict{Symbol, ProblemDatasets}()
+    datasets = OrderedDict{Symbol, ModelDatasets}()
     cache = OptimizationResultCache()
     store = HdfSimulationStore(
         file,
@@ -171,6 +171,9 @@ function Base.flush(store::HdfSimulationStore)
 end
 
 get_params(store::HdfSimulationStore) = store.params
+function get_model_params(store::HdfSimulationStore, model_name::Symbol)
+    return get_params(store).models_params[model_name]
+end
 
 """
 Return the problem names in order of execution.
@@ -187,18 +190,18 @@ end
 
 function write_optimizer_stats!(
     store::HdfSimulationStore,
-    problem_name,
+    model_name,
     stats::OptimizerStats,
     timestamp,  # Unused here. Matches the interface for InMemorySimulationStore.
 )
-    dataset = _get_dataset(OptimizerStats, store, problem_name)
+    dataset = _get_dataset(OptimizerStats, store, model_name)
 
     # Uncomment for performance measures of HDF Store
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
-    dataset[:, store.optimizer_stats_write_index[problem_name]] = to_array(stats)
+    dataset[:, store.optimizer_stats_write_index[model_name]] = to_array(stats)
     #end
 
-    store.optimizer_stats_write_index[problem_name] += 1
+    store.optimizer_stats_write_index[model_name] += 1
     return
 end
 
@@ -241,7 +244,7 @@ function initialize_problem_storage!(
     @debug "initialize_problem_storage" store.cache
 
     for problem in keys(store.params.models_params)
-        store.datasets[problem] = ProblemDatasets()
+        store.datasets[problem] = ModelDatasets()
         problem_group = _get_group_or_create(problems_group, string(problem))
         for type in STORE_CONTAINERS
             group = _get_group_or_create(problem_group, string(type))
@@ -291,41 +294,41 @@ Return DataFrame, DenseAxisArray, or Array for a model result at a timestamp.
 function read_result(
     ::Type{DataFrames.DataFrame},
     store::HdfSimulationStore,
-    problem_name,
-    key,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
 )
-    data, columns = _read_data_columns(store, problem_name, key, timestamp)
+    data, columns = _read_data_columns(store, model_name, key, timestamp)
     return DataFrames.DataFrame(data, Symbol.(columns))
 end
 
 function read_result(
     ::Type{JuMP.Containers.DenseAxisArray},
     store::HdfSimulationStore,
-    problem_name,
-    key,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
 )
-    data, columns = _read_data_columns(store, problem_name, key, timestamp)
+    data, columns = _read_data_columns(store, model_name, key, timestamp)
     return JuMP.Containers.DenseAxisArray(data, size(data[1]), columns)
 end
 
 function read_result(
     ::Type{<:Array},
     store::HdfSimulationStore,
-    problem_name,
-    key,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
 )
-    if is_cached(store.cache, problem_name, key, timestamp)
-        data = read_result(store.cache, problem_name, key, timestamp)
+    if is_cached(store.cache, model_name, key, timestamp)
+        data = read_result(store.cache, model_name, key, timestamp)
     else
         # PERF: If this will be commonly used then we need to remove reading of columns.
-        data, _ = read_result(store, problem_name, key, timestamp)
+        data, _ = read_result(store, model_name, key, timestamp)
     end
 end
 
-function read_result(store::HdfSimulationStore, key, timestamp::Dates.DateTime)
+function read_result(store::HdfSimulationStore, key::OptimizationContainerKey, timestamp::Dates.DateTime)
     simulation_step, execution_index = _get_indices(store, key.model, timestamp)
     return read_result(store, key, simulation_step, execution_index)
 end
@@ -374,13 +377,13 @@ Write a model result for a timestamp to the store.
 """
 function write_result!(
     store::HdfSimulationStore,
-    problem_name,
+    model_name,
     key::OptimizationContainerKey,
     timestamp,
     data,
     columns = nothing,  # Unused here. Matches the interface for InMemorySimulationStore.
 )
-    output_cache = get_output_cache(store.cache, problem_name, key)
+    output_cache = get_output_cache(store.cache, model_name, key)
 
     cur_size = get_size(store.cache)
     add_result!(output_cache, timestamp, to_array(data), is_full(store.cache, cur_size))
@@ -390,7 +393,7 @@ function write_result!(
 
         # PERF: A potentially significant performance improvement would be to queue several
         # flushes and submit them in parallel.
-        size_flushed = _flush_data!(output_cache, store, problem_name, key, discard)
+        size_flushed = _flush_data!(output_cache, store, model_name, key, discard)
 
         @debug "flushed data" key size_flushed discard
     end
@@ -464,10 +467,10 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
     empty!(store.datasets)
     for problem in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/problems/$problem"]
-        problem_name = Symbol(problem)
+        model_name = Symbol(problem)
         container_metadata =
             deserialize_metadata(OptimizationContainerMetadata, problem_path, problem)
-        store.params.models_params[problem_name] = ModelStoreParams(
+        store.params.models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
@@ -477,7 +480,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
             Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
             container_metadata,
         )
-        store.datasets[problem_name] = ProblemDatasets()
+        store.datasets[model_name] = ModelDatasets()
         for type in STORE_CONTAINERS
             group = problem_group[string(type)]
             for name in keys(group)
@@ -486,14 +489,14 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
                     column_dataset = group[_make_column_name(name)]
                     item = Dataset(dataset, column_dataset)
                     container_key = deserialize_key(container_metadata, name)
-                    getfield(store.datasets[problem_name], type)[container_key] = item
+                    getfield(store.datasets[model_name], type)[container_key] = item
                     add_output_cache!(store.cache, problem, key, get_rule(flush_rules, key))
                 end
             end
         end
 
-        store.optimizer_stats_datasets[problem_name] = problem_group[OPTIMIZER_STATS_PATH]
-        store.optimizer_stats_write_index[problem_name] = 0
+        store.optimizer_stats_datasets[model_name] = problem_group[OPTIMIZER_STATS_PATH]
+        store.optimizer_stats_write_index[model_name] = 0
     end
 
     @debug "deserialized store params and datasets" store.params
@@ -530,14 +533,14 @@ end
 function _flush_data!(
     cache::OptimzationResultCache,
     store::HdfSimulationStore,
-    problem_name,
+    model_name,
     key::OptimizationContainerKey,
     discard,
 )
     return _flush_data!(
         cache,
         store,
-        OptimizationResultCacheKey(problem_name, key),
+        OptimizationResultCacheKey(model_name, key),
         discard,
     )
 end
@@ -580,8 +583,8 @@ function _get_columns_dataset(store::HdfSimulationStore, key)
     return getfield(store.datasets[key.model], key.type)[key.name].columns
 end
 
-function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, problem_name)
-    return store.optimizer_stats_datasets[problem_name]
+function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, model_name)
+    return store.optimizer_stats_datasets[model_name]
 end
 
 function _get_dataset(store::HdfSimulationStore, model_name::Symbol)
@@ -645,7 +648,7 @@ end
 
 _make_column_name(name) = string(name) * "__columns"
 
-function _get_indices(store::HdfSimulationStore, problem, timestamp)
+function _get_indices(store::HdfSimulationStore, problem::Symbol, timestamp)
     time_diff = Dates.Millisecond(timestamp - store.params.initial_time)
     step = time_diff ÷ store.params.step_resolution + 1
     if step > store.params.num_steps
@@ -670,13 +673,13 @@ function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function _read_data_columns(store, problem_name, key, timestamp)
-    if is_cached(store.cache, problem_name, key, timestamp)
-        data = read_result(store.cache, problem_name, key, timestamp)
-        column_dataset = _get_dataset(store, problem_name, key).column_dataset
+function _read_data_columns(store::HdfSimulationStore, model_name::Symbol, key::OptimizationContainerKey, timestamp)
+    if is_cached(store.cache, model_name, key, timestamp)
+        data = read_result(store.cache, model_name, key, timestamp)
+        column_dataset = _get_dataset(store, model_name, key).column_dataset
         columns = column_dataset[:]
     else
-        data, columns = read_result(store, problem_name, key, timestamp)
+        data, columns = read_result(store, model_name, key, timestamp)
     end
 
     return data, columns
