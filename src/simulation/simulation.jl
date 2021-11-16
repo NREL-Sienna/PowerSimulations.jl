@@ -410,18 +410,15 @@ function get_increment(sim::Simulation, model::DecisionModel, cache::TimeStatusC
 end
 
 function _update_initial_conditions!(model::DecisionModel, sim::Simulation)
-    ini_cond_chronology = get_sequence(sim).ini_cond_chronology
-    optimization_containter = get_optimization_container(model)
-    for (k, v) in iterate_initial_conditions(optimization_containter)
-        initial_condition_update!(model, k, v, ini_cond_chronology, sim)
+    for key in keys(get_initial_conditions(model))
+        update_initial_conditions!(model, key)
     end
     return
 end
 
 function _update_parameters(model::DecisionModel, sim::Simulation)
-    container = get_optimization_container(model)
-    for container in iterate_parameter_containers(container)
-        update_parameter!(container.update_ref, container, model, sim)
+    for key in keys(get_parameters(model))
+        update_parameter_values!(model, key)
     end
     return
 end
@@ -562,7 +559,7 @@ function _execute!(
                     model_number,
                     "start",
                 )
-                model = models[model_number]
+                model = get_decision_models(models)[model_number]
                 model_name = get_name(model)
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                     if !is_built(model)
@@ -601,8 +598,8 @@ function _execute!(
                             @assert status == RunStatus.SUCCESSFUL
                         end
                     end # Run problem Timer
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(model_number)" begin
-                        _update_caches!(sim, model)
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Simulation State" begin
+                        # _update_simulation_state!(sim, model)
                     end
                     if warm_start_enabled(model)
                         _apply_warm_start!(model)
