@@ -27,7 +27,7 @@ const UNSET_INI_TIME = Dates.DateTime(0)
 # Tolerance of comparisons
 # MIP gap tolerances in most solvers are set to 1e-4
 const ABSOLUTE_TOLERANCE = 1.0e-3
-const BALANCE_SLACK_COST = 1e6
+const BALANCE_SLACK_COST = 1e8
 const SERVICES_SLACK_COST = 1e5
 const FEEDFORWARD_SLACK_COST = 1e5
 const COST_EPSILON = 1e-3
