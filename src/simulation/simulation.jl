@@ -433,6 +433,7 @@ end
 function _update_simulation_state!(sim::Simulation)
     sim_store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
+    # Temporary during development. Needs to be removed before merging to master
     open_store(
         HdfSimulationStore,
         sim.internal.store_dir,
