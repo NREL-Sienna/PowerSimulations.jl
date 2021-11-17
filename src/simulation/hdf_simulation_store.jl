@@ -473,7 +473,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
         problem_group = store.file["simulation/problems/$problem"]
         model_name = Symbol(problem)
         container_metadata =
-            deserialize_metadata(OptimizationContainerMetadata, problem_path, problem)
+            deserialize_metadata(OptimizationContainerMetadata, problem_path, model_name)
         store.params.models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
@@ -494,7 +494,12 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
                     item = Dataset(dataset, column_dataset)
                     container_key = deserialize_key(container_metadata, name)
                     getfield(store.datasets[model_name], type)[container_key] = item
-                    add_output_cache!(store.cache, problem, key, get_rule(flush_rules, key))
+                    add_output_cache!(
+                        store.cache,
+                        model_name,
+                        container_key,
+                        CacheFlushRule(),
+                    )
                 end
             end
         end
