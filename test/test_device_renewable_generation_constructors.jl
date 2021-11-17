@@ -5,7 +5,7 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
 
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5)
-    @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
+    @test_logs (:warn, warn_message) match_mode = :any mock_construct_device!(
         op_problem,
         model,
     )

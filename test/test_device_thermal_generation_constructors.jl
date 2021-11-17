@@ -5,7 +5,7 @@ test_path = mktempdir()
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
     c_sys5_re_only = PSB.build_system(PSITestSystems, "c_sys5_re_only")
     op_problem = OperationsProblem(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
-    @test_logs (:info,) (:warn, warn_message) match_mode = :any mock_construct_device!(
+    @test_logs (:warn, warn_message) match_mode = :any mock_construct_device!(
         op_problem,
         model,
     )
