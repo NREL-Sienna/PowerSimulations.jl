@@ -478,3 +478,55 @@ end
         GLPK_optimizer,
     )
 end
+
+@testset "Test serialization of InitialConditionsData" begin
+    template = get_thermal_standard_uc_template()
+    sys = PSB.build_system(
+        PSITestSystems,
+        "c_sys5_pglib";
+        add_single_time_series = true,
+        force_build = true,
+    )
+    optimizer = Cbc_optimizer
+    set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
+    model = EmulationModel(template, sys; optimizer = Cbc_optimizer)
+    output_dir = mktempdir(cleanup = true)
+
+    @test build!(model; executions = 1, output_dir = output_dir) == BuildStatus.BUILT
+    ic_file = PSI.get_initial_conditions_file(model)
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    # Build again. Initial conditions should be deserialized.
+    PSI.reset!(model)
+    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    # Build again, force rebuild of initial conditions.
+    model =
+        EmulationModel(template, sys; optimizer = optimizer, force_initialization = true)
+    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
+    @test run!(model) == RunStatus.SUCCESSFUL
+
+    # Construct and build again with custom initial conditions file.
+    initialization_file = joinpath(output_dir, ic_file * ".old")
+    mv(ic_file, initialization_file)
+    touch(ic_file)
+    model = EmulationModel(
+        template,
+        sys;
+        optimizer = optimizer,
+        initialization_file = initialization_file,
+    )
+    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
+
+    # Construct and build again while skipping build of initial conditions.
+    model = EmulationModel(template, sys; optimizer = optimizer, initialize_model = false)
+    rm(ic_file)
+    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model, ic_file_exists = false, message = "skip")
+    @test run!(model) == RunStatus.SUCCESSFUL
+end
