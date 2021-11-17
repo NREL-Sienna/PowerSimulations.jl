@@ -17,7 +17,7 @@ function deserialize_metadata(
     output_dir::String,
     model_name,
 )
-    filename = _make_metadata_filename(output_dir)
+    filename = _make_metadata_filename(model_name, output_dir)
     return Serialization.deserialize(filename)
 end
 
@@ -530,6 +530,8 @@ end
 
 const _CONTAINER_METADATA_FILE = "optimization_container_metadata.bin"
 
+_make_metadata_filename(model_name::Symbol, output_dir) =
+    joinpath(output_dir, string(model_name), _CONTAINER_METADATA_FILE)
 _make_metadata_filename(output_dir) = joinpath(output_dir, _CONTAINER_METADATA_FILE)
 
 function serialize_metadata!(container::OptimizationContainer, output_dir::String)
@@ -538,6 +540,8 @@ function serialize_metadata!(container::OptimizationContainer, output_dir::Strin
         keys(container.duals),
         keys(container.parameters),
         keys(container.variables),
+        keys(container.aux_variables),
+        keys(container.expressions),
     ))
         encoded_key = encode_key_as_string(key)
         if has_container_key(container.metadata, encoded_key)

@@ -20,7 +20,7 @@ function get_initial_conditions_template(model::OperationModel)
     return ic_template
 end
 
-function build_initial_conditions_problem!(model::T) where {T <: OperationModel}
+function build_initial_conditions_model!(model::T) where {T <: OperationModel}
     model.internal.ic_model_container = deepcopy(get_optimization_container(model))
     ic_settings = model.internal.ic_model_container.settings
     # TODO: add an interface to allow user to configure initial_conditions problem

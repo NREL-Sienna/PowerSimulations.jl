@@ -11,7 +11,7 @@ function update_parameter_values!(
     model::DecisionModel,
 ) where {T <: PSY.AbstractDeterministic, U <: PSY.Device}
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
-    horizon = get_time_steps(get_container(model))[end]
+    horizon = get_time_steps(get_optimization_container(model))[end]
     components = get_available_components(U, get_system(model))
     for component in components
         ts_vector = get_time_series_values!(
@@ -107,7 +107,6 @@ function update_parameter_values!(
         optimization_container = PSI.get_optimization_container(model)
         parameter_array = PSI.get_parameter_array(optimization_container, T(), U)
         parameter_attributes = get_parameter_attributes(optimization_container, T(), U)
-        system = PSI.get_system(model)
         update_parameter_values!(parameter_array, parameter_attributes, U, model)
         _gen_parameter_update_event(
             parameter_attributes,
@@ -119,6 +118,11 @@ function update_parameter_values!(
     end
     return
 end
+
+function update_parameter_values!(
+    model::OperationModel,
+    ::ParameterKey{T, U},
+) where {T <: VariableValueParameter, U <: PSY.Device} end
 
 function _gen_parameter_update_event(
     ::ParameterAttributes,

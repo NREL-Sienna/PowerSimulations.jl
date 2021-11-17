@@ -203,7 +203,7 @@ end
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)
-    execution_count = get_model_internal(model).execution_count
+    execution_count = get_internal(model).execution_count
     initial_time = get_initial_time(model)
     interval = get_interval(model.internal.store_parameters)
     return initial_time + interval * execution_count
@@ -218,7 +218,7 @@ function init_model_store_params!(model::DecisionModel)
     end_of_interval_step = 1 # get_end_of_interval_step(get_internal(model)) #TODO: to be implemented when simulation is working
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    return ModelStoreParams(
+    model.internal.store_parameters = ModelStoreParams(
         num_executions,
         horizon,
         interval,
@@ -228,6 +228,7 @@ function init_model_store_params!(model::DecisionModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
+    return
 end
 
 function build_pre_step!(model::DecisionModel)
@@ -313,21 +314,25 @@ end
 Default implementation of build method for Operational Problems for models conforming with
 DecisionProblem specification. Overload this function to implement a custom build method
 """
-function build_problem!(model::DecisionModel)
+function build_model!(model::DecisionModel)
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end
 
 function reset!(model::OperationModel)
-    if built_for_recurrent_solves(model)
+    # TODO-PJ: This is needed until we remove the ParameterJuMP dependency
+    # TODO: If the optimization container already has initial condition data, do not re-initialize
+    was_built_for_recurrent_solves = built_for_recurrent_solves(model)
+    if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
     end
-    container = OptimizationContainer(
+    model.internal.container = OptimizationContainer(
         get_system(model),
         get_settings(model),
         nothing,
         PSY.Deterministic,
     )
-    model.internal.container = container
+    model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
+    model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
     set_status!(model, BuildStatus.EMPTY)
     return
@@ -484,28 +489,16 @@ function write_results!(store, model::DecisionModel, timestamp; exports = nothin
         export_params = nothing
     end
 
-    container = get_optimization_container(model)
-    # This line should only be called if the problem is exporting duals. Otherwise ignore.
-    if is_milp(container)
-        @warn "Problem $(get_simulation_info(model).name) is a MILP, duals can't be exported"
-    else
-        _write_model_dual_results!(store, container, model, timestamp, export_params)
-    end
-
-    _write_model_parameter_results!(store, container, model, timestamp, export_params)
-    _write_model_variable_results!(store, container, model, timestamp, export_params)
-    _write_model_aux_variable_results!(store, container, model, timestamp, export_params)
+    _write_model_dual_results!(store, model, timestamp, export_params)
+    _write_model_parameter_results!(store, model, timestamp, export_params)
+    _write_model_variable_results!(store, model, timestamp, export_params)
+    _write_model_aux_variable_results!(store, model, timestamp, export_params)
     return
 end
 
-function _write_model_dual_results!(
-    store,
-    container,
-    model::DecisionModel,
-    timestamp,
-    exports,
-)
-    problem_name = get_name(model)
+function _write_model_dual_results!(store, model::DecisionModel, timestamp, exports)
+    container = get_optimization_container(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "duals")
         mkpath(exports_path)
@@ -514,7 +507,7 @@ function _write_model_dual_results!(
     for (key, constraint) in get_duals(container)
         write_result!(
             store,
-            problem_name,
+            model_name,
             STORE_CONTAINER_DUALS,
             key,
             timestamp,
@@ -523,7 +516,7 @@ function _write_model_dual_results!(
         )
 
         if exports !== nothing &&
-           should_export_dual(exports[:exports], timestamp, problem_name, key)
+           should_export_dual(exports[:exports], timestamp, model_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
@@ -535,25 +528,18 @@ function _write_model_dual_results!(
     end
 end
 
-function _write_model_parameter_results!(
-    store,
-    container,
-    model::DecisionModel,
-    timestamp,
-    exports,
-)
-    problem_name = get_name(model)
+function _write_model_parameter_results!(store, model::DecisionModel, timestamp, exports)
+    container = get_optimization_container(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "parameters")
         mkpath(exports_path)
     end
 
-    parameters = get_parameters(container)
-    (parameters === nothing || isempty(parameters)) && return
     horizon = get_horizon(get_settings(model))
 
+    parameters = get_parameters(container)
     for (key, container) in parameters
-        !isa(container.update_ref, UpdateRef{<:PSY.Component}) && continue
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
         @assert_op length(axes(param_array)) == 2
@@ -565,18 +551,10 @@ function _write_model_parameter_results!(
             data[r_ix, c_ix] = val1 * val2
         end
 
-        write_result!(
-            store,
-            problem_name,
-            STORE_CONTAINER_PARAMETERS,
-            key,
-            timestamp,
-            data,
-            param_array.axes[1],
-        )
+        write_result!(store, model_name, key, timestamp, data, param_array.axes[1])
 
         if exports !== nothing &&
-           should_export_parameter(exports[:exports], timestamp, problem_name, key)
+           should_export_parameter(exports[:exports], timestamp, model_name, key)
             resolution = exports[:resolution]
             file_type = exports[:file_type]
             df = DataFrames.DataFrame(data, param_array.axes[1])
@@ -587,31 +565,19 @@ function _write_model_parameter_results!(
     end
 end
 
-function _write_model_variable_results!(
-    store,
-    container,
-    model::DecisionModel,
-    timestamp,
-    exports,
-)
-    problem_name = get_name(model)
+function _write_model_variable_results!(store, model::DecisionModel, timestamp, exports)
+    container = get_optimization_container(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "variables")
         mkpath(exports_path)
     end
 
     for (key, variable) in get_variables(container)
-        write_result!(
-            store,
-            problem_name,
-            STORE_CONTAINER_VARIABLES,
-            key,
-            timestamp,
-            variable,
-        )
+        write_result!(store, model_name, key, timestamp, variable)
 
         if exports !== nothing &&
-           should_export_variable(exports[:exports], timestamp, problem_name, key)
+           should_export_variable(exports[:exports], timestamp, model_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
@@ -623,31 +589,19 @@ function _write_model_variable_results!(
     end
 end
 
-function _write_model_aux_variable_results!(
-    store,
-    container,
-    model::DecisionModel,
-    timestamp,
-    exports,
-)
-    problem_name = get_name(model)
+function _write_model_aux_variable_results!(store, model::DecisionModel, timestamp, exports)
+    container = get_optimization_container(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "aux_variables")
         mkpath(exports_path)
     end
 
     for (key, variable) in get_aux_variables(container)
-        write_result!(
-            store,
-            problem_name,
-            STORE_CONTAINER_AUX_VARIABLES,
-            key,
-            timestamp,
-            variable,
-        )
+        write_result!(store, model_name, key, timestamp, variable)
 
         if exports !== nothing &&
-           should_export_aux_variable(exports[:exports], timestamp, problem_name, key)
+           should_export_aux_variable(exports[:exports], timestamp, model_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
@@ -659,31 +613,19 @@ function _write_model_aux_variable_results!(
     end
 end
 
-function _write_model_expression_results!(
-    store,
-    container,
-    model::DecisionModel,
-    timestamp,
-    exports,
-)
-    problem_name = get_name(model)
+function _write_model_expression_results!(store, model::DecisionModel, timestamp, exports)
+    container = get_optimization_container(model)
+    model_name = get_name(model)
     if exports !== nothing
         exports_path = joinpath(exports[:exports_path], "expressions")
         mkpath(exports_path)
     end
 
     for (key, expression) in get_expressions(container)
-        write_result!(
-            store,
-            problem_name,
-            STORE_CONTAINER_EXPRESSIONS,
-            key,
-            timestamp,
-            expression,
-        )
+        write_result!(store, model_name, key, timestamp, expression)
 
         if exports !== nothing &&
-           should_export_expression(exports[:exports], timestamp, problem_name, key)
+           should_export_expression(exports[:exports], timestamp, model_name, key)
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]

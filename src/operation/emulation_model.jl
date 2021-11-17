@@ -235,6 +235,7 @@ function init_model_store_params!(model::EmulationModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
+    return
 end
 
 function build_pre_step!(model::EmulationModel)
@@ -320,7 +321,7 @@ end
 """
 Default implementation of build method for Emulation Problems for models conforming with  DecisionProblem specification. Overload this function to implement a custom build method
 """
-function build_problem!(model::EmulationModel{<:EmulationProblem})
+function build_model!(model::EmulationModel{<:EmulationProblem})
     container = get_optimization_container(model)
     system = get_system(model)
     build_impl!(container, get_template(model), system)

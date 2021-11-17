@@ -137,10 +137,6 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                     affected_variables = [ActivePowerVariable],
                 ),
             ),
-            cache = Dict(
-                ("UC",) => TimeStatusChange(ThermalStandard),
-                ("UC", "ED") => StoredEnergy(HydroEnergyReservoir),
-            ),
             ini_cond_chronology = InterProblemChronology(),
         )
         sim = Simulation(

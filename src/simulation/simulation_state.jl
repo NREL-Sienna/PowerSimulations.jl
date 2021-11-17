@@ -1,4 +1,5 @@
 struct StateInfo
+    # TODO: enable passing constraint duals as states
     aux_variables::Dict{AuxVarKey, JuMP.Containers.DenseAxisArray{Float64}}
     variables::Dict{VariableKey, JuMP.Containers.DenseAxisArray{Float64}}
 end

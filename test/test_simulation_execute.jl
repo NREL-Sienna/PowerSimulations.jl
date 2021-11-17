@@ -89,7 +89,6 @@ end
     single_sequence = SimulationSequence(
         problems = problems,
         intervals = Dict("ED" => (Hour(1), 0)),
-        cache = Dict(("ED",) => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY)),
         ini_cond_chronology = IntraProblemChronology(),
     )
 
@@ -129,10 +128,6 @@ end
                 variable_source_problem = ActivePowerVariable,
                 affected_variables = [ActivePowerVariable],
             ),
-        ),
-        cache = Dict(
-            ("UC",) => TimeStatusChange(PSY.ThermalStandard, OnVariable),
-            ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
         ),
         ini_cond_chronology = InterProblemChronology(),
     )
