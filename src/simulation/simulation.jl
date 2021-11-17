@@ -219,7 +219,8 @@ function _build_decision_models!(sim::Simulation)
         @info("Building problem $(get_name(model))")
         initial_time = get_initial_time(sim)
         set_initial_time!(model, initial_time)
-        output_dir = joinpath(get_models_dir(sim))
+        output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
+        mkpath(output_dir)
         set_output_dir!(model, output_dir)
         try
             TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
@@ -430,21 +431,28 @@ function _update_model!(model::DecisionModel, sim::Simulation)
 end
 
 function _update_simulation_state!(sim::Simulation)
-    store = get_simulation_store(sim)
+    sim_store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
-    state = get_simulation_state(sim)
-    for model_name in list_models(store), type in [:variables, :aux_variables]
-        model_params = get_model_params(store, model_name)
-        for key in list_fields(store, model_name, type)
-            res = read_result(
-                JuMP.Containers.DenseAxisArray,
-                store,
-                model_name,
-                key,
-                simulation_time,
-            )
-            @show model_name key
-            # update_state_data(state, res, model_params)
+    open_store(
+        HdfSimulationStore,
+        sim.internal.store_dir,
+        "r";
+        problem_path = sim.internal.models_dir,
+    ) do store
+        state = get_simulation_state(sim)
+        for model_name in list_models(store), type in [:variables, :aux_variables]
+            model_params = get_model_params(store, model_name)
+            for key in list_fields(store, model_name, type)
+                model_params
+                res = read_result(
+                    JuMP.Containers.DenseAxisArray,
+                    store,
+                    model_name,
+                    key,
+                    simulation_time,
+                )
+                update_state_data(state, res, model_params)
+            end
         end
     end
 end
