@@ -267,6 +267,7 @@ function _initialize_simulation_state!(sim::Simulation)
         get_simulation_state(sim),
         simulation_models,
         step_resolution,
+        get_initial_time(sim),
     )
 end
 
@@ -430,7 +431,8 @@ function _update_model!(model::DecisionModel, sim::Simulation)
     return
 end
 
-function _update_simulation_state!(sim::Simulation)
+function _update_simulation_state!(sim::Simulation, model::DecisionModel)
+    model_name = get_name(model)
     sim_store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
     # Temporary during development. Needs to be removed before merging to master
@@ -441,11 +443,10 @@ function _update_simulation_state!(sim::Simulation)
         problem_path = sim.internal.models_dir,
     ) do store
         state = get_simulation_state(sim)
-        for model_name in list_models(store), field in [:variables, :aux_variables, :duals]
+        for field in [:variables, :aux_variables, :duals]
             model_params = get_model_params(store, model_name)
             for key in list_fields(store, model_name, field)
                 state_info = getfield(state.decision_states, field)
-                model_params
                 res = read_result(
                     JuMP.Containers.DenseAxisArray,
                     store,
@@ -453,11 +454,14 @@ function _update_simulation_state!(sim::Simulation)
                     key,
                     simulation_time,
                 )
-                model_resolution = get_resolution(model_params)
-                horizon = get_horizon(model_params)
-                solution_time_steps =
-                    range(simulation_time, step = model_resolution, length = horizon)
-                update_state_data!(state_info[key], res, solution_time_steps)
+                end_of_step_timestamp = get_end_of_step_timestamp(state)
+                update_state_data!(
+                    state_info[key],
+                    res,
+                    simulation_time,
+                    model_params,
+                    end_of_step_timestamp,
+                )
             end
         end
     end
@@ -623,7 +627,7 @@ function _execute!(
                     end # Run problem Timer
 
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Simulation State" begin
-                        _update_simulation_state!(sim)
+                        _update_simulation_state!(sim, model)
                     end
 
                     global_problem_execution_count =
