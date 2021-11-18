@@ -48,7 +48,6 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::ProblemTemplate
     sys::PSY.System
-    initialization_file::String
     internal::Union{Nothing, ModelInternal}
     ext::Dict{String, Any}
 
@@ -57,7 +56,6 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         sys::PSY.System,
         settings::Settings,
         jump_model::Union{Nothing, JuMP.Model} = nothing;
-        initialization_file = "",
         name = nothing,
     ) where {M <: DecisionProblem}
         if name === nothing
@@ -74,7 +72,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
         )
-        new{M}(name, template, sys, initialization_file, internal, Dict{String, Any}())
+        new{M}(name, template, sys, internal, Dict{String, Any}())
     end
 end
 
@@ -89,7 +87,7 @@ function DecisionModel{M}(
     system_to_file = true,
     initialize_model = true,
     initialization_file = "",
-    serialize_initial_conditions = false,
+    force_initialization = false,
     export_pwl_vars = false,
     allow_fails = false,
     optimizer_log_print = false,
@@ -106,20 +104,14 @@ function DecisionModel{M}(
         warm_start = warm_start,
         system_to_file = system_to_file,
         initialize_model = initialize_model,
-        serialize_initial_conditions = serialize_initial_conditions,
+        initialization_file = initialization_file,
+        force_initialization = force_initialization,
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
         optimizer_log_print = optimizer_log_print,
         direct_mode_optimizer = direct_mode_optimizer,
     )
-    return DecisionModel{M}(
-        template,
-        sys,
-        settings,
-        jump_model,
-        name = name,
-        initialization_file = initialization_file,
-    )
+    return DecisionModel{M}(template, sys, settings, jump_model, name = name)
 end
 
 """
@@ -254,15 +246,7 @@ function build_pre_step!(model::DecisionModel)
         populate_contributing_devices!(get_template(model), get_system(model))
         add_services_to_device_model!(get_template(model))
 
-        run_initialization_step = get_initialize_model(get_settings(model))
-        initialization_file = get_initialization_file(model)
-        if run_initialization_step && isempty(initialization_file)
-            @info "Make Initial Conditions  Model"
-            build_initial_conditions!(model)
-            initialize!(model)
-        elseif !isempty(initialization_file)
-            # De-serialize initialization file
-        end
+        handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
@@ -318,9 +302,8 @@ function build_model!(model::DecisionModel)
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
 end
 
-function reset!(model::OperationModel)
+function reset!(model::DecisionModel)
     # TODO-PJ: This is needed until we remove the ParameterJuMP dependency
-    # TODO: If the optimization container already has initial condition data, do not re-initialize
     was_built_for_recurrent_solves = built_for_recurrent_solves(model)
     if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
@@ -332,7 +315,6 @@ function reset!(model::OperationModel)
         PSY.Deterministic,
     )
     model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
-    model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
     set_status!(model, BuildStatus.EMPTY)
     return

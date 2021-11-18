@@ -29,8 +29,10 @@ get_simulation_number(model::OperationModel) = model.internal.simulation_info.nu
 get_status(model::OperationModel) = model.internal.status
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
-get_initialization_file(model::OperationModel) = model.initialization_file
+get_log_file(model::OperationModel) = joinpath(get_output_dir(model), PROBLEM_LOG_FILENAME)
 get_output_dir(model::OperationModel) = model.internal.output_dir
+get_initial_conditions_file(model::OperationModel) =
+    joinpath(model.internal.output_dir, "initial_conditions.bin")
 get_recorder_dir(model::OperationModel) = joinpath(model.internal.output_dir, "recorder")
 get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
 get_parameters(model::OperationModel) = get_parameters(get_optimization_container(model))
@@ -122,6 +124,48 @@ function write_initial_conditions_data(model::OperationModel)
     return
 end
 
+function handle_initial_conditions!(model::OperationModel)
+    settings = get_settings(model)
+    initialize_model = get_initialize_model(settings)
+    force_initialization = get_force_initialization(settings)
+    serialized_initial_conditions_file = get_initial_conditions_file(model)
+    custom_init_file = get_initialization_file(settings)
+
+    if !initialize_model && force_initialization
+        throw(IS.ConflictingInputsError("!initialize_model && force_initialization"))
+    elseif !initialize_model && !isempty(custom_init_file)
+        throw(IS.ConflictingInputsError("!initialize_model && initialization_file"))
+    end
+
+    if !initialize_model
+        @info "Skip build of initial conditions"
+        return
+    end
+
+    if !isempty(custom_init_file)
+        if !isfile(custom_init_file)
+            error("initialization_file = $custom_init_file does not exist")
+        end
+        if custom_init_file != serialized_initial_conditions_file
+            cp(custom_init_file, serialized_initial_conditions_file, force = true)
+        end
+    end
+
+    if !force_initialization && isfile(serialized_initial_conditions_file)
+        set_initial_conditions_data!(
+            model.internal.container,
+            Serialization.deserialize(serialized_initial_conditions_file),
+        )
+        @info "Deserialized initial_conditions_data"
+    else
+        @info "Make Initial Conditions Model"
+        build_initial_conditions!(model)
+        initialize!(model)
+    end
+
+    return
+end
+
 function initialize!(model::OperationModel)
     container = get_optimization_container(model)
     if model.internal.ic_model_container === nothing
@@ -140,6 +184,10 @@ function initialize!(model::OperationModel)
     end
 
     write_initial_conditions_data(container, model.internal.ic_model_container)
+    init_file = get_initial_conditions_file(model)
+    Serialization.serialize(init_file, get_initial_conditions_data(container))
+    model.internal.ic_model_container = nothing
+    @info "Serialized initial conditions to $init_file"
     return
 end
 

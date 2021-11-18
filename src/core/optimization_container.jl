@@ -146,6 +146,8 @@ get_time_steps(container::OptimizationContainer) = container.time_steps
 get_variables(container::OptimizationContainer) = container.variables
 get_initial_conditions_data(container::OptimizationContainer) =
     container.initial_conditions_data
+set_initial_conditions_data!(container::OptimizationContainer, data) =
+    container.initial_conditions_data = data
 
 function is_milp(container::OptimizationContainer)
     type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)

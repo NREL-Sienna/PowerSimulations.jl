@@ -21,6 +21,7 @@ using DataFrames
 using DataStructures
 import UUIDs
 using Random
+import Serialization
 
 # Solvers
 using Ipopt
@@ -46,6 +47,7 @@ const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 
+include("test_utils/common_operation_model.jl")
 include("test_utils/model_checks.jl")
 include("test_utils/mock_operation_models.jl")
 include("test_utils/solver_definitions.jl")

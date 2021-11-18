@@ -556,3 +556,75 @@ end
     check_energy_initial_conditions_values(model, HydroEnergyReservoir)
     @test solve!(model) == RunStatus.SUCCESSFUL
 end
+
+@testset "Test serialization of InitialConditionsData" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
+    )
+    optimizer = GLPK_optimizer
+
+    # Construct and build with default behavior that builds initial conditions.
+    model = DecisionModel(template, sys; optimizer = optimizer)
+    output_dir = mktempdir(cleanup = true)
+
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    ic_file = PSI.get_initial_conditions_file(model)
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
+    @test solve!(model) == RunStatus.SUCCESSFUL
+
+    # Build again. Initial conditions should be deserialized.
+    PSI.reset!(model)
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
+    @test solve!(model) == RunStatus.SUCCESSFUL
+
+    # Build again, force rebuild of initial conditions.
+    model = DecisionModel(template, sys; optimizer = optimizer, force_initialization = true)
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
+    @test solve!(model) == RunStatus.SUCCESSFUL
+
+    # Construct and build again with custom initial conditions file.
+    initialization_file = joinpath(output_dir, ic_file * ".old")
+    mv(ic_file, initialization_file)
+    touch(ic_file)
+    model = DecisionModel(
+        template,
+        sys;
+        optimizer = optimizer,
+        initialization_file = initialization_file,
+    )
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
+    @test solve!(model) == RunStatus.SUCCESSFUL
+
+    # Construct and build again while skipping build of initial conditions.
+    rm(ic_file)
+    model = DecisionModel(template, sys; optimizer = optimizer, initialize_model = false)
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model, ic_file_exists = false, message = "skip")
+    @test solve!(model) == RunStatus.SUCCESSFUL
+
+    # Conflicting inputs
+    model = DecisionModel(
+        template,
+        sys;
+        optimizer = optimizer,
+        initialize_model = false,
+        force_initialization = true,
+    )
+    @test build!(model; output_dir = output_dir, console_level = Logging.Error.level + 1) ==
+          PSI.BuildStatus.FAILED
+    model = DecisionModel(
+        template,
+        sys;
+        optimizer = optimizer,
+        initialize_model = false,
+        initialization_file = "init_file.bin",
+    )
+    build!(model; output_dir = output_dir, console_level = Logging.Error.level + 1) ==
+    PSI.BuildStatus.FAILED
+end
