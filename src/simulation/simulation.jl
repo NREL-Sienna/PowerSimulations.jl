@@ -441,9 +441,10 @@ function _update_simulation_state!(sim::Simulation)
         problem_path = sim.internal.models_dir,
     ) do store
         state = get_simulation_state(sim)
-        for model_name in list_models(store), type in [:variables, :aux_variables]
+        for model_name in list_models(store), field in [:variables, :aux_variables, :duals]
             model_params = get_model_params(store, model_name)
-            for key in list_fields(store, model_name, type)
+            for key in list_fields(store, model_name, field)
+                state_info = getfield(state.decision_states, field)
                 model_params
                 res = read_result(
                     JuMP.Containers.DenseAxisArray,
@@ -452,7 +453,11 @@ function _update_simulation_state!(sim::Simulation)
                     key,
                     simulation_time,
                 )
-                update_state_data(state, res, model_params)
+                model_resolution = get_resolution(model_params)
+                horizon = get_horizon(model_params)
+                solution_time_steps =
+                    range(simulation_time, step = model_resolution, length = horizon)
+                update_state_data!(state_info[key], res, solution_time_steps)
             end
         end
     end
