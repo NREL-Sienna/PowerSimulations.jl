@@ -9,7 +9,7 @@ struct Settings
     system_to_file::Bool
     initialize_model::Bool
     initialization_file::String
-    force_initialization::Bool
+    deserialize_initial_conditions::Bool
     export_pwl_vars::Bool
     allow_fails::Bool
     ext::Dict{String, Any}
@@ -27,7 +27,7 @@ function Settings(
     system_to_file = true,
     initialize_model = true,
     initialization_file = "",
-    force_initialization = false,
+    deserialize_initial_conditions = false,
     export_pwl_vars = false,
     allow_fails = false,
     ext = Dict{String, Any}(),
@@ -59,7 +59,7 @@ function Settings(
         system_to_file,
         initialize_model,
         initialization_file,
-        force_initialization,
+        deserialize_initial_conditions,
         export_pwl_vars,
         allow_fails,
         ext,
@@ -122,7 +122,8 @@ get_warm_start(settings::Settings) = settings.warm_start[]
 get_system_to_file(settings::Settings) = settings.system_to_file
 get_initialize_model(settings::Settings) = settings.initialize_model
 get_initialization_file(settings::Settings) = settings.initialization_file
-get_force_initialization(settings::Settings) = settings.force_initialization
+get_deserialize_initial_conditions(settings::Settings) =
+    settings.deserialize_initial_conditions
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails
 get_optimizer_log_print(settings::Settings) = settings.optimizer_log_print

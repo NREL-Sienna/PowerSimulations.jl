@@ -575,16 +575,21 @@ end
     test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
     @test solve!(model) == RunStatus.SUCCESSFUL
 
-    # Build again. Initial conditions should be deserialized.
+    # Build again. Initial conditions should be rebuilt.
     PSI.reset!(model)
     @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
     @test solve!(model) == RunStatus.SUCCESSFUL
 
-    # Build again, force rebuild of initial conditions.
-    model = DecisionModel(template, sys; optimizer = optimizer, force_initialization = true)
+    # Build again, use existing initial conditions.
+    model = DecisionModel(
+        template,
+        sys;
+        optimizer = optimizer,
+        deserialize_initial_conditions = true,
+    )
     @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     # Construct and build again with custom initial conditions file.
@@ -596,6 +601,7 @@ end
         sys;
         optimizer = optimizer,
         initialization_file = initialization_file,
+        deserialize_initial_conditions = true,
     )
     @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
     test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
@@ -614,9 +620,9 @@ end
         sys;
         optimizer = optimizer,
         initialize_model = false,
-        force_initialization = true,
+        deserialize_initial_conditions = true,
     )
-    @test build!(model; output_dir = output_dir, console_level = Logging.Error.level + 1) ==
+    @test build!(model; output_dir = output_dir, console_level = Logging.AboveMaxLevel) ==
           PSI.BuildStatus.FAILED
     model = DecisionModel(
         template,
@@ -625,6 +631,6 @@ end
         initialize_model = false,
         initialization_file = "init_file.bin",
     )
-    build!(model; output_dir = output_dir, console_level = Logging.Error.level + 1) ==
+    build!(model; output_dir = output_dir, console_level = Logging.AboveMaxLevel) ==
     PSI.BuildStatus.FAILED
 end
