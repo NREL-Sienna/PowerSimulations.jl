@@ -27,21 +27,21 @@ struct ProblemExecutionEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
     step::Int
-    problem::Int
+    model::Int
     status::String
 end
 
 function ProblemExecutionEvent(
     simulation_time::Dates.DateTime,
     step::Int,
-    problem::Int,
+    model::Int,
     status::AbstractString,
 )
     return ProblemExecutionEvent(
         IS.RecorderEventCommon("ProblemExecutionEvent"),
         simulation_time,
         step,
-        problem,
+        model,
         status,
     )
 end
@@ -54,14 +54,14 @@ struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     device_name::String
     new_value::Float64
     previous_value::Float64
-    problem_number::Int
+    model_number::Int
 end
 
 function InitialConditionUpdateEvent(
     simulation_time,
     ic::InitialCondition,
     previous_value::Float64,
-    problem_number::Int,
+    model_number::Int,
 )
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
@@ -71,7 +71,7 @@ function InitialConditionUpdateEvent(
         get_component_name(ic),
         get_condition(ic),
         previous_value,
-        problem_number,
+        model_number,
     )
 end
 
@@ -81,7 +81,7 @@ struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
     parameter_type::String
     device_type::String
     tag::String
-    problem_number::Int
+    model_name::String
 end
 
 function ParameterUpdateEvent(
@@ -89,7 +89,7 @@ function ParameterUpdateEvent(
     device_type::Type{<:PSY.Device},
     tag::String,
     execution_timestamp::Dates.DateTime,
-    problem_number::Int,
+    model_name,
 )
     return ParameterUpdateEvent(
         IS.RecorderEventCommon("ParameterUpdateEvent"),
@@ -97,42 +97,43 @@ function ParameterUpdateEvent(
         string(parameter_type),
         string(device_type),
         tag,
-        problem_number,
+        string(model_name),
     )
 end
 
-struct FeedforwardUpdateEvent <: IS.AbstractRecorderEvent
+struct StateUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
-    category::String
-    simulation_time::Dates.DateTime
-    parameter_type::String
-    device_name::String
-    previous_value::Float64
-    val::Float64
-    problem_number::Int
-    source::Int
+    execution_timestamp::Dates.DateTime
+    entry_type::String
+    component_type::String
+    model_name::String
 end
 
-function FeedforwardUpdateEvent(
-    category::String,
-    simulation_time::Dates.DateTime,
-    parameter::VariableValueParameter,
-    device_name::String,
-    val::Float64,
-    previous_value::Float64,
-    destination_model::DecisionModel,
-    source_model::DecisionModel,
+function StateUpdateEvent(
+    entry_type::DataType,
+    component_type::DataType,
+    execution_timestamp::Dates.DateTime,
+    model_name,
 )
-    return FeedforwardUpdateEvent(
-        IS.RecorderEventCommon("FeedforwardUpdateEvent"),
-        category,
-        simulation_time,
-        parameter,
-        device_name,
-        previous_value,
-        val,
-        get_simulation_number(destination_problem),
-        get_simulation_number(source_problem),
+    return StateUpdateEvent(
+        IS.RecorderEventCommon("StateUpdateEvent"),
+        execution_timestamp,
+        string(entry_type),
+        string(component_type),
+        string(model_name),
+    )
+end
+
+function StateUpdateEvent(
+    key::OptimizationContainerKey,
+    execution_timestamp::Dates.DateTime,
+    model_name,
+)
+    return StateUpdateEvent(
+        get_entry_type(key),
+        get_component_type(key),
+        execution_timestamp,
+        model_name,
     )
 end
 
@@ -157,16 +158,16 @@ function get_simulation_step_range(filename::AbstractString, step::Int)
     return (start = events[1].simulation_time, done = events[2].simulation_time)
 end
 
-function get_simulation_problem_range(filename::AbstractString, step::Int, problem::Int)
+function get_simulation_model_range(filename::AbstractString, step::Int, model::Int)
     events = IS.list_recorder_events(
         ProblemExecutionEvent,
         filename,
-        x -> x.step == step && x.problem == problem,
+        x -> x.step == step && x.model == model,
     )
     if length(events) != 2
         throw(
             ArgumentError(
-                "$filename does not have two ProblemExecutionEvent for step = $step problem = $problem",
+                "$filename does not have two ProblemExecutionEvent for step = $step model = $model",
             ),
         )
     end
@@ -174,7 +175,7 @@ function get_simulation_problem_range(filename::AbstractString, step::Int, probl
     if events[1].status != "start" || events[2].status != "done"
         throw(
             ArgumentError(
-                "$filename does not contain start and done events for step = $step problem = $problem",
+                "$filename does not contain start and done events for step = $step model = $model",
             ),
         )
     end
@@ -207,7 +208,7 @@ end
         output_dir::AbstractString,
         filter_func::Union{Nothing, Function} = nothing;
         step = nothing,
-        problem = nothing,
+        model = nothing,
     ) where {T <: IS.AbstractRecorderEvent}
 
 List simulation events of type T in a simulation output directory.
@@ -215,18 +216,18 @@ List simulation events of type T in a simulation output directory.
 # Arguments
 - `output_dir::AbstractString`: Simulation output directory
 - `filter_func::Union{Nothing, Function} = nothing`: Refer to [`show_simulation_events`](@ref).
-- `step::Int = nothing`: Filter events by step. Required if problem is passed.
-- `problem::Int = nothing`: Filter events by problem.
+- `step::Int = nothing`: Filter events by step. Required if model is passed.
+- `model::Int = nothing`: Filter events by model.
 """
 function list_simulation_events(
     ::Type{T},
     output_dir::AbstractString,
     filter_func::Union{Nothing, Function} = nothing;
     step = nothing,
-    problem = nothing,
+    model = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
-    if problem !== nothing && step === nothing
-        throw(ArgumentError("step is required if problem is passed"))
+    if model !== nothing && step === nothing
+        throw(ArgumentError("step is required if model is passed"))
     end
 
     recorder_file = _get_simulation_recorder_filename(output_dir)
@@ -238,10 +239,10 @@ function list_simulation_events(
         _filter_by_type_range!(events, step_range)
     end
 
-    if problem !== nothing
+    if model !== nothing
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
-        problem_range = get_simulation_problem_range(recorder_file, step, problem)
-        _filter_by_type_range!(events, problem_range)
+        model_range = get_simulation_model_range(recorder_file, step, model)
+        _filter_by_type_range!(events, model_range)
     end
 
     return events
@@ -263,7 +264,7 @@ end
         output_dir::AbstractString,
         filter_func::Union{Nothing,Function} = nothing;
         step = nothing,
-        problem = nothing,
+        model = nothing,
         wall_time = false,
         kwargs...,
     ) where { T <: IS.AbstractRecorderEvent}
@@ -274,8 +275,8 @@ Show all simulation events of type T in a simulation output directory.
 - `::Type{T}`: Recorder event type
 - `output_dir::AbstractString`: Simulation output directory
 - `filter_func::Union{Nothing, Function} = nothing`: Refer to [`show_recorder_events`](@ref).
-- `step::Int = nothing`: Filter events by step. Required if problem is passed.
-- `problem::Int = nothing`: Filter events by problem.
+- `step::Int = nothing`: Filter events by step. Required if model is passed.
+- `model::Int = nothing`: Filter events by model.
 - `wall_time = false`: If true, show the wall_time timestamp.
 """
 function show_simulation_events(
@@ -283,7 +284,7 @@ function show_simulation_events(
     output_dir::AbstractString,
     filter_func::Union{Nothing, Function} = nothing;
     step = nothing,
-    problem = nothing,
+    model = nothing,
     wall_time = false,
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
@@ -293,7 +294,7 @@ function show_simulation_events(
         output_dir,
         filter_func;
         step = step,
-        problem = problem,
+        model = model,
         wall_time = wall_time,
         kwargs...,
     )
@@ -334,12 +335,11 @@ function show_simulation_events(
     output_dir::AbstractString,
     filter_func::Union{Nothing, Function} = nothing;
     step = nothing,
-    problem = nothing,
+    model = nothing,
     wall_time = false,
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    events =
-        list_simulation_events(T, output_dir, filter_func; step = step, problem = problem)
+    events = list_simulation_events(T, output_dir, filter_func; step = step, model = model)
     show_recorder_events(io, events, filter_func; wall_time = wall_time, kwargs...)
 end
 
