@@ -433,36 +433,29 @@ end
 
 function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_name = get_name(model)
-    sim_store = get_simulation_store(sim)
+    store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
-    # Temporary during development. Needs to be removed before merging to master
-    open_store(
-        HdfSimulationStore,
-        sim.internal.store_dir,
-        "r";
-        problem_path = sim.internal.models_dir,
-    ) do store
-        state = get_simulation_state(sim)
-        for field in [:variables, :aux_variables, :duals]
-            model_params = get_model_params(store, model_name)
-            for key in list_fields(store, model_name, field)
-                state_info = getfield(state.decision_states, field)
-                res = read_result(
-                    JuMP.Containers.DenseAxisArray,
-                    store,
-                    model_name,
-                    key,
-                    simulation_time,
-                )
-                end_of_step_timestamp = get_end_of_step_timestamp(state)
-                update_state_data!(
-                    state_info[key],
-                    res,
-                    simulation_time,
-                    model_params,
-                    end_of_step_timestamp,
-                )
-            end
+    state = get_simulation_state(sim)
+    for field in [:variables, :aux_variables, :duals]
+        model_params = get_model_params(store, model_name)
+        for key in list_fields(store, model_name, field)
+            state_info = getfield(state.decision_states, field)
+            res = read_result(
+                JuMP.Containers.DenseAxisArray,
+                store,
+                model_name,
+                key,
+                simulation_time,
+            )
+            end_of_step_timestamp = get_end_of_step_timestamp(state)
+            update_state_data!(
+                state_info[key],
+                res,
+                simulation_time,
+                model_params,
+                end_of_step_timestamp,
+            )
+            IS.@record :execution StateUpdateEvent(key, simulation_time, model_name)
         end
     end
 end
