@@ -497,17 +497,21 @@ end
     test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
     @test run!(model) == RunStatus.SUCCESSFUL
 
-    # Build again. Initial conditions should be deserialized.
+    # Build again, use existing initial conditions.
     PSI.reset!(model)
     @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
     @test run!(model) == RunStatus.SUCCESSFUL
 
-    # Build again, force rebuild of initial conditions.
-    model =
-        EmulationModel(template, sys; optimizer = optimizer, force_initialization = true)
+    # Build again, use existing initial conditions.
+    model = EmulationModel(
+        template,
+        sys;
+        optimizer = optimizer,
+        deserialize_initial_conditions = true,
+    )
     @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists = true, message = "make")
+    test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
     @test run!(model) == RunStatus.SUCCESSFUL
 
     # Construct and build again with custom initial conditions file.
@@ -519,6 +523,7 @@ end
         sys;
         optimizer = optimizer,
         initialization_file = initialization_file,
+        deserialize_initial_conditions = true,
     )
     @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
     test_ic_serialization_outputs(model, ic_file_exists = true, message = "deserialize")
