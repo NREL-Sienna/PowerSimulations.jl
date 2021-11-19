@@ -420,7 +420,8 @@ function _apply_warm_start!(model::DecisionModel)
     container = get_optimization_container(model)
     jump_model = get_jump_model(container)
     all_vars = JuMP.all_variables(jump_model)
-    JuMP.set_start_value.(all_vars, JuMP.value.(all_vars))
+    all_vars_value = JuMP.value.(all_vars)
+    JuMP.set_start_value.(all_vars, all_vars_value)
     return
 end
 
