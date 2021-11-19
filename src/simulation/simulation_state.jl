@@ -77,7 +77,14 @@ function _initialize_model_states!(
         for (key, value) in field_containers
             # TODO: Handle case of sparse_axis_array
             value_counts = params[key][1] ÷ params[key][2]
-            column_names, _ = axes(value)
+            if length(axes(value)) == 1
+                column_names = [string(encode_key(key))]
+            elseif length(axes(value)) == 2
+                column_names, _ = axes(value)
+            else
+                @warn("Multidimensional Array caching is not currently supported")
+                continue
+            end
             if !haskey(field_states, key) ||
                get_timestamps_length(field_states[key]) < value_counts
                 field_states[key] = StateData(
@@ -148,15 +155,20 @@ function update_state_data!(
     offset = resolution_ratio - 1
 
     # Not most optimal way to search. Most be improved before merging to master
-    result_time_index, names = axes(store_data)
+    names, result_time_index = axes(store_data)
+    state_names, _ = axes(state_data.values)
+
+    # This implementation can fail if the names aren't in the same order. This protects for this
+    @assert_op state_names == names
 
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        for n in names
-            state_data.values[n, state_range].data .= store_data[t, n]
+        for j in eachindex(names)
+            for i in state_range
+                state_data.values.data[j, i] = store_data.data[j, t]
+            end
         end
         state_data_index += resolution_ratio
     end
-
     return
 end
