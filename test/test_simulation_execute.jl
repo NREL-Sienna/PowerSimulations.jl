@@ -4,11 +4,8 @@
     models = SimulationModels([
         DecisionModel(template_ed, c_sys, name = "ED", optimizer = ipopt_optimizer),
     ])
-    test_sequence = SimulationSequence(
-        models = models,
-        intervals = Dict("ED" => (Hour(24), 0)),
-        ini_cond_chronology = InterProblemChronology(),
-    )
+    test_sequence =
+        SimulationSequence(models = models, ini_cond_chronology = InterProblemChronology())
     sim_single = Simulation(
         name = "consecutive",
         steps = 2,
@@ -22,6 +19,7 @@
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
+#=
 @testset "All stages executed - No Cache" begin
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
@@ -302,3 +300,4 @@ end
     #     _test_plain_print_methods(list)
     # end
 end
+=#
