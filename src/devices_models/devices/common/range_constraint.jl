@@ -228,10 +228,11 @@ function add_lower_bound_range_constraints_impl!(
     for (i, device) in enumerate(devices), t in time_steps
         !does_subcomponent_exist(device, PSY.ThermalGen) && continue
         ci_name = PSY.get_name(device)
+        subcomp_key = string(PSY.ThermalGen)
         limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            array[ci_name, PSY.ThermalGen, t] >= limits.min
+            array[ci_name, subcomp_key, t] >= limits.min
         )
     end
 end
@@ -262,10 +263,11 @@ function add_upper_bound_range_constraints_impl!(
     for (i, device) in enumerate(devices), t in time_steps
         !does_subcomponent_exist(device, PSY.ThermalGen) && continue
         ci_name = PSY.get_name(device)
+        subcomp_key = string(PSY.ThermalGen)
         limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_ub[ci_name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            array[ci_name, PSY.ThermalGen, t] <= limits.max
+            array[ci_name, subcomp_key, t] <= limits.max
         )
     end
 end
@@ -906,10 +908,11 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     multiplier = get_parameter_multiplier_array(container, P(), V)
     for (i, device) in enumerate(devices), t in time_steps
         !does_subcomponent_exist(device, PSY.RenewableGen) && continue
+        subcomp_key = string(PSY.RenewableGen)
         name = PSY.get_name(device)
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            array[name, PSY.RenewableGen, t] <= multiplier[name, t] * parameter[name, t]
+            array[name, subcomp_key, t] <= multiplier[name, t] * parameter[name, t]
         )
     end
 end
