@@ -150,9 +150,7 @@ set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
 
 function is_milp(container::OptimizationContainer)
-    type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)
-    supports_milp = hasfield(type_of_optimizer, :last_solved_by_mip)
-    !supports_milp && return false
+    !supports_milp(container) && return false
     return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 
