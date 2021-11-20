@@ -568,6 +568,7 @@ end
         template,
         ramp_test_sys;
         optimizer = Cbc_optimizer,
+        initialize_model = false,
     )
     @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(ED, false, 10, 0, 20, 10, 5, false)
@@ -583,6 +584,7 @@ end
         template,
         PSB.build_system(PSITestSystems, "c_duration_test");
         optimizer = Cbc_optimizer,
+        initialize_model = false,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 56, 0, 56, 14, 21, true)
@@ -597,6 +599,7 @@ end
         template,
         PSB.build_system(PSITestSystems, "c_linear_pwl_test");
         optimizer = Cbc_optimizer,
+        initialize_model = false,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 32, 0, 8, 4, 10, true)
@@ -610,6 +613,7 @@ end
         template,
         PSB.build_system(PSITestSystems, "c_sos_pwl_test");
         optimizer = Cbc_optimizer,
+        initialize_model = false,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 32, 0, 8, 4, 14, true)
@@ -643,6 +647,7 @@ end
         CopperPlatePowerModel,
         c_sys5_pwl_ed_nonconvex;
         export_pwl_vars = true,
+        initialize_model = false,
     )
     @test_throws IS.InvalidValue mock_construct_device!(
         model,
