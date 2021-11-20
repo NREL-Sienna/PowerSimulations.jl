@@ -181,36 +181,39 @@ function add_variable!(
     settings = get_settings(container)
     binary = get_variable_binary(variable_type, D, formulation)
     subcomp_types = get_subcomponent_types(T)
+    subcomp_keys = string.(get_subcomponent_types(T))
 
     variable = add_variable_container!(
         container,
         variable_type,
         D,
         [PSY.get_name(d) for d in devices],
-        subcomp_types,
+        subcomp_keys,
         time_steps;
         sparse = true,
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types
         !does_subcomponent_exist(d, subcomp) && continue
-
+        subcomp_key = string(subcomp)
         name = PSY.get_name(d)
-        variable[name, subcomp, t] = JuMP.@variable(
+        variable[name, subcomp_key, t] = JuMP.@variable(
             container.JuMPmodel,
             base_name = "$(variable_type)_$(D)_$(subcomp)_{$(name), $(t)}",
             binary = binary
         )
 
         ub = get_variable_upper_bound(variable_type, d, formulation)
-        ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp, t], ub)
+        ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp_key, t], ub)
 
         lb = get_variable_lower_bound(variable_type, d, formulation)
-        lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, subcomp, t], lb)
+        lb !== nothing &&
+            !binary &&
+            JuMP.set_lower_bound(variable[name, subcomp_key, t], lb)
 
         if get_warm_start(settings)
             init = get_variable_warm_start_value(variable_type, d, formulation)
-            init !== nothing && JuMP.set_start_value(variable[name, subcomp, t], init)
+            init !== nothing && JuMP.set_start_value(variable[name, subcomp_key, t], init)
         end
     end
 

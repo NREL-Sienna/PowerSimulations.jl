@@ -142,10 +142,38 @@ end
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
 
+    template_uc = ProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
+    set_device_model!(template_uc, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+
+    template_ed = ProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template_ed, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template_ed, PowerLoad, StaticPowerLoad)
+    set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+
     models = SimulationModels([
-        DecisionModel(template, name = "MD", sys_md, system_to_file = false),
-        DecisionModel(template, name = "UC", sys_uc, system_to_file = false),
-        DecisionModel(template, name = "ED", sys_ed, system_to_file = false),
+        DecisionModel(
+            template,
+            name = "MD",
+            sys_md,
+            initialize_model = false,
+            system_to_file = false,
+        ),
+        DecisionModel(
+            template_uc,
+            name = "UC",
+            sys_uc,
+            initialize_model = false,
+            system_to_file = false,
+        ),
+        DecisionModel(
+            template_ed,
+            name = "ED",
+            sys_ed,
+            initialize_model = false,
+            system_to_file = false,
+        ),
     ])
 
     feedforwards = Dict(
@@ -180,5 +208,5 @@ end
         sequence = test_sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
-    # @test build!(sim, serialize = false) == PSI.BuildStatus.BUILT
+    @test build!(sim, serialize = false) == PSI.BuildStatus.BUILT
 end

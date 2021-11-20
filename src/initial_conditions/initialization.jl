@@ -1,7 +1,7 @@
 function get_initial_conditions_template(model::OperationModel)
     ic_template = ProblemTemplate(get_network_model(model.template))
     for device_model in values(model.template.devices)
-        base_model = get_initial_conditions_device_model(device_model)
+        base_model = get_initial_conditions_device_model(model, device_model)
         base_model.use_slacks = device_model.use_slacks
         base_model.duals = device_model.duals
         base_model.time_series_names = device_model.time_series_names
@@ -9,7 +9,7 @@ function get_initial_conditions_template(model::OperationModel)
         set_device_model!(ic_template, base_model)
     end
     for device_model in values(model.template.branches)
-        base_model = get_initial_conditions_device_model(device_model)
+        base_model = get_initial_conditions_device_model(model, device_model)
         base_model.use_slacks = device_model.use_slacks
         base_model.duals = device_model.duals
         base_model.time_series_names = device_model.time_series_names

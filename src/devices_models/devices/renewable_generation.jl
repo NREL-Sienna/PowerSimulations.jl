@@ -24,10 +24,12 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenew
 #! format: on
 
 get_initial_conditions_device_model(
+    ::OperationModel,
     ::DeviceModel{T, <:AbstractRenewableFormulation},
 ) where {T <: PSY.RenewableGen} = DeviceModel(T, RenewableFullDispatch)
 
 get_initial_conditions_device_model(
+    ::OperationModel,
     ::DeviceModel{T, FixedOutput},
 ) where {T <: PSY.RenewableGen} = DeviceModel(T, FixedOutput)
 

@@ -64,10 +64,13 @@ get_variable_binary(::ReservationVariable, ::Type{<:PSY.HybridSystem}, ::Abstrac
 initial_condition_default(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_initial_energy(PSY.get_storage(d))
 initial_condition_variable(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = EnergyVariable()
 
-get_initial_conditions_device_model(::DeviceModel{T, <:AbstractHybridFormulation}) where {T <: PSY.HybridSystem} = DeviceModel(T, BasicHybridDisaptch)
 get_multiplier_value( ::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_renewable_unit(d))
 
 #! format: on
+get_initial_conditions_device_model(
+    ::OperationModel,
+    ::DeviceModel{T, <:AbstractHybridFormulation},
+) where {T <: PSY.HybridSystem} = DeviceModel(T, BasicHybridDisaptch)
 
 does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) =
     !isnothing(PSY.get_thermal_unit(v))
@@ -254,10 +257,11 @@ function add_constraints!(
         !does_subcomponent_exist(d, subcomp) && continue
         name = PSY.get_name(d)
         limits = get_min_max_limits(d, subcomp, T, W)
+        subcomp_key = string(subcomp)
         constraint_ub[name, subcomp, t] =
-            JuMP.@constraint(container.JuMPmodel, var[name, subcomp, t] <= limits.max)
+            JuMP.@constraint(container.JuMPmodel, var[name, subcomp_key, t] <= limits.max)
         constraint_lb[name, subcomp, t] =
-            JuMP.@constraint(container.JuMPmodel, var[name, subcomp, t] >= limits.min)
+            JuMP.@constraint(container.JuMPmodel, var[name, subcomp_key, t] >= limits.min)
     end
 end
 ######################## Energy balance constraints ############################
@@ -346,8 +350,8 @@ function add_constraints!(
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             var_p[name, t] ==
-            var_sub_p[name, PSY.RenewableGen, t] +
-            var_sub_p[name, PSY.ThermalGen, t] +
+            var_sub_p[name, string(PSY.RenewableGen), t] +
+            var_sub_p[name, string(PSY.ThermalGen), t] +
             var_out[name, t] - var_in[name, t]
         )
     end
@@ -382,9 +386,9 @@ function add_constraints!(
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             var_q[name, t] ==
-            var_sub_q[name, PSY.RenewableGen, t] +
-            var_sub_q[name, PSY.ThermalGen, t] +
-            var_sub_q[name, PSY.Storage, t]
+            var_sub_q[name, string(PSY.RenewableGen), t] +
+            var_sub_q[name, string(PSY.ThermalGen), t] +
+            var_sub_q[name, string(PSY.Storage), t]
         )
     end
     return
@@ -538,7 +542,7 @@ function add_constraints!(
         con_up[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             sub_expr_up[name, t] == sum(
-                sub_r_up[name, sub_comp_type, t] for
+                sub_r_up[name, string(sub_comp_type), t] for
                 sub_comp_type in [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
             )
         )
@@ -570,7 +574,7 @@ function add_constraints!(
         con_dn[name, t] = JuMP.@constraint(
             container.JuMPmodel,
             sub_expr_dn[name, t] == sum(
-                sub_r_dn[name, sub_comp_type, t] for
+                sub_r_dn[name, string(sub_comp_type), t] for
                 sub_comp_type in [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
             )
         )

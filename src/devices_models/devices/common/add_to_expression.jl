@@ -29,12 +29,13 @@ function add_expressions!(
 } where {D <: PSY.HybridSystem}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
+    subcomp_keys = string.([PSY.ThermalGen, PSY.RenewableGen])
     add_expression_container!(
         container,
         T(),
         D,
         names,
-        [PSY.ThermalGen, PSY.RenewableGen],
+        subcomp_keys,
         time_steps;
         sparse = true,
     )
@@ -499,10 +500,11 @@ function add_to_expression!(
         t in get_time_steps(container),
         sub_comp in [PSY.ThermalGen, PSY.RenewableGen]
 
+        sub_comp_key = string(sub_comp)
         name = PSY.get_name(d)
         add_to_jump_expression!(
-            expression[name, sub_comp, t],
-            variable[name, sub_comp, t],
+            expression[name, sub_comp_key, t],
+            variable[name, sub_comp_key, t],
             1.0,
         )
     end

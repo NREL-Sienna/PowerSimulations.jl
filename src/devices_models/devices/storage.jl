@@ -58,6 +58,7 @@ get_initial_parameter_value(::VariableValueParameter, d::PSY.Storage, ::Abstract
 #! format: on
 
 get_initial_conditions_device_model(
+    ::OperationModel,
     ::DeviceModel{T, <:AbstractStorageFormulation},
 ) where {T <: PSY.Storage} = DeviceModel(T, BookKeeping)
 

@@ -26,10 +26,12 @@ struct StaticBranchUnbounded <: AbstractBranchFormulation end
 # for the branch flows either in AC or DC.
 
 get_initial_conditions_device_model(
+    ::OperationModel,
     ::DeviceModel{T, <:AbstractBranchFormulation},
 ) where {T <: PSY.ACBranch} = DeviceModel(T, StaticBranch)
 
 get_initial_conditions_device_model(
+    ::OperationModel,
     ::DeviceModel{T, <:AbstractBranchFormulation},
 ) where {T <: PSY.MonitoredLine} = DeviceModel(T, StaticBranchUnbounded)
 
