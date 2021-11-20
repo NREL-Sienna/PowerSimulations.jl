@@ -2,15 +2,22 @@ const _SERIALIZED_MODEL_FILENAME = "model.bin"
 
 struct OptimizerAttributes
     name::String
+    version::String
     attributes::Any
 end
 
 function OptimizerAttributes(model::OperationModel, optimizer::MOI.OptimizerWithAttributes)
-    name = JuMP.solver_name(get_jump_model(model))
+    jump_model = get_jump_model(model)
+    name = JuMP.solver_name(jump_model)
     # Note that this uses private field access to MOI.OptimizerWithAttributes because there
     # is no public method available.
     # This could break if MOI changes their implementation.
-    return OptimizerAttributes(name, optimizer.params)
+    if MOI.supports(JuMP.backend(jump_model), MOI.SolverVersion())
+        version = MOI.get(JuMP.backend(jump_model), MOI.SolverVersion())
+    else
+        version = "MOI.SolverVersion not supported"
+    end
+    return OptimizerAttributes(name, version, optimizer.params)
 end
 
 function _get_optimizer_attributes(model::OperationModel)

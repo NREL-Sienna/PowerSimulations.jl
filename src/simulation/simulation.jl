@@ -267,6 +267,7 @@ function _initialize_simulation_state!(sim::Simulation)
         get_simulation_state(sim),
         simulation_models,
         step_resolution,
+        get_initial_time(sim),
     )
 end
 
@@ -419,7 +420,8 @@ function _apply_warm_start!(model::DecisionModel)
     container = get_optimization_container(model)
     jump_model = get_jump_model(container)
     all_vars = JuMP.all_variables(jump_model)
-    JuMP.set_start_value.(all_vars, JuMP.value.(all_vars))
+    all_vars_value = JuMP.value.(all_vars)
+    JuMP.set_start_value.(all_vars, all_vars_value)
     return
 end
 
@@ -430,30 +432,31 @@ function _update_model!(model::DecisionModel, sim::Simulation)
     return
 end
 
-function _update_simulation_state!(sim::Simulation)
-    sim_store = get_simulation_store(sim)
+function _update_simulation_state!(sim::Simulation, model::DecisionModel)
+    model_name = get_name(model)
+    store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
-    # Temporary during development. Needs to be removed before merging to master
-    open_store(
-        HdfSimulationStore,
-        sim.internal.store_dir,
-        "r";
-        problem_path = sim.internal.models_dir,
-    ) do store
-        state = get_simulation_state(sim)
-        for model_name in list_models(store), type in [:variables, :aux_variables]
-            model_params = get_model_params(store, model_name)
-            for key in list_fields(store, model_name, type)
-                model_params
-                res = read_result(
-                    JuMP.Containers.DenseAxisArray,
-                    store,
-                    model_name,
-                    key,
-                    simulation_time,
-                )
-                update_state_data(state, res, model_params)
-            end
+    state = get_simulation_state(sim)
+    for field in [:variables, :aux_variables, :duals]
+        model_params = get_model_params(store, model_name)
+        for key in list_fields(store, model_name, field)
+            state_info = getfield(state.decision_states, field)
+            res = read_result(
+                JuMP.Containers.DenseAxisArray,
+                store,
+                model_name,
+                key,
+                simulation_time,
+            )
+            end_of_step_timestamp = get_end_of_step_timestamp(state)
+            update_state_data!(
+                state_info[key],
+                res,
+                simulation_time,
+                model_params,
+                end_of_step_timestamp,
+            )
+            IS.@record :execution StateUpdateEvent(key, simulation_time, model_name)
         end
     end
 end
@@ -618,7 +621,7 @@ function _execute!(
                     end # Run problem Timer
 
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Simulation State" begin
-                        _update_simulation_state!(sim)
+                        _update_simulation_state!(sim, model)
                     end
 
                     global_problem_execution_count =

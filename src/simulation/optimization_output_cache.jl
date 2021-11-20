@@ -76,7 +76,7 @@ is_cached(cache::OptimizationResultCache, key, timestamp) =
 Log the cache hit percentages for all caches.
 """
 function log_cache_hit_percentages(cache::OptimizationResultCache)
-    for key in sort!(collect(keys(cache.data)))
+    for key in keys(cache.data)
         output_cache = cache.data[key]
         cache_hit_pecentage = get_cache_hit_percentage(output_cache)
         @debug "Cache stats" key cache_hit_pecentage

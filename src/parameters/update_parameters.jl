@@ -113,7 +113,7 @@ function update_parameter_values!(
             T,
             U,
             get_current_timestamp(model),
-            0,
+            get_name(model),
         )
     end
     return
@@ -130,7 +130,7 @@ function _gen_parameter_update_event(
     ::Type{<:PSY.Device},
     ::String,
     ::Dates.DateTime,
-    ::Int,
+    ::Any,
 )
     return
 end
@@ -140,13 +140,13 @@ function _gen_parameter_update_event(
     parameter_type::Type{<:ParameterType},
     device_type::Type{<:PSY.Device},
     timestamp::Dates.DateTime,
-    problem_number::Int,
+    model_name,
 )
     IS.@record :execution ParameterUpdateEvent(
         parameter_type,
         device_type,
         attributes.name,
         timestamp,
-        problem_number,
+        model_name,
     )
 end
