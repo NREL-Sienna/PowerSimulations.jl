@@ -311,7 +311,7 @@ function read_result(
 )
     data, columns = _read_data_columns(store, model_name, key, timestamp)
     return JuMP.Containers.DenseAxisArray(
-        LinearAlgebra.transpose(data),
+        permuteddims(data),
         columns,
         1:size(data)[1],
     )
