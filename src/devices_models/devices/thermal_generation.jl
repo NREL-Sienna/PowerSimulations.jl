@@ -91,19 +91,40 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 
 #! format: on
 function get_initial_conditions_device_model(
-    model::DeviceModel{T, D},
+    model::OperationModel,
+    ::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    return DeviceModel(T, ThermalBasicDispatch)
+    optimizer_model = model.internal.container.JuMPmodel.moi_backend.optimizer.model
+    supports_milp =
+        MOI.supports_constraint(optimizer_model, MOI.SingleVariable, MOI.ZeroOne)
+    if supports_milp
+        return DeviceModel(T, ThermalBasicUnitCommitment)
+    else
+        throw(
+            IS.ConflictingInputsError(
+                "Model requires initialization but provided solver doesn't support mixed integer problems.",
+            ),
+        )
+    end
 end
 
 function get_initial_conditions_device_model(
-    model::DeviceModel{T, D},
+    ::OperationModel,
+    ::DeviceModel{T, D},
+) where {T <: PSY.ThermalGen, D <: ThermalDispatchNoMin}
+    return DeviceModel(T, ThermalDispatchNoMin)
+end
+
+function get_initial_conditions_device_model(
+    ::OperationModel,
+    ::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
     return DeviceModel(T, ThermalBasicUnitCommitment)
 end
 
 function get_initial_conditions_device_model(
-    model::DeviceModel{T, D},
+    ::OperationModel,
+    ::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractCompactUnitCommitment}
     return DeviceModel(T, ThermalBasicCompactUnitCommitment)
 end

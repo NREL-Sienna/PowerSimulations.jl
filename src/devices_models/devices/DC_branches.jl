@@ -49,6 +49,7 @@ function get_default_attributes(
 end
 
 get_initial_conditions_device_model(
+    ::OperationModel,
     ::DeviceModel{T, <:AbstractDCLineFormulation},
 ) where {T <: PSY.HVDCLine} = DeviceModel(T, HVDCDispatch)
 
