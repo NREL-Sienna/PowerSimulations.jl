@@ -171,7 +171,6 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     warm_start_enabled = get_warm_start(settings)
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
-
     if get_optimizer_log_print(settings)
         JuMP.unset_silent(JuMPmodel)
         @debug "optimizer unset to silent" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -205,7 +204,6 @@ function _make_jump_model(settings::Settings)
         JuMPmodel = JuMP.Model(optimizer)
     end
     _finalize_jump_model!(JuMPmodel, settings)
-
     return JuMPmodel
 end
 
@@ -358,7 +356,6 @@ end
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
-
     initialize_system_expressions!(container, transmission, sys)
 
     # Order is required
@@ -471,6 +468,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
     check_optimization_container(container)
+
     return
 end
 
@@ -502,9 +500,10 @@ function export_optimizer_stats(
     container::OptimizationContainer,
     path::String,
 )
-    optimizer_stats[:termination_status] = Int(JuMP.termination_status(container.JuMPmodel))
-    optimizer_stats[:primal_status] = Int(JuMP.primal_status(container.JuMPmodel))
-    optimizer_stats[:dual_status] = Int(JuMP.dual_status(container.JuMPmodel))
+    jump_model = get_jump_model(container)
+    optimizer_stats[:termination_status] = Int(JuMP.termination_status(jump_model))
+    optimizer_stats[:primal_status] = Int(JuMP.primal_status(jump_model))
+    optimizer_stats[:dual_status] = Int(JuMP.dual_status(jump_model))
 
     if optimizer_stats[:primal_status] == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         optimizer_stats[:obj_value] = JuMP.objective_value(container.JuMPmodel)
