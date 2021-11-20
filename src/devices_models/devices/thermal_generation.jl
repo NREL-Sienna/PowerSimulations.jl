@@ -94,10 +94,7 @@ function get_initial_conditions_device_model(
     model::OperationModel,
     ::DeviceModel{T, D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    optimizer_model = model.internal.container.JuMPmodel.moi_backend.optimizer.model
-    supports_milp =
-        MOI.supports_constraint(optimizer_model, MOI.SingleVariable, MOI.ZeroOne)
-    if supports_milp
+    if supports_milp(get_optimization_container(model))
         return DeviceModel(T, ThermalBasicUnitCommitment)
     else
         throw(

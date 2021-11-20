@@ -156,6 +156,12 @@ function is_milp(container::OptimizationContainer)
     return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 
+function supports_milp(container::OptimizationContainer)
+    jump_model = get_jump_model(container)
+    optimizer_model = jump_model.moi_backend.optimizer.model
+    return MOI.supports_constraint(optimizer_model, MOI.VariableIndex, MOI.ZeroOne)
+end
+
 function _validate_warm_start_support(JuMPmodel::JuMP.Model, warm_start_enabled::Bool)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =

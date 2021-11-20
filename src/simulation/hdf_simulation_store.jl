@@ -310,7 +310,7 @@ function read_result(
     timestamp::Dates.DateTime,
 )
     data, columns = _read_data_columns(store, model_name, key, timestamp)
-    return JuMP.Containers.DenseAxisArray(permuteddims(data), columns, 1:size(data)[1])
+    return JuMP.Containers.DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
 end
 
 function read_result(
