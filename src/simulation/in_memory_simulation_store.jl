@@ -1,34 +1,17 @@
 """
-Stores simulation data for one problem.
-"""
-mutable struct ProblemData
-    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-end
-
-function ProblemData()
-    return ProblemData(
-        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
-        Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
-        Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}(),
-    )
-end
-
-"""
 Stores simulation data in memory
 """
 mutable struct InMemorySimulationStore <: SimulationStore
     params::SimulationStoreParams
-    data::OrderedDict{Symbol, ProblemData}
-    # The key is the problem name.
+    data::OrderedDict{Symbol, DecisionModelOptimizerResults}
+    # The key is the model name.
     optimizer_stats::Dict{Symbol, OrderedDict{Dates.DateTime, OptimizerStats}}
 end
 
 function InMemorySimulationStore()
     return InMemorySimulationStore(
         SimulationStoreParams(),
-        OrderedDict{Symbol, ProblemData}(),
+        OrderedDict{Symbol, DecisionModelOptimizerResults}(),
         Dict{Symbol, OrderedDict{Dates.DateTime, OptimizerStats}}(),
     )
 end
@@ -45,9 +28,9 @@ function open_store(
 end
 
 function Base.empty!(store::InMemorySimulationStore)
-    for problem_data in values(store.data)
+    for model_data in values(store.data)
         for type in STORE_CONTAINERS
-            container = getfield(problem_data, type)
+            container = getfield(model_data, type)
             for dict in values(container)
                 empty!(dict)
             end
@@ -58,68 +41,68 @@ function Base.empty!(store::InMemorySimulationStore)
     @debug "Emptied the store"
 end
 
-Base.isopen(store::InMemorySimulationStore) = true
-Base.close(store::InMemorySimulationStore) = nothing
-Base.flush(store::InMemorySimulationStore) = nothing
+Base.isopen(::InMemorySimulationStore) = true
+Base.close(::InMemorySimulationStore) = nothing
+Base.flush(::InMemorySimulationStore) = nothing
 get_params(store::InMemorySimulationStore) = store.params
 
-list_problems(store::InMemorySimulationStore) = keys(store.data)
-log_cache_hit_percentages(InMemorySimulationStore) = nothing
+list_models(store::InMemorySimulationStore) = keys(store.data)
+log_cache_hit_percentages(::InMemorySimulationStore) = nothing
 
 function list_fields(
     store::InMemorySimulationStore,
-    problem::Symbol,
+    model_name::Symbol,
     container_type::Symbol,
 )
-    container = getfield(store.data[problem], container_type)
+    container = getfield(store.data[model_name], container_type)
     return keys(container)
 end
 
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
-    model,
+    model_name,
     stats::OptimizerStats,
-    timestamp,
+    timestamp::Dates.DateTime,
 )
-    store.optimizer_stats[Symbol(model)][timestamp] = stats
+    store.optimizer_stats[Symbol(model_name)][timestamp] = stats
     return
 end
 
-function read_problem_optimizer_stats(
+function read_model_optimizer_stats(
     store::InMemorySimulationStore,
-    simulation_step,
-    problem,
-    timestamp,
+    ::Int,
+    model_name,
+    timestamp::Dates.DateTime,
 )
     _check_timestamp(store.optimizer_stats, timestamp)
-    return store.optimizer_stats[problem][timestamp]
+    return store.optimizer_stats[model_name][timestamp]
 end
 
-function read_problem_optimizer_stats(store::InMemorySimulationStore, problem)
-    stats = [to_namedtuple(x) for x in values(store.optimizer_stats[problem])]
+function read_model_optimizer_stats(store::InMemorySimulationStore, model_name)
+    stats = [to_namedtuple(x) for x in values(store.optimizer_stats[model_name])]
     return DataFrames.DataFrame(stats)
 end
 
-function initialize_problem_storage!(
+function initialize_model_storage!(
     store::InMemorySimulationStore,
     params,
-    problem_reqs,
+    model_reqs,
     flush_rules,
 )
     store.params = params
-    @debug "initialize_problem_storage"
+    @debug "initialize in memory storage"
 
-    for problem in keys(store.params.models)
-        store.data[problem] = ProblemData()
+    for model_name in keys(store.params.models)
+        store.data[model_name] = DecisionModelOptimizerResults()
         for type in STORE_CONTAINERS
-            for (name, reqs) in getfield(problem_reqs[problem], type)
-                container = getfield(store.data[problem], type)
+            for (name, reqs) in getfield(model_reqs[model_name], type)
+                container = getfield(store.data[model_name], type)
                 container[name] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
             end
         end
 
-        store.optimizer_stats[problem] = OrderedDict{Dates.DateTime, OptimizerStats}()
-        @debug "Initialized optimizer_stats_datasets $problem"
+        store.optimizer_stats[model_name] = OrderedDict{Dates.DateTime, OptimizerStats}()
+        @debug "Initialized optimizer_stats_datasets $model_name"
     end
 end
 
@@ -128,7 +111,7 @@ function write_result!(
     model_name,
     container_type,
     name,
-    timestamp,
+    timestamp::Dates.DateTime,
     array,
     columns = nothing,
 )
