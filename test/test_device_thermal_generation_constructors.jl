@@ -612,7 +612,7 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-        optimizer = Cbc_optimizer,
+        optimizer = SCIP_optimizer,
         initialize_model = false,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
