@@ -470,7 +470,7 @@ function update_model!(
         # TODO: Implement this case where the model is re-built
         # build_impl!(model)
     else
-        update_model!(model, get_simulation_state(sim))
+        # update_model!(model, get_simulation_state(sim))
     end
     return
 end

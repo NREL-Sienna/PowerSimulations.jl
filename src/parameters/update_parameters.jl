@@ -140,8 +140,7 @@ end
 function update_parameter_values!(
     model::OperationModel,
     ::ParameterKey{T, U},
-) where {T <: VariableValueParameter, U <: PSY.Device} 
-end
+) where {T <: VariableValueParameter, U <: PSY.Device} end
 
 function _gen_parameter_update_event(
     ::ParameterAttributes,
