@@ -12,9 +12,10 @@ function OptimizerAttributes(model::OperationModel, optimizer::MOI.OptimizerWith
     # Note that this uses private field access to MOI.OptimizerWithAttributes because there
     # is no public method available.
     # This could break if MOI changes their implementation.
-    if MOI.supports(JuMP.backend(jump_model), MOI.SolverVersion())
+    try
         version = MOI.get(JuMP.backend(jump_model), MOI.SolverVersion())
-    else
+    catch
+        @debug "Solver Version not supported by the solver"
         version = "MOI.SolverVersion not supported"
     end
     return OptimizerAttributes(name, version, optimizer.params)
