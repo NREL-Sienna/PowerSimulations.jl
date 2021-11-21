@@ -617,7 +617,7 @@ end
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 32, 0, 8, 4, 14, true)
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 8188.41, 10.0)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89, 10.0)
 end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin

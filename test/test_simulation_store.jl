@@ -32,7 +32,6 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
             horizon,
             model_defs[model]["interval"],
             model_defs[model]["resolution"],
-            model_defs[model]["end_of_interval_step"],
             model_defs[model]["base_power"],
             model_defs[model]["system_uuid"],
         )
@@ -151,7 +150,6 @@ end
             "variables" => Dict(x => ones(12, 5) for x in keys(variables)),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(1),
-            "end_of_interval_step" => 1,
             "base_power" => 100.0,
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
@@ -162,7 +160,6 @@ end
             "variables" => Dict(x => ones(24, 3) for x in keys(variables)),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(24),
-            "end_of_interval_step" => 12,
             "base_power" => 100.0,
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
