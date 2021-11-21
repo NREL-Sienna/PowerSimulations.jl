@@ -14,11 +14,12 @@ function OptimizerAttributes(model::OperationModel, optimizer::MOI.OptimizerWith
     # This could break if MOI changes their implementation.
     try
         version = MOI.get(JuMP.backend(jump_model), MOI.SolverVersion())
+        return OptimizerAttributes(name, version, optimizer.params)
     catch
         @debug "Solver Version not supported by the solver"
         version = "MOI.SolverVersion not supported"
+        return OptimizerAttributes(name, version, optimizer.params)
     end
-    return OptimizerAttributes(name, version, optimizer.params)
 end
 
 function _get_optimizer_attributes(model::OperationModel)
