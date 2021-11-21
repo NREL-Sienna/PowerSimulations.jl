@@ -207,7 +207,6 @@ function init_model_store_params!(model::DecisionModel)
     system = get_system(model)
     interval = PSY.get_forecast_interval(system)
     resolution = PSY.get_time_series_resolution(system)
-    end_of_interval_step = 1 # get_end_of_interval_step(get_internal(model)) #TODO: to be implemented when simulation is working
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
     model.internal.store_parameters = ModelStoreParams(
@@ -215,7 +214,6 @@ function init_model_store_params!(model::DecisionModel)
         horizon,
         interval,
         resolution,
-        end_of_interval_step,
         base_power,
         sys_uuid,
         get_metadata(get_optimization_container(model)),
@@ -415,6 +413,16 @@ function solve!(
     end
 
     return get_run_status(model)
+end
+
+function update_model!(model::DecisionModel)
+    for key in keys(get_parameters(model))
+        update_parameter_values!(model, key)
+    end
+    for key in keys(get_initial_conditions(model))
+        update_initial_conditions!(model, key)
+    end
+    return
 end
 
 function write_results!(

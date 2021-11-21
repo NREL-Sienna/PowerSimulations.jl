@@ -14,6 +14,14 @@ get_jump_model(model::OperationModel) = get_internal(model).container.JuMPmodel
 get_name(model::OperationModel) = model.name
 get_store(model::OperationModel) = model.store
 
+function get_requires_rebuild(model::OperationModel)
+    sim_info = get_internal(model).simulation_info
+    if sim_info === nothing
+        error("Model not part of a simulation")
+    end
+    return sim_info.requires_rebuild
+end
+
 get_optimization_container(model::OperationModel) = get_internal(model).container
 function get_resolution(model::OperationModel)
     resolution = PSY.get_time_series_resolution(get_system(model))

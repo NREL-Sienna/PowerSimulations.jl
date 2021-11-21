@@ -22,20 +22,32 @@ function StateInfo()
 end
 
 struct SimulationState
+    current_time::Base.RefValue{Dates.DateTime}
     end_of_step_timestamp::Base.RefValue{Dates.DateTime}
     decision_states::StateInfo
     system_state::StateInfo
 end
 
+function SimulationState()
+    return SimulationState(
+        Ref(UNSET_INI_TIME),
+        Ref(UNSET_INI_TIME),
+        StateInfo(),
+        StateInfo(),
+    )
+end
+
 get_end_of_step_timestamp(s::SimulationState) = s.end_of_step_timestamp[]
+get_current_time(s::SimulationState) = s.current_time[]
 
 function set_end_of_step_timestamp!(s::SimulationState, val::Dates.DateTime)
     s.end_of_step_timestamp[] = val
     return
 end
 
-function SimulationState()
-    return SimulationState(Ref(UNSET_INI_TIME), StateInfo(), StateInfo())
+function set_current_time!(s::SimulationState, val::Dates.DateTime)
+    s.current_time[] = val
+    return
 end
 
 get_decision_states(s::SimulationState) = s.decision_states

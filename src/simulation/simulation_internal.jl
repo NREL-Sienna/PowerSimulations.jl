@@ -7,8 +7,7 @@ mutable struct SimulationInternal
     results_dir::String
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
-    current_time::Dates.DateTime
-    status::Union{Nothing, RunStatus}
+    status::RunStatus
     build_status::BuildStatus
     simulation_state::SimulationState
     store::Union{Nothing, SimulationStore}
@@ -75,7 +74,6 @@ function SimulationInternal(
     unique_recorders = Set(REQUIRED_RECORDERS)
     foreach(x -> push!(unique_recorders, x), recorders)
 
-    init_time = Dates.now()
     return SimulationInternal(
         sim_files_dir,
         store_dir,
@@ -85,8 +83,7 @@ function SimulationInternal(
         results_dir,
         count_dict,
         Dict{Int, Dates.DateTime}(),
-        init_time,
-        nothing,
+        RunStatus.NOT_READY,
         BuildStatus.EMPTY,
         SimulationState(),
         nothing,

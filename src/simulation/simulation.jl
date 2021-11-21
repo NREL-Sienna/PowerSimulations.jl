@@ -68,11 +68,19 @@ function Simulation(directory::AbstractString, model_info::Dict)
     return deserialize_model(Simulation, directory, model_info)
 end
 
-################# accessor functions ####################
+###################### Simulation Accessor Functions ####################
+function get_base_powers(sim::Simulation)
+    base_powers = Dict()
+    for model in get_models(sim)
+        base_powers[get_name(model)] = PSY.get_base_power(get_system(model))
+    end
+    return base_powers
+end
+
 get_initial_time(sim::Simulation) = sim.initial_time
 get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
-get_current_time(sim::Simulation) = sim.internal.current_time
+get_current_time(sim::Simulation) = get_current_time(get_simulation_state(sim))
 get_models(sim::Simulation) = sim.models
 get_model(sim::Simulation, ix::Int) = sim.models[ix]
 get_model(sim::Simulation, name::Symbol) = get_model(sim.models, name)
@@ -81,19 +89,11 @@ get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
 get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
+get_simulation_state(sim::Simulation) = sim.internal.simulation_state
 set_simulation_store!(sim::Simulation, store) = sim.internal.store = store
 get_simulation_store(sim::Simulation) = sim.internal.store
 get_results_dir(sim::Simulation) = sim.internal.results_dir
 get_models_dir(sim::Simulation) = sim.internal.models_dir
-get_simulation_state(sim::Simulation) = sim.internal.simulation_state
-
-function get_base_powers(sim::Simulation)
-    base_powers = Dict()
-    for model in get_models(sim)
-        base_powers[get_name(model)] = PSY.get_base_power(get_system(model))
-    end
-    return base_powers
-end
 
 get_interval(sim::Simulation, name::Symbol) = get_interval(sim.sequence, name)
 
@@ -114,7 +114,11 @@ get_file_level(sim::Simulation) = sim.internal.file_level
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
 set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
     sim.internal.build_status = status
-set_current_time!(sim::Simulation, val) = sim.internal.current_time = val
+
+function set_current_time!(sim::Simulation, val::Dates.DateTime)
+    set_current_time!(get_simulation_state(sim), val)
+    return
+end
 
 function _get_simulation_initial_times!(sim::Simulation)
     model_initial_times = OrderedDict{Int, Vector{Dates.DateTime}}()
@@ -174,7 +178,7 @@ Manually provided initial times have to be compatible with the specified interva
             model_initial_times[emulator_model_no + 1] = sim.initial_time
         end
     end
-    sim.internal.current_time = sim.initial_time
+    set_current_time!(sim, sim.initial_time)
     return model_initial_times
 end
 
@@ -269,6 +273,7 @@ function _initialize_simulation_state!(sim::Simulation)
         step_resolution,
         get_initial_time(sim),
     )
+    return
 end
 
 function _build!(sim::Simulation, serialize::Bool)
@@ -388,7 +393,7 @@ function build!(
                 catch e
                     @error "Simulation build failed" exception = (e, catch_backtrace())
                     set_simulation_build_status!(sim, BuildStatus.FAILED)
-                    set_simulation_status!(sim, nothing)
+                    set_simulation_status!(sim, RunStatus.NOT_READY)
                     rethrow(e)
                 end
             end
@@ -425,13 +430,6 @@ function _apply_warm_start!(model::DecisionModel)
     return
 end
 
-""" Required update problem function call"""
-function _update_model!(model::DecisionModel, sim::Simulation)
-    _update_parameters(model, sim)
-    _update_initial_conditions!(model, sim)
-    return
-end
-
 function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_name = get_name(model)
     store = get_simulation_store(sim)
@@ -463,12 +461,17 @@ end
 
 ############################# Interfacing Functions##########################################
 ## These are the functions that the user will have to implement to update a custom problem ###
-""" Generic problem update function for most problems with no customization"""
+""" Default problem update function for most problems with no customization"""
 function update_model!(
     model::DecisionModel{M},
     sim::Simulation,
-) where {M <: DecisionProblem}  # DT This must remain problem
-    _update_model!(model, sim)
+) where {M <: DecisionProblem}
+    if get_requires_rebuild(model)
+        # TODO: Implement this case where the model is re-built
+        # build_impl!(model)
+    else
+        update_model!(model, get_simulation_state(sim))
+    end
     return
 end
 

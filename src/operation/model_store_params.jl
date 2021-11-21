@@ -21,7 +21,6 @@ struct ModelStoreParams
     horizon::Int
     interval::Dates.Period
     resolution::Dates.Period
-    end_of_interval_step::Int
     base_power::Float64
     system_uuid::Base.UUID
     container_metadata::OptimizationContainerMetadata
@@ -31,7 +30,6 @@ struct ModelStoreParams
         horizon,
         interval,
         resolution,
-        end_of_interval_step,
         base_power,
         system_uuid,
         container_metadata = OptimizationContainerMetadata(),
@@ -41,7 +39,6 @@ struct ModelStoreParams
             horizon,
             Dates.Millisecond(interval),
             Dates.Millisecond(resolution),
-            end_of_interval_step,
             base_power,
             system_uuid,
             container_metadata,

@@ -4,6 +4,7 @@ function update_parameter_values!(
     args...,
 ) where {T <: Union{Float64, PJ.ParameterRef}} end
 
+######################## Methods to update Parameters from Time Series #####################
 function update_parameter_values!(
     param_array::AbstractArray{PJ.ParameterRef},
     attributes::TimeSeriesAttributes{T},
@@ -119,22 +120,6 @@ function update_parameter_values!(
     return
 end
 
-function update_parameter_values!(
-    model::OperationModel,
-    ::ParameterKey{T, U},
-) where {T <: VariableValueParameter, U <: PSY.Device} end
-
-function _gen_parameter_update_event(
-    ::ParameterAttributes,
-    ::Type{<:ParameterType},
-    ::Type{<:PSY.Device},
-    ::String,
-    ::Dates.DateTime,
-    ::Any,
-)
-    return
-end
-
 function _gen_parameter_update_event(
     attributes::TimeSeriesAttributes,
     parameter_type::Type{<:ParameterType},
@@ -149,4 +134,22 @@ function _gen_parameter_update_event(
         timestamp,
         model_name,
     )
+end
+
+###################### Methods to update Parameters from Variable Values ###################
+function update_parameter_values!(
+    model::OperationModel,
+    ::ParameterKey{T, U},
+) where {T <: VariableValueParameter, U <: PSY.Device} 
+end
+
+function _gen_parameter_update_event(
+    ::ParameterAttributes,
+    ::Type{<:ParameterType},
+    ::Type{<:PSY.Device},
+    ::String,
+    ::Dates.DateTime,
+    ::Any,
+)
+    return
 end

@@ -606,7 +606,6 @@ end
 #        start_offset,
 #        end_offset,
 #        interval_len,
-#        end_of_interval_step,
 #    )
 #end
 #

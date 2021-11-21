@@ -212,8 +212,6 @@ function init_model_store_params!(model::EmulationModel)
     num_executions = get_executions(model)
     system = get_system(model)
     interval = resolution = PSY.get_time_series_resolution(system)
-    # This field is probably not needed for Emulation
-    # end_of_interval_step = get_end_of_interval_step(get_internal(model))
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
     model.internal.store_parameters = ModelStoreParams(
@@ -221,7 +219,6 @@ function init_model_store_params!(model::EmulationModel)
         1,
         interval,
         resolution,
-        -1, #end_of_interval_step
         base_power,
         sys_uuid,
         get_metadata(get_optimization_container(model)),

@@ -528,8 +528,6 @@ function _serialize_attributes(store::HdfSimulationStore, problems_group, proble
         HDF5.attributes(problem_group)["horizon"] = params.models_params[problem].horizon
         HDF5.attributes(problem_group)["resolution_ms"] =
             Dates.Millisecond(params.models_params[problem].resolution).value
-        HDF5.attributes(problem_group)["end_of_interval_step"] =
-            params.models_params[problem].end_of_interval_step
         HDF5.attributes(problem_group)["interval_ms"] =
             Dates.Millisecond(params.models_params[problem].interval).value
         HDF5.attributes(problem_group)["base_power"] =

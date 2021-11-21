@@ -4,10 +4,10 @@ struct TimeSeriesCacheKey
     name::String
 end
 
+# TODO: Marge all structs (ModelInternal, ModelStoreParams and SimulationInfo) to a single Internal Struct
+
 mutable struct SimulationInfo
     number::Int
-    name::Symbol
-    end_of_interval_step::Int
     requires_rebuild::Bool
     sequence_uuid::Base.UUID
 end
@@ -23,12 +23,11 @@ mutable struct ModelInternal
     output_dir::Union{Nothing, String}
     simulation_info::Union{Nothing, SimulationInfo}
     time_series_cache::Dict{TimeSeriesCacheKey, <:IS.TimeSeriesCache}
-    ext::Dict{String, Any}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
     file_level::Base.CoreLogging.LogLevel
-    # TODO: Marge all structs (ModelInternal, ModelStoreParams and SimulationInternal) to a single Internal Struct
     store_parameters::Union{Nothing, ModelStoreParams}
+    ext::Dict{String, Any}
 end
 
 function ModelInternal(
@@ -47,11 +46,11 @@ function ModelInternal(
         nothing,
         nothing,
         Dict{TimeSeriesCacheKey, IS.TimeSeriesCache}(),
-        ext,
         recorders,
         Logging.Warn,
         Logging.Info,
         nothing,
+        ext,
     )
 end
 
