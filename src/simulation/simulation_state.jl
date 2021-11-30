@@ -161,8 +161,7 @@ function update_state_data!(
     if simulation_time > end_of_step_timestamp
         state_data_index = 1
     else
-        # This seems to be a bug in indexing that requires an array when the types are Dates.DateTime
-        state_data_index = indexin([simulation_time], get_timestamps(state_data))[1]
+        state_data_index = findlast(get_timestamps(state_data) .<= simulation_time)
     end
 
     offset = resolution_ratio - 1

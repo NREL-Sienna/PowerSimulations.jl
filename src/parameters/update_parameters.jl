@@ -114,12 +114,17 @@ function update_parameter_values!(
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
     # TODO: check if this is the most performant way to find the common indices
-    state_data_index = indexin(
-        range(current_time, step = resolution, length = time[end]),
-        get_timestamps(state_data),
-    )
+    state_timestamps = get_timestamps(state_data)
+    max_state_index = length(state_timestamps)
+    state_data_index = findlast(state_timestamps .<= current_time)
+    sim_timestamps = range(current_time, step = resolution, length = time[end])
     for name in component_names, t in time
-        JuMP.set_value(param_array[name, t], values[state_data_index[t], name])
+        time_stamp_ix = min(max_state_index, state_data_index + 1)
+        @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
+        if state_timestamps[time_stamp_ix] < sim_timestamps[t]
+            state_data_index = time_stamp_ix
+        end
+        JuMP.set_value(param_array[name, t], values[state_data_index, name])
     end
     return
 end
@@ -137,12 +142,17 @@ function update_parameter_values!(
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
     # TODO: check if this is the most performant way to find the common indices
-    @show state_data_index = indexin(
-        range(current_time, step = resolution, length = time[end]),
-        get_timestamps(state_data),
-    )
+    state_timestamps = get_timestamps(state_data)
+    max_state_index = length(state_timestamps)
+    state_data_index = findlast(state_timestamps .<= current_time)
+    sim_timestamps = range(current_time, step = resolution, length = time[end])
     for name in component_names, t in time
-        param_array[name, t] = values[state_data_index[t], name]
+        time_stamp_ix = min(max_state_index, state_data_index + 1)
+        @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
+        if state_timestamps[time_stamp_ix] < sim_timestamps[t]
+            state_data_index = time_stamp_ix
+        end
+        param_array[name, t] = values[state_data_index, name]
     end
     return
 end
