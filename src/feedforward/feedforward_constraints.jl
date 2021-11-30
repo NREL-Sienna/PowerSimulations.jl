@@ -71,7 +71,8 @@ function add_feedforward_constraints!(
         # # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
         for v in variable
             if JuMP.has_lower_bound(v) && JuMP.lower_bound(v) > 0.0
-                @debug "lb reset" JuMP.lower_bound(v) v _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
+                @debug "lb reset" JuMP.lower_bound(v) v _group =
+                    LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
                 JuMP.set_lower_bound(v, 0.0)
             end
         end
