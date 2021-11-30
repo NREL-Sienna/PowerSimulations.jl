@@ -299,6 +299,9 @@ function read_result(
     timestamp::Dates.DateTime,
 )
     data, columns = _read_data_columns(store, model_name, key, timestamp)
+    if ndims(data) < 2
+        data = reshape(data, length(data), 1)
+    end
     return DataFrames.DataFrame(data, Symbol.(columns))
 end
 
@@ -679,7 +682,7 @@ function _read_data_columns(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    timestamp,
+    timestamp::Dates.DateTime,
 )
     if is_cached(store.cache, model_name, key, timestamp)
         data = read_result(store.cache, model_name, key, timestamp)
