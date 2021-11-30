@@ -336,6 +336,9 @@ function solve_impl!(model::DecisionModel; optimizer = nothing, kwargs...)
     _pre_solve_model_checks(model, optimizer)
     container = get_optimization_container(model)
     solve_impl!(container, get_system(model), get_solve_timed_log(model))
+    # Note, if the solver fails solve_impl!(container, args...) throws an exception.
+    # The model is only set to RunStatus.SUCCESSFUL if solve_impl! finishes correctly
+    set_run_status!(model, RunStatus.SUCCESSFUL)
     return
 end
 
@@ -386,7 +389,6 @@ function solve!(
             try
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                     solve_impl!(model; kwargs...)
-                    set_run_status!(model, RunStatus.SUCCESSFUL)
                 end
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
@@ -457,13 +459,15 @@ function solve!(
     store::SimulationStore;
     exports = nothing,
 )
-    solve_status = solve!(model)
-    if solve_status == RunStatus.SUCCESSFUL
+    # Note, we don't call solve!(decision_model) here becuase the solve call includes a lot of
+    # other logic used when solving
+    solve_impl!(model)
+    if get_run_status(model) == RunStatus.SUCCESSFUL
         write_results!(step, model, start_time, store, exports)
         advance_execution_count!(model)
     end
 
-    return solve_status
+    return get_run_status(model)
 end
 
 function write_results!(store, model::DecisionModel, timestamp; exports = nothing)

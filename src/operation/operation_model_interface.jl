@@ -278,7 +278,6 @@ function _pre_solve_model_checks(model::OperationModel, optimizer)
     optimizer_name = JuMP.solver_name(jump_model)
     _check_numerical_bounds(model)
     @info "Solving $(typeof(model)) with optimizer = $optimizer_name"
-    @info "Solver backend: $(JuMP.backend(jump_model))"
 
     return
 end
