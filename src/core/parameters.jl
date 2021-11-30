@@ -32,7 +32,11 @@ end
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 get_name(attr::TimeSeriesAttributes) = attr.name
 
-struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes end
+struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
+    attribute_key::T
+end
+
+get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key
 
 struct ParameterContainer
     attributes::ParameterAttributes
