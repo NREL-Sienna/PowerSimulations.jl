@@ -21,7 +21,7 @@ function add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.HybridSystem}
-    _devices = [d for d in devices if PSY.get_renewable_unit(d) != nothing]
+    _devices = [d for d in devices if PSY.get_renewable_unit(d) !== nothing]
     add_parameters!(container, T(), _devices, model)
 end
 
@@ -153,6 +153,7 @@ function add_parameters!(
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
+    @show key
     parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
     jump_model = get_jump_model(container)
 
