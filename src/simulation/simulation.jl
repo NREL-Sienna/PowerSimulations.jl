@@ -439,16 +439,12 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
         model_params = get_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
             state_info = getfield(state.decision_states, field)
-            res = read_result(
-                JuMP.Containers.DenseAxisArray,
-                store,
-                model_name,
-                key,
-                simulation_time,
-            )
+            # TODO: Read Array here to avoid allocating the DataFrame
+            res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
             end_of_step_timestamp = get_end_of_step_timestamp(state)
             update_state_data!(
                 state_info[key],
+                # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
                 res,
                 simulation_time,
                 model_params,
@@ -459,8 +455,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     end
 end
 
-############################# Interfacing Functions##########################################
-## These are the functions that the user will have to implement to update a custom problem ###
 """ Default problem update function for most problems with no customization"""
 function update_model!(
     model::DecisionModel{M},
@@ -470,7 +464,7 @@ function update_model!(
         # TODO: Implement this case where the model is re-built
         # build_impl!(model)
     else
-        # update_model!(model, get_simulation_state(sim))
+        update_model!(model, get_simulation_state(sim))
     end
     return
 end

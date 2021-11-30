@@ -10,6 +10,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{T},
     ::Type{U},
     model::DecisionModel,
+    state,
 ) where {T <: PSY.AbstractDeterministic, U <: PSY.Device}
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
@@ -34,6 +35,7 @@ function update_parameter_values(
     attributes::TimeSeriesAttributes{T},
     ::Type{U},
     model::DecisionModel,
+    state,
 ) where {T <: PSY.AbstractDeterministic, U <: PSY.Device}
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_container(model))[end]
@@ -57,6 +59,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{T},
     ::Type{U},
     model::EmulationModel,
+    state,
 ) where {T <: PSY.SingleTimeSeries, U <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(U, get_system(model))
@@ -79,6 +82,7 @@ function update_parameter_values(
     attributes::TimeSeriesAttributes{T},
     ::Type{U},
     model::EmulationModel,
+    state,
 ) where {T <: PSY.SingleTimeSeries, U <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     # TODO: Can we avoid calling get_available_components and cache the component to avoid the filtering in PSY.get_components
@@ -97,58 +101,72 @@ function update_parameter_values(
     return
 end
 
-"""
-Update parameter function for TimeSeriesParameters in an OperationModel
-"""
 function update_parameter_values!(
-    model::OperationModel,
-    ::ParameterKey{T, U},
-) where {T <: TimeSeriesParameter, U <: PSY.Device}
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-        optimization_container = PSI.get_optimization_container(model)
-        parameter_array = PSI.get_parameter_array(optimization_container, T(), U)
-        parameter_attributes = get_parameter_attributes(optimization_container, T(), U)
-        update_parameter_values!(parameter_array, parameter_attributes, U, model)
-        _gen_parameter_update_event(
-            parameter_attributes,
-            T,
-            U,
-            get_current_timestamp(model),
-            get_name(model),
-        )
+    param_array::AbstractArray{PJ.ParameterRef},
+    attributes::VariableValueAttributes,
+    ::Type{<:PSY.Component},
+    model::DecisionModel,
+    state,
+)
+    current_time = get_current_time(model)
+    state_data = get_decision_state_data(state, get_attribute_key(attributes))
+    values = get_values(state_data)
+    component_names, time = axes(param_array)
+    resolution = get_resolution(model)
+    # TODO: check if this is the most performant way to find the common indices
+    state_data_index = indexin(
+        range(current_time, step = resolution, length = time[end]),
+        get_timestamps(state_data),
+    )
+    for name in component_names, t in time
+        JuMP.set_value(param_array[name, t], values[state_data_index[t], name])
     end
     return
 end
 
-function _gen_parameter_update_event(
-    attributes::TimeSeriesAttributes,
-    parameter_type::Type{<:ParameterType},
-    device_type::Type{<:PSY.Device},
-    timestamp::Dates.DateTime,
-    model_name,
+function update_parameter_values!(
+    param_array::AbstractArray{Float64},
+    attributes::VariableValueAttributes,
+    ::Type{<:PSY.Component},
+    model::DecisionModel,
+    state,
 )
-    IS.@record :execution ParameterUpdateEvent(
-        parameter_type,
-        device_type,
-        attributes.name,
-        timestamp,
-        model_name,
+    current_time = get_current_time(model)
+    state_data = get_decision_state_data(state, get_attribute_key(attributes))
+    values = get_values(state_data)
+    component_names, time = axes(param_array)
+    resolution = get_resolution(model)
+    # TODO: check if this is the most performant way to find the common indices
+    @show state_data_index = indexin(
+        range(current_time, step = resolution, length = time[end]),
+        get_timestamps(state_data),
     )
+    for name in component_names, t in time
+        param_array[name, t] = values[state_data_index[t], name]
+    end
+    return
 end
 
-###################### Methods to update Parameters from Variable Values ###################
+"""
+Update parameter function an OperationModel
+"""
 function update_parameter_values!(
     model::OperationModel,
     ::ParameterKey{T, U},
-) where {T <: VariableValueParameter, U <: PSY.Device} end
-
-function _gen_parameter_update_event(
-    ::ParameterAttributes,
-    ::Type{<:ParameterType},
-    ::Type{<:PSY.Device},
-    ::String,
-    ::Dates.DateTime,
-    ::Any,
-)
+    input::Any,
+) where {T <: ParameterType, U <: PSY.Device}
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+        optimization_container = get_optimization_container(model)
+        parameter_array = get_parameter_array(optimization_container, T(), U)
+        parameter_attributes = get_parameter_attributes(optimization_container, T(), U)
+        update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
+        IS.@record :execution ParameterUpdateEvent(
+            T,
+            U,
+            parameter_attributes,
+            get_current_timestamp(model),
+            get_name(model),
+        )
+    end
     return
 end

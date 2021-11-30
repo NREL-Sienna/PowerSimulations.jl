@@ -348,12 +348,15 @@ function one_step_solve!(model::EmulationModel)
     return
 end
 
-function update_model!(model::EmulationModel, store)
+function update_model!(
+    model::EmulationModel,
+    store::InMemoryModelStore{EmulationModelOptimizerResults},
+)
     for key in keys(get_parameters(model))
-        update_parameter_values!(model, key)
+        update_parameter_values!(model, key, store)
     end
     for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key)
+        update_initial_conditions!(model, key, store)
     end
     return
 end

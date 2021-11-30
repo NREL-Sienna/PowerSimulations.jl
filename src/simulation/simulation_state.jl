@@ -1,11 +1,12 @@
 struct StateData
-    values::JuMP.Containers.DenseAxisArray{Float64}
+    values::DataFrames.DataFrame
     timestamps::Vector{Dates.DateTime}
 end
 
 get_timestamps_length(s::StateData) = length(s.timestamps)
 get_data_resolution(s::StateData) = s.timestamps[2] - s.timestamps[1]
 get_timestamps(s::StateData) = s.timestamps
+get_values(s::StateData) = s.values
 
 struct StateInfo
     duals::Dict{ConstraintKey, StateData}
@@ -83,7 +84,7 @@ function _initialize_model_states!(
     params,
 )
     container = get_optimization_container(model)
-    for field in [:variables, :aux_variables]
+    for field in [:variables, :aux_variables, :duals]
         field_containers = getfield(container, field)
         field_states = getfield(states, field)
         for (key, value) in field_containers
@@ -100,10 +101,9 @@ function _initialize_model_states!(
             if !haskey(field_states, key) ||
                get_timestamps_length(field_states[key]) < value_counts
                 field_states[key] = StateData(
-                    JuMP.Containers.DenseAxisArray{Float64}(
-                        undef,
+                    DataFrames.DataFrame(
+                        Matrix{Float64}(undef, value_counts, length(column_names)),
                         column_names,
-                        1:value_counts,
                     ),
                     collect(
                         range(
@@ -141,6 +141,7 @@ function initialize_simulation_state!(
     em = get_emulation_model(models)
     if em !== nothing
         emulator_states = get_system_state(sim_state)
+        # TODO: Initialize properly once we have an emulation example
         _initialize_model_states!(emulator_states, model, simulation_step)
     end
     return
@@ -148,7 +149,7 @@ end
 
 function update_state_data!(
     state_data::StateData,
-    store_data::JuMP.Containers.DenseAxisArray{Float64},
+    store_data::DataFrames.DataFrame,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
     end_of_step_timestamp::Dates.DateTime,
@@ -160,27 +161,44 @@ function update_state_data!(
     if simulation_time > end_of_step_timestamp
         state_data_index = 1
     else
-        # This seems to be a bug in indexin that requires an array when the types are Dates.DateTime
+        # This seems to be a bug in indexing that requires an array when the types are Dates.DateTime
         state_data_index = indexin([simulation_time], get_timestamps(state_data))[1]
     end
 
     offset = resolution_ratio - 1
+    result_time_index = axes(store_data)[1]
 
-    # TODO: Not most optimal way to search. Most be improved before merging to master
-    names, result_time_index = axes(store_data)
-    state_names, _ = axes(state_data.values)
-
-    # This implementation can fail if the names aren't in the same order. This protects for this
-    @assert_op state_names == names
+    # This implementation can fail if the names aren't in the same order.
+    @assert_op DataFrames.names(state_data.values) == DataFrames.names(store_data)
 
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        for j in eachindex(names)
+        for j in DataFrames.names(store_data)
             for i in state_range
-                state_data.values.data[j, i] = store_data.data[j, t]
+                # TODO: We could also interpolate here
+                state_data.values[i, j] = store_data[t, j]
             end
         end
         state_data_index += resolution_ratio
     end
     return
 end
+
+function get_decision_state_data(state::SimulationState, opt_container_key::VariableKey)
+    return getfield(state.decision_states, STORE_CONTAINER_VARIABLES)[opt_container_key]
+end
+
+function get_decision_state_data(state::SimulationState, opt_container_key::ConstraintKey)
+    return getfield(state.decision_states, STORE_CONTAINER_DUALS)[opt_container_key]
+end
+
+function get_decision_state_data(state::SimulationState, opt_container_key::AuxVarKey)
+    return getfield(state.decision_states, STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
+end
+
+#function get_decision_state_data(
+#    state::SimulationState,
+#    opt_container_key::ExpressionKey,
+#)
+#    return getfield(state.decision_states, STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
+#end

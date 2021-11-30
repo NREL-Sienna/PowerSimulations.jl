@@ -415,9 +415,9 @@ function solve!(
     return get_run_status(model)
 end
 
-function update_model!(model::DecisionModel)
+function update_model!(model::DecisionModel, state)
     for key in keys(get_parameters(model))
-        update_parameter_values!(model, key)
+        update_parameter_values!(model, key, state)
     end
     for key in keys(get_initial_conditions(model))
         update_initial_conditions!(model, key)
