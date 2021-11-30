@@ -241,7 +241,7 @@ function _check_numerical_bounds(model::OperationModel)
         min_bound_variable = $(encode_key_as_string(variable_bounds.bounds.min_index)) \\
         Run get_detailed_variable_numerical_bounds on the model for a deeper analysis"
     else
-        @info "Variable bounds [$(variable_bounds.bounds.min) $(variable_bounds.bounds.max)]"
+        @info "Variable bounds range is [$(variable_bounds.bounds.min) $(variable_bounds.bounds.max)]"
     end
 
     constraint_bounds = get_constraint_numerical_bounds(model)
@@ -251,7 +251,7 @@ function _check_numerical_bounds(model::OperationModel)
         min_bound_constraint = $(encode_key_as_string(constraint_bounds.coefficient.min_index)) \\
         Run get_detailed_constraint_numerical_bounds on the model for a deeper analysis"
     else
-        @info "Constraint coefficient bounds [$(constraint_bounds.coefficient.min) $(constraint_bounds.coefficient.max)]"
+        @info "Constraint coefficient bounds range is [$(constraint_bounds.coefficient.min) $(constraint_bounds.coefficient.max)]"
     end
 
     if constraint_bounds.rhs.max - constraint_bounds.rhs.min > 1e9
@@ -265,7 +265,7 @@ function _check_numerical_bounds(model::OperationModel)
     return
 end
 
-function _pre_solve_model_checks(model::OperationModel, optimizer)
+function _pre_solve_model_checks(model::OperationModel, optimizer = nothing)
     jump_model = get_jump_model(model)
     if optimizer !== nothing
         JuMP.set_optimizer(jump_model, optimizer)
@@ -276,8 +276,8 @@ function _pre_solve_model_checks(model::OperationModel, optimizer)
     end
 
     optimizer_name = JuMP.solver_name(jump_model)
+    @info "Solving $(get_name(model)) with optimizer = $optimizer_name"
     _check_numerical_bounds(model)
-    @info "Solving $(typeof(model)) with optimizer = $optimizer_name"
 
     return
 end

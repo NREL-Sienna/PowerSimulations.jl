@@ -332,8 +332,7 @@ function calculate_dual_variables!(model::DecisionModel)
     return
 end
 
-function solve_impl!(model::DecisionModel; optimizer = nothing, kwargs...)
-    _pre_solve_model_checks(model, optimizer)
+function solve_impl!(model::DecisionModel)
     container = get_optimization_container(model)
     solve_impl!(container, get_system(model), get_solve_timed_log(model))
     # Note, if the solver fails solve_impl!(container, args...) throws an exception.
@@ -384,15 +383,16 @@ function solve!(
     file_mode = "a"
     register_recorders!(model, file_mode)
     logger = configure_logging(model.internal, file_mode)
+    optimizer = get(kwargs, :optimizer, nothing)
     try
         Logging.with_logger(logger) do
             try
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
-                    solve_impl!(model; kwargs...)
+                    _pre_solve_model_checks(model, optimizer)
+                    solve_impl!(model)
                 end
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
-                        optimizer = get(kwargs, :optimizer, nothing)
                         serialize_problem(model, optimizer = optimizer)
                         serialize_optimization_model(model)
                     end

@@ -229,7 +229,7 @@ end
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
-            @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
+            @warn "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
         # TODO-PJ: Temporary while are able to switch from PJ to POI

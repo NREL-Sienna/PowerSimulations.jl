@@ -4,7 +4,7 @@ function validate_available_devices(
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     devices = get_available_components(T, system)
     if isempty(devices)
-        @warn "The data doesn't include devices of type $(T), consider changing the device models" _group =
+        @info "The data doesn't include devices of type $(T), consider changing the device models" _group =
             LOG_GROUP_MODELS_VALIDATION
         return false
     end
@@ -19,7 +19,7 @@ function validate_service!(
 ) where {S <: PSY.Service}
     service = PSY.get_component(S, sys, get_service_name(model))
     if service === nothing
-        @warn "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
+        @info "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
             LOG_GROUP_MODELS_VALIDATION
         return false
     end
@@ -50,7 +50,7 @@ function validate_services!(
 ) where {S <: PSY.StaticReserveGroup}
     service = PSY.get_component(S, sys, get_service_name(model))
     if service === nothing
-        @warn "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
+        @info "The data doesn't include services of type $(S) and name $(get_service_name(model)), consider changing the service models" _group =
             LOG_GROUP_MODELS_VALIDATION
         return false
     end

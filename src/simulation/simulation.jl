@@ -235,6 +235,8 @@ function _build_decision_models!(sim::Simulation)
             end
             sim.internal.date_ref[model_number] = initial_time
             set_status!(model, BuildStatus.BUILT)
+            # TODO: Disable check of variable bounds ?
+            _pre_solve_model_checks(model)
         catch
             set_status!(model, BuildStatus.FAILED)
             rethrow()
