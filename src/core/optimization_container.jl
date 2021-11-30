@@ -849,7 +849,7 @@ function add_param_container!(
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
     param_key = ParameterKey(T, U, meta)
-    @show attributes = VariableValueAttributes(source_key)
+    attributes = VariableValueAttributes(source_key)
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
