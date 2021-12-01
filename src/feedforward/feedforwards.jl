@@ -24,17 +24,18 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
         affected_values::Vector{DataType},
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
-        values = Vector(undef, length(affected_values))
+        values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
             if v <: VariableType
-                values[ix] = get_optimization_container_key(v(), component_type, meta)
+                values_vector[ix] =
+                    get_optimization_container_key(v(), component_type, meta)
             else
                 error(
                     "UpperBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values)
+        new(get_optimization_container_key(T(), component_type, meta), values_vector)
     end
 end
 
@@ -53,17 +54,18 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
         affected_values::Vector{DataType},
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
-        values = Vector{VariableKey}(undef, length(affected_values))
+        values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
             if v <: VariableType
-                values[ix] = get_optimization_container_key(v(), component_type, meta)
+                values_vector[ix] =
+                    get_optimization_container_key(v(), component_type, meta)
             else
                 error(
                     "LowerBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values)
+        new(get_optimization_container_key(T(), component_type, meta), values_vector)
     end
 end
 
@@ -82,17 +84,18 @@ struct SemiContinuousFeedforward <: AbstractAffectFeedforward
         affected_values::Vector{DataType},
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
-        values = Vector{VariableKey}(undef, length(affected_values))
+        values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
             if v <: VariableType
-                values[ix] = get_optimization_container_key(v(), component_type, meta)
+                values_vector[ix] =
+                    get_optimization_container_key(v(), component_type, meta)
             else
                 error(
                     "SemiContinuousFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values)
+        new(get_optimization_container_key(T(), component_type, meta), values_vector)
     end
 end
 
@@ -113,10 +116,11 @@ struct IntegralLimitFeedforward <: AbstractAffectFeedforward
         number_of_periods::Int,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
-        values = Vector{VariableKey}(undef, length(affected_values))
+        values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
             if v <: VariableType
-                values[ix] = get_optimization_container_key(v(), component_type, meta)
+                values_vector[ix] =
+                    get_optimization_container_key(v(), component_type, meta)
             else
                 error(
                     "IntegralLimitFeedforward is only compatible with VariableType or ParamterType affected values",
@@ -125,7 +129,7 @@ struct IntegralLimitFeedforward <: AbstractAffectFeedforward
         end
         new(
             get_optimization_container_key(T(), component_type, meta),
-            values,
+            values_vector,
             number_of_periods,
         )
     end
@@ -147,17 +151,18 @@ struct FixValueFeedforward <: AbstractAffectFeedforward
         affected_values::Vector{DataType},
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
-        values = Vector(undef, length(affected_values))
+        values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
             if v <: VariableType || v <: ParameterType
-                values[ix] = get_optimization_container_key(v(), component_type, meta)
+                values_vector[ix] =
+                    get_optimization_container_key(v(), component_type, meta)
             else
                 error(
                     "UpperBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values)
+        new(get_optimization_container_key(T(), component_type, meta), values_vector)
     end
 end
 
@@ -180,10 +185,11 @@ struct EnergyTargetFeedforward <: AbstractAffectFeedforward
         penalty_cost::Float64,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
-        values = Vector{VariableKey}(undef, length(affected_values))
+        values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
             if v <: VariableType
-                values[ix] = get_optimization_container_key(v(), component_type, meta)
+                values_vector[ix] =
+                    get_optimization_container_key(v(), component_type, meta)
             else
                 error(
                     "EnergyTargetFeedforward is only compatible with VariableType or ParamterType affected values",
@@ -192,7 +198,7 @@ struct EnergyTargetFeedforward <: AbstractAffectFeedforward
         end
         new(
             get_optimization_container_key(T(), component_type, meta),
-            values,
+            values_vector,
             target_period,
             penalty_cost,
         )

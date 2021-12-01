@@ -110,7 +110,7 @@ function update_parameter_values!(
 )
     current_time = get_current_time(model)
     state_data = get_decision_state_data(state, get_attribute_key(attributes))
-    values = get_values(state_data)
+    state_values = get_values(state_data)
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
     # TODO: check if this is the most performant way to find the common indices
@@ -124,7 +124,7 @@ function update_parameter_values!(
         if state_timestamps[time_stamp_ix] < sim_timestamps[t]
             state_data_index = time_stamp_ix
         end
-        JuMP.set_value(param_array[name, t], values[state_data_index, name])
+        JuMP.set_value(param_array[name, t], state_values[state_data_index, name])
     end
     return
 end
@@ -138,7 +138,7 @@ function update_parameter_values!(
 )
     current_time = get_current_time(model)
     state_data = get_decision_state_data(state, get_attribute_key(attributes))
-    values = get_values(state_data)
+    state_values = get_values(state_data)
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
     # TODO: check if this is the most performant way to find the common indices
@@ -152,7 +152,7 @@ function update_parameter_values!(
         if state_timestamps[time_stamp_ix] < sim_timestamps[t]
             state_data_index = time_stamp_ix
         end
-        param_array[name, t] = values[state_data_index, name]
+        param_array[name, t] = state_values[state_data_index, name]
     end
     return
 end

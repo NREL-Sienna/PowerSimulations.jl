@@ -334,8 +334,8 @@ function read_variables_internal(
 )
     variable_keys = _get_keys(VariableKey, res, variables)
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _read_variables(res, variable_keys, timestamps, store)
-    return values
+    var_values = _read_variables(res, variable_keys, timestamps, store)
+    return var_values
 end
 
 function _read_duals(
@@ -393,8 +393,8 @@ function read_duals_internal(
 )
     dual_keys = _get_keys(ConstraintKey, res, duals)
     timestamps = _process_timestamps(res, initial_time, count)
-    values = _read_duals(res, dual_keys, timestamps, store)
-    return values
+    var_values = _read_duals(res, dual_keys, timestamps, store)
+    return var_values
 end
 
 function _read_parameters(

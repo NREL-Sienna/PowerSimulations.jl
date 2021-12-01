@@ -167,7 +167,7 @@ end
             sys_uc,
             initialize_model = false,
             system_to_file = false,
-            optimizer = Cbc_optimizer
+            optimizer = Cbc_optimizer,
         ),
         DecisionModel(
             template_ed,
@@ -175,7 +175,7 @@ end
             sys_ed,
             initialize_model = false,
             system_to_file = false,
-            optimizer = Cbc_optimizer
+            optimizer = Cbc_optimizer,
         ),
     ])
 
