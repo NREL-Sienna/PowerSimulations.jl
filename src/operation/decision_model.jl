@@ -459,7 +459,7 @@ function solve!(
     store::SimulationStore;
     exports = nothing,
 )
-    # Note, we don't call solve!(decision_model) here becuase the solve call includes a lot of
+    # Note, we don't call solve!(decision_model) here because the solve call includes a lot of
     # other logic used when solving
     solve_impl!(model)
     if get_run_status(model) == RunStatus.SUCCESSFUL
