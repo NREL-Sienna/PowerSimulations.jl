@@ -422,7 +422,7 @@ function update_model!(model::DecisionModel, state)
         update_parameter_values!(model, key, state)
     end
     for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key)
+        update_initial_conditions!(model, key, state)
     end
     return
 end
