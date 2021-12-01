@@ -39,10 +39,10 @@
     ed_vars = [ActivePowerVariable]
     for (key, data) in state.decision_states.variables
         if PSI.get_entry_type(key) ∈ uc_vars
-            _, count = size(data.values)
+            count, _ = size(data.values)
             @test count == 24
         elseif PSI.get_entry_type(key) ∈ ed_vars
-            _, count = size(data.values)
+            count, _ = size(data.values)
             @test count == 288
         end
     end
@@ -159,6 +159,7 @@ end
             sys_md,
             initialize_model = false,
             system_to_file = false,
+            optimizer = Cbc_optimizer,
         ),
         DecisionModel(
             template_uc,
@@ -166,6 +167,7 @@ end
             sys_uc,
             initialize_model = false,
             system_to_file = false,
+            optimizer = Cbc_optimizer
         ),
         DecisionModel(
             template_ed,
@@ -173,6 +175,7 @@ end
             sys_ed,
             initialize_model = false,
             system_to_file = false,
+            optimizer = Cbc_optimizer
         ),
     ])
 
