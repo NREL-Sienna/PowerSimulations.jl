@@ -19,8 +19,3 @@ scs_solver = JuMP.optimizer_with_attributes(
     "eps" => 1e-4,
     "verbose" => 0,
 )
-SCIP_optimizer = JuMP.optimizer_with_attributes(
-    SCIP.Optimizer,
-    "limits/gap" => 1e-5,
-    "limits/time" => 100,
-)
