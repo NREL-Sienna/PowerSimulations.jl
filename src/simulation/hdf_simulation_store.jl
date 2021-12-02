@@ -190,7 +190,7 @@ end
 
 function write_optimizer_stats!(
     store::HdfSimulationStore,
-    model_name,
+    model_name::Symbol,
     stats::OptimizerStats,
     timestamp,  # Unused here. Matches the interface for InMemorySimulationStore.
 )
