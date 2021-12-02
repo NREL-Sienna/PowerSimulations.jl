@@ -156,3 +156,32 @@ function _calc_dimensions(
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end
+
+function summary_to_dict(optimizer_log::Dict{Symbol, Any}, jump_summary::JuMP._SolutionSummary)
+    fields = [
+    :raw_status, # String
+    :result_count, # Int
+    :has_values, # Bool
+    :has_duals, # Bool
+    # Candidate solution
+    :objective_bound, # Union{Missing,Float64}
+    :dual_objective_value, # Union{Missing,Float64}
+    :primal_solution, # Union{Missing,Dict{String,Float64}}
+    :dual_solution, # Union{Missing,Dict{String,Float64}}
+    # Work counters
+    :solve_time, # Float64
+    :barrier_iterations, # Union{Missing,Int}
+    :simplex_iterations, # Union{Missing,Int}
+    :node_count, # Union{Missing,Int}
+    ]
+
+    for field in fields
+        field_value = getfield(jump_summary, field)
+        if ismissing(field_value)
+            optimizer_log[field] = "missing"
+        else
+            optimizer_log[field] = field_value
+        end
+    end
+    return
+end
