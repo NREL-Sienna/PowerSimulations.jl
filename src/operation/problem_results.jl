@@ -34,7 +34,7 @@ get_dual_values(res::ProblemResults) = res.dual_values
 get_expressionl_values(res::ProblemResults) = res.expression_values
 get_variable_values(res::ProblemResults) = res.variable_values
 IS.get_total_cost(res::ProblemResults) = get_objective_value(res)
-IS.get_optimizer_stats(res::ProblemResults) = res.optimizer_stats
+get_optimizer_stats(res::ProblemResults) = res.optimizer_stats
 get_parameter_values(res::ProblemResults) = res.parameter_values
 IS.get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
@@ -56,7 +56,7 @@ function ProblemResults(model::DecisionModel)
     parameters = read_parameters(container)
     expressions = read_expressions(container)
     timestamps = get_timestamps(model)
-    optimizer_stats = to_dataframe(OptimizerStats(model))
+    optimizer_stats = to_dataframe(get_optimizer_stats(model))
 
     for df in Iterators.flatten(((
         values(variables),

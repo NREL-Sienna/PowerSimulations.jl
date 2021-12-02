@@ -30,8 +30,8 @@ end
 
 get_problem_base_power(model::OperationModel) = PSY.get_base_power(model.sys)
 get_settings(model::OperationModel) = get_optimization_container(model).settings
-get_solve_timed_log(model::OperationModel) =
-    get_optimization_container(model).solve_timed_log
+get_optimizer_stats(model::OperationModel) =
+    get_optimizer_stats(get_optimization_container(model))
 get_simulation_info(model::OperationModel) = model.internal.simulation_info
 get_simulation_number(model::OperationModel) = model.internal.simulation_info.number
 get_status(model::OperationModel) = model.internal.status
@@ -174,7 +174,7 @@ function handle_initial_conditions!(model::OperationModel)
         build_initial_conditions!(model)
         initialize!(model)
     end
-
+    model.internal.ic_model_container = nothing
     return
 end
 
@@ -185,11 +185,7 @@ function initialize!(model::OperationModel)
     end
     @info "Solving Initialization Model for $(get_name(model))"
     try
-        solve_impl!(
-            model.internal.ic_model_container,
-            get_system(model),
-            Dict{Symbol, Any}(),
-        )
+        solve_impl!(model.internal.ic_model_container, get_system(model))
     catch e
         @error exception = (e, catch_backtrace())
         error("Model failed to initialize")
@@ -198,7 +194,6 @@ function initialize!(model::OperationModel)
     write_initial_conditions_data(container, model.internal.ic_model_container)
     init_file = get_initial_conditions_file(model)
     Serialization.serialize(init_file, get_initial_conditions_data(container))
-    model.internal.ic_model_container = nothing
     @info "Serialized initial conditions to $init_file"
     return
 end

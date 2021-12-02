@@ -49,7 +49,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     initial_conditions_data::InitialConditionsData
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
-    solve_timed_log::Dict{Symbol, Any}
+    optimizer_stats::OptimizerStats
     built_for_recurrent_solves::Bool
     metadata::OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
@@ -92,7 +92,7 @@ function OptimizationContainer(
         InitialConditionsData(),
         nothing,
         PSY.get_base_power(sys),
-        Dict{Symbol, Any}(),
+        OptimizerStats(),
         false,
         OptimizationContainerMetadata(),
         T,
@@ -119,7 +119,7 @@ end
 #         Dict{ICKey, Vector{InitialCondition}}(),
 #         nothing,
 #         PSY.get_base_power(sys),
-#         Dict{Symbol, Any}(),
+#         OptimizerStats(),
 #         false,
 #         PSY.Deterministic,
 #     )
@@ -148,6 +148,7 @@ get_initial_conditions_data(container::OptimizationContainer) =
     container.initial_conditions_data
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
+get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 
 function is_milp(container::OptimizationContainer)
     !supports_milp(container) && return false
@@ -175,7 +176,7 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     warm_start_enabled = get_warm_start(settings)
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
-    if get_optimizer_log_print(settings)
+    if get_optimizer_solve_log_print(settings)
         JuMP.unset_silent(JuMPmodel)
         @debug "optimizer unset to silent" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     else
@@ -247,6 +248,9 @@ function init_optimization_container!(
             "The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times."
         )
     end
+
+    stats = get_optimizer_stats(container)
+    stats.detailed_stats = get_detailed_optimizer_stats(settings)
 
     return
 end
@@ -479,57 +483,63 @@ end
 """
 Default solve method for OptimizationContainer
 """
-function solve_impl!(
-    container::OptimizationContainer,
-    system::PSY.System,
-    log::Dict{Symbol, Any},
-)
+function solve_impl!(container::OptimizationContainer, system::PSY.System)
+    optimizer_stats = get_optimizer_stats(container)
+
     jump_model = get_jump_model(container)
-    _, log[:timed_solve_time], log[:solve_bytes_alloc], log[:sec_in_gc] =
-        @timed JuMP.optimize!(jump_model)
+    _,
+    optimizer_stats.timed_solve_time,
+    optimizer_stats.solve_bytes_alloc,
+    optimizer_stats.sec_in_gc = @timed JuMP.optimize!(jump_model)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Optimizer returned $model_status")
     end
 
-    _, log[:timed_calculate_aux_variables] =
+    _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
-    _, log[:timed_calculate_dual_variables] =
+    _, optimizer_stats.timed_calculate_dual_variables =
         @timed calculate_dual_variables!(container, system)
     return
 end
 
-function export_optimizer_stats(
-    optimizer_stats::Dict{Symbol, Any},
-    container::OptimizationContainer,
-    path::String,
-)
+function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
-    optimizer_stats[:termination_status] = Int(JuMP.termination_status(jump_model))
-    optimizer_stats[:primal_status] = Int(JuMP.primal_status(jump_model))
-    optimizer_stats[:dual_status] = Int(JuMP.dual_status(jump_model))
-
-    if optimizer_stats[:primal_status] == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        optimizer_stats[:obj_value] = JuMP.objective_value(container.JuMPmodel)
-    else
-        optimizer_stats[:obj_value] = Inf
-    end
-
     try
-        optimizer_stats[:solve_time] = MOI.get(container.JuMPmodel, MOI.SolveTime())
-    catch
-        @warn("SolveTime() property not supported by the Solver")
-        optimizer_stats[:solve_time] = NaN # "Not Supported by solver"
+        JuMP.compute_conflict!(jump_model)
+    catch e
+        @error "Can't compute conflict, check that your optimizer supports conflict refining/IIS" exception =
+            (e, catch_backtrace())
+        return
     end
-    write_optimizer_stats(optimizer_stats, path)
+
+    if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
+        @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
+    end
+
+    conflict = Dict{Symbol, Array}()
+    for field in get_constraints(container)
+        for (key, field_container) in field
+            conflict_indices = check_conflict_status(jump_model, field_container)
+            if isempty(conflict_indices)
+                continue
+            else
+                confict[encode_key(key)] = conflict_indices
+            end
+        end
+    end
+
+    return
+end
+
+function write_optimizer_stats!(container::OptimizationContainer)
+    write_optimizer_stats!(get_optimizer_stats(container), get_jump_model(container))
     return
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function serialize_optimization_model(container::OptimizationContainer, save_path::String)
-    MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
-    MOI.copy_to(MOF_model, JuMP.backend(container.JuMPmodel))
-    MOI.write_to_file(MOF_model, save_path)
+    serialize_optimization_model(get_jump_model(container), save_path)
     return
 end
 

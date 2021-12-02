@@ -39,7 +39,7 @@ OpModel = DecisionModel(MockOperationProblem, template, system)
 - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
 - `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default is false.
 - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
-- `optimizer_log_print::Bool`: True to print the optimizer solve log. Default is false.
+- `optimizer_solve_log_print::Bool`: True to print the optimizer solve log. Default is false.
 - `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default is false.
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
@@ -90,7 +90,8 @@ function DecisionModel{M}(
     deserialize_initial_conditions = false,
     export_pwl_vars = false,
     allow_fails = false,
-    optimizer_log_print = false,
+    optimizer_solve_log_print = false,
+    detailed_optimizer_stats = false,
     direct_mode_optimizer = false,
     initial_time = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
@@ -108,7 +109,8 @@ function DecisionModel{M}(
         deserialize_initial_conditions = deserialize_initial_conditions,
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
-        optimizer_log_print = optimizer_log_print,
+        optimizer_solve_log_print = optimizer_solve_log_print,
+        detailed_optimizer_stats = detailed_optimizer_stats,
         direct_mode_optimizer = direct_mode_optimizer,
     )
     return DecisionModel{M}(template, sys, settings, jump_model, name = name)
@@ -141,7 +143,7 @@ problem = DecisionModel(MyOpProblemType template, system, optimizer)
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 - `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
 - `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
-- `optimizer_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
+- `optimizer_solve_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
 - `name`: name of model, string or symbol; defaults to the type of template converted to a symbol
 """
 function DecisionModel(
@@ -313,6 +315,7 @@ function reset!(model::DecisionModel)
         PSY.Deterministic,
     )
     model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
+    model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
     set_status!(model, BuildStatus.EMPTY)
     return
@@ -334,9 +337,10 @@ end
 
 function solve_impl!(model::DecisionModel)
     container = get_optimization_container(model)
-    solve_impl!(container, get_system(model), get_solve_timed_log(model))
+    solve_impl!(container, get_system(model))
     # Note, if the solver fails solve_impl!(container, args...) throws an exception.
     # The model is only set to RunStatus.SUCCESSFUL if solve_impl! finishes correctly
+    write_optimizer_stats!(container)
     set_run_status!(model, RunStatus.SUCCESSFUL)
     return
 end
@@ -428,13 +432,13 @@ function update_model!(model::DecisionModel, state)
 end
 
 function write_results!(
-    step::Int,
+    step::Int, # TODO: check if might not be needed anymore
     model::DecisionModel{<:DecisionProblem},
     start_time::Dates.DateTime,
     store::SimulationStore,
     exports,
 )
-    stats = OptimizerStats(model, step)
+    stats = get_optimizer_stats(model)
     write_optimizer_stats!(store, get_name(model), stats, start_time)
     write_results!(store, model, start_time; exports = exports)
     return
