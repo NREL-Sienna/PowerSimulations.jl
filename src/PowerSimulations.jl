@@ -330,7 +330,6 @@ import InfrastructureSystems:
     get_variables,
     get_parameters,
     get_total_cost,
-    get_optimizer_stats,
     write_results,
     get_timestamp,
     get_resolution,
