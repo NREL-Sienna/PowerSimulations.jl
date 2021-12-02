@@ -29,7 +29,6 @@ using GLPK
 using Cbc
 using OSQP
 using SCS
-using SCIP
 
 # Code Quality Tests
 import Aqua
