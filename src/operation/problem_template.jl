@@ -59,7 +59,7 @@ function set_network_model!(
     template::ProblemTemplate,
     model::NetworkModel{<:PM.AbstractPowerModel},
 )
-    template.network_model= model
+    template.network_model = model
     return
 end
 
