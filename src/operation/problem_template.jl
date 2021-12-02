@@ -53,13 +53,13 @@ end
 # Note to devs. PSY exports set_model! these names are chosen to avoid name clashes
 
 """
-Sets the transmission model in a template.
+Sets the network model in a template.
 """
-function set_transmission_model!(
+function set_network_model!(
     template::ProblemTemplate,
     model::NetworkModel{<:PM.AbstractPowerModel},
 )
-    template.transmission = model
+    template.network_model = model
     return
 end
 
