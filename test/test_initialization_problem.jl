@@ -3,7 +3,7 @@
 if !Sys.iswindows()
     using Pkg
     Pkg.add("SCIP")
-
+    using SCIP
     SCIP_optimizer = JuMP.optimizer_with_attributes(
         SCIP.Optimizer,
         "limits/gap" => 1e-5,
