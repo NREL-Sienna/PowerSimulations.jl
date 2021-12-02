@@ -1096,4 +1096,5 @@ if !Sys.iswindows()
             # @test solve!(model) == RunStatus.SUCCESSFUL
         end
     end
+    Pkg.rm("SCIP")
 end
