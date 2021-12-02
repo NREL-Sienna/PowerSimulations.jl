@@ -505,19 +505,19 @@ end
 
 function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
+    conflict = Dict{Symbol, Array}()
     try
         JuMP.compute_conflict!(jump_model)
     catch e
         @error "Can't compute conflict, check that your optimizer supports conflict refining/IIS" exception =
             (e, catch_backtrace())
-        return
+        return conflict
     end
 
     if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
         @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
     end
 
-    conflict = Dict{Symbol, Array}()
     for field in get_constraints(container)
         for (key, field_container) in field
             conflict_indices = check_conflict_status(jump_model, field_container)

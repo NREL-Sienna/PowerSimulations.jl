@@ -66,7 +66,7 @@ Convert OptimizerStats to an array of floats that can be serialized to HDF5.
 function to_array(stats::T) where {T <: OptimizerStats}
     field_values = Vector{Float64}(undef, fieldcount(T))
     for (ix, field) in enumerate(fieldnames(T))
-        value = ismissing(getfield(stats, field))
+        value = getfield(stats, field)
         field_values[ix] = ismissing(value) ? NaN : value
     end
     return field_values
