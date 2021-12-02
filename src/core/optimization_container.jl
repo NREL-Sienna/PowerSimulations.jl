@@ -529,7 +529,9 @@ function compute_conflict!(container::OptimizationContainer)
         end
     end
 
-    return
+    #TODO: Serialize the conflict to file
+
+    return conflict
 end
 
 function write_optimizer_stats!(container::OptimizationContainer)
