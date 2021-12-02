@@ -1,6 +1,6 @@
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
-function add_jump_parameter(model::JuMP.Model, val::Number)
-    param = JuMP.@variable(model, variable_type = PJ.Param())
+function add_jump_parameter(jump_model::JuMP.Model, val::Number)
+    param = JuMP.@variable(jump_model, variable_type = PJ.Param())
     PJ.set_value(param, val)
     return param
 end
@@ -157,22 +157,20 @@ function _calc_dimensions(
     return Dict("columns" => columns, "dims" => dims)
 end
 
-function summary_to_dict(
-    optimizer_log::Dict{Symbol, Any},
-    jump_summary::JuMP._SolutionSummary,
-)
+"""
+Run this function only when getting detailed solver stats
+"""
+function _summary_to_dict!(optimizer_stats::OptimizerStats, jump_model::JuMP.Model)
+    # JuMP.solution_summary uses a lot of try-catch so it has a performance hit and should be opt-in
+    jump_summary = JuMP.solution_summary(jump_model, verbose = false)
+    # Note we don't grab all the fields from the summary because not all can be encoded as Float for HDF store
     fields = [
-        :raw_status, # String
-        :result_count, # Int
         :has_values, # Bool
         :has_duals, # Bool
         # Candidate solution
         :objective_bound, # Union{Missing,Float64}
         :dual_objective_value, # Union{Missing,Float64}
-        :primal_solution, # Union{Missing,Dict{String,Float64}}
-        :dual_solution, # Union{Missing,Dict{String,Float64}}
         # Work counters
-        :solve_time, # Float64
         :barrier_iterations, # Union{Missing,Int}
         :simplex_iterations, # Union{Missing,Int}
         :node_count, # Union{Missing,Int}
@@ -181,10 +179,80 @@ function summary_to_dict(
     for field in fields
         field_value = getfield(jump_summary, field)
         if ismissing(field_value)
-            optimizer_log[field] = "missing"
+            setfield!(optimizer_stats, field, missing)
         else
-            optimizer_log[field] = field_value
+            setfield!(optimizer_stats, field, field_value)
         end
     end
     return
+end
+
+function _get_solver_time(jump_model::JuMP.Model)
+    solver_solve_time = NaN
+    try
+        solver_solve_time = MOI.get(jump_model, MOI.SolveTime())
+    catch
+        @debug "SolveTime() property not supported by the Solver"
+    end
+
+    return solver_solve_time
+end
+
+function write_optimizer_stats!(optimizer_stats::OptimizerStats, jump_model::JuMP.Model)
+    if JuMP.primal_status(jump_model) == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        optimizer_stats.objective_value = JuMP.objective_value(jump_model)
+    else
+        optimizer_stats.objective_value = Inf
+    end
+
+    optimizer_stats.termination_status = Int(JuMP.termination_status(jump_model))
+    optimizer_stats.primal_status = Int(JuMP.primal_status(jump_model))
+    optimizer_stats.dual_status = Int(JuMP.dual_status(jump_model))
+    optimizer_stats.result_count = JuMP.result_count(jump_model)
+    optimizer_stats.solve_time = _get_solver_time(jump_model)
+    if optimizer_stats.detailed_stats
+        _summary_to_dict!(optimizer_stats, jump_model)
+    end
+    return
+end
+
+""" Exports the JuMP object in MathOptFormat"""
+function serialize_optimization_model(jump_model::JuMP.Model, save_path::String)
+    MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
+    MOI.copy_to(MOF_model, JuMP.backend(jump_model))
+    MOI.write_to_file(MOF_model, save_path)
+    return
+end
+
+# check_conflict_status functions can't be tested on CI because free solvers don't support IIS
+function check_conflict_status(
+    jump_model::JuMP.Model,
+    constraint_container::JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef},
+)
+    conflict_indices = Vector()
+    dims = axes(constraint_container)
+    for index in zip(dims...)
+        if MOI.get(
+            jump_model,
+            MOI.ConstraintConflictStatus(),
+            constraint_container[index],
+        ) != MOI.NOT_IN_CONFLICT
+            push!(conflict_indices, index)
+        end
+    end
+    return conflict_indices
+end
+
+function check_conflict_status(
+    jump_model::JuMP.Model,
+    constraint_container::JuMP.Containers.SparseAxisArray{JuMP.ConstraintRef},
+)
+    conflict_indices = Vector()
+    for (index, constraint) in constraint_container
+        if MOI.get(jump_model, MOI.ConstraintConflictStatus(), constraint) !=
+           MOI.NOT_IN_CONFLICT
+            push!(conflict_indices, index)
+        end
+    end
+    return conflict_indices
 end
