@@ -337,7 +337,7 @@ end
 function update_model!(
     model::OperationModel,
     source,
-    ini_cond_chronology::InitialConditionChronology,
+    ini_cond_chronology,
 )
     # The default implementation updates parameters from the decision states
     update_parameters(model, get_decision_states(source))
