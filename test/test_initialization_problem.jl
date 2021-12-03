@@ -340,6 +340,10 @@ if !Sys.iswindows()
             )
             check_initialization_variable_count(model, ActivePowerVariable(), HydroDispatch)
 
+            #= 
+            Disabling the constraint test as the ic_model is deleted after the initial conditions are stored.
+            We can't use duals here as the model is MILP. 
+
             check_initialization_constraint_count(
                 model,
                 ActivePowerVariableLimitsConstraint(),
@@ -387,7 +391,7 @@ if !Sys.iswindows()
                 HydroDispatch;
                 meta = "ub",
             )
-
+            =#
             ####### Check initial condition from initialization step
             check_duration_on_initial_conditions_values(model, ThermalStandard)
             check_duration_off_initial_conditions_values(model, ThermalStandard)
@@ -618,7 +622,7 @@ if !Sys.iswindows()
             ####### Check initialization problem
             check_initialization_variable_count(
                 model,
-                PSI.PowerAboveMinimumVariable(),
+                ActivePowerVariable(),
                 ThermalMultiStart,
             )
             check_initialization_variable_count(model, OnVariable(), ThermalMultiStart)
@@ -645,7 +649,7 @@ if !Sys.iswindows()
             check_status_initial_conditions_values(model, ThermalMultiStart)
             check_energy_initial_conditions_values(model, GenericBattery)
             ####### Check variables
-            check_variable_count(model, PSI.PowerAboveMinimumVariable(), ThermalMultiStart)
+            check_variable_count(model, ActivePowerVariable(), ThermalMultiStart)
             check_variable_count(model, StopVariable(), ThermalMultiStart)
             check_variable_count(model, OnVariable(), ThermalMultiStart)
             check_variable_count(model, StartVariable(), ThermalMultiStart)
@@ -949,6 +953,10 @@ if !Sys.iswindows()
             )
             check_initialization_variable_count(model, ActivePowerVariable(), HydroDispatch)
 
+            #=
+            Disabling the constraint test as the ic_model is deleted after the initial conditions are stored.
+            We can't use duals here as the model is MILP. 
+
             check_initialization_constraint_count(
                 model,
                 ActivePowerVariableLimitsConstraint(),
@@ -996,7 +1004,7 @@ if !Sys.iswindows()
                 HydroDispatch;
                 meta = "ub",
             )
-
+            =#
             ####### Check initial condition from initialization step
             check_duration_on_initial_conditions_values(model, ThermalMultiStart)
             check_duration_off_initial_conditions_values(model, ThermalMultiStart)
