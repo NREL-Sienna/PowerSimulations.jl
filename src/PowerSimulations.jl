@@ -433,6 +433,9 @@ include("core/state_data.jl")
 
 include("core/optimization_container.jl")
 
+# Order Required
+include("initial_conditions/initial_condition_chronologies.jl")
+
 include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
 include("operation/model_store_params.jl")
@@ -448,7 +451,6 @@ include("operation/optimization_debugging.jl")
 include("operation/model_numerical_analysis_utils.jl")
 
 include("initial_conditions/add_initial_condition.jl")
-include("initial_conditions/initial_condition_chronologies.jl")
 include("initial_conditions/update_initial_conditions.jl")
 include("initial_conditions/calculate_initial_condition.jl")
 
