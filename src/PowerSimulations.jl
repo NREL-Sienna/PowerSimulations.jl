@@ -410,7 +410,6 @@ using DocStringExtensions
 include("core/definitions.jl")
 
 # Core components
-include("core/abstract_types.jl")
 include("core/abstract_formulations.jl")
 include("core/abstract_simulation_store.jl")
 include("core/operation_model_abstract_types.jl")

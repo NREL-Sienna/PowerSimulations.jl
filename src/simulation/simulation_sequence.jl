@@ -152,7 +152,6 @@ end
                         models::SimulationModels,
                         feedforward::Dict{Symbol, <:AbstractAffectFeedforward}
                         ini_cond_chronology::Dict{Symbol, <:FeedforwardChronology}
-                        cache::Dict{Symbol, AbstractCache}
                         )
 """
 mutable struct SimulationSequence

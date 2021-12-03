@@ -9,7 +9,7 @@ const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}
 """
 Holds the results of a simulation problem for plotting or exporting.
 """
-mutable struct SimulationProblemResults <: PSIResults
+mutable struct SimulationProblemResults
     problem::String
     base_power::Float64
     execution_path::String
