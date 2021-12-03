@@ -50,7 +50,7 @@ struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     execution_timestamp::Dates.DateTime
     initial_condition_type::String
-    device_type::String
+    component_type::String
     device_name::String
     new_value::Float64
     previous_value::Float64
@@ -79,14 +79,14 @@ struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     execution_timestamp::Dates.DateTime
     parameter_type::String
-    device_type::String
+    component_type::String
     tag::String
     model_name::String
 end
 
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
-    device_type::Type{<:PSY.Device},
+    component_type::DataType,
     tag::String,
     execution_timestamp::Dates.DateTime,
     model_name::Symbol,
@@ -95,7 +95,7 @@ function ParameterUpdateEvent(
         IS.RecorderEventCommon("ParameterUpdateEvent"),
         execution_timestamp,
         string(parameter_type),
-        string(device_type),
+        string(component_type),
         tag,
         string(model_name),
     )
@@ -103,14 +103,14 @@ end
 
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
-    device_type::Type{<:PSY.Device},
+    component_type::DataType,
     attributes::TimeSeriesAttributes,
     timestamp::Dates.DateTime,
     model_name::Symbol,
 )
     return ParameterUpdateEvent(
         parameter_type,
-        device_type,
+        component_type,
         attributes.name,
         timestamp,
         model_name,
@@ -119,14 +119,14 @@ end
 
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
-    device_type::DataType,
+    component_type::DataType,
     attributes::VariableValueAttributes,
     timestamp::Dates.DateTime,
     model_name::Symbol,
 )
     return ParameterUpdateEvent(
         parameter_type,
-        device_type,
+        component_type,
         # TODO: Store as string in the attributes to avoid interpolations
         encode_key_as_string(get_attribute_key(attributes)),
         timestamp,

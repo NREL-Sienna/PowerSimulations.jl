@@ -34,7 +34,7 @@ function update_parameter_values!(
 ) where {
     T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
-    V <: PSY.Device,
+    V <: PSY.Component,
 }
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
@@ -44,14 +44,40 @@ function update_parameter_values!(
             U,
             model,
             component,
-            get_name(attributes),
+            get_timeseries_name(attributes),
             initial_forecast_time,
             horizon,
         )
-        name = PSY.get_name(component)
         for (t, value) in enumerate(ts_vector)
             _set_param_value!(param_array, value, name, t)
         end
+    end
+end
+
+function update_parameter_values!(
+    param_array::AbstractArray{T},
+    attributes::TimeSeriesAttributes{U},
+    service::V,
+    model::DecisionModel,
+    ::StateInfo,
+) where {
+    T <: Union{PJ.ParameterRef, Float64},
+    U <: PSY.AbstractDeterministic,
+    V <: PSY.Service,
+}
+    initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
+    horizon = get_time_steps(get_optimization_container(model))[end]
+    ts_vector = get_time_series_values!(
+        U,
+        model,
+        service,
+        get_timeseries_name(attributes),
+        initial_forecast_time,
+        horizon,
+    )
+    service_name = PSY.get_name(service)
+    for (t, value) in enumerate(ts_vector)
+        _set_param_value!(param_array, value, service_name, t)
     end
 end
 
@@ -70,7 +96,7 @@ function update_parameter_values!(
             U,
             model,
             component,
-            get_name(attributes),
+            get_timeseries_name(attributes),
             initial_forecast_time,
         )
         _set_param_value!(param_array, ts_vector[1], PSY.get_name(component), 1)
@@ -122,6 +148,33 @@ function update_parameter_values!(
         parameter_array = get_parameter_array(optimization_container, key)
         parameter_attributes = get_parameter_attributes(optimization_container, key)
         update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
+        IS.@record :execution ParameterUpdateEvent(
+            T,
+            U,
+            parameter_attributes,
+            get_current_timestamp(model),
+            get_name(model),
+        )
+    end
+    return
+end
+
+"""
+Update parameter function an OperationModel
+"""
+function update_parameter_values!(
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::StateInfo,
+) where {T <: ParameterType, U <: PSY.Service}
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+        optimization_container = get_optimization_container(model)
+        # Note: Do not instantite a new key here because it might not match the param keys in the container
+        # if the keys have strings in the meta fields
+        param_array = get_parameter_array(optimization_container, key)
+        parameter_attributes = get_parameter_attributes(optimization_container, key)
+        service = PSY.get_component(U, get_system(model), key.meta)
+        update_parameter_values!(param_array, parameter_attributes, service, model, input)
         IS.@record :execution ParameterUpdateEvent(
             T,
             U,
