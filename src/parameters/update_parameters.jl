@@ -112,13 +112,15 @@ Update parameter function an OperationModel
 """
 function update_parameter_values!(
     model::OperationModel,
-    ::ParameterKey{T, U},
+    key::ParameterKey{T, U},
     input::StateInfo,
-) where {T <: ParameterType, U <: PSY.Device}
+) where {T <: ParameterType, U <: PSY.Component}
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
         optimization_container = get_optimization_container(model)
-        parameter_array = get_parameter_array(optimization_container, T(), U)
-        parameter_attributes = get_parameter_attributes(optimization_container, T(), U)
+        # Note: Do not instantite a new key here because it might not match the param keys in the container
+        # if the keys have strings in the meta fields
+        parameter_array = get_parameter_array(optimization_container, key)
+        parameter_attributes = get_parameter_attributes(optimization_container, key)
         update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
         IS.@record :execution ParameterUpdateEvent(
             T,
