@@ -554,7 +554,7 @@ function _flush_data!(
     cache::OptimzationResultCache,
     store::HdfSimulationStore,
     cache_key::OptimizationResultCacheKey,
-    discard,
+    discard::Bool,
 )
     !has_dirty(cache) && return 0
     dataset = _get_dataset(store, cache_key)
