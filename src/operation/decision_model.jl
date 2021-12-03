@@ -421,13 +421,25 @@ function solve!(
     return get_run_status(model)
 end
 
-function update_model!(model::DecisionModel, state)
+function update_parameters(model::DecisionModel, decision_states::StateInfo)
     for key in keys(get_parameters(model))
-        update_parameter_values!(model, key, state)
+        update_parameter_values!(model, key, decision_states)
     end
+    return
+end
+
+function update_initial_conditions(model::DecisionModel, state, ::InterProblemChronology)
     for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key, state)
+        update_initial_conditions!(model, key, get_system_state(state))
     end
+    return
+end
+
+function update_initial_conditions(model::DecisionModel, state, ::IntraProblemChronology)
+    #for key in keys(get_initial_conditions(model))
+    #    update_initial_conditions!(model, key, get_system_state(state))
+    #end
+    error("Not Implemented yet")
     return
 end
 

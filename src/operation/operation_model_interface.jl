@@ -333,3 +333,14 @@ function serialize_optimization_model(model::OperationModel)
     )
     return
 end
+
+function update_model!(
+    model::OperationModel,
+    source,
+    ini_cond_chronology::InitialConditionChronology,
+)
+    # The default implementation updates parameters from the decision states
+    update_parameters(model, get_decision_states(source))
+    update_initial_conditions(model, source, ini_cond_chronology)
+    return
+end

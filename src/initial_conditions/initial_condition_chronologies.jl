@@ -1,3 +1,5 @@
+abstract type InitialConditionChronology end
+
 """
     InterProblemChronology()
 

@@ -351,13 +351,21 @@ function one_step_solve!(model::EmulationModel)
     return
 end
 
-function update_model!(
+function update_parameters(
     model::EmulationModel,
     store::InMemoryModelStore{EmulationModelOptimizerResults},
 )
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, store)
     end
+    return
+end
+
+function update_initial_conditions(
+    model::EmulationModel,
+    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    ::InterProblemChronology,
+)
     for key in keys(get_initial_conditions(model))
         update_initial_conditions!(model, key, store)
     end
@@ -365,7 +373,7 @@ function update_model!(
 end
 
 function update_model!(model::EmulationModel)
-    update_model!(model, model.store)
+    update_model!(model, InterProblemChronology(), model.store)
     return
 end
 
