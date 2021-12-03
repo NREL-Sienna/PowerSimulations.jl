@@ -6,7 +6,7 @@ end
 get_timestamps_length(s::StateData) = length(s.timestamps)
 get_data_resolution(s::StateData) = s.timestamps[2] - s.timestamps[1]
 get_timestamps(s::StateData) = s.timestamps
-get_values(s::StateData) = s.values
+get_state_values(s::StateData) = s.values
 
 struct StateInfo
     duals::Dict{ConstraintKey, StateData}
@@ -60,7 +60,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Peri
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
         horizon_step = get_horizon(model) * model_resolution
-        for type in [:variables, :aux_variables]
+        for type in fieldnames(StateInfo)
             field_containers = getfield(container, type)
             for key in keys(field_containers)
                 if !haskey(params, key)
@@ -78,13 +78,14 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Peri
 end
 
 function _initialize_model_states!(
-    states::StateInfo,
+    sim_state::SimulationState,
     model::OperationModel,
     simulation_initial_time::Dates.DateTime,
-    params,
+    params::OrderedDict{OptimizationContainerKey, NTuple{2, Dates.Millisecond}},
 )
+    states = get_decision_states(sim_state)
     container = get_optimization_container(model)
-    for field in [:variables, :aux_variables, :duals]
+    for field in fieldnames(StateInfo)
         field_containers = getfield(container, field)
         field_states = getfield(states, field)
         for (key, value) in field_containers
@@ -119,17 +120,34 @@ function _initialize_model_states!(
     return
 end
 
+function _initialize_system_states!(
+    sim_state::SimulationState,
+    ::Nothing,
+    simulation_initial_time::Dates.DateTime,
+    ::OrderedDict{OptimizationContainerKey, NTuple{2, Dates.Millisecond}},
+)
+    decision_states = get_decision_states(sim_state)
+    emulator_states = get_system_state(sim_state)
+    for field in fieldnames(StateInfo)
+        decision_containers = getfield(decision_states, field)
+        emulator_containers = getfield(emulator_states, field)
+        for (key, data) in (decision_containers)
+            cols = DataFrames.names(get_state_values(data))
+            emulator_containers[key] = StateData(DataFrames.DataFrame(cols .=> NaN), [simulation_initial_time])
+        end
+    end
+    return
+end
+
 function initialize_simulation_state!(
     sim_state::SimulationState,
     models::SimulationModels,
     simulation_step::Dates.Period,
     simulation_initial_time::Dates.DateTime,
 )
-    decision_states = get_decision_states(sim_state)
     params = _get_state_params(models, simulation_step)
-    min_resolution = simulation_step
     for model in get_decision_models(models)
-        _initialize_model_states!(decision_states, model, simulation_initial_time, params)
+        _initialize_model_states!(sim_state, model, simulation_initial_time, params)
     end
 
     min_resolution = minimum([v[2] for v in values(params)])
@@ -139,11 +157,7 @@ function initialize_simulation_state!(
     )
 
     em = get_emulation_model(models)
-    if em !== nothing
-        emulator_states = get_system_state(sim_state)
-        # TODO: Initialize properly once we have an emulation example
-        _initialize_model_states!(emulator_states, model, simulation_step)
-    end
+    _initialize_system_states!(sim_state, em, simulation_initial_time, params)
     return
 end
 
@@ -201,3 +215,15 @@ end
 #)
 #    return getfield(state.decision_states, STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
 #end
+
+function get_system_state(state::SimulationState, opt_container_key::VariableKey)
+    return getfield(state.system_state, STORE_CONTAINER_VARIABLES)[opt_container_key]
+end
+
+function get_system_state(state::SimulationState, opt_container_key::ConstraintKey)
+    return getfield(state.system_state, STORE_CONTAINER_DUALS)[opt_container_key]
+end
+
+function get_system_state(state::SimulationState, opt_container_key::AuxVarKey)
+    return getfield(state.system_state, STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
+end
