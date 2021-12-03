@@ -10,5 +10,3 @@ abstract type PSIResults <: IS.Results end
 
 # This are bound go away. TBD location
 abstract type AbstractCache end
-abstract type FeedforwardChronology end
-abstract type InitialConditionChronology end
