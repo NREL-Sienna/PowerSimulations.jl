@@ -321,9 +321,6 @@ function _build!(sim::Simulation, serialize::Bool)
         _initialize_simulation_state!(sim)
     end
 
-    # Here is check that store params are properly initialized
-    # _initialize_problem_storage!(sim, cache_size_mib, min_cache_flush_size_mib)
-
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
             serialize_simulation(sim)
@@ -407,20 +404,6 @@ function build!(
     initialize_problem && _initial_conditions_problems!(sim)
     @info "\n$(BUILD_PROBLEMS_TIMER)\n"
     return get_simulation_build_status(sim)
-end
-
-function _update_initial_conditions!(model::DecisionModel, sim::Simulation)
-    for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key)
-    end
-    return
-end
-
-function _update_parameters(model::DecisionModel, sim::Simulation)
-    for key in keys(get_parameters(model))
-        update_parameter_values!(model, key)
-    end
-    return
 end
 
 function _apply_warm_start!(model::DecisionModel)
