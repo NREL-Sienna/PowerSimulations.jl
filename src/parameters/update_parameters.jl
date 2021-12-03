@@ -30,7 +30,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
-    state,
+    ::StateInfo,
 ) where {
     T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -60,7 +60,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
-    state,
+    ::StateInfo,
 ) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))
@@ -83,10 +83,10 @@ function update_parameter_values!(
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::DecisionModel,
-    state,
+    state::StateInfo,
 ) where {T <: Union{PJ.ParameterRef, Float64}}
     current_time = get_current_time(model)
-    state_data = get_decision_state_data(state, get_attribute_key(attributes))
+    state_data = get_state_data(state, get_attribute_key(attributes))
     state_values = get_state_values(state_data)
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
@@ -113,7 +113,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     ::ParameterKey{T, U},
-    input::Any,
+    input::StateInfo,
 ) where {T <: ParameterType, U <: PSY.Device}
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
         optimization_container = get_optimization_container(model)

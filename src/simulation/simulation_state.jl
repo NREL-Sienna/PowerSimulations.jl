@@ -1,27 +1,3 @@
-struct StateData
-    values::DataFrames.DataFrame
-    timestamps::Vector{Dates.DateTime}
-end
-
-get_timestamps_length(s::StateData) = length(s.timestamps)
-get_data_resolution(s::StateData) = s.timestamps[2] - s.timestamps[1]
-get_timestamps(s::StateData) = s.timestamps
-get_state_values(s::StateData) = s.values
-
-struct StateInfo
-    duals::Dict{ConstraintKey, StateData}
-    aux_variables::Dict{AuxVarKey, StateData}
-    variables::Dict{VariableKey, StateData}
-end
-
-function StateInfo()
-    return StateInfo(
-        Dict{ConstraintKey, StateData}(),
-        Dict{AuxVarKey, StateData}(),
-        Dict{VariableKey, StateData}(),
-    )
-end
-
 struct SimulationState
     current_time::Base.RefValue{Dates.DateTime}
     end_of_step_timestamp::Base.RefValue{Dates.DateTime}
@@ -133,7 +109,8 @@ function _initialize_system_states!(
         emulator_containers = getfield(emulator_states, field)
         for (key, data) in (decision_containers)
             cols = DataFrames.names(get_state_values(data))
-            emulator_containers[key] = StateData(DataFrames.DataFrame(cols .=> NaN), [simulation_initial_time])
+            emulator_containers[key] =
+                StateData(DataFrames.DataFrame(cols .=> NaN), [simulation_initial_time])
         end
     end
     return

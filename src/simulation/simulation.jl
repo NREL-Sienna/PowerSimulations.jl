@@ -525,11 +525,9 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     end
 end
 
-# Temporary while emulator is implemented better
 function _set_system_state!(sim::Simulation)
     em = get_emulation_model(get_models(sim))
     if isnothing(em)
-
     end
     return
 end
@@ -543,7 +541,7 @@ function update_model!(
         # TODO: Implement this case where the model is re-built
         # build_impl!(model)
     else
-        update_model!(model, get_simulation_state(sim))
+        update_model!(model, get_simulation_state(sim), get_ini_cond_chronology(sim))
     end
     return
 end
