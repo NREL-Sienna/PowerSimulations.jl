@@ -508,6 +508,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     for field in fieldnames(StateInfo)
         model_params = get_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
+            @show key
             state_info = getfield(state.decision_states, field)
             # TODO: Read Array here to avoid allocating the DataFrame
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
@@ -540,14 +541,24 @@ function _set_system_state!(sim::Simulation)
 
     for field in fieldnames(StateInfo)
         state_field = getfield(system_state, field)
+        decision_field = getfield(decision_state, field)
         for (key, data) in state_field
-            @show key
-            IS.@record :execution StateUpdateEvent(
-                key,
-                simulation_time,
-                model_name,
-                "EmulationState",
-            )
+            if get_last_update_timestamp(decision_field[key]) == simulation_time
+
+# sim.internal.simulation_state.system_state.variables[PowerSimulations.VariableKey{ActivePowerVariable, RenewableDispatch}("")].values[1,:] .= values(vals.values[1, :])
+            elseif get_last_update_timestamp(decision_field[key]) < simulation_time
+
+            elseif get_last_update_timestamp(decision_field[key]) > simulation_time
+                error("Something went really wrong. Please report this error.")
+            end
+            error()
+            # @show get_state_values(decision_field[key])
+            # IS.@record :execution StateUpdateEvent(
+            #     key,
+            #     simulation_time,
+            #     model_name,
+            #     "EmulationState",
+            # )
         end
     end
 
