@@ -157,8 +157,8 @@ Manually provided initial times have to be compatible with the specified interva
     end
     if get_initial_time(sim) === nothing
         sim.initial_time = model_initial_times[1][1]
-        @debug("Initial Simulation Time will be infered from the data.
-               Initial Simulation Time set to $(sim.initial_time)")
+        @debug("Initial Simulation timestamp will be infered from the data. \\
+               Initial Simulation timestamp set to $(sim.initial_time)")
     end
     if get_models(sim).emulation_model !== nothing
         em = get_models(sim).emulation_model
@@ -520,15 +520,37 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
                 model_params,
                 end_of_step_timestamp,
             )
-            IS.@record :execution StateUpdateEvent(key, simulation_time, model_name)
+            IS.@record :execution StateUpdateEvent(
+                key,
+                simulation_time,
+                model_name,
+                "DecisionState",
+            )
         end
     end
 end
 
 function _set_system_state!(sim::Simulation)
     em = get_emulation_model(get_models(sim))
-    if isnothing(em)
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_state(sim_state)
+    decision_state = get_decision_states(sim_state)
+    #state_data_index = findlast(get_timestamps(state_data) .<= simulation_time)
+    simulation_time = get_current_time(sim)
+
+    for field in fieldnames(StateInfo)
+        state_field = getfield(system_state, field)
+        for (key, data) in state_field
+            @show key
+            IS.@record :execution StateUpdateEvent(
+                key,
+                simulation_time,
+                model_name,
+                "EmulationState",
+            )
+        end
     end
+
     return
 end
 
