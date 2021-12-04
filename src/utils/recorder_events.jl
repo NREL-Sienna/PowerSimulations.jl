@@ -140,6 +140,7 @@ struct StateUpdateEvent <: IS.AbstractRecorderEvent
     entry_type::String
     component_type::String
     model_name::String
+    state_type::String
 end
 
 function StateUpdateEvent(
@@ -147,6 +148,7 @@ function StateUpdateEvent(
     component_type::DataType,
     execution_timestamp::Dates.DateTime,
     model_name,
+    state_type::String,
 )
     return StateUpdateEvent(
         IS.RecorderEventCommon("StateUpdateEvent"),
@@ -154,6 +156,7 @@ function StateUpdateEvent(
         string(entry_type),
         string(component_type),
         string(model_name),
+        state_type,
     )
 end
 
@@ -161,12 +164,14 @@ function StateUpdateEvent(
     key::OptimizationContainerKey,
     execution_timestamp::Dates.DateTime,
     model_name,
+    state_type::String,
 )
     return StateUpdateEvent(
         get_entry_type(key),
         get_component_type(key),
         execution_timestamp,
         model_name,
+        state_type,
     )
 end
 
