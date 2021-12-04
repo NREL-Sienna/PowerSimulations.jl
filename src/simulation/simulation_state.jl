@@ -171,6 +171,8 @@ function update_state_data!(
         end
         state_data_index += resolution_ratio
     end
+
+    state_data.last_recorded_row = state_data_index
     return
 end
 
