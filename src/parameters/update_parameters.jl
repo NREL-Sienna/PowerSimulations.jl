@@ -48,6 +48,7 @@ function update_parameter_values!(
             initial_forecast_time,
             horizon,
         )
+        name = PSY.get_name(component)
         for (t, value) in enumerate(ts_vector)
             _set_param_value!(param_array, value, name, t)
         end
