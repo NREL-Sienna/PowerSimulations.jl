@@ -441,13 +441,11 @@ function check_initialization_constraint_count(
     filter_func = x -> x.available,
     meta = PSI.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
-    container = PSI.get_optimization_container(model)
-    initial_conditions_data = PSI.get_initial_conditions_data(container)
+    container = model.internal.ic_model_container
     no_component = length(PSY.get_components(T, model.sys, filter_func))
     time_steps = PSI.get_time_steps(container)[end]
-    constraint = PSI.get_initial_condition_value(container, S(), T, meta)
-    rows, cols = size(variable)
-    @test rows * cols == no_component * time_steps
+    constraint = PSI.get_constraint(container, S(), T, meta)
+    @test length(constraint) == no_component * time_steps
 end
 
 function check_constraint_count(
