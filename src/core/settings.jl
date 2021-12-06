@@ -5,7 +5,8 @@ struct Settings
     initial_time::Base.RefValue{Dates.DateTime}
     optimizer::Union{Nothing, MOI.OptimizerWithAttributes}
     direct_mode_optimizer::Bool
-    optimizer_log_print::Bool
+    optimizer_solve_log_print::Bool
+    detailed_optimizer_stats::Bool
     system_to_file::Bool
     initialize_model::Bool
     initialization_file::String
@@ -23,7 +24,8 @@ function Settings(
     horizon::Int = UNSET_HORIZON,
     optimizer = nothing,
     direct_mode_optimizer::Bool = false,
-    optimizer_log_print::Bool = false,
+    optimizer_solve_log_print::Bool = false,
+    detailed_optimizer_stats::Bool = false,
     system_to_file = true,
     initialize_model = true,
     initialization_file = "",
@@ -55,7 +57,8 @@ function Settings(
         Ref(initial_time),
         optimizer_,
         direct_mode_optimizer,
-        optimizer_log_print,
+        optimizer_solve_log_print,
+        detailed_optimizer_stats,
         system_to_file,
         initialize_model,
         initialization_file,
@@ -126,7 +129,8 @@ get_deserialize_initial_conditions(settings::Settings) =
     settings.deserialize_initial_conditions
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails
-get_optimizer_log_print(settings::Settings) = settings.optimizer_log_print
+get_optimizer_solve_log_print(settings::Settings) = settings.optimizer_solve_log_print
+get_detailed_optimizer_stats(settings::Settings) = settings.detailed_optimizer_stats
 get_direct_mode_optimizer(settings::Settings) = settings.direct_mode_optimizer
 use_time_series_cache(settings::Settings) = settings.time_series_cache_size > 0
 

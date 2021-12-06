@@ -142,7 +142,7 @@ function mock_construct_device!(
 end
 
 function mock_construct_network!(problem::PSI.DecisionModel{MockOperationProblem}, model)
-    PSI.set_transmission_model!(problem.template, model)
+    PSI.set_network_model!(problem.template, model)
     PSI.construct_network!(
         PSI.get_optimization_container(problem),
         PSI.get_system(problem),

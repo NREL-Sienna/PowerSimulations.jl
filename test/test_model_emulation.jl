@@ -361,7 +361,17 @@ end
     ) isa DataFrame
 
     @test read_optimizer_stats(model) isa DataFrame
-    @test read_optimizer_stats(model) == read_optimizer_stats(results)
+    for n in names(read_optimizer_stats(model))
+        stats_values = read_optimizer_stats(model)[!, n]
+        if any(ismissing.(stats_values))
+            @test ismissing.(stats_values) ==
+                  ismissing.(read_optimizer_stats(results)[!, n])
+        elseif any(isnan.(stats_values))
+            @test isnan.(stats_values) == isnan.(read_optimizer_stats(results)[!, n])
+        else
+            @test stats_values == read_optimizer_stats(results)[!, n]
+        end
+    end
 
     for i in 1:executions
         @test get_objective_value(results, i) isa Float64

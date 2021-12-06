@@ -634,3 +634,23 @@ end
     build!(model; output_dir = output_dir, console_level = Logging.AboveMaxLevel) ==
     PSI.BuildStatus.FAILED
 end
+
+@testset "Solve with detailed optimizer stats" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
+    )
+    UC = DecisionModel(
+        template,
+        c_sys5;
+        optimizer = GLPK_optimizer,
+        detailed_optimizer_stats = true,
+    )
+    output_dir = mktempdir(cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test solve!(UC) == RunStatus.SUCCESSFUL
+    # We only test this field because most free solvers don't support detailed stats
+    @test !ismissing(get_optimizer_stats(UC).objective_bound)
+end

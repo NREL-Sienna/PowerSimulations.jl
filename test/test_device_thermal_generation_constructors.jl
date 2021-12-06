@@ -1,11 +1,11 @@
 test_path = mktempdir()
 @testset "ThermalGen data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
-    warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
+    info_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
     device_model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
     c_sys5_re_only = PSB.build_system(PSITestSystems, "c_sys5_re_only")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
-    @test_logs (:warn, warn_message) match_mode = :any mock_construct_device!(
+    @test_logs (:info, info_message) match_mode = :any mock_construct_device!(
         model,
         device_model,
     )
@@ -612,12 +612,13 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-        optimizer = SCIP_optimizer,
+        optimizer = Cbc_optimizer,
         initialize_model = false,
     )
     @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 32, 0, 8, 4, 14, true)
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89, 10.0)
+    # Disables due to https://github.com/jump-dev/Cbc.jl/issues/183
+    # psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89, 10.0)
 end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin

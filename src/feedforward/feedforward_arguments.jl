@@ -30,9 +30,8 @@ function add_feedforward_arguments!(
     ff::AbstractAffectFeedforward,
 ) where {T <: PSY.Component}
     parameter_type = get_default_parameter_type(ff, T)
-    for var_key in get_affected_values(ff)
-        add_parameters!(container, parameter_type, var_key, model, devices)
-    end
+    source_key = get_optimization_container_key(ff)
+    add_parameters!(container, parameter_type, source_key, model, devices)
     return
 end
 
@@ -43,9 +42,8 @@ function add_feedforward_arguments!(
     ff::AbstractAffectFeedforward,
 ) where {T <: PSY.Component, SR <: PSY.AbstractReserve}
     parameter_type = get_default_parameter_type(ff, SR)
-    for var_key in get_affected_values(ff)
-        add_parameters!(container, parameter_type, var_key, model, contributing_devices)
-    end
+    source_key = get_optimization_container_key(ff)
+    add_parameters!(container, parameter_type, source_key, model, contributing_devices)
     return
 end
 
@@ -53,10 +51,9 @@ function _handle_active_power_semicontinuous_feedforward!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    var_key::VariableKey,
+    source_key::VariableKey,
     parameter_type::OnStatusParameter,
 ) where {T <: PSY.Component}
-    add_parameters!(container, parameter_type, var_key, model, devices)
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -81,6 +78,8 @@ function add_feedforward_arguments!(
     ff::SemiContinuousFeedforward,
 ) where {T <: PSY.Component}
     parameter_type = get_default_parameter_type(ff, T)
+    source_key = get_optimization_container_key(ff)
+    add_parameters!(container, parameter_type, source_key, model, devices)
     for var_key in get_affected_values(ff)
         if get_entry_type(var_key) == ActivePowerVariable ||
            get_entry_type(var_key) == PowerAboveMinimumVariable
@@ -107,9 +106,8 @@ function add_feedforward_arguments!(
     ff::EnergyTargetFeedforward,
 ) where {T <: PSY.Component}
     parameter_type = get_default_parameter_type(ff, T)
-    for var_key in get_affected_values(ff)
-        add_parameters!(container, parameter_type, var_key, model, devices)
-    end
+    source_key = get_optimization_container_key(ff)
+    add_parameters!(container, parameter_type, source_key, model, devices)
     add_variables!(container, EnergyShortageVariable, devices, get_formulation(model)())
     return
 end

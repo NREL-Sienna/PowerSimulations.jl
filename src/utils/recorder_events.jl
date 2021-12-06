@@ -89,7 +89,7 @@ function ParameterUpdateEvent(
     device_type::Type{<:PSY.Device},
     tag::String,
     execution_timestamp::Dates.DateTime,
-    model_name,
+    model_name::Symbol,
 )
     return ParameterUpdateEvent(
         IS.RecorderEventCommon("ParameterUpdateEvent"),
@@ -98,6 +98,39 @@ function ParameterUpdateEvent(
         string(device_type),
         tag,
         string(model_name),
+    )
+end
+
+function ParameterUpdateEvent(
+    parameter_type::Type{<:ParameterType},
+    device_type::Type{<:PSY.Device},
+    attributes::TimeSeriesAttributes,
+    timestamp::Dates.DateTime,
+    model_name::Symbol,
+)
+    return ParameterUpdateEvent(
+        parameter_type,
+        device_type,
+        attributes.name,
+        timestamp,
+        model_name,
+    )
+end
+
+function ParameterUpdateEvent(
+    parameter_type::Type{<:ParameterType},
+    device_type::DataType,
+    attributes::VariableValueAttributes,
+    timestamp::Dates.DateTime,
+    model_name::Symbol,
+)
+    return ParameterUpdateEvent(
+        parameter_type,
+        device_type,
+        # TODO: Store as string in the attributes to avoid interpolations
+        encode_key_as_string(get_attribute_key(attributes)),
+        timestamp,
+        model_name,
     )
 end
 

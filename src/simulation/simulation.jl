@@ -235,6 +235,8 @@ function _build_decision_models!(sim::Simulation)
             end
             sim.internal.date_ref[model_number] = initial_time
             set_status!(model, BuildStatus.BUILT)
+            # TODO: Disable check of variable bounds ?
+            _pre_solve_model_checks(model)
         catch
             set_status!(model, BuildStatus.FAILED)
             rethrow()
@@ -439,16 +441,12 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
         model_params = get_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
             state_info = getfield(state.decision_states, field)
-            res = read_result(
-                JuMP.Containers.DenseAxisArray,
-                store,
-                model_name,
-                key,
-                simulation_time,
-            )
+            # TODO: Read Array here to avoid allocating the DataFrame
+            res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
             end_of_step_timestamp = get_end_of_step_timestamp(state)
             update_state_data!(
                 state_info[key],
+                # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
                 res,
                 simulation_time,
                 model_params,
@@ -459,8 +457,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     end
 end
 
-############################# Interfacing Functions##########################################
-## These are the functions that the user will have to implement to update a custom problem ###
 """ Default problem update function for most problems with no customization"""
 function update_model!(
     model::DecisionModel{M},
@@ -470,7 +466,7 @@ function update_model!(
         # TODO: Implement this case where the model is re-built
         # build_impl!(model)
     else
-        # update_model!(model, get_simulation_state(sim))
+        update_model!(model, get_simulation_state(sim))
     end
     return
 end
@@ -571,96 +567,91 @@ function _execute!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_SIMULATION_TIMER)
     store = get_simulation_store(sim)
     for step in 1:steps
-        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
-            IS.@record :simulation_status SimulationStepEvent(
+        IS.@record :simulation_status SimulationStepEvent(
+            get_current_time(sim),
+            step,
+            "start",
+        )
+        for (ix, model_number) in enumerate(execution_order)
+            IS.@record :simulation_status ProblemExecutionEvent(
                 get_current_time(sim),
                 step,
+                model_number,
                 "start",
             )
-            for (ix, model_number) in enumerate(execution_order)
+            model = get_decision_models(models)[model_number]
+            model_name = get_name(model)
+            TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
+                if !is_built(model)
+                    error("$(model_name) status is not BuildStatus.BUILT")
+                end
+                problem_interval = get_interval(sequence, model_name)
+                set_current_time!(sim, sim.internal.date_ref[model_number])
+                sequence.current_execution_index = ix
+
+                # Is first run of first problem? Yes -> don't update problem
+
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update $(model_name)" begin
+                    !(step == 1 && ix == 1) && update_model!(model, sim)
+                end
+
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
+                    settings = get_settings(model)
+                    status =
+                        solve!(step, model, get_current_time(sim), store; exports = exports)
+                    if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
+                        continue
+                    elseif !get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
+                        throw(
+                            ErrorException(
+                                "Simulation Failed in problem $(model_name). Returned $(status)",
+                            ),
+                        )
+                    else
+                        @assert status == RunStatus.SUCCESSFUL
+                    end
+                end # Run problem Timer
+
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
+                    _update_simulation_state!(sim, model)
+                end
+
+                global_problem_execution_count = (step - 1) * length(execution_order) + ix
+                sim.internal.run_count[step][model_number] += 1
+                sim.internal.date_ref[model_number] += problem_interval
+
+                # _apply_warm_start! can only be called once all the operations that read solutions
+                # from the optimization container have been called.
+                # See https://github.com/NREL-SIIP/PowerSimulations.jl/pull/793#discussion_r761545526
+                # for reference
+                if warm_start_enabled(model)
+                    _apply_warm_start!(model)
+                end
+
                 IS.@record :simulation_status ProblemExecutionEvent(
                     get_current_time(sim),
                     step,
                     model_number,
-                    "start",
+                    "done",
                 )
-                model = get_decision_models(models)[model_number]
-                model_name = get_name(model)
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
-                    if !is_built(model)
-                        error("$(model_name) status is not BuildStatus.BUILT")
-                    end
-                    problem_interval = get_interval(sequence, model_name)
-                    set_current_time!(sim, sim.internal.date_ref[model_number])
-                    sequence.current_execution_index = ix
 
-                    # Is first run of first problem? Yes -> don't update problem
+                ProgressMeter.update!(
+                    prog_bar,
+                    global_problem_execution_count;
+                    showvalues = [
+                        (:Step, step),
+                        (:model, model_name),
+                        (:("Simulation Timestamp"), get_current_time(sim)),
+                    ],
+                )
+            end #execution problem timer
+        end # execution order for loop
 
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update $(model_name)" begin
-                        !(step == 1 && ix == 1) && update_model!(model, sim)
-                    end
-
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run $(model_name)" begin
-                        settings = get_settings(model)
-                        status = solve!(
-                            step,
-                            model,
-                            get_current_time(sim),
-                            store;
-                            exports = exports,
-                        )
-                        if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
-                            continue
-                        elseif !get_allow_fails(settings) &&
-                               (status != RunStatus.SUCCESSFUL)
-                            throw(
-                                ErrorException(
-                                    "Simulation Failed in problem $(model_name). Returned $(status)",
-                                ),
-                            )
-                        else
-                            @assert status == RunStatus.SUCCESSFUL
-                        end
-                    end # Run problem Timer
-
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Simulation State" begin
-                        _update_simulation_state!(sim, model)
-                    end
-
-                    global_problem_execution_count =
-                        (step - 1) * length(execution_order) + ix
-                    sim.internal.run_count[step][model_number] += 1
-                    sim.internal.date_ref[model_number] += problem_interval
-
-                    if warm_start_enabled(model)
-                        _apply_warm_start!(model)
-                    end
-
-                    IS.@record :simulation_status ProblemExecutionEvent(
-                        get_current_time(sim),
-                        step,
-                        model_number,
-                        "done",
-                    )
-
-                    ProgressMeter.update!(
-                        prog_bar,
-                        global_problem_execution_count;
-                        showvalues = [
-                            (:Step, step),
-                            (:model, model_name),
-                            (:("Simulation Timestamp"), get_current_time(sim)),
-                        ],
-                    )
-                end #execution problem timer
-            end # execution order for loop
-
-            IS.@record :simulation_status SimulationStepEvent(
-                get_current_time(sim),
-                step,
-                "done",
-            )
-        end # Execution step timer
+        IS.@record :simulation_status SimulationStepEvent(
+            get_current_time(sim),
+            step,
+            "done",
+        )
     end # Steps for loop
     return nothing
 end

@@ -21,7 +21,7 @@ function add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.HybridSystem}
-    _devices = [d for d in devices if PSY.get_renewable_unit(d) != nothing]
+    _devices = [d for d in devices if PSY.get_renewable_unit(d) !== nothing]
     add_parameters!(container, T(), _devices, model)
 end
 
