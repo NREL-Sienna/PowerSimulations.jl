@@ -390,7 +390,6 @@ if !Sys.iswindows()
             )
             check_initialization_variable_count(model, ActivePowerVariable(), HydroDispatch)
 
-
             ####### Check initial condition from initialization step
             check_duration_on_initial_conditions_values(model, ThermalStandard)
             check_duration_off_initial_conditions_values(model, ThermalStandard)
@@ -1002,7 +1001,6 @@ if !Sys.iswindows()
                 RenewableDispatch,
             )
             check_initialization_variable_count(model, ActivePowerVariable(), HydroDispatch)
-
 
             ####### Check initial condition from initialization step
             check_duration_on_initial_conditions_values(model, ThermalMultiStart)
