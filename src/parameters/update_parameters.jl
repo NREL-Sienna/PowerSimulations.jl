@@ -171,21 +171,22 @@ function update_parameter_values!(
     key::ParameterKey{T, U},
     input::StateInfo,
 ) where {T <: ParameterType, U <: PSY.Service}
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-        optimization_container = get_optimization_container(model)
-        # Note: Do not instantite a new key here because it might not match the param keys in the container
-        # if the keys have strings in the meta fields
-        param_array = get_parameter_array(optimization_container, key)
-        parameter_attributes = get_parameter_attributes(optimization_container, key)
-        service = PSY.get_component(U, get_system(model), key.meta)
-        update_parameter_values!(param_array, parameter_attributes, service, model, input)
-        IS.@record :execution ParameterUpdateEvent(
-            T,
-            U,
-            parameter_attributes,
-            get_current_timestamp(model),
-            get_name(model),
-        )
-    end
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    param_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    service = PSY.get_component(U, get_system(model), key.meta)
+    update_parameter_values!(param_array, parameter_attributes, service, model, input)
+    IS.@record :execution ParameterUpdateEvent(
+        T,
+        U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    #end
     return
 end
