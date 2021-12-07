@@ -124,23 +124,24 @@ end
 
 function add_service_variable!(
     container::OptimizationContainer,
-    variable_type::VariableType,
-    service::T,
-    contributing_devices::U,
+    variable_type::T,
+    service::U,
+    contributing_devices::V,
     formulation::AbstractReservesFormulation,
 ) where {
-    T <: PSY.Service,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    T <: VariableType,
+    U <: PSY.Service,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     @assert !isempty(contributing_devices)
     time_steps = get_time_steps(container)
 
-    binary = get_variable_binary(variable_type, T, formulation)
+    binary = get_variable_binary(variable_type, U, formulation)
 
     variable = add_variable_container!(
         container,
         variable_type,
-        T,
+        U,
         PSY.get_name(service),
         [PSY.get_name(d) for d in contributing_devices],
         time_steps,
@@ -150,7 +151,7 @@ function add_service_variable!(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "$(variable_type)_$(D)_$(T)_{$(name), $(t)}",
+            base_name = "$(T)_$(U)_$(PSY.get_name(service))_{$(name), $(t)}",
             binary = binary
         )
 
