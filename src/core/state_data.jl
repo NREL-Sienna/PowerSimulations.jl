@@ -95,6 +95,13 @@ function get_state_value(
     date::Dates.DateTime,
 )
     state_data = get_state_data(state, key)
-    state_data_index = findlast(get_timestamps(state_data) .<= date)
+    if get_last_update_timestamp(state_data) == date
+        state_data_index = get_last_recorded_row(state_data)
+    else
+        state_data_index = findlast(get_timestamps(state_data) .<= date)
+    end
+    if isnothing(state_data_index)
+        error("Request time stamp $date not in the state")
+    end
     return get_state_values(state_data)[state_data_index, :]
 end
