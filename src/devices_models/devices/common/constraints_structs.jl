@@ -8,9 +8,9 @@ abstract type AbstractRangeConstraintInfo <: AbstractConstraintInfo end
 # Pending for refactoring
 struct DeviceRampConstraintInfo <: AbstractRampConstraintInfo
     component_name::String
-    limits::PSI.MinMax
+    limits::MinMax
     ic_power::InitialCondition
-    ramp_limits::PSI.UpDown
+    ramp_limits::UpDown
     additional_terms_ub::Vector{VariableKey}
     additional_terms_lb::Vector{VariableKey}
 end
@@ -19,7 +19,7 @@ function DeviceRampConstraintInfo(
     component_name::String,
     limits::PSY.Min_Max,
     ic_power::InitialCondition,
-    ramp_limits::PSI.UpDown,
+    ramp_limits::UpDown,
 )
     return DeviceRampConstraintInfo(
         component_name,

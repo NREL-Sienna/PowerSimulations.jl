@@ -268,7 +268,7 @@ function initialize_problem_storage!(
         end
 
         num_stats = params.num_steps * params.models_params[problem].num_executions
-        columns = fieldnames(PSI.OptimizerStats)
+        columns = fieldnames(OptimizerStats)
         num_columns = length(columns)
         dataset = HDF5.create_dataset(
             problem_group,

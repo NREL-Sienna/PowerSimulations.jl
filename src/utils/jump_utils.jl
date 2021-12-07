@@ -67,7 +67,7 @@ function to_array(array::JuMP.Containers.SparseAxisArray)
     tmp_data = Dict{Any, Vector{Float64}}()
     for (ix, col) in enumerate(columns)
         res = values(filter(v -> first(v)[[1, 3]] == col, array.data))
-        tmp_data[col] = PSI._jump_value.(res)
+        tmp_data[col] = _jump_value.(res)
     end
 
     data = Array{Float64, 2}(undef, length(first(values(tmp_data))), length(columns))
