@@ -639,19 +639,17 @@ function _execute!(
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
                     settings = get_settings(model)
+                    @show model_name
                     status =
                         solve!(step, model, get_current_time(sim), store; exports = exports)
-                    if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
-                        continue
-                    elseif !get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
-                        throw(
-                            ErrorException(
-                                "Simulation Failed in problem $(model_name). Returned $(status)",
-                            ),
-                        )
-                    else
-                        @assert status == RunStatus.SUCCESSFUL
-                    end
+                    # TODO: This block of code is currently not in the execution path after a failed solve
+                    #if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
+                    #    continue
+                    #elseif !get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
+                    #    @error "Simulation Failed in problem $(model_name). Returned $(status)"
+                    #else
+                    #    @assert status == RunStatus.SUCCESSFUL
+                    #end
                 end # Run problem Timer
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Decision State" begin
