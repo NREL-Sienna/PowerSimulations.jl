@@ -505,6 +505,7 @@ end
 
 function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
+    JuMP.unset_silent(jump_model)
     conflict = Dict{Symbol, Array}()
     try
         JuMP.compute_conflict!(jump_model)
@@ -518,14 +519,12 @@ function compute_conflict!(container::OptimizationContainer)
         @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
     end
 
-    for field in get_constraints(container)
-        for (key, field_container) in field
-            conflict_indices = check_conflict_status(jump_model, field_container)
-            if isempty(conflict_indices)
-                continue
-            else
-                confict[encode_key(key)] = conflict_indices
-            end
+    for (key, field_container) in get_constraints(container)
+        conflict_indices = check_conflict_status(jump_model, field_container)
+        if isempty(conflict_indices)
+            continue
+        else
+            conflict[encode_key(key)] = conflict_indices
         end
     end
 

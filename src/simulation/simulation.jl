@@ -508,7 +508,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     for field in fieldnames(StateInfo)
         model_params = get_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
-            @show key
             state_info = getfield(state.decision_states, field)
             # TODO: Read Array here to avoid allocating the DataFrame
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
@@ -532,33 +531,32 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
 end
 
 function _set_system_state!(sim::Simulation)
-    em = get_emulation_model(get_models(sim))
+    # TODO: Update after solution of emulation
+    # em = get_emulation_model(get_models(sim))
     sim_state = get_simulation_state(sim)
     system_state = get_system_state(sim_state)
     decision_state = get_decision_states(sim_state)
-    #state_data_index = findlast(get_timestamps(state_data) .<= simulation_time)
     simulation_time = get_current_time(sim)
 
     for field in fieldnames(StateInfo)
-        state_field = getfield(system_state, field)
+        system_state_field = getfield(system_state, field)
         decision_field = getfield(decision_state, field)
-        for (key, data) in state_field
+        for (key, data) in decision_field
             if get_last_update_timestamp(decision_field[key]) == simulation_time
-
-# sim.internal.simulation_state.system_state.variables[PowerSimulations.VariableKey{ActivePowerVariable, RenewableDispatch}("")].values[1,:] .= values(vals.values[1, :])
+                get_state_values(system_state_field[key])[1, :] .=
+                    DataFrames.values(get_state_values(data)[1, :])
             elseif get_last_update_timestamp(decision_field[key]) < simulation_time
-
+                get_state_values(system_state_field[key])[1, :] .=
+                    DataFrames.values(get_state_value(data, simulation_time))
             elseif get_last_update_timestamp(decision_field[key]) > simulation_time
                 error("Something went really wrong. Please report this error.")
             end
-            error()
-            # @show get_state_values(decision_field[key])
             # IS.@record :execution StateUpdateEvent(
-            #     key,
-            #     simulation_time,
-            #     model_name,
-            #     "EmulationState",
-            # )
+            #    key,
+            #    simulation_time,
+            #    model_name,
+            #    "EmulationState",
+            #)
         end
     end
 
@@ -661,7 +659,6 @@ function _execute!(
                     _update_simulation_state!(sim, model)
                     _set_system_state!(sim)
                 end
-
                 global_problem_execution_count = (step - 1) * length(execution_order) + ix
                 sim.internal.run_count[step][model_number] += 1
                 sim.internal.date_ref[model_number] += problem_interval

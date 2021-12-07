@@ -112,24 +112,36 @@ function update_parameter_values!(
     model::DecisionModel,
     state::StateInfo,
 ) where {T <: Union{PJ.ParameterRef, Float64}}
-    current_time = get_current_time(model)
+    current_time = PSI.get_current_time(model)
     state_data = get_state_data(state, get_attribute_key(attributes))
-    state_values = get_state_values(state_data)
+    state_values = PSI.get_state_values(state_data)
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
     # TODO: check if this is the most performant way to find the common indices
     state_timestamps = get_timestamps(state_data)
-    max_state_index = length(state_timestamps)
-    state_data_index = findlast(state_timestamps .<= current_time)
-    sim_timestamps = range(current_time, step = resolution, length = time[end])
-    for name in component_names, t in time
+    @show max_state_index = length(state_data)
+    @show state_data_index = findlast(state_timestamps .<= current_time)
+    @show state_timestamps[state_data_index]
+    @show sim_timestamps = range(current_time, step = resolution, length = time[end])
+    for t in time
         time_stamp_ix = min(max_state_index, state_data_index + 1)
         @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
-        if state_timestamps[time_stamp_ix] < sim_timestamps[t]
+        @show state_timestamps[time_stamp_ix]
+        @show sim_timestamps[t]
+        @show state_timestamps[time_stamp_ix] <= sim_timestamps[t]
+        if state_timestamps[time_stamp_ix] <= sim_timestamps[t]
             state_data_index = time_stamp_ix
         end
-        # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        _set_param_value!(param_array, state_values[state_data_index, name], name, t)
+        @show state_data_index
+        for name in component_names
+            # Pass indices in this way since JuMP DenseAxisArray don't support view()
+            PSI._set_param_value!(
+                param_array,
+                state_values[state_data_index, name],
+                name,
+                t,
+            )
+        end
     end
     return
 end

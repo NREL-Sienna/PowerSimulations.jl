@@ -75,11 +75,10 @@ function _initialize_model_states!(
                 @warn("Multidimensional Array caching is not currently supported")
                 continue
             end
-            if !haskey(field_states, key) ||
-               get_timestamps_length(field_states[key]) < value_counts
+            if !haskey(field_states, key) || length(field_states[key]) < value_counts
                 field_states[key] = StateData(
                     DataFrames.DataFrame(
-                        Matrix{Float64}(undef, value_counts, length(column_names)),
+                        fill(NaN, value_counts, length(column_names)),
                         column_names,
                     ),
                     collect(
@@ -89,6 +88,7 @@ function _initialize_model_states!(
                             length = value_counts,
                         ),
                     ),
+                    params[key][2],
                 )
             end
         end
@@ -100,7 +100,7 @@ function _initialize_system_states!(
     sim_state::SimulationState,
     ::Nothing,
     simulation_initial_time::Dates.DateTime,
-    ::OrderedDict{OptimizationContainerKey, NTuple{2, Dates.Millisecond}},
+    params::OrderedDict{OptimizationContainerKey, NTuple{2, Dates.Millisecond}},
 )
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_state(sim_state)
@@ -109,8 +109,11 @@ function _initialize_system_states!(
         emulator_containers = getfield(emulator_states, field)
         for (key, data) in (decision_containers)
             cols = DataFrames.names(get_state_values(data))
-            emulator_containers[key] =
-                StateData(DataFrames.DataFrame(cols .=> NaN), [simulation_initial_time])
+            emulator_containers[key] = StateData(
+                DataFrames.DataFrame(cols .=> NaN),
+                [simulation_initial_time],
+                params[key][2],
+            )
         end
     end
     return
