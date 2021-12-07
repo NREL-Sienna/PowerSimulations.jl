@@ -322,7 +322,7 @@ if !Sys.iswindows()
                 initial_time = init_time,
                 horizon = horizon,
             )
-            setup_initialize_container!(model)
+            setup_ic_model_container!(model)
             ####### Check initialization problem constraints #####
             check_initialization_constraint_count(
                 model,
@@ -933,7 +933,7 @@ if !Sys.iswindows()
                 optimizer = SCIP_optimizer,
                 initial_time = init_time,
             )
-            setup_initialize_container!(model)
+            setup_ic_model_container!(model)
             ####### Check initialization problem constraints #####
             check_initialization_constraint_count(
                 model,
