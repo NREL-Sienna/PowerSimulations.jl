@@ -322,24 +322,8 @@ if !Sys.iswindows()
                 initial_time = init_time,
                 horizon = horizon,
             )
-            @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
-
-            ####### Check initialization problem
-            check_initialization_variable_count(
-                model,
-                PSI.PowerAboveMinimumVariable(),
-                ThermalStandard,
-            )
-            check_initialization_variable_count(model, OnVariable(), ThermalStandard)
-            check_initialization_variable_count(model, StopVariable(), ThermalStandard)
-            check_initialization_variable_count(model, StartVariable(), ThermalStandard)
-            check_initialization_variable_count(
-                model,
-                ActivePowerVariable(),
-                RenewableDispatch,
-            )
-            check_initialization_variable_count(model, ActivePowerVariable(), HydroDispatch)
-
+            setup_ic_model_container!(model)
+            ####### Check initialization problem constraints #####
             check_initialization_constraint_count(
                 model,
                 ActivePowerVariableLimitsConstraint(),
@@ -387,6 +371,24 @@ if !Sys.iswindows()
                 HydroDispatch;
                 meta = "ub",
             )
+            PSI.reset!(model)
+            @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
+
+            ####### Check initialization problem
+            check_initialization_variable_count(
+                model,
+                PSI.PowerAboveMinimumVariable(),
+                ThermalStandard,
+            )
+            check_initialization_variable_count(model, OnVariable(), ThermalStandard)
+            check_initialization_variable_count(model, StopVariable(), ThermalStandard)
+            check_initialization_variable_count(model, StartVariable(), ThermalStandard)
+            check_initialization_variable_count(
+                model,
+                ActivePowerVariable(),
+                RenewableDispatch,
+            )
+            check_initialization_variable_count(model, ActivePowerVariable(), HydroDispatch)
 
             ####### Check initial condition from initialization step
             check_duration_on_initial_conditions_values(model, ThermalStandard)
@@ -618,7 +620,7 @@ if !Sys.iswindows()
             ####### Check initialization problem
             check_initialization_variable_count(
                 model,
-                PSI.PowerAboveMinimumVariable(),
+                ActivePowerVariable(),
                 ThermalMultiStart,
             )
             check_initialization_variable_count(model, OnVariable(), ThermalMultiStart)
@@ -645,7 +647,7 @@ if !Sys.iswindows()
             check_status_initial_conditions_values(model, ThermalMultiStart)
             check_energy_initial_conditions_values(model, GenericBattery)
             ####### Check variables
-            check_variable_count(model, PSI.PowerAboveMinimumVariable(), ThermalMultiStart)
+            check_variable_count(model, ActivePowerVariable(), ThermalMultiStart)
             check_variable_count(model, StopVariable(), ThermalMultiStart)
             check_variable_count(model, OnVariable(), ThermalMultiStart)
             check_variable_count(model, StartVariable(), ThermalMultiStart)
@@ -931,24 +933,8 @@ if !Sys.iswindows()
                 optimizer = SCIP_optimizer,
                 initial_time = init_time,
             )
-            @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
-
-            ####### Check variables
-            check_initialization_variable_count(
-                model,
-                PSI.PowerAboveMinimumVariable(),
-                ThermalMultiStart,
-            )
-            check_initialization_variable_count(model, OnVariable(), ThermalMultiStart)
-            check_initialization_variable_count(model, StopVariable(), ThermalMultiStart)
-            check_initialization_variable_count(model, StartVariable(), ThermalMultiStart)
-            check_initialization_variable_count(
-                model,
-                ActivePowerVariable(),
-                RenewableDispatch,
-            )
-            check_initialization_variable_count(model, ActivePowerVariable(), HydroDispatch)
-
+            setup_ic_model_container!(model)
+            ####### Check initialization problem constraints #####
             check_initialization_constraint_count(
                 model,
                 ActivePowerVariableLimitsConstraint(),
@@ -996,6 +982,25 @@ if !Sys.iswindows()
                 HydroDispatch;
                 meta = "ub",
             )
+            PSI.reset!(model)
+
+            @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
+
+            ####### Check variables
+            check_initialization_variable_count(
+                model,
+                PSI.PowerAboveMinimumVariable(),
+                ThermalMultiStart,
+            )
+            check_initialization_variable_count(model, OnVariable(), ThermalMultiStart)
+            check_initialization_variable_count(model, StopVariable(), ThermalMultiStart)
+            check_initialization_variable_count(model, StartVariable(), ThermalMultiStart)
+            check_initialization_variable_count(
+                model,
+                ActivePowerVariable(),
+                RenewableDispatch,
+            )
+            check_initialization_variable_count(model, ActivePowerVariable(), HydroDispatch)
 
             ####### Check initial condition from initialization step
             check_duration_on_initial_conditions_values(model, ThermalMultiStart)
