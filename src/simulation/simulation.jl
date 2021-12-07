@@ -530,7 +530,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     end
 end
 
-function _set_system_state!(sim::Simulation)
+function _set_system_state!(sim::Simulation, model_name::String)
     # TODO: Update after solution of emulation
     # em = get_emulation_model(get_models(sim))
     sim_state = get_simulation_state(sim)
@@ -542,21 +542,20 @@ function _set_system_state!(sim::Simulation)
         system_state_field = getfield(system_state, field)
         decision_field = getfield(decision_state, field)
         for (key, data) in decision_field
-            if get_last_update_timestamp(decision_field[key]) == simulation_time
-                get_state_values(system_state_field[key])[1, :] .=
-                    DataFrames.values(get_state_values(data)[1, :])
-            elseif get_last_update_timestamp(decision_field[key]) < simulation_time
+            if get_last_update_timestamp(decision_field[key]) <= simulation_time
                 get_state_values(system_state_field[key])[1, :] .=
                     DataFrames.values(get_state_value(data, simulation_time))
             elseif get_last_update_timestamp(decision_field[key]) > simulation_time
                 error("Something went really wrong. Please report this error.")
+            else
+                @assert false
             end
-            # IS.@record :execution StateUpdateEvent(
-            #    key,
-            #    simulation_time,
-            #    model_name,
-            #    "EmulationState",
-            #)
+            IS.@record :execution StateUpdateEvent(
+                key,
+                simulation_time,
+                model_name,
+                "EmulationState",
+            )
         end
     end
 
@@ -655,10 +654,14 @@ function _execute!(
                     end
                 end # Run problem Timer
 
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Decision State" begin
                     _update_simulation_state!(sim, model)
-                    _set_system_state!(sim)
                 end
+
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update System State" begin
+                    _set_system_state!(sim, string(model_name))
+                end
+
                 global_problem_execution_count = (step - 1) * length(execution_order) + ix
                 sim.internal.run_count[step][model_number] += 1
                 sim.internal.date_ref[model_number] += problem_interval
