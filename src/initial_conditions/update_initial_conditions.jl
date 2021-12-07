@@ -7,8 +7,9 @@ function _update_initial_conditions!(
     InitialCondition{InitialTimeDurationOn, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ic_vector
-        var_val = get_aux_variable_value(store, TimeDurationOn(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[index, get_component_name(ic)])
+        sdata = get_state_data(state, TimeDurationOn(), get_component_type(ic))
+        var_val = get_state_values(sdata)
+        set_ic_quantity!(ic, var_val[1, get_component_name(ic)])
     end
     return
 end
@@ -24,8 +25,9 @@ function _update_initial_conditions!(
     },
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ic_vector
-        var_val = get_aux_variable_value(store, TimeDurationOff(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[index, get_component_name(ic)])
+        sdata = get_state_data(state, TimeDurationOff(), get_component_type(ic))
+        var_val = get_state_values(sdata)
+        set_ic_quantity!(ic, var_val[1, get_component_name(ic)])
     end
     return
 end
@@ -36,8 +38,26 @@ function _update_initial_conditions!(
     ::Dates.Period,
 ) where {T <: InitialCondition{DevicePower, S}} where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ic_vector
-        var_val = get_variable_value(store, ActivePowerVariable(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[index, get_component_name(ic)])
+        status_data = get_state_data(state, OnVariable(), get_component_type(ic))
+        status_val = get_state_values(status_data)[1, get_component_name(ic)]
+        sdata = get_state_data(state, ActivePowerVariable(), get_component_type(ic))
+        var_val = get_state_values(sdata)[1, get_component_name(ic)]
+        if status_val > 0
+            comp = get_component(ic)
+            @show get_component_name(ic)
+            @show PSY.get_name(comp)
+            @show var_val
+            @assert var_val <= PSY.get_active_power_limits(comp).max
+            @assert var_val >= PSY.get_active_power_limits(comp).min
+            set_ic_quantity!(ic, var_val)
+        else
+            comp = get_component(ic)
+            @show get_component_name(ic)
+            @show PSY.get_name(comp)
+            @show var_val
+            @show status_val
+            @assert isapprox(var_val, 0.0, atol = 1e-6)
+        end
     end
     return
 end
@@ -50,8 +70,9 @@ function _update_initial_conditions!(
     T <: InitialCondition{DeviceStatus, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ic_vector
-        var_val = get_variable_value(store, OnVariable(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[index, get_component_name(ic)])
+        sdata = get_state_data(state, OnVariable(), get_component_type(ic))
+        var_val = get_state_values(sdata)
+        set_ic_quantity!(ic, var_val[1, get_component_name(ic)])
     end
     return
 end
@@ -65,9 +86,9 @@ function _update_initial_conditions!(
     InitialCondition{DeviceAboveMinPower, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ic_vector
-        var_val =
-            get_variable_value(store, PowerAboveMinimumVariable(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[index, get_component_name(ic)])
+        sdata = get_state_data(state, PowerAboveMinimumVariable(), get_component_type(ic))
+        var_val = get_state_values(sdata)
+        set_ic_quantity!(ic, var_val[1, get_component_name(ic)])
     end
     return
 end
@@ -81,8 +102,9 @@ function _update_initial_conditions!(
     InitialCondition{InitialEnergyLevel, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ic_vector
-        var_val = get_variable_value(store, EnergyVariable(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[index, get_component_name(ic)])
+        sdata = get_state_data(state, EnergyVariable(), get_component_type(ic))
+        var_val = get_state_values(sdata)
+        set_ic_quantity!(ic, var_val[1, get_component_name(ic)])
     end
     return
 end
@@ -96,8 +118,9 @@ function _update_initial_conditions!(
     InitialCondition{InitialEnergyLevelUp, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ic_vector
-        var_val = get_variable_value(store, EnergyVariableUp(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[index, get_component_name(ic)])
+        sdata = get_state_data(state, EnergyVariableUp(), get_component_type(ic))
+        var_val = get_state_values(sdata)
+        set_ic_quantity!(ic, var_val[1, get_component_name(ic)])
     end
     return
 end
@@ -113,8 +136,9 @@ function _update_initial_conditions!(
     },
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ic_vector
-        var_val = get_variable_value(store, EnergyVariableDown(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[index, get_component_name(ic)])
+        sdata = get_state_data(state, EnergyVariableDown(), get_component_type(ic))
+        var_val = get_state_values(sdata)
+        set_ic_quantity!(ic, var_val[1, get_component_name(ic)])
     end
     return
 end
