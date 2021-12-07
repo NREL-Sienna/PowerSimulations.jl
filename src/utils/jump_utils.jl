@@ -235,7 +235,7 @@ function check_conflict_status(
         if MOI.get(
             jump_model,
             MOI.ConstraintConflictStatus(),
-            constraint_container[index],
+            constraint_container[index...],
         ) != MOI.NOT_IN_CONFLICT
             push!(conflict_indices, index)
         end
