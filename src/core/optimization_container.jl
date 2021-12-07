@@ -506,6 +506,7 @@ end
 function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
     JuMP.unset_silent(jump_model)
+    jump_model.is_model_dirty = false
     conflict = Dict{Symbol, Array}()
     try
         JuMP.compute_conflict!(jump_model)
