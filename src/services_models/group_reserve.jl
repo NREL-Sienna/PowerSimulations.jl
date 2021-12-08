@@ -39,7 +39,7 @@ function add_constraints!(
         time_steps;
         meta = service_name,
     )
-    constraint = get_constraint(container, RequirementConstraint(), SR, name)
+    constraint = get_constraint(container, RequirementConstraint(), SR, service_name)
     use_slacks = get_use_slacks(model)
     reserve_variables = [
         get_variable(container, ActivePowerReserveVariable(), typeof(r), PSY.get_name(r)) for r in contributing_services
@@ -54,7 +54,7 @@ function add_constraints!(
         if use_slacks
             resource_expression += slack_vars[t]
         end
-        constraint[name, t] =
+        constraint[service_name, t] =
             JuMP.@constraint(container.JuMPmodel, resource_expression >= requirement)
     end
 

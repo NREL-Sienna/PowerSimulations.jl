@@ -142,7 +142,6 @@ function add_constraints!(
     V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    initial_time = get_initial_time(container)
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
     # TODO: The constraint addition is still not clean enough
@@ -154,12 +153,12 @@ function add_constraints!(
         time_steps;
         meta = service_name,
     )
-    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
+    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     use_slacks = get_use_slacks(model)
     use_slacks && (slack_vars = reserve_slacks(container, service))
 
     requirement = PSY.get_requirement(service)
-    jump_model = get_JumpModel(container)
+    jump_model = get_jump_model(container)
     for t in time_steps
         resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
         JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
@@ -206,9 +205,9 @@ function add_constraints!(
         time_steps;
         meta = service_name,
     )
-    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, name)
+    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
-    jump_model = get_JumpModel(container)
+    jump_model = get_jump_model(container)
     for t in time_steps
         constraint[service_name, t] = JuMP.@constraint(
             jump_model,
@@ -268,9 +267,9 @@ function add_constraints!(
             container,
             T(),
             SR,
-            service_name,
             set_name,
-            time_steps,
+            time_steps;
+            meta = service_name
         )
         for d in ramp_devices, t in time_steps
             name = PSY.get_name(d)
@@ -309,9 +308,9 @@ function add_constraints!(
             container,
             T(),
             SR,
-            service_name,
             set_name,
-            time_steps,
+            time_steps;
+            meta = service_name
         )
         for d in ramp_devices, t in time_steps
             name = PSY.get_name(d)
@@ -352,7 +351,8 @@ function add_constraints!(
         T(),
         SR,
         [PSY.get_name(d) for d in contributing_devices],
-        time_steps,
+        time_steps;
+        meta = service_name
     )
     var_r = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     reserve_response_time = PSY.get_time_frame(service)
