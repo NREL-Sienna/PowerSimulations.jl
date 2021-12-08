@@ -373,7 +373,7 @@ function update_initial_conditions(
 end
 
 function update_model!(model::EmulationModel)
-    update_model!(model, InterProblemChronology(), model.store)
+    update_model!(model, model.store, InterProblemChronology())
     return
 end
 

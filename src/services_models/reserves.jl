@@ -153,7 +153,8 @@ function add_constraints!(
         time_steps;
         meta = service_name,
     )
-    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
+    reserve_variable =
+        get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     use_slacks = get_use_slacks(model)
     use_slacks && (slack_vars = reserve_slacks(container, service))
 
@@ -205,7 +206,8 @@ function add_constraints!(
         time_steps;
         meta = service_name,
     )
-    reserve_variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
+    reserve_variable =
+        get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
     jump_model = get_jump_model(container)
     for t in time_steps
@@ -269,7 +271,7 @@ function add_constraints!(
             SR,
             set_name,
             time_steps;
-            meta = service_name
+            meta = service_name,
         )
         for d in ramp_devices, t in time_steps
             name = PSY.get_name(d)
@@ -310,7 +312,7 @@ function add_constraints!(
             SR,
             set_name,
             time_steps;
-            meta = service_name
+            meta = service_name,
         )
         for d in ramp_devices, t in time_steps
             name = PSY.get_name(d)
@@ -352,7 +354,7 @@ function add_constraints!(
         SR,
         [PSY.get_name(d) for d in contributing_devices],
         time_steps;
-        meta = service_name
+        meta = service_name,
     )
     var_r = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     reserve_response_time = PSY.get_time_frame(service)
