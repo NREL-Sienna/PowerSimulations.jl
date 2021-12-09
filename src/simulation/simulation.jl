@@ -634,25 +634,20 @@ function _execute!(
                 end
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
-                    # settings = get_settings(model)
                     status =
                         solve!(step, model, get_current_time(sim), store; exports = exports)
-                    # TODO: This block of code is currently not in the execution path after a failed solve
-                    #if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
-                    #    continue
-                    #elseif !get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
-                    #    @error "Simulation Failed in problem $(model_name). Returned $(status)"
-                    #else
-                    #    @assert status == RunStatus.SUCCESSFUL
-                    #end
                 end # Run problem Timer
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Decision State" begin
-                    _update_simulation_state!(sim, model)
+                    if status == RunStatus.SUCCESSFUL
+                        _update_simulation_state!(sim, model)
+                    end
                 end
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update System State" begin
-                    _set_system_state!(sim, string(model_name))
+                    if status == RunStatus.SUCCESSFUL
+                        _set_system_state!(sim, string(model_name))
+                    end
                 end
 
                 global_problem_execution_count = (step - 1) * length(execution_order) + ix
