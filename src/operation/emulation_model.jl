@@ -372,6 +372,20 @@ function update_initial_conditions(
     return
 end
 
+function update_model!(
+    model::EmulationModel,
+    source::InMemoryModelStore{EmulationModelOptimizerResults},
+    ini_cond_chronology,
+)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
+        update_parameters(model, source)
+    end
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
+        update_initial_conditions(model, source, ini_cond_chronology)
+    end
+    return
+end
+
 function update_model!(model::EmulationModel)
     update_model!(model, model.store, InterProblemChronology())
     return

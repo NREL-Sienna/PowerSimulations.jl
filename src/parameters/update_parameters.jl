@@ -87,7 +87,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
-    ::StateInfo,
+    ::Union{StateInfo, InMemoryModelStore{PowerSimulations.EmulationModelOptimizerResults}},
 ) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))
@@ -142,7 +142,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input::StateInfo,
+    input,#::StateInfo,
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -169,7 +169,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input::StateInfo,
+    input,#::StateInfo,
 ) where {T <: ParameterType, U <: PSY.Service}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
