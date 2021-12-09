@@ -187,3 +187,28 @@ function Base.show(io::IO, struct_stages::MockStagesStruct)
     println(io, "\n\n")
     PSI._print_intra_stages(io, struct_stages.stages)
 end
+
+function setup_ic_model_container!(model::DecisionModel)
+    # This function is only for testing purposes.
+    if !PSI.is_empty(model)
+        PSI.reset!(model)
+    end
+
+    PSI.init_optimization_container!(
+        PSI.get_optimization_container(model),
+        PSI.get_network_formulation(PSI.get_template(model)),
+        PSI.get_system(model),
+    )
+
+    PSI.init_model_store_params!(model)
+
+    PSI.populate_aggregated_service_model!(PSI.get_template(model), PSI.get_system(model))
+    PSI.populate_contributing_devices!(PSI.get_template(model), PSI.get_system(model))
+    PSI.add_services_to_device_model!(PSI.get_template(model))
+
+    @info "Make Initial Conditions Model"
+    PSI.set_output_dir!(model, mktempdir(cleanup = true))
+    PSI.build_initial_conditions!(model)
+    PSI.initialize!(model)
+    return
+end

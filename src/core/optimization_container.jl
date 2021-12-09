@@ -152,7 +152,12 @@ get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stat
 
 function is_milp(container::OptimizationContainer)
     !supports_milp(container) && return false
-    return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
+    if !isempty(
+        JuMP.all_constraints(container.JuMPmodel, JuMP.VariableRef, JuMP.MOI.ZeroOne),
+    )
+        return true
+    end
+    return false
 end
 
 function supports_milp(container::OptimizationContainer)
