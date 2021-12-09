@@ -8,7 +8,7 @@ function _get_time_series(
     forecast = PSY.get_time_series(
         T,
         component,
-        get_timeseries_name(attributes);
+        get_time_series_name(attributes);
         start_time = initial_time,
         count = 1,
     )

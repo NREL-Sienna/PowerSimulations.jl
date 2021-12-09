@@ -44,7 +44,7 @@ function update_parameter_values!(
             U,
             model,
             component,
-            get_timeseries_name(attributes),
+            get_time_series_name(attributes),
             initial_forecast_time,
             horizon,
         )
@@ -72,7 +72,7 @@ function update_parameter_values!(
         U,
         model,
         service,
-        get_timeseries_name(attributes),
+        get_time_series_name(attributes),
         initial_forecast_time,
         horizon,
     )
@@ -97,7 +97,7 @@ function update_parameter_values!(
             U,
             model,
             component,
-            get_timeseries_name(attributes),
+            get_time_series_name(attributes),
             initial_forecast_time,
         )
         _set_param_value!(param_array, ts_vector[1], PSY.get_name(component), 1)
