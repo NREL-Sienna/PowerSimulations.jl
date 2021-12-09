@@ -542,6 +542,8 @@ function _set_system_state!(sim::Simulation, model_name::String)
         last_update = get_last_updated_timestamp(decision_state, key)
         if last_update <= simulation_time
             # TODO: Implement setter functions for this operation to avoid hardcoding index 1
+            # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
+            # in-place value update
             get_state_values(system_state, key)[1, :] .=
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
         else
@@ -723,7 +725,6 @@ function execute!(sim::Simulation; kwargs...)
     try
         open_store(store_type, get_store_dir(sim), "w") do store
             set_simulation_store!(sim, store)
-            # TODO: return file name for hash calculation instead of hard code
             Logging.with_logger(logger) do
                 try
                     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
