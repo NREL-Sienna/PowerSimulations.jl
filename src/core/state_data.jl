@@ -18,25 +18,32 @@ get_last_recorded_row(s::StateData) = s.last_recorded_row
 Base.length(s::StateData) = length(s.timestamps)
 get_data_resolution(s::StateData) = s.resolution
 get_timestamps(s::StateData) = s.timestamps
-get_state_values(s::StateData) = s.values
+_get_values(s::StateData) = s.values
 
-function get_last_update_timestamp(s::StateData)
+function _get_last_updated_timestamp(s::StateData)
     if get_last_recorded_row(s) == 0
         return UNSET_INI_TIME
     end
     return get_timestamps(s)[get_last_recorded_row(s)]
 end
 
-function get_last_update_value(s::StateData, key::OptimizationContainerKey)
+function _get_state_value(s::StateData, date::Dates.DateTime)
+    if _get_last_updated_timestamp(s) == date
+        s_index = get_last_recorded_row(s)
+    else
+        s_index = findlast(get_timestamps(s) .<= date)
+    end
+    if isnothing(s_index)
+        error("Request time stamp $date not in the state")
+    end
+    return _get_values(s)[s_index, :]
+end
+
+function get_last_recorded_value(s::StateData)
     if get_last_recorded_row(s) == 0
         error("The State hasn't been written yet")
     end
-    return get_state_values(get_state_data(s, key))[get_last_recorded_row(s), :]
-end
-
-function get_state_value(s::StateData, date::Dates.DateTime)
-    state_data_index = findlast(get_timestamps(s) .<= date)
-    return get_state_values(s)[state_data_index, :]
+    return _get_values(s)[get_last_recorded_row(s), :]
 end
 
 function set_last_recorded_row(s::StateData, val::Int)
@@ -58,6 +65,10 @@ function StateInfo()
     )
 end
 
+function get_state_keys(state::StateInfo)
+    return Iterators.flatten(keys(getfield(state, f)) for f in fieldnames(StateInfo))
+end
+
 function get_state_data(state::StateInfo, key::VariableKey)
     return state.variables[key]
 end
@@ -68,6 +79,21 @@ end
 
 function get_state_data(state::StateInfo, key::ConstraintKey)
     return state.duals[key]
+end
+
+function set_state_data(state::StateInfo, key::VariableKey, val::StateData)
+    state.variables[key] = val
+    return
+end
+
+function set_state_data(state::StateInfo, key::AuxVarKey, val::StateData)
+    state.aux_variables[key] = val
+    return
+end
+
+function set_state_data(state::StateInfo, key::ConstraintKey, val::StateData)
+    state.duals[key] = val
+    return
 end
 
 function get_state_data(
@@ -94,19 +120,46 @@ function get_state_data(
     return get_state_data(state, AuxVarKey(T, U))
 end
 
-function get_state_value(
+function get_state_values(state::StateInfo, key::OptimizationContainerKey)
+    return _get_values(get_state_data(state, key))
+end
+
+function get_state_values(
+    state::StateInfo,
+    ::T,
+    ::Type{U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_state_values(state, ConstraintKey(T, U))
+end
+
+function get_state_values(
+    state::StateInfo,
+    ::T,
+    ::Type{U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_state_values(state, VariableKey(T, U))
+end
+
+function get_state_values(
+    state::StateInfo,
+    ::T,
+    ::Type{U},
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_state_values(state, AuxVarKey(T, U))
+end
+
+function get_state_values(
     state::StateInfo,
     key::OptimizationContainerKey,
     date::Dates.DateTime,
 )
-    state_data = get_state_data(state, key)
-    if get_last_update_timestamp(state_data) == date
-        state_data_index = get_last_recorded_row(state_data)
-    else
-        state_data_index = findlast(get_timestamps(state_data) .<= date)
-    end
-    if isnothing(state_data_index)
-        error("Request time stamp $date not in the state")
-    end
-    return get_state_values(state_data)[state_data_index, :]
+    return _get_state_value(get_state_data(state, key), date)
+end
+
+function get_last_updated_timestamp(state::StateInfo, key::OptimizationContainerKey)
+    return _get_last_updated_timestamp(get_state_data(state, key))
+end
+
+function get_last_update_value(state::StateInfo, key::OptimizationContainerKey)
+    return get_last_recorded_value(get_state_data(state, key))
 end

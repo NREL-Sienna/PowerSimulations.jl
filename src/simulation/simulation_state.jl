@@ -28,7 +28,7 @@ function set_current_time!(s::SimulationState, val::Dates.DateTime)
 end
 
 get_decision_states(s::SimulationState) = s.decision_states
-get_system_state(s::SimulationState) = s.system_state
+get_system_states(s::SimulationState) = s.system_state
 
 const STATE_TIME_PARAMS = NamedTuple{(:horizon, :resolution), NTuple{2, Dates.Millisecond}}
 
@@ -108,18 +108,18 @@ function _initialize_system_states!(
     params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
     decision_states = get_decision_states(sim_state)
-    emulator_states = get_system_state(sim_state)
-    for field in fieldnames(StateInfo)
-        decision_containers = getfield(decision_states, field)
-        emulator_containers = getfield(emulator_states, field)
-        for (key, data) in (decision_containers)
-            cols = DataFrames.names(get_state_values(data))
-            emulator_containers[key] = StateData(
+    emulator_states = get_system_states(sim_state)
+    for key in get_state_keys(decision_states)
+        cols = DataFrames.names(get_state_values(decision_states, key))
+        set_state_data(
+            emulator_states,
+            key,
+            StateData(
                 DataFrames.DataFrame(cols .=> NaN),
                 [simulation_initial_time],
                 params[key].resolution,
-            )
-        end
+            ),
+        )
     end
     return
 end
@@ -183,33 +183,38 @@ function update_state_data!(
     return
 end
 
-function get_decision_state_data(state::SimulationState, opt_container_key::VariableKey)
-    return getfield(state.decision_states, STORE_CONTAINER_VARIABLES)[opt_container_key]
+function get_decision_state_value(
+    state::SimulationState,
+    key::OptimizationContainerKey,
+    date::Dates.DateTime,
+)
+    return get_state_values(get_decision_states(state), key, date)
 end
 
-function get_decision_state_data(state::SimulationState, opt_container_key::ConstraintKey)
-    return getfield(state.decision_states, STORE_CONTAINER_DUALS)[opt_container_key]
+function get_system_state_value(state::SimulationState, key::OptimizationContainerKey)
+    return get_state_values(get_system_states(state), key)[1, :]
 end
 
-function get_decision_state_data(state::SimulationState, opt_container_key::AuxVarKey)
-    return getfield(state.decision_states, STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
+function get_system_state_value(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, VariableKey(T, U))
 end
 
-#function get_decision_state_data(
-#    state::SimulationState,
-#    opt_container_key::ExpressionKey,
-#)
-#    return getfield(state.decision_states, STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
-#end
-
-function get_system_state(state::SimulationState, opt_container_key::VariableKey)
-    return getfield(state.system_state, STORE_CONTAINER_VARIABLES)[opt_container_key]
+function get_system_state_value(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, AuxVarKey(T, U))
 end
 
-function get_system_state(state::SimulationState, opt_container_key::ConstraintKey)
-    return getfield(state.system_state, STORE_CONTAINER_DUALS)[opt_container_key]
-end
-
-function get_system_state(state::SimulationState, opt_container_key::AuxVarKey)
-    return getfield(state.system_state, STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
+function get_system_state_value(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, ConstraintKey(T, U))
 end
