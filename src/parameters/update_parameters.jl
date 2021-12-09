@@ -113,13 +113,14 @@ function update_parameter_values!(
     state::StateInfo,
 ) where {T <: Union{PJ.ParameterRef, Float64}}
     current_time = get_current_time(model)
-    state_data = get_state_data(state, get_attribute_key(attributes))
-    state_values = get_state_values(state_data)
+    state_values = get_state_values(state, get_attribute_key(attributes))
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
-    # TODO: check if this is the most performant way to find the common indices
+
+    state_data = get_state_data(state, get_attribute_key(attributes))
     state_timestamps = get_timestamps(state_data)
     max_state_index = length(state_data)
+
     state_data_index = findlast(state_timestamps .<= current_time)
     sim_timestamps = range(current_time, step = resolution, length = time[end])
     for t in time

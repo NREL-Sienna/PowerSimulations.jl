@@ -534,29 +534,24 @@ function _set_system_state!(sim::Simulation, model_name::String)
     # TODO: Update after solution of emulation
     # em = get_emulation_model(get_models(sim))
     sim_state = get_simulation_state(sim)
-    system_state = get_system_state(sim_state)
+    system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
     simulation_time = get_current_time(sim)
 
-    for field in fieldnames(StateInfo)
-        system_state_field = getfield(system_state, field)
-        decision_field = getfield(decision_state, field)
-        for (key, data) in decision_field
-            if get_last_update_timestamp(decision_field[key]) <= simulation_time
-                get_state_values(system_state_field[key])[1, :] .=
-                    DataFrames.values(get_state_value(data, simulation_time))
-            elseif get_last_update_timestamp(decision_field[key]) > simulation_time
-                error("Something went really wrong. Please report this error.")
-            else
-                @assert false
-            end
-            IS.@record :execution StateUpdateEvent(
-                key,
-                simulation_time,
-                model_name,
-                "EmulationState",
-            )
+    for key in get_state_keys(decision_state)
+        last_update = get_last_updated_timestamp(decision_state, key)
+        if last_update <= simulation_time
+            get_state_values(system_state, key)[1, :] .=
+                DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
+        else
+            error("Something went really wrong. Please report this error.")
         end
+        IS.@record :execution StateUpdateEvent(
+            key,
+            simulation_time,
+            model_name,
+            "SystemState",
+        )
     end
 
     return

@@ -430,14 +430,14 @@ end
 
 function update_initial_conditions(model::DecisionModel, state, ::InterProblemChronology)
     for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key, get_system_state(state))
+        update_initial_conditions!(model, key, state)
     end
     return
 end
 
 function update_initial_conditions(model::DecisionModel, state, ::IntraProblemChronology)
     #for key in keys(get_initial_conditions(model))
-    #    update_initial_conditions!(model, key, get_system_state(state))
+    #    update_initial_conditions!(model, key, state)
     #end
     error("Not Implemented yet")
     return
