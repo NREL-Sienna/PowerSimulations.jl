@@ -638,8 +638,7 @@ function _execute!(
                 end
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
-                    settings = get_settings(model)
-                    @show model_name
+                    # settings = get_settings(model)
                     status =
                         solve!(step, model, get_current_time(sim), store; exports = exports)
                     # TODO: This block of code is currently not in the execution path after a failed solve

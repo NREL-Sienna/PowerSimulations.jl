@@ -44,8 +44,8 @@ function _update_initial_conditions!(
         var_val = get_state_values(sdata)[1, get_component_name(ic)]
         if status_val > 0
             comp = get_component(ic)
-            @assert var_val <= PSY.get_active_power_limits(comp).max
-            @assert var_val >= PSY.get_active_power_limits(comp).min
+            @assert_op var_val <= PSY.get_active_power_limits(comp).max
+            @assert_op var_val >= PSY.get_active_power_limits(comp).min
             set_ic_quantity!(ic, var_val)
         else
             @assert isapprox(var_val, 0.0, atol = ABSOLUTE_TOLERANCE) "status and power don't match"
