@@ -30,8 +30,10 @@ end
 get_decision_states(s::SimulationState) = s.decision_states
 get_system_state(s::SimulationState) = s.system_state
 
+const STATE_TIME_PARAMS = NamedTuple{(:horizon, :resolution), NTuple{2, Dates.Millisecond}}
+
 function _get_state_params(models::SimulationModels, simulation_step::Dates.Period)
-    params = OrderedDict{OptimizationContainerKey, NTuple{2, Dates.Millisecond}}()
+    params = OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS}()
     for model in get_decision_models(models)
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
@@ -40,11 +42,14 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Peri
             field_containers = getfield(container, type)
             for key in keys(field_containers)
                 if !haskey(params, key)
-                    params[key] = (max(simulation_step, horizon_step), model_resolution)
+                    params[key] = (
+                        horizon = max(simulation_step, horizon_step),
+                        resolution = model_resolution,
+                    )
                 else
                     params[key] = (
-                        max(params[key][1], horizon_step),
-                        min(params[key][2], model_resolution),
+                        horizon = max(params[key].horizon, horizon_step),
+                        resolution = min(params[key].resolution, model_resolution),
                     )
                 end
             end
@@ -57,7 +62,7 @@ function _initialize_model_states!(
     sim_state::SimulationState,
     model::OperationModel,
     simulation_initial_time::Dates.DateTime,
-    params::OrderedDict{OptimizationContainerKey, NTuple{2, Dates.Millisecond}},
+    params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
     states = get_decision_states(sim_state)
     container = get_optimization_container(model)
@@ -66,7 +71,7 @@ function _initialize_model_states!(
         field_states = getfield(states, field)
         for (key, value) in field_containers
             # TODO: Handle case of sparse_axis_array
-            value_counts = params[key][1] ÷ params[key][2]
+            value_counts = params[key].horizon ÷ params[key].resolution
             if length(axes(value)) == 1
                 column_names = [string(encode_key(key))]
             elseif length(axes(value)) == 2
@@ -84,11 +89,11 @@ function _initialize_model_states!(
                     collect(
                         range(
                             simulation_initial_time,
-                            step = params[key][2],
+                            step = params[key].resolution,
                             length = value_counts,
                         ),
                     ),
-                    params[key][2],
+                    params[key].resolution,
                 )
             end
         end
@@ -100,7 +105,7 @@ function _initialize_system_states!(
     sim_state::SimulationState,
     ::Nothing,
     simulation_initial_time::Dates.DateTime,
-    params::OrderedDict{OptimizationContainerKey, NTuple{2, Dates.Millisecond}},
+    params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_state(sim_state)
@@ -112,7 +117,7 @@ function _initialize_system_states!(
             emulator_containers[key] = StateData(
                 DataFrames.DataFrame(cols .=> NaN),
                 [simulation_initial_time],
-                params[key][2],
+                params[key].resolution,
             )
         end
     end
