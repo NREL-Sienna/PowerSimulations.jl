@@ -453,6 +453,7 @@ if !Sys.iswindows()
         end
     end
 
+    #= This test is too large for CI testing. Run locally if debugging is necessary
     ############ Test with the ERCOT system ############
 
     @testset "Decision Model test for Initialization with TAMU ERCOT system, Case 1" begin
@@ -1096,5 +1097,6 @@ if !Sys.iswindows()
             # @test solve!(model) == RunStatus.SUCCESSFUL
         end
     end
+    =#
     Pkg.rm("SCIP")
 end
