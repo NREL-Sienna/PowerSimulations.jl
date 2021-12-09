@@ -1,16 +1,16 @@
 struct SimulationState
     current_time::Base.RefValue{Dates.DateTime}
     end_of_step_timestamp::Base.RefValue{Dates.DateTime}
-    decision_states::StateInfo
-    system_state::StateInfo
+    decision_states::ValueStates
+    system_states::ValueStates
 end
 
 function SimulationState()
     return SimulationState(
         Ref(UNSET_INI_TIME),
         Ref(UNSET_INI_TIME),
-        StateInfo(),
-        StateInfo(),
+        ValueStates(),
+        ValueStates(),
     )
 end
 
@@ -28,7 +28,7 @@ function set_current_time!(s::SimulationState, val::Dates.DateTime)
 end
 
 get_decision_states(s::SimulationState) = s.decision_states
-get_system_states(s::SimulationState) = s.system_state
+get_system_states(s::SimulationState) = s.system_states
 
 const STATE_TIME_PARAMS = NamedTuple{(:horizon, :resolution), NTuple{2, Dates.Millisecond}}
 
@@ -38,7 +38,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Peri
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
         horizon_step = get_horizon(model) * model_resolution
-        for type in fieldnames(StateInfo)
+        for type in fieldnames(ValueStates)
             field_containers = getfield(container, type)
             for key in keys(field_containers)
                 if !haskey(params, key)
@@ -66,7 +66,7 @@ function _initialize_model_states!(
 )
     states = get_decision_states(sim_state)
     container = get_optimization_container(model)
-    for field in fieldnames(StateInfo)
+    for field in fieldnames(ValueStates)
         field_containers = getfield(container, field)
         field_states = getfield(states, field)
         for (key, value) in field_containers
@@ -81,7 +81,7 @@ function _initialize_model_states!(
                 continue
             end
             if !haskey(field_states, key) || length(field_states[key]) < value_counts
-                field_states[key] = StateData(
+                field_states[key] = ValueState(
                     DataFrames.DataFrame(
                         fill(NaN, value_counts, length(column_names)),
                         column_names,
@@ -111,10 +111,10 @@ function _initialize_system_states!(
     emulator_states = get_system_states(sim_state)
     for key in get_state_keys(decision_states)
         cols = DataFrames.names(get_state_values(decision_states, key))
-        set_state_data(
+        set_state_data!(
             emulator_states,
             key,
-            StateData(
+            ValueState(
                 DataFrames.DataFrame(cols .=> NaN),
                 [simulation_initial_time],
                 params[key].resolution,
@@ -147,7 +147,7 @@ function initialize_simulation_state!(
 end
 
 function update_state_data!(
-    state_data::StateData,
+    state_data::ValueState,
     store_data::DataFrames.DataFrame,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
@@ -160,12 +160,12 @@ function update_state_data!(
     if simulation_time > end_of_step_timestamp
         state_data_index = 1
     else
-        state_data_index = findlast(get_timestamps(state_data) .<= simulation_time)
+        state_data_index = find_timestamp_index(get_timestamps(state_data), simulation_time)
     end
 
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[1]
-    set_last_recorded_row(state_data, state_data_index)
+    set_last_recorded_row!(state_data, state_data_index)
     # This implementation can fail if the names aren't in the same order.
     @assert_op DataFrames.names(state_data.values) == DataFrames.names(store_data)
 

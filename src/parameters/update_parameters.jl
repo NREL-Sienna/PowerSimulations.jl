@@ -30,7 +30,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
-    ::StateInfo,
+    ::ValueStates,
 ) where {
     T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -60,7 +60,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
-    ::StateInfo,
+    ::ValueStates,
 ) where {
     T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -87,7 +87,10 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
-    ::Union{StateInfo, InMemoryModelStore{PowerSimulations.EmulationModelOptimizerResults}},
+    ::Union{
+        ValueStates,
+        InMemoryModelStore{PowerSimulations.EmulationModelOptimizerResults},
+    },
 ) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))
@@ -110,7 +113,7 @@ function update_parameter_values!(
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::DecisionModel,
-    state::StateInfo,
+    state::ValueStates,
 ) where {T <: Union{PJ.ParameterRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_state_values(state, get_attribute_key(attributes))
@@ -144,7 +147,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input,#::StateInfo,
+    input,#::ValueStates,
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -171,7 +174,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input,#::StateInfo,
+    input,#::ValueStates,
 ) where {T <: ParameterType, U <: PSY.Service}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
