@@ -160,7 +160,7 @@ function update_state_data!(
 
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[1]
-    state_data.last_recorded_row = state_data_index
+    set_last_recorded_row(state_data, state_data_index)
     # This implementation can fail if the names aren't in the same order.
     @assert_op DataFrames.names(state_data.values) == DataFrames.names(store_data)
 

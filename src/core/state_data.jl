@@ -21,22 +21,27 @@ get_timestamps(s::StateData) = s.timestamps
 get_state_values(s::StateData) = s.values
 
 function get_last_update_timestamp(s::StateData)
-    if s.last_recorded_row == 0
+    if get_last_recorded_row(s) == 0
         return UNSET_INI_TIME
     end
-    return get_timestamps(s)[s.last_recorded_row]
+    return get_timestamps(s)[get_last_recorded_row(s)]
 end
 
 function get_last_update_value(s::StateData, key::OptimizationContainerKey)
-    if s.last_recorded_row == 0
+    if get_last_recorded_row(s) == 0
         error("The State hasn't been written yet")
     end
-    return get_state_values(get_state_data(s, key))[s.last_recorded_row, :]
+    return get_state_values(get_state_data(s, key))[get_last_recorded_row(s), :]
 end
 
 function get_state_value(s::StateData, date::Dates.DateTime)
     state_data_index = findlast(get_timestamps(s) .<= date)
     return get_state_values(s)[state_data_index, :]
+end
+
+function set_last_recorded_row(s::StateData, val::Int)
+    s.last_recorded_row = val
+    return
 end
 
 struct StateInfo
