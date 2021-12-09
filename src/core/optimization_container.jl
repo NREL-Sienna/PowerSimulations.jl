@@ -493,14 +493,15 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     optimizer_stats.sec_in_gc = @timed JuMP.optimize!(jump_model)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        error("Optimizer returned $model_status")
+        @error "Optimizer returned $model_status"
+        return RunStatus.FAILED
     end
 
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
     _, optimizer_stats.timed_calculate_dual_variables =
         @timed calculate_dual_variables!(container, system)
-    return
+    return RunStatus.SUCCESSFUL
 end
 
 function compute_conflict!(container::OptimizationContainer)

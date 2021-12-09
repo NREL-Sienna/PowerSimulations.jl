@@ -345,9 +345,7 @@ The one step solution method for the emulation model. Any Custom EmulationModel
 needs to reimplement this method. This method is called by run! and execute!.
 """
 function one_step_solve!(model::EmulationModel)
-    container = get_optimization_container(model)
-    solve_impl!(container, get_system(model))
-    write_optimizer_stats!(container)
+    solve_impl!(model)
     return
 end
 

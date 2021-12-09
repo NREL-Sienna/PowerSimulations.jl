@@ -335,16 +335,6 @@ function calculate_dual_variables!(model::DecisionModel)
     return
 end
 
-function solve_impl!(model::DecisionModel)
-    container = get_optimization_container(model)
-    solve_impl!(container, get_system(model))
-    # Note, if the solver fails solve_impl!(container, args...) throws an exception.
-    # The model is only set to RunStatus.SUCCESSFUL if solve_impl! finishes correctly
-    write_optimizer_stats!(container)
-    set_run_status!(model, RunStatus.SUCCESSFUL)
-    return
-end
-
 """
 Default solve method for models that conform to the requirements of
 DecisionModel{<: DecisionProblem}.
