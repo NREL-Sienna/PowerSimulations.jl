@@ -545,5 +545,6 @@ include("utils/dataframes_utils.jl")
 include("utils/jump_utils.jl")
 include("utils/powersystems_utils.jl")
 include("utils/recorder_events.jl")
+include("utils/datetime_utils.jl")
 
 end

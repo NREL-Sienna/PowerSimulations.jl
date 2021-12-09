@@ -121,7 +121,8 @@ function update_parameter_values!(
     state_timestamps = get_timestamps(state_data)
     max_state_index = length(state_data)
 
-    state_data_index = findlast(state_timestamps .<= current_time)
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+
     sim_timestamps = range(current_time, step = resolution, length = time[end])
     for t in time
         time_stamp_ix = min(max_state_index, state_data_index + 1)
