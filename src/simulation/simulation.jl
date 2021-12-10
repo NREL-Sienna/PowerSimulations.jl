@@ -508,12 +508,11 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     for field in fieldnames(ValueStates)
         model_params = get_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
-            state_info = getfield(state.decision_states, field)
             # TODO: Read Array here to avoid allocating the DataFrame
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
             end_of_step_timestamp = get_end_of_step_timestamp(state)
             update_state_data!(
-                state_info[key],
+                get_decision_state_data(state, key),
                 # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
                 res,
                 simulation_time,

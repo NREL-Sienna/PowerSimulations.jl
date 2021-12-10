@@ -154,11 +154,14 @@ function update_state_data!(
     end_of_step_timestamp::Dates.DateTime,
 )
     model_resolution = get_resolution(model_params)
-    resolution_ratio = model_resolution ÷ get_data_resolution(state_data)
+    state_resolution = get_data_resolution(state_data)
+    resolution_ratio = model_resolution ÷ state_resolution
     @assert_op resolution_ratio >= 1
 
     if simulation_time > end_of_step_timestamp
         state_data_index = 1
+        state_data.timestamps[:] .=
+            range(simulation_time, step = state_resolution, length = length(state_data))
     else
         state_data_index = find_timestamp_index(get_timestamps(state_data), simulation_time)
     end
@@ -183,12 +186,24 @@ function update_state_data!(
     return
 end
 
+function get_decision_state_data(state::SimulationState, key::OptimizationContainerKey)
+    return get_state_data(get_decision_states(state), key)
+end
+
+function get_decision_state_value(state::SimulationState, key::OptimizationContainerKey)
+    return get_state_values(get_decision_states(state), key)
+end
+
 function get_decision_state_value(
     state::SimulationState,
     key::OptimizationContainerKey,
     date::Dates.DateTime,
 )
     return get_state_values(get_decision_states(state), key, date)
+end
+
+function get_system_state_data(state::SimulationState, key::OptimizationContainerKey)
+    return get_state_data(get_system_states(state), key)
 end
 
 function get_system_state_value(state::SimulationState, key::OptimizationContainerKey)
