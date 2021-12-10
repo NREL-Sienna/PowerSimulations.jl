@@ -1,5 +1,5 @@
 # This needs renaming to avoid collision with the DecionModelResults/EmulationModelResults
-mutable struct ProblemResults <: PSIResults
+mutable struct ProblemResults
     base_power::Float64
     timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     system::Union{Nothing, PSY.System}

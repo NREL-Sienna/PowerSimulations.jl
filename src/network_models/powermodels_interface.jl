@@ -551,7 +551,7 @@ function add_pm_constraint_refs!(
     pm_constraint_map = PMconmap(system_formulation)
     for (pm_v, ps_v) in pm_constraint_map[PSY.Bus]
         if pm_v in pm_constraint_names
-            cons_container = PSI.add_constraints_container!(
+            cons_container = add_constraints_container!(
                 container,
                 ps_v,
                 PSY.Bus,

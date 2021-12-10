@@ -1,14 +1,14 @@
 function _get_time_series(
     container::OptimizationContainer,
     component::PSY.Component,
-    parameter_attributes::TimeSeriesAttributes{T},
+    attributes::TimeSeriesAttributes{T},
 ) where {T <: PSY.TimeSeriesData}
     initial_time = get_initial_time(container)
     time_steps = get_time_steps(container)
     forecast = PSY.get_time_series(
         T,
         component,
-        get_name(parameter_attributes);
+        get_time_series_name(attributes);
         start_time = initial_time,
         count = 1,
     )

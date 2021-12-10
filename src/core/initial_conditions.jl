@@ -1,5 +1,4 @@
-struct ICKey{T <: PSI.InitialConditionType, U <: PSY.Component} <:
-       PSI.OptimizationContainerKey
+struct ICKey{T <: InitialConditionType, U <: PSY.Component} <: OptimizationContainerKey
     meta::String
 end
 

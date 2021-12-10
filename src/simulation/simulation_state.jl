@@ -1,40 +1,16 @@
-struct StateData
-    values::DataFrames.DataFrame
-    timestamps::Vector{Dates.DateTime}
-end
-
-get_timestamps_length(s::StateData) = length(s.timestamps)
-get_data_resolution(s::StateData) = s.timestamps[2] - s.timestamps[1]
-get_timestamps(s::StateData) = s.timestamps
-get_values(s::StateData) = s.values
-
-struct StateInfo
-    duals::Dict{ConstraintKey, StateData}
-    aux_variables::Dict{AuxVarKey, StateData}
-    variables::Dict{VariableKey, StateData}
-end
-
-function StateInfo()
-    return StateInfo(
-        Dict{ConstraintKey, StateData}(),
-        Dict{AuxVarKey, StateData}(),
-        Dict{VariableKey, StateData}(),
-    )
-end
-
 struct SimulationState
     current_time::Base.RefValue{Dates.DateTime}
     end_of_step_timestamp::Base.RefValue{Dates.DateTime}
-    decision_states::StateInfo
-    system_state::StateInfo
+    decision_states::ValueStates
+    system_states::ValueStates
 end
 
 function SimulationState()
     return SimulationState(
         Ref(UNSET_INI_TIME),
         Ref(UNSET_INI_TIME),
-        StateInfo(),
-        StateInfo(),
+        ValueStates(),
+        ValueStates(),
     )
 end
 
@@ -52,23 +28,28 @@ function set_current_time!(s::SimulationState, val::Dates.DateTime)
 end
 
 get_decision_states(s::SimulationState) = s.decision_states
-get_system_state(s::SimulationState) = s.system_state
+get_system_states(s::SimulationState) = s.system_states
+
+const STATE_TIME_PARAMS = NamedTuple{(:horizon, :resolution), NTuple{2, Dates.Millisecond}}
 
 function _get_state_params(models::SimulationModels, simulation_step::Dates.Period)
-    params = OrderedDict{OptimizationContainerKey, NTuple{2, Dates.Millisecond}}()
+    params = OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS}()
     for model in get_decision_models(models)
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
         horizon_step = get_horizon(model) * model_resolution
-        for type in [:variables, :aux_variables]
+        for type in fieldnames(ValueStates)
             field_containers = getfield(container, type)
             for key in keys(field_containers)
                 if !haskey(params, key)
-                    params[key] = (max(simulation_step, horizon_step), model_resolution)
+                    params[key] = (
+                        horizon = max(simulation_step, horizon_step),
+                        resolution = model_resolution,
+                    )
                 else
                     params[key] = (
-                        max(params[key][1], horizon_step),
-                        min(params[key][2], model_resolution),
+                        horizon = max(params[key].horizon, horizon_step),
+                        resolution = min(params[key].resolution, model_resolution),
                     )
                 end
             end
@@ -78,18 +59,19 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Peri
 end
 
 function _initialize_model_states!(
-    states::StateInfo,
+    sim_state::SimulationState,
     model::OperationModel,
     simulation_initial_time::Dates.DateTime,
-    params,
+    params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
+    states = get_decision_states(sim_state)
     container = get_optimization_container(model)
-    for field in [:variables, :aux_variables, :duals]
+    for field in fieldnames(ValueStates)
         field_containers = getfield(container, field)
         field_states = getfield(states, field)
         for (key, value) in field_containers
             # TODO: Handle case of sparse_axis_array
-            value_counts = params[key][1] ÷ params[key][2]
+            value_counts = params[key].horizon ÷ params[key].resolution
             if length(axes(value)) == 1
                 column_names = [string(encode_key(key))]
             elseif length(axes(value)) == 2
@@ -98,23 +80,46 @@ function _initialize_model_states!(
                 @warn("Multidimensional Array caching is not currently supported")
                 continue
             end
-            if !haskey(field_states, key) ||
-               get_timestamps_length(field_states[key]) < value_counts
-                field_states[key] = StateData(
+            if !haskey(field_states, key) || length(field_states[key]) < value_counts
+                field_states[key] = ValueState(
                     DataFrames.DataFrame(
-                        Matrix{Float64}(undef, value_counts, length(column_names)),
+                        fill(NaN, value_counts, length(column_names)),
                         column_names,
                     ),
                     collect(
                         range(
                             simulation_initial_time,
-                            step = params[key][2],
+                            step = params[key].resolution,
                             length = value_counts,
                         ),
                     ),
+                    params[key].resolution,
                 )
             end
         end
+    end
+    return
+end
+
+function _initialize_system_states!(
+    sim_state::SimulationState,
+    ::Nothing,
+    simulation_initial_time::Dates.DateTime,
+    params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
+)
+    decision_states = get_decision_states(sim_state)
+    emulator_states = get_system_states(sim_state)
+    for key in get_state_keys(decision_states)
+        cols = DataFrames.names(get_state_values(decision_states, key))
+        set_state_data!(
+            emulator_states,
+            key,
+            ValueState(
+                DataFrames.DataFrame(cols .=> NaN),
+                [simulation_initial_time],
+                params[key].resolution,
+            ),
+        )
     end
     return
 end
@@ -125,11 +130,9 @@ function initialize_simulation_state!(
     simulation_step::Dates.Period,
     simulation_initial_time::Dates.DateTime,
 )
-    decision_states = get_decision_states(sim_state)
     params = _get_state_params(models, simulation_step)
-    min_resolution = simulation_step
     for model in get_decision_models(models)
-        _initialize_model_states!(decision_states, model, simulation_initial_time, params)
+        _initialize_model_states!(sim_state, model, simulation_initial_time, params)
     end
 
     min_resolution = minimum([v[2] for v in values(params)])
@@ -139,16 +142,12 @@ function initialize_simulation_state!(
     )
 
     em = get_emulation_model(models)
-    if em !== nothing
-        emulator_states = get_system_state(sim_state)
-        # TODO: Initialize properly once we have an emulation example
-        _initialize_model_states!(emulator_states, model, simulation_step)
-    end
+    _initialize_system_states!(sim_state, em, simulation_initial_time, params)
     return
 end
 
 function update_state_data!(
-    state_data::StateData,
+    state_data::ValueState,
     store_data::DataFrames.DataFrame,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
@@ -161,12 +160,12 @@ function update_state_data!(
     if simulation_time > end_of_step_timestamp
         state_data_index = 1
     else
-        state_data_index = findlast(get_timestamps(state_data) .<= simulation_time)
+        state_data_index = find_timestamp_index(get_timestamps(state_data), simulation_time)
     end
 
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[1]
-
+    set_last_recorded_row!(state_data, state_data_index)
     # This implementation can fail if the names aren't in the same order.
     @assert_op DataFrames.names(state_data.values) == DataFrames.names(store_data)
 
@@ -180,24 +179,42 @@ function update_state_data!(
         end
         state_data_index += resolution_ratio
     end
+
     return
 end
 
-function get_decision_state_data(state::SimulationState, opt_container_key::VariableKey)
-    return getfield(state.decision_states, STORE_CONTAINER_VARIABLES)[opt_container_key]
+function get_decision_state_value(
+    state::SimulationState,
+    key::OptimizationContainerKey,
+    date::Dates.DateTime,
+)
+    return get_state_values(get_decision_states(state), key, date)
 end
 
-function get_decision_state_data(state::SimulationState, opt_container_key::ConstraintKey)
-    return getfield(state.decision_states, STORE_CONTAINER_DUALS)[opt_container_key]
+function get_system_state_value(state::SimulationState, key::OptimizationContainerKey)
+    return get_state_values(get_system_states(state), key)[1, :]
 end
 
-function get_decision_state_data(state::SimulationState, opt_container_key::AuxVarKey)
-    return getfield(state.decision_states, STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
+function get_system_state_value(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, VariableKey(T, U))
 end
 
-#function get_decision_state_data(
-#    state::SimulationState,
-#    opt_container_key::ExpressionKey,
-#)
-#    return getfield(state.decision_states, STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
-#end
+function get_system_state_value(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, AuxVarKey(T, U))
+end
+
+function get_system_state_value(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, ConstraintKey(T, U))
+end

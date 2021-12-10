@@ -345,27 +345,47 @@ The one step solution method for the emulation model. Any Custom EmulationModel
 needs to reimplement this method. This method is called by run! and execute!.
 """
 function one_step_solve!(model::EmulationModel)
-    container = get_optimization_container(model)
-    solve_impl!(container, get_system(model))
-    write_optimizer_stats!(container)
+    solve_impl!(model)
     return
 end
 
-function update_model!(
+function update_parameters(
     model::EmulationModel,
     store::InMemoryModelStore{EmulationModelOptimizerResults},
 )
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, store)
     end
+    return
+end
+
+function update_initial_conditions(
+    model::EmulationModel,
+    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    ::InterProblemChronology,
+)
     for key in keys(get_initial_conditions(model))
         update_initial_conditions!(model, key, store)
     end
     return
 end
 
+function update_model!(
+    model::EmulationModel,
+    source::InMemoryModelStore{EmulationModelOptimizerResults},
+    ini_cond_chronology,
+)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
+        update_parameters(model, source)
+    end
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
+        update_initial_conditions(model, source, ini_cond_chronology)
+    end
+    return
+end
+
 function update_model!(model::EmulationModel)
-    update_model!(model, model.store)
+    update_model!(model, model.store, InterProblemChronology())
     return
 end
 

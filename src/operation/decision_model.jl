@@ -335,16 +335,6 @@ function calculate_dual_variables!(model::DecisionModel)
     return
 end
 
-function solve_impl!(model::DecisionModel)
-    container = get_optimization_container(model)
-    solve_impl!(container, get_system(model))
-    # Note, if the solver fails solve_impl!(container, args...) throws an exception.
-    # The model is only set to RunStatus.SUCCESSFUL if solve_impl! finishes correctly
-    write_optimizer_stats!(container)
-    set_run_status!(model, RunStatus.SUCCESSFUL)
-    return
-end
-
 """
 Default solve method for models that conform to the requirements of
 DecisionModel{<: DecisionProblem}.
@@ -421,13 +411,25 @@ function solve!(
     return get_run_status(model)
 end
 
-function update_model!(model::DecisionModel, state)
+function update_parameters(model::DecisionModel, decision_states::ValueStates)
     for key in keys(get_parameters(model))
-        update_parameter_values!(model, key, state)
+        update_parameter_values!(model, key, decision_states)
     end
+    return
+end
+
+function update_initial_conditions(model::DecisionModel, state, ::InterProblemChronology)
     for key in keys(get_initial_conditions(model))
         update_initial_conditions!(model, key, state)
     end
+    return
+end
+
+function update_initial_conditions(model::DecisionModel, state, ::IntraProblemChronology)
+    #for key in keys(get_initial_conditions(model))
+    #    update_initial_conditions!(model, key, state)
+    #end
+    error("Not Implemented yet")
     return
 end
 

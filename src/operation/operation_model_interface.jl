@@ -80,6 +80,23 @@ function get_initial_conditions(
     return get_initial_conditions(get_optimization_container(model), T, U)
 end
 
+function solve_impl!(model::OperationModel)
+    container = get_optimization_container(model)
+    status = solve_impl!(container, get_system(model))
+    write_optimizer_stats!(container)
+    set_run_status!(model, status)
+    if status != RunStatus.SUCCESSFUL
+        settings = get_settings(model)
+        model_name = get_name(model)
+        if !get_allow_fails(settings)
+            error("Solving model $(model_name) failed")
+        else
+            @error "Solving model $(model_name) failed. Failure Allowed"
+        end
+    end
+    return
+end
+
 set_console_level!(model::OperationModel, val) = get_internal(model).console_level = val
 set_file_level!(model::OperationModel, val) = get_internal(model).file_level = val
 set_executions!(model::OperationModel, val::Int) = model.internal.executions = val
@@ -98,7 +115,6 @@ set_output_dir!(model::OperationModel, path::AbstractString) =
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
     internal.execution_count += 1
-    # TODO: Will be refactored when simulation is re-enabled
     # Reset execution count at the end of step
     #if get_execution_count(model) == get_executions(model)
     #    internal.execution_count = 0
@@ -331,5 +347,15 @@ function serialize_optimization_model(model::OperationModel)
         get_optimization_container(model),
         joinpath(get_output_dir(model), _JUMP_MODEL_FILENAME),
     )
+    return
+end
+
+function update_model!(model::OperationModel, source, ini_cond_chronology)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
+        update_parameters(model, get_decision_states(source))
+    end
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
+        update_initial_conditions(model, source, ini_cond_chronology)
+    end
     return
 end

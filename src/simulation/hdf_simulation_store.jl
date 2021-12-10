@@ -268,7 +268,7 @@ function initialize_problem_storage!(
         end
 
         num_stats = params.num_steps * params.models_params[problem].num_executions
-        columns = fieldnames(PSI.OptimizerStats)
+        columns = fieldnames(OptimizerStats)
         num_columns = length(columns)
         dataset = HDF5.create_dataset(
             problem_group,
@@ -554,7 +554,7 @@ function _flush_data!(
     cache::OptimzationResultCache,
     store::HdfSimulationStore,
     cache_key::OptimizationResultCacheKey,
-    discard,
+    discard::Bool,
 )
     !has_dirty(cache) && return 0
     dataset = _get_dataset(store, cache_key)

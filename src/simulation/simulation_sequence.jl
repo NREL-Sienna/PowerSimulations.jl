@@ -152,7 +152,6 @@ end
                         models::SimulationModels,
                         feedforward::Dict{Symbol, <:AbstractAffectFeedforward}
                         ini_cond_chronology::Dict{Symbol, <:FeedforwardChronology}
-                        cache::Dict{Symbol, AbstractCache}
                         )
 """
 mutable struct SimulationSequence
@@ -180,7 +179,8 @@ mutable struct SimulationSequence
         end
 
         if length(models.decision_models) == 1
-            ini_cond_chronology = IntraProblemChronology()
+            # Not implemented yet
+            # ini_cond_chronology = IntraProblemChronology()
         end
 
         execution_order = _get_execution_order_vector(intervals)

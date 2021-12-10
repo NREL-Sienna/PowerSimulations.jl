@@ -120,6 +120,9 @@ function Base.show(io::IO, ::MIME"text/plain", results::SimulationProblemResults
         end
     end
 end
+
+PSIResults = Union{ProblemResults, SimulationProblemResults, SimulationResults}
+
 function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     println(io, "<h1>Results</h1>")
     timestamps = get_existing_timestamps(results)
@@ -196,7 +199,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)
     println(io, "  Parameters: $params")
 end
 
-function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})
+function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, ServiceModel})
     println(io, "<h1>Services</h1>")
     for (k, v) in services
         println(io, "<p><b>$(k)</b></p>")

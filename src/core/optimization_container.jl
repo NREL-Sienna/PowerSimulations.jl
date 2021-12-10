@@ -498,18 +498,21 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     optimizer_stats.sec_in_gc = @timed JuMP.optimize!(jump_model)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        error("Optimizer returned $model_status")
+        @error "Optimizer returned $model_status"
+        return RunStatus.FAILED
     end
 
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
     _, optimizer_stats.timed_calculate_dual_variables =
         @timed calculate_dual_variables!(container, system)
-    return
+    return RunStatus.SUCCESSFUL
 end
 
 function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
+    JuMP.unset_silent(jump_model)
+    jump_model.is_model_dirty = false
     conflict = Dict{Symbol, Array}()
     try
         JuMP.compute_conflict!(jump_model)
@@ -523,14 +526,12 @@ function compute_conflict!(container::OptimizationContainer)
         @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
     end
 
-    for field in get_constraints(container)
-        for (key, field_container) in field
-            conflict_indices = check_conflict_status(jump_model, field_container)
-            if isempty(conflict_indices)
-                continue
-            else
-                confict[encode_key(key)] = conflict_indices
-            end
+    for (key, field_container) in get_constraints(container)
+        conflict_indices = check_conflict_status(jump_model, field_container)
+        if isempty(conflict_indices)
+            continue
+        else
+            conflict[encode_key(key)] = conflict_indices
         end
     end
 
@@ -899,13 +900,33 @@ end
 
 function get_parameter_array(
     container::OptimizationContainer,
+    key::ParameterKey{T, U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_parameter_array(get_parameter(container, key))
+end
+
+function get_parameter_multiplier_array(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_multiplier_array(get_parameter(container, key))
+end
+
+function get_parameter_attributes(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_attributes(get_parameter(container, key))
+end
+
+function get_parameter_array(
+    container::OptimizationContainer,
     ::T,
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return get_parameter_array(get_parameter(container, ParameterKey(T, U, meta)))
+    return get_parameter_array(container, ParameterKey(T, U, meta))
 end
-
 function get_parameter_multiplier_array(
     container::OptimizationContainer,
     ::T,

@@ -157,8 +157,8 @@ Manually provided initial times have to be compatible with the specified interva
     end
     if get_initial_time(sim) === nothing
         sim.initial_time = model_initial_times[1][1]
-        @debug("Initial Simulation Time will be infered from the data.
-               Initial Simulation Time set to $(sim.initial_time)")
+        @debug("Initial Simulation timestamp will be infered from the data. \\
+               Initial Simulation timestamp set to $(sim.initial_time)")
     end
     if get_models(sim).emulation_model !== nothing
         em = get_models(sim).emulation_model
@@ -278,6 +278,91 @@ function _initialize_simulation_state!(sim::Simulation)
     return
 end
 
+function _initialize_problem_storage!(
+    sim::Simulation,
+    cache_size_mib,
+    min_cache_flush_size_mib,
+)
+    sequence = get_sequence(sim)
+    executions_by_model = sequence.executions_by_model
+    models = get_models(sim)
+    model_store_params = OrderedDict{Symbol, ModelStoreParams}()
+    model_req = Dict{Symbol, SimulationModelStoreRequirements}()
+    num_param_containers = 0
+    rules = CacheFlushRules(
+        max_size = cache_size_mib * MiB,
+        min_flush_size = min_cache_flush_size_mib,
+    )
+    for model in get_decision_models(models)
+        model_name = get_name(model)
+        model_store_params[model_name] = model.internal.store_parameters
+        horizon = get_horizon(model)
+        num_executions = executions_by_model[model_name]
+        reqs = SimulationModelStoreRequirements()
+        container = get_optimization_container(model)
+        num_rows = num_executions * get_steps(sim)
+
+        # TODO: configuration of keep_in_cache and priority are not correct
+
+        for (key, array) in get_duals(container)
+            reqs.duals[model] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            add_rule!(rules, model_name, key, false, CachePriority.LOW)
+        end
+
+        for (key, param_container) in get_parameters(container)
+            array = get_parameter_array(param_container)
+            reqs.parameters[key] =
+                _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            add_rule!(rules, model_name, key, false, CachePriority.LOW)
+        end
+
+        for (key, array) in get_variables(container)
+            reqs.variables[key] =
+                _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
+        end
+
+        for (key, array) in get_aux_variables(container)
+            reqs.aux_variables[key] =
+                _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
+        end
+
+        # TODO: Do for expressions
+        #for (key, array) in get_expressions(model)
+        #    reqs.aux_variables[key] =
+        #        _calc_dimensions(array, encode_key(key), num_rows, horizon)
+        #    add_rule!(
+        #        rules,
+        #        model_name,
+        #        key,
+        #        false,
+        #        CachePriority.HIGH,
+        #    )
+        #end
+
+        model_req[model_name] = reqs
+
+        num_param_containers +=
+            length(reqs.duals) +
+            length(reqs.parameters) +
+            length(reqs.variables) +
+            length(reqs.aux_variables) +
+            length(reqs.expressions)
+    end
+
+    simulation_store_params = SimulationStoreParams(
+        get_initial_time(sim),
+        get_step_resolution(sequence),
+        get_steps(sim),
+        model_store_params,
+    )
+    @debug "initialized problem requirements" simulation_store_params
+    store = get_simulation_store(sim)
+    initialize_problem_storage!(store, simulation_store_params, model_req, rules)
+    return simulation_store_params
+end
+
 function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
@@ -320,9 +405,6 @@ function _build!(sim::Simulation, serialize::Bool)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
         _initialize_simulation_state!(sim)
     end
-
-    # Here is check that store params are properly initialized
-    # _initialize_problem_storage!(sim, cache_size_mib, min_cache_flush_size_mib)
 
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
@@ -409,20 +491,6 @@ function build!(
     return get_simulation_build_status(sim)
 end
 
-function _update_initial_conditions!(model::DecisionModel, sim::Simulation)
-    for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key)
-    end
-    return
-end
-
-function _update_parameters(model::DecisionModel, sim::Simulation)
-    for key in keys(get_parameters(model))
-        update_parameter_values!(model, key)
-    end
-    return
-end
-
 function _apply_warm_start!(model::DecisionModel)
     container = get_optimization_container(model)
     jump_model = get_jump_model(container)
@@ -437,7 +505,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
     state = get_simulation_state(sim)
-    for field in [:variables, :aux_variables, :duals]
+    for field in fieldnames(ValueStates)
         model_params = get_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
             state_info = getfield(state.decision_states, field)
@@ -452,9 +520,44 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
                 model_params,
                 end_of_step_timestamp,
             )
-            IS.@record :execution StateUpdateEvent(key, simulation_time, model_name)
+            IS.@record :execution StateUpdateEvent(
+                key,
+                simulation_time,
+                model_name,
+                "DecisionState",
+            )
         end
     end
+end
+
+function _set_system_state!(sim::Simulation, model_name::String)
+    # TODO: Update after solution of emulation
+    # em = get_emulation_model(get_models(sim))
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_states(sim_state)
+    decision_state = get_decision_states(sim_state)
+    simulation_time = get_current_time(sim)
+
+    for key in get_state_keys(decision_state)
+        last_update = get_last_updated_timestamp(decision_state, key)
+        if last_update <= simulation_time
+            # TODO: Implement setter functions for this operation to avoid hardcoding index 1
+            # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
+            # in-place value update
+            get_state_values(system_state, key)[1, :] .=
+                DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
+        else
+            error("Something went really wrong. Please report this error.")
+        end
+        IS.@record :execution StateUpdateEvent(
+            key,
+            simulation_time,
+            model_name,
+            "SystemState",
+        )
+    end
+
+    return
 end
 
 """ Default problem update function for most problems with no customization"""
@@ -466,72 +569,9 @@ function update_model!(
         # TODO: Implement this case where the model is re-built
         # build_impl!(model)
     else
-        update_model!(model, get_simulation_state(sim))
+        update_model!(model, get_simulation_state(sim), get_ini_cond_chronology(sim))
     end
     return
-end
-
-"""
-    execute!(sim::Simulation; kwargs...)
-
-Solves the simulation model for sequential Simulations.
-
-# Arguments
-- `sim::Simulation=sim`: simulation object created by Simulation()
-
-The optional keyword argument `exports` controls exporting of results to CSV files as
-the simulation runs. Refer to [`export_results`](@ref) for a description of this argument.
-
-# Example
-```julia
-sim = Simulation("Test", 7, problems, "/Users/folder")
-execute!(sim::Simulation; kwargs...)
-```
-"""
-function execute!(sim::Simulation; kwargs...)
-    file_mode = "a"
-    logger = configure_logging(sim.internal, file_mode)
-    register_recorders!(sim.internal, file_mode)
-
-    # Undocumented option for test & dev only.
-    in_memory = get(kwargs, :in_memory, false)
-    store_type = in_memory ? InMemorySimulationStore : HdfSimulationStore
-
-    if (get_simulation_build_status(sim) != BuildStatus.BUILT) ||
-       (get_simulation_status(sim) != RunStatus.READY)
-        error("Simulation status is invalid, you need to rebuild the simulation")
-    end
-    try
-        open_store(store_type, get_store_dir(sim), "w") do store
-            set_simulation_store!(sim, store)
-            # TODO: return file name for hash calculation instead of hard code
-            Logging.with_logger(logger) do
-                try
-                    TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
-                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-                        _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
-                    end
-                    @info ("\n$(RUN_SIMULATION_TIMER)\n")
-                    set_simulation_status!(sim, RunStatus.SUCCESSFUL)
-                    log_cache_hit_percentages(store)
-                catch e
-                    set_simulation_status!(sim, RunStatus.FAILED)
-                    @error "simulation failed" exception = (e, catch_backtrace())
-                end
-            end
-        end
-    finally
-        _empty_problem_caches!(sim)
-        unregister_recorders!(sim.internal)
-        close(logger)
-    end
-
-    if !in_memory
-        compute_file_hash(get_store_dir(sim), HDF_FILENAME)
-    end
-
-    serialize_status(sim)
-    return get_simulation_status(sim)
 end
 
 function _execute!(
@@ -596,24 +636,20 @@ function _execute!(
                 end
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
-                    settings = get_settings(model)
                     status =
                         solve!(step, model, get_current_time(sim), store; exports = exports)
-                    if get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
-                        continue
-                    elseif !get_allow_fails(settings) && (status != RunStatus.SUCCESSFUL)
-                        throw(
-                            ErrorException(
-                                "Simulation Failed in problem $(model_name). Returned $(status)",
-                            ),
-                        )
-                    else
-                        @assert status == RunStatus.SUCCESSFUL
-                    end
                 end # Run problem Timer
 
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
-                    _update_simulation_state!(sim, model)
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Decision State" begin
+                    if status == RunStatus.SUCCESSFUL
+                        _update_simulation_state!(sim, model)
+                    end
+                end
+
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update System State" begin
+                    if status == RunStatus.SUCCESSFUL
+                        _set_system_state!(sim, string(model_name))
+                    end
                 end
 
                 global_problem_execution_count = (step - 1) * length(execution_order) + ix
@@ -656,89 +692,66 @@ function _execute!(
     return nothing
 end
 
-function _initialize_problem_storage!(
-    sim::Simulation,
-    cache_size_mib,
-    min_cache_flush_size_mib,
-)
-    sequence = get_sequence(sim)
-    executions_by_model = sequence.executions_by_model
-    models = get_models(sim)
-    model_store_params = OrderedDict{Symbol, ModelStoreParams}()
-    model_req = Dict{Symbol, SimulationModelStoreRequirements}()
-    num_param_containers = 0
-    rules = CacheFlushRules(
-        max_size = cache_size_mib * MiB,
-        min_flush_size = min_cache_flush_size_mib,
-    )
-    for model in get_decision_models(models)
-        model_name = get_name(model)
-        model_store_params[model_name] = model.internal.store_parameters
-        horizon = get_horizon(model)
-        num_executions = executions_by_model[model_name]
-        reqs = SimulationModelStoreRequirements()
-        container = get_optimization_container(model)
-        num_rows = num_executions * get_steps(sim)
+"""
+    execute!(sim::Simulation; kwargs...)
 
-        # TODO: configuration of keep_in_cache and priority are not correct
+Solves the simulation model for sequential Simulations.
 
-        for (key, array) in get_duals(container)
-            reqs.duals[model] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.LOW)
+# Arguments
+- `sim::Simulation=sim`: simulation object created by Simulation()
+
+The optional keyword argument `exports` controls exporting of results to CSV files as
+the simulation runs. Refer to [`export_results`](@ref) for a description of this argument.
+
+# Example
+```julia
+sim = Simulation("Test", 7, problems, "/Users/folder")
+execute!(sim::Simulation; kwargs...)
+```
+"""
+function execute!(sim::Simulation; kwargs...)
+    file_mode = "a"
+    logger = configure_logging(sim.internal, file_mode)
+    register_recorders!(sim.internal, file_mode)
+
+    # Undocumented option for test & dev only.
+    in_memory = get(kwargs, :in_memory, false)
+    store_type = in_memory ? InMemorySimulationStore : HdfSimulationStore
+
+    if (get_simulation_build_status(sim) != BuildStatus.BUILT) ||
+       (get_simulation_status(sim) != RunStatus.READY)
+        error("Simulation status is invalid, you need to rebuild the simulation")
+    end
+    try
+        open_store(store_type, get_store_dir(sim), "w") do store
+            set_simulation_store!(sim, store)
+            Logging.with_logger(logger) do
+                try
+                    TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
+                        _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
+                    end
+                    @info ("\n$(RUN_SIMULATION_TIMER)\n")
+                    set_simulation_status!(sim, RunStatus.SUCCESSFUL)
+                    log_cache_hit_percentages(store)
+                catch e
+                    set_simulation_status!(sim, RunStatus.FAILED)
+                    @error "simulation failed" exception = (e, catch_backtrace())
+                end
+            end
         end
-
-        for (key, param_container) in get_parameters(container)
-            array = get_parameter_array(param_container)
-            reqs.parameters[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.LOW)
-        end
-
-        for (key, array) in get_variables(container)
-            reqs.variables[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
-        end
-
-        for (key, array) in get_aux_variables(container)
-            reqs.aux_variables[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
-        end
-
-        # TODO: Do for expressions
-        #for (key, array) in get_expressions(model)
-        #    reqs.aux_variables[key] =
-        #        _calc_dimensions(array, encode_key(key), num_rows, horizon)
-        #    add_rule!(
-        #        rules,
-        #        model_name,
-        #        key,
-        #        false,
-        #        CachePriority.HIGH,
-        #    )
-        #end
-
-        model_req[model_name] = reqs
-
-        num_param_containers +=
-            length(reqs.duals) +
-            length(reqs.parameters) +
-            length(reqs.variables) +
-            length(reqs.aux_variables) +
-            length(reqs.expressions)
+    finally
+        _empty_problem_caches!(sim)
+        unregister_recorders!(sim.internal)
+        close(logger)
     end
 
-    simulation_store_params = SimulationStoreParams(
-        get_initial_time(sim),
-        get_step_resolution(sequence),
-        get_steps(sim),
-        model_store_params,
-    )
-    @debug "initialized problem requirements" simulation_store_params
-    store = get_simulation_store(sim)
-    initialize_problem_storage!(store, simulation_store_params, model_req, rules)
-    return simulation_store_params
+    if !in_memory
+        compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+    end
+
+    serialize_status(sim)
+    return get_simulation_status(sim)
 end
 
 struct SimulationSerializationWrapper

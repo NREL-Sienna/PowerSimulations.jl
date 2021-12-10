@@ -14,7 +14,7 @@ function _fill_result_value_container(fields)
     return FieldResultsByTime(x => ResultsByTime() for x in fields)
 end
 
-struct SimulationResults <: PSIResults
+struct SimulationResults
     path::String
     params::SimulationStoreParams
     problem_results::Dict{String, SimulationProblemResults}

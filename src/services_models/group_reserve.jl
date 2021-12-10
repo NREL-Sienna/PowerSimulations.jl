@@ -24,23 +24,22 @@ This function creates the requirement constraint that will be attained by the ap
 """
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{RequirementConstraint},
+    ::Type{RequirementConstraint},
     service::SR,
     contributing_services::Vector{<:PSY.Service},
     model::ServiceModel{SR, GroupReserve},
 ) where {SR <: PSY.StaticReserveGroup}
-    initial_time = get_initial_time(container)
     time_steps = get_time_steps(container)
-    name = PSY.get_name(service)
+    service_name = PSY.get_name(service)
     add_constraints_container!(
         container,
         RequirementConstraint(),
         SR,
-        [name],
+        [service_name],
         time_steps;
-        meta = name,
+        meta = service_name,
     )
-    constraint = get_constraint(container, RequirementConstraint(), SR, name)
+    constraint = get_constraint(container, RequirementConstraint(), SR, service_name)
     use_slacks = get_use_slacks(model)
     reserve_variables = [
         get_variable(container, ActivePowerReserveVariable(), typeof(r), PSY.get_name(r)) for r in contributing_services
@@ -55,7 +54,7 @@ function add_constraints!(
         if use_slacks
             resource_expression += slack_vars[t]
         end
-        constraint[name, t] =
+        constraint[service_name, t] =
             JuMP.@constraint(container.JuMPmodel, resource_expression >= requirement)
     end
 

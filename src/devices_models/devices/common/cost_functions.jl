@@ -347,8 +347,8 @@ function pwl_gencost_linear!(
             upper_bound = PSY.get_breakpoint_upperbounds(cost_data)[i] / base_power
         )
         if export_pwl_vars
-            container = _get_pwl_variables_container(container)
-            container[(component_name, time_period, i)] = pwlvar
+            var_container = _get_pwl_variables_container(container)
+            var_container[(component_name, time_period, i)] = pwlvar
         end
         JuMP.add_to_expression!(
             gen_cost,
