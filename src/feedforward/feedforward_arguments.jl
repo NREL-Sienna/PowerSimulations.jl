@@ -51,7 +51,6 @@ function _handle_active_power_semicontinuous_feedforward!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    source_key::VariableKey,
     parameter_type::OnStatusParameter,
 ) where {T <: PSY.Component}
     add_to_expression!(
@@ -87,7 +86,6 @@ function add_feedforward_arguments!(
                 container,
                 model,
                 devices,
-                var_key,
                 parameter_type,
             )
         else
