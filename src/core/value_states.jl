@@ -31,7 +31,7 @@ function _get_state_value(s::ValueState, date::Dates.DateTime)
     if _get_last_updated_timestamp(s) == date
         s_index = get_last_recorded_row(s)
     else
-        s_index = findlast(get_timestamps(s) .<= date)
+        s_index = find_timestamp_index(get_timestamps(s), date)
     end
     if isnothing(s_index)
         error("Request time stamp $date not in the state")
