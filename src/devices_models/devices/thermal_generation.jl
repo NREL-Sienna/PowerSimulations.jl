@@ -505,8 +505,6 @@ function add_constraints!(
             limits = PSY.get_active_power_limits(device)
             lag_ramp_limits = PSY.get_power_trajectory(device)
             val = max(limits.max - lag_ramp_limits.shutdown, 0)
-            # TODO: How to do the following?
-            # add_device_services!(range_data, d, model)
             con[name] = JuMP.@constraint(
                 container.JuMPmodel,
                 val * varstop[name, 1] <=

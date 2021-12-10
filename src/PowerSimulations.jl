@@ -477,7 +477,6 @@ include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
 
-include("devices_models/devices/common/constraints_structs.jl")
 include("devices_models/devices/common/cost_functions.jl")
 include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
