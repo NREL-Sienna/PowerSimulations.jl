@@ -61,7 +61,7 @@ function to_array(array::JuMPDArray{<:Number})
     return permutedims(array.data)
 end
 
-function to_array(array::JuMP.Containers.SparseAxisArray)
+function to_array(array::JuMPSparseArray)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     # PERF: can we determine the 2-d array size?
     tmp_data = Dict{Any, Vector{Float64}}()
@@ -96,13 +96,13 @@ end
 function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.AbstractJuMPScalar}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
-    return JuMP.Containers.SparseAxisArray(contents)
+    return JuMPSparseArray(contents)
 end
 
 function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> 0.0)
-    return JuMP.Containers.SparseAxisArray(contents)
+    return JuMPSparseArray(contents)
 end
 
 function remove_undef!(expression_array::AbstractArray)
@@ -117,7 +117,7 @@ function remove_undef!(expression_array::AbstractArray)
     return expression_array
 end
 
-remove_undef!(expression_array::JuMP.Containers.SparseAxisArray) = expression_array
+remove_undef!(expression_array::JuMPSparseArray) = expression_array
 
 function _calc_dimensions(array::JuMPDArray, name, num_rows::Int, horizon::Int)
     ax = axes(array)
@@ -142,7 +142,7 @@ function _calc_dimensions(array::JuMPDArray, name, num_rows::Int, horizon::Int)
 end
 
 function _calc_dimensions(
-    array::JuMP.Containers.SparseAxisArray,
+    array::JuMPSparseArray,
     name,
     num_rows::Int,
     horizon::Int,
@@ -240,7 +240,7 @@ end
 
 function check_conflict_status(
     jump_model::JuMP.Model,
-    constraint_container::JuMP.Containers.SparseAxisArray{JuMP.ConstraintRef},
+    constraint_container::JuMPSparseArray{JuMP.ConstraintRef},
 )
     conflict_indices = Vector()
     for (index, constraint) in constraint_container

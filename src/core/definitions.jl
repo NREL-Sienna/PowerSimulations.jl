@@ -16,6 +16,7 @@ const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPDArray = JuMP.Containers.DenseAxisArray
+const JuMPSparseArray = JuMP.Containers.SparseAxisArray
 const JuMPConstraintArray = JuMPDArray{JuMP.ConstraintRef}
 const JuMPVariableArray = JuMPDArray{JuMP.VariableRef}
 const JuMPParamArray = JuMPDArray{PJ.ParameterRef}

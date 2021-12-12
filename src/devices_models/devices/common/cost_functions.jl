@@ -136,7 +136,7 @@ end
 # Since PWL vars aren't stored by default
 function _get_pwl_variables_container(::OptimizationContainer)
     contents = Dict{Tuple{String, Int, Int}, Any}()
-    return JuMP.Containers.SparseAxisArray(contents)
+    return JuMPSparseArray(contents)
 end
 
 function slope_convexity_check(slopes::Vector{Float64})

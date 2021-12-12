@@ -121,7 +121,7 @@ function axis_array_to_dataframe(input_array::JuMPDArray{}, columns = nothing)
 end
 
 function axis_array_to_dataframe(
-    input_array::JuMP.Containers.SparseAxisArray,
+    input_array::JuMPSparseArray,
     columns = nothing,
 )
     column_names = unique([(k[1], k[3]) for k in keys(input_array.data)])
