@@ -305,7 +305,7 @@ function _initialize_problem_storage!(
         # TODO: configuration of keep_in_cache and priority are not correct
 
         for (key, array) in get_duals(container)
-            reqs.duals[model] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            reqs.duals[key] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
             add_rule!(rules, model_name, key, false, CachePriority.LOW)
         end
 
