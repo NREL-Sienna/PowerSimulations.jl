@@ -7,10 +7,7 @@ Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
 - `columns::Vector{Symbol}`: Required when there is only one axis which is data. Ignored if
   `input_array` includes an axis for device names.
 """
-function axis_array_to_dataframe(
-    input_array::JuMP.Containers.DenseAxisArray{Float64},
-    columns = nothing,
-)
+function axis_array_to_dataframe(input_array::JuMPDArray{Float64}, columns = nothing)
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
 
@@ -65,10 +62,7 @@ function axis_array_to_dataframe(
     end
 end
 
-function axis_array_to_dataframe(
-    input_array::JuMP.Containers.DenseAxisArray{},
-    columns = nothing,
-)
+function axis_array_to_dataframe(input_array::JuMPDArray{}, columns = nothing)
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
         for t in input_array.axes[1]

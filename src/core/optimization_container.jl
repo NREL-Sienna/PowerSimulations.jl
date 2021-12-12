@@ -290,9 +290,9 @@ end
 # This function is necessary while we switch from ParameterJuMP to POI
 function _make_container_array(parameter_jump::Bool, ax...)
     if parameter_jump
-        return remove_undef!(JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...))
+        return remove_undef!(JuMPDArray{PGAE}(undef, ax...))
     else
-        return remove_undef!(JuMP.Containers.DenseAxisArray{GAE}(undef, ax...))
+        return remove_undef!(JuMPDArray{GAE}(undef, ax...))
     end
 end
 
@@ -817,8 +817,8 @@ function _add_param_container!(
     param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
         attribute,
-        JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),
-        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
+        JuMPDArray{param_type}(undef, axs...),
+        fill!(JuMPDArray{Float64}(undef, axs...), NaN),
     )
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -834,8 +834,8 @@ function _add_param_container!(
     param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
         attribute,
-        JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),
-        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
+        JuMPDArray{param_type}(undef, axs...),
+        fill!(JuMPDArray{Float64}(undef, axs...), NaN),
     )
     _assign_container!(container.parameters, key, param_container)
     return param_container

@@ -40,8 +40,8 @@ get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key
 
 struct ParameterContainer
     attributes::ParameterAttributes
-    parameter_array::JuMP.Containers.DenseAxisArray
-    multiplier_array::JuMP.Containers.DenseAxisArray
+    parameter_array::JuMPDArray
+    multiplier_array::JuMPDArray
 end
 
 function ParameterContainer(parameter_array, multiplier_array)

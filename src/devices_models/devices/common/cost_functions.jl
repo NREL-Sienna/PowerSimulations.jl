@@ -225,7 +225,7 @@ Returns ```gen_cost```
 # Arguments
 
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* variable::JuMPDArray{JV} : variable array
 * cost_data::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
 function pwl_gencost_sos!(
@@ -317,7 +317,7 @@ Returns ```gen_cost```
 # Arguments
 
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* variable::JuMPDArray{JV} : variable array
 * cost_data::Vector{NTuple{2, Float64}} : container for quadratic and linear factors
 """
 function pwl_gencost_linear!(

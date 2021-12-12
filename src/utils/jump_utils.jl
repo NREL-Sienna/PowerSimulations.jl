@@ -25,7 +25,7 @@ function _jump_value(input::JuMP.ConstraintRef)
     return JuMP.dual(input)
 end
 
-function to_array(array::JuMP.Containers.DenseAxisArray)
+function to_array(array::JuMPDArray)
     ax = axes(array)
     len_axes = length(ax)
     if len_axes == 1
@@ -56,7 +56,7 @@ function to_array(array::JuMP.Containers.DenseAxisArray)
     return data
 end
 
-function to_array(array::JuMP.Containers.DenseAxisArray{<:Number})
+function to_array(array::JuMPDArray{<:Number})
     length(axes(array)) > 2 && error("array axes not supported: $(axes(array))")
     return permutedims(array.data)
 end
@@ -82,12 +82,12 @@ to_array(array::Array) = array
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(::Type{T}, axs...) where {T <: Any}
-    return JuMP.Containers.DenseAxisArray{T}(undef, axs...)
+    return JuMPDArray{T}(undef, axs...)
 end
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(::Type{Float64}, axs...)
-    cont = JuMP.Containers.DenseAxisArray{Float64}(undef, axs...)
+    cont = JuMPDArray{Float64}(undef, axs...)
     cont.data .= ones(size(cont.data)) .* NaN
     return cont
 end
@@ -119,12 +119,7 @@ end
 
 remove_undef!(expression_array::JuMP.Containers.SparseAxisArray) = expression_array
 
-function _calc_dimensions(
-    array::JuMP.Containers.DenseAxisArray,
-    name,
-    num_rows::Int,
-    horizon::Int,
-)
+function _calc_dimensions(array::JuMPDArray, name, num_rows::Int, horizon::Int)
     ax = axes(array)
     # Two use cases for read:
     # 1. Read data for one execution for one device.
@@ -227,7 +222,7 @@ end
 # check_conflict_status functions can't be tested on CI because free solvers don't support IIS
 function check_conflict_status(
     jump_model::JuMP.Model,
-    constraint_container::JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef},
+    constraint_container::JuMPDArray{JuMP.ConstraintRef},
 )
     conflict_indices = Vector()
     dims = axes(constraint_container)
