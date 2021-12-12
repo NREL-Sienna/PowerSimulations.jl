@@ -109,10 +109,12 @@ function has_semicontinuous_feedforward(
     if isempty(model.feedforwards)
         return false
     end
+    sc_feedforwards = [x for x in model.feedforwards if isa(x, SemiContinuousFeedforward)]
+    if isempty(sc_feedforwards)
+        return false
+    end
 
-    keys = get_affected_values.([
-        x for x in model.feedforwards if isa(x, SemiContinuousFeedforward)
-    ])[1]
+    keys = get_affected_values(sc_feedforwards[1])
 
     return T ∈ get_entry_type.(keys)
 end
