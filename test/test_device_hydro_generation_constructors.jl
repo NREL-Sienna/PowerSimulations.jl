@@ -621,7 +621,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
-    moi_tests(model, true, 144, 0, 48, 48, 48, true)
+    moi_tests(model, true, 144, 0, 24, 24, 48, true)
 end
 
 @testset "Test IntegralLimitFeedforward to HydroEnergyReservoir models" begin
