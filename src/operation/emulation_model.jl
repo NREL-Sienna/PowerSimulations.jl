@@ -591,7 +591,7 @@ function _write_model_expression_results!(store, container, execution)
     end
 end
 
-# Move to emulation model
+# TODO: Implement version for Decision Model
 list_aux_variable_keys(x::EmulationModel) =
     list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
 list_aux_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)

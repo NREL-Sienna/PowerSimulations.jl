@@ -250,7 +250,7 @@ export EnergyLimitConstraint
 export EnergyShortageVariableLimitsConstraint
 export EnergyTargetConstraint
 export EqualityConstraint
-export FeedforwardBinConstraint
+export FeedforwardSemiContinousConstraint
 export FeedforwardUpperBoundConstraint
 export FeedforwardLowerBoundConstraint
 export FeedforwardIntegralLimitConstraint
