@@ -14,7 +14,7 @@ function get_min_max_limits(
     ::Type{<:VariableType},
     ::Type{<:AbstractDeviceFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    (min = 0.0, max = 0.0)
+    return (min = 0.0, max = 0.0)
 end
 
 @doc raw"""
@@ -54,6 +54,7 @@ function add_range_constraints!(
     array = get_variable(container, U(), V)
     _add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
     _add_upper_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function add_range_constraints!(
@@ -72,6 +73,7 @@ function add_range_constraints!(
 }
     array = get_expression(container, U(), V)
     _add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function add_range_constraints!(
@@ -90,6 +92,7 @@ function add_range_constraints!(
 }
     array = get_expression(container, U(), V)
     _add_upper_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function add_range_constraints!(
@@ -117,6 +120,7 @@ function add_range_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function add_range_constraints!(
@@ -135,6 +139,7 @@ function add_range_constraints!(
 }
     array = get_expression(container, U(), V)
     _add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function add_range_constraints!(
@@ -161,6 +166,7 @@ function add_range_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function _add_lower_bound_range_constraints_impl!(
@@ -182,6 +188,7 @@ function _add_lower_bound_range_constraints_impl!(
         con_lb[ci_name, t] =
             JuMP.@constraint(container.JuMPmodel, array[ci_name, t] >= limits.min)
     end
+    return
 end
 
 function _add_upper_bound_range_constraints_impl!(
@@ -203,6 +210,7 @@ function _add_upper_bound_range_constraints_impl!(
         con_ub[ci_name, t] =
             JuMP.@constraint(container.JuMPmodel, array[ci_name, t] <= limits.max)
     end
+    return
 end
 
 @doc raw"""
@@ -258,6 +266,7 @@ function add_semicontinuous_range_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function add_semicontinuous_range_constraints!(
@@ -282,6 +291,7 @@ function add_semicontinuous_range_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function add_semicontinuous_range_constraints!(
@@ -306,6 +316,7 @@ function add_semicontinuous_range_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function _add_semicontinuous_lower_bound_range_constraints_impl!(
@@ -332,6 +343,7 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
             array[ci_name, t] >= limits.min * varbin[ci_name, t]
         )
     end
+    return
 end
 
 function _add_semicontinuous_upper_bound_range_constraints_impl!(
@@ -358,6 +370,7 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
             array[ci_name, t] <= limits.max * varbin[ci_name, t]
         )
     end
+    return
 end
 
 @doc raw"""
@@ -394,6 +407,7 @@ function add_reserve_range_constraints!(
     array = get_variable(container, U(), V)
     _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
     _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function add_reserve_range_constraints!(
@@ -413,6 +427,7 @@ function add_reserve_range_constraints!(
     array = get_expression(container, U(), W)
     _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
     _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function _add_reserve_lower_bound_range_constraints_impl!(
@@ -446,6 +461,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
             array[ci_name, t] >= limits.min * (1 - varbin[ci_name, t])
         )
     end
+    return
 end
 
 function _add_reserve_upper_bound_range_constraints_impl!(
@@ -479,6 +495,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
             array[ci_name, t] <= limits.max * (1 - varbin[ci_name, t])
         )
     end
+    return
 end
 
 @doc raw"""
@@ -514,6 +531,7 @@ function add_reserve_range_constraints!(
     array = get_variable(container, U(), W)
     _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
     _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 @doc raw"""
@@ -549,6 +567,7 @@ function add_reserve_range_constraints!(
     array = get_expression(container, U(), W)
     _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
     _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function _add_reserve_lower_bound_range_constraints_impl!(
@@ -580,6 +599,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
             array[ci_name, t] >= limits.min * varbin[ci_name, t]
         )
     end
+    return
 end
 
 function _add_reserve_upper_bound_range_constraints_impl!(
@@ -611,6 +631,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
             array[ci_name, t] <= limits.max * varbin[ci_name, t]
         )
     end
+    return
 end
 
 function add_parameterized_lower_bound_range_constraints(
@@ -638,6 +659,7 @@ function add_parameterized_lower_bound_range_constraints(
         devices,
         model,
     )
+    return
 end
 
 function add_parameterized_lower_bound_range_constraints(
@@ -665,6 +687,27 @@ function add_parameterized_lower_bound_range_constraints(
         devices,
         model,
     )
+    return
+end
+
+# This function is re-used in SemiContinuousFeedforward
+function lower_bound_range_with_parameter!(
+    jump_model::JuMP.Model,
+    constraint_container::JuMPConstraintArray,
+    lhs_array,
+    param_multiplier::JuMPFloatArray,
+    param_array::Union{JuMPParamArray, JuMPFloatArray},
+    devices::IS.FlattenIteratorWrapper{V},
+) where {V <: PSY.Component}
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        constraint_container[name, t] = JuMP.@constraint(
+            jump_model,
+            lhs_array[name, t] >= param_multiplier[name, t] * param_array[name, t]
+        )
+    end
+    return
 end
 
 function _add_parameterized_lower_bound_range_constraints_impl!(
@@ -688,13 +731,16 @@ function _add_parameterized_lower_bound_range_constraints_impl!(
 
     parameter = get_parameter_array(container, U(), V)
     multiplier = get_parameter_multiplier_array(container, U(), V)
-    for device in devices, t in time_steps
-        name = PSY.get_name(device)
-        constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            array[name, t] >= multiplier[name, t] * parameter[name, t]
-        )
-    end
+    jump_model = get_jump_model(container)
+    lower_bound_range_with_parameter!(
+        jump_model,
+        constraint,
+        array,
+        multiplier,
+        parameter,
+        devices,
+    )
+    return
 end
 
 function add_parameterized_upper_bound_range_constraints(
@@ -722,6 +768,7 @@ function add_parameterized_upper_bound_range_constraints(
         devices,
         model,
     )
+    return
 end
 
 function add_parameterized_upper_bound_range_constraints(
@@ -749,6 +796,27 @@ function add_parameterized_upper_bound_range_constraints(
         devices,
         model,
     )
+    return
+end
+
+# This function is re-used in SemiContinuousFeedforward
+function upper_bound_range_with_parameter!(
+    jump_model::JuMP.Model,
+    constraint_container::JuMPConstraintArray,
+    lhs_array,
+    param_multiplier::JuMPFloatArray,
+    param_array::Union{JuMPParamArray, JuMPFloatArray},
+    devices::IS.FlattenIteratorWrapper{V},
+) where {V <: PSY.Component}
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        constraint_container[name, t] = JuMP.@constraint(
+            jump_model,
+            lhs_array[name, t] <= param_multiplier[name, t] * param_array[name, t]
+        )
+    end
+    return
 end
 
 function _add_parameterized_upper_bound_range_constraints_impl!(
@@ -772,11 +840,14 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
 
     parameter = get_parameter_array(container, P(), V)
     multiplier = get_parameter_multiplier_array(container, P(), V)
-    for device in devices, t in time_steps
-        name = PSY.get_name(device)
-        constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            array[name, t] <= multiplier[name, t] * parameter[name, t]
-        )
-    end
+    jump_model = get_jump_model(container)
+    upper_bound_range_with_parameter!(
+        jump_model,
+        constraint,
+        array,
+        multiplier,
+        parameter,
+        devices,
+    )
+    return
 end
