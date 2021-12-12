@@ -75,31 +75,3 @@ function assign_dual_variable!(
     add_dual_container!(container, constraint_type, U, time_steps)
     return
 end
-
-function _calculate_dual_variable_value!(
-    container::OptimizationContainer,
-    key::ConstraintKey{CopperPlateBalanceConstraint, D},
-    ::PSY.System,
-) where {D <: Union{PSY.Component, PSY.System}}
-    constraint_container = get_constraint(container, key)
-    dual_variable_container = get_duals(container)[key]
-
-    for t in constraint_container.axes[1]
-        dual_variable_container[t] = JuMP.dual(constraint_container[t])
-    end
-    return
-end
-
-function _calculate_dual_variable_value!(
-    container::OptimizationContainer,
-    key,
-    ::PSY.System,
-)
-    constraint_container = get_constraint(container, key)
-    dual_variable_container = get_duals(container)[key]
-
-    for name in constraint_container.axes[1], t in constraint_container.axes[2]
-        dual_variable_container[name, t] = JuMP.dual(constraint_container[name, t])
-    end
-    return
-end
