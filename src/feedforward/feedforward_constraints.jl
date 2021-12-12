@@ -85,6 +85,9 @@ function _add_sc_feedforward_constraints!(
     parameter = get_parameter_array(container, P(), V)
     upper_bounds = [get_variable_upper_bound(U(), d, W()) for d in devices]
     lower_bounds = [get_variable_lower_bound(U(), d, W()) for d in devices]
+    if any(isnothing.(upper_bounds)) || any(isnothing.(lower_bounds))
+        throw(IS.InvalidValueError("Bounds for variable $U $V not defined correctly"))
+    end
     mult_ub = JuMPDArray(repeat(upper_bounds, 1, time_steps[end]), names, time_steps)
     mult_lb = JuMPDArray(repeat(lower_bounds, 1, time_steps[end]), names, time_steps)
     jump_model = get_jump_model(container)
