@@ -141,12 +141,7 @@ function _calc_dimensions(array::JuMPDArray, name, num_rows::Int, horizon::Int)
     return Dict("columns" => columns, "dims" => dims)
 end
 
-function _calc_dimensions(
-    array::JuMPSparseArray,
-    name,
-    num_rows::Int,
-    horizon::Int,
-)
+function _calc_dimensions(array::JuMPSparseArray, name, num_rows::Int, horizon::Int)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)

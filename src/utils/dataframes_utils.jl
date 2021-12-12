@@ -120,7 +120,7 @@ function axis_array_to_dataframe(input_array::JuMPDArray, columns = nothing)
     end
 end
 
-function axis_array_to_dataframe(input_array::JuMPSparseArray, columns = nothing,)
+function axis_array_to_dataframe(input_array::JuMPSparseArray, columns = nothing)
     column_names = unique([(k[1], k[3]) for k in keys(input_array.data)])
     array_values = Vector{Vector{Float64}}(undef, length(column_names))
     for (ix, col) in enumerate(column_names)
