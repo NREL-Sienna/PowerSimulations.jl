@@ -13,7 +13,7 @@ end
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     model::ServiceModel,
-    service::V,
+    ::V,
 ) where {V <: PSY.AbstractReserve}
     for ff in get_feedforwards(model)
         @debug "constraints" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
@@ -23,52 +23,99 @@ function add_feedforward_constraints!(
     return
 end
 
-@doc raw"""
-            semicontinuousrange_ff(container::OptimizationContainer,
-                                    cons_name::Symbol,
-                                    var_key::VariableKey,
-                                    param_reference)
+function _add_feedforward_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::P,
+    ::VariableKey{U, V},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel,
+) where {T <: ConstraintType, P <: ParameterType, U <: VariableType, V <: PSY.Component}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    constraint_lb =
+        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)lb")
+    constraint_ub =
+        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)ub")
+    array = get_variable(container, U(), V)
+    parameter = get_parameter_array(container, P(), V)
+    multiplier = get_parameter_multiplier_array(container, P(), V)
+    jump_model = get_jump_model(container)
+    upper_bound_range_with_parameter!(
+        jump_model,
+        constraint_ub,
+        array,
+        multiplier,
+        parameter,
+        devices,
+    )
+    lower_bound_range_with_parameter!(
+        jump_model,
+        constraint_lb,
+        array,
+        multiplier,
+        parameter,
+        devices,
+    )
+    return
+end
 
-Constructs min/max range constraint from device variable with parameter setting.
+function _add_sc_feedforward_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::P,
+    ::VariableKey{U, V},
+    devices::IS.FlattenIteratorWrapper{V},
+) where {
+    T <: FeedforwardSemiContinousConstraint,
+    P <: ParameterType,
+    U <: Union{ActivePowerVariable, PowerAboveMinimumVariable},
+    V <: PSY.Component,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    constraint_lb =
+        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)lb")
+    constraint_ub =
+        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)ub")
+    array_lb = get_expression(container, ActivePowerRangeExpressionLB(), V)
+    array_ub = get_expression(container, ActivePowerRangeExpressionUB(), V)
+    parameter = get_parameter_array(container, P(), V)
+    multiplier = get_parameter_multiplier_array(container, P(), V)
+    jump_model = get_jump_model(container)
+    upper_bound_range_with_parameter!(
+        jump_model,
+        constraint_ub,
+        array_ub,
+        multiplier,
+        parameter,
+        devices,
+    )
+    lower_bound_range_with_parameter!(
+        jump_model,
+        constraint_lb,
+        array_lb,
+        multiplier,
+        parameter,
+        devices,
+    )
+    return
+end
 
-
-If device min = 0:
-
-``` variable[var_name, t] <= r.max*param_reference[var_name] ```
-
-Otherwise:
-
-``` variable[var_name, t] <= r.max*param_reference[var_name] ```
-
-``` variable[var_name, t] >= r.min*param_reference[var_name] ```
-
-where r in range_data.
-
-# LaTeX
-
-`` 0.0 \leq x^{var} \leq r^{max} x^{param}, \text{ for } r^{min} = 0 ``
-
-`` r^{min} x^{param} \leq x^{var} \leq r^{min} x^{param}, \text{ otherwise } ``
-
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* cons_name::Symbol : name of the constraint
-* var_key::VariableKey : the name of the continuous variable
-* param_reference : UpdateRef of the parameter
-"""
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
     ff::SemiContinuousFeedforward,
 ) where {T <: PSY.Component}
+    parameter_type = get_default_parameter_type(ff, T)
     time_steps = get_time_steps(container)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
         IS.@assert_op axes[1] == [PSY.get_name(d) for d in devices]
         IS.@assert_op axes[2] == time_steps
-        # # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
+        # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
         for v in variable
             if JuMP.has_lower_bound(v) && JuMP.lower_bound(v) > 0.0
                 @debug "lb reset" JuMP.lower_bound(v) v _group =
@@ -76,6 +123,13 @@ function add_feedforward_constraints!(
                 JuMP.set_lower_bound(v, 0.0)
             end
         end
+        _add_sc_feedforward_constraints!(
+            container,
+            FeedforwardSemiContinousConstraint,
+            parameter_type,
+            var,
+            devices,
+        )
     end
     return
 end
@@ -256,7 +310,6 @@ The Parameters are initialized using the upper boundary values of the provided v
 * devices::IS.FlattenIteratorWrapper{T} : list of devices
 * ff::FixValueFeedforward : a instance of the FixValue Feedforward
 """
-
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
@@ -317,7 +370,6 @@ Constructs a equality constraint to a fix a variable in one model using the vari
 * devices::IS.FlattenIteratorWrapper{T} : list of devices
 * ff::FixValueFeedforward : a instance of the FixValue Feedforward
 """
-
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,

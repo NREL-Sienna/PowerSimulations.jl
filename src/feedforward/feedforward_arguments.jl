@@ -79,21 +79,21 @@ function add_feedforward_arguments!(
     parameter_type = get_default_parameter_type(ff, T)
     source_key = get_optimization_container_key(ff)
     add_parameters!(container, parameter_type, source_key, model, devices)
-    for var_key in get_affected_values(ff)
-        if get_entry_type(var_key) == ActivePowerVariable ||
-           get_entry_type(var_key) == PowerAboveMinimumVariable
-            _handle_active_power_semicontinuous_feedforward!(
-                container,
-                model,
-                devices,
-                parameter_type,
-            )
-        else
-            error(
-                "SemiContinuousFeedforward not implemented for variable $(get_entry_type(var_key))",
-            )
-        end
-    end
+    # for var_key in get_affected_values(ff)
+    #     if get_entry_type(var_key) == ActivePowerVariable ||
+    #        get_entry_type(var_key) == PowerAboveMinimumVariable
+    #         _handle_active_power_semicontinuous_feedforward!(
+    #             container,
+    #             model,
+    #             devices,
+    #             parameter_type,
+    #         )
+    #     else
+    #         error(
+    #             "SemiContinuousFeedforward not implemented for variable $(get_entry_type(var_key))",
+    #         )
+    #     end
+    # end
     return
 end
 
@@ -106,6 +106,7 @@ function add_feedforward_arguments!(
     parameter_type = get_default_parameter_type(ff, T)
     source_key = get_optimization_container_key(ff)
     add_parameters!(container, parameter_type, source_key, model, devices)
+    # Enabling this FF requires the addition of an extra variable
     add_variables!(container, EnergyShortageVariable, devices, get_formulation(model)())
     return
 end

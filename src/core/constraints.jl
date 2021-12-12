@@ -19,7 +19,7 @@ struct EnergyLimitConstraint <: ConstraintType end
 struct EnergyTargetConstraint <: ConstraintType end
 struct EnergyShortageVariableLimitsConstraint <: ConstraintType end
 struct EqualityConstraint <: ConstraintType end
-struct FeedforwardBinConstraint <: ConstraintType end
+struct FeedforwardSemiContinousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
 struct FeedforwardUpperBoundConstraint <: ConstraintType end
 struct FeedforwardLowerBoundConstraint <: ConstraintType end

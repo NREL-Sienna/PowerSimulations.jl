@@ -18,6 +18,7 @@ const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
+const JuMPFloatArray = JuMP.Containers.DenseAxisArray{Float64}
 
 # Settings constants
 const UNSET_HORIZON = 0
