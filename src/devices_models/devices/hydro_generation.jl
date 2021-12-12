@@ -221,7 +221,9 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
-    add_range_constraints!(container, T, U, devices, model, X)
+    if !has_semicontinuous_feedforward(model, U)
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -231,6 +233,7 @@ function add_constraints!(
         model,
         X,
     )
+    return
 end
 
 function add_constraints!(
@@ -241,7 +244,10 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
-    add_range_constraints!(container, T, U, devices, model, X)
+    if !has_semicontinuous_feedforward(model, U)
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
+    return
 end
 
 """
@@ -256,6 +262,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
+    return
 end
 
 function add_constraints!(
@@ -276,6 +283,7 @@ function add_constraints!(
         model,
         X,
     )
+    return
 end
 
 """
@@ -286,7 +294,7 @@ function get_min_max_limits(
     ::Type{<:ReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractHydroFormulation},
 )
-    PSY.get_reactive_power_limits(x)
+    return PSY.get_reactive_power_limits(x)
 end
 
 """
@@ -297,7 +305,7 @@ function get_min_max_limits(
     ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractHydroFormulation},
 )
-    PSY.get_active_power_limits(x)
+    return PSY.get_active_power_limits(x)
 end
 
 function get_min_max_limits(
@@ -320,6 +328,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
+    return
 end
 
 """
@@ -333,7 +342,10 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroDispatchFormulation}
-    add_range_constraints!(container, T, U, devices, model, X)
+    if !has_semicontinuous_feedforward(model, U)
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
+    return
 end
 
 """
@@ -348,10 +360,14 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
+        # TODO: Are the "reservation" models compatible with SC FF?
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X)
+        if !has_semicontinuous_feedforward(model, U)
+            add_range_constraints!(container, T, U, devices, model, X)
+        end
     end
+    return
 end
 
 """
@@ -366,10 +382,14 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
+        # TODO: Are the "reservation" models compatible with SC FF?
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
-        add_range_constraints!(container, T, U, devices, model, X)
+        if !has_semicontinuous_feedforward(model, U)
+            add_range_constraints!(container, T, U, devices, model, X)
+        end
     end
+    return
 end
 
 """
@@ -380,7 +400,7 @@ function get_min_max_limits(
     ::Type{<:OutputActivePowerVariableLimitsConstraint},
     ::Type{HydroDispatchPumpedStorage},
 )
-    PSY.get_active_power_limits(x)
+    return PSY.get_active_power_limits(x)
 end
 
 """
@@ -391,7 +411,7 @@ function get_min_max_limits(
     ::Type{<:InputActivePowerVariableLimitsConstraint},
     ::Type{HydroDispatchPumpedStorage},
 )
-    PSY.get_active_power_limits_pump(x)
+    return PSY.get_active_power_limits_pump(x)
 end
 
 ######################## RoR constraints ############################
@@ -409,7 +429,12 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
-    add_range_constraints!(container, T, U, devices, model, X)
+    # TODO: Confirm this is correct. Why Range in the Commitment formulation ?
+    #add_range_constraints!(container, T, U, devices, model, X)
+    if !has_semicontinuous_feedforward(model, U)
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
+    return
 end
 
 ######################## Energy balance constraints ############################
@@ -614,6 +639,7 @@ function add_constraints!(
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
+    # TODO: Check why this isn't used
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
     constraint = add_constraints_container!(
@@ -666,6 +692,7 @@ function initial_conditions!(
     return
 end
 
+# TODO: Add test that checks for this function
 function initial_conditions!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -674,7 +701,7 @@ function initial_conditions!(
     add_initial_condition!(
         container,
         devices,
-        formulation,
+        device_formulation,
         DevicePower,
         ActivePowerVariable,
     )
@@ -698,7 +725,7 @@ function add_constraints!(
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
-    # Variable not used. Check if needed Sourabh
+    # TODO: Variable not used. Check if needed Sourabh
     inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
     constraint =
