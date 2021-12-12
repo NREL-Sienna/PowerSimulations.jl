@@ -177,8 +177,9 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalGen, W <: ThermalCompactDispatch}
-    # Check for FF here and skip if necessary
-    add_range_constraints!(container, T, U, devices, model, X)
+    if !has_semicontinuous_feedforward(model, U)
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
 end
 
 """
@@ -218,8 +219,9 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalGen, W <: AbstractThermalDispatchFormulation}
-    # Check for FF here and skip if necessary
-    add_range_constraints!(container, T, U, devices, model, X)
+    if !has_semicontinuous_feedforward(model, U)
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
     return
 end
 

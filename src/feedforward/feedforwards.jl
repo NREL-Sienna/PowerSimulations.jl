@@ -102,6 +102,23 @@ end
 get_default_parameter_type(::SemiContinuousFeedforward, _) = OnStatusParameter()
 get_optimization_container_key(f::SemiContinuousFeedforward) = f.optimization_container_key
 
+function has_semicontinuous_feedforward(
+    model::DeviceModel,
+    ::Type{T},
+)::Bool where {T <: Union{VariableType, ExpressionType}}
+    keys = get_affected_values.([
+        x for x in model.feedforwards if isa(x, SemiContinuousFeedforward)
+    ])[1]
+    return T ∈ get_entry_type.(keys)
+end
+
+function has_semicontinuous_feedforward(
+    model::DeviceModel,
+    ::Type{T},
+)::Bool where {T <: Union{ActivePowerRangeExpressionUB, ActivePowerRangeExpressionLB}}
+    return has_semicontinuous_feedforward(model, ActivePowerVariable)
+end
+
 """
 Adds a constraint to limit the sum of a variable over the number of periods to the source value
 """

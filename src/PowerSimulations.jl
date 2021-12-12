@@ -231,6 +231,7 @@ export PowerOutput
 export AbsoluteValueConstraint
 export ActiveConstraint
 export ActivePowerVariableLimitsConstraint
+export ActivePowerVariableTimeSeriesLimitsConstraint
 export ActiveRangeConstraint
 export ActiveRangeICConstraint
 export AreaDispatchBalanceConstraint
