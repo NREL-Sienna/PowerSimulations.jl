@@ -106,9 +106,14 @@ function has_semicontinuous_feedforward(
     model::DeviceModel,
     ::Type{T},
 )::Bool where {T <: Union{VariableType, ExpressionType}}
+    if isempty(model.feedforwards)
+        return false
+    end
+
     keys = get_affected_values.([
         x for x in model.feedforwards if isa(x, SemiContinuousFeedforward)
     ])[1]
+
     return T ∈ get_entry_type.(keys)
 end
 
