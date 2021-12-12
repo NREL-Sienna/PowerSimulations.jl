@@ -39,8 +39,8 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThe
 ############## PowerAboveMinimumVariable, ThermalGen ####################
 get_variable_binary(::PowerAboveMinimumVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_warm_start_value(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
-get_variable_lower_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = 0.0
-get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = PSY.get_active_power_limits(d).max - PSY.get_active_power_limits(d).min
+get_variable_lower_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
+get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max - PSY.get_active_power_limits(d).min
 
 ############## ReactivePowerVariable, ThermalGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
@@ -172,12 +172,12 @@ Range constraints for thermal compact dispatch
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
-    U::Type{<:Union{VariableType, ExpressionType}},
+    U::Type{<:Union{PowerAboveMinimumVariable, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalGen, W <: ThermalCompactDispatch}
-    if !has_semicontinuous_feedforward(model, U)
+    if !has_semicontinuous_feedforward(model, PowerAboveMinimumVariable)
         add_range_constraints!(container, T, U, devices, model, X)
     end
 end
@@ -324,6 +324,7 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalMultiStart, W <: ThermalMultiStartUnitCommitment}
+    @show _steps = get_time_steps(container)
     time_steps = get_time_steps(container)
     constraint_type = T()
     variable_type = U()

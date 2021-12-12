@@ -221,6 +221,7 @@ export FlowActivePowerFromToVariable
 export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable
 export FlowReactivePowerToFromVariable
+export PowerAboveMinimumVariable
 
 # Auxiliary variables
 export TimeDurationOn

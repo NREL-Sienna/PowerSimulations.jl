@@ -723,7 +723,7 @@ end
     ff_sc = SemiContinuousFeedforward(
         component_type = ThermalStandard,
         source = OnVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
+        affected_values = [PowerAboveMinimumVariable],
     )
 
     ff_ub = UpperBoundFeedforward(
