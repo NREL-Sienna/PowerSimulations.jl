@@ -504,10 +504,10 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
 
     status = RunStatus.SUCCESSFUL
 
-    status, optimizer_stats.timed_calculate_aux_variables =
+    _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
-    status, optimizer_stats.timedcalculate_dual_variables =
-        @timed calculate_dual_variables!(container, system, supports_milp(container))
+    _, optimizer_stats.timed_calculate_dual_variables =
+        @timed calculate_dual_variables!(container, system, Base.RefValue{is_milp(container)})
     return status
 end
 
@@ -1232,7 +1232,7 @@ function _calculate_dual_variable_value!(
 
     for t in axes(constraint_container)[1]
         # See https://jump.dev/JuMP.jl/stable/manual/solutions/#Dual-solution-values
-        dual_variable_container[t] = JuMP.shadow_price(constraint_container[t])
+        dual_variable_container[t] = JuMP.dual(constraint_container[t])
     end
     return
 end
@@ -1246,9 +1246,9 @@ function _calculate_dual_variable_value!(
     dual_variable_container = get_duals(container)[key]
 
     dims = axes(constraint_container)
-    for index in zip(dims...)
+    for index in Iterators.product(dims...)
         dual_variable_container[index...] =
-            JuMP.shadow_price(constraint_container[index...])
+            JuMP.dual(constraint_container[index...])
     end
     return
 end
@@ -1256,11 +1256,11 @@ end
 function calculate_dual_variables!(
     container::OptimizationContainer,
     system::PSY.System,
-    ::Ref.Value{false},
+    ::Type{Base.RefValue{false}},
 )
     duals_vars = get_duals(container)
     for key in keys(duals_vars)
-        calculate_dual_variable_value!(container, key, system)
+        _calculate_dual_variable_value!(container, key, system)
     end
     return
 end
@@ -1322,8 +1322,10 @@ end
 function calculate_dual_variables!(
     container::OptimizationContainer,
     system::PSY.System,
-    ::Ref.Value{true},
+    ::Type{Base.RefValue{true}},
 )
+    isempty(get_duals(container)) && return
+
     status = _process_duals(container)
     return
 end
