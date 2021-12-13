@@ -17,6 +17,7 @@
         c_sys5_re;
         optimizer = GLPK_optimizer,
     )
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     model = DecisionModel(
         get_thermal_dispatch_template_network(),
         c_sys5;
