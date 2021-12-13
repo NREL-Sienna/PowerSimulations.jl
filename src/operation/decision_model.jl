@@ -49,6 +49,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     template::ProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ModelInternal}
+    store::InMemoryModelStore
     ext::Dict{String, Any}
 
     function DecisionModel{M}(
@@ -72,7 +73,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
         )
-        new{M}(name, template, sys, internal, Dict{String, Any}())
+        new{M}(name, template, sys, internal, InMemoryModelStore(DecisionModelOptimizerResults),  Dict{String, Any}())
     end
 end
 
