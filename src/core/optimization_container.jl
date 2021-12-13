@@ -506,8 +506,11 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
 
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
-    _, optimizer_stats.timed_calculate_dual_variables =
-        @timed calculate_dual_variables!(container, system, Base.RefValue{is_milp(container)})
+    _, optimizer_stats.timed_calculate_dual_variables = @timed calculate_dual_variables!(
+        container,
+        system,
+        Base.RefValue{is_milp(container)},
+    )
     return status
 end
 
@@ -1247,8 +1250,7 @@ function _calculate_dual_variable_value!(
 
     dims = axes(constraint_container)
     for index in Iterators.product(dims...)
-        dual_variable_container[index...] =
-            JuMP.dual(constraint_container[index...])
+        dual_variable_container[index...] = JuMP.dual(constraint_container[index...])
     end
     return
 end
