@@ -63,7 +63,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        _, ts_count, forecast_count = PSY.get_time_series_counts(sys)
+        _, ts_count, _ = PSY.get_time_series_counts(sys)
         if ts_count < 1
             error(
                 "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
@@ -101,7 +101,6 @@ function EmulationModel{M}(
     direct_mode_optimizer = false,
     initial_time = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
-    horizon = 1,  # Unused; included for compatibility with DecisionModel.
 ) where {M <: EmulationProblem}
     settings = Settings(
         sys;
@@ -118,7 +117,7 @@ function EmulationModel{M}(
         optimizer_solve_log_print = optimizer_solve_log_print,
         detailed_optimizer_stats = detailed_optimizer_stats,
         direct_mode_optimizer = direct_mode_optimizer,
-        horizon = horizon,
+        horizon = 1,
     )
     return EmulationModel{M}(template, sys, settings, jump_model, name = name)
 end

@@ -221,7 +221,7 @@ function check_conflict_status(
 )
     conflict_indices = Vector()
     dims = axes(constraint_container)
-    for index in zip(dims...)
+    for index in Iterators.product(dims...)
         if MOI.get(
             jump_model,
             MOI.ConstraintConflictStatus(),
