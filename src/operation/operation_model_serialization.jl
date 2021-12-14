@@ -81,7 +81,7 @@ function deserialize_problem(
         throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
     end
     sys = get(kwargs, :system, nothing)
-    settings = restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])
+
     if sys === nothing
         if obj.sys === nothing && !settings[:sys_to_file]
             throw(
@@ -94,9 +94,10 @@ function deserialize_problem(
         end
         sys = PSY.System(obj.sys)
     end
-
+    settings =
+        Settings(sys; restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])...)
     model =
-        obj.model_type(obj.template, sys, kwargs[:jump_model]; name = obj.name, settings...)
+        obj.model_type(obj.template, sys, settings, kwargs[:jump_model]; name = obj.name)
     jump_model = get_jump_model(model)
     if obj.optimizer.name == JuMP.solver_name(jump_model)
         orig_attrs = obj.optimizer.attributes
