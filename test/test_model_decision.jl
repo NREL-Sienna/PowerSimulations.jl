@@ -35,7 +35,7 @@
         my_model;
         optimizer = GLPK_optimizer,
     )
-    build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test haskey(PSI.get_optimization_container(model).JuMPmodel.ext, :PSI_Testing)
     @test (:ParameterJuMP in keys(PSI.get_optimization_container(model).JuMPmodel.ext)) ==
           false
@@ -243,21 +243,21 @@ end
 end
 
 @testset "Test Serialization, deserialization and write optimizer problem" begin
-    path = mktempdir(cleanup = true)
+    fpath = mktempdir(cleanup = true)
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(
         NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
     )
     model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
-    @test build!(model; output_dir = path) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = fpath) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
-    file_list = sort!(collect(readdir(path)))
+    file_list = sort!(collect(readdir(fpath)))
     model_name = PSI.get_name(model)
     @test PSI._JUMP_MODEL_FILENAME in file_list
     @test PSI._SERIALIZED_MODEL_FILENAME in file_list
-    ED2 = DecisionModel(path, OSQP_optimizer)
-    build!(ED2, output_dir = path)
+    ED2 = DecisionModel(fpath, OSQP_optimizer)
+    build!(ED2, output_dir = fpath)
     solve!(ED2)
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 
