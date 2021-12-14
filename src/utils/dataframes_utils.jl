@@ -66,14 +66,9 @@ function axis_array_to_dataframe(input_array::JuMPDArray, columns = nothing)
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
         for t in input_array.axes[1]
-            result[t] = _jump_value(input_array[t])
+            result[t] = jump_value(input_array[t])
         end
-
-        # TODO v015: This is a hack to workaround lack of support for this scenario.
-        # @assert columns !== nothing
-        if columns === nothing
-            columns = ["System"]
-        end
+        @assert columns !== nothing
         return DataFrames.DataFrame(columns[1] => result)
     elseif length(axes(input_array)) == 2
         result = Array{Float64, length(input_array.axes)}(
@@ -84,7 +79,7 @@ function axis_array_to_dataframe(input_array::JuMPDArray, columns = nothing)
         names = Array{Symbol, 1}(undef, length(input_array.axes[1]))
 
         for t in input_array.axes[2], (ix, name) in enumerate(input_array.axes[1])
-            result[t, ix] = _jump_value(input_array[name, t])
+            result[t, ix] = jump_value(input_array[name, t])
             names[ix] = Symbol(name)
         end
 
@@ -106,7 +101,7 @@ function axis_array_to_dataframe(input_array::JuMPDArray, columns = nothing)
             for t in last(input_array.axes),
                 (ix, name) in enumerate(first(input_array.axes))
 
-                result[t, ix] = _jump_value(input_array[name, i, t])
+                result[t, ix] = jump_value(input_array[name, i, t])
             end
             res = DataFrames.DataFrame(hcat(third_dim, result), :auto)
             result_df = vcat(result_df, res)
@@ -125,7 +120,7 @@ function axis_array_to_dataframe(input_array::JuMPSparseArray, columns = nothing
     array_values = Vector{Vector{Float64}}(undef, length(column_names))
     for (ix, col) in enumerate(column_names)
         res = values(filter(v -> first(v)[[1, 3]] == col, input_array.data))
-        array_values[ix] = _jump_value.(res)
+        array_values[ix] = jump_value.(res)
     end
     return DataFrames.DataFrame(array_values, Symbol.(column_names))
 end
