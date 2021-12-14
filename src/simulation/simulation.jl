@@ -331,13 +331,7 @@ function _initialize_problem_storage!(
         for (key, array) in get_expressions(container)
             reqs.expressions[key] =
                 _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(
-                rules,
-                model_name,
-                key,
-                false,
-                CachePriority.LOW,
-            )
+            add_rule!(rules, model_name, key, false, CachePriority.LOW)
         end
 
         model_req[model_name] = reqs
