@@ -119,7 +119,7 @@ function EmulationModel{M}(
         direct_mode_optimizer = direct_mode_optimizer,
         horizon = 1,
     )
-    return EmulationModel{M}(template, sys, settings, jump_model, name = name)
+    return EmulationModel{M}(template, sys, settings, jump_model; name = name)
 end
 
 """
@@ -518,32 +518,47 @@ function run!(
     # Initialize the InMemorySimulationStore
     solve_status = run!(model)
     if solve_status == RunStatus.SUCCESSFUL
-        write_results!(step, model, start_time, store)
+        write_results!(model, start_time, store)
         advance_execution_count!(model)
     end
 
     return solve_status
 end
 
-function write_results!(model::EmulationModel, execution)
+function write_results!(model::EmulationModel, execution::Int)
     store = get_store(model)
-    container = get_optimization_container(model)
-
-    _write_model_dual_results!(store, container, execution)
-    _write_model_parameter_results!(store, container, execution)
-    _write_model_variable_results!(store, container, execution)
-    _write_model_aux_variable_results!(store, container, execution)
+    write_model_dual_results!(store, model, execution)
+    write_model_parameter_results!(store, model, execution)
+    write_model_variable_results!(store, model, execution)
+    write_model_aux_variable_results!(store, model, execution)
+    write_model_expression_results!(store, model, execution)
     write_optimizer_stats!(store, get_optimizer_stats(model), execution)
     store.data.last_recorded_row = execution
+    return
 end
 
-function _write_model_dual_results!(store, container, execution)
+function write_model_dual_results!(
+    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    model::EmulationModel,
+    execution::Int,
+)
+    container = get_optimization_container(model)
     for (key, dual) in get_duals(container)
-        write_result!(store, STORE_CONTAINER_DUALS, key, execution, dual)
+        cols = axes(dual)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
+        end
+        write_result!(store, STORE_CONTAINER_DUALS, key, execution, dual, cols)
     end
+    return
 end
 
-function _write_model_parameter_results!(store, container, execution)
+function write_model_parameter_results!(
+    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    model::EmulationModel,
+    execution::Int,
+)
+    container = get_optimization_container(model)
     parameters = get_parameters(container)
     (parameters === nothing || isempty(parameters)) && return
     horizon = 1
@@ -556,50 +571,65 @@ function _write_model_parameter_results!(store, container, execution)
         num_columns = size(param_array)[1]
         data = Array{Float64}(undef, horizon, num_columns)
         for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
-            val1 = _jump_value(param_array[name, r_ix])
+            val1 = jump_value(param_array[name, r_ix])
             val2 = multiplier_array[name, r_ix]
             data[r_ix, c_ix] = val1 * val2
         end
 
-        write_result!(
-            store,
-            STORE_CONTAINER_PARAMETERS,
-            key,
-            execution,
-            data,
-            param_array.axes[1],
-        )
+        cols = axes(param_array)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
+        end
+
+        write_result!(store, STORE_CONTAINER_PARAMETERS, key, execution, data, cols)
     end
+    return
 end
 
-function _write_model_variable_results!(store, container, execution)
+function write_model_variable_results!(
+    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    model::EmulationModel,
+    execution::Int,
+)
+    container = get_optimization_container(model)
     for (key, variable) in get_variables(container)
-        write_result!(store, STORE_CONTAINER_VARIABLES, key, execution, variable)
+        cols = axes(variable)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
+        end
+        write_result!(store, STORE_CONTAINER_VARIABLES, key, execution, variable, cols)
     end
+    return
 end
 
-function _write_model_aux_variable_results!(store, container, execution)
+function write_model_aux_variable_results!(
+    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    model::EmulationModel,
+    execution::Int,
+)
+    container = get_optimization_container(model)
     for (key, variable) in get_aux_variables(container)
-        write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, execution, variable)
+        cols = axes(variable)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
+        end
+        write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, execution, variable, cols)
     end
+    return
 end
 
-function _write_model_expression_results!(store, container, execution)
+function write_model_expression_results!(
+    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    model::EmulationModel,
+    execution::Int,
+)
+    container = get_optimization_container(model)
     for (key, expression) in get_expressions(container)
-        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, execution, expression)
+        cols = axes(expression)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
+        end
+        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, execution, expression, cols)
     end
+    return
 end
-
-# TODO: Implement version for Decision Model
-list_aux_variable_keys(x::EmulationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
-list_aux_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
-list_variable_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
-list_variable_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
-list_parameter_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
-list_parameter_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
-list_dual_keys(x::EmulationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
-list_dual_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_DUALS)
-list_expression_keys(x::EmulationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
-list_expression_names(x::EmulationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)

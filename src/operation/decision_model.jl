@@ -222,7 +222,7 @@ function init_model_store_params!(model::DecisionModel)
     model.internal.store_parameters = ModelStoreParams(
         num_executions,
         horizon,
-        interval,
+        iszero(interval) ? resolution : interval,
         resolution,
         base_power,
         sys_uuid,
@@ -389,9 +389,15 @@ function solve!(
     try
         Logging.with_logger(logger) do
             try
+                initialize_storage!(
+                    model.store,
+                    get_optimization_container(model),
+                    model.internal.store_parameters,
+                )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                     _pre_solve_model_checks(model, optimizer)
                     solve_impl!(model)
+                    write_results!(model.store, model, get_initial_time(model))
                 end
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
@@ -400,6 +406,7 @@ function solve!(
                     end
                 end
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
+                    # TODO: This could be more complicated than it needs to be
                     results = ProblemResults(model)
                     serialize_results(results, get_output_dir(model))
                     export_problem_results && export_results(results)
@@ -441,19 +448,6 @@ function update_initial_conditions(model::DecisionModel, state, ::IntraProblemCh
     return
 end
 
-function write_results!(
-    step::Int, # TODO: check if might not be needed anymore
-    model::DecisionModel{<:DecisionProblem},
-    start_time::Dates.DateTime,
-    store::SimulationStore,
-    exports,
-)
-    stats = get_optimizer_stats(model)
-    write_optimizer_stats!(store, get_name(model), stats, start_time)
-    write_results!(store, model, start_time; exports = exports)
-    return
-end
-
 """
 Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<: DecisionProblem}
 
@@ -477,14 +471,21 @@ function solve!(
     # other logic used when solving
     solve_impl!(model)
     if get_run_status(model) == RunStatus.SUCCESSFUL
-        write_results!(step, model, start_time, store, exports)
+        stats = get_optimizer_stats(model)
+        write_optimizer_stats!(store, get_name(model), stats, start_time)
+        write_results!(store, model, start_time; exports = exports)
         advance_execution_count!(model)
     end
 
     return get_run_status(model)
 end
 
-function write_results!(store, model::DecisionModel, timestamp; exports = nothing)
+function write_results!(
+    store,
+    model::DecisionModel,
+    timestamp::Dates.DateTime;
+    exports = nothing,
+)
     if exports !== nothing
         export_params = Dict{Symbol, Any}(
             :exports => exports,
@@ -497,150 +498,112 @@ function write_results!(store, model::DecisionModel, timestamp; exports = nothin
         export_params = nothing
     end
 
-    _write_model_dual_results!(store, model, timestamp, export_params)
-    _write_model_parameter_results!(store, model, timestamp, export_params)
-    _write_model_variable_results!(store, model, timestamp, export_params)
-    _write_model_aux_variable_results!(store, model, timestamp, export_params)
+    write_model_dual_results!(store, model, timestamp, export_params)
+    write_model_parameter_results!(store, model, timestamp, export_params)
+    write_model_variable_results!(store, model, timestamp, export_params)
+    write_model_aux_variable_results!(store, model, timestamp, export_params)
+    write_model_expression_results!(store, model, timestamp, export_params)
     return
 end
 
-function _write_model_dual_results!(store, model::DecisionModel, timestamp, exports)
+function write_model_dual_results!(
+    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    model::DecisionModel,
+    timestamp::Dates.DateTime,
+    export_params,
+)
     container = get_optimization_container(model)
-    model_name = get_name(model)
-    if exports !== nothing
-        exports_path = joinpath(exports[:exports_path], "duals")
-        mkpath(exports_path)
-    end
-
-    for (key, constraint) in get_duals(container)
-        write_result!(
-            store,
-            model_name,
-            STORE_CONTAINER_DUALS,
-            key,
-            timestamp,
-            constraint,
-            [encode_key(key)],  # TODO DT: is this what the columns should be?
-        )
-
-        if exports !== nothing &&
-           should_export_dual(exports[:exports], timestamp, model_name, key)
-            horizon = exports[:horizon]
-            resolution = exports[:resolution]
-            file_type = exports[:file_type]
-            df = axis_array_to_dataframe(constraint, [name])
-            time_col = range(timestamp, length = horizon, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, timestamp, df)
+    for (key, dual) in get_duals(container)
+        cols = axes(dual)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
         end
+        write_result!(store, STORE_CONTAINER_DUALS, key, timestamp, dual, cols)
     end
+    return
 end
 
-function _write_model_parameter_results!(store, model::DecisionModel, timestamp, exports)
+function write_model_parameter_results!(
+    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    model::DecisionModel,
+    timestamp::Dates.DateTime,
+    export_params,
+)
     container = get_optimization_container(model)
-    model_name = get_name(model)
-    if exports !== nothing
-        exports_path = joinpath(exports[:exports_path], "parameters")
-        mkpath(exports_path)
-    end
-
-    horizon = get_horizon(get_settings(model))
-
     parameters = get_parameters(container)
-    for (key, container) in parameters
-        param_array = get_parameter_array(container)
-        multiplier_array = get_multiplier_array(container)
+    (parameters === nothing || isempty(parameters)) && return
+    horizon = get_horizon(model)
+
+    for (key, parameter) in parameters
+        name = encode_key(key)
+        param_array = get_parameter_array(parameter)
+        multiplier_array = get_multiplier_array(parameter)
         @assert_op length(axes(param_array)) == 2
         num_columns = size(param_array)[1]
         data = Array{Float64}(undef, horizon, num_columns)
         for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
-            val1 = _jump_value(param_array[name, r_ix])
+            val1 = jump_value(param_array[name, r_ix])
             val2 = multiplier_array[name, r_ix]
             data[r_ix, c_ix] = val1 * val2
         end
 
-        write_result!(store, model_name, key, timestamp, data, param_array.axes[1])
-
-        if exports !== nothing &&
-           should_export_parameter(exports[:exports], timestamp, model_name, key)
-            resolution = exports[:resolution]
-            file_type = exports[:file_type]
-            df = DataFrames.DataFrame(data, param_array.axes[1])
-            time_col = range(timestamp, length = horizon, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, timestamp, df)
+        cols = axes(param_array)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
         end
+
+        write_result!(store, STORE_CONTAINER_PARAMETERS, key, timestamp, data, cols)
     end
+    return
 end
 
-function _write_model_variable_results!(store, model::DecisionModel, timestamp, exports)
+function write_model_variable_results!(
+    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    model::DecisionModel,
+    timestamp::Dates.DateTime,
+    export_params,
+)
     container = get_optimization_container(model)
-    model_name = get_name(model)
-    if exports !== nothing
-        exports_path = joinpath(exports[:exports_path], "variables")
-        mkpath(exports_path)
-    end
-
     for (key, variable) in get_variables(container)
-        write_result!(store, model_name, key, timestamp, variable)
-
-        if exports !== nothing &&
-           should_export_variable(exports[:exports], timestamp, model_name, key)
-            horizon = exports[:horizon]
-            resolution = exports[:resolution]
-            file_type = exports[:file_type]
-            df = axis_array_to_dataframe(variable)
-            time_col = range(timestamp, length = horizon, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, timestamp, df)
+        cols = axes(variable)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
         end
+        write_result!(store, STORE_CONTAINER_VARIABLES, key, timestamp, variable, cols)
     end
+    return
 end
 
-function _write_model_aux_variable_results!(store, model::DecisionModel, timestamp, exports)
+function write_model_aux_variable_results!(
+    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    model::DecisionModel,
+    timestamp::Dates.DateTime,
+    export_params,
+)
     container = get_optimization_container(model)
-    model_name = get_name(model)
-    if exports !== nothing
-        exports_path = joinpath(exports[:exports_path], "aux_variables")
-        mkpath(exports_path)
-    end
-
     for (key, variable) in get_aux_variables(container)
-        write_result!(store, model_name, key, timestamp, variable)
-
-        if exports !== nothing &&
-           should_export_aux_variable(exports[:exports], timestamp, model_name, key)
-            horizon = exports[:horizon]
-            resolution = exports[:resolution]
-            file_type = exports[:file_type]
-            df = axis_array_to_dataframe(variable)
-            time_col = range(timestamp, length = horizon, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, timestamp, df)
+        cols = axes(variable)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
         end
+        write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, timestamp, variable, cols)
     end
+    return
 end
 
-function _write_model_expression_results!(store, model::DecisionModel, timestamp, exports)
+function write_model_expression_results!(
+    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    model::DecisionModel,
+    timestamp::Dates.DateTime,
+    export_params,
+)
     container = get_optimization_container(model)
-    model_name = get_name(model)
-    if exports !== nothing
-        exports_path = joinpath(exports[:exports_path], "expressions")
-        mkpath(exports_path)
-    end
-
     for (key, expression) in get_expressions(container)
-        write_result!(store, model_name, key, timestamp, expression)
-
-        if exports !== nothing &&
-           should_export_expression(exports[:exports], timestamp, model_name, key)
-            horizon = exports[:horizon]
-            resolution = exports[:resolution]
-            file_type = exports[:file_type]
-            df = axis_array_to_dataframe(expression)
-            time_col = range(timestamp, length = horizon, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, timestamp, df)
+        cols = axes(expression)[1]
+        if cols == get_time_steps(container)
+            cols = ["System"]
         end
+        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, timestamp, expression, cols)
     end
+    return
 end
