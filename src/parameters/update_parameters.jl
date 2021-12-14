@@ -128,10 +128,10 @@ function update_parameter_values!(
 
     sim_timestamps = range(current_time, step = resolution, length = time[end])
     for t in time
-        time_stamp_ix = min(max_state_index, state_data_index + 1)
+        timestamp_ix = min(max_state_index, state_data_index + 1)
         @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
-        if state_timestamps[time_stamp_ix] <= sim_timestamps[t]
-            state_data_index = time_stamp_ix
+        if state_timestamps[timestamp_ix] <= sim_timestamps[t]
+            state_data_index = timestamp_ix
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()

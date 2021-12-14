@@ -60,7 +60,7 @@ function read_file_hashes(path)
     return data["files"]
 end
 
-# this ensures that the time_stamp is not double shortened
+# this ensures that the timestamp is not double shortened
 function find_variable_length(es::Dict, e_list::Array)
     return size(es[Symbol(splitext(e_list[1])[1])], 1)
 end
