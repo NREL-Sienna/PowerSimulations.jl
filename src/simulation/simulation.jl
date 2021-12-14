@@ -328,18 +328,17 @@ function _initialize_problem_storage!(
             add_rule!(rules, model_name, key, false, CachePriority.HIGH)
         end
 
-        # TODO: Do for expressions
-        #for (key, array) in get_expressions(model)
-        #    reqs.aux_variables[key] =
-        #        _calc_dimensions(array, encode_key(key), num_rows, horizon)
-        #    add_rule!(
-        #        rules,
-        #        model_name,
-        #        key,
-        #        false,
-        #        CachePriority.HIGH,
-        #    )
-        #end
+        for (key, array) in get_expressions(container)
+            reqs.expressions[key] =
+                _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            add_rule!(
+                rules,
+                model_name,
+                key,
+                false,
+                CachePriority.LOW,
+            )
+        end
 
         model_req[model_name] = reqs
 
