@@ -324,7 +324,6 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalMultiStart, W <: ThermalMultiStartUnitCommitment}
-    @show _steps = get_time_steps(container)
     time_steps = get_time_steps(container)
     constraint_type = T()
     variable_type = U()

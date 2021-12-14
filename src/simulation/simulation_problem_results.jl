@@ -284,10 +284,10 @@ function _read_variables(
         store = res.store
     end
     _validate_keys(keys(res.variable_values), variable_keys)
-    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
     keys_with_values = [k for (k, v) in res.variable_values if !isempty(v)]
     same_keys = isempty([n for n in variable_keys if n ∉ keys_with_values])
-    if same_time_stamps && same_keys
+    if same_timestamps && same_keys
         @info "reading variables from SimulationsResults"
         vals = filter(p -> (p.first ∈ variable_keys), res.variable_values)
     else
@@ -350,10 +350,10 @@ function _read_duals(
         store = res.store
     end
     _validate_keys(keys(res.dual_values), dual_keys)
-    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
     keys_with_values = [k for (k, v) in res.dual_values if !isempty(v)]
     same_keys = isempty([n for n in dual_keys if n ∉ keys_with_values])
-    if same_time_stamps && same_keys
+    if same_timestamps && same_keys
         @debug "reading duals from SimulationsResults"
         vals = filter(p -> (p.first ∈ dual_keys), res.dual_values)
     else
@@ -409,10 +409,10 @@ function _read_parameters(
         store = res.store
     end
     _validate_keys(res.parameter_values, parameter_keys)
-    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
     parameters_with_values = [k for (k, v) in res.parameter_values if !isempty(v)]
     same_parameters = isempty([n for n in parameter_keys if n ∉ parameters_with_values])
-    if same_time_stamps && same_parameters
+    if same_timestamps && same_parameters
         @info "reading parameters from SimulationsResults"
         vals = filter(p -> (p.first ∈ parameter_keys), res.parameter_values)
     else
@@ -821,9 +821,9 @@ function write_to_CSV(res::SimulationProblemResults; kwargs...)
     for (p, v) in IS.get_parameters(res)
         parameters_export[p] = get_model_base_power(res) .* v
     end
-    write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
+    write_data(variables_export, res.timestamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_stats(IS.get_total_cost(res), folder_path)
-    write_data(IS.get_timestamp(res), folder_path, "time_stamp"; file_type = CSV, kwargs...)
+    write_data(IS.get_timestamp(res), folder_path, "timestamp"; file_type = CSV, kwargs...)
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
     write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
     files = readdir(folder_path)

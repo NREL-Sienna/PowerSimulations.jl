@@ -9,31 +9,35 @@ function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
 
-function _jump_value(input::JuMP.VariableRef)
+function jump_value(input::JuMP.VariableRef)
     return JuMP.value(input)
 end
 
-function _jump_value(input::JuMP.AbstractJuMPScalar)
+function jump_value(input::JuMP.AbstractJuMPScalar)
     return JuMP.value(input)
 end
 
-function _jump_value(input::PJ.ParameterRef)
+function jump_value(input::PJ.ParameterRef)
     return PJ.value(input)
 end
 
-function _jump_value(input::JuMP.ConstraintRef)
+function jump_value(input::JuMP.ConstraintRef)
     return JuMP.dual(input)
+end
+
+function jump_value(input::Float64)
+    return input
 end
 
 function to_array(array::JuMPDArray)
     ax = axes(array)
     len_axes = length(ax)
     if len_axes == 1
-        data = _jump_value.((array[x] for x in ax[1]))
+        data = jump_value.((array[x] for x in ax[1]))
     elseif len_axes == 2
         data = Array{Float64, 2}(undef, length(ax[2]), length(ax[1]))
         for t in ax[2], (ix, name) in enumerate(ax[1])
-            data[t, ix] = _jump_value(array[name, t])
+            data[t, ix] = jump_value(array[name, t])
         end
         # TODO: this needs a better plan
         #elseif len_axes == 3
@@ -44,7 +48,7 @@ function to_array(array::JuMPDArray)
         #        third_dim = collect(fill(i, size(array)[end]))
         #        data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
         #        for t in last(ax), (ix, name) in enumerate(first(ax))
-        #            data[t, ix] = _jump_value(array[name, i, t])
+        #            data[t, ix] = jump_value(array[name, i, t])
         #        end
         #        push!(arrays, data)
         #    end
@@ -67,7 +71,7 @@ function to_array(array::JuMPSparseArray)
     tmp_data = Dict{Any, Vector{Float64}}()
     for (ix, col) in enumerate(columns)
         res = values(filter(v -> first(v)[[1, 3]] == col, array.data))
-        tmp_data[col] = _jump_value.(res)
+        tmp_data[col] = jump_value.(res)
     end
 
     data = Array{Float64, 2}(undef, length(first(values(tmp_data))), length(columns))
@@ -221,7 +225,7 @@ function check_conflict_status(
 )
     conflict_indices = Vector()
     dims = axes(constraint_container)
-    for index in zip(dims...)
+    for index in Iterators.product(dims...)
         if MOI.get(
             jump_model,
             MOI.ConstraintConflictStatus(),

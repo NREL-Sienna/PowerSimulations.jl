@@ -50,36 +50,38 @@ function ProblemResults(model::DecisionModel)
     status = get_run_status(model)
     status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
 
-    container = get_optimization_container(model)
-    variables = read_variables(container)
-    duals = read_duals(container)
-    parameters = read_parameters(container)
-    expressions = read_expressions(container)
+    model_store = get_store(model)
+
+    if isempty(model_store)
+        error("Model Solved as part of a Simulation.")
+    end
+
     timestamps = get_timestamps(model)
     optimizer_stats = to_dataframe(get_optimizer_stats(model))
 
-    for df in Iterators.flatten(((
-        values(variables),
-        values(duals),
-        values(parameters),
-        values(expressions),
-    )))
-        DataFrames.insertcols!(df, 1, :DateTime => timestamps)
-    end
+    aux_variable_values =
+        Dict(x => read_aux_variable(model, x) for x in list_aux_variable_keys(model))
+    variable_values = Dict(x => read_variable(model, x) for x in list_variable_keys(model))
+    dual_values = Dict(x => read_dual(model, x) for x in list_dual_keys(model))
+    parameter_values =
+        Dict(x => read_parameter(model, x) for x in list_parameter_keys(model))
+    expression_values =
+        Dict(x => read_expression(model, x) for x in list_expression_keys(model))
 
     sys = get_system(model)
+
     return ProblemResults(
         get_problem_base_power(model),
         timestamps,
         sys,
         IS.get_uuid(sys),
-        Dict{VariableKey, DataFrames.DataFrame}(),
-        variables,
-        duals,
-        parameters,
-        expressions,
+        aux_variable_values,
+        variable_values,
+        dual_values,
+        parameter_values,
+        expression_values,
         optimizer_stats,
-        get_metadata(container),
+        get_metadata(get_optimization_container(model)),
         IS.strip_module_name(typeof(model)),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
@@ -91,6 +93,12 @@ Construct ProblemResults from a solved EmulationModel.
 function ProblemResults(model::EmulationModel)
     status = get_run_status(model)
     status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
+
+    model_store = get_store(model)
+
+    if isempty(model_store)
+        error("Model Solved as part of a Simulation.")
+    end
 
     aux_variables =
         Dict(x => read_aux_variable(model, x) for x in list_aux_variable_keys(model))

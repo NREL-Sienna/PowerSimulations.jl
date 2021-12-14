@@ -88,18 +88,10 @@ function psi_checksolve_test(model::DecisionModel, status, expected_result, tol 
 end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
-    duals = get_dual_values(res)
-    λ = convert(
-        Array,
-        duals[PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)][
-            :,
-            :CopperPlateBalanceConstraint__System,
-        ],
-    )
+    cp_duals = read_dual(res, PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
+    λ = Matrix(cp_duals)
 
-    nf_duals = [k for k in keys(duals) if PSI.get_entry_type(k) == NetworkFlowConstraint]
-    flow_duals =
-        hcat([duals[k][:, propertynames(duals[k]) .!== :DateTime] for k in nf_duals]...)
+    flow_duals = read_dual(res, PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line))
     μ = Matrix(flow_duals[:, ptdf.axes[1]])
 
     buses = get_components(Bus, get_system(res))
@@ -232,7 +224,7 @@ function check_flow_variable_values(
     return true
 end
 
-function PSI._jump_value(int::Int)
+function PSI.jump_value(int::Int)
     @warn("This is for testing purposes only.")
     return int
 end

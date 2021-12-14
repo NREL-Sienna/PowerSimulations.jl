@@ -150,7 +150,7 @@ set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
 get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 
-function is_milp(container::OptimizationContainer)
+function is_milp(container::OptimizationContainer)::Bool
     !supports_milp(container) && return false
     if !isempty(
         JuMP.all_constraints(container.JuMPmodel, JuMP.VariableRef, JuMP.MOI.ZeroOne),
@@ -502,11 +502,16 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
         return RunStatus.FAILED
     end
 
+    status = RunStatus.SUCCESSFUL
+
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
-    _, optimizer_stats.timed_calculate_dual_variables =
-        @timed calculate_dual_variables!(container, system)
-    return RunStatus.SUCCESSFUL
+    _, optimizer_stats.timed_calculate_dual_variables = @timed calculate_dual_variables!(
+        container,
+        system,
+        Base.RefValue{is_milp(container)},
+    )
+    return status
 end
 
 function compute_conflict!(container::OptimizationContainer)
@@ -720,20 +725,18 @@ function add_dual_container!(
     sparse = false,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     if is_milp(container)
-        @warn(
-            "Current formulation has resulted in a MILP problem, dual value retrieval is not supported for MILP problems."
-        )
-    else
-        const_key = ConstraintKey(T, U)
-        if sparse
-            dual_container = sparse_container_spec(Float64, axs...)
-        else
-            dual_container = container_spec(Float64, axs...)
-        end
-        _assign_container!(container.duals, const_key, dual_container)
-        return dual_container
+        @warn("The model has resulted in a MILP, \
+              dual value retrieval requires solving an additional Linear Program \
+              which increases simulation time and the results could be innacurate.")
     end
-    return
+    const_key = ConstraintKey(T, U)
+    if sparse
+        dual_container = sparse_container_spec(Float64, axs...)
+    else
+        dual_container = container_spec(Float64, axs...)
+    end
+    _assign_container!(container.duals, const_key, dual_container)
+    return dual_container
 end
 
 function get_dual_keys(container::OptimizationContainer)
@@ -1219,14 +1222,113 @@ function calculate_aux_variables!(container::OptimizationContainer, system::PSY.
     for key in keys(aux_vars)
         calculate_aux_variable_value!(container, key, system)
     end
+    return RunStatus.SUCCESSFUL
+end
+
+function _calculate_dual_variable_value!(
+    container::OptimizationContainer,
+    key::ConstraintKey{CopperPlateBalanceConstraint, PSY.System},
+    ::PSY.System,
+)
+    constraint_container = get_constraint(container, key)
+    dual_variable_container = get_duals(container)[key]
+
+    for t in axes(constraint_container)[1]
+        # See https://jump.dev/JuMP.jl/stable/manual/solutions/#Dual-solution-values
+        dual_variable_container[t] = JuMP.dual(constraint_container[t])
+    end
     return
 end
 
-function calculate_dual_variables!(container::OptimizationContainer, system::PSY.System)
+function _calculate_dual_variable_value!(
+    container::OptimizationContainer,
+    key::ConstraintKey{T, D},
+    ::PSY.System,
+) where {T <: ConstraintType, D <: Union{PSY.Component, PSY.System}}
+    constraint_container = get_constraint(container, key)
+    dual_variable_container = get_duals(container)[key]
+
+    dims = axes(constraint_container)
+    for index in Iterators.product(dims...)
+        dual_variable_container[index...] = JuMP.dual(constraint_container[index...])
+    end
+    return
+end
+
+function calculate_dual_variables!(
+    container::OptimizationContainer,
+    system::PSY.System,
+    ::Type{Base.RefValue{false}},
+)
     duals_vars = get_duals(container)
     for key in keys(duals_vars)
         _calculate_dual_variable_value!(container, key, system)
     end
+    return
+end
+
+function _process_duals(container::OptimizationContainer)
+    mip_solution = Dict(v => value(v) for v in all_variables(model))
+    cache = Dict{VariableRef, Tuple{Float64, Float64, Bool}}()
+    for x in all_variables(model)
+        is_integer_flag = false
+        if is_binary(x)
+            unset_binary(x)
+        elseif is_integer(x)
+            unset_integer(x)
+            is_integer_flag = true
+        else
+            continue
+        end
+        cache[x] = (
+            has_lower_bound(x) ? lower_bound(x) : -Inf,
+            has_upper_bound(x) ? upper_bound(x) : Inf,
+            is_integer_flag,
+        )
+        fix(x, mip_solution[x]; force = true)
+    end
+    set_optimizer(model, lp_solver)
+    optimize!(model)
+
+    model_status = JuMP.dual_status(jump_model)
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        @error "Optimizer returned $model_status"
+        return RunStatus.FAILED
+    end
+
+    if JuMP.has_duals(jump_model)
+        duals = missing  # use shadow_price See https://jump.dev/JuMP.jl/stable/manual/solutions/#Dual-solution-values
+    end
+
+    for (x, c) in cache
+        unfix(x)
+        if c[1] == -Inf
+            delete_lower_bound(x, c[1])
+        else
+            set_lower_bound(x, c[1])
+        end
+        if c[2] == Inf
+            delete_upper_bound(x, c[2])
+        else
+            set_upper_bound(x, c[2])
+        end
+        if c[3]
+            set_integer(x)
+        else
+            set_binnary(x)
+        end
+    end
+    return duals
+end
+
+function calculate_dual_variables!(
+    container::OptimizationContainer,
+    system::PSY.System,
+    ::Type{Base.RefValue{true}},
+)
+    isempty(get_duals(container)) && return
+
+    status = _process_duals(container)
     return
 end
 
