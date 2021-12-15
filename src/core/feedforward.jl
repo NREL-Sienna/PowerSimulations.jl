@@ -163,17 +163,20 @@ struct PowerCommitmentFF <: AbstractAffectFeedForward
     variable_source_problem::Symbol
     affected_variables::Vector{Symbol}
     affected_time_periods::Int
+    penalty_cost::Float64
     cache::Union{Nothing, Type{<:AbstractCache}}
     function PowerCommitmentFF(
         variable_source_problem::AbstractString,
         affected_variables::Vector{<:AbstractString},
         affected_time_periods::Int,
+        penalty_cost::Float64,
         cache::Union{Nothing, Type{<:AbstractCache}},
     )
         new(
             Symbol(variable_source_problem),
             Symbol.(affected_variables),
             affected_time_periods,
+            penalty_cost,
             cache,
         )
     end
@@ -183,11 +186,13 @@ function PowerCommitmentFF(;
     variable_source_problem,
     affected_variables,
     affected_time_periods,
+    penalty_cost,
 )
     return PowerCommitmentFF(
         variable_source_problem,
         affected_variables,
         affected_time_periods,
+        penalty_cost,
         nothing,
     )
 end
@@ -558,6 +563,7 @@ function power_commitment_ff(
     param_reference::UpdateRef,
     var_names::Tuple{Symbol, Symbol},
     affected_time_periods::Int,
+    penalty_cost::Float64,
 )
     time_steps = model_time_steps(optimization_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
@@ -585,7 +591,7 @@ function power_commitment_ff(
         for t in 1:affected_time_periods
             add_to_cost_expression!(
                 optimization_container,
-                varslack[name, t] * FEEDFORWARD_SLACK_COST,
+                varslack[name, t] * penalty_cost,
             )
         end
     end
@@ -622,7 +628,7 @@ function energy_target_ff(
         multiplier_ub[name] = 1.0
         con_ub[name] = JuMP.@constraint(
             optimization_container.JuMPmodel,
-            variable[idx] + varslack[name, target_period] >=
+            variable[name, target_period] + varslack[name, target_period] >=
             param_ub[name] * multiplier_ub[name]
         )
         add_to_cost_expression!(
@@ -786,6 +792,7 @@ function feedforward!(
             parameter_ref,
             (var_name, varslack_name),
             ff_model.affected_time_periods,
+            ff_model.penalty_cost,
         )
     end
 end

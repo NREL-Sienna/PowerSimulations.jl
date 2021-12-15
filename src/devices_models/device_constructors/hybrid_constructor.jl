@@ -591,6 +591,7 @@ function construct_device!(
     # Variables
     add_variables!(psi_container, ActivePowerInVariable, devices, D())
     add_variables!(psi_container, ActivePowerOutVariable, devices, D())
+    add_variables!(psi_container, EnergyVariable, devices, D())
     add_variables!(psi_container, SubComponentReserveVariable, devices, D())
     add_variables!(psi_container, SubComponentActivePowerInVariable, devices, D())
     add_variables!(psi_container, SubComponentActivePowerOutVariable, devices, D())
@@ -665,6 +666,7 @@ function construct_device!(
     )
 
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    energy_variable_constraints!(psi_container, devices, model, S, get_feedforward(model))
     add_constraints!(
         psi_container,
         EnergyBalanceConstraint,
@@ -699,6 +701,7 @@ function construct_device!(
     # Variables
     add_variables!(psi_container, ActivePowerInVariable, devices, D())
     add_variables!(psi_container, ActivePowerOutVariable, devices, D())
+    add_variables!(psi_container, EnergyVariable, devices, D())
     add_variables!(psi_container, ReactivePowerVariable, devices, D())
     add_variables!(psi_container, SubComponentReserveVariable, devices, D())
     add_variables!(psi_container, SubComponentActivePowerInVariable, devices, D())
@@ -825,6 +828,7 @@ function construct_device!(
 
     # Constraints
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    energy_variable_constraints!(psi_container, devices, model, S, get_feedforward(model))
     add_constraints!(
         psi_container,
         EnergyBalanceConstraint,
@@ -859,7 +863,7 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices, D())
+    # add_variables!(psi_container, ActivePowerInVariable, devices, D())
     add_variables!(psi_container, ActivePowerOutVariable, devices, D())
     add_variables!(psi_container, EnergyVariable, devices, D())
     add_variables!(psi_container, SubComponentReserveVariable, devices, D())
@@ -871,15 +875,15 @@ function construct_device!(
     initial_conditions!(psi_container, devices, D())
 
     # Constraints
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        ActivePowerInVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    # add_constraints!(
+    #     psi_container,
+    #     RangeConstraint,
+    #     ActivePowerInVariable,
+    #     devices,
+    #     model,
+    #     S,
+    #     get_feedforward(model),
+    # )
     add_constraints!(
         psi_container,
         RangeConstraint,
@@ -968,7 +972,7 @@ function construct_device!(
     end
 
     # Variables
-    add_variables!(psi_container, ActivePowerInVariable, devices, D())
+    # add_variables!(psi_container, ActivePowerInVariable, devices, D())
     add_variables!(psi_container, ActivePowerOutVariable, devices, D())
     add_variables!(psi_container, EnergyVariable, devices, D())
     add_variables!(psi_container, ReactivePowerVariable, devices, D())
@@ -984,15 +988,15 @@ function construct_device!(
     initial_conditions!(psi_container, devices, D())
 
     # Constraints
-    add_constraints!(
-        psi_container,
-        RangeConstraint,
-        ActivePowerInVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
+    # add_constraints!(
+    #     psi_container,
+    #     RangeConstraint,
+    #     ActivePowerInVariable,
+    #     devices,
+    #     model,
+    #     S,
+    #     get_feedforward(model),
+    # )
     add_constraints!(
         psi_container,
         RangeConstraint,
