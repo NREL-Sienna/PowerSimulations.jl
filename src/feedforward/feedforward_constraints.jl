@@ -110,6 +110,55 @@ function _add_sc_feedforward_constraints!(
     return
 end
 
+function _add_sc_feedforward_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::P,
+    ::VariableKey{U, V},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: FeedforwardSemiContinousConstraint,
+    P <: ParameterType,
+    U <: VariableType,
+    V <: PSY.Component,
+    W <: AbstractDeviceFormulation,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    constraint_lb =
+        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)lb")
+    constraint_ub =
+        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)ub")
+    variable = get_variable(container, U(), V)
+    parameter = get_parameter_array(container, P(), V)
+    upper_bounds = [get_variable_upper_bound(U(), d, W()) for d in devices]
+    lower_bounds = [get_variable_lower_bound(U(), d, W()) for d in devices]
+    if any(isnothing.(upper_bounds)) || any(isnothing.(lower_bounds))
+        throw(IS.InvalidValueError("Bounds for variable $U $V not defined correctly"))
+    end
+    mult_ub = JuMPDArray(repeat(upper_bounds, 1, time_steps[end]), names, time_steps)
+    mult_lb = JuMPDArray(repeat(lower_bounds, 1, time_steps[end]), names, time_steps)
+    jump_model = get_jump_model(container)
+    upper_bound_range_with_parameter!(
+        jump_model,
+        constraint_ub,
+        variable,
+        mult_ub,
+        parameter,
+        devices,
+    )
+    lower_bound_range_with_parameter!(
+        jump_model,
+        constraint_lb,
+        variable,
+        mult_lb,
+        parameter,
+        devices,
+    )
+    return
+end
+
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     model::DeviceModel,
