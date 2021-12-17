@@ -725,8 +725,8 @@ function add_dual_container!(
     sparse = false,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     if is_milp(container)
-        @warn("The model has resulted in a MILP, \
-              dual value retrieval requires solving an additional Linear Program \
+        @warn("The model has resulted in a MILP, \n
+              dual value retrieval requires solving an additional Linear Program \n
               which increases simulation time and the results could be innacurate.")
     end
     const_key = ConstraintKey(T, U)
@@ -1165,7 +1165,11 @@ function write_initial_conditions_data(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                ic_data_dict[key] = axis_array_to_dataframe(field_container, nothing)
+                cols = axes(field_container)[1]
+                if cols == get_time_steps(container)
+                    cols = ["System"]
+                end
+                ic_data_dict[key] = axis_array_to_dataframe(field_container, cols)
             end
         end
     end
