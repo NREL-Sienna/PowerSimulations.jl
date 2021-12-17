@@ -40,11 +40,22 @@ function update_initial_conditions!(
         comp_type = get_component_type(ic)
         status_val = get_system_state_value(state, OnVariable(), comp_type)[comp_name]
         var_val = get_system_state_value(state, ActivePowerVariable(), comp_type)[comp_name]
-        if status_val > 0
+        if !isapprox(status_val, 0.0, atol = ABSOLUTE_TOLERANCE)
             comp = get_component(ic)
-            @assert_op var_val <= PSY.get_active_power_limits(comp).max
-            @assert_op var_val >= PSY.get_active_power_limits(comp).min
-            set_ic_quantity!(ic, var_val)
+            min = PSY.get_active_power_limits(comp).min
+            max = PSY.get_active_power_limits(comp).max
+            value_in_bounds = true
+            if var_val <= max && var_val >= min
+                set_ic_quantity!(ic, var_val)
+            elseif isapprox(min - var_val, 0.0, atol = ABSOLUTE_TOLERANCE)
+                set_ic_quantity!(ic, min)
+            elseif isapprox(var_val - max, 0.0, atol = ABSOLUTE_TOLERANCE)
+                set_ic_quantity!(ic, max)
+            else
+                error(
+                    "Variable value $(var_val) for ActivePowerVariable for $(comp_type) is out of bounds [$(min), $(max)].",
+                )
+            end
         else
             @assert isapprox(var_val, 0.0, atol = ABSOLUTE_TOLERANCE) "status and power don't match"
             set_ic_quantity!(ic, 0.0)
