@@ -49,7 +49,6 @@ function OptimizerStats()
     )
 end
 
-
 """
 Construct OptimizerStats from a vector that was serialized to HDF5.
 """
