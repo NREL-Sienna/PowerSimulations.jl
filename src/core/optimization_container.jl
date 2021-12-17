@@ -1165,7 +1165,7 @@ function write_initial_conditions_data(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                ic_data_dict[key] = axis_array_to_dataframe(field_container, nothing)
+                ic_data_dict[key] = axis_array_to_dataframe(field_container, ["System"])
             end
         end
     end
