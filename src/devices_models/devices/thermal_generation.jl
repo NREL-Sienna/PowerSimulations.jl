@@ -665,7 +665,7 @@ function calculate_aux_variable_value!(
                       JuMP.axes(on_variable_results)[1][ix]
         IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
                       get_component_name(ini_cond[ix])
-        on_var = JuMP.value.(on_variable_results.data[ix, :])
+        on_var = jump_value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
         sum_on_var = sum(on_var)
@@ -709,7 +709,7 @@ function calculate_aux_variable_value!(
                       JuMP.axes(on_variable_results)[1][ix]
         IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
                       get_component_name(ini_cond[ix])
-        on_var = JuMP.value.(on_variable_results.data[ix, :])
+        on_var = jump_value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
         sum_on_var = sum(on_var)
@@ -758,8 +758,8 @@ function calculate_aux_variable_value!(
         name = PSY.get_name(d)
         min = PSY.get_active_power_limits(d).min
         aux_variable_container[name, t] =
-            JuMP.value(on_variable_results[name, t]) * min +
-            JuMP.value(p_variable_results[name, t])
+            jump_value(on_variable_results[name, t]) * min +
+            jump_value(p_variable_results[name, t])
     end
 
     return

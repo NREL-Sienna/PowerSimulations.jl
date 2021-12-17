@@ -13,7 +13,7 @@ function jump_value(input::JuMP.VariableRef)
     return JuMP.value(input)
 end
 
-function jump_value(input::JuMP.AbstractJuMPScalar)
+function jump_value(input::T) where {T <: JuMP.AbstractJuMPScalar}
     return JuMP.value(input)
 end
 

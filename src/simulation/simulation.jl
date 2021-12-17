@@ -488,7 +488,7 @@ function _apply_warm_start!(model::DecisionModel)
     container = get_optimization_container(model)
     jump_model = get_jump_model(container)
     all_vars = JuMP.all_variables(jump_model)
-    all_vars_value = JuMP.value.(all_vars)
+    all_vars_value = jump_value.(all_vars)
     JuMP.set_start_value.(all_vars, all_vars_value)
     return
 end
@@ -504,6 +504,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             # TODO: Read Array here to avoid allocating the DataFrame
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
             end_of_step_timestamp = get_end_of_step_timestamp(state)
+            @show key
             update_state_data!(
                 get_decision_state_data(state, key),
                 # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
@@ -520,6 +521,8 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             )
         end
     end
+    @show simulation_time
+    return
 end
 
 function _set_system_state!(sim::Simulation, model_name::String)
