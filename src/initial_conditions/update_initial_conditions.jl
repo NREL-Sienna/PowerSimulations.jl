@@ -16,7 +16,7 @@ function update_initial_conditions!(
             timestamp,
             initial_condition,
             previous_values[i],
-            0,
+            get_name(model),
         )
     end
 end

@@ -54,14 +54,14 @@ struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     device_name::String
     new_value::Float64
     previous_value::Float64
-    model_number::Int
+    model_name::String
 end
 
 function InitialConditionUpdateEvent(
     simulation_time,
     ic::InitialCondition,
     previous_value::Float64,
-    model_number::Int,
+    model_name,
 )
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
@@ -71,7 +71,7 @@ function InitialConditionUpdateEvent(
         get_component_name(ic),
         get_condition(ic),
         previous_value,
-        model_number,
+        string(model_name),
     )
 end
 
