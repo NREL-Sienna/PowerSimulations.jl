@@ -504,7 +504,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             # TODO: Read Array here to avoid allocating the DataFrame
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
             end_of_step_timestamp = get_end_of_step_timestamp(state)
-            @show key
             update_state_data!(
                 get_decision_state_data(state, key),
                 # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
@@ -521,7 +520,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             )
         end
     end
-    @show simulation_time
     return
 end
 
