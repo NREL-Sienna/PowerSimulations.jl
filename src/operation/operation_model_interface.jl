@@ -56,7 +56,6 @@ empty_time_series_cache!(x::OperationModel) = empty!(get_time_series_cache(x))
 
 function get_current_timestamp(model::OperationModel)
     # For EmulationModel interval and resolution are the same.
-    # TODO: make a field to store an updated timestamp
     return get_initial_time(model) + get_execution_count(model) * get_interval(model)
 end
 

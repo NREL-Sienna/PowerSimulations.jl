@@ -489,7 +489,6 @@ function run!(
                 @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
             catch e
                 @error "Emulation Problem Run failed" exception = (e, catch_backtrace())
-                # TODO: Here run IIS if failed
                 set_run_status!(model, RunStatus.FAILED)
             end
         end

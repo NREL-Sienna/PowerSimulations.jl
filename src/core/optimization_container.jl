@@ -1150,7 +1150,6 @@ function write_initial_conditions_data(
 )
     for field in STORE_CONTAINERS
         ic_container_dict = getfield(ic_container, field)
-        # TODO: Not ideal, clean up a bit more.
         if field == STORE_CONTAINER_PARAMETERS
             ic_container_dict = read_parameters(ic_container)
         end
@@ -1172,7 +1171,7 @@ function write_initial_conditions_data(
     return
 end
 
-# TODO: These methods aren't passing the potential meta fields in the keys
+# Note: These methods aren't passing the potential meta fields in the keys
 function get_initial_conditions_variable(
     container::OptimizationContainer,
     type::VariableType,
