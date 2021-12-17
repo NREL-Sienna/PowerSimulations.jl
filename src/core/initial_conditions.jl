@@ -48,7 +48,7 @@ end
 function get_condition(
     p::InitialCondition{T, PJ.ParameterRef},
 ) where {T <: InitialConditionType}
-    return JuMP.value(p.value)
+    return jump_value(p.value)
 end
 
 get_component(ic::InitialCondition) = ic.component

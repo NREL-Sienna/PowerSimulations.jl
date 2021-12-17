@@ -179,7 +179,7 @@ mutable struct SimulationSequence
         end
 
         if length(models.decision_models) == 1
-            # Not implemented yet
+            # TODO: Not implemented yet
             # ini_cond_chronology = IntraProblemChronology()
         end
 

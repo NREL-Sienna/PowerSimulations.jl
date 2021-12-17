@@ -1150,7 +1150,6 @@ function write_initial_conditions_data(
 )
     for field in STORE_CONTAINERS
         ic_container_dict = getfield(ic_container, field)
-        # TODO: Not ideal, clean up a bit more.
         if field == STORE_CONTAINER_PARAMETERS
             ic_container_dict = read_parameters(ic_container)
         end
@@ -1165,18 +1164,14 @@ function write_initial_conditions_data(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                cols = axes(field_container)[1]
-                if cols == get_time_steps(container)
-                    cols = ["System"]
-                end
-                ic_data_dict[key] = axis_array_to_dataframe(field_container, cols)
+                ic_data_dict[key] = axis_array_to_dataframe(field_container, ["System"])
             end
         end
     end
     return
 end
 
-# TODO: These methods aren't passing the potential meta fields in the keys
+# Note: These methods aren't passing the potential meta fields in the keys
 function get_initial_conditions_variable(
     container::OptimizationContainer,
     type::VariableType,

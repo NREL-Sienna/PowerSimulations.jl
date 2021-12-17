@@ -9,23 +9,23 @@ function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
 
-function jump_value(input::JuMP.VariableRef)
+function jump_value(input::JuMP.VariableRef)::Float64
     return JuMP.value(input)
 end
 
-function jump_value(input::JuMP.AbstractJuMPScalar)
+function jump_value(input::T)::Float64 where {T <: JuMP.AbstractJuMPScalar}
     return JuMP.value(input)
 end
 
-function jump_value(input::PJ.ParameterRef)
+function jump_value(input::PJ.ParameterRef)::Float64
     return PJ.value(input)
 end
 
-function jump_value(input::JuMP.ConstraintRef)
+function jump_value(input::JuMP.ConstraintRef)::Float64
     return JuMP.dual(input)
 end
 
-function jump_value(input::Float64)
+function jump_value(input::Float64)::Float64
     return input
 end
 

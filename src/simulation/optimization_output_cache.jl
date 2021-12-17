@@ -65,7 +65,12 @@ end
 """
 Return true if the data for `timestamp` is stored in cache.
 """
-function is_cached(cache::OptimizationResultCache, model_name, key, timestamp::Dates.DateTime)
+function is_cached(
+    cache::OptimizationResultCache,
+    model_name,
+    key,
+    timestamp::Dates.DateTime,
+)
     cache_key = OptimizationResultCacheKey(model_name, key)
     return is_cached(cache, cache_key, timestamp)
 end

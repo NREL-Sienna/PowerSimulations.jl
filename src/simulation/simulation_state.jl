@@ -37,13 +37,16 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Peri
     for model in get_decision_models(models)
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
+        model_interval = get_interval(model)
         horizon_step = get_horizon(model) * model_resolution
+        # This is the portion of the Horizon that "overflows" into the next step
+        time_residual = horizon_step - model_interval
         for type in fieldnames(ValueStates)
             field_containers = getfield(container, type)
             for key in keys(field_containers)
                 if !haskey(params, key)
                     params[key] = (
-                        horizon = max(simulation_step, horizon_step),
+                        horizon = max(simulation_step + time_residual, horizon_step),
                         resolution = model_resolution,
                     )
                 else

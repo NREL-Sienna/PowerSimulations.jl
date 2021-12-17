@@ -58,7 +58,6 @@ they passed to the original Simulation.
 
 # Arguments
 - `directory::AbstractString`: the directory returned from the call to serialize
-# TODO: this description is probably wrong
 - `model_info::Dict`: Two-level dictionary containing model parameters that cannot be
   serialized. The outer dict should be keyed by the problem name. The inner dict must contain
   'optimizer' and may contain 'jump_model'. These should be the same values used for the
@@ -331,13 +330,7 @@ function _initialize_problem_storage!(
         for (key, array) in get_expressions(container)
             reqs.expressions[key] =
                 _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(
-                rules,
-                model_name,
-                key,
-                false,
-                CachePriority.LOW,
-            )
+            add_rule!(rules, model_name, key, false, CachePriority.LOW)
         end
 
         model_req[model_name] = reqs
@@ -494,7 +487,7 @@ function _apply_warm_start!(model::DecisionModel)
     container = get_optimization_container(model)
     jump_model = get_jump_model(container)
     all_vars = JuMP.all_variables(jump_model)
-    all_vars_value = JuMP.value.(all_vars)
+    all_vars_value = jump_value.(all_vars)
     JuMP.set_start_value.(all_vars, all_vars_value)
     return
 end
@@ -526,6 +519,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             )
         end
     end
+    return
 end
 
 function _set_system_state!(sim::Simulation, model_name::String)
