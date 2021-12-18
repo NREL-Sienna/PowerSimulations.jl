@@ -1,14 +1,18 @@
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    model_resolution::Dates.Period,
 ) where {
     T <:
     InitialCondition{InitialTimeDurationOn, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, TimeDurationOn(), get_component_type(ic))
-        set_ic_quantity!(ic, var_val[get_component_name(ic)])
+        state_resolution = get_data_resolution(get_system_state_data(state, TimeDurationOn(), get_component_type(ic)))
+        # The state data is stored in the state resolution (i.e. lowest resolution among all models)
+        # so this step scales the data to the model resolution.
+        val = var_val[get_component_name(ic)]/(model_resolution/state_resolution)
+        set_ic_quantity!(ic, val)
     end
     return
 end
@@ -16,7 +20,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    model_resolution::Dates.Period,
 ) where {
     T <: InitialCondition{
         InitialTimeDurationOff,
@@ -25,6 +29,10 @@ function update_initial_conditions!(
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, TimeDurationOff(), get_component_type(ic))
+        state_resolution = get_data_resolution(get_system_state_data(state, TimeDurationOff(), get_component_type(ic)))
+        # The state data is stored in the state resolution (i.e. lowest resolution among all models)
+        # so this step scales the data to the model resolution.
+        val = var_val[get_component_name(ic)]/(model_resolution/state_resolution)
         set_ic_quantity!(ic, var_val[get_component_name(ic)])
     end
     return
