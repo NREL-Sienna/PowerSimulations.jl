@@ -492,6 +492,25 @@ function _apply_warm_start!(model::DecisionModel)
     return
 end
 
+function update_end_of_step_timestamp!(sim::Simulation)
+    simulation_models = get_models(sim)
+    sim_state = get_simulation_state(sim)
+    step_resolution = get_step_resolution(get_sequence(sim))
+    params = _get_state_params(simulation_models, step_resolution)
+    min_resolution = minimum([v[2] for v in values(params)])
+    _update_end_of_step_timestamp!(sim, sim_state, step_resolution, min_resolution)
+    return
+end
+
+function _update_end_of_step_timestamp!(sim::Simulation, sim_state::SimulationState, step_resolution::Dates.Period, min_resolution::Dates.Period)
+    set_end_of_step_timestamp!(
+        sim_state,
+        get_current_time(sim) + step_resolution - min_resolution,
+    )
+    return
+end
+    
+
 function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_name = get_name(model)
     store = get_simulation_store(sim)
@@ -504,7 +523,8 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
             end_of_step_timestamp = get_end_of_step_timestamp(state)
             update_state_data!(
-                get_decision_state_data(state, key),
+                key,
+                state,
                 # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
                 res,
                 simulation_time,
@@ -619,6 +639,7 @@ function _execute!(
                 end
                 problem_interval = get_interval(sequence, model_name)
                 set_current_time!(sim, sim.internal.date_ref[model_number])
+                update_end_of_step_timestamp!(sim)
                 sequence.current_execution_index = ix
 
                 # Is first run of first problem? Yes -> don't update problem
