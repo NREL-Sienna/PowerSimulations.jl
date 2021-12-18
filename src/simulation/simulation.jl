@@ -502,14 +502,18 @@ function update_end_of_step_timestamp!(sim::Simulation)
     return
 end
 
-function _update_end_of_step_timestamp!(sim::Simulation, sim_state::SimulationState, step_resolution::Dates.Period, min_resolution::Dates.Period)
+function _update_end_of_step_timestamp!(
+    sim::Simulation,
+    sim_state::SimulationState,
+    step_resolution::Dates.Period,
+    min_resolution::Dates.Period,
+)
     set_end_of_step_timestamp!(
         sim_state,
         get_current_time(sim) + step_resolution - min_resolution,
     )
     return
 end
-    
 
 function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_name = get_name(model)

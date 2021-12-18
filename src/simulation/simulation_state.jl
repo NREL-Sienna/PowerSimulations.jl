@@ -221,10 +221,10 @@ function update_state_data!(
     @assert_op sort(DataFrames.names(state_data.values)) ==
                sort(DataFrames.names(store_data))
 
-    if (model_resolution/state_resolution) == 1.0
+    if (model_resolution / state_resolution) == 1.0
         increment_per_period = 1.0
     elseif state_resolution < Dates.Hour(1) && state_resolution > Dates.Minute(1)
-        increment_per_period =  Dates.value(Dates.Minute(state_resolution))
+        increment_per_period = Dates.value(Dates.Minute(state_resolution))
     end
 
     for t in result_time_index
@@ -236,12 +236,16 @@ function update_state_data!(
                         # Account for the fact that previous model stores the state at the end of the hour/period
                         # we take look one timestep back. As all models save Duration data based on its resolution/timesteps
                         #  The 2nd terms scales the data to the state resolution.
-                        state_data.values[i, j] = (store_data[t, j] - 1.0) *  (model_resolution/state_resolution) 
+                        state_data.values[i, j] =
+                            (store_data[t, j] - 1.0) * (model_resolution / state_resolution)
                     else
-                        state_data.values[i, j] = store_data[t, j]  *  (model_resolution/state_resolution) 
+                        state_data.values[i, j] =
+                            store_data[t, j] * (model_resolution / state_resolution)
                     end
                 else
-                    state_data.values[i, j] = store_data[t, j] >  0 ? state_data.values[i-1, j] + increment_per_period : 0
+                    state_data.values[i, j] =
+                        store_data[t, j] > 0 ?
+                        state_data.values[i - 1, j] + increment_per_period : 0
                 end
             end
         end
@@ -250,7 +254,6 @@ function update_state_data!(
 
     return
 end
-
 
 function get_decision_state_data(state::SimulationState, key::OptimizationContainerKey)
     return get_state_data(get_decision_states(state), key)

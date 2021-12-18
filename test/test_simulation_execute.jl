@@ -419,7 +419,7 @@ end
     sys_rts_da = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_DA_sys")
     sys_rts_rt = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_RT_sys")
     sys_rts_ha = deepcopy(sys_rts_rt)
-    
+
     PSY.transform_single_time_series!(sys_rts_da, 36, Hour(24))
     PSY.transform_single_time_series!(sys_rts_ha, 24, Hour(1))
     PSY.transform_single_time_series!(sys_rts_rt, 12, Hour(1))
@@ -484,5 +484,3 @@ end
     # execute_out = execute!(sim)
     # @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
-
-
