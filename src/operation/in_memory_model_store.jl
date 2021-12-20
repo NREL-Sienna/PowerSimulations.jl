@@ -91,6 +91,7 @@ function Base.isempty(
     for field in fieldnames(T)
         value_container = getfield(store.data, field)
         empty = isempty(value_container)
+        !empty && break
     end
 
     return empty
