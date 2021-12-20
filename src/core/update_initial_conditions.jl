@@ -20,7 +20,7 @@ function calculate_ic_quantity(
     # its comparing the last_status(t=24) to the 1st variable value (t=1)
     # @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
-    return last_status >= 1.0 ? current_counter : 0.0
+    return var_status >= 1.0 ? current_counter : 0.0
 end
 
 function calculate_ic_quantity(
@@ -42,7 +42,7 @@ function calculate_ic_quantity(
     # its comparing the last_status(t=24) to the 1st variable value (t=1)
     # @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
-    return last_status >= 1.0 ? 0.0 : current_counter
+    return var_status >= 1.0 ? 0.0 : current_counter
 end
 
 function calculate_ic_quantity(
