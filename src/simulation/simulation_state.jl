@@ -150,12 +150,14 @@ function initialize_simulation_state!(
 end
 
 function update_state_data!(
-    state_data::ValueState,
+    key::VariableKey,
+    state::SimulationState,
     store_data::DataFrames.DataFrame,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
     end_of_step_timestamp::Dates.DateTime,
 )
+    state_data = get_decision_state_data(state, key)
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
@@ -173,7 +175,8 @@ function update_state_data!(
     result_time_index = axes(store_data)[1]
     set_last_recorded_row!(state_data, state_data_index)
     # This implementation can fail if the names aren't in the same order.
-    @assert_op DataFrames.names(state_data.values) == DataFrames.names(store_data)
+    @assert_op sort(DataFrames.names(state_data.values)) ==
+               sort(DataFrames.names(store_data))
 
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
@@ -181,6 +184,69 @@ function update_state_data!(
             for i in state_range
                 # TODO: We could also interpolate here
                 state_data.values[i, j] = store_data[t, j]
+            end
+        end
+        state_data_index += resolution_ratio
+    end
+
+    return
+end
+
+function update_state_data!(
+    key::AuxVarKey{S, T},
+    state::SimulationState,
+    store_data::DataFrames.DataFrame,
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+    end_of_step_timestamp::Dates.DateTime,
+) where {T <: PSY.Component, S <: Union{TimeDurationOff, TimeDurationOn}}
+    state_data = get_decision_state_data(state, key)
+    model_resolution = get_resolution(model_params)
+    state_resolution = get_data_resolution(state_data)
+    resolution_ratio = model_resolution ÷ state_resolution
+    @assert_op resolution_ratio >= 1
+
+    if simulation_time > end_of_step_timestamp
+        state_data_index = 1
+        state_data.timestamps[:] .=
+            range(simulation_time, step = state_resolution, length = length(state_data))
+    else
+        state_data_index = find_timestamp_index(get_timestamps(state_data), simulation_time)
+    end
+
+    offset = resolution_ratio - 1
+    result_time_index = axes(store_data)[1]
+    set_last_recorded_row!(state_data, state_data_index)
+    # This implementation can fail if the names aren't in the same order.
+    @assert_op sort(DataFrames.names(state_data.values)) ==
+               sort(DataFrames.names(store_data))
+
+    if (model_resolution / state_resolution) == 1.0
+        increment_per_period = 1.0
+    elseif state_resolution < Dates.Hour(1) && state_resolution > Dates.Minute(1)
+        increment_per_period = Dates.value(Dates.Minute(state_resolution))
+    end
+
+    for t in result_time_index
+        state_range = state_data_index:(state_data_index + offset)
+        for j in DataFrames.names(store_data)
+            for i in state_range
+                if t == 1 && i == 1
+                    if store_data[t, j] > 1
+                        # Account for the fact that previous model stores the state at the end of the hour/period
+                        # we take look one timestep back. As all models save Duration data based on its resolution/timesteps
+                        #  The 2nd terms scales the data to the state resolution.
+                        state_data.values[i, j] =
+                            (store_data[t, j] - 1.0) * (model_resolution / state_resolution)
+                    else
+                        state_data.values[i, j] =
+                            store_data[t, j] * (model_resolution / state_resolution)
+                    end
+                else
+                    state_data.values[i, j] =
+                        store_data[t, j] > 0 ?
+                        state_data.values[i - 1, j] + increment_per_period : 0
+                end
             end
         end
         state_data_index += resolution_ratio
@@ -235,4 +301,28 @@ function get_system_state_value(
     ::Type{U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     return get_system_state_value(state, ConstraintKey(T, U))
+end
+
+function get_system_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_data(state, VariableKey(T, U))
+end
+
+function get_system_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_data(state, AuxVarKey(T, U))
+end
+
+function get_system_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_data(state, ConstraintKey(T, U))
 end

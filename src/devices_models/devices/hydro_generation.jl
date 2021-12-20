@@ -360,7 +360,6 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
-        # TODO: Are the "reservation" models compatible with SC FF?
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
         if !has_semicontinuous_feedforward(model, U)
@@ -382,7 +381,6 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
-        # TODO: Are the "reservation" models compatible with SC FF?
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
         if !has_semicontinuous_feedforward(model, U)
@@ -412,29 +410,6 @@ function get_min_max_limits(
     ::Type{HydroDispatchPumpedStorage},
 )
     return PSY.get_active_power_limits_pump(x)
-end
-
-######################## RoR constraints ############################
-
-"""
-This function define the range constraint specs for the
-reactive power for Commitment Run of River formulation.
-    `` P <= multiplier * P_max ``
-"""
-function add_constraints!(
-    container::OptimizationContainer,
-    T::Type{ActivePowerVariableLimitsConstraint},
-    U::Type{<:Union{VariableType, ExpressionType}},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
-    # TODO: Confirm this is correct. Why Range in the Commitment formulation ?
-    #add_range_constraints!(container, T, U, devices, model, X)
-    if !has_semicontinuous_feedforward(model, U)
-        add_range_constraints!(container, T, U, devices, model, X)
-    end
-    return
 end
 
 ######################## Energy balance constraints ############################
@@ -639,8 +614,6 @@ function add_constraints!(
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
-    # TODO: Check why this isn't used
-    inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
     constraint = add_constraints_container!(
         container,
@@ -678,36 +651,6 @@ function add_constraints!(
     return
 end
 
-########################## Make initial Conditions for a Model #############################
-function initial_conditions!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    ::AbstractHydroUnitCommitment,
-) where {H <: PSY.HydroGen}
-    add_initial_condition!(container, devices, formulation, DeviceStatus)
-    add_initial_condition!(container, devices, formulation, DevicePower)
-    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn)
-    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff)
-
-    return
-end
-
-# TODO: Add test that checks for this function
-function initial_conditions!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    device_formulation::AbstractHydroDispatchFormulation,
-) where {H <: PSY.HydroGen}
-    add_initial_condition!(
-        container,
-        devices,
-        device_formulation,
-        DevicePower,
-        ActivePowerVariable,
-    )
-    return
-end
-
 ##################################### Water/Energy Budget Constraint ############################
 """
 This function define the budget constraint for the
@@ -725,8 +668,6 @@ function add_constraints!(
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
-    # TODO: Variable not used. Check if needed Sourabh
-    inv_dt = 1.0 / (Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR)
     set_name = [PSY.get_name(d) for d in devices]
     constraint =
         add_constraints_container!(container, EnergyBudgetConstraint(), V, set_name)

@@ -670,7 +670,7 @@ function calculate_aux_variable_value!(
         aux_variable_container.data[ix, :] .= ini_cond_value
         sum_on_var = sum(on_var)
         if sum_on_var == time_steps[end] # Unit was always on
-            aux_variable_container.data[ix, :] += time_steps * minutes_per_period
+            aux_variable_container.data[ix, :] += time_steps
         elseif sum_on_var == 0.0 # Unit was always off
             aux_variable_container.data[ix, :] .= 0.0
         else
@@ -716,7 +716,7 @@ function calculate_aux_variable_value!(
         if sum_on_var == time_steps[end] # Unit was always on
             aux_variable_container.data[ix, :] .= 0.0
         elseif sum_on_var == 0.0 # Unit was always off
-            aux_variable_container.data[ix, :] += time_steps * minutes_per_period
+            aux_variable_container.data[ix, :] += time_steps
         else
             previous_condition = ini_cond_value
             for (t, v) in enumerate(on_var)
