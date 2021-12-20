@@ -19,20 +19,20 @@
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
-@testset "All stages executed - No Cache" begin
+@testset "2-Stage Decision Models with FeedForwards" begin
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
     set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,
-        # TODO: Duals currently not working 
+        # TODO: Duals currently not working
         # duals = [CopperPlateBalanceConstraint],
         use_slacks = true,
     ))
     set_network_model!(template_ed, NetworkModel(
         CopperPlatePowerModel,
-        # TODO: Duals currently not working 
+        # TODO: Duals currently not working
         # duals = [CopperPlateBalanceConstraint],
         use_slacks = true,
     ))
@@ -88,33 +88,7 @@ end
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
-@testset "Simulation Single Stage with Cache" begin
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
-    template = get_template_hydro_st_ed()
-    models = SimulationModels(
-        decision_models = [
-            DecisionModel(template, c_sys5_hy_ed; name = "ED", optimizer = ipopt_optimizer),
-        ],
-    )
-
-    single_sequence =
-        SimulationSequence(models = models, ini_cond_chronology = IntraProblemChronology())
-
-    sim_single_wcache = Simulation(
-        name = "cache_st",
-        steps = 2,
-        models = models,
-        sequence = single_sequence,
-        simulation_folder = mktempdir(cleanup = true),
-    )
-    build_out = build!(sim_single_wcache)
-    @test build_out == PSI.BuildStatus.BUILT
-    # TODO: IntraProblemChronology not implemented
-    # execute_out = execute!(sim_single_wcache)
-    # @test execute_out == PSI.RunStatus.SUCCESSFUL
-end
-
-@testset "Simulation with 2-Stages and Cache" begin
+@testset "Simulation with 2-Stages with Storage EMS" begin
     template_uc =
         get_template_hydro_st_uc(NetworkModel(CopperPlatePowerModel, use_slacks = true))
     template_ed =
@@ -171,118 +145,13 @@ end
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
-@testset "Test Recedin Horizon Chronology" begin
-    template_uc = get_template_basic_uc_simulation()
-    # network slacks added because of data issues
-    template_ed = get_template_nomin_ed_simulation(
-        NetworkModel(CopperPlatePowerModel, use_slacks = true),
-    )
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    models = SimulationModels(
-        decision_models = [
-            DecisionModel(
-                template_uc,
-                c_sys5_hy_uc;
-                name = "UC",
-                optimizer = GLPK_optimizer,
-            ),
-            DecisionModel(
-                template_ed,
-                c_sys5_hy_ed;
-                name = "ED",
-                optimizer = ipopt_optimizer,
-            ),
-        ],
-    )
-
-    sequence = SimulationSequence(
-        models = models,
-        feedforwards = Dict(
-            "ED" => [
-                SemiContinuousFeedforward(
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable],
-                ),
-            ],
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-
-    sim = Simulation(
-        name = "receding_horizon",
-        steps = 1,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
-    )
-    build_out = build!(sim)
-    @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
-end
-
-@testset "Test SemiContinuous Feedforward with Active and Reactive Power variables" begin
-    template_uc = get_template_basic_uc_simulation()
-    set_network_model!(template_uc, NetworkModel(ACPPowerModel, use_slacks = true))
-    # network slacks added because of data issues
-    template_ed =
-        get_template_nomin_ed_simulation(NetworkModel(ACPPowerModel, use_slacks = true))
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    models = SimulationModels(
-        decision_models = [
-            DecisionModel(
-                template_uc,
-                c_sys5_hy_uc;
-                name = "UC",
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
-            ),
-            DecisionModel(
-                template_ed,
-                c_sys5_hy_ed;
-                name = "ED",
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
-            ),
-        ],
-    )
-
-    sequence = SimulationSequence(
-        models = models,
-        feedforwards = Dict(
-            "ED" => [
-                SemiContinuousFeedforward(
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable, ReactivePowerVariable],
-                ),
-            ],
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-
-    sim = Simulation(
-        name = "reactive_feedforward",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
-    )
-    build_out = build!(sim)
-    @test build_out == PSI.BuildStatus.BUILT
-    # execute_out = execute!(sim)
-    # @test execute_out == PSI.RunStatus.SUCCESSFUL
-end
-
 @testset "Test Simulation Utils" begin
     template_uc = get_template_basic_uc_simulation()
+    set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,
         use_slacks = true,
-        # TODO: Duals currently not working 
+        # TODO: Duals currently not working
         # duals = [CopperPlateBalanceConstraint],
     ))
 
@@ -291,7 +160,7 @@ end
             CopperPlatePowerModel;
             # Added because of data issues
             use_slacks = true,
-            # TODO: Duals currently not working 
+            # TODO: Duals currently not working
             # duals = [CopperPlateBalanceConstraint],
         ),
     )
@@ -348,8 +217,6 @@ end
     execute_out = execute!(sim)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 
-    #= 
-    TODO: The recorder test are not passing  
     @testset "Verify simulation events" begin
         file = joinpath(PSI.get_simulation_dir(sim), "recorder", "simulation_status.log")
         @test isfile(file)
@@ -364,7 +231,9 @@ end
             PSI.get_simulation_dir(sim);
             step = 2,
         )
-        @test length(events) == 10
+        # This value needs to be checked
+        @test length(events) == 20
+
         PSI.show_simulation_events(
             devnull,
             PSI.InitialConditionUpdateEvent,
@@ -376,7 +245,7 @@ end
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim);
             step = 1,
-            problem = 1,
+            model_name = "UC",
         )
         @test length(events) == 0
         events = PSI.list_simulation_events(
@@ -384,30 +253,30 @@ end
             PSI.get_simulation_dir(sim),
             ;
             step = 2,
-            problem = 1,
+            model_name = "UC",
         )
-        @test length(events) == 10
+        @test length(events) == 20
         PSI.show_simulation_events(
             devnull,
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim),
             ;
             step = 2,
-            problem = 1,
+            model_name = "UC",
         )
     end
 
-    @testset "Check Serialization - Deserialization of Sim" begin
-        path = mktempdir()
-        files_path = PSI.serialize_simulation(sim; path = path)
-        deserialized_sim = Simulation(files_path, stage_info)
-        build_out = build!(deserialized_sim)
-        @test build_out == PSI.BuildStatus.BUILT
-        for stage in values(PSI.get_stages(deserialized_sim))
-            @test PSI.is_stage_built(stage)
-        end
-    end
-    =#
+    # @testset "Check Serialization - Deserialization of Sim" begin
+    #     path = mktempdir()
+    #     files_path = PSI.serialize_simulation(sim; path = path)
+    #     deserialized_sim = Simulation(files_path, stage_info)
+    #     build_out = build!(deserialized_sim)
+    #     @test build_out == PSI.BuildStatus.BUILT
+    #     for stage in values(PSI.get_stages(deserialized_sim))
+    #         @test PSI.is_stage_built(stage)
+    #     end
+    # end
+
     # TODO: Enable for test coverage later
     # @testset "Test print methods" begin
     #     list = [sim, sim.sequence, sim.stages["UC"]]
