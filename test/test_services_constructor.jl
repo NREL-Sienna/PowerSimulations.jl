@@ -339,7 +339,7 @@ end
         affected_values = [ActivePowerReserveVariable],
         meta = "Reserve1",
     )
-    PSI.attach_feedforward(service_model, ff_lb)
+    PSI.attach_feedforward!(service_model, ff_lb)
 
     set_service_model!(template, service_model)
 

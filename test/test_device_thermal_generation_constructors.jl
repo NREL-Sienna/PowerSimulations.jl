@@ -688,8 +688,8 @@ end
         affected_values = [ActivePowerVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_sc)
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_sc)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -710,8 +710,8 @@ end
         affected_values = [ActivePowerVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_sc)
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_sc)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -732,8 +732,8 @@ end
         affected_values = [PSI.PowerAboveMinimumVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_sc)
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_sc)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -754,8 +754,8 @@ end
         affected_values = [ActivePowerVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_sc)
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_sc)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -776,8 +776,8 @@ end
         affected_values = [ActivePowerVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_sc)
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_sc)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -798,8 +798,8 @@ end
         affected_values = [PSI.PowerAboveMinimumVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_sc)
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_sc)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)

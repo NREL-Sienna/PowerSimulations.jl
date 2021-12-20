@@ -2,13 +2,9 @@ function get_affected_values(ff::AbstractAffectFeedforward)
     return ff.affected_values
 end
 
-function attach_feedforward(model, ff::T) where {T <: AbstractAffectFeedforward}
+function attach_feedforward!(model, ff::T) where {T <: AbstractAffectFeedforward}
     if !isempty(model.feedforwards)
         ff_k = [get_optimization_container_key(v) for v in model.feedforwards if isa(v, T)]
-        if isempty(ff_k)
-            push!(model.feedforwards, ff)
-            return
-        end
         if get_optimization_container_key(ff) ∈ ff_k
             return
         end

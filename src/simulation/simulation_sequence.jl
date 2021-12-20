@@ -138,7 +138,7 @@ function _attach_feedforwards(models::SimulationModels, feedforwards)
                         ),
                     )
                 end
-                attach_feedforward(device_model, ff)
+                attach_feedforward!(device_model, ff)
             end
         else
             error("Model $k not present in the SimulationModels")

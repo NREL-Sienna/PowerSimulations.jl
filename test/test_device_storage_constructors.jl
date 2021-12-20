@@ -177,7 +177,7 @@ end
         penalty_cost = 1e5,
     )
 
-    PSI.attach_feedforward(device_model, ff_et)
+    PSI.attach_feedforward!(device_model, ff_et)
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -194,7 +194,7 @@ end
         number_of_periods = 12,
     )
 
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -212,7 +212,7 @@ end
         penalty_cost = 1e5,
     )
 
-    PSI.attach_feedforward(device_model, ff_et)
+    PSI.attach_feedforward!(device_model, ff_et)
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -229,7 +229,7 @@ end
         number_of_periods = 12,
     )
 
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -247,7 +247,7 @@ end
         penalty_cost = 1e5,
     )
 
-    PSI.attach_feedforward(device_model, ff_et)
+    PSI.attach_feedforward!(device_model, ff_et)
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -264,7 +264,7 @@ end
         number_of_periods = 12,
     )
 
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -282,7 +282,7 @@ end
         penalty_cost = 1e5,
     )
 
-    PSI.attach_feedforward(device_model, ff_et)
+    PSI.attach_feedforward!(device_model, ff_et)
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -299,7 +299,7 @@ end
         number_of_periods = 12,
     )
 
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
