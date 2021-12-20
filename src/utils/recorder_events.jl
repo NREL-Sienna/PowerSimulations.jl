@@ -377,7 +377,13 @@ function show_simulation_events(
     wall_time = false,
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    events = list_simulation_events(T, output_dir, filter_func; step = step, model_name = model_name)
+    events = list_simulation_events(
+        T,
+        output_dir,
+        filter_func;
+        step = step,
+        model_name = model_name,
+    )
     show_recorder_events(io, events, filter_func; wall_time = wall_time, kwargs...)
 end
 
