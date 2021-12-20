@@ -155,20 +155,20 @@ function update_state_data!(
     store_data::DataFrames.DataFrame,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
-    end_of_step_timestamp::Dates.DateTime,
 )
     state_data = get_decision_state_data(state, key)
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
+    state_timestamps = get_timestamps(state_data)
     @assert_op resolution_ratio >= 1
 
-    if simulation_time > end_of_step_timestamp
+    if simulation_time > state_timestamps[end]
         state_data_index = 1
         state_data.timestamps[:] .=
             range(simulation_time, step = state_resolution, length = length(state_data))
     else
-        state_data_index = find_timestamp_index(get_timestamps(state_data), simulation_time)
+        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
 
     offset = resolution_ratio - 1
@@ -198,15 +198,15 @@ function update_state_data!(
     store_data::DataFrames.DataFrame,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
-    end_of_step_timestamp::Dates.DateTime,
 ) where {T <: PSY.Component, S <: Union{TimeDurationOff, TimeDurationOn}}
     state_data = get_decision_state_data(state, key)
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
+    state_timestamps = get_timestamps(state_data)
     @assert_op resolution_ratio >= 1
 
-    if simulation_time > end_of_step_timestamp
+    if simulation_time > state_timestamps[end]
         state_data_index = 1
         state_data.timestamps[:] .=
             range(simulation_time, step = state_resolution, length = length(state_data))

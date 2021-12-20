@@ -493,24 +493,11 @@ function _apply_warm_start!(model::DecisionModel)
 end
 
 function update_end_of_step_timestamp!(sim::Simulation)
-    simulation_models = get_models(sim)
-    sim_state = get_simulation_state(sim)
     step_resolution = get_step_resolution(get_sequence(sim))
-    params = _get_state_params(simulation_models, step_resolution)
-    min_resolution = minimum([v[2] for v in values(params)])
-    _update_end_of_step_timestamp!(sim, sim_state, step_resolution, min_resolution)
-    return
-end
-
-function _update_end_of_step_timestamp!(
-    sim::Simulation,
-    sim_state::SimulationState,
-    step_resolution::Dates.Period,
-    min_resolution::Dates.Period,
-)
+    sim_state = get_simulation_state(sim)
     set_end_of_step_timestamp!(
         sim_state,
-        get_current_time(sim) + step_resolution - min_resolution,
+        get_end_of_step_timestamp(sim_state) + step_resolution,
     )
     return
 end
@@ -525,7 +512,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
         for key in list_fields(store, model_name, field)
             # TODO: Read Array here to avoid allocating the DataFrame
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
-            end_of_step_timestamp = get_end_of_step_timestamp(state)
             update_state_data!(
                 key,
                 state,
@@ -533,7 +519,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
                 res,
                 simulation_time,
                 model_params,
-                end_of_step_timestamp,
             )
             IS.@record :execution StateUpdateEvent(
                 key,
@@ -629,21 +614,20 @@ function _execute!(
             "start",
         )
         for (ix, model_number) in enumerate(execution_order)
+            model = get_decision_models(models)[model_number]
+            model_name = get_name(model)
             IS.@record :simulation_status ProblemExecutionEvent(
                 get_current_time(sim),
                 step,
-                model_number,
+                model_name,
                 "start",
             )
-            model = get_decision_models(models)[model_number]
-            model_name = get_name(model)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                 if !is_built(model)
                     error("$(model_name) status is not BuildStatus.BUILT")
                 end
                 problem_interval = get_interval(sequence, model_name)
                 set_current_time!(sim, sim.internal.date_ref[model_number])
-                update_end_of_step_timestamp!(sim)
                 sequence.current_execution_index = ix
 
                 # Is first run of first problem? Yes -> don't update problem
@@ -684,7 +668,7 @@ function _execute!(
                 IS.@record :simulation_status ProblemExecutionEvent(
                     get_current_time(sim),
                     step,
-                    model_number,
+                    model_name,
                     "done",
                 )
 
@@ -700,6 +684,7 @@ function _execute!(
             end #execution problem timer
         end # execution order for loop
 
+        update_end_of_step_timestamp!(sim)
         IS.@record :simulation_status SimulationStepEvent(
             get_current_time(sim),
             step,
