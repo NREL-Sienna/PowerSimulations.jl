@@ -648,7 +648,6 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
-            HDF5.read(HDF5.attributes(problem_group)["end_of_interval_step"]),
             HDF5.read(HDF5.attributes(problem_group)["base_power"]),
             Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
             container_metadata,

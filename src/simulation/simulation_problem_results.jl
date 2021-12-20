@@ -20,7 +20,7 @@ mutable struct SimulationProblemResults
     system_uuid::Base.UUID
     resolution::Dates.TimePeriod
     forecast_horizon::Int
-    end_of_interval_step::Int
+    end_of_interval_index::Int
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
@@ -62,7 +62,7 @@ function SimulationProblemResults(
         problem_params.system_uuid,
         get_resolution(problem_params),
         get_horizon(problem_params),
-        get_end_of_interval_step(problem_params),
+        get_end_of_interval_index(problem_params),
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
         _fill_result_value_container(parameters),
@@ -90,7 +90,7 @@ get_model_name(res::SimulationProblemResults) = res.problem
 get_system(res::SimulationProblemResults) = res.system
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_forecast_horizon(res::SimulationProblemResults) = res.forecast_horizon
-get_end_of_interval_step(res::SimulationProblemResults) = res.end_of_interval_step
+get_end_of_interval_index(res::SimulationProblemResults) = res.end_of_interval_index
 get_execution_path(res::SimulationProblemResults) = res.execution_path
 get_model_base_power(res::SimulationProblemResults) = res.base_power
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
@@ -567,7 +567,7 @@ end
 #    start_offset::Int
 #    end_offset::Int
 #    interval_len::Int
-#    end_of_interval_step::Int
+#    end_of_interval_index::Int
 #end
 #
 #function RealizedMeta(
@@ -579,7 +579,7 @@ end
 #    interval = timestamps.step
 #    resolution = get_resolution(res)
 #    interval_len = Int(interval / resolution)
-#    end_of_interval_step = get_end_of_interval_step(res)
+#    end_of_interval_index = get_end_of_interval_index(res)
 #    realized_timestamps =
 #        get_realized_timestamps(res, initial_time = initial_time, len = len)
 #
@@ -654,7 +654,7 @@ end
 #            result_length = length(first_id:last_id)
 #            for colname in propertynames(df)
 #                colname == :DateTime && continue
-#                if meta.end_of_interval_step == 1 # indicates RH
+#                if meta.end_of_interval_index == 1 # indicates RH
 #                    col = ones(result_length) .* df[!, colname][1] # realization is first period setpoint
 #                else
 #                    col = df[!, colname][first_id:last_id]
