@@ -320,6 +320,7 @@ import Serialization
 import JuMP
 # so that users do not need to import JuMP to use a solver with PowerModels
 import JuMP: optimizer_with_attributes
+import JuMP.Containers: DenseAxisArray, SparseAxisArray
 export optimizer_with_attributes
 import MathOptInterface
 import ParameterJuMP

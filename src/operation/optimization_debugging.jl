@@ -63,7 +63,7 @@ function get_detailed_constraint_numerical_bounds(model::OperationModel)
     end
     constraint_bounds = Dict()
     for (const_key, constriant_array) in get_constraints(get_optimization_container(model))
-        if isa(constriant_array, JuMPSparseArray)
+        if isa(constriant_array, SparseAxisArray)
             bounds = ConstraintBounds()
             for idx in eachindex(constriant_array)
                 constriant_array[idx] == 0.0 && continue
@@ -92,7 +92,7 @@ function get_detailed_variable_numerical_bounds(model::OperationModel)
     variable_bounds = Dict()
     for (variable_key, variable_array) in get_variables(get_optimization_container(model))
         bounds = VariableBounds()
-        if isa(variable_array, JuMPSparseArray)
+        if isa(variable_array, SparseAxisArray)
             for idx in eachindex(variable_array)
                 var = variable_array[idx]
                 var == 0.0 && continue

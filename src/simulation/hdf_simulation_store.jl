@@ -306,14 +306,14 @@ function read_result(
 end
 
 function read_result(
-    ::Type{JuMPDArray},
+    ::Type{DenseAxisArray},
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
 )
     data, columns = _read_data_columns(store, model_name, key, timestamp)
-    return JuMPDArray(permutedims(data), columns, 1:size(data)[1])
+    return DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
 end
 
 function read_result(

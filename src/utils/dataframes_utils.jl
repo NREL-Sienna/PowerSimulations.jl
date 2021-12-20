@@ -7,7 +7,7 @@ Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
 - `columns::Vector{Symbol}`: Required when there is only one axis which is data. Ignored if
   `input_array` includes an axis for device names.
 """
-function axis_array_to_dataframe(input_array::JuMPDArray{Float64}, columns = nothing)
+function axis_array_to_dataframe(input_array::DenseAxisArray{Float64}, columns = nothing)
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
 
@@ -62,7 +62,7 @@ function axis_array_to_dataframe(input_array::JuMPDArray{Float64}, columns = not
     end
 end
 
-function axis_array_to_dataframe(input_array::JuMPDArray, columns = nothing)
+function axis_array_to_dataframe(input_array::DenseAxisArray, columns = nothing)
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
         for t in input_array.axes[1]
@@ -115,7 +115,7 @@ function axis_array_to_dataframe(input_array::JuMPDArray, columns = nothing)
     end
 end
 
-function axis_array_to_dataframe(input_array::JuMPSparseArray, columns = nothing)
+function axis_array_to_dataframe(input_array::SparseAxisArray, columns = nothing)
     column_names = unique([(k[1], k[3]) for k in keys(input_array.data)])
     array_values = Vector{Vector{Float64}}(undef, length(column_names))
     for (ix, col) in enumerate(column_names)

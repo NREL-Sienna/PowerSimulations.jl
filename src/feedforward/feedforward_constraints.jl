@@ -88,8 +88,8 @@ function _add_sc_feedforward_constraints!(
     if any(isnothing.(upper_bounds)) || any(isnothing.(lower_bounds))
         throw(IS.InvalidValueError("Bounds for variable $U $V not defined correctly"))
     end
-    mult_ub = JuMPDArray(repeat(upper_bounds, 1, time_steps[end]), names, time_steps)
-    mult_lb = JuMPDArray(repeat(lower_bounds, 1, time_steps[end]), names, time_steps)
+    mult_ub = DenseAxisArray(repeat(upper_bounds, 1, time_steps[end]), names, time_steps)
+    mult_lb = DenseAxisArray(repeat(lower_bounds, 1, time_steps[end]), names, time_steps)
     jump_model = get_jump_model(container)
     upper_bound_range_with_parameter!(
         jump_model,
@@ -137,8 +137,8 @@ function _add_sc_feedforward_constraints!(
     if any(isnothing.(upper_bounds)) || any(isnothing.(lower_bounds))
         throw(IS.InvalidValueError("Bounds for variable $U $V not defined correctly"))
     end
-    mult_ub = JuMPDArray(repeat(upper_bounds, 1, time_steps[end]), names, time_steps)
-    mult_lb = JuMPDArray(repeat(lower_bounds, 1, time_steps[end]), names, time_steps)
+    mult_ub = DenseAxisArray(repeat(upper_bounds, 1, time_steps[end]), names, time_steps)
+    mult_lb = DenseAxisArray(repeat(lower_bounds, 1, time_steps[end]), names, time_steps)
     jump_model = get_jump_model(container)
     upper_bound_range_with_parameter!(
         jump_model,

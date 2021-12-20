@@ -29,7 +29,7 @@ function jump_value(input::Float64)::Float64
     return input
 end
 
-function to_array(array::JuMPDArray)
+function to_array(array::DenseAxisArray)
     ax = axes(array)
     len_axes = length(ax)
     if len_axes == 1
@@ -60,12 +60,12 @@ function to_array(array::JuMPDArray)
     return data
 end
 
-function to_array(array::JuMPDArray{<:Number})
+function to_array(array::DenseAxisArray{<:Number})
     length(axes(array)) > 2 && error("array axes not supported: $(axes(array))")
     return permutedims(array.data)
 end
 
-function to_array(array::JuMPSparseArray)
+function to_array(array::SparseAxisArray)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     # PERF: can we determine the 2-d array size?
     tmp_data = Dict{Any, Vector{Float64}}()
@@ -86,12 +86,12 @@ to_array(array::Array) = array
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(::Type{T}, axs...) where {T <: Any}
-    return JuMPDArray{T}(undef, axs...)
+    return DenseAxisArray{T}(undef, axs...)
 end
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(::Type{Float64}, axs...)
-    cont = JuMPDArray{Float64}(undef, axs...)
+    cont = DenseAxisArray{Float64}(undef, axs...)
     cont.data .= ones(size(cont.data)) .* NaN
     return cont
 end
@@ -100,13 +100,13 @@ end
 function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.AbstractJuMPScalar}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
-    return JuMPSparseArray(contents)
+    return SparseAxisArray(contents)
 end
 
 function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> 0.0)
-    return JuMPSparseArray(contents)
+    return SparseAxisArray(contents)
 end
 
 function remove_undef!(expression_array::AbstractArray)
@@ -121,9 +121,9 @@ function remove_undef!(expression_array::AbstractArray)
     return expression_array
 end
 
-remove_undef!(expression_array::JuMPSparseArray) = expression_array
+remove_undef!(expression_array::SparseAxisArray) = expression_array
 
-function _calc_dimensions(array::JuMPDArray, name, num_rows::Int, horizon::Int)
+function _calc_dimensions(array::DenseAxisArray, name, num_rows::Int, horizon::Int)
     ax = axes(array)
     # Two use cases for read:
     # 1. Read data for one execution for one device.
@@ -145,7 +145,7 @@ function _calc_dimensions(array::JuMPDArray, name, num_rows::Int, horizon::Int)
     return Dict("columns" => columns, "dims" => dims)
 end
 
-function _calc_dimensions(array::JuMPSparseArray, name, num_rows::Int, horizon::Int)
+function _calc_dimensions(array::SparseAxisArray, name, num_rows::Int, horizon::Int)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
@@ -221,7 +221,7 @@ end
 # check_conflict_status functions can't be tested on CI because free solvers don't support IIS
 function check_conflict_status(
     jump_model::JuMP.Model,
-    constraint_container::JuMPDArray{JuMP.ConstraintRef},
+    constraint_container::DenseAxisArray{JuMP.ConstraintRef},
 )
     conflict_indices = Vector()
     dims = axes(constraint_container)
@@ -239,7 +239,7 @@ end
 
 function check_conflict_status(
     jump_model::JuMP.Model,
-    constraint_container::JuMPSparseArray{JuMP.ConstraintRef},
+    constraint_container::SparseAxisArray{JuMP.ConstraintRef},
 )
     conflict_indices = Vector()
     for (index, constraint) in constraint_container
