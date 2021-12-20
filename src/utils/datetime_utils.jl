@@ -14,7 +14,7 @@ function find_timestamp_index(dates::Vector{Dates.DateTime}, date::Dates.DateTim
     # s_index = findlast(dates .<= date)
     # IS.@assert_op index == s_index
     if index < 1 || index > length(dates)
-        error("Requested timestamp $date not in the provided dates")
+        error("Requested timestamp $date not in the provided dates $dates")
     end
     return index
 end
