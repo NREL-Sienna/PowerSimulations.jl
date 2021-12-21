@@ -40,7 +40,7 @@ struct ModelStoreParams
             horizon,
             Dates.Millisecond(interval),
             Dates.Millisecond(resolution),
-            Dates.Millisecond(interval)/Dates.Millisecond(resolution),
+            Dates.Millisecond(interval) / Dates.Millisecond(resolution),
             base_power,
             system_uuid,
             container_metadata,
