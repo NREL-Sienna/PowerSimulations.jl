@@ -506,11 +506,8 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
 
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
-    _, optimizer_stats.timed_calculate_dual_variables = @timed calculate_dual_variables!(
-        container,
-        system,
-        Val{is_milp(container)}(),
-    )
+    _, optimizer_stats.timed_calculate_dual_variables =
+        @timed calculate_dual_variables!(container, system, Val{is_milp(container)}())
     return status
 end
 
