@@ -118,6 +118,7 @@ export solve!
 export run!
 ## Sim Model Exports
 export execute!
+export get_simulation_model
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
