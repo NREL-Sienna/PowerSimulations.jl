@@ -3,16 +3,15 @@ Stores simulation data in memory
 """
 mutable struct InMemorySimulationStore <: SimulationStore
     params::SimulationStoreParams
-    data::OrderedDict{Symbol, DecisionModelOptimizerResults}
-    # The key is the model name.
-    optimizer_stats::Dict{Symbol, OrderedDict{Dates.DateTime, OptimizerStats}}
+    dm_data::OrderedDict{Symbol, DecisionModelOptimizerResults}
+    em_data::OrderedDict{Symbol, EmulationModelOptimizerResults}
 end
 
 function InMemorySimulationStore()
     return InMemorySimulationStore(
         SimulationStoreParams(),
         OrderedDict{Symbol, DecisionModelOptimizerResults}(),
-        Dict{Symbol, OrderedDict{Dates.DateTime, OptimizerStats}}(),
+        OrderedDict{Symbol, EmulationModelOptimizerResults}(),
     )
 end
 
@@ -28,17 +27,9 @@ function open_store(
 end
 
 function Base.empty!(store::InMemorySimulationStore)
-    for model_data in values(store.data)
-        for type in STORE_CONTAINERS
-            container = getfield(model_data, type)
-            for dict in values(container)
-                empty!(dict)
-            end
-        end
-    end
-
-    empty!(store.optimizer_stats)
-    @debug "Emptied the store"
+    empty!(store.dm_data)
+    empty!(store.em_data)
+    @debug "Emptied the store" _group = LOG_GROUP_SIMULATION_STORE
 end
 
 Base.isopen(::InMemorySimulationStore) = true
@@ -46,7 +37,12 @@ Base.close(::InMemorySimulationStore) = nothing
 Base.flush(::InMemorySimulationStore) = nothing
 get_params(store::InMemorySimulationStore) = store.params
 
-list_models(store::InMemorySimulationStore) = keys(store.data)
+function get_model_params(store::InMemorySimulationStore, model_name::Symbol)
+    return get_params(store).models_params[model_name]
+end
+
+list_models(store::InMemorySimulationStore) =
+    Iterators.flatten((keys(store.dm_data), keys(store.em_data)))
 log_cache_hit_percentages(::InMemorySimulationStore) = nothing
 
 function list_fields(
@@ -54,8 +50,7 @@ function list_fields(
     model_name::Symbol,
     container_type::Symbol,
 )
-    container = getfield(store.data[model_name], container_type)
-    return keys(container)
+    return list_fields(_get_model_results(store, model_name), container_type)
 end
 
 function write_optimizer_stats!(
@@ -64,59 +59,66 @@ function write_optimizer_stats!(
     stats::OptimizerStats,
     timestamp::Dates.DateTime,
 )
-    store.optimizer_stats[Symbol(model_name)][timestamp] = stats
+    write_optimizer_stats!(store.dm_data[model_name], stats, timestamp)
+    return
+end
+
+function write_optimizer_stats!(
+    store::InMemorySimulationStore,
+    model_name,
+    stats::OptimizerStats,
+    execution::Int,
+)
+    write_optimizer_stats!(store.em_data[model_name], stats, index)
     return
 end
 
 function read_model_optimizer_stats(
     store::InMemorySimulationStore,
-    ::Int,
     model_name,
     timestamp::Dates.DateTime,
 )
-    _check_timestamp(store.optimizer_stats, timestamp)
-    return store.optimizer_stats[model_name][timestamp]
+    return read_optimizer_stats(store.dm_data[model_name], timestamp)
 end
 
-function read_model_optimizer_stats(store::InMemorySimulationStore, model_name)
-    stats = [to_namedtuple(x) for x in values(store.optimizer_stats[model_name])]
-    return DataFrames.DataFrame(stats)
+function read_model_optimizer_stats(
+    store::InMemorySimulationStore,
+    model_name,
+    execution::Int,
+)
+    return read_optimizer_stats(store.em_data[model_name], execution)
 end
 
-function initialize_model_storage!(
+function initialize_problem_storage!(
     store::InMemorySimulationStore,
     params,
-    model_reqs,
+    problem_reqs,
     flush_rules,
 )
     store.params = params
-    @debug "initialize in memory storage"
-
-    for model_name in keys(store.params.models)
-        store.data[model_name] = DecisionModelOptimizerResults()
+    for problem in keys(store.params.models_params)
+        store.dm_data[problem] = DecisionModelOptimizerResults()
         for type in STORE_CONTAINERS
-            for (name, reqs) in getfield(model_reqs[model_name], type)
-                container = getfield(store.data[model_name], type)
+            for (name, reqs) in getfield(problem_reqs[problem], type)
+                container = getfield(store.dm_data[problem], type)
                 container[name] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
+                @debug "Added $type $name in $problem" _group = LOG_GROUP_SIMULATION_STORE
             end
         end
 
-        store.optimizer_stats[model_name] = OrderedDict{Dates.DateTime, OptimizerStats}()
-        @debug "Initialized optimizer_stats_datasets $model_name"
+        # TODO EmulationModel: how do we differentiate DM and EM?
     end
 end
 
 function write_result!(
     store::InMemorySimulationStore,
     model_name,
-    container_type,
-    name,
+    key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     array,
     columns = nothing,
 )
-    container = getfield(store.data[model_name], container_type)
-    container[name][timestamp] = axis_array_to_dataframe(array, columns)
+    write_result!(store.dm_data[model_name], key, timestamp, array, columns)
     return
 end
 
@@ -124,28 +126,30 @@ function read_result(
     ::Type{DataFrames.DataFrame},
     store::InMemorySimulationStore,
     model_name,
-    container_type,
-    name,
+    key,
     timestamp::Dates.DateTime,
 )
-    return read_result(store, model_name, container_type, name, timestamp)
+    return read_result(store, model_name, key, timestamp)
 end
 
 function read_result(
     store::InMemorySimulationStore,
     model_name,
-    container_type,
-    name,
+    key,
     timestamp::Dates.DateTime,
 )
-    container = getfield(store.data[Symbol(model_name)], container_type)[name]
-    _check_timestamp(container, timestamp)
-    # Return a copy because callers may mutate it. SimulationProblemResults adds timestamps.
-    return copy(container[timestamp], copycols = true)
+    return read_results(store.dm_data[model_name], key, timestamp)
 end
 
-function _check_timestamp(dict::AbstractDict, timestamp::Dates.DateTime)
-    if !haskey(dict, timestamp)
-        throw(IS.InvalidValue("timestamp = $timestamp is not stored"))
+# Note that this function is not type-stable.
+function _get_model_results(store::InMemorySimulationStore, model_name::Symbol)
+    if model_name in keys(store.dm_data)
+        results = store.dm_data
+    elseif model_name in keys(store.em_data)
+        results = store.em_data
+    else
+        error("model name $model_name is not stored")
     end
+
+    return results[model_name]
 end

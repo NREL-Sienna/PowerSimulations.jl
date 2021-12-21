@@ -297,23 +297,23 @@ function _list_names(model::OperationModel, container_type)
 end
 
 function read_dual(model::OperationModel, key::ConstraintKey)
-    return read_results(get_store(model), STORE_CONTAINER_DUALS, key)
+    return read_results(get_store(model), key)
 end
 
 function read_parameter(model::OperationModel, key::ParameterKey)
-    return read_results(get_store(model), STORE_CONTAINER_PARAMETERS, key)
+    return read_results(get_store(model), key)
 end
 
 function read_aux_variable(model::OperationModel, key::AuxVarKey)
-    return read_results(get_store(model), STORE_CONTAINER_AUX_VARIABLES, key)
+    return read_results(get_store(model), key)
 end
 
 function read_variable(model::OperationModel, key::VariableKey)
-    return read_results(get_store(model), STORE_CONTAINER_VARIABLES, key)
+    return read_results(get_store(model), key)
 end
 
 function read_expression(model::OperationModel, key::ExpressionKey)
-    return read_results(get_store(model), STORE_CONTAINER_EXPRESSIONS, key)
+    return read_results(get_store(model), key)
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))

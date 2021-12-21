@@ -1,74 +1,12 @@
-# So far just the EmulationStore is implemented.
-
-"""
-Stores results data for one DecisionModel
-"""
-mutable struct DecisionModelOptimizerResults <: AbstractModelOptimizerResults
-    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-    expressions::Dict{ExpressionKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}}
-end
-
-function DecisionModelOptimizerResults()
-    return DecisionModelOptimizerResults(
-        Dict{
-            ConstraintKey,
-            Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
-        }(),
-        Dict{
-            ParameterKey,
-            Dict{ParameterKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
-        }(),
-        Dict{
-            VariableKey,
-            Dict{VariableKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
-        }(),
-        Dict{
-            AuxVarKey,
-            Dict{ConstraintKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
-        }(),
-        Dict{
-            AuxVarKey,
-            Dict{ExpressionKey, OrderedDict{Dates.DateTime, DataFrames.DataFrame}},
-        }(),
-    )
-end
-
-"""
-Stores results data for one EmulationModel
-"""
-mutable struct EmulationModelOptimizerResults <: AbstractModelOptimizerResults
-    last_recorded_row::Int
-    duals::Dict{ConstraintKey, DataFrames.DataFrame}
-    parameters::Dict{ParameterKey, DataFrames.DataFrame}
-    variables::Dict{VariableKey, DataFrames.DataFrame}
-    aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
-    expressions::Dict{ExpressionKey, DataFrames.DataFrame}
-end
-
-function EmulationModelOptimizerResults()
-    return EmulationModelOptimizerResults(
-        0,
-        Dict{ConstraintKey, DataFrames.DataFrame}(),
-        Dict{ParameterKey, DataFrames.DataFrame}(),
-        Dict{VariableKey, DataFrames.DataFrame}(),
-        Dict{AuxVarKey, DataFrames.DataFrame}(),
-        Dict{ExpressionKey, DataFrames.DataFrame}(),
-    )
-end
-
 """
 Stores simulation data in memory
 """
 mutable struct InMemoryModelStore{T <: AbstractModelOptimizerResults}
     data::T
-    optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
 
 function InMemoryModelStore(::Type{T}) where {T <: AbstractModelOptimizerResults}
-    return InMemoryModelStore(T(), OrderedDict{Int, OptimizerStats}())
+    return InMemoryModelStore(T())
 end
 
 # TBD: Implementation depending on what the call need is. Needs to make sure it is safe.
@@ -97,14 +35,36 @@ function Base.isempty(
     return empty
 end
 
-function write_optimizer_stats!(store::InMemoryModelStore, stats::OptimizerStats, execution)
-    store.optimizer_stats[execution] = stats
+function write_result!(
+    store::InMemoryModelStore,
+    key::OptimizationContainerKey,
+    index,
+    array,
+    columns,
+)
+    return write_result!(store.data, key, index, array, columns)
+end
+
+function read_results(
+    ::Type{DataFrames.DataFrame},
+    store::InMemoryModelStore,
+    key::OptimizationContainerKey,
+    index = nothing,
+)
+    return read_results(store, key, index)
+end
+
+function read_results(store::InMemoryModelStore, key, index = nothing)
+    return read_results(store.data, key, index)
+end
+
+function write_optimizer_stats!(store::InMemoryModelStore, stats::OptimizerStats, index)
+    write_optimizer_stats!(store.data, stats, index)
     return
 end
 
 function read_optimizer_stats(store::InMemoryModelStore)
-    stats = [to_namedtuple(x) for x in values(store.optimizer_stats)]
-    return DataFrames.DataFrame(stats)
+    return read_optimizer_stats(store.data)
 end
 
 function initialize_storage!(
@@ -138,10 +98,6 @@ function initialize_storage!(
             end
         end
     end
-
-    store.optimizer_stats = OrderedDict{Dates.DateTime, OptimizerStats}()
-    @debug "Initialized optimizer_stats_datasets $(get_name(model))" _group =
-        LOG_GROUP_IN_MEMORY_MODEL_STORE
 end
 
 function initialize_storage!(
@@ -185,70 +141,11 @@ function initialize_storage!(
             end
         end
     end
-
-    store.optimizer_stats = OrderedDict{Dates.DateTime, OptimizerStats}()
-    @debug "Initialized optimizer_stats_datasets $(get_name(model))" _group =
-        LOG_GROUP_IN_MEMORY_MODEL_STORE
 end
 
 function list_keys(store::InMemoryModelStore, container_type)
     container = getfield(store.data, container_type)
     return collect(keys(container))
-end
-
-function write_result!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
-    field::Symbol,
-    key::OptimizationContainerKey,
-    execution::Int,
-    array,
-    columns,
-)
-    container = getfield(store.data, field)
-    df = axis_array_to_dataframe(array, columns)
-    container[key][execution, :] = df[1, :]
-    return
-end
-
-function write_result!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
-    field::Symbol,
-    key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
-    array,
-    columns,
-)
-    container = getfield(store.data, field)
-    df = axis_array_to_dataframe(array, columns)
-    container[key][timestamp] = df
-    return
-end
-
-function read_results(store::InMemoryModelStore, container_type::Symbol, key)
-    return read_results(DataFrames.DataFrame, store, container_type, key)
-end
-
-function read_results(
-    ::Type{DataFrames.DataFrame},
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
-    container_type::Symbol,
-    key::OptimizationContainerKey,
-)
-    container = getfield(store.data, container_type)
-    # Return a copy because callers may mutate it.
-    return copy(container[key], copycols = true)
-end
-
-function read_results(
-    ::Type{DataFrames.DataFrame},
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
-    container_type::Symbol,
-    key::OptimizationContainerKey,
-)
-    container = getfield(store.data, container_type)
-    @assert length(container[key]) == 1
-    # Return a copy because callers may mutate it.
-    return copy(first(values(container[key])), copycols = true)
 end
 
 function get_variable_value(
@@ -282,3 +179,7 @@ function get_parameter_value(
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
     return store.data.parameters[ParameterKey(T, U)]
 end
+
+# TODO DT: Jose, do we need this for DecisionModel?
+get_last_recorded_row(x::InMemoryModelStore) = get_last_recorded_row(x.data)
+set_last_recorded_row!(x::InMemoryModelStore, y) = set_last_recorded_row!(x.data, y)

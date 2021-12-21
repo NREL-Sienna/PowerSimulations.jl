@@ -532,7 +532,7 @@ function write_results!(model::EmulationModel, execution::Int)
     write_model_aux_variable_results!(store, model, execution)
     write_model_expression_results!(store, model, execution)
     write_optimizer_stats!(store, get_optimizer_stats(model), execution)
-    store.data.last_recorded_row = execution
+    set_last_recorded_row!(store, execution)
     return
 end
 
@@ -547,7 +547,7 @@ function write_model_dual_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_DUALS, key, execution, dual, cols)
+        write_result!(store, key, execution, dual, cols)
     end
     return
 end
@@ -580,7 +580,7 @@ function write_model_parameter_results!(
             cols = ["System"]
         end
 
-        write_result!(store, STORE_CONTAINER_PARAMETERS, key, execution, data, cols)
+        write_result!(store, key, execution, data, cols)
     end
     return
 end
@@ -596,7 +596,7 @@ function write_model_variable_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_VARIABLES, key, execution, variable, cols)
+        write_result!(store, key, execution, variable, cols)
     end
     return
 end
@@ -612,7 +612,7 @@ function write_model_aux_variable_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, execution, variable, cols)
+        write_result!(store, key, execution, variable, cols)
     end
     return
 end
@@ -628,7 +628,7 @@ function write_model_expression_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, execution, expression, cols)
+        write_result!(store, key, execution, expression, cols)
     end
     return
 end

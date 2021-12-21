@@ -518,7 +518,7 @@ function write_model_dual_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_DUALS, key, timestamp, dual, cols)
+        write_result!(store, key, timestamp, dual, cols)
     end
     return
 end
@@ -552,7 +552,7 @@ function write_model_parameter_results!(
             cols = ["System"]
         end
 
-        write_result!(store, STORE_CONTAINER_PARAMETERS, key, timestamp, data, cols)
+        write_result!(store, key, timestamp, data, cols)
     end
     return
 end
@@ -569,7 +569,7 @@ function write_model_variable_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_VARIABLES, key, timestamp, variable, cols)
+        write_result!(store, key, timestamp, variable, cols)
     end
     return
 end
@@ -586,7 +586,7 @@ function write_model_aux_variable_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, timestamp, variable, cols)
+        write_result!(store, key, timestamp, variable, cols)
     end
     return
 end
@@ -603,7 +603,7 @@ function write_model_expression_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, timestamp, expression, cols)
+        write_result!(store, key, timestamp, expression, cols)
     end
     return
 end
