@@ -20,7 +20,6 @@ mutable struct SimulationProblemResults
     system_uuid::Base.UUID
     resolution::Dates.TimePeriod
     forecast_horizon::Int
-    end_of_interval_index::Int
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
@@ -62,7 +61,6 @@ function SimulationProblemResults(
         problem_params.system_uuid,
         get_resolution(problem_params),
         get_horizon(problem_params),
-        get_end_of_interval_index(problem_params),
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
         _fill_result_value_container(parameters),
@@ -90,7 +88,6 @@ get_model_name(res::SimulationProblemResults) = res.problem
 get_system(res::SimulationProblemResults) = res.system
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_forecast_horizon(res::SimulationProblemResults) = res.forecast_horizon
-get_end_of_interval_index(res::SimulationProblemResults) = res.end_of_interval_index
 get_execution_path(res::SimulationProblemResults) = res.execution_path
 get_model_base_power(res::SimulationProblemResults) = res.base_power
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
@@ -560,55 +557,6 @@ function _read_optimizer_stats(res::SimulationProblemResults, store::SimulationS
     return read_problem_optimizer_stats(store, Symbol(res.problem))
 end
 
-#struct RealizedMeta
-#    initial_time::Dates.DateTime
-#    resolution::Dates.TimePeriod
-#    count::Int
-#    start_offset::Int
-#    end_offset::Int
-#    interval_len::Int
-#    end_of_interval_index::Int
-#end
-#
-#function RealizedMeta(
-#    res::SimulationProblemResults;
-#    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-#    len::Union{Int, Nothing} = nothing,
-#)
-#    timestamps = get_timestamps(res)
-#    interval = timestamps.step
-#    resolution = get_resolution(res)
-#    interval_len = Int(interval / resolution)
-#    end_of_interval_index = get_end_of_interval_index(res)
-#    realized_timestamps =
-#        get_realized_timestamps(res, initial_time = initial_time, len = len)
-#
-#    result_initial_time = timestamps[findlast(
-#        x -> x .<= first(realized_timestamps),
-#        timestamps,
-#    )]
-#    result_end_time = timestamps[findlast(
-#        x -> x .<= last(realized_timestamps),
-#        timestamps,
-#    )]
-#
-#    count = length(result_initial_time:interval:result_end_time)
-#
-#    start_offset = length(result_initial_time:resolution:first(realized_timestamps))
-#    end_offset = length(
-#        (last(realized_timestamps) + resolution):resolution:(result_end_time + interval - resolution),
-#    )
-#
-#    return RealizedMeta(
-#        result_initial_time,
-#        resolution,
-#        count,
-#        start_offset,
-#        end_offset,
-#        interval_len,
-#    )
-#end
-#
 #function get_realized_timestamps(
 #    res::SimulationProblemResults;
 #    initial_time::Union{Nothing, Dates.DateTime} = nothing,
