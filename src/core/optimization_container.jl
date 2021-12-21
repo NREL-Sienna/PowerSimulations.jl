@@ -509,7 +509,7 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     _, optimizer_stats.timed_calculate_dual_variables = @timed calculate_dual_variables!(
         container,
         system,
-        Base.RefValue{is_milp(container)},
+        Val{is_milp(container)}(),
     )
     return status
 end
@@ -1257,7 +1257,7 @@ end
 function calculate_dual_variables!(
     container::OptimizationContainer,
     system::PSY.System,
-    ::Type{Base.RefValue{false}},
+    ::Val{false},
 )
     duals_vars = get_duals(container)
     for key in keys(duals_vars)
@@ -1323,7 +1323,7 @@ end
 function calculate_dual_variables!(
     container::OptimizationContainer,
     system::PSY.System,
-    ::Type{Base.RefValue{true}},
+    ::Val{true},
 )
     isempty(get_duals(container)) && return
 

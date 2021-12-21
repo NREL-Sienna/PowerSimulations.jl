@@ -683,7 +683,7 @@ function _execute!(
             "done",
         )
     end # Steps for loop
-    return nothing
+    return
 end
 
 """
@@ -762,6 +762,7 @@ function _empty_problem_caches!(sim::Simulation)
     for model in get_decision_models(models)
         empty_time_series_cache!(model)
     end
+    return
 end
 
 """
@@ -785,7 +786,6 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     end
     problems = get_model_names(get_models(sim))
 
-    orig = pwd()
     if !isempty(readdir(directory)) && !force
         throw(
             ArgumentError(
