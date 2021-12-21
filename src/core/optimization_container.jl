@@ -1243,11 +1243,7 @@ function _calculate_dual_variable_value!(
 ) where {T <: ConstraintType, D <: Union{PSY.Component, PSY.System}}
     constraint_container = get_constraint(container, key)
     dual_variable_container = get_duals(container)[key]
-
-    dims = axes(constraint_container)
-    for index in Iterators.product(dims...)
-        dual_variable_container[index...] = JuMP.dual(constraint_container[index...])
-    end
+    dual_variable_container.data .= jump_value.(constraint_container).data
     return
 end
 
@@ -1263,28 +1259,33 @@ function calculate_dual_variables!(
     return
 end
 
-function _process_duals(container::OptimizationContainer)
-    mip_solution = Dict(v => value(v) for v in all_variables(model))
-    cache = Dict{VariableRef, Tuple{Float64, Float64, Bool}}()
-    for x in all_variables(model)
+function _process_duals(container::OptimizationContainer, lp_optimizer)
+    mip_solution = Dict(k => jump_value.(v) for (k, v) in get_variables(container))
+    cache = Dict{VariableKey, Dict}()
+    for (key, variable) in get_variables(container)
         is_integer_flag = false
-        if is_binary(x)
-            unset_binary(x)
-        elseif is_integer(x)
-            unset_integer(x)
+        if JuMP.is_binary(first(variable))
+            JuMP.unset_binary.(variable)
+        elseif JuMP.is_integer(first(variable))
+            JuMP.unset_integer.(variable)
             is_integer_flag = true
         else
             continue
         end
-        cache[x] = (
-            has_lower_bound(x) ? lower_bound(x) : -Inf,
-            has_upper_bound(x) ? upper_bound(x) : Inf,
-            is_integer_flag,
-        )
-        fix(x, mip_solution[x]; force = true)
+        cache[key] = Dict{Symbol, Any}()
+        if JuMP.has_lower_bound(first(variable))
+            cache[key][:lb] = JUMP.lower_bound.(variable)
+        end
+        if JuMP.has_upper_bound(first(variable))
+            cache[key][:ub] = JuMP.upper_bound.(variable)
+        end
+        cache[key][:integer] = is_integer_flag
+        JuMP.fix.(variable, mip_solution[key]; force = true)
     end
-    set_optimizer(model, lp_solver)
-    optimize!(model)
+    @assert !isempty(cache)
+    jump_model = get_jump_model(container)
+    JuMP.set_optimizer(jump_model, lp_optimizer)
+    JuMP.optimize!(jump_model)
 
     model_status = JuMP.dual_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
@@ -1293,28 +1294,36 @@ function _process_duals(container::OptimizationContainer)
     end
 
     if JuMP.has_duals(jump_model)
-        duals = missing  # use shadow_price See https://jump.dev/JuMP.jl/stable/manual/solutions/#Dual-solution-values
+        for (key, dual) in get_duals(container)
+            constraint = get_constraint(container, key)
+            dual.data .= jump_value.(constraint).data
+        end
     end
 
-    for (x, c) in cache
-        unfix(x)
-        if c[1] == -Inf
-            delete_lower_bound(x, c[1])
-        else
-            set_lower_bound(x, c[1])
+    for (key, variable) in get_variables(container)
+        if !haskey(cache, key)
+            continue
         end
-        if c[2] == Inf
-            delete_upper_bound(x, c[2])
-        else
-            set_upper_bound(x, c[2])
+
+        JuMP.unfix.(variable)
+        JuMP.set_binary.(variable)
+        #= Needed if a model has integer variables
+        if haskey(cache[key], :lb) && JuMP.has_lower_bound(first(variable))
+            JuMP.set_lower_bound.(variable, cache[key][:lb])
         end
-        if c[3]
-            set_integer(x)
-        else
-            set_binnary(x)
+
+        if haskey(cache[key], :ub) && JuMP.has_upper_bound(first(variable))
+            JuMP.set_upper_bound.(variable, cache[key][:ub])
         end
+
+        if cache[key][:integer]
+            JuMP.set_integer.(variable)
+        else
+            JuMP.set_binary.(variable)
+        end
+        =#
     end
-    return duals
+    return
 end
 
 function calculate_dual_variables!(
@@ -1324,7 +1333,7 @@ function calculate_dual_variables!(
 )
     isempty(get_duals(container)) && return
 
-    status = _process_duals(container)
+    status = _process_duals(container, container.settings.optimizer)
     return
 end
 
