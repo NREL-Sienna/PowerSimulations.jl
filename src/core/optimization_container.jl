@@ -1236,7 +1236,7 @@ function _calculate_dual_variable_value!(
 
     for t in axes(constraint_container)[1]
         # See https://jump.dev/JuMP.jl/stable/manual/solutions/#Dual-solution-values
-        dual_variable_container[t] = JuMP.dual(constraint_container[t])
+        dual_variable_container[t] = jump_value(constraint_container[t])
     end
     return
 end
@@ -1246,9 +1246,14 @@ function _calculate_dual_variable_value!(
     key::ConstraintKey{T, D},
     ::PSY.System,
 ) where {T <: ConstraintType, D <: Union{PSY.Component, PSY.System}}
-    constraint_container = get_constraint(container, key)
+    constraint_duals = jump_value.(get_constraint(container, key))
     dual_variable_container = get_duals(container)[key]
-    dual_variable_container.data .= jump_value.(constraint_container).data
+
+    # Needs to loop since the container ordering might not match in the DenseAxisArray
+    for index in Iterators.product(axes(constraint_duals)...)
+        dual_variable_container[index...] = constraint_duals[index...]
+    end
+
     return
 end
 
