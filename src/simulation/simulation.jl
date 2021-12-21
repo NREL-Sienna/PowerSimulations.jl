@@ -538,12 +538,10 @@ function _set_system_state!(sim::Simulation, model_name::String)
             get_state_values(system_state, key)[1, :] .=
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
         else
-            error(
-                "Something went really wrong. Please report this error. \n
-                last_update: $(last_update) \n
-                simulation_time: $(simulation_time) \n
-                key: $(encode_key_as_string(key))"
-            )
+            error("Something went really wrong. Please report this error. \n
+                  last_update: $(last_update) \n
+                  simulation_time: $(simulation_time) \n
+                  key: $(encode_key_as_string(key))")
         end
         IS.@record :execution StateUpdateEvent(
             key,
