@@ -47,6 +47,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     parameters::Dict{ParameterKey, ParameterContainer}
     initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
     initial_conditions_data::InitialConditionsData
+    infeasibility_conflict::Dict{Symbol, Array}
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     optimizer_stats::OptimizerStats
@@ -90,6 +91,7 @@ function OptimizationContainer(
         Dict{ParameterKey, ParameterContainer}(),
         Dict{ICKey, Vector{InitialCondition}}(),
         InitialConditionsData(),
+        Dict{Symbol, Array}(),
         nothing,
         PSY.get_base_power(sys),
         OptimizerStats(),
@@ -137,6 +139,8 @@ get_duals(container::OptimizationContainer) = container.duals
 get_expressions(container::OptimizationContainer) = container.expressions
 get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
 get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
+get_infeasibility_conflict(container::OptimizationContainer) =
+    container.infeasibility_conflict
 get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_metadata(container::OptimizationContainer) = container.metadata
 get_parameters(container::OptimizationContainer) = container.parameters
@@ -499,6 +503,9 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         @error "Optimizer returned $model_status"
+        if get_calculate_conflict(get_settings(container))
+            compute_conflict!(container)
+        end
         return RunStatus.FAILED
     end
 
@@ -515,13 +522,13 @@ function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
     JuMP.unset_silent(jump_model)
     jump_model.is_model_dirty = false
-    conflict = Dict{Symbol, Array}()
+    conflict = container.infeasibility_conflict
     try
         JuMP.compute_conflict!(jump_model)
     catch e
         @error "Can't compute conflict, check that your optimizer supports conflict refining/IIS" exception =
             (e, catch_backtrace())
-        return conflict
+        return
     end
 
     if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
@@ -537,9 +544,7 @@ function compute_conflict!(container::OptimizationContainer)
         end
     end
 
-    #TODO: Serialize the conflict to file
-
-    return conflict
+    return
 end
 
 function write_optimizer_stats!(container::OptimizationContainer)
