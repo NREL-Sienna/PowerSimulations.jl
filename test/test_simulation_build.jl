@@ -264,4 +264,33 @@ end
     )
     build_out = build!(sim)
     @test build_out == PSI.BuildStatus.BUILT
+    ac_power_model = PSI.get_simulation_model(PSI.get_models(sim), :ED)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ac_power_model),
+        FeedforwardSemiContinousConstraint(),
+        ThermalStandard,
+        "ActivePowerVariableub",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ac_power_model),
+        FeedforwardSemiContinousConstraint(),
+        ThermalStandard,
+        "ActivePowerVariablelb",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ac_power_model),
+        FeedforwardSemiContinousConstraint(),
+        ThermalStandard,
+        "ReactivePowerVariableub",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ac_power_model),
+        FeedforwardSemiContinousConstraint(),
+        ThermalStandard,
+        "ReactivePowerVariablelb",
+    )
+    @test !isempty(c)
 end
