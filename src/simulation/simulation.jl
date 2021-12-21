@@ -492,16 +492,6 @@ function _apply_warm_start!(model::DecisionModel)
     return
 end
 
-function update_end_of_step_timestamp!(sim::Simulation)
-    step_resolution = get_step_resolution(get_sequence(sim))
-    sim_state = get_simulation_state(sim)
-    set_end_of_step_timestamp!(
-        sim_state,
-        get_end_of_step_timestamp(sim_state) + step_resolution,
-    )
-    return
-end
-
 function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_name = get_name(model)
     store = get_simulation_store(sim)
@@ -548,7 +538,12 @@ function _set_system_state!(sim::Simulation, model_name::String)
             get_state_values(system_state, key)[1, :] .=
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
         else
-            error("Something went really wrong. Please report this error.")
+            error(
+                "Something went really wrong. Please report this error. \n
+                last_update: $(last_update) \n
+                simulation_time: $(simulation_time) \n
+                key: $(encode_key_as_string(key))"
+            )
         end
         IS.@record :execution StateUpdateEvent(
             key,
@@ -684,7 +679,6 @@ function _execute!(
             end #execution problem timer
         end # execution order for loop
 
-        update_end_of_step_timestamp!(sim)
         IS.@record :simulation_status SimulationStepEvent(
             get_current_time(sim),
             step,

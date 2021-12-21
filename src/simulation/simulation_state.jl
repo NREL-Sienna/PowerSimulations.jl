@@ -1,26 +1,14 @@
 struct SimulationState
     current_time::Base.RefValue{Dates.DateTime}
-    end_of_step_timestamp::Base.RefValue{Dates.DateTime}
     decision_states::ValueStates
     system_states::ValueStates
 end
 
 function SimulationState()
-    return SimulationState(
-        Ref(UNSET_INI_TIME),
-        Ref(UNSET_INI_TIME),
-        ValueStates(),
-        ValueStates(),
-    )
+    return SimulationState(Ref(UNSET_INI_TIME), ValueStates(), ValueStates())
 end
 
-get_end_of_step_timestamp(s::SimulationState) = s.end_of_step_timestamp[]
 get_current_time(s::SimulationState) = s.current_time[]
-
-function set_end_of_step_timestamp!(s::SimulationState, val::Dates.DateTime)
-    s.end_of_step_timestamp[] = val
-    return
-end
 
 function set_current_time!(s::SimulationState, val::Dates.DateTime)
     s.current_time[] = val
@@ -65,6 +53,7 @@ function _initialize_model_states!(
     sim_state::SimulationState,
     model::OperationModel,
     simulation_initial_time::Dates.DateTime,
+    simulation_step::Dates.Period,
     params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
     states = get_decision_states(sim_state)
@@ -97,6 +86,7 @@ function _initialize_model_states!(
                         ),
                     ),
                     params[key].resolution,
+                    Int(simulation_step / params[key].resolution),
                 )
             end
         end
@@ -135,14 +125,14 @@ function initialize_simulation_state!(
 )
     params = _get_state_params(models, simulation_step)
     for model in get_decision_models(models)
-        _initialize_model_states!(sim_state, model, simulation_initial_time, params)
+        _initialize_model_states!(
+            sim_state,
+            model,
+            simulation_initial_time,
+            simulation_step,
+            params,
+        )
     end
-
-    min_resolution = minimum([v[2] for v in values(params)])
-    set_end_of_step_timestamp!(
-        sim_state,
-        simulation_initial_time + simulation_step - min_resolution,
-    )
 
     em = get_emulation_model(models)
     _initialize_system_states!(sim_state, em, simulation_initial_time, params)
@@ -163,7 +153,7 @@ function update_state_data!(
     state_timestamps = get_timestamps(state_data)
     @assert_op resolution_ratio >= 1
 
-    if simulation_time > state_timestamps[end]
+    if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
             range(simulation_time, step = state_resolution, length = length(state_data))
@@ -174,17 +164,12 @@ function update_state_data!(
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[1]
     set_last_recorded_row!(state_data, state_data_index)
-    # This implementation can fail if the names aren't in the same order.
-    @assert_op sort(DataFrames.names(state_data.values)) ==
-               sort(DataFrames.names(store_data))
 
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        for j in DataFrames.names(store_data)
-            for i in state_range
-                # TODO: We could also interpolate here
-                state_data.values[i, j] = store_data[t, j]
-            end
+        for name in DataFrames.names(store_data), i in state_range
+            # TODO: We could also interpolate here
+            state_data.values[i, name] = store_data[t, name]
         end
         state_data_index += resolution_ratio
     end
@@ -203,10 +188,9 @@ function update_state_data!(
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
-    state_timestamps = get_timestamps(state_data)
     @assert_op resolution_ratio >= 1
 
-    if simulation_time > state_timestamps[end]
+    if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
             range(simulation_time, step = state_resolution, length = length(state_data))
@@ -217,36 +201,33 @@ function update_state_data!(
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[1]
     set_last_recorded_row!(state_data, state_data_index)
-    # This implementation can fail if the names aren't in the same order.
-    @assert_op sort(DataFrames.names(state_data.values)) ==
-               sort(DataFrames.names(store_data))
 
-    if (model_resolution / state_resolution) == 1.0
+    if resolution_ratio == 1.0
         increment_per_period = 1.0
     elseif state_resolution < Dates.Hour(1) && state_resolution > Dates.Minute(1)
         increment_per_period = Dates.value(Dates.Minute(state_resolution))
+    else
+        error("Incorrect Problem Resolution specification")
     end
 
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        for j in DataFrames.names(store_data)
-            for i in state_range
-                if t == 1 && i == 1
-                    if store_data[t, j] > 1
-                        # Account for the fact that previous model stores the state at the end of the hour/period
-                        # we take look one timestep back. As all models save Duration data based on its resolution/timesteps
-                        #  The 2nd terms scales the data to the state resolution.
-                        state_data.values[i, j] =
-                            (store_data[t, j] - 1.0) * (model_resolution / state_resolution)
-                    else
-                        state_data.values[i, j] =
-                            store_data[t, j] * (model_resolution / state_resolution)
-                    end
+        @assert_op state_range[end] <= length(state_data)
+        for name in DataFrames.names(store_data), i in state_range
+            if t == 1 && i == 1
+                if store_data[t, name] > 1
+                    # Account for the fact that previous model stores the state at the end of the hour/period
+                    # we take look one timestep back. As all models save Duration data based on its resolution/timesteps
+                    # The 2nd terms scales the data to the state resolution.
+                    state_data.values[i, name] =
+                        (store_data[t, name] - 1.0) * resolution_ratio
                 else
-                    state_data.values[i, j] =
-                        store_data[t, j] > 0 ?
-                        state_data.values[i - 1, j] + increment_per_period : 0
+                    state_data.values[i, name] = store_data[t, name] * resolution_ratio
                 end
+            else
+                state_data.values[i, name] =
+                    store_data[t, name] > 0 ?
+                    state_data.values[i - 1, name] + increment_per_period : 0
             end
         end
         state_data_index += resolution_ratio
