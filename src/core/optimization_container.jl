@@ -39,6 +39,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     settings::Settings
     settings_copy::Settings
     variables::Dict{VariableKey, AbstractArray}
+    primal_variables_cache::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
@@ -47,6 +48,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     parameters::Dict{ParameterKey, ParameterContainer}
     initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
     initial_conditions_data::InitialConditionsData
+    infeasibility_conflict::Dict{Symbol, Array}
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
     optimizer_stats::OptimizerStats
@@ -82,6 +84,7 @@ function OptimizationContainer(
         settings,
         copy_for_serialization(settings),
         Dict{VariableKey, AbstractArray}(),
+        Dict{VariableKey, AbstractArray}(),
         Dict{AuxVarKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
@@ -90,6 +93,7 @@ function OptimizationContainer(
         Dict{ParameterKey, ParameterContainer}(),
         Dict{ICKey, Vector{InitialCondition}}(),
         InitialConditionsData(),
+        Dict{Symbol, Array}(),
         nothing,
         PSY.get_base_power(sys),
         OptimizerStats(),
@@ -137,6 +141,8 @@ get_duals(container::OptimizationContainer) = container.duals
 get_expressions(container::OptimizationContainer) = container.expressions
 get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
 get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
+get_infeasibility_conflict(container::OptimizationContainer) =
+    container.infeasibility_conflict
 get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_metadata(container::OptimizationContainer) = container.metadata
 get_parameters(container::OptimizationContainer) = container.parameters
@@ -150,7 +156,7 @@ set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
 get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 
-function is_milp(container::OptimizationContainer)
+function is_milp(container::OptimizationContainer)::Bool
     !supports_milp(container) && return false
     if !isempty(
         JuMP.all_constraints(container.JuMPmodel, JuMP.VariableRef, JuMP.MOI.ZeroOne),
@@ -290,9 +296,9 @@ end
 # This function is necessary while we switch from ParameterJuMP to POI
 function _make_container_array(parameter_jump::Bool, ax...)
     if parameter_jump
-        return remove_undef!(JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...))
+        return remove_undef!(DenseAxisArray{PGAE}(undef, ax...))
     else
-        return remove_undef!(JuMP.Containers.DenseAxisArray{GAE}(undef, ax...))
+        return remove_undef!(DenseAxisArray{GAE}(undef, ax...))
     end
 end
 
@@ -499,27 +505,32 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         @error "Optimizer returned $model_status"
+        if get_calculate_conflict(get_settings(container))
+            compute_conflict!(container)
+        end
         return RunStatus.FAILED
     end
+
+    status = RunStatus.SUCCESSFUL
 
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
     _, optimizer_stats.timed_calculate_dual_variables =
-        @timed calculate_dual_variables!(container, system)
-    return RunStatus.SUCCESSFUL
+        @timed calculate_dual_variables!(container, system, is_milp(container))
+    return status
 end
 
 function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
     JuMP.unset_silent(jump_model)
     jump_model.is_model_dirty = false
-    conflict = Dict{Symbol, Array}()
+    conflict = container.infeasibility_conflict
     try
         JuMP.compute_conflict!(jump_model)
     catch e
         @error "Can't compute conflict, check that your optimizer supports conflict refining/IIS" exception =
             (e, catch_backtrace())
-        return conflict
+        return
     end
 
     if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
@@ -535,9 +546,7 @@ function compute_conflict!(container::OptimizationContainer)
         end
     end
 
-    #TODO: Serialize the conflict to file
-
-    return conflict
+    return
 end
 
 function write_optimizer_stats!(container::OptimizationContainer)
@@ -720,20 +729,18 @@ function add_dual_container!(
     sparse = false,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     if is_milp(container)
-        @warn(
-            "Current formulation has resulted in a MILP problem, dual value retrieval is not supported for MILP problems."
-        )
-    else
-        const_key = ConstraintKey(T, U)
-        if sparse
-            dual_container = sparse_container_spec(Float64, axs...)
-        else
-            dual_container = container_spec(Float64, axs...)
-        end
-        _assign_container!(container.duals, const_key, dual_container)
-        return dual_container
+        @warn("The model has resulted in a MILP, \n
+              dual value retrieval requires solving an additional Linear Program \n
+              which increases simulation time and the results could be innacurate.")
     end
-    return
+    const_key = ConstraintKey(T, U)
+    if sparse
+        dual_container = sparse_container_spec(Float64, axs...)
+    else
+        dual_container = container_spec(Float64, axs...)
+    end
+    _assign_container!(container.duals, const_key, dual_container)
+    return dual_container
 end
 
 function get_dual_keys(container::OptimizationContainer)
@@ -817,8 +824,8 @@ function _add_param_container!(
     param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
         attribute,
-        JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),
-        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
+        DenseAxisArray{param_type}(undef, axs...),
+        fill!(DenseAxisArray{Float64}(undef, axs...), NaN),
     )
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -834,8 +841,8 @@ function _add_param_container!(
     param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
     param_container = ParameterContainer(
         attribute,
-        JuMP.Containers.DenseAxisArray{param_type}(undef, axs...),
-        fill!(JuMP.Containers.DenseAxisArray{Float64}(undef, axs...), NaN),
+        DenseAxisArray{param_type}(undef, axs...),
+        fill!(DenseAxisArray{Float64}(undef, axs...), NaN),
     )
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -1147,7 +1154,6 @@ function write_initial_conditions_data(
 )
     for field in STORE_CONTAINERS
         ic_container_dict = getfield(ic_container, field)
-        # TODO: Not ideal, clean up a bit more.
         if field == STORE_CONTAINER_PARAMETERS
             ic_container_dict = read_parameters(ic_container)
         end
@@ -1162,14 +1168,14 @@ function write_initial_conditions_data(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                ic_data_dict[key] = axis_array_to_dataframe(field_container, nothing)
+                ic_data_dict[key] = axis_array_to_dataframe(field_container, ["System"])
             end
         end
     end
     return
 end
 
-# TODO: These methods aren't passing the potential meta fields in the keys
+# Note: These methods aren't passing the potential meta fields in the keys
 function get_initial_conditions_variable(
     container::OptimizationContainer,
     type::VariableType,
@@ -1219,13 +1225,136 @@ function calculate_aux_variables!(container::OptimizationContainer, system::PSY.
     for key in keys(aux_vars)
         calculate_aux_variable_value!(container, key, system)
     end
+    return RunStatus.SUCCESSFUL
+end
+
+function _calculate_dual_variable_value!(
+    container::OptimizationContainer,
+    key::ConstraintKey{CopperPlateBalanceConstraint, PSY.System},
+    ::PSY.System,
+)
+    constraint_container = get_constraint(container, key)
+    dual_variable_container = get_duals(container)[key]
+
+    for t in axes(constraint_container)[1]
+        # See https://jump.dev/JuMP.jl/stable/manual/solutions/#Dual-solution-values
+        dual_variable_container[t] = jump_value(constraint_container[t])
+    end
     return
 end
 
-function calculate_dual_variables!(container::OptimizationContainer, system::PSY.System)
+function _calculate_dual_variable_value!(
+    container::OptimizationContainer,
+    key::ConstraintKey{T, D},
+    ::PSY.System,
+) where {T <: ConstraintType, D <: Union{PSY.Component, PSY.System}}
+    constraint_duals = jump_value.(get_constraint(container, key))
+    dual_variable_container = get_duals(container)[key]
+
+    # Needs to loop since the container ordering might not match in the DenseAxisArray
+    for index in Iterators.product(axes(constraint_duals)...)
+        dual_variable_container[index...] = constraint_duals[index...]
+    end
+
+    return
+end
+
+function _calculate_dual_variables_continous_model!(
+    container::OptimizationContainer,
+    system::PSY.System,
+)
     duals_vars = get_duals(container)
     for key in keys(duals_vars)
         _calculate_dual_variable_value!(container, key, system)
+    end
+    return RunStatus.SUCCESSFUL
+end
+
+function _process_duals(container::OptimizationContainer, lp_optimizer)
+    container.primal_variables_cache =
+        Dict(k => jump_value.(v) for (k, v) in get_variables(container))
+    cache = Dict{VariableKey, Dict}()
+    for (key, variable) in get_variables(container)
+        is_integer_flag = false
+        if JuMP.is_binary(first(variable))
+            JuMP.unset_binary.(variable)
+        elseif JuMP.is_integer(first(variable))
+            JuMP.unset_integer.(variable)
+            is_integer_flag = true
+        else
+            continue
+        end
+        cache[key] = Dict{Symbol, Any}()
+        if JuMP.has_lower_bound(first(variable))
+            cache[key][:lb] = JUMP.lower_bound.(variable)
+        end
+        if JuMP.has_upper_bound(first(variable))
+            cache[key][:ub] = JuMP.upper_bound.(variable)
+        end
+        cache[key][:integer] = is_integer_flag
+        JuMP.fix.(variable, container.primal_variables_cache[key]; force = true)
+    end
+    @assert !isempty(cache)
+    jump_model = get_jump_model(container)
+    JuMP.set_optimizer(jump_model, lp_optimizer)
+    JuMP.optimize!(jump_model)
+
+    model_status = JuMP.dual_status(jump_model)
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        @error "Optimizer returned $model_status"
+        return RunStatus.FAILED
+    end
+
+    if JuMP.has_duals(jump_model)
+        for (key, dual) in get_duals(container)
+            constraint = get_constraint(container, key)
+            dual.data .= jump_value.(constraint).data
+        end
+    end
+
+    for (key, variable) in get_variables(container)
+        if !haskey(cache, key)
+            continue
+        end
+
+        JuMP.unfix.(variable)
+        JuMP.set_binary.(variable)
+        #= Needed if a model has integer variables
+        if haskey(cache[key], :lb) && JuMP.has_lower_bound(first(variable))
+            JuMP.set_lower_bound.(variable, cache[key][:lb])
+        end
+
+        if haskey(cache[key], :ub) && JuMP.has_upper_bound(first(variable))
+            JuMP.set_upper_bound.(variable, cache[key][:ub])
+        end
+
+        if cache[key][:integer]
+            JuMP.set_integer.(variable)
+        else
+            JuMP.set_binary.(variable)
+        end
+        =#
+    end
+    return RunStatus.SUCCESSFUL
+end
+
+function _calculate_dual_variables_discrete_model!(
+    container::OptimizationContainer,
+    ::PSY.System,
+)
+    return _process_duals(container, container.settings.optimizer)
+end
+
+function calculate_dual_variables!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    is_milp::Bool,
+)
+    isempty(get_duals(container)) && return RunStatus.SUCCESSFUL
+    if is_milp
+        status = _calculate_dual_variables_discrete_model!(container, sys)
+    else
+        status = _calculate_dual_variables_continous_model!(container, sys)
     end
     return
 end

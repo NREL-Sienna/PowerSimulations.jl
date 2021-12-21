@@ -221,6 +221,7 @@ export FlowActivePowerFromToVariable
 export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable
 export FlowReactivePowerToFromVariable
+export PowerAboveMinimumVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -231,6 +232,7 @@ export PowerOutput
 export AbsoluteValueConstraint
 export ActiveConstraint
 export ActivePowerVariableLimitsConstraint
+export ActivePowerVariableTimeSeriesLimitsConstraint
 export ActiveRangeConstraint
 export ActiveRangeICConstraint
 export AreaDispatchBalanceConstraint
@@ -250,7 +252,7 @@ export EnergyLimitConstraint
 export EnergyShortageVariableLimitsConstraint
 export EnergyTargetConstraint
 export EqualityConstraint
-export FeedforwardBinConstraint
+export FeedforwardSemiContinousConstraint
 export FeedforwardUpperBoundConstraint
 export FeedforwardLowerBoundConstraint
 export FeedforwardIntegralLimitConstraint
@@ -318,6 +320,7 @@ import Serialization
 import JuMP
 # so that users do not need to import JuMP to use a solver with PowerModels
 import JuMP: optimizer_with_attributes
+import JuMP.Containers: DenseAxisArray, SparseAxisArray
 export optimizer_with_attributes
 import MathOptInterface
 import ParameterJuMP
@@ -477,7 +480,6 @@ include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
 
-include("devices_models/devices/common/constraints_structs.jl")
 include("devices_models/devices/common/cost_functions.jl")
 include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")

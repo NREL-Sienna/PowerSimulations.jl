@@ -481,11 +481,11 @@ end
         affected_values = [ActivePowerVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_sc)
+    PSI.attach_feedforward!(device_model, ff_sc)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
-    moi_tests(model, true, 48, 0, 48, 24, 0, true)
+    moi_tests(model, true, 48, 0, 72, 48, 0, true)
 end
 
 @testset "Test UpperBoundFeedforward to HydroDispatch with HydroCommitmentRunOfRiver model" begin
@@ -495,7 +495,7 @@ end
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
     )
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -509,7 +509,7 @@ end
         source = ActivePowerVariable,
         affected_values = [ActivePowerVariable],
     )
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -525,7 +525,7 @@ end
         affected_values = [ActivePowerVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -541,7 +541,7 @@ end
         affected_values = [ActivePowerVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_ub)
+    PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hy")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -557,7 +557,7 @@ end
         number_of_periods = 12,
     )
 
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -573,7 +573,7 @@ end
         number_of_periods = 12,
     )
 
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -588,7 +588,7 @@ end
         affected_values = [ActivePowerVariable],
     )
 
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -603,7 +603,7 @@ end
         affected_values = [ActivePowerVariable],
         number_of_periods = 12,
     )
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -617,11 +617,11 @@ end
         source = OnVariable,
         affected_values = [ActivePowerVariable],
     )
-    PSI.attach_feedforward(device_model, ff_sc)
+    PSI.attach_feedforward!(device_model, ff_sc)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
-    moi_tests(model, true, 144, 0, 24, 24, 48, true)
+    moi_tests(model, true, 144, 0, 48, 48, 48, true)
 end
 
 @testset "Test IntegralLimitFeedforward to HydroEnergyReservoir models" begin
@@ -634,7 +634,7 @@ end
         number_of_periods = 12,
     )
 
-    PSI.attach_feedforward(device_model, ff_il)
+    PSI.attach_feedforward!(device_model, ff_il)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
@@ -652,7 +652,7 @@ end
         penalty_cost = 1e4,
     )
 
-    PSI.attach_feedforward(device_model, ff_up)
+    PSI.attach_feedforward!(device_model, ff_up)
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_phes_ed")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)

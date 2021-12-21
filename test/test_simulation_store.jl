@@ -127,7 +127,7 @@ function _verify_data(expected, store, model, name, time, columns)
     df = read_result(DataFrames.DataFrame, store, model, name, time)
     @test expected_df == df
 
-    # TODO read_result with JuMP.Containers.DenseAxisArray
+    # TODO read_result with DenseAxisArray
 end
 
 @testset "Test SimulationStore 2-d arrays" begin

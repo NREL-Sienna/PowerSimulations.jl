@@ -41,7 +41,7 @@ function ModelInternal(
         BuildStatus.EMPTY,
         RunStatus.READY,
         true,
-        0,
+        1, #Default executions is 1. The model will be run at least once
         0,
         nothing,
         nothing,

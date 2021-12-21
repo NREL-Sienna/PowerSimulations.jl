@@ -56,7 +56,6 @@ empty_time_series_cache!(x::OperationModel) = empty!(get_time_series_cache(x))
 
 function get_current_timestamp(model::OperationModel)
     # For EmulationModel interval and resolution are the same.
-    # TODO: make a field to store an updated timestamp
     return get_initial_time(model) + get_execution_count(model) * get_interval(model)
 end
 
@@ -359,3 +358,16 @@ function update_model!(model::OperationModel, source, ini_cond_chronology)
     end
     return
 end
+
+list_aux_variable_keys(x::OperationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
+list_aux_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
+list_variable_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
+list_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
+list_parameter_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
+list_parameter_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
+list_dual_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
+list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
+list_expression_keys(x::OperationModel) =
+    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
+list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)

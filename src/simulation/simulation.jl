@@ -58,7 +58,6 @@ they passed to the original Simulation.
 
 # Arguments
 - `directory::AbstractString`: the directory returned from the call to serialize
-# TODO: this description is probably wrong
 - `model_info::Dict`: Two-level dictionary containing model parameters that cannot be
   serialized. The outer dict should be keyed by the problem name. The inner dict must contain
   'optimizer' and may contain 'jump_model'. These should be the same values used for the
@@ -82,8 +81,6 @@ get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
 get_current_time(sim::Simulation) = get_current_time(get_simulation_state(sim))
 get_models(sim::Simulation) = sim.models
-get_model(sim::Simulation, ix::Int) = sim.models[ix]
-get_model(sim::Simulation, name::Symbol) = get_model(sim.models, name)
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
 get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
@@ -305,7 +302,7 @@ function _initialize_problem_storage!(
         # TODO: configuration of keep_in_cache and priority are not correct
 
         for (key, array) in get_duals(container)
-            reqs.duals[model] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            reqs.duals[key] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
             add_rule!(rules, model_name, key, false, CachePriority.LOW)
         end
 
@@ -328,18 +325,11 @@ function _initialize_problem_storage!(
             add_rule!(rules, model_name, key, false, CachePriority.HIGH)
         end
 
-        # TODO: Do for expressions
-        #for (key, array) in get_expressions(model)
-        #    reqs.aux_variables[key] =
-        #        _calc_dimensions(array, encode_key(key), num_rows, horizon)
-        #    add_rule!(
-        #        rules,
-        #        model_name,
-        #        key,
-        #        false,
-        #        CachePriority.HIGH,
-        #    )
-        #end
+        for (key, array) in get_expressions(container)
+            reqs.expressions[key] =
+                _calc_dimensions(array, encode_key(key), num_rows, horizon)
+            add_rule!(rules, model_name, key, false, CachePriority.LOW)
+        end
 
         model_req[model_name] = reqs
 
@@ -495,7 +485,7 @@ function _apply_warm_start!(model::DecisionModel)
     container = get_optimization_container(model)
     jump_model = get_jump_model(container)
     all_vars = JuMP.all_variables(jump_model)
-    all_vars_value = JuMP.value.(all_vars)
+    all_vars_value = jump_value.(all_vars)
     JuMP.set_start_value.(all_vars, all_vars_value)
     return
 end
@@ -508,17 +498,15 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     for field in fieldnames(ValueStates)
         model_params = get_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
-            state_info = getfield(state.decision_states, field)
             # TODO: Read Array here to avoid allocating the DataFrame
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
-            end_of_step_timestamp = get_end_of_step_timestamp(state)
             update_state_data!(
-                state_info[key],
+                key,
+                state,
                 # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
                 res,
                 simulation_time,
                 model_params,
-                end_of_step_timestamp,
             )
             IS.@record :execution StateUpdateEvent(
                 key,
@@ -528,6 +516,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             )
         end
     end
+    return
 end
 
 function _set_system_state!(sim::Simulation, model_name::String)
@@ -547,7 +536,10 @@ function _set_system_state!(sim::Simulation, model_name::String)
             get_state_values(system_state, key)[1, :] .=
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
         else
-            error("Something went really wrong. Please report this error.")
+            error("Something went really wrong. Please report this error. \n
+                  last_update: $(last_update) \n
+                  simulation_time: $(simulation_time) \n
+                  key: $(encode_key_as_string(key))")
         end
         IS.@record :execution StateUpdateEvent(
             key,
@@ -613,14 +605,14 @@ function _execute!(
             "start",
         )
         for (ix, model_number) in enumerate(execution_order)
+            model = get_decision_models(models)[model_number]
+            model_name = get_name(model)
             IS.@record :simulation_status ProblemExecutionEvent(
                 get_current_time(sim),
                 step,
-                model_number,
+                model_name,
                 "start",
             )
-            model = get_decision_models(models)[model_number]
-            model_name = get_name(model)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                 if !is_built(model)
                     error("$(model_name) status is not BuildStatus.BUILT")
@@ -667,7 +659,7 @@ function _execute!(
                 IS.@record :simulation_status ProblemExecutionEvent(
                     get_current_time(sim),
                     step,
-                    model_number,
+                    model_name,
                     "done",
                 )
 
@@ -689,7 +681,7 @@ function _execute!(
             "done",
         )
     end # Steps for loop
-    return nothing
+    return
 end
 
 """
@@ -768,6 +760,7 @@ function _empty_problem_caches!(sim::Simulation)
     for model in get_decision_models(models)
         empty_time_series_cache!(model)
     end
+    return
 end
 
 """
@@ -791,7 +784,6 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     end
     problems = get_model_names(get_models(sim))
 
-    orig = pwd()
     if !isempty(readdir(directory)) && !force
         throw(
             ArgumentError(

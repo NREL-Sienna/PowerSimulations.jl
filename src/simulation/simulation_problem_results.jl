@@ -20,7 +20,6 @@ mutable struct SimulationProblemResults
     system_uuid::Base.UUID
     resolution::Dates.TimePeriod
     forecast_horizon::Int
-    end_of_interval_step::Int
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
@@ -62,7 +61,6 @@ function SimulationProblemResults(
         problem_params.system_uuid,
         get_resolution(problem_params),
         get_horizon(problem_params),
-        get_end_of_interval_step(problem_params),
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
         _fill_result_value_container(parameters),
@@ -90,7 +88,6 @@ get_model_name(res::SimulationProblemResults) = res.problem
 get_system(res::SimulationProblemResults) = res.system
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_forecast_horizon(res::SimulationProblemResults) = res.forecast_horizon
-get_end_of_interval_step(res::SimulationProblemResults) = res.end_of_interval_step
 get_execution_path(res::SimulationProblemResults) = res.execution_path
 get_model_base_power(res::SimulationProblemResults) = res.base_power
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
@@ -284,10 +281,10 @@ function _read_variables(
         store = res.store
     end
     _validate_keys(keys(res.variable_values), variable_keys)
-    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
     keys_with_values = [k for (k, v) in res.variable_values if !isempty(v)]
     same_keys = isempty([n for n in variable_keys if n ∉ keys_with_values])
-    if same_time_stamps && same_keys
+    if same_timestamps && same_keys
         @info "reading variables from SimulationsResults"
         vals = filter(p -> (p.first ∈ variable_keys), res.variable_values)
     else
@@ -350,10 +347,10 @@ function _read_duals(
         store = res.store
     end
     _validate_keys(keys(res.dual_values), dual_keys)
-    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
     keys_with_values = [k for (k, v) in res.dual_values if !isempty(v)]
     same_keys = isempty([n for n in dual_keys if n ∉ keys_with_values])
-    if same_time_stamps && same_keys
+    if same_timestamps && same_keys
         @debug "reading duals from SimulationsResults"
         vals = filter(p -> (p.first ∈ dual_keys), res.dual_values)
     else
@@ -409,10 +406,10 @@ function _read_parameters(
         store = res.store
     end
     _validate_keys(res.parameter_values, parameter_keys)
-    same_time_stamps = isempty(setdiff(res.results_timestamps, timestamps))
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
     parameters_with_values = [k for (k, v) in res.parameter_values if !isempty(v)]
     same_parameters = isempty([n for n in parameter_keys if n ∉ parameters_with_values])
-    if same_time_stamps && same_parameters
+    if same_timestamps && same_parameters
         @info "reading parameters from SimulationsResults"
         vals = filter(p -> (p.first ∈ parameter_keys), res.parameter_values)
     else
@@ -560,55 +557,6 @@ function _read_optimizer_stats(res::SimulationProblemResults, store::SimulationS
     return read_problem_optimizer_stats(store, Symbol(res.problem))
 end
 
-#struct RealizedMeta
-#    initial_time::Dates.DateTime
-#    resolution::Dates.TimePeriod
-#    count::Int
-#    start_offset::Int
-#    end_offset::Int
-#    interval_len::Int
-#    end_of_interval_step::Int
-#end
-#
-#function RealizedMeta(
-#    res::SimulationProblemResults;
-#    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-#    len::Union{Int, Nothing} = nothing,
-#)
-#    timestamps = get_timestamps(res)
-#    interval = timestamps.step
-#    resolution = get_resolution(res)
-#    interval_len = Int(interval / resolution)
-#    end_of_interval_step = get_end_of_interval_step(res)
-#    realized_timestamps =
-#        get_realized_timestamps(res, initial_time = initial_time, len = len)
-#
-#    result_initial_time = timestamps[findlast(
-#        x -> x .<= first(realized_timestamps),
-#        timestamps,
-#    )]
-#    result_end_time = timestamps[findlast(
-#        x -> x .<= last(realized_timestamps),
-#        timestamps,
-#    )]
-#
-#    count = length(result_initial_time:interval:result_end_time)
-#
-#    start_offset = length(result_initial_time:resolution:first(realized_timestamps))
-#    end_offset = length(
-#        (last(realized_timestamps) + resolution):resolution:(result_end_time + interval - resolution),
-#    )
-#
-#    return RealizedMeta(
-#        result_initial_time,
-#        resolution,
-#        count,
-#        start_offset,
-#        end_offset,
-#        interval_len,
-#    )
-#end
-#
 #function get_realized_timestamps(
 #    res::SimulationProblemResults;
 #    initial_time::Union{Nothing, Dates.DateTime} = nothing,
@@ -654,7 +602,7 @@ end
 #            result_length = length(first_id:last_id)
 #            for colname in propertynames(df)
 #                colname == :DateTime && continue
-#                if meta.end_of_interval_step == 1 # indicates RH
+#                if meta.end_of_interval_index == 1 # indicates RH
 #                    col = ones(result_length) .* df[!, colname][1] # realization is first period setpoint
 #                else
 #                    col = df[!, colname][first_id:last_id]
@@ -821,9 +769,9 @@ function write_to_CSV(res::SimulationProblemResults; kwargs...)
     for (p, v) in IS.get_parameters(res)
         parameters_export[p] = get_model_base_power(res) .* v
     end
-    write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
+    write_data(variables_export, res.timestamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_stats(IS.get_total_cost(res), folder_path)
-    write_data(IS.get_timestamp(res), folder_path, "time_stamp"; file_type = CSV, kwargs...)
+    write_data(IS.get_timestamp(res), folder_path, "timestamp"; file_type = CSV, kwargs...)
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
     write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
     files = readdir(folder_path)

@@ -10,7 +10,7 @@ if !Sys.iswindows()
         "limits/time" => 100,
     )
 
-    test_months = (get(ENV, "CI", nothing) == "true") ? 1 : 4
+    test_months = (get(ENV, "CI", nothing) == "true") ? 4 : 6
     sys_rts = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_DA_sys")
     @testset "Decision Model test for Initialization with RTS GMLC system, Case 1" begin
         ######## Test with ThermalStandardUnitCommitment ########

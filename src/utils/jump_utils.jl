@@ -9,31 +9,35 @@ function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
 
-function _jump_value(input::JuMP.VariableRef)
+function jump_value(input::JuMP.VariableRef)::Float64
     return JuMP.value(input)
 end
 
-function _jump_value(input::JuMP.AbstractJuMPScalar)
+function jump_value(input::T)::Float64 where {T <: JuMP.AbstractJuMPScalar}
     return JuMP.value(input)
 end
 
-function _jump_value(input::PJ.ParameterRef)
+function jump_value(input::PJ.ParameterRef)::Float64
     return PJ.value(input)
 end
 
-function _jump_value(input::JuMP.ConstraintRef)
+function jump_value(input::JuMP.ConstraintRef)::Float64
     return JuMP.dual(input)
 end
 
-function to_array(array::JuMP.Containers.DenseAxisArray)
+function jump_value(input::Float64)::Float64
+    return input
+end
+
+function to_array(array::DenseAxisArray)
     ax = axes(array)
     len_axes = length(ax)
     if len_axes == 1
-        data = _jump_value.((array[x] for x in ax[1]))
+        data = jump_value.((array[x] for x in ax[1]))
     elseif len_axes == 2
         data = Array{Float64, 2}(undef, length(ax[2]), length(ax[1]))
         for t in ax[2], (ix, name) in enumerate(ax[1])
-            data[t, ix] = _jump_value(array[name, t])
+            data[t, ix] = jump_value(array[name, t])
         end
         # TODO: this needs a better plan
         #elseif len_axes == 3
@@ -44,7 +48,7 @@ function to_array(array::JuMP.Containers.DenseAxisArray)
         #        third_dim = collect(fill(i, size(array)[end]))
         #        data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
         #        for t in last(ax), (ix, name) in enumerate(first(ax))
-        #            data[t, ix] = _jump_value(array[name, i, t])
+        #            data[t, ix] = jump_value(array[name, i, t])
         #        end
         #        push!(arrays, data)
         #    end
@@ -56,18 +60,18 @@ function to_array(array::JuMP.Containers.DenseAxisArray)
     return data
 end
 
-function to_array(array::JuMP.Containers.DenseAxisArray{<:Number})
+function to_array(array::DenseAxisArray{<:Number})
     length(axes(array)) > 2 && error("array axes not supported: $(axes(array))")
     return permutedims(array.data)
 end
 
-function to_array(array::JuMP.Containers.SparseAxisArray)
+function to_array(array::SparseAxisArray)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     # PERF: can we determine the 2-d array size?
     tmp_data = Dict{Any, Vector{Float64}}()
     for (ix, col) in enumerate(columns)
         res = values(filter(v -> first(v)[[1, 3]] == col, array.data))
-        tmp_data[col] = _jump_value.(res)
+        tmp_data[col] = jump_value.(res)
     end
 
     data = Array{Float64, 2}(undef, length(first(values(tmp_data))), length(columns))
@@ -82,12 +86,12 @@ to_array(array::Array) = array
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(::Type{T}, axs...) where {T <: Any}
-    return JuMP.Containers.DenseAxisArray{T}(undef, axs...)
+    return DenseAxisArray{T}(undef, axs...)
 end
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(::Type{Float64}, axs...)
-    cont = JuMP.Containers.DenseAxisArray{Float64}(undef, axs...)
+    cont = DenseAxisArray{Float64}(undef, axs...)
     cont.data .= ones(size(cont.data)) .* NaN
     return cont
 end
@@ -96,13 +100,13 @@ end
 function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.AbstractJuMPScalar}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
-    return JuMP.Containers.SparseAxisArray(contents)
+    return SparseAxisArray(contents)
 end
 
 function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> 0.0)
-    return JuMP.Containers.SparseAxisArray(contents)
+    return SparseAxisArray(contents)
 end
 
 function remove_undef!(expression_array::AbstractArray)
@@ -117,14 +121,9 @@ function remove_undef!(expression_array::AbstractArray)
     return expression_array
 end
 
-remove_undef!(expression_array::JuMP.Containers.SparseAxisArray) = expression_array
+remove_undef!(expression_array::SparseAxisArray) = expression_array
 
-function _calc_dimensions(
-    array::JuMP.Containers.DenseAxisArray,
-    name,
-    num_rows::Int,
-    horizon::Int,
-)
+function _calc_dimensions(array::DenseAxisArray, name, num_rows::Int, horizon::Int)
     ax = axes(array)
     # Two use cases for read:
     # 1. Read data for one execution for one device.
@@ -146,12 +145,7 @@ function _calc_dimensions(
     return Dict("columns" => columns, "dims" => dims)
 end
 
-function _calc_dimensions(
-    array::JuMP.Containers.SparseAxisArray,
-    name,
-    num_rows::Int,
-    horizon::Int,
-)
+function _calc_dimensions(array::SparseAxisArray, name, num_rows::Int, horizon::Int)
     columns = unique([(k[1], k[3]) for k in keys(array.data)])
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
@@ -227,11 +221,11 @@ end
 # check_conflict_status functions can't be tested on CI because free solvers don't support IIS
 function check_conflict_status(
     jump_model::JuMP.Model,
-    constraint_container::JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef},
+    constraint_container::DenseAxisArray{JuMP.ConstraintRef},
 )
     conflict_indices = Vector()
     dims = axes(constraint_container)
-    for index in zip(dims...)
+    for index in Iterators.product(dims...)
         if MOI.get(
             jump_model,
             MOI.ConstraintConflictStatus(),
@@ -245,7 +239,7 @@ end
 
 function check_conflict_status(
     jump_model::JuMP.Model,
-    constraint_container::JuMP.Containers.SparseAxisArray{JuMP.ConstraintRef},
+    constraint_container::SparseAxisArray{JuMP.ConstraintRef},
 )
     conflict_indices = Vector()
     for (index, constraint) in constraint_container

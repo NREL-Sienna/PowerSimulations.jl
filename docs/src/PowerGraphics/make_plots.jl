@@ -151,19 +151,17 @@ PG.plot_variable(p, re_results, "P__RenewableDispatch"; title = "overlay", save 
 path = mkdir(joinpath(pwd(), "plots-54"));
 PG.plot_dataframe(
     re_results.variable_values[:P__ThermalStandard],
-    re_results.time_stamp;
+    re_results.timestamp;
     save = path,
 );
 path = mkdir(joinpath(pwd(), "plots-55"));
 
-p2 = PG.plot_dataframe(
-    re_results.variable_values[:P__ThermalStandard],
-    re_results.time_stamp,
-);
+p2 =
+    PG.plot_dataframe(re_results.variable_values[:P__ThermalStandard], re_results.timestamp);
 PG.plot_dataframe(
     p2,
     re_results.variable_values[:P__RenewableDispatch],
-    re_results.time_stamp;
+    re_results.timestamp;
     title = "overlay",
     save = path,
     format = "png",

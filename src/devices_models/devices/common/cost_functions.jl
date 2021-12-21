@@ -136,7 +136,7 @@ end
 # Since PWL vars aren't stored by default
 function _get_pwl_variables_container(::OptimizationContainer)
     contents = Dict{Tuple{String, Int, Int}, Any}()
-    return JuMP.Containers.SparseAxisArray(contents)
+    return SparseAxisArray(contents)
 end
 
 function slope_convexity_check(slopes::Vector{Float64})
@@ -225,7 +225,7 @@ Returns ```gen_cost```
 # Arguments
 
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* variable::DenseAxisArray{JV} : variable array
 * cost_data::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
 function pwl_gencost_sos!(
@@ -317,7 +317,7 @@ Returns ```gen_cost```
 # Arguments
 
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* variable::DenseAxisArray{JV} : variable array
 * cost_data::Vector{NTuple{2, Float64}} : container for quadratic and linear factors
 """
 function pwl_gencost_linear!(

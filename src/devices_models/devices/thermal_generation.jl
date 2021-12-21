@@ -39,8 +39,8 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThe
 ############## PowerAboveMinimumVariable, ThermalGen ####################
 get_variable_binary(::PowerAboveMinimumVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_warm_start_value(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
-get_variable_lower_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = 0.0
-get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = PSY.get_active_power_limits(d).max - PSY.get_active_power_limits(d).min
+get_variable_lower_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
+get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max - PSY.get_active_power_limits(d).min
 
 ############## ReactivePowerVariable, ThermalGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
@@ -172,12 +172,14 @@ Range constraints for thermal compact dispatch
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
-    U::Type{<:Union{VariableType, ExpressionType}},
+    U::Type{<:Union{PowerAboveMinimumVariable, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalGen, W <: ThermalCompactDispatch}
-    add_range_constraints!(container, T, U, devices, model, X)
+    if !has_semicontinuous_feedforward(model, PowerAboveMinimumVariable)
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
 end
 
 """
@@ -217,7 +219,9 @@ function add_constraints!(
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalGen, W <: AbstractThermalDispatchFormulation}
-    add_range_constraints!(container, T, U, devices, model, X)
+    if !has_semicontinuous_feedforward(model, U)
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
     return
 end
 
@@ -505,8 +509,6 @@ function add_constraints!(
             limits = PSY.get_active_power_limits(device)
             lag_ramp_limits = PSY.get_power_trajectory(device)
             val = max(limits.max - lag_ramp_limits.shutdown, 0)
-            # TODO: How to do the following?
-            # add_device_services!(range_data, d, model)
             con[name] = JuMP.@constraint(
                 container.JuMPmodel,
                 val * varstop[name, 1] <=
@@ -663,12 +665,12 @@ function calculate_aux_variable_value!(
                       JuMP.axes(on_variable_results)[1][ix]
         IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
                       get_component_name(ini_cond[ix])
-        on_var = JuMP.value.(on_variable_results.data[ix, :])
+        on_var = jump_value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
         sum_on_var = sum(on_var)
         if sum_on_var == time_steps[end] # Unit was always on
-            aux_variable_container.data[ix, :] += time_steps * minutes_per_period
+            aux_variable_container.data[ix, :] += time_steps
         elseif sum_on_var == 0.0 # Unit was always off
             aux_variable_container.data[ix, :] .= 0.0
         else
@@ -707,14 +709,14 @@ function calculate_aux_variable_value!(
                       JuMP.axes(on_variable_results)[1][ix]
         IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
                       get_component_name(ini_cond[ix])
-        on_var = JuMP.value.(on_variable_results.data[ix, :])
+        on_var = jump_value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
         sum_on_var = sum(on_var)
         if sum_on_var == time_steps[end] # Unit was always on
             aux_variable_container.data[ix, :] .= 0.0
         elseif sum_on_var == 0.0 # Unit was always off
-            aux_variable_container.data[ix, :] += time_steps * minutes_per_period
+            aux_variable_container.data[ix, :] += time_steps
         else
             previous_condition = ini_cond_value
             for (t, v) in enumerate(on_var)
@@ -756,8 +758,8 @@ function calculate_aux_variable_value!(
         name = PSY.get_name(d)
         min = PSY.get_active_power_limits(d).min
         aux_variable_container[name, t] =
-            JuMP.value(on_variable_results[name, t]) * min +
-            JuMP.value(p_variable_results[name, t])
+            jump_value(on_variable_results[name, t]) * min +
+            jump_value(p_variable_results[name, t])
     end
 
     return

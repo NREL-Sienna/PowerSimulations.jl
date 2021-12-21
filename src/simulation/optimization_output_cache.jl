@@ -33,7 +33,8 @@ set_min_flush_size!(cache::OptimizationResultCache, x) = cache.min_flush_size = 
 function add_output_cache!(cache::OptimizationResultCache, model_name, key, flush_rule)
     cache_key = OptimizationResultCacheKey(model_name, key)
     cache.data[cache_key] = OptimzationResultCache(cache_key, flush_rule)
-    #@debug "Added cache container for" key flush_rule
+    # @debug "Added cache container for" key flush_rule
+    return
 end
 
 """
@@ -64,7 +65,12 @@ end
 """
 Return true if the data for `timestamp` is stored in cache.
 """
-function is_cached(cache::OptimizationResultCache, model_name, key, timestamp)
+function is_cached(
+    cache::OptimizationResultCache,
+    model_name,
+    key,
+    timestamp::Dates.DateTime,
+)
     cache_key = OptimizationResultCacheKey(model_name, key)
     return is_cached(cache, cache_key, timestamp)
 end
@@ -81,6 +87,7 @@ function log_cache_hit_percentages(cache::OptimizationResultCache)
         cache_hit_pecentage = get_cache_hit_percentage(output_cache)
         @debug "Cache stats" key cache_hit_pecentage
     end
+    return
 end
 
 """

@@ -68,7 +68,7 @@ function add_constraints!(
     container::OptimizationContainer,
     T::Type{RequirementConstraint},
     service::SR,
-    contributing_devices::U,
+    ::U,
     model::ServiceModel{SR, V},
 ) where {
     SR <: PSY.AbstractReserve,
@@ -135,7 +135,7 @@ function add_constraints!(
     container::OptimizationContainer,
     T::Type{RequirementConstraint},
     service::SR,
-    contributing_devices::U,
+    ::U,
     model::ServiceModel{SR, V},
 ) where {
     SR <: PSY.StaticReserve,
@@ -190,8 +190,8 @@ function add_constraints!(
     container::OptimizationContainer,
     T::Type{RequirementConstraint},
     service::SR,
-    contributing_devices::U,
-    model::ServiceModel{SR, StepwiseCostReserve},
+    ::U,
+    ::ServiceModel{SR, StepwiseCostReserve},
 ) where {
     SR <: PSY.ReserveDemandCurve,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
@@ -251,7 +251,7 @@ function add_constraints!(
     T::Type{RampConstraint},
     service::SR,
     contributing_devices::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    model::ServiceModel{SR, V},
+    ::ServiceModel{SR, V},
 ) where {
     SR <: PSY.Reserve{PSY.ReserveUp},
     V <: AbstractReservesFormulation,
@@ -461,158 +461,5 @@ function modify_device_model!(
     service_model::ServiceModel{<:PSY.ReserveNonSpinning, <:AbstractReservesFormulation},
     contributing_devices::Vector{<:PSY.Component},
 )
-    return
-end
-
-function include_service!(
-    constraint_info::T,
-    services,
-    ::ServiceModel{SR, <:AbstractReservesFormulation},
-) where {
-    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
-    SR <: PSY.Reserve{PSY.ReserveUp},
-}
-    for service in services
-        push!(
-            constraint_info.additional_terms_ub,
-            VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service)),
-        )
-    end
-    return
-end
-
-function include_service!(
-    constraint_info::T,
-    services,
-    ::ServiceModel{SR, <:AbstractReservesFormulation},
-) where {
-    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
-    SR <: PSY.Reserve{PSY.ReserveDown},
-}
-    for service in services
-        push!(
-            constraint_info.additional_terms_lb,
-            VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service)),
-        )
-    end
-    return
-end
-
-function include_service!(
-    ::T,
-    services,
-    ::ServiceModel{SR, RampReserve},
-) where {T <: AbstractRampConstraintInfo, SR <: PSY.Reserve{PSY.ReserveDown}}
-    return
-end
-
-function include_service!(
-    constraint_info::ReserveRangeConstraintInfo,
-    services,
-    ::ServiceModel{SR, RampReserve},
-) where {SR <: PSY.Reserve{PSY.ReserveUp}}
-    for service in services
-        key = VariableKey(ActivePowerReserveVariable, SR, get_name(service))
-        push!(constraint_info.additional_terms_up, key)
-        set_time_frame!(constraint_info, (key => PSY.get_time_frame(service)))
-    end
-    return
-end
-
-function include_service!(
-    constraint_info::ReserveRangeConstraintInfo,
-    services,
-    ::ServiceModel{SR, RampReserve},
-) where {SR <: PSY.Reserve{PSY.ReserveDown}}
-    for service in services
-        key = VariableKey(ActivePowerReserveVariable, SR, PSY.get_name(service))
-        push!(constraint_info.additional_terms_dn, key)
-        set_time_frame!(constraint_info, (key => PSY.get_time_frame(service)))
-    end
-    return
-end
-
-function add_device_services!(
-    constraint_info::T,
-    device::D,
-    model::DeviceModel,
-) where {
-    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
-    D <: PSY.Device,
-}
-    for service_model in get_services(model)
-        service_type = get_component_type(service_model)
-        if PSY.has_service(device, service_type)
-            services = (s for s in PSY.get_services(device) if isa(s, service_type))
-            @assert !isempty(services)
-            include_service!(constraint_info, services, service_model)
-        end
-    end
-    return
-end
-
-function add_device_services!(
-    constraint_info::T,
-    device::D,
-    model::DeviceModel{D, BatteryAncillaryServices},
-) where {
-    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
-    D <: PSY.Storage,
-}
-    return
-end
-
-function add_device_services!(
-    constraint_info::ReserveRangeConstraintInfo,
-    device::D,
-    model::DeviceModel{D, BatteryAncillaryServices},
-) where {D <: PSY.Storage}
-    for service_model in get_services(model)
-        service_type = get_component_type(service_model)
-        if PSY.has_service(device, service_type)
-            services = (s for s in PSY.get_services(device) if isa(s, service_type))
-            @assert !isempty(services)
-            include_service!(constraint_info, services, service_model)
-        end
-    end
-    return
-end
-
-function add_device_services!(
-    constraint_data_in::AbstractRangeConstraintInfo,
-    constraint_data_out::AbstractRangeConstraintInfo,
-    device::D,
-    model::DeviceModel{D, <:AbstractStorageFormulation},
-) where {D <: PSY.Storage}
-    for service_model in get_services(model)
-        service_type = get_component_type(service_model)
-        if PSY.has_service(device)
-            services = (s for s in PSY.get_services(device) if isa(s, service_type))
-            @assert !isempty(services)
-            if service_type <: PSY.Reserve{PSY.ReserveDown}
-                for service in services
-                    push!(
-                        constraint_data_in.additional_terms_ub,
-                        VariableKey(
-                            ActivePowerReserveVariable,
-                            service_type,
-                            PSY.get_name(service),
-                        ),
-                    )
-                end
-            elseif service_type <: PSY.Reserve{PSY.ReserveUp}
-                for service in services
-                    push!(
-                        constraint_data_out.additional_terms_ub,
-                        VariableKey(
-                            ActivePowerReserveVariable,
-                            service_type,
-                            PSY.get_name(service),
-                        ),
-                    )
-                end
-            end
-        end
-    end
     return
 end

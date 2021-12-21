@@ -138,7 +138,7 @@ function _attach_feedforwards(models::SimulationModels, feedforwards)
                         ),
                     )
                 end
-                attach_feedforward(device_model, ff)
+                attach_feedforward!(device_model, ff)
             end
         else
             error("Model $k not present in the SimulationModels")
@@ -179,7 +179,7 @@ mutable struct SimulationSequence
         end
 
         if length(models.decision_models) == 1
-            # Not implemented yet
+            # TODO: Not implemented yet
             # ini_cond_chronology = IntraProblemChronology()
         end
 

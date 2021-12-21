@@ -27,41 +27,41 @@ struct ProblemExecutionEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
     step::Int
-    model::Int
+    model_name::Symbol
     status::String
 end
 
 function ProblemExecutionEvent(
     simulation_time::Dates.DateTime,
     step::Int,
-    model::Int,
+    model_name::Symbol,
     status::AbstractString,
 )
     return ProblemExecutionEvent(
         IS.RecorderEventCommon("ProblemExecutionEvent"),
         simulation_time,
         step,
-        model,
+        model_name,
         status,
     )
 end
 
 struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
-    execution_timestamp::Dates.DateTime
+    simulation_time::Dates.DateTime
     initial_condition_type::String
     component_type::String
     device_name::String
     new_value::Float64
     previous_value::Float64
-    model_number::Int
+    model_name::String
 end
 
 function InitialConditionUpdateEvent(
     simulation_time,
     ic::InitialCondition,
     previous_value::Float64,
-    model_number::Int,
+    model_name,
 )
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
@@ -71,13 +71,13 @@ function InitialConditionUpdateEvent(
         get_component_name(ic),
         get_condition(ic),
         previous_value,
-        model_number,
+        string(model_name),
     )
 end
 
 struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
-    execution_timestamp::Dates.DateTime
+    simulation_time::Dates.DateTime
     parameter_type::String
     component_type::String
     tag::String
@@ -88,12 +88,12 @@ function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
     component_type::DataType,
     tag::String,
-    execution_timestamp::Dates.DateTime,
+    simulation_time::Dates.DateTime,
     model_name::Symbol,
 )
     return ParameterUpdateEvent(
         IS.RecorderEventCommon("ParameterUpdateEvent"),
-        execution_timestamp,
+        simulation_time,
         string(parameter_type),
         string(component_type),
         tag,
@@ -105,14 +105,14 @@ function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
     component_type::DataType,
     attributes::TimeSeriesAttributes,
-    timestamp::Dates.DateTime,
+    simulation_time::Dates.DateTime,
     model_name::Symbol,
 )
     return ParameterUpdateEvent(
         parameter_type,
         component_type,
         attributes.name,
-        timestamp,
+        simulation_time,
         model_name,
     )
 end
@@ -121,7 +121,7 @@ function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
     component_type::DataType,
     attributes::VariableValueAttributes,
-    timestamp::Dates.DateTime,
+    simulation_time::Dates.DateTime,
     model_name::Symbol,
 )
     return ParameterUpdateEvent(
@@ -129,14 +129,14 @@ function ParameterUpdateEvent(
         component_type,
         # TODO: Store as string in the attributes to avoid interpolations
         encode_key_as_string(get_attribute_key(attributes)),
-        timestamp,
+        simulation_time,
         model_name,
     )
 end
 
 struct StateUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
-    execution_timestamp::Dates.DateTime
+    simulation_time::Dates.DateTime
     entry_type::String
     component_type::String
     model_name::String
@@ -146,13 +146,13 @@ end
 function StateUpdateEvent(
     entry_type::DataType,
     component_type::DataType,
-    execution_timestamp::Dates.DateTime,
+    simulation_time::Dates.DateTime,
     model_name,
     state_type::String,
 )
     return StateUpdateEvent(
         IS.RecorderEventCommon("StateUpdateEvent"),
-        execution_timestamp,
+        simulation_time,
         string(entry_type),
         string(component_type),
         string(model_name),
@@ -162,14 +162,14 @@ end
 
 function StateUpdateEvent(
     key::OptimizationContainerKey,
-    execution_timestamp::Dates.DateTime,
+    simulation_time::Dates.DateTime,
     model_name,
     state_type::String,
 )
     return StateUpdateEvent(
         get_entry_type(key),
         get_component_type(key),
-        execution_timestamp,
+        simulation_time,
         model_name,
         state_type,
     )
@@ -196,11 +196,11 @@ function get_simulation_step_range(filename::AbstractString, step::Int)
     return (start = events[1].simulation_time, done = events[2].simulation_time)
 end
 
-function get_simulation_model_range(filename::AbstractString, step::Int, model::Int)
+function get_simulation_model_range(filename::AbstractString, step::Int, model::String)
     events = IS.list_recorder_events(
         ProblemExecutionEvent,
         filename,
-        x -> x.step == step && x.model == model,
+        x -> x.step == step && x.model_name == Symbol(model),
     )
     if length(events) != 2
         throw(
@@ -237,7 +237,7 @@ function _get_simulation_status_recorder_filename(output_dir)
 end
 
 function _get_simulation_recorder_filename(output_dir)
-    return _get_recorder_filename(output_dir, "simulation")
+    return _get_recorder_filename(output_dir, "execution")
 end
 
 """
@@ -262,10 +262,10 @@ function list_simulation_events(
     output_dir::AbstractString,
     filter_func::Union{Nothing, Function} = nothing;
     step = nothing,
-    model = nothing,
+    model_name::Union{String, Nothing} = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
-    if model !== nothing && step === nothing
-        throw(ArgumentError("step is required if model is passed"))
+    if model_name !== nothing && step === nothing
+        throw(ArgumentError("step is required if model_name is passed"))
     end
 
     recorder_file = _get_simulation_recorder_filename(output_dir)
@@ -277,9 +277,9 @@ function list_simulation_events(
         _filter_by_type_range!(events, step_range)
     end
 
-    if model !== nothing
+    if model_name !== nothing
         recorder_file = _get_simulation_status_recorder_filename(output_dir)
-        model_range = get_simulation_model_range(recorder_file, step, model)
+        model_range = get_simulation_model_range(recorder_file, step, model_name)
         _filter_by_type_range!(events, model_range)
     end
 
@@ -373,11 +373,17 @@ function show_simulation_events(
     output_dir::AbstractString,
     filter_func::Union{Nothing, Function} = nothing;
     step = nothing,
-    model = nothing,
+    model_name::Union{String, Nothing} = nothing,
     wall_time = false,
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    events = list_simulation_events(T, output_dir, filter_func; step = step, model = model)
+    events = list_simulation_events(
+        T,
+        output_dir,
+        filter_func;
+        step = step,
+        model_name = model_name,
+    )
     show_recorder_events(io, events, filter_func; wall_time = wall_time, kwargs...)
 end
 

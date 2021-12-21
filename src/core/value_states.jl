@@ -4,14 +4,16 @@ mutable struct ValueState
     timestamps::Vector{Dates.DateTime}
     # Resolution is needed because ValueState might have just one entry
     resolution::Dates.Period
+    end_of_step_index::Int
 end
 
 function ValueState(
     values::DataFrames.DataFrame,
     timestamps::Vector{Dates.DateTime},
     resolution::Dates.Period,
+    end_of_step_index::Int = 0,
 )
-    return ValueState(0, values, timestamps, resolution)
+    return ValueState(0, values, timestamps, resolution, end_of_step_index)
 end
 
 get_last_recorded_row(s::ValueState) = s.last_recorded_row
@@ -19,6 +21,10 @@ Base.length(s::ValueState) = length(s.timestamps)
 get_data_resolution(s::ValueState) = s.resolution
 get_timestamps(s::ValueState) = s.timestamps
 _get_values(s::ValueState) = s.values
+
+function get_end_of_step_timestamp(s::ValueState)
+    return get_timestamps(s)[s.end_of_step_index]
+end
 
 function _get_last_updated_timestamp(s::ValueState)
     if get_last_recorded_row(s) == 0

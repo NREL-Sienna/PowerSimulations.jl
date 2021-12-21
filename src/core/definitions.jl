@@ -15,9 +15,10 @@ const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
 const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
-const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
-const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
-const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
+const JuMPConstraintArray = DenseAxisArray{JuMP.ConstraintRef}
+const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
+const JuMPParamArray = DenseAxisArray{PJ.ParameterRef}
+const JuMPFloatArray = DenseAxisArray{Float64}
 
 # Settings constants
 const UNSET_HORIZON = 0

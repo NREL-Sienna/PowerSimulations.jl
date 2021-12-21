@@ -2,8 +2,13 @@ function get_affected_values(ff::AbstractAffectFeedforward)
     return ff.affected_values
 end
 
-function attach_feedforward(model, ff::AbstractAffectFeedforward)
-    ff ∈ model.feedforwards && return
+function attach_feedforward!(model, ff::T) where {T <: AbstractAffectFeedforward}
+    if !isempty(model.feedforwards)
+        ff_k = [get_optimization_container_key(v) for v in model.feedforwards if isa(v, T)]
+        if get_optimization_container_key(ff) ∈ ff_k
+            return
+        end
+    end
     push!(model.feedforwards, ff)
     return
 end
@@ -101,6 +106,30 @@ end
 
 get_default_parameter_type(::SemiContinuousFeedforward, _) = OnStatusParameter()
 get_optimization_container_key(f::SemiContinuousFeedforward) = f.optimization_container_key
+
+function has_semicontinuous_feedforward(
+    model::DeviceModel,
+    ::Type{T},
+)::Bool where {T <: Union{VariableType, ExpressionType}}
+    if isempty(model.feedforwards)
+        return false
+    end
+    sc_feedforwards = [x for x in model.feedforwards if isa(x, SemiContinuousFeedforward)]
+    if isempty(sc_feedforwards)
+        return false
+    end
+
+    keys = get_affected_values(sc_feedforwards[1])
+
+    return T ∈ get_entry_type.(keys)
+end
+
+function has_semicontinuous_feedforward(
+    model::DeviceModel,
+    ::Type{T},
+)::Bool where {T <: Union{ActivePowerRangeExpressionUB, ActivePowerRangeExpressionLB}}
+    return has_semicontinuous_feedforward(model, ActivePowerVariable)
+end
 
 """
 Adds a constraint to limit the sum of a variable over the number of periods to the source value

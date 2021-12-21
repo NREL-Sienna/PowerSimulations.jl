@@ -47,30 +47,6 @@ function add_feedforward_arguments!(
     return
 end
 
-function _handle_active_power_semicontinuous_feedforward!(
-    container::OptimizationContainer,
-    model::DeviceModel,
-    devices::IS.FlattenIteratorWrapper{T},
-    source_key::VariableKey,
-    parameter_type::OnStatusParameter,
-) where {T <: PSY.Component}
-    add_to_expression!(
-        container,
-        ActivePowerRangeExpressionLB,
-        parameter_type,
-        devices,
-        model,
-    )
-    add_to_expression!(
-        container,
-        ActivePowerRangeExpressionUB,
-        parameter_type,
-        devices,
-        model,
-    )
-    return
-end
-
 function add_feedforward_arguments!(
     container::OptimizationContainer,
     model::DeviceModel,
@@ -80,22 +56,6 @@ function add_feedforward_arguments!(
     parameter_type = get_default_parameter_type(ff, T)
     source_key = get_optimization_container_key(ff)
     add_parameters!(container, parameter_type, source_key, model, devices)
-    for var_key in get_affected_values(ff)
-        if get_entry_type(var_key) == ActivePowerVariable ||
-           get_entry_type(var_key) == PowerAboveMinimumVariable
-            _handle_active_power_semicontinuous_feedforward!(
-                container,
-                model,
-                devices,
-                var_key,
-                parameter_type,
-            )
-        else
-            error(
-                "SemiContinuousFeedforward not implemented for variable $(get_entry_type(var_key))",
-            )
-        end
-    end
     return
 end
 
@@ -108,6 +68,7 @@ function add_feedforward_arguments!(
     parameter_type = get_default_parameter_type(ff, T)
     source_key = get_optimization_container_key(ff)
     add_parameters!(container, parameter_type, source_key, model, devices)
+    # Enabling this FF requires the addition of an extra variable
     add_variables!(container, EnergyShortageVariable, devices, get_formulation(model)())
     return
 end

@@ -49,10 +49,6 @@ function OptimizerStats()
     )
 end
 
-# TODO: Check if this is necessary
-_SIMULATION_FIELDS = Set((:simulation_step, :execution_index))
-_BASE_FIELDS = setdiff(fieldnames(OptimizerStats), _SIMULATION_FIELDS)
-
 """
 Construct OptimizerStats from a vector that was serialized to HDF5.
 """
@@ -84,7 +80,6 @@ end
 function to_dict(stats::OptimizerStats)
     data = Dict()
     for field in fieldnames(typeof(stats))
-        # !_part_of_simulation(stats) && field in _SIMULATION_FIELDS && continue
         data[String(field)] = getfield(stats, field)
     end
 
@@ -94,5 +89,3 @@ end
 function get_column_names(::Type{OptimizerStats})
     return collect(string.(fieldnames(OptimizerStats)))
 end
-
-# _part_of_simulation(stats::OptimizerStats) = stats.simulation_step > 0
