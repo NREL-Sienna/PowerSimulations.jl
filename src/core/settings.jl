@@ -7,6 +7,7 @@ struct Settings
     direct_mode_optimizer::Bool
     optimizer_solve_log_print::Bool
     detailed_optimizer_stats::Bool
+    calculate_conflict::Bool
     system_to_file::Bool
     initialize_model::Bool
     initialization_file::String
@@ -26,6 +27,7 @@ function Settings(
     direct_mode_optimizer::Bool = false,
     optimizer_solve_log_print::Bool = false,
     detailed_optimizer_stats::Bool = false,
+    calculate_conflict::Bool = true,
     system_to_file = true,
     initialize_model = true,
     initialization_file = "",
@@ -59,6 +61,7 @@ function Settings(
         direct_mode_optimizer,
         optimizer_solve_log_print,
         detailed_optimizer_stats,
+        calculate_conflict,
         system_to_file,
         initialize_model,
         initialization_file,
@@ -130,6 +133,7 @@ get_deserialize_initial_conditions(settings::Settings) =
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
 get_allow_fails(settings::Settings) = settings.allow_fails
 get_optimizer_solve_log_print(settings::Settings) = settings.optimizer_solve_log_print
+get_calculate_conflict(settings::Settings) = settings.calculate_conflict
 get_detailed_optimizer_stats(settings::Settings) = settings.detailed_optimizer_stats
 get_direct_mode_optimizer(settings::Settings) = settings.direct_mode_optimizer
 use_time_series_cache(settings::Settings) = settings.time_series_cache_size > 0
