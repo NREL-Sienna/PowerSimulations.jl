@@ -81,7 +81,6 @@ get_sequence(sim::Simulation) = sim.sequence
 get_steps(sim::Simulation) = sim.steps
 get_current_time(sim::Simulation) = get_current_time(get_simulation_state(sim))
 get_models(sim::Simulation) = sim.models
-get_model(sim::Simulation, ix::Int) = sim.models[ix]
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
 get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
 get_store_dir(sim::Simulation) = sim.internal.store_dir
