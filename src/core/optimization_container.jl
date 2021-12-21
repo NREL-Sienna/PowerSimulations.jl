@@ -39,6 +39,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     settings::Settings
     settings_copy::Settings
     variables::Dict{VariableKey, AbstractArray}
+    primal_variables_cache::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
@@ -82,6 +83,7 @@ function OptimizationContainer(
         IS.time_period_conversion(resolution),
         settings,
         copy_for_serialization(settings),
+        Dict{VariableKey, AbstractArray}(),
         Dict{VariableKey, AbstractArray}(),
         Dict{AuxVarKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
@@ -1269,7 +1271,8 @@ function _calculate_dual_variables_continous_model!(
 end
 
 function _process_duals(container::OptimizationContainer, lp_optimizer)
-    mip_solution = Dict(k => jump_value.(v) for (k, v) in get_variables(container))
+    container.primal_variables_cache =
+        Dict(k => jump_value.(v) for (k, v) in get_variables(container))
     cache = Dict{VariableKey, Dict}()
     for (key, variable) in get_variables(container)
         is_integer_flag = false
@@ -1289,7 +1292,7 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
             cache[key][:ub] = JuMP.upper_bound.(variable)
         end
         cache[key][:integer] = is_integer_flag
-        JuMP.fix.(variable, mip_solution[key]; force = true)
+        JuMP.fix.(variable, container.primal_variables_cache[key]; force = true)
     end
     @assert !isempty(cache)
     jump_model = get_jump_model(container)
