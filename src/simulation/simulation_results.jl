@@ -68,7 +68,7 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
     ) do store
         problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
-        for (name, problem_params) in sim_params.problems
+        for (name, problem_params) in sim_params.models_params
             name = string(name)
             problem_result = SimulationProblemResults(
                 store,
@@ -94,8 +94,8 @@ function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
         execution_path = get_simulation_dir(sim)
         problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
-        for (name, problem_params) in sim_params.problems
-            model = get_model(sim, name)
+        for (name, problem_params) in sim_params.models_params
+            model = get_simulation_model(get_models(sim), name)
             name = string(name)
             problem_result = SimulationProblemResults(
                 store,

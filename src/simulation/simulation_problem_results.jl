@@ -187,7 +187,6 @@ _get_dicts(res::SimulationProblemResults) =
 
 function _get_store_value(
     res::SimulationProblemResults,
-    field::Symbol,
     container_keys::Vector{<:OptimizationContainerKey},
     timestamps,
     ::Nothing,
@@ -200,13 +199,12 @@ function _get_store_value(
         "r",
         problem_path = problem_path,
     ) do store
-        _get_store_value(res, field, container_keys, timestamps, store)
+        _get_store_value(res, container_keys, timestamps, store)
     end
 end
 
 function _get_store_value(
     res::SimulationProblemResults,
-    field::Symbol,
     names::Vector{<:OptimizationContainerKey},
     timestamps,
     store::SimulationStore,
@@ -220,7 +218,7 @@ function _get_store_value(
     for name in names
         _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
         for ts in timestamps
-            out = read_result(DataFrames.DataFrame, store, model_name, field, name, ts)
+            out = read_result(DataFrames.DataFrame, store, model_name, name, ts)
             time_col = range(ts, length = horizon, step = resolution)
             DataFrames.insertcols!(out, 1, :DateTime => time_col)
             _results[ts] = out
@@ -289,13 +287,7 @@ function _read_variables(
         vals = filter(p -> (p.first ∈ variable_keys), res.variable_values)
     else
         @info "reading variables from data store"
-        vals = _get_store_value(
-            res,
-            STORE_CONTAINER_VARIABLES,
-            variable_keys,
-            timestamps,
-            store,
-        )
+        vals = _get_store_value(res, variable_keys, timestamps, store)
     end
     return vals
 end
@@ -355,7 +347,7 @@ function _read_duals(
         vals = filter(p -> (p.first ∈ dual_keys), res.dual_values)
     else
         @debug "reading duals from data store"
-        vals = _get_store_value(res, STORE_CONTAINER_DUALS, dual_keys, timestamps, store)
+        vals = _get_store_value(res, dual_keys, timestamps, store)
     end
     return vals
 end
@@ -414,13 +406,7 @@ function _read_parameters(
         vals = filter(p -> (p.first ∈ parameter_keys), res.parameter_values)
     else
         @info "reading parameters from data store"
-        vals = _get_store_value(
-            res,
-            STORE_CONTAINER_PARAMETERS,
-            parameter_keys,
-            timestamps,
-            store,
-        )
+        vals = _get_store_value(res, parameter_keys, timestamps, store)
     end
     return vals
 end

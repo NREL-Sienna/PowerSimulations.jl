@@ -58,17 +58,14 @@ function test_simulation_results_simple(file_path::String, export_path; in_memor
     models = SimulationModels([
         DecisionModel(template_ed, c_sys, name = "ED", optimizer = ipopt_optimizer),
     ])
-    test_sequence = SimulationSequence(
-        models = models,
-        intervals = Dict("ED" => (Hour(24), 0)),
-        ini_cond_chronology = InterProblemChronology(),
-    )
+    test_sequence =
+        SimulationSequence(models = models, ini_cond_chronology = InterProblemChronology())
     sim = Simulation(
         name = "consecutive",
         steps = 2,
         models = models,
         sequence = test_sequence,
-        simulation_folder = file_path,
+        simulation_folder = mktempdir(cleanup = true),
     )
     build_out = build!(sim)
     @test build_out == PSI.BuildStatus.BUILT

@@ -36,11 +36,14 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
         # duals = [CopperPlateBalanceConstraint],
         use_slacks = true,
     ))
-    set_network_model!(template_ed, NetworkModel(
-        CopperPlatePowerModel,
-        duals = [CopperPlateBalanceConstraint],
-        use_slacks = true,
-    ))
+    set_network_model!(
+        template_ed,
+        NetworkModel(
+            CopperPlatePowerModel,
+            duals = [CopperPlateBalanceConstraint],
+            use_slacks = true,
+        ),
+    )
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     models = SimulationModels(
@@ -165,12 +168,15 @@ end
 @testset "Test Simulation Utils" begin
     template_uc = get_template_basic_uc_simulation()
     set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
-    set_network_model!(template_uc, NetworkModel(
-        CopperPlatePowerModel,
-        use_slacks = true,
-        # MILP "duals" not supported with free solvers
-        duals = [CopperPlateBalanceConstraint],
-    ))
+    set_network_model!(
+        template_uc,
+        NetworkModel(
+            CopperPlatePowerModel,
+            use_slacks = true,
+            # MILP "duals" not supported with free solvers
+            duals = [CopperPlateBalanceConstraint],
+        ),
+    )
 
     template_ed = get_template_nomin_ed_simulation(
         NetworkModel(
