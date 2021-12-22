@@ -51,7 +51,7 @@ function initialize_storage!(
         for (key, field_container) in field_containers
             container_axes = axes(field_container)
             @debug "Adding $(encode_key_as_string(key)) to DecisionModelStore" _group =
-                LOG_GROUP_IN_MEMORY_MODEL_STORE
+                LOG_GROUP_MODEL_STORE
             results_container[key] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
             for timestamp in
                 range(initial_time, step = model_interval, length = num_of_executions)

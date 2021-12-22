@@ -69,7 +69,7 @@ function initialize_storage!(
         for (key, field_container) in field_containers
             container_axes = axes(field_container)
             @debug "Adding $(encode_key_as_string(key)) to EmulationModelStore" _group =
-                LOG_GROUP_IN_MEMORY_MODEL_STORE
+                LOG_GROUP_MODEL_STORE
             if length(container_axes) == 2
                 if type == STORE_CONTAINER_PARAMETERS
                     column_names = string.(get_parameter_array(field_container).axes[1])
@@ -131,7 +131,7 @@ end
 get_last_recorded_row(x::EmulationModelStore) = x.last_recorded_row
 
 function set_last_recorded_row!(store::EmulationModelStore, execution)
-    @debug "set_last_recorded_row!" _group = LOG_GROUP_IN_MEMORY_MODEL_STORE execution
+    @debug "set_last_recorded_row!" _group = LOG_GROUP_MODEL_STORE execution
     store.last_recorded_row = execution
     return
 end
