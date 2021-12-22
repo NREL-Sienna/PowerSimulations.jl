@@ -484,10 +484,18 @@ end
 
 function _apply_warm_start!(model::DecisionModel)
     container = get_optimization_container(model)
-    jump_model = get_jump_model(container)
-    all_vars = JuMP.all_variables(jump_model)
-    all_vars_value = jump_value.(all_vars)
-    JuMP.set_start_value.(all_vars, all_vars_value)
+    # If the model was used to retrieve duals from an MILP the logic has to be different
+    if isempty(container.primal_values_cache)
+        jump_model = get_jump_model(container)
+        all_vars = JuMP.all_variables(jump_model)
+        all_vars_value = jump_value.(all_vars)
+        JuMP.set_start_value.(all_vars, all_vars_value)
+    else
+        for (var_key, variable_value) in container.primal_values_cache.variables_cache
+            variable = get_variable(container, var_key)
+            JuMP.set_start_value.(variable, variable_value)
+        end
+    end
     return
 end
 
@@ -536,6 +544,7 @@ function _set_system_state!(sim::Simulation, model_name::String)
             # in-place value update
             get_state_values(system_state, key)[1, :] .=
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
+            # and write to store ()
         else
             error("Something went really wrong. Please report this error. \n
                   last_update: $(last_update) \n

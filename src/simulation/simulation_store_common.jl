@@ -96,7 +96,13 @@ function write_model_variable_results!(
         mkpath(exports_path)
     end
 
-    for (key, variable) in get_variables(container)
+    if !isempty(container.primal_values_cache)
+        variables = container.primal_values_cache.variables_cache
+    else
+        variables = get_variables(container)
+    end
+
+    for (key, variable) in variables
         cols = axes(variable)[1]
         if cols == get_time_steps(container)
             cols = [encode_key_as_string(key)]
@@ -158,7 +164,13 @@ function write_model_expression_results!(
         mkpath(exports_path)
     end
 
-    for (key, expression) in get_expressions(container)
+    if !isempty(container.primal_values_cache)
+        expressions = container.primal_values_cache.expressions_cache
+    else
+        expressions = get_expressions(container)
+    end
+
+    for (key, expression) in expressions
         cols = axes(expression)[1]
         if cols == get_time_steps(container)
             cols = ["System"]

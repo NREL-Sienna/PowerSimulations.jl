@@ -32,6 +32,22 @@ get_container_key(x::OptimizationContainerMetadata, key) = x.container_key_looku
 has_container_key(x::OptimizationContainerMetadata, key) =
     haskey(x.container_key_lookup, key)
 
+struct PrimalValuesCache
+    variables_cache::Dict{VariableKey, AbstractArray}
+    expressions_cache::Dict{ExpressionKey, AbstractArray}
+end
+
+function PrimalValuesCache()
+    return PrimalValuesCache(
+        Dict{VariableKey, AbstractArray}(),
+        Dict{ExpressionKey, AbstractArray}(),
+    )
+end
+
+function Base.isempty(pvc::PrimalValuesCache)
+    return isempty(pvc.variables_cache) && isempty(pvc.expressions_cache)
+end
+
 mutable struct OptimizationContainer <: AbstractModelContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
@@ -39,13 +55,13 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     settings::Settings
     settings_copy::Settings
     variables::Dict{VariableKey, AbstractArray}
-    primal_variables_cache::Dict{VariableKey, AbstractArray}
     aux_variables::Dict{AuxVarKey, AbstractArray}
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{ExpressionKey, AbstractArray}
     parameters::Dict{ParameterKey, ParameterContainer}
+    primal_values_cache::PrimalValuesCache
     initial_conditions::Dict{ICKey, Vector{<:InitialCondition}}
     initial_conditions_data::InitialConditionsData
     infeasibility_conflict::Dict{Symbol, Array}
@@ -84,13 +100,13 @@ function OptimizationContainer(
         settings,
         copy_for_serialization(settings),
         Dict{VariableKey, AbstractArray}(),
-        Dict{VariableKey, AbstractArray}(),
         Dict{AuxVarKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
         zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
         Dict{ExpressionKey, AbstractArray}(),
         Dict{ParameterKey, ParameterContainer}(),
+        PrimalValuesCache(),
         Dict{ICKey, Vector{InitialCondition}}(),
         InitialConditionsData(),
         Dict{Symbol, Array}(),
@@ -168,8 +184,7 @@ end
 
 function supports_milp(container::OptimizationContainer)
     jump_model = get_jump_model(container)
-    optimizer_model = jump_model.moi_backend.optimizer.model
-    return MOI.supports_constraint(optimizer_model, MOI.VariableIndex, MOI.ZeroOne)
+    return supports_milp(jump_model)
 end
 
 function _validate_warm_start_support(JuMPmodel::JuMP.Model, warm_start_enabled::Bool)
@@ -515,6 +530,10 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
 
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
+
+    # Needs to be called here to avoid issues when getting duals from MILPs
+    write_optimizer_stats!(container)
+
     _, optimizer_stats.timed_calculate_dual_variables =
         @timed calculate_dual_variables!(container, system, is_milp(container))
     return status
@@ -528,9 +547,11 @@ function compute_conflict!(container::OptimizationContainer)
     try
         JuMP.compute_conflict!(jump_model)
     catch e
-        @error "Can't compute conflict, check that your optimizer supports conflict refining/IIS" exception =
-            (e, catch_backtrace())
-        return
+        if isa(e, MethodError)
+            @info "Can't compute conflict, check that your optimizer supports conflict refining/IIS"
+        else
+            @error "Can't compute conflict" exception = (e, catch_backtrace())
+        end
     end
 
     if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
@@ -1271,8 +1292,14 @@ function _calculate_dual_variables_continous_model!(
 end
 
 function _process_duals(container::OptimizationContainer, lp_optimizer)
-    container.primal_variables_cache =
-        Dict(k => jump_value.(v) for (k, v) in get_variables(container))
+    for (k, v) in get_variables(container)
+        container.primal_values_cache.variables_cache[k] = jump_value.(v)
+    end
+
+    for (k, v) in get_expressions(container)
+        container.primal_values_cache.expressions_cache[k] = jump_value.(v)
+    end
+    var_cache = container.primal_values_cache.variables_cache
     cache = Dict{VariableKey, Dict}()
     for (key, variable) in get_variables(container)
         is_integer_flag = false
@@ -1292,11 +1319,17 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
             cache[key][:ub] = JuMP.upper_bound.(variable)
         end
         cache[key][:integer] = is_integer_flag
-        JuMP.fix.(variable, container.primal_variables_cache[key]; force = true)
+        JuMP.fix.(variable, var_cache[key]; force = true)
     end
     @assert !isempty(cache)
     jump_model = get_jump_model(container)
-    JuMP.set_optimizer(jump_model, lp_optimizer)
+
+    if JuMP.mode(jump_model) != JuMP.DIRECT
+        JuMP.set_optimizer(jump_model, lp_optimizer)
+    else
+        @warn("JuMP model set in direct mode")
+    end
+
     JuMP.optimize!(jump_model)
 
     model_status = JuMP.dual_status(jump_model)
