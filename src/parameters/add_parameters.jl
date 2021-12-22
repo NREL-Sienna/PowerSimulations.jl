@@ -66,7 +66,7 @@ function add_parameters!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     ts_name = get_time_series_names(model)[T]
-    @debug "adding" T name ts_type _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    @debug "adding" T ts_name ts_type _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container =
         add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
     jump_model = get_jump_model(container)
