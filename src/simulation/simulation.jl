@@ -536,6 +536,7 @@ function _set_system_state!(sim::Simulation, model_name::String)
             # in-place value update
             get_state_values(system_state, key)[1, :] .=
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
+            # and write to store ()
         else
             error("Something went really wrong. Please report this error. \n
                   last_update: $(last_update) \n
