@@ -1,7 +1,7 @@
 """
 Stores results data for one EmulationModel
 """
-mutable struct EmulationModelOptimizerResults <: AbstractModelOptimizerResults
+mutable struct EmulationModelStore <: AbstractModelStore
     last_recorded_row::Int
     duals::Dict{ConstraintKey, DataFrames.DataFrame}
     parameters::Dict{ParameterKey, DataFrames.DataFrame}
@@ -11,8 +11,8 @@ mutable struct EmulationModelOptimizerResults <: AbstractModelOptimizerResults
     optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
 
-function EmulationModelOptimizerResults()
-    return EmulationModelOptimizerResults(
+function EmulationModelStore()
+    return EmulationModelStore(
         0,
         Dict{ConstraintKey, DataFrames.DataFrame}(),
         Dict{ParameterKey, DataFrames.DataFrame}(),
@@ -23,8 +23,41 @@ function EmulationModelOptimizerResults()
     )
 end
 
+function initialize_storage!(
+    store::EmulationModelStore,
+    container::OptimizationContainer,
+    params::ModelStoreParams,
+)
+    num_of_executions = get_num_executions(params)
+    for type in STORE_CONTAINERS
+        field_containers = getfield(container, type)
+        results_container = getfield(store, type)
+        for (key, field_container) in field_containers
+            container_axes = axes(field_container)
+            @debug "Adding $(encode_key_as_string(key)) to EmulationModelStore" _group =
+                LOG_GROUP_IN_MEMORY_MODEL_STORE
+            if length(container_axes) == 2
+                if type == STORE_CONTAINER_PARAMETERS
+                    column_names = string.(get_parameter_array(field_container).axes[1])
+                else
+                    column_names = string.(axes(field_container)[1])
+                end
+                results_container[key] = DataFrames.DataFrame(
+                    OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
+                )
+            elseif length(container_axes) == 1
+                @assert_op container_axes[1] == get_time_steps(container)
+                results_container[key] =
+                    DataFrames.DataFrame("System" => fill(NaN, num_of_executions))
+            else
+                error("Container structure for $(encode_key_as_string(key)) not supported")
+            end
+        end
+    end
+end
+
 function write_result!(
-    data::EmulationModelOptimizerResults,
+    data::EmulationModelStore,
     field::Symbol,
     key::OptimizationContainerKey,
     execution::Int,
@@ -38,7 +71,7 @@ function write_result!(
 end
 
 function read_results(
-    data::EmulationModelOptimizerResults,
+    data::EmulationModelStore,
     container_type::Symbol,
     key::OptimizationContainerKey,
     index = nothing,
@@ -49,23 +82,22 @@ function read_results(
 end
 
 function write_optimizer_stats!(
-    results::EmulationModelOptimizerResults,
+    store::EmulationModelStore,
     stats::OptimizerStats,
     execution::Int,
 )
-    # TODO DT: This trips in one test. Should we enforce this rule?
-    #@assert !(execution in keys(results.optimizer_stats))
-    results.optimizer_stats[execution] = stats
+    @assert !(execution in keys(store.optimizer_stats))
+    store.optimizer_stats[execution] = stats
 end
 
-function read_optimizer_stats(results::EmulationModelOptimizerResults)
-    return DataFrames.DataFrame([to_namedtuple(x) for x in values(results.optimizer_stats)])
+function read_optimizer_stats(store::EmulationModelStore)
+    return DataFrames.DataFrame([to_namedtuple(x) for x in values(store.optimizer_stats)])
 end
 
-get_last_recorded_row(x::EmulationModelOptimizerResults) = x.last_recorded_row
+get_last_recorded_row(x::EmulationModelStore) = x.last_recorded_row
 
-function set_last_recorded_row!(results::EmulationModelOptimizerResults, execution)
+function set_last_recorded_row!(store::EmulationModelStore, execution)
     @debug "set_last_recorded_row!" _group = LOG_GROUP_IN_MEMORY_MODEL_STORE execution
-    results.last_recorded_row = execution
+    store.last_recorded_row = execution
     return
 end

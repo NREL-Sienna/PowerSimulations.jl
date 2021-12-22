@@ -49,7 +49,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     template::ProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ModelInternal}
-    store::InMemoryModelStore
+    store::DecisionModelStore
     ext::Dict{String, Any}
 
     function DecisionModel{M}(
@@ -78,7 +78,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
             template,
             sys,
             internal,
-            InMemoryModelStore(DecisionModelOptimizerResults),
+            DecisionModelStore(),
             Dict{String, Any}(),
         )
     end
@@ -507,7 +507,7 @@ function write_results!(
 end
 
 function write_model_dual_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -524,7 +524,7 @@ function write_model_dual_results!(
 end
 
 function write_model_parameter_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -558,7 +558,7 @@ function write_model_parameter_results!(
 end
 
 function write_model_variable_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -575,7 +575,7 @@ function write_model_variable_results!(
 end
 
 function write_model_aux_variable_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -592,7 +592,7 @@ function write_model_aux_variable_results!(
 end
 
 function write_model_expression_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,

@@ -3,7 +3,7 @@
 
 function update_initial_conditions!(
     ics::Vector{T},
-    store::InMemoryModelStore,
+    store::AbstractModelStore,
     ::Dates.Period,
 ) where {
     T <:
@@ -19,7 +19,7 @@ end
 
 function update_initial_conditions!(
     ics::Vector{T},
-    store::InMemoryModelStore,
+    store::AbstractModelStore,
     ::Dates.Period,
 ) where {
     T <: InitialCondition{
@@ -37,7 +37,7 @@ end
 
 function update_initial_conditions!(
     ics::Vector{T},
-    store::InMemoryModelStore,
+    store::AbstractModelStore,
     ::Dates.Period,
 ) where {T <: InitialCondition{DevicePower, S}} where {S <: Union{Float64, PJ.ParameterRef}}
     index = get_last_recorded_row(store)
@@ -50,7 +50,7 @@ end
 
 function update_initial_conditions!(
     ics::Vector{T},
-    store::InMemoryModelStore,
+    store::AbstractModelStore,
     ::Dates.Period,
 ) where {
     T <: InitialCondition{DeviceStatus, S},
@@ -65,7 +65,7 @@ end
 
 function update_initial_conditions!(
     ics::Vector{T},
-    store::InMemoryModelStore,
+    store::AbstractModelStore,
     ::Dates.Period,
 ) where {
     T <:
@@ -82,7 +82,7 @@ end
 
 function update_initial_conditions!(
     ics::Vector{T},
-    store::InMemoryModelStore,
+    store::AbstractModelStore,
     ::Dates.Period,
 ) where {
     T <:
@@ -98,7 +98,7 @@ end
 
 function update_initial_conditions!(
     ics::Vector{T},
-    store::InMemoryModelStore,
+    store::AbstractModelStore,
     ::Dates.Period,
 ) where {
     T <:
@@ -114,7 +114,7 @@ end
 
 function update_initial_conditions!(
     ics::Vector{T},
-    store::InMemoryModelStore,
+    store::AbstractModelStore,
     ::Dates.Period,
 ) where {
     T <: InitialCondition{

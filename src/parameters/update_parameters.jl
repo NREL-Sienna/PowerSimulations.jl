@@ -89,7 +89,7 @@ function update_parameter_values!(
     model::EmulationModel,
     ::Union{
         ValueStates,
-        InMemoryModelStore{PowerSimulations.EmulationModelOptimizerResults},
+        EmulationModelStore,
     },
 ) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)

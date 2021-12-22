@@ -48,7 +48,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     template::ProblemTemplate
     sys::PSY.System
     internal::ModelInternal
-    store::InMemoryModelStore # might be extended to other stores for simulation
+    store::EmulationModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
 
     function EmulationModel{M}(
@@ -77,7 +77,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
             template,
             sys,
             internal,
-            InMemoryModelStore(EmulationModelOptimizerResults),
+            EmulationModelStore(),
             Dict{String, Any}(),
         )
     end
@@ -350,7 +350,7 @@ end
 
 function update_parameters(
     model::EmulationModel,
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
 )
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, store)
@@ -360,7 +360,7 @@ end
 
 function update_initial_conditions(
     model::EmulationModel,
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     ::InterProblemChronology,
 )
     for key in keys(get_initial_conditions(model))
@@ -371,7 +371,7 @@ end
 
 function update_model!(
     model::EmulationModel,
-    source::InMemoryModelStore{EmulationModelOptimizerResults},
+    source::EmulationModelStore,
     ini_cond_chronology,
 )
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
@@ -537,7 +537,7 @@ function write_results!(model::EmulationModel, execution::Int)
 end
 
 function write_model_dual_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -553,7 +553,7 @@ function write_model_dual_results!(
 end
 
 function write_model_parameter_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -586,7 +586,7 @@ function write_model_parameter_results!(
 end
 
 function write_model_variable_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -602,7 +602,7 @@ function write_model_variable_results!(
 end
 
 function write_model_aux_variable_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -618,7 +618,7 @@ function write_model_aux_variable_results!(
 end
 
 function write_model_expression_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )

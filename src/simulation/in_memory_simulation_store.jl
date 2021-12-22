@@ -3,15 +3,15 @@ Stores simulation data in memory
 """
 mutable struct InMemorySimulationStore <: SimulationStore
     params::SimulationStoreParams
-    dm_data::OrderedDict{Symbol, DecisionModelOptimizerResults}
-    em_data::OrderedDict{Symbol, EmulationModelOptimizerResults}
+    dm_data::OrderedDict{Symbol, DecisionModelStore}
+    em_data::OrderedDict{Symbol, EmulationModelStore}
 end
 
 function InMemorySimulationStore()
     return InMemorySimulationStore(
         SimulationStoreParams(),
-        OrderedDict{Symbol, DecisionModelOptimizerResults}(),
-        OrderedDict{Symbol, EmulationModelOptimizerResults}(),
+        OrderedDict{Symbol, DecisionModelStore}(),
+        OrderedDict{Symbol, EmulationModelStore}(),
     )
 end
 
@@ -97,7 +97,7 @@ function initialize_problem_storage!(
 )
     store.params = params
     for problem in keys(store.params.models_params)
-        store.dm_data[problem] = DecisionModelOptimizerResults()
+        store.dm_data[problem] = DecisionModelStore()
         for type in STORE_CONTAINERS
             for (name, reqs) in getfield(problem_reqs[problem], type)
                 container = getfield(store.dm_data[problem], type)
