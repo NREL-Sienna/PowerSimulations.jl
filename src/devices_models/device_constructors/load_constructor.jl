@@ -344,6 +344,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ReactivePowerBalance,
+        # The base assumption is that reactive power follows the same curve as active power
         ActivePowerTimeSeriesParameter,
         devices,
         model,
