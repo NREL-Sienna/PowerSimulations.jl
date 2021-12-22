@@ -48,7 +48,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     template::ProblemTemplate
     sys::PSY.System
     internal::ModelInternal
-    store::InMemoryModelStore # might be extended to other stores for simulation
+    store::EmulationModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
 
     function EmulationModel{M}(
@@ -72,14 +72,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
-        new{M}(
-            name,
-            template,
-            sys,
-            internal,
-            InMemoryModelStore(EmulationModelOptimizerResults),
-            Dict{String, Any}(),
-        )
+        new{M}(name, template, sys, internal, EmulationModelStore(), Dict{String, Any}())
     end
 end
 
@@ -321,6 +314,7 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     )
     model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
+    empty!(model.store)
     set_status!(model, BuildStatus.EMPTY)
     return
 end
@@ -348,10 +342,7 @@ function one_step_solve!(model::EmulationModel)
     return
 end
 
-function update_parameters(
-    model::EmulationModel,
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
-)
+function update_parameters(model::EmulationModel, store::EmulationModelStore)
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, store)
     end
@@ -360,7 +351,7 @@ end
 
 function update_initial_conditions(
     model::EmulationModel,
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     ::InterProblemChronology,
 )
     for key in keys(get_initial_conditions(model))
@@ -371,7 +362,7 @@ end
 
 function update_model!(
     model::EmulationModel,
-    source::InMemoryModelStore{EmulationModelOptimizerResults},
+    source::EmulationModelStore,
     ini_cond_chronology,
 )
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
@@ -532,12 +523,12 @@ function write_results!(model::EmulationModel, execution::Int)
     write_model_aux_variable_results!(store, model, execution)
     write_model_expression_results!(store, model, execution)
     write_optimizer_stats!(store, get_optimizer_stats(model), execution)
-    store.data.last_recorded_row = execution
+    set_last_recorded_row!(store, execution)
     return
 end
 
 function write_model_dual_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -547,13 +538,13 @@ function write_model_dual_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_DUALS, key, execution, dual, cols)
+        write_result!(store, key, execution, dual, cols)
     end
     return
 end
 
 function write_model_parameter_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -580,13 +571,13 @@ function write_model_parameter_results!(
             cols = ["System"]
         end
 
-        write_result!(store, STORE_CONTAINER_PARAMETERS, key, execution, data, cols)
+        write_result!(store, key, execution, data, cols)
     end
     return
 end
 
 function write_model_variable_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -596,13 +587,13 @@ function write_model_variable_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_VARIABLES, key, execution, variable, cols)
+        write_result!(store, key, execution, variable, cols)
     end
     return
 end
 
 function write_model_aux_variable_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -612,13 +603,13 @@ function write_model_aux_variable_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, execution, variable, cols)
+        write_result!(store, key, execution, variable, cols)
     end
     return
 end
 
 function write_model_expression_results!(
-    store::InMemoryModelStore{EmulationModelOptimizerResults},
+    store::EmulationModelStore,
     model::EmulationModel,
     execution::Int,
 )
@@ -628,7 +619,7 @@ function write_model_expression_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, execution, expression, cols)
+        write_result!(store, key, execution, expression, cols)
     end
     return
 end
