@@ -318,6 +318,7 @@ function reset!(model::DecisionModel)
     model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
     model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
+    empty!(model.store)
     set_status!(model, BuildStatus.EMPTY)
     return
 end

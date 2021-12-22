@@ -23,6 +23,40 @@ function EmulationModelStore()
     )
 end
 
+function Base.empty!(store::EmulationModelStore)
+    stype = typeof(store)
+    for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
+        if name == :last_recorded_row
+            store.last_recorded_row = 0
+        else
+            val = getfield(store, name)
+            try
+                empty!(val)
+            catch
+                @error "Base.empty! must be customized for type $stype or skipped"
+                rethrow()
+            end
+        end
+    end
+end
+
+function Base.isempty(store::EmulationModelStore)
+    stype = typeof(store)
+    for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
+        name == :last_recorded_row && continue
+        val = getfield(store, name)
+        try
+            !isempty(val) && return false
+        catch
+            @error "Base.isempty must be customized for type $stype or skipped"
+            rethrow()
+        end
+    end
+
+    @assert_op store.last_recorded_row == 0
+    return true
+end
+
 function initialize_storage!(
     store::EmulationModelStore,
     container::OptimizationContainer,

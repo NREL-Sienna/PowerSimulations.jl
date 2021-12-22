@@ -36,6 +36,7 @@ function Base.isempty(store::AbstractModelStore)
 
     return true
 end
+
 function list_fields(store::AbstractModelStore, container_type::Symbol)
     return keys(getfield(store, container_type))
 end
