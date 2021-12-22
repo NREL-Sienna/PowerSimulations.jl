@@ -184,9 +184,9 @@ end
 function _get_solver_time(jump_model::JuMP.Model)
     solver_solve_time = NaN
     try
-        solver_solve_time = MOI.get(jump_model, MOI.SolveTime())
+        solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
     catch
-        @debug "SolveTime() property not supported by the Solver"
+        @debug "SolveTimeSec() property not supported by the Solver"
     end
 
     return solver_solve_time
