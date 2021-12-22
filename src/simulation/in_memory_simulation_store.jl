@@ -4,14 +4,14 @@ Stores simulation data in memory
 mutable struct InMemorySimulationStore <: SimulationStore
     params::SimulationStoreParams
     dm_data::OrderedDict{Symbol, DecisionModelStore}
-    em_data::OrderedDict{Symbol, EmulationModelStore}
+    em_data::EmulationModelStore
 end
 
 function InMemorySimulationStore()
     return InMemorySimulationStore(
         SimulationStoreParams(),
         OrderedDict{Symbol, DecisionModelStore}(),
-        OrderedDict{Symbol, EmulationModelStore}(),
+        EmulationModelStore(),
     )
 end
 
@@ -27,8 +27,11 @@ function open_store(
 end
 
 function Base.empty!(store::InMemorySimulationStore)
-    empty!(store.dm_data)
-    empty!(store.em_data)
+    for val in values(store.dm_data)
+        empty!(val)
+    end
+    # TODO EmulationModel: this interface is TBD
+    #empty!(store.em_data)
     @debug "Emptied the store" _group = LOG_GROUP_SIMULATION_STORE
 end
 
@@ -41,8 +44,9 @@ function get_model_params(store::InMemorySimulationStore, model_name::Symbol)
     return get_params(store).models_params[model_name]
 end
 
-list_models(store::InMemorySimulationStore) =
-    Iterators.flatten((keys(store.dm_data), keys(store.em_data)))
+list_models(x::InMemorySimulationStore) = collect(keys(x.dm_data))
+# TODO EmulationModel: this interface is TBD
+#list_models(x::InMemorySimulationStore) = vcat(collect(keys(x.dm_data)), [x.em_data])
 log_cache_hit_percentages(::InMemorySimulationStore) = nothing
 
 function list_fields(
@@ -63,15 +67,15 @@ function write_optimizer_stats!(
     return
 end
 
-function write_optimizer_stats!(
-    store::InMemorySimulationStore,
-    model_name,
-    stats::OptimizerStats,
-    execution::Int,
-)
-    write_optimizer_stats!(store.em_data[model_name], stats, index)
-    return
-end
+# TODO EmulationModel: this interface is TBD
+#function write_optimizer_stats!(
+#    store::InMemorySimulationStore,
+#    stats::OptimizerStats,
+#    execution::Int,
+#)
+#    write_optimizer_stats!(store.em_data, stats, index)
+#    return
+#end
 
 function read_model_optimizer_stats(
     store::InMemorySimulationStore,
@@ -81,13 +85,13 @@ function read_model_optimizer_stats(
     return read_optimizer_stats(store.dm_data[model_name], timestamp)
 end
 
-function read_model_optimizer_stats(
-    store::InMemorySimulationStore,
-    model_name,
-    execution::Int,
-)
-    return read_optimizer_stats(store.em_data[model_name], execution)
-end
+# TODO EmulationModel: this interface is TBD
+#function read_model_optimizer_stats(
+#    store::InMemorySimulationStore,
+#    execution::Int,
+#)
+#    return read_optimizer_stats(store.em_data, execution)
+#end
 
 function initialize_problem_storage!(
     store::InMemorySimulationStore,
@@ -122,6 +126,18 @@ function write_result!(
     return
 end
 
+# TODO EmulationModel: this interface is TBD
+#function write_result!(
+#    store::InMemorySimulationStore,
+#    key::OptimizationContainerKey,
+#    execution::Int,
+#    array,
+#    columns = nothing,
+#)
+#    write_result!(store.em_data, key, execution, array, columns)
+#    return
+#end
+
 function read_result(
     ::Type{DataFrames.DataFrame},
     store::InMemorySimulationStore,
@@ -145,9 +161,8 @@ end
 function _get_model_results(store::InMemorySimulationStore, model_name::Symbol)
     if model_name in keys(store.dm_data)
         results = store.dm_data
-    elseif model_name in keys(store.em_data)
-        results = store.em_data
     else
+        # TODO EmulationModel: this interface is TBD
         error("model name $model_name is not stored")
     end
 
