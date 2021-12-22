@@ -32,14 +32,13 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,
-        # TODO: Duals currently not working
+        # MILP "duals" not supported with free solvers
         # duals = [CopperPlateBalanceConstraint],
         use_slacks = true,
     ))
     set_network_model!(template_ed, NetworkModel(
         CopperPlatePowerModel,
-        # TODO: Duals currently not working
-        # duals = [CopperPlateBalanceConstraint],
+        duals = [CopperPlateBalanceConstraint],
         use_slacks = true,
     ))
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
@@ -153,7 +152,7 @@ function test_2_stages_with_storage_ems(in_memory)
     )
     build_out = build!(sim_cache)
     @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim_cache, in_memory = in_memory)
+    execute_out = execute!(sim_cache) #, in_memory = in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
@@ -169,8 +168,8 @@ end
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,
         use_slacks = true,
-        # TODO: Duals currently not working
-        # duals = [CopperPlateBalanceConstraint],
+        # MILP "duals" not supported with free solvers
+        duals = [CopperPlateBalanceConstraint],
     ))
 
     template_ed = get_template_nomin_ed_simulation(
@@ -178,8 +177,7 @@ end
             CopperPlatePowerModel;
             # Added because of data issues
             use_slacks = true,
-            # TODO: Duals currently not working
-            # duals = [CopperPlateBalanceConstraint],
+            duals = [CopperPlateBalanceConstraint],
         ),
     )
     set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
