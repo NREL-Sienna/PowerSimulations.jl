@@ -184,8 +184,7 @@ end
 
 function supports_milp(container::OptimizationContainer)
     jump_model = get_jump_model(container)
-    optimizer_model = jump_model.moi_backend.optimizer.model
-    return MOI.supports_constraint(optimizer_model, MOI.VariableIndex, MOI.ZeroOne)
+    return supports_milp(jump_model)
 end
 
 function _validate_warm_start_support(JuMPmodel::JuMP.Model, warm_start_enabled::Bool)
@@ -1324,7 +1323,13 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
     end
     @assert !isempty(cache)
     jump_model = get_jump_model(container)
-    JuMP.set_optimizer(jump_model, lp_optimizer)
+
+    if JuMP.mode(jump_model) != JuMP.DIRECT
+        JuMP.set_optimizer(jump_model, lp_optimizer)
+    else
+        @warn("JuMP model set in direct mode")
+    end
+
     JuMP.optimize!(jump_model)
 
     model_status = JuMP.dual_status(jump_model)

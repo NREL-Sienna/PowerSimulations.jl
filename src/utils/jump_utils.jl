@@ -181,6 +181,11 @@ function _summary_to_dict!(optimizer_stats::OptimizerStats, jump_model::JuMP.Mod
     return
 end
 
+function supports_milp(jump_model::JuMP.Model)
+    optimizer_backend = JuMP.backend(jump_model)
+    return MOI.supports_constraint(optimizer_backend, MOI.VariableIndex, MOI.ZeroOne)
+end
+
 function _get_solver_time(jump_model::JuMP.Model)
     solver_solve_time = NaN
     try
