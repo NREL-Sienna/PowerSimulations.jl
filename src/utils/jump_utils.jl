@@ -183,10 +183,20 @@ end
 
 function _get_solver_time(jump_model::JuMP.Model)
     solver_solve_time = NaN
-    try
-        solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
-    catch
-        @debug "SolveTimeSec() property not supported by the Solver"
+
+    try_s = get(jump_model.ext, :try_supports_solvetime, (trycatch = true, supports = true))
+    if try_s.trycatch
+        try
+            solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
+            jump_model.ext[:try_supports_solvetime] = (trycatch = false, supports = true)
+        catch
+            @debug "SolveTimeSec() property not supported by the Solver"
+            jump_model.ext[:try_supports_solvetime] = (trycatch = false, supports = false)
+        end
+    else
+        if try_s.trycatch.supports
+            solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
+        end
     end
 
     return solver_solve_time
