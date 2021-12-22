@@ -45,7 +45,7 @@ function PrimalValuesCache()
 end
 
 function Base.isempty(pvc::PrimalValuesCache)
-    return isempty(pvc.variables_cache) || isempty(pvc.expressions_cache)
+    return isempty(pvc.variables_cache) && isempty(pvc.expressions_cache)
 end
 
 mutable struct OptimizationContainer <: AbstractModelContainer
