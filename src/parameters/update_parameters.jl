@@ -41,7 +41,6 @@ function update_parameter_values!(
     components = get_available_components(V, get_system(model))
     for component in components
         name = PSY.get_name(component)
-        @debug "Updating parameter value with time series" name,
         get_time_series_name(attributes),
         initial_forecast_time,
         horizon
@@ -160,7 +159,6 @@ function update_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    @debug "Updating parameter" key
     update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
     IS.@record :execution ParameterUpdateEvent(
         T,
