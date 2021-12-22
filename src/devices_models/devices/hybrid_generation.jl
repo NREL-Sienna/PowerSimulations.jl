@@ -167,10 +167,7 @@ get_min_max_limits(
     ::Type{<:AbstractHybridFormulation},
 ) = PSY.get_state_of_charge_limits(PSY.get_storage(device))
 
-# TODO: Refactor these constraints to be used only by HybridSystems methods and change name
-# of the function
-
-function _add_lower_bound_range_constraints_impl!(
+function add_lower_bound_range_constraints_impl!(
     container::OptimizationContainer,
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
@@ -204,7 +201,7 @@ function _add_lower_bound_range_constraints_impl!(
     end
 end
 
-function _add_upper_bound_range_constraints_impl!(
+function add_upper_bound_range_constraints_impl!(
     container::OptimizationContainer,
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
@@ -238,7 +235,7 @@ function _add_upper_bound_range_constraints_impl!(
     end
 end
 
-function _add_parameterized_upper_bound_range_constraints_impl!(
+function add_parameterized_upper_bound_range_constraints_impl!(
     container::OptimizationContainer,
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
@@ -288,12 +285,54 @@ end
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{ComponentActivePowerVariableLimitsConstraint},
-    U::Type{<:Union{VariableType, ExpressionType}},
+    U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
-    add_range_constraints!(container, T, U, devices, model, X)
+    array = get_variable(container, U(), V)
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model)
+    add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+    )
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    U::Type{<:RangeConstraintLBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
+    array = get_expression(container, U(), V)
+    add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ComponentActivePowerVariableLimitsConstraint},
+    U::Type{<:RangeConstraintUBExpressions},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
+    array = get_expression(container, U(), V)
+    add_upper_bound_range_constraints_impl!(container, T, array, devices, model)
+    add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+    )
 end
 
 function add_constraints!(
