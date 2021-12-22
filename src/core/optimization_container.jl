@@ -548,8 +548,10 @@ function compute_conflict!(container::OptimizationContainer)
     try
         JuMP.compute_conflict!(jump_model)
     catch e
-        @error "Can't compute conflict, check that your optimizer supports conflict refining/IIS" exception =
-            (e, catch_backtrace())
+        if isa(e, MethodError)
+            @info "Can't compute conflict, check that your optimizer supports conflict refining/IIS"
+        else
+            @error "Can't compute conflict", exception = (e, catch_backtrace())
         return
     end
 
