@@ -89,10 +89,10 @@ end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
     cp_duals = read_dual(res, PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
-    λ = Matrix(cp_duals)
+    λ = Matrix{Float64}(cp_duals)
 
     flow_duals = read_dual(res, PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line))
-    μ = Matrix(flow_duals[:, ptdf.axes[1]])
+    μ = Matrix{Float64}(flow_duals[:, ptdf.axes[1]])
 
     buses = get_components(Bus, get_system(res))
     lmps = OrderedDict()
