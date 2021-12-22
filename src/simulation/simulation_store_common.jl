@@ -22,7 +22,6 @@ function write_model_dual_results!(
         write_result!(
             store,
             model_name,
-            STORE_CONTAINER_DUALS,
             key,
             timestamp,
             constraint,
