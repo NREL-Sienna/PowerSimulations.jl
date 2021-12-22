@@ -299,7 +299,7 @@ function read_result(
     timestamp::Dates.DateTime,
 )
     data, columns = _read_data_columns(store, model_name, key, timestamp)
-    if ndims(data) < 2
+    if ndims(data) < 2 || size(data)[1] == 1
         data = reshape(data, length(data), 1)
     end
     return DataFrames.DataFrame(data, Symbol.(columns))
