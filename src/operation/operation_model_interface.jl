@@ -82,7 +82,6 @@ end
 function solve_impl!(model::OperationModel)
     container = get_optimization_container(model)
     status = solve_impl!(container, get_system(model))
-    write_optimizer_stats!(container)
     set_run_status!(model, status)
     if status != RunStatus.SUCCESSFUL
         settings = get_settings(model)
@@ -281,8 +280,12 @@ function _pre_solve_model_checks(model::OperationModel, optimizer = nothing)
         JuMP.set_optimizer(jump_model, optimizer)
     end
 
-    if jump_model.moi_backend.state == MOIU.NO_OPTIMIZER
-        error("No Optimizer has been defined, can't solve the operational problem")
+    if JuMP.mode(jump_model) != JuMP.DIRECT
+        if JuMP.backend(jump_model).state == MOIU.NO_OPTIMIZER
+            error("No Optimizer has been defined, can't solve the operational problem")
+        end
+    else
+        @assert !get_direct_mode_optimizer(get_settings(model))
     end
 
     optimizer_name = JuMP.solver_name(jump_model)
@@ -297,23 +300,23 @@ function _list_names(model::OperationModel, container_type)
 end
 
 function read_dual(model::OperationModel, key::ConstraintKey)
-    return read_results(get_store(model), STORE_CONTAINER_DUALS, key)
+    return read_results(get_store(model), key)
 end
 
 function read_parameter(model::OperationModel, key::ParameterKey)
-    return read_results(get_store(model), STORE_CONTAINER_PARAMETERS, key)
+    return read_results(get_store(model), key)
 end
 
 function read_aux_variable(model::OperationModel, key::AuxVarKey)
-    return read_results(get_store(model), STORE_CONTAINER_AUX_VARIABLES, key)
+    return read_results(get_store(model), key)
 end
 
 function read_variable(model::OperationModel, key::VariableKey)
-    return read_results(get_store(model), STORE_CONTAINER_VARIABLES, key)
+    return read_results(get_store(model), key)
 end
 
 function read_expression(model::OperationModel, key::ExpressionKey)
-    return read_results(get_store(model), STORE_CONTAINER_EXPRESSIONS, key)
+    return read_results(get_store(model), key)
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))

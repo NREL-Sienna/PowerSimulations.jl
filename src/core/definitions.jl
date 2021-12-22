@@ -115,6 +115,7 @@ Base.convert(::Type{RunStatus}, val::String) = get_enum_value(RunStatus, val)
 Base.convert(::Type{SOSStatusVariable}, x::String) = get_enum_value(SOSStatusVariable, x)
 
 # Store const definitions
+# Update src/simulation/simulation_store_common.jl with any changes.
 const STORE_CONTAINER_DUALS = :duals
 const STORE_CONTAINER_PARAMETERS = :parameters
 const STORE_CONTAINER_VARIABLES = :variables

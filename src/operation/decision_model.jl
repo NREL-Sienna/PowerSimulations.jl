@@ -49,7 +49,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     template::ProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ModelInternal}
-    store::InMemoryModelStore
+    store::DecisionModelStore
     ext::Dict{String, Any}
 
     function DecisionModel{M}(
@@ -73,14 +73,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
         )
-        new{M}(
-            name,
-            template,
-            sys,
-            internal,
-            InMemoryModelStore(DecisionModelOptimizerResults),
-            Dict{String, Any}(),
-        )
+        new{M}(name, template, sys, internal, DecisionModelStore(), Dict{String, Any}())
     end
 end
 
@@ -100,6 +93,7 @@ function DecisionModel{M}(
     allow_fails = false,
     optimizer_solve_log_print = false,
     detailed_optimizer_stats = false,
+    calculate_conflict = false,
     direct_mode_optimizer = false,
     initial_time = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
@@ -117,6 +111,7 @@ function DecisionModel{M}(
         deserialize_initial_conditions = deserialize_initial_conditions,
         export_pwl_vars = export_pwl_vars,
         allow_fails = allow_fails,
+        calculate_conflict = calculate_conflict,
         optimizer_solve_log_print = optimizer_solve_log_print,
         detailed_optimizer_stats = detailed_optimizer_stats,
         direct_mode_optimizer = direct_mode_optimizer,
@@ -325,6 +320,7 @@ function reset!(model::DecisionModel)
     model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
     model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
+    empty!(model.store)
     set_status!(model, BuildStatus.EMPTY)
     return
 end
@@ -507,7 +503,7 @@ function write_results!(
 end
 
 function write_model_dual_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -518,13 +514,13 @@ function write_model_dual_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_DUALS, key, timestamp, dual, cols)
+        write_result!(store, key, timestamp, dual, cols)
     end
     return
 end
 
 function write_model_parameter_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -552,13 +548,13 @@ function write_model_parameter_results!(
             cols = ["System"]
         end
 
-        write_result!(store, STORE_CONTAINER_PARAMETERS, key, timestamp, data, cols)
+        write_result!(store, key, timestamp, data, cols)
     end
     return
 end
 
 function write_model_variable_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -569,13 +565,13 @@ function write_model_variable_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_VARIABLES, key, timestamp, variable, cols)
+        write_result!(store, key, timestamp, variable, cols)
     end
     return
 end
 
 function write_model_aux_variable_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -586,13 +582,13 @@ function write_model_aux_variable_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_AUX_VARIABLES, key, timestamp, variable, cols)
+        write_result!(store, key, timestamp, variable, cols)
     end
     return
 end
 
 function write_model_expression_results!(
-    store::InMemoryModelStore{DecisionModelOptimizerResults},
+    store::DecisionModelStore,
     model::DecisionModel,
     timestamp::Dates.DateTime,
     export_params,
@@ -603,7 +599,7 @@ function write_model_expression_results!(
         if cols == get_time_steps(container)
             cols = ["System"]
         end
-        write_result!(store, STORE_CONTAINER_EXPRESSIONS, key, timestamp, expression, cols)
+        write_result!(store, key, timestamp, expression, cols)
     end
     return
 end

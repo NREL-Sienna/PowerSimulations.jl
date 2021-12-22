@@ -1,4 +1,4 @@
-@testset "Single stage sequential tests" begin
+function test_single_stage_sequential(in_memory)
     template_ed = get_template_nomin_ed_simulation()
     c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
     models = SimulationModels([
@@ -15,25 +15,30 @@
     )
     build_out = build!(sim_single)
     @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim_single)
+    execute_out = execute!(sim_single, in_memory = in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
-@testset "2-Stage Decision Models with FeedForwards" begin
+@testset "Single stage sequential tests" begin
+    for in_memory in (true, false)
+        test_single_stage_sequential(in_memory)
+    end
+end
+
+function test_2_stage_decision_models_with_feedforwards(in_memory)
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
     set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,
-        # TODO: Duals currently not working
+        # MILP "duals" not supported with free solvers
         # duals = [CopperPlateBalanceConstraint],
         use_slacks = true,
     ))
     set_network_model!(template_ed, NetworkModel(
         CopperPlatePowerModel,
-        # TODO: Duals currently not working
-        # duals = [CopperPlateBalanceConstraint],
+        duals = [CopperPlateBalanceConstraint],
         use_slacks = true,
     ))
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
@@ -84,11 +89,17 @@ end
 
     build_out = build!(sim; console_level = Logging.Error)
     @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim)
+    execute_out = execute!(sim, in_memory = in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
-@testset "Simulation with 2-Stages with Storage EMS" begin
+@testset "2-Stage Decision Models with FeedForwards" begin
+    for in_memory in (true, false)
+        test_2_stage_decision_models_with_feedforwards(in_memory)
+    end
+end
+
+function test_2_stages_with_storage_ems(in_memory)
     template_uc =
         get_template_hydro_st_uc(NetworkModel(CopperPlatePowerModel, use_slacks = true))
     template_ed =
@@ -141,8 +152,14 @@ end
     )
     build_out = build!(sim_cache)
     @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim_cache)
+    execute_out = execute!(sim_cache) #, in_memory = in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
+end
+
+@testset "Simulation with 2-Stages with Storage EMS" begin
+    for in_memory in (true, false)
+        test_2_stages_with_storage_ems(in_memory)
+    end
 end
 
 @testset "Test Simulation Utils" begin
@@ -151,8 +168,8 @@ end
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,
         use_slacks = true,
-        # TODO: Duals currently not working
-        # duals = [CopperPlateBalanceConstraint],
+        # MILP "duals" not supported with free solvers
+        duals = [CopperPlateBalanceConstraint],
     ))
 
     template_ed = get_template_nomin_ed_simulation(
@@ -160,8 +177,7 @@ end
             CopperPlatePowerModel;
             # Added because of data issues
             use_slacks = true,
-            # TODO: Duals currently not working
-            # duals = [CopperPlateBalanceConstraint],
+            duals = [CopperPlateBalanceConstraint],
         ),
     )
     set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
@@ -284,7 +300,7 @@ end
     # end
 end
 
-@testset "Test 3 stage simulation with FeedForwards" begin
+function test_3_stage_simulation_with_feedforwards(in_memory)
     sys_rts_da = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_DA_sys")
     sys_rts_rt = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_RT_sys")
     sys_rts_ha = deepcopy(sys_rts_rt)
@@ -350,9 +366,16 @@ end
     )
     build_out = build!(sim)
     @test build_out == PSI.BuildStatus.BUILT
-    # execute_out = execute!(sim)
+    # execute_out = execute!(sim, in_memory = in_memory)
     # @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
+
+@testset "Test 3 stage simulation with FeedForwards" begin
+    for in_memory in (true, false)
+        test_3_stage_simulation_with_feedforwards(in_memory)
+    end
+end
+
 
 @testset "Test HybridSystem simulations" begin
     sys_uc = PSB.build_system(PSITestSystems, "c_sys5_hybrid_uc")

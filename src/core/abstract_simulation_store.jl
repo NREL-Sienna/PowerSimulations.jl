@@ -17,6 +17,3 @@ abstract type SimulationStore end
 # - read_result!
 # - write_optimizer_stats!
 # - read_problem_optimizer_stats
-
-# TBD how this will be used
-abstract type AbstractModelOptimizerResults end
