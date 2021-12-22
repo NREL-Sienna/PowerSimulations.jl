@@ -87,10 +87,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
-    ::Union{
-        ValueStates,
-        EmulationModelStore,
-    },
+    ::Union{ValueStates, EmulationModelStore},
 ) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))

@@ -73,14 +73,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
         )
-        new{M}(
-            name,
-            template,
-            sys,
-            internal,
-            DecisionModelStore(),
-            Dict{String, Any}(),
-        )
+        new{M}(name, template, sys, internal, DecisionModelStore(), Dict{String, Any}())
     end
 end
 

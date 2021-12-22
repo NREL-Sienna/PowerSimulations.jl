@@ -72,14 +72,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
-        new{M}(
-            name,
-            template,
-            sys,
-            internal,
-            EmulationModelStore(),
-            Dict{String, Any}(),
-        )
+        new{M}(name, template, sys, internal, EmulationModelStore(), Dict{String, Any}())
     end
 end
 
@@ -348,10 +341,7 @@ function one_step_solve!(model::EmulationModel)
     return
 end
 
-function update_parameters(
-    model::EmulationModel,
-    store::EmulationModelStore,
-)
+function update_parameters(model::EmulationModel, store::EmulationModelStore)
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, store)
     end
