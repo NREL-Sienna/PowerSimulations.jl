@@ -285,7 +285,7 @@ function _pre_solve_model_checks(model::OperationModel, optimizer = nothing)
             error("No Optimizer has been defined, can't solve the operational problem")
         end
     else
-        @assert !get_direct_mode_optimizer(get_settings(model))
+        @assert get_direct_mode_optimizer(get_settings(model))
     end
 
     optimizer_name = JuMP.solver_name(jump_model)
