@@ -484,10 +484,18 @@ end
 
 function _apply_warm_start!(model::DecisionModel)
     container = get_optimization_container(model)
-    jump_model = get_jump_model(container)
-    all_vars = JuMP.all_variables(jump_model)
-    all_vars_value = jump_value.(all_vars)
-    JuMP.set_start_value.(all_vars, all_vars_value)
+    # If the model was used to retrieve duals from an MILP the logic has to be different
+    if isempty(container.primal_values_cache)
+        jump_model = get_jump_model(container)
+        all_vars = JuMP.all_variables(jump_model)
+        all_vars_value = jump_value.(all_vars)
+        JuMP.set_start_value.(all_vars, all_vars_value)
+    else
+        for (var_key, variable_value) in container.primal_values_cache.variables_cache
+            variable = get_variable(container, var_key)
+            JuMP.set_start_value.(variable, variable_value)
+        end
+    end
     return
 end
 

@@ -100,7 +100,6 @@ function write_model_variable_results!(
         variables = container.primal_values_cache.variables_cache
     else
         variables = get_variables(container)
-        @assert isempty(get_duals(container))
     end
 
     for (key, variable) in variables
@@ -169,7 +168,6 @@ function write_model_expression_results!(
         expressions = container.primal_values_cache.expressions_cache
     else
         expressions = get_expressions(container)
-        @assert isempty(get_duals(container))
     end
 
     for (key, expression) in expressions
