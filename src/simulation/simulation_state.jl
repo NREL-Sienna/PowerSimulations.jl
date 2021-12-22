@@ -140,7 +140,7 @@ function initialize_simulation_state!(
 end
 
 function update_state_data!(
-    key::VariableKey,
+    key::OptimizationContainerKey,
     state::SimulationState,
     store_data::DataFrames.DataFrame,
     simulation_time::Dates.DateTime,
