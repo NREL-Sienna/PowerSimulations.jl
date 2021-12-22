@@ -82,7 +82,6 @@ end
 function solve_impl!(model::OperationModel)
     container = get_optimization_container(model)
     status = solve_impl!(container, get_system(model))
-    write_optimizer_stats!(container)
     set_run_status!(model, status)
     if status != RunStatus.SUCCESSFUL
         settings = get_settings(model)
