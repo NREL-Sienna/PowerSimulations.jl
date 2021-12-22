@@ -198,7 +198,7 @@ function write_optimizer_stats!(
 
     # Uncomment for performance measures of HDF Store
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
-    dataset[:, store.optimizer_stats_write_index[model_name]] = to_array(stats)
+    dataset[:, store.optimizer_stats_write_index[model_name]] = to_matrix(stats)
     #end
 
     store.optimizer_stats_write_index[model_name] += 1
@@ -393,7 +393,7 @@ function write_result!(
     output_cache = get_output_cache(store.cache, model_name, key)
 
     cur_size = get_size(store.cache)
-    add_result!(output_cache, timestamp, to_array(data), is_full(store.cache, cur_size))
+    add_result!(output_cache, timestamp, to_matrix(data), is_full(store.cache, cur_size))
 
     if get_dirty_size(output_cache) >= get_min_flush_size(store.cache)
         discard = !should_keep_in_cache(output_cache)

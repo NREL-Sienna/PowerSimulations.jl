@@ -29,24 +29,24 @@ function jump_value(input::Float64)::Float64
     return input
 end
 
-function to_array(array::DenseAxisArray)
+function to_matrix(array::DenseAxisArray)
     ax = axes(array)
     len_axes = length(ax)
     if len_axes == 1
         data = jump_value.((array[x] for x in ax[1]))
     elseif len_axes == 2
-        data = Array{Float64, 2}(undef, length(ax[2]), length(ax[1]))
+        data = Matrix(undef, length(ax[2]), length(ax[1]))
         for t in ax[2], (ix, name) in enumerate(ax[1])
             data[t, ix] = jump_value(array[name, t])
         end
         # TODO: this needs a better plan
         #elseif len_axes == 3
         #    extra_dims = sum(length(axes(array)[2:(end - 1)]))
-        #    arrays = Vector{Array{Float64, 2}}()
+        #    arrays = Vector{Matrix}()
 
         #    for i in ax[2]
         #        third_dim = collect(fill(i, size(array)[end]))
-        #        data = Array{Float64, 2}(undef, length(last(ax)), length(first(ax)))
+        #        data = Matrix(undef, length(last(ax)), length(first(ax)))
         #        for t in last(ax), (ix, name) in enumerate(first(ax))
         #            data[t, ix] = jump_value(array[name, i, t])
         #        end
@@ -60,26 +60,24 @@ function to_array(array::DenseAxisArray)
     return data
 end
 
-function to_array(array::DenseAxisArray{<:Number})
-    length(axes(array)) > 2 && error("array axes not supported: $(axes(array))")
+# to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
+# HDF5 Store.
+function to_matrix(array::DenseAxisArray{<:Number})
+    length(axes(array)) > 2 && error("array axes not supported: $(size(array))")
     return permutedims(array.data)
 end
 
-function to_array(array::SparseAxisArray)
-    columns = Set()
-    timesteps = Set{Int}()
-    for k in keys(array.data)
-        push!(columns, (k[1], k[2]))
-        push!(timesteps, k[3])
-    end
-    data = Array{Float64, 2}(undef, length(timesteps), length(columns))
+function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
+    columns = Set(k[1:(N - 1)] for k in keys(array.data))
+    timesteps = Set{Int}(k[N] for k in keys(array.data))
+    data = Matrix(undef, length(timesteps), length(columns))
     for (ix, col) in enumerate(columns), t in timesteps
-        data[t, ix] = array.data[(col..., t)]
+        data[t, ix] = jump_value(array.data[(col..., t)])
     end
     return data
 end
 
-to_array(array::Array) = array
+to_matrix(array::Array) = array
 
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(::Type{T}, axs...) where {T <: Any}
@@ -89,7 +87,7 @@ end
 """ Returns the correct container spec for the selected type of JuMP Model"""
 function container_spec(::Type{Float64}, axs...)
     cont = DenseAxisArray{Float64}(undef, axs...)
-    cont.data .= ones(size(cont.data)) .* NaN
+    cont.data .= fill(NaN, size(cont.data))
     return cont
 end
 

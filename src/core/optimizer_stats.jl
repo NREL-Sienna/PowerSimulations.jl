@@ -57,9 +57,9 @@ function OptimizerStats(data::Vector{Float64})
 end
 
 """
-Convert OptimizerStats to an array of floats that can be serialized to HDF5.
+Convert OptimizerStats to a matrix of floats that can be serialized to HDF5.
 """
-function to_array(stats::T) where {T <: OptimizerStats}
+function to_matrix(stats::T) where {T <: OptimizerStats}
     field_values = Vector{Float64}(undef, fieldcount(T))
     for (ix, field) in enumerate(fieldnames(T))
         value = getfield(stats, field)
