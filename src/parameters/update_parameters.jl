@@ -41,9 +41,7 @@ function update_parameter_values!(
     components = get_available_components(V, get_system(model))
     for component in components
         name = PSY.get_name(component)
-        get_time_series_name(attributes),
-        initial_forecast_time,
-        horizon
+        get_time_series_name(attributes), initial_forecast_time, horizon
         ts_vector = get_time_series_values!(
             U,
             model,
