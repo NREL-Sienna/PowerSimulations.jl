@@ -551,7 +551,7 @@ function compute_conflict!(container::OptimizationContainer)
         if isa(e, MethodError)
             @info "Can't compute conflict, check that your optimizer supports conflict refining/IIS"
         else
-            @error "Can't compute conflict", exception = (e, catch_backtrace())
+            @error "Can't compute conflict" exception = (e, catch_backtrace())
         end
     end
 
