@@ -3,7 +3,6 @@
     info_message = "The data doesn't include devices of type RenewableDispatch, consider changing the device models"
     device_model = DeviceModel(RenewableDispatch, RenewableFullDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     @test_logs (:info, info_message) match_mode = :any mock_construct_device!(
         model,
