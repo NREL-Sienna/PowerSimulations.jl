@@ -552,7 +552,7 @@ function compute_conflict!(container::OptimizationContainer)
             @info "Can't compute conflict, check that your optimizer supports conflict refining/IIS"
         else
             @error "Can't compute conflict", exception = (e, catch_backtrace())
-        return
+        end
     end
 
     if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
