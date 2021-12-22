@@ -116,13 +116,20 @@ function axis_array_to_dataframe(input_array::DenseAxisArray, columns = nothing)
 end
 
 function axis_array_to_dataframe(input_array::SparseAxisArray, columns = nothing)
-    column_names = unique([(k[1], k[3]) for k in keys(input_array.data)])
-    array_values = Vector{Vector{Float64}}(undef, length(column_names))
+    column_names = unique([(k[1], k[2]) for k in keys(input_array.data)])
+    array_values = Vector{Vector{Float64}}()
+    final_column_names = Vector{Symbol}()
     for (ix, col) in enumerate(column_names)
-        res = values(filter(v -> first(v)[[1, 3]] == col, input_array.data))
-        array_values[ix] = jump_value.(res)
+        res = collect(
+            filter(v -> first(v)[[1, 2]] == col && (last(v) != 0), input_array.data),
+        )
+        sorted_res = last.(sort(res, by = x -> x[1][3]))
+        if !isempty(sorted_res)
+            push!(array_values, PSI._jump_value.(sorted_res))
+            push!(final_column_names, Symbol(col...))
+        end
     end
-    return DataFrames.DataFrame(array_values, Symbol.(column_names))
+    return DataFrames.DataFrame(array_values, final_column_names)
 end
 
 function axis_array_to_dataframe(input_array::Matrix{Float64}, columns)

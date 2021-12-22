@@ -66,16 +66,27 @@ function to_array(array::DenseAxisArray{<:Number})
 end
 
 function to_array(array::SparseAxisArray)
-    columns = unique([(k[1], k[3]) for k in keys(array.data)])
+    columns = unique([(k[1], k[2]) for k in keys(array.data)])
     # PERF: can we determine the 2-d array size?
     tmp_data = Dict{Any, Vector{Float64}}()
+    final_column_names = Vector{Symbol}()
     for (ix, col) in enumerate(columns)
-        res = values(filter(v -> first(v)[[1, 3]] == col, array.data))
-        tmp_data[col] = jump_value.(res)
+        filtered_vars =
+            collect(filter(v -> (first(v)[[1, 2]] == col) && (last(v) != 0), array.data))
+        sorted_vars = sort(filtered_vars, by = x -> x[1][3])
+        vars = last.(sorted_vars)
+        if !isempty(vars)
+            tmp_data[Symbol(col...)] = PSI._jump_value.(vars)
+            push!(final_column_names, Symbol(col...))
+        end
     end
 
-    data = Array{Float64, 2}(undef, length(first(values(tmp_data))), length(columns))
-    for (i, column) in enumerate(columns)
+    data = Array{Float64, 2}(
+        undef,
+        length(first(values(tmp_data))),
+        length(final_column_names),
+    )
+    for (i, column) in enumerate(final_column_names)
         data[:, i] = tmp_data[column]
     end
 
