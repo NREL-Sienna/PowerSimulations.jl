@@ -46,9 +46,9 @@ function update_parameter_values!(
             model,
             component,
             get_time_series_name(attributes),
+            get_time_series_multiplier_id(attributes),
             initial_forecast_time,
             horizon,
-            multiplier_id = get_time_series_multiplier_id(attributes),
         )
         for (t, value) in enumerate(ts_vector)
             _set_param_value!(param_array, value, name, t)
@@ -74,9 +74,9 @@ function update_parameter_values!(
         model,
         service,
         get_time_series_name(attributes),
+        get_time_series_multiplier_id(attributes),
         initial_forecast_time,
         horizon,
-        multiplier_id = get_time_series_multiplier_id(attributes),
     )
     service_name = PSY.get_name(service)
     for (t, value) in enumerate(ts_vector)
@@ -103,8 +103,8 @@ function update_parameter_values!(
             model,
             component,
             get_time_series_name(attributes),
+            get_time_series_multiplier_id(attributes),
             initial_forecast_time,
-            multiplier_id = get_time_series_multiplier_id(attributes),
         )
         _set_param_value!(param_array, ts_vector[1], PSY.get_name(component), 1)
     end
