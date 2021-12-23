@@ -41,7 +41,7 @@ function axis_array_to_dataframe(input_array::DenseAxisArray{Float64}, columns =
 
         for i in input_array.axes[2]
             third_dim = collect(fill(i, size(input_array)[end]))
-            result = Matrix(
+            result = Matrix{Float64}(
                 undef,
                 length(last(input_array.axes)),
                 length(first(input_array.axes)),
@@ -93,7 +93,7 @@ function axis_array_to_dataframe(input_array::DenseAxisArray, columns = nothing)
 
         for i in input_array.axes[2]
             third_dim = collect(fill(i, size(input_array)[end]))
-            result = Matrix(
+            result = Matrix{Float64}(
                 undef,
                 length(last(input_array.axes)),
                 length(first(input_array.axes)),
@@ -123,7 +123,7 @@ function axis_array_to_dataframe(input_array::SparseAxisArray, columns = nothing
         push!(timesteps, k[3])
     end
 
-    data = Matrix(undef, length(timesteps), length(columns))
+    data = Matrix{Float64}(undef, length(timesteps), length(columns))
 
     for (ix, col) in enumerate(columns), t in timesteps
         data[t, ix] = array.data[(col..., t)]

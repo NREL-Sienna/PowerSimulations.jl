@@ -420,8 +420,8 @@ end
 end
 
 #=
-# TODO: re-enable this test after new version of PSB is tagged and released that has 
-# the "c_sys5_hybrid_ed" system. 
+# TODO: re-enable this test after new version of PSB is tagged and released that has
+# the "c_sys5_hybrid_ed" system.
 @testset "Test HybridSystem simulations" begin
     sys_uc = PSB.build_system(PSITestSystems, "c_sys5_hybrid_uc")
     sys_ed = PSB.build_system(PSITestSystems, "c_sys5_hybrid_ed")

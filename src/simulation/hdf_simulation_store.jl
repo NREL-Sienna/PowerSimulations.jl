@@ -699,16 +699,14 @@ function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function _write_dataset!(dataset, array, row_range)
-    if ndims(array) == 2
-        dataset[:, 1, row_range] = array
-    elseif ndims(array) == 3
-        dataset[:, :, row_range] = array
-        #elseif ndims(array) == 4
-        #    dataset[:, :, :, row_range] = array
-    else
-        error("ndims not supported: $(ndims(array))")
-    end
-
+function _write_dataset!(dataset, array::Array{Float64, 2}, row_range::UnitRange{Int64})
+    dataset[:, 1, row_range] = array
     @debug "wrote dataset" dataset row_range
+    return
+end
+
+function _write_dataset!(dataset, array::Array{Float64, 3}, row_range::UnitRange{Int64})
+    dataset[:, :, row_range] = array
+    @debug "wrote dataset" dataset row_range
+    return
 end

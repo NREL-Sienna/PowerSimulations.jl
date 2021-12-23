@@ -35,7 +35,7 @@ function to_matrix(array::DenseAxisArray)
     if len_axes == 1
         data = jump_value.((array[x] for x in ax[1]))
     elseif len_axes == 2
-        data = Matrix(undef, length(ax[2]), length(ax[1]))
+        data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
         for t in ax[2], (ix, name) in enumerate(ax[1])
             data[t, ix] = jump_value(array[name, t])
         end
@@ -46,7 +46,7 @@ function to_matrix(array::DenseAxisArray)
 
         #    for i in ax[2]
         #        third_dim = collect(fill(i, size(array)[end]))
-        #        data = Matrix(undef, length(last(ax)), length(first(ax)))
+        #        data = Matrix{Float64}(undef, length(last(ax)), length(first(ax)))
         #        for t in last(ax), (ix, name) in enumerate(first(ax))
         #            data[t, ix] = jump_value(array[name, i, t])
         #        end
@@ -70,7 +70,7 @@ end
 function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     columns = Set(k[1:(N - 1)] for k in keys(array.data))
     timesteps = Set{Int}(k[N] for k in keys(array.data))
-    data = Matrix(undef, length(timesteps), length(columns))
+    data = Matrix{Float64}(undef, length(timesteps), length(columns))
     for (ix, col) in enumerate(columns), t in timesteps
         data[t, ix] = jump_value(array.data[(col..., t)])
     end
@@ -183,10 +183,21 @@ end
 
 function _get_solver_time(jump_model::JuMP.Model)
     solver_solve_time = NaN
-    try
-        solver_solve_time = MOI.get(jump_model, MOI.SolveTime())
-    catch
-        @debug "SolveTime() property not supported by the Solver"
+
+    try_s =
+        get!(jump_model.ext, :try_supports_solvetime, (trycatch = true, supports = true))
+    if try_s.trycatch
+        try
+            solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
+            jump_model.ext[:try_supports_solvetime] = (trycatch = false, supports = true)
+        catch
+            @debug "SolveTimeSec() property not supported by the Solver"
+            jump_model.ext[:try_supports_solvetime] = (trycatch = false, supports = false)
+        end
+    else
+        if try_s.supports
+            solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
+        end
     end
 
     return solver_solve_time
