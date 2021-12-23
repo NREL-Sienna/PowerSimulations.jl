@@ -1,7 +1,7 @@
 # TODO:
 # - Allow passing the system path if the simulation wasn't serialized
 # - Handle PER-UNIT conversion of variables according to type
-# - Enconde Variable/Parameter/Dual from other inputs to avoid passing Symbol
+# - encode Variable/Parameter/Dual from other inputs to avoid passing Symbol
 
 const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
 const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}

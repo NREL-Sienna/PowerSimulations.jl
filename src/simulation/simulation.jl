@@ -543,7 +543,9 @@ function _set_system_state!(sim::Simulation, model_name::String)
     simulation_time = get_current_time(sim)
 
     for key in get_state_keys(decision_state)
+        state_data = get_state_data(decision_state, key)
         last_update = get_last_updated_timestamp(decision_state, key)
+        simulation_time > get_end_of_step_timestamp(state_data) && continue
         if last_update <= simulation_time
             # TODO: Implement setter functions for this operation to avoid hardcoding index 1
             # Every DataFrame in the system state is 1 row so the 1 index is necessary for the

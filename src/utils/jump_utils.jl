@@ -60,6 +60,28 @@ function to_matrix(array::DenseAxisArray)
     return data
 end
 
+# TODO: These functions could be use in other places for the store etc
+function get_column_names(
+    key::OptimizationContainerKey,
+    ::DenseAxisArray{T, 1, K},
+) where {T, K <: NTuple{1, Any}}
+    return [encode_key_as_string(key)]
+end
+
+function get_column_names(
+    ::OptimizationContainerKey,
+    arr::DenseAxisArray{T, 2, K},
+) where {T, K <: NTuple{2, Any}}
+    return axes(arr)[1]
+end
+
+function get_column_names(
+    ::OptimizationContainerKey,
+    arr::SparseAxisArray{T, N, K},
+)::Vector{String} where {T, N, K <: NTuple{N, Any}}
+    return collect(Set(encode_tuple_to_column(k[1:(N - 1)]) for k in keys(arr.data)))
+end
+
 # to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
 # HDF5 Store.
 function to_matrix(array::DenseAxisArray{<:Number})
@@ -67,14 +89,30 @@ function to_matrix(array::DenseAxisArray{<:Number})
     return permutedims(array.data)
 end
 
-function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    columns = Set(k[1:(N - 1)] for k in keys(array.data))
+function encode_tuple_to_column(val::NTuple{N, T}) where {N, T <: AbstractString}
+    return join(val, PSI_NAME_DELIMITER)
+end
+
+function _to_matrix(
+    array::SparseAxisArray{T, N, K},
+    columns,
+) where {T, N, K <: NTuple{N, Any}}
     timesteps = Set{Int}(k[N] for k in keys(array.data))
     data = Matrix{Float64}(undef, length(timesteps), length(columns))
     for (ix, col) in enumerate(columns), t in timesteps
         data[t, ix] = jump_value(array.data[(col..., t)])
     end
     return data
+end
+
+function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
+    columns = Set(k[1:(N - 1)] for k in keys(array.data))
+    return _to_matrix(array, columns)
+end
+
+function to_dataframe(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
+    columns = _encode_tuple_to_column.(Set(k[1:(N - 1)] for k in keys(array.data)))
+    return DataFrames.DataFrame(_to_matrix(array, columns), collect(columns))
 end
 
 to_matrix(array::Array) = array
