@@ -64,14 +64,14 @@ end
 function get_column_names(
     key::OptimizationContainerKey,
     ::DenseAxisArray{T, 1, K},
-)::Vector{String} where {T, K <: NTuple{1, Any}}
-    return [string(encode_key(key))]
+) where {T, K <: NTuple{1, Any}}
+    return [encode_key_as_string(key)]
 end
 
 function get_column_names(
     ::OptimizationContainerKey,
     arr::DenseAxisArray{T, 2, K},
-)::Vector{String} where {T, K <: NTuple{2, Any}}
+) where {T, K <: NTuple{2, Any}}
     return axes(arr)[1]
 end
 
@@ -79,7 +79,7 @@ function get_column_names(
     ::OptimizationContainerKey,
     arr::SparseAxisArray{T, N, K},
 )::Vector{String} where {T, N, K <: NTuple{N, Any}}
-    return collect(Set(enconde_tuple_to_column(k[1:(N - 1)]) for k in keys(arr.data)))
+    return collect(Set(encode_tuple_to_column(k[1:(N - 1)]) for k in keys(arr.data)))
 end
 
 # to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
@@ -89,7 +89,7 @@ function to_matrix(array::DenseAxisArray{<:Number})
     return permutedims(array.data)
 end
 
-function enconde_tuple_to_column(val::NTuple{N, T}) where {N, T <: AbstractString}
+function encode_tuple_to_column(val::NTuple{N, T}) where {N, T <: AbstractString}
     return join(val, PSI_NAME_DELIMITER)
 end
 
@@ -111,7 +111,7 @@ function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, 
 end
 
 function to_dataframe(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    columns = _enconde_tuple_to_column.(Set(k[1:(N - 1)] for k in keys(array.data)))
+    columns = _encode_tuple_to_column.(Set(k[1:(N - 1)] for k in keys(array.data)))
     return DataFrames._to_matrix(_to_matrix(array, columns), collect(columns))
 end
 
