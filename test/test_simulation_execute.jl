@@ -34,7 +34,6 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
         CopperPlatePowerModel,
         # MILP "duals" not supported with free solvers
         # duals = [CopperPlateBalanceConstraint],
-        use_slacks = true,
     ))
     set_network_model!(
         template_ed,
@@ -155,7 +154,7 @@ function test_2_stages_with_storage_ems(in_memory)
     )
     build_out = build!(sim_cache)
     @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim_cache) #, in_memory = in_memory)
+    execute_out = execute!(sim_cache, in_memory = in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
@@ -168,15 +167,11 @@ end
 @testset "Test Simulation Utils" begin
     template_uc = get_template_basic_uc_simulation()
     set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
-    set_network_model!(
-        template_uc,
-        NetworkModel(
-            CopperPlatePowerModel,
-            use_slacks = true,
-            # MILP "duals" not supported with free solvers
-            duals = [CopperPlateBalanceConstraint],
-        ),
-    )
+    set_network_model!(template_uc, NetworkModel(
+        CopperPlatePowerModel,
+        # MILP "duals" not supported with free solvers
+        # duals = [CopperPlateBalanceConstraint],
+    ))
 
     template_ed = get_template_nomin_ed_simulation(
         NetworkModel(
@@ -316,7 +311,7 @@ function test_3_stage_simulation_with_feedforwards(in_memory)
     PSY.transform_single_time_series!(sys_rts_rt, 12, Hour(1))
 
     template_uc = get_template_standard_uc_simulation()
-    set_network_model!(template_uc, NetworkModel(CopperPlatePowerModel, use_slacks = true))
+    set_network_model!(template_uc, NetworkModel(CopperPlatePowerModel))
     template_ha = deepcopy(template_uc)
     # network slacks added because of data issues
     template_ed = get_thermal_dispatch_template_network(
