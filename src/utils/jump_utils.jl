@@ -184,7 +184,7 @@ end
 function _get_solver_time(jump_model::JuMP.Model)
     solver_solve_time = NaN
 
-    try_s = get(jump_model.ext, :try_supports_solvetime, (trycatch = true, supports = true))
+    try_s = get!(jump_model.ext, :try_supports_solvetime, (trycatch = true, supports = true))
     if try_s.trycatch
         try
             solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
