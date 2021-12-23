@@ -65,10 +65,21 @@ function add_parameters!(
     end
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    ts_name = get_time_series_names(model)[T]
+    ts_names = get_time_series_names(model)
+    ts_name = ts_names[T]
+    time_series_multiplier_id =
+        findfirst(x -> x == T, [first(p) for p in ts_names if last(p) == ts_name])
     @debug "adding" T ts_name ts_type _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    parameter_container =
-        add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
+    parameter_container = add_param_container!(
+        container,
+        T(),
+        D,
+        ts_type,
+        ts_name,
+        names,
+        time_steps,
+        time_series_multiplier_id = time_series_multiplier_id,
+    )
     jump_model = get_jump_model(container)
     for d in devices
         name = PSY.get_name(d)
@@ -114,7 +125,10 @@ function add_parameters!(
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
-    ts_name = get_time_series_names(model)[T]
+    ts_names = get_time_series_names(model)
+    ts_name = ts_names[T]
+    time_series_multiplier_id =
+        findfirst(x -> x == T, [first(p) for p in ts_names if last(p) == ts_name])
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     @debug "adding" parameter_type U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -127,6 +141,7 @@ function add_parameters!(
         [name],
         time_steps;
         meta = name,
+        time_series_multiplier_id = time_series_multiplier_id,
     )
     jump_model = get_jump_model(container)
     ts_vector = get_time_series(container, service, T(), name)

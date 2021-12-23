@@ -27,10 +27,20 @@ struct NoAttributes end
 
 struct TimeSeriesAttributes{T <: PSY.TimeSeriesData} <: ParameterAttributes
     name::String
+    multiplier_id::Int
+end
+
+function TimeSeriesAttributes(
+    ::Type{T},
+    name::String,
+    multiplier_id::Int = 1,
+) where {T <: PSY.TimeSeriesData}
+    return TimeSeriesAttributes{T}(name, multiplier_id)
 end
 
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 get_time_series_name(attr::TimeSeriesAttributes) = attr.name
+get_time_series_multiplier_id(attr::TimeSeriesAttributes) = attr.multiplier_id
 
 struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
     attribute_key::T
