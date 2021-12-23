@@ -4,9 +4,9 @@ if two parameters each reference the same time series name, this function will r
 different value for each parameter entry
 """
 function create_time_series_multiplier_index(
-    model::DeviceModel{D, W},
+    model,
     ::Type{T},
-) where {D <: PSY.Component, W <: AbstractDeviceFormulation, T <: TimeSeriesParameter}
+) where {T <: TimeSeriesParameter}
     ts_names = get_time_series_names(model)
     ts_name = ts_names[T]
     return findfirst(x -> x == T, [k for (k, v) in ts_names if v == ts_name])
