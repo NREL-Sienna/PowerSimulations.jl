@@ -710,12 +710,3 @@ function _write_dataset!(dataset, array::Array{Float64, 3}, row_range::UnitRange
     @debug "wrote dataset" dataset row_range
     return
 end
-
-function _write_dataset!(
-    dataset,
-    ::Array{Float64, N},
-    row_range::UnitRange{Int64},
-) where {N}
-    error("ndims not supported: $N")
-    return
-end
