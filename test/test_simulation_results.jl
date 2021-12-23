@@ -549,8 +549,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         #        existing_timetsamps = get_timestamps(results_rh)
         #        for ts in existing_timetsamps
         #            val_cols = setdiff(propertynames(var), [:DateTime])
-        #            first_row = Matrix(var[var.DateTime .== ts, val_cols])
-        #            all_rows = Matrix(
+        #            first_row = Matrix{Float64}(var[var.DateTime .== ts, val_cols])
+        #            all_rows = Matrix{Float64}(
         #                var[
         #                    (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
         #                    val_cols,
@@ -567,8 +567,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         #        existing_timetsamps = get_timestamps(results_rh)
         #        for ts in existing_timetsamps
         #            val_cols = setdiff(propertynames(var), [:DateTime])
-        #            first_row = Matrix(var[var.DateTime .== ts, val_cols])
-        #            all_rows = Matrix(
+        #            first_row = Matrix{Float64}(var[var.DateTime .== ts, val_cols])
+        #            all_rows = Matrix{Float64}(
         #                var[
         #                    (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
         #                    val_cols,
@@ -586,8 +586,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         #            existing_timetsamps = get_timestamps(results_rh)
         #            for ts in existing_timetsamps
         #                val_cols = setdiff(propertynames(var), [:DateTime])
-        #                first_row = Matrix(var[var.DateTime .== ts, val_cols])
-        #                all_rows = Matrix(
+        #                first_row = Matrix{Float64}(var[var.DateTime .== ts, val_cols])
+        #                all_rows = Matrix{Float64}(
         #                    var[
         #                        (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
         #                        val_cols,
