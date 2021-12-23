@@ -266,6 +266,7 @@ function construct_device!(
     devices = get_available_components(L, sys)
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
     add_to_expression!(
         container,
@@ -278,8 +279,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ReactivePowerBalance,
-        # The base assumption is that reactive power follows the same curve as active power
-        ActivePowerTimeSeriesParameter,
+        ReactivePowerTimeSeriesParameter,
         devices,
         model,
         S,
@@ -333,6 +333,8 @@ function construct_device!(
     devices = get_available_components(L, sys)
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -344,8 +346,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ReactivePowerBalance,
-        # The base assumption is that reactive power follows the same curve as active power
-        ActivePowerTimeSeriesParameter,
+        ReactivePowerTimeSeriesParameter,
         devices,
         model,
         S,
