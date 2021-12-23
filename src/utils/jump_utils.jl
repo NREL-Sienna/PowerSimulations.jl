@@ -112,7 +112,7 @@ end
 
 function to_dataframe(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     columns = _encode_tuple_to_column.(Set(k[1:(N - 1)] for k in keys(array.data)))
-    return DataFrames._to_matrix(_to_matrix(array, columns), collect(columns))
+    return DataFrames.DataFrame(_to_matrix(array, columns), collect(columns))
 end
 
 to_matrix(array::Array) = array
