@@ -19,13 +19,14 @@ function write_model_dual_results!(
     end
 
     for (key, constraint) in get_duals(container)
+        col = encode_key(key)
         write_result!(
             store,
             model_name,
             key,
             timestamp,
             constraint,
-            [encode_key(key)],  # TODO DT: is this what the columns should be?
+            [col],  # TODO DT: is this what the columns should be?
         )
 
         if exports !== nothing &&
@@ -33,7 +34,7 @@ function write_model_dual_results!(
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
-            df = axis_array_to_dataframe(constraint, [name])
+            df = axis_array_to_dataframe(constraint, [col])
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, timestamp, df)
@@ -114,7 +115,7 @@ function write_model_variable_results!(
             horizon = exports[:horizon]
             resolution = exports[:resolution]
             file_type = exports[:file_type]
-            df = axis_array_to_dataframe(variable)
+            df = axis_array_to_dataframe(variable, cols)
             time_col = range(timestamp, length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, timestamp, df)

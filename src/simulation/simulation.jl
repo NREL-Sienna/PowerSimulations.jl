@@ -401,6 +401,12 @@ function _build!(sim::Simulation, serialize::Bool)
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
             serialize_simulation(sim)
         end
+        for model in get_decision_models(simulation_models)
+            serialize_problem(model)
+        end
+        if em !== nothing
+            serialize_problem(em)
+        end
     end
     return
 end
@@ -583,6 +589,7 @@ function _execute!(
     exports = nothing,
     enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
+    serialize = true,
 )
     @assert sim.internal !== nothing
 

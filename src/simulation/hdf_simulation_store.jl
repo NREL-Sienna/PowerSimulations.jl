@@ -147,6 +147,7 @@ function open_store(
         )
         return func(store)
     finally
+        flush(store)
         store !== nothing && close(store)
     end
 end
@@ -208,7 +209,7 @@ end
 """
 Read the optimizer stats for a problem execution.
 """
-function read_problem_optimizer_stats(
+function read_optimizer_stats(
     store::HdfSimulationStore,
     simulation_step,
     problem,
@@ -223,7 +224,7 @@ end
 """
 Return the optimizer stats for a problem as a DataFrame.
 """
-function read_problem_optimizer_stats(store::HdfSimulationStore, problem)
+function read_optimizer_stats(store::HdfSimulationStore, problem)
     dataset = _get_dataset(OptimizerStats, store, problem)
     data = permutedims(dataset[:, :])
     stats = [to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
