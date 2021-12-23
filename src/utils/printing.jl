@@ -96,7 +96,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::SimulationProblemResults
     println(io, "\n$title")
     bars = join(("=" for _ in 1:length(title)))
     println(io, "$bars\n")
-    timestamps = get_existing_timestamps(results)
+    timestamps = get_timestamps(results)
     println(io, "Start: $(timestamps.start)")
     println(io, "End: $(timestamps.stop)")
     println(io, "Resolution: $(timestamps.step)")
@@ -125,7 +125,7 @@ PSIResults = Union{ProblemResults, SimulationProblemResults, SimulationResults}
 
 function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     println(io, "<h1>Results</h1>")
-    timestamps = get_existing_timestamps(results)
+    timestamps = get_timestamps(results)
     println(io, "<p> Start: $(timestamps.start)</p>")
     println(io, "<p> End: $(timestamps.stop)</p>")
     println(io, "<p> Resolution: $(timestamps.step)</p>")

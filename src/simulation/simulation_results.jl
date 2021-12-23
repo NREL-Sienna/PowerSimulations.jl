@@ -185,7 +185,13 @@ function export_results(results::SimulationResults, exports)
         export_results(results, exports, results.store)
     else
         simulation_store_path = joinpath(results.path, "data_store")
-        open_store(HdfSimulationStore, simulation_store_path, "r") do store
+        problem_path = joinpath(results.path, "problems")
+        open_store(
+            HdfSimulationStore,
+            simulation_store_path,
+            "r",
+            problem_path = problem_path,
+        ) do store
             export_results(results, exports, store)
         end
     end
@@ -202,7 +208,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
         problem_exports = get_problem_exports(exports, problem_results.problem)
         path =
             exports.path === nothing ? problem_results.results_output_folder : exports.path
-        for timestamp in get_existing_timestamps(problem_results)
+        for timestamp in get_timestamps(problem_results)
             !should_export(exports, timestamp) && continue
 
             export_path = mkpath(joinpath(path, problem_results.problem, "variables"))
@@ -263,13 +269,38 @@ function export_result(
     timestamp::Dates.DateTime,
     df::DataFrames.DataFrame,
 )
-    filename =
-        joinpath(path, string(encode_key(key)) * "_" * convert_for_path(timestamp) * ".csv")
+    name = encode_key_as_string(key)
+    export_result(CSV.File, path, name, timestamp, df)
+end
+
+function export_result(
+    ::Type{CSV.File},
+    path,
+    name::AbstractString,
+    timestamp::Dates.DateTime,
+    df::DataFrames.DataFrame,
+)
+    filename = joinpath(path, name * "_" * convert_for_path(timestamp) * ".csv")
     export_result(CSV.File, filename, df)
 end
 
-function export_result(::Type{CSV.File}, path, key, df::DataFrames.DataFrame)
-    filename = joinpath(path, string(encode_key(key)) * ".csv")
+function export_result(
+    ::Type{CSV.File},
+    path,
+    key::OptimizationContainerKey,
+    df::DataFrames.DataFrame,
+)
+    name = encode_key_as_string(key)
+    export_result(CSV.File, path, name, df)
+end
+
+function export_result(
+    ::Type{CSV.File},
+    path,
+    name::AbstractString,
+    df::DataFrames.DataFrame,
+)
+    filename = joinpath(path, name * ".csv")
     export_result(CSV.File, filename, df)
 end
 
