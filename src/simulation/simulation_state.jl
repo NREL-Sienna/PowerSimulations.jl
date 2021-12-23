@@ -62,16 +62,8 @@ function _initialize_model_states!(
         field_containers = getfield(container, field)
         field_states = getfield(states, field)
         for (key, value) in field_containers
-            # TODO: Handle case of sparse_axis_array
             value_counts = params[key].horizon ÷ params[key].resolution
-            if length(axes(value)) == 1
-                column_names = [string(encode_key(key))]
-            elseif length(axes(value)) == 2
-                column_names, _ = axes(value)
-            else
-                @warn("Multidimensional Array caching is not currently supported")
-                continue
-            end
+            column_names = get_column_names(key, value)
             if !haskey(field_states, key) || length(field_states[key]) < value_counts
                 field_states[key] = ValueState(
                     DataFrames.DataFrame(
