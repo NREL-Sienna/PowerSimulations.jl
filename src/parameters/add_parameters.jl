@@ -81,7 +81,8 @@ function add_parameters!(
     names = [PSY.get_name(d) for d in devices]
     ts_name = get_time_series_names(model)[T]
     time_series_mult_id = create_time_series_multiplier_index(model, T)
-    @debug "adding" T ts_name ts_type _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    @debug "adding" T ts_name ts_type time_series_mult_id _group =
+        LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container =
         add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
     set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
