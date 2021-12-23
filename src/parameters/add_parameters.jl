@@ -1,3 +1,17 @@
+"""
+Function to create a unique index of time series names for each device model. For example,
+if two parameters each reference the same time series name, this function will return a
+different value for each parameter entry
+"""
+function create_time_series_multiplier_index(
+    model::DeviceModel{D, W},
+    ::Type{T},
+) where {D <: PSY.Component, W <: AbstractDeviceFormulation, T <: TimeSeriesParameter}
+    ts_names = get_time_series_names(model)
+    ts_name = ts_names[T]
+    return findfirst(x -> x == T, [k for (k, v) in ts_names if v == ts_name])
+end
+
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
@@ -65,21 +79,12 @@ function add_parameters!(
     end
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    ts_names = get_time_series_names(model)
-    ts_name = ts_names[T]
-    time_series_multiplier_id =
-        findfirst(x -> x == T, [first(p) for p in ts_names if last(p) == ts_name])
+    ts_name = get_time_series_names(model)[T]
+    time_series_mult_id = create_time_series_multiplier_index(model, T)
     @debug "adding" T ts_name ts_type _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    parameter_container = add_param_container!(
-        container,
-        T(),
-        D,
-        ts_type,
-        ts_name,
-        names,
-        time_steps,
-        time_series_multiplier_id = time_series_multiplier_id,
-    )
+    parameter_container =
+        add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
+    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
     jump_model = get_jump_model(container)
     for d in devices
         name = PSY.get_name(d)
@@ -125,10 +130,8 @@ function add_parameters!(
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
-    ts_names = get_time_series_names(model)
-    ts_name = ts_names[T]
-    time_series_multiplier_id =
-        findfirst(x -> x == T, [first(p) for p in ts_names if last(p) == ts_name])
+    ts_name = get_time_series_names(model)[T]
+    time_series_mult_id = create_time_series_multiplier_index(model, T)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     @debug "adding" parameter_type U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -141,8 +144,8 @@ function add_parameters!(
         [name],
         time_steps;
         meta = name,
-        time_series_multiplier_id = time_series_multiplier_id,
     )
+    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
     jump_model = get_jump_model(container)
     ts_vector = get_time_series(container, service, T(), name)
     multiplier = get_multiplier_value(T(), service, V())

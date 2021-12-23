@@ -856,13 +856,12 @@ function add_param_container!(
     name::String,
     axs...;
     meta = CONTAINER_KEY_EMPTY_META,
-    time_series_multiplier_id = 1,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     param_key = ParameterKey(T, U, meta)
     if isabstracttype(V)
         error("$V can't be abstract: $param_key")
     end
-    attributes = TimeSeriesAttributes(V, name, time_series_multiplier_id)
+    attributes = TimeSeriesAttributes(V, name)
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
