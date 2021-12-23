@@ -41,7 +41,10 @@ end
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 get_time_series_name(attr::TimeSeriesAttributes) = attr.name
 get_time_series_multiplier_id(attr::TimeSeriesAttributes) = attr.multiplier_id
-
+function set_time_series_multiplier_id!(attr::TimeSeriesAttributes, val::Int)
+    get_time_series_multiplier_id(attr) = val
+    return
+end
 struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
     attribute_key::T
 end

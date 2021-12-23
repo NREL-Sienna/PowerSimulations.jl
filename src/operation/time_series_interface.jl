@@ -59,7 +59,7 @@ function get_time_series_values!(
     initial_time,
     horizon::Int;
     ignore_scaling_factors = true,
-    multiplier_id = "",
+    multiplier_id = 1,
 ) where {T <: PSY.Forecast}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
@@ -100,7 +100,7 @@ function get_time_series_values!(
     initial_time,
     len::Int = 1;
     ignore_scaling_factors = true,
-    multiplier_id = "",
+    multiplier_id = 1,
 ) where {T <: PSY.StaticTimeSeries}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
