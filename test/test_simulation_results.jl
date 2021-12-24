@@ -10,17 +10,31 @@ function verify_export_results(results, export_path)
         problem = problem_results.problem
         for timestamp in get_timestamps(problem_results)
             for name in list_dual_names(problem_results)
-                compare_results(rpath, export_path, problem, "duals", name, timestamp)
+                @test compare_results(rpath, export_path, problem, "duals", name, timestamp)
             end
             for name in list_parameter_names(problem_results)
-                compare_results(rpath, export_path, problem, "parameters", name, timestamp)
+                @test compare_results(
+                    rpath,
+                    export_path,
+                    problem,
+                    "parameters",
+                    name,
+                    timestamp,
+                )
             end
             for name in list_variable_names(problem_results)
-                compare_results(rpath, export_path, problem, "variables", name, timestamp)
+                @test compare_results(
+                    rpath,
+                    export_path,
+                    problem,
+                    "variables",
+                    name,
+                    timestamp,
+                )
             end
             # TODO: These aren't stored yet.
             #for name in list_aux_variable_names(problem_results)
-            #    compare_results(rpath, export_path, problem, "aux_variables", name, timestamp)
+            #    @test compare_results(rpath, export_path, problem, "aux_variables", name, timestamp)
             #end
         end
 
@@ -43,21 +57,19 @@ function compare_results(rpath, epath, model, field, name, timestamp)
     df2 = PSI.read_dataframe(ep)
     names1 = names(df1)
     names2 = names(df2)
-    @test match = names1 == names2
-    !match && return
-    @test match = size(df1) == size(df2)
-    !match && return
+    names1 != names2 && return false
+    size(df1) != size(df2) && return false
 
     for (row1, row2) in zip(eachrow(df1), eachrow(df2))
         for name in names1
             if !isapprox(row1[name], row2[name])
                 @error "File mismatch" rp ep row1 row2
-                @test match = false
-                return
+                return false
             end
         end
     end
-    @test match
+
+    return true
 end
 
 function make_export_all(problems)
@@ -170,27 +182,17 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             "ActivePowerVariable__HydroEnergyReservoir",
             "ActivePowerVariable__RenewableDispatch",
             "ActivePowerVariable__ThermalStandard",
-            "EnergyShortageVariable__HydroEnergyReservoir",
-            "EnergySurplusVariable__HydroEnergyReservoir",
-            "EnergyVariable__HydroEnergyReservoir",
             "SystemBalanceSlackDown__System",
             "SystemBalanceSlackUp__System",
-            "WaterSpillageVariable__HydroEnergyReservoir",
         ]
 
         uc_expected_vars = [
             "ActivePowerVariable__HydroEnergyReservoir",
             "ActivePowerVariable__RenewableDispatch",
             "ActivePowerVariable__ThermalStandard",
-            "EnergyShortageVariable__HydroEnergyReservoir",
-            "EnergySurplusVariable__HydroEnergyReservoir",
-            "EnergyVariable__HydroEnergyReservoir",
             "OnVariable__ThermalStandard",
             "StartVariable__ThermalStandard",
             "StopVariable__ThermalStandard",
-            "SystemBalanceSlackDown__System",
-            "SystemBalanceSlackUp__System",
-            "WaterSpillageVariable__HydroEnergyReservoir",
         ]
 
         if in_memory
@@ -205,7 +207,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test get_system(results_ed) === nothing
             @test IS.get_uuid(get_system!(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
 
-            results_from_file = SimulationResults(joinpath(file_path, "cache"))
+            results_from_file = SimulationResults(joinpath(file_path, "no_cache"))
             @test list_problems(results) == ["ED", "UC"]
             results_uc_from_file = get_problem_results(results_from_file, "UC")
             results_ed_from_file = get_problem_results(results_from_file, "ED")
