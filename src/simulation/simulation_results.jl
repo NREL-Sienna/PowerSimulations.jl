@@ -304,16 +304,6 @@ function export_result(
     export_result(CSV.File, filename, df)
 end
 
-function export_result(
-    ::Type{CSV.File},
-    path,
-    timestamp::Dates.DateTime,
-    df::DataFrames.DataFrame,
-)
-    filename = joinpath(path, convert_for_path(timestamp) * ".csv")
-    export_result(CSV.File, filename, df)
-end
-
 function export_result(::Type{CSV.File}, filename, df::DataFrames.DataFrame)
     open(filename, "w") do io
         CSV.write(io, df)

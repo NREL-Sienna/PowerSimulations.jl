@@ -84,10 +84,10 @@ end
 
 # to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
 # HDF5 Store.
-function to_matrix(array::DenseAxisArray{<:Number})
-    length(axes(array)) > 2 && error("array axes not supported: $(size(array))")
-    return permutedims(array.data)
-end
+#function to_matrix(array::DenseAxisArray{<:Number})
+#    length(axes(array)) > 2 && error("array axes not supported: $(size(array))")
+#    return deepcopy(permutedims(array.data))
+#end
 
 function encode_tuple_to_column(val::NTuple{N, T}) where {N, T <: AbstractString}
     return join(val, PSI_NAME_DELIMITER)

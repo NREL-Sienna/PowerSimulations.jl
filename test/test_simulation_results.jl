@@ -37,9 +37,27 @@ end
 
 function compare_results(rpath, epath, model, field, name, timestamp)
     filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
-    df1 = PSI.read_dataframe(joinpath(rpath, model, field, filename))
-    df2 = PSI.read_dataframe(joinpath(epath, model, field, filename))
-    @test df1 == df2
+    rp = joinpath(rpath, model, field, filename)
+    ep = joinpath(epath, model, field, filename)
+    df1 = PSI.read_dataframe(rp)
+    df2 = PSI.read_dataframe(ep)
+    names1 = names(df1)
+    names2 = names(df2)
+    @test match = names1 == names2
+    !match && return
+    @test match = size(df1) == size(df2)
+    !match && return
+
+    for (row1, row2) in zip(eachrow(df1), eachrow(df2))
+        for name in names1
+            if !isapprox(row1[name], row2[name])
+                @error "File mismatch" rp ep row1 row2
+                @test match = false
+                return
+            end
+        end
+    end
+    @test match
 end
 
 function make_export_all(problems)
@@ -54,75 +72,27 @@ function make_export_all(problems)
     ]
 end
 
-function test_simulation_results_simple(file_path::String, export_path; in_memory = false)
-    template_ed = get_template_nomin_ed_simulation()
-    c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    models = SimulationModels([
-        DecisionModel(template_ed, c_sys, name = "ED", optimizer = ipopt_optimizer),
-    ])
-    test_sequence =
-        SimulationSequence(models = models, ini_cond_chronology = InterProblemChronology())
-    sim = Simulation(
-        name = "consecutive",
-        steps = 2,
-        models = models,
-        sequence = test_sequence,
-        simulation_folder = file_path,
-    )
-    build_out = build!(sim)
-    @test build_out == PSI.BuildStatus.BUILT
-    exports = Dict(
-        "models" => [
-            Dict(
-                "name" => "ED",
-                "store_all_variables" => true,
-                "store_all_parameters" => true,
-                "store_all_duals" => true,
-            ),
-        ],
-        "path" => export_path,
-        "optimizer_stats" => true,
-    )
-    execute_out = execute!(sim, exports = exports, in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
-
-    results = SimulationResults(sim)
-    @test list_problems(results) == ["ED"]
-    results_ed = get_problem_results(results, "ED")
-    @test list_variable_names(results_ed) == ["ActivePowerVariable__ThermalStandard"]
-    var1 = read_variable(results_ed, "ActivePowerVariable__ThermalStandard")
-    var2 = read_variable(results_ed, ActivePowerVariable, ThermalStandard)
-    @test var1 == var2
-end
-
 function test_simulation_results(file_path::String, export_path; in_memory = false)
-    if isdir(file_path)
-        rm(file_path, recursive = true)
-        mkdir(file_path)
-    end
-    if isdir(export_path)
-        rm(export_path, recursive = true)
-        mkdir(export_path)
-    end
-    @testset "Test simulation results" begin
-        template_uc = get_template_hydro_st_uc(
-            NetworkModel(
-                CopperPlatePowerModel,
-                use_slacks = true,
-                duals = [CopperPlateBalanceConstraint],
-            ),
-        )
-        template_ed = get_template_hydro_st_ed(
-            NetworkModel(
-                CopperPlatePowerModel,
-                use_slacks = true,
-                duals = [CopperPlateBalanceConstraint],
-            ),
-        )
+    @testset "Test simulation results in_memory = $in_memory" begin
+        template_uc = get_template_basic_uc_simulation()
+        template_ed = get_template_nomin_ed_simulation()
         set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
-        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
-        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
-        time_series_cache_size = 0  # This is only for test coverage.
+        set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
+        set_network_model!(template_uc, NetworkModel(
+            CopperPlatePowerModel,
+            # MILP "duals" not supported with free solvers
+            # duals = [CopperPlateBalanceConstraint],
+        ))
+        set_network_model!(
+            template_ed,
+            NetworkModel(
+                CopperPlatePowerModel,
+                duals = [CopperPlateBalanceConstraint],
+                use_slacks = true,
+            ),
+        )
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
         models = SimulationModels(
             decision_models = [
                 DecisionModel(
@@ -130,19 +100,17 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                     c_sys5_hy_uc;
                     name = "UC",
                     optimizer = GLPK_optimizer,
-                    time_series_cache_size = time_series_cache_size,
                 ),
                 DecisionModel(
                     template_ed,
                     c_sys5_hy_ed;
                     name = "ED",
-                    optimizer = GLPK_optimizer,
-                    time_series_cache_size = time_series_cache_size,
+                    optimizer = ipopt_optimizer,
                 ),
             ],
         )
 
-        sequence_cache = SimulationSequence(
+        sequence = SimulationSequence(
             models = models,
             feedforwards = Dict(
                 "ED" => [
@@ -162,13 +130,14 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             ini_cond_chronology = InterProblemChronology(),
         )
         sim = Simulation(
-            name = "cache",
+            name = "no_cache",
             steps = 2,
             models = models,
-            sequence = sequence_cache,
+            sequence = sequence,
             simulation_folder = file_path,
         )
-        build_out = build!(sim)
+
+        build_out = build!(sim; console_level = Logging.Error)
         @test build_out == PSI.BuildStatus.BUILT
 
         exports = Dict(
@@ -281,7 +250,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             end
         end
 
-        # TODO DT: is read_realized_variables still supported?
+        # TODO: is read_realized_variables still supported?
         #realized_variable_uc = read_realized_variables(results_uc)
         #@test length(keys(realized_variable_uc)) == 12
         #for var in values(realized_variable_uc)
@@ -459,187 +428,13 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test isempty(sim.internal.store.dm_data[:ED].optimizer_stats)
         end
     end
-
-    @testset "Test receding horizon simulation results" begin
-        template_uc =
-            get_template_hydro_st_uc(NetworkModel(CopperPlatePowerModel, use_slacks = true))
-        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
-        models = SimulationModels(
-            decision_models = [
-                DecisionModel(
-                    name = "UC",
-                    template_uc,
-                    c_sys5_hy_uc;
-                    optimizer = GLPK_optimizer,
-                ),
-            ],
-        )
-
-        sequence_rh = SimulationSequence(
-            models = models,
-            ini_cond_chronology = InterProblemChronology(),
-        )
-        sim = Simulation(
-            name = "RH",
-            steps = 2,
-            models = models,
-            sequence = sequence_rh,
-            simulation_folder = file_path,
-        )
-        build_out = build!(sim)
-        @test build_out == PSI.BuildStatus.BUILT
-
-        execute_out = execute!(sim, in_memory = in_memory)
-        @test execute_out == PSI.RunStatus.SUCCESSFUL
-
-        results = SimulationResults(sim)
-        @test list_problems(results) == ["UC"]
-        results_rh = get_problem_results(results, "UC")
-
-        if in_memory
-            @test IS.get_uuid(get_system(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
-        else
-            @test get_system(results_rh) === nothing
-            #@test length(read_realized_variables(results_rh)) == 12 #verifies this works without system
-            set_system!(results_rh, c_sys5_hy_uc)
-            @test IS.get_uuid(get_system!(results_rh)) === IS.get_uuid(c_sys5_hy_uc)
-        end
-
-        #    uc_expected_vars = [
-        #        "WaterSpillageVariable__HydroEnergyReservoir",
-        #        "ActivePowerVariable__ThermalStandard",
-        #        "ActivePowerVariable_RenewableDispatch",
-        #        "StartVariable__ThermalStandard",
-        #        "StopVariable__ThermalStandard",
-        #        "EnergyVariable_HydroEnergyReservoir",
-        #        "ActivePowerVariable_HydroEnergyReservoir",
-        #        "OnVariable__ThermalStandard",
-        #    ]
-        #    @test isempty(setdiff(uc_expected_vars, list_variable_names(results_rh)))
-
-        #    p_thermal_standard_rh = read_variable(results_rh, :P__ThermalStandard)
-        #    @test length(keys(p_thermal_standard_rh)) == 2
-        #    for v in values(p_thermal_standard_rh)
-        #        @test size(v) == (24, 6)
-        #    end
-
-        #    ren_dispatch_params = read_parameter(
-        #        results_rh,
-        #        :P__max_active_power__RenewableDispatch_max_active_power,
-        #    )
-        #    @test length(keys(ren_dispatch_params)) == 2
-        #    for v in values(ren_dispatch_params)
-        #        @test size(v) == (24, 4)
-        #    end
-
-        #    if !in_memory
-        #        # this creates a container for duals but doesn't write anything because
-        #        # it's a MIP and the duals are unavailable.
-        #        network_duals = read_dual(results_rh, :CopperPlateBalance)
-        #        @test length(keys(network_duals)) == 2
-        #        for v in values(network_duals)
-        #            @test size(v) == (24, 2)
-        #        end
-        #    end
-
-        #    realized_variable_rh = read_realized_variables(results_rh)
-        #    @test length(keys(realized_variable_rh)) == 12
-        #    for var in values(realized_variable_rh)
-        #        @test size(var)[1] == 48
-        #        existing_timetsamps = get_timestamps(results_rh)
-        #        for ts in existing_timetsamps
-        #            val_cols = setdiff(propertynames(var), [:DateTime])
-        #            first_row = Matrix{Float64}(var[var.DateTime .== ts, val_cols])
-        #            all_rows = Matrix{Float64}(
-        #                var[
-        #                    (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
-        #                    val_cols,
-        #                ],
-        #            )
-        #            @test all(first_row .== all_rows)
-        #        end
-        #    end
-
-        #    realized_param_rh = read_realized_parameters(results_rh)
-        #    @test length(keys(realized_param_rh)) == 4
-        #    for var in values(realized_param_rh)
-        #        @test size(var)[1] == 48
-        #        existing_timetsamps = get_timestamps(results_rh)
-        #        for ts in existing_timetsamps
-        #            val_cols = setdiff(propertynames(var), [:DateTime])
-        #            first_row = Matrix{Float64}(var[var.DateTime .== ts, val_cols])
-        #            all_rows = Matrix{Float64}(
-        #                var[
-        #                    (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
-        #                    val_cols,
-        #                ],
-        #            )
-        #            @test all(first_row .== all_rows)
-        #        end
-        #    end
-
-        #    if !in_memory
-        #        realized_duals_rh = read_realized_duals(results_rh)
-        #        @test length(keys(realized_duals_rh)) == 1
-        #        for var in values(realized_duals_rh)
-        #            @test size(var)[1] == 48
-        #            existing_timetsamps = get_timestamps(results_rh)
-        #            for ts in existing_timetsamps
-        #                val_cols = setdiff(propertynames(var), [:DateTime])
-        #                first_row = Matrix{Float64}(var[var.DateTime .== ts, val_cols])
-        #                all_rows = Matrix{Float64}(
-        #                    var[
-        #                        (var.DateTime .>= ts) .& (var.DateTime .< ts + existing_timetsamps.step),
-        #                        val_cols,
-        #                    ],
-        #                )
-        #                @test all(first_row .== all_rows)
-        #            end
-        #        end
-        #    end
-
-        #    # request non sync data
-        #    @test_logs(
-        #        (:error, r"Requested time does not match available results"),
-        #        match_mode = :any,
-        #        @test_throws IS.InvalidValue read_realized_variables(
-        #            results_rh,
-        #            names = [:P__ThermalStandard],
-        #            initial_time = DateTime("2024-01-01T02:12:00"),
-        #            len = 3,
-        #        )
-        #    )
-
-        #    # request good window
-        #    @test size(
-        #        read_realized_variables(
-        #            results_rh,
-        #            names = [:P__ThermalStandard],
-        #            initial_time = DateTime("2024-01-01T23:00:00"),
-        #            len = 10,
-        #        )[:P__ThermalStandard],
-        #    )[1] == 10
-
-        #    # request bad window
-        #    @test_logs(
-        #        (:error, r"Requested time does not match available results"),
-        #        (@test_throws IS.InvalidValue read_realized_variables(
-        #            results_rh,
-        #            names = [:P__ThermalStandard],
-        #            initial_time = DateTime("2024-01-01T23:00:00"),
-        #            len = 26,
-        #        ))
-        #    )
-    end
 end
 
 @testset "Test simulation results" begin
-    for in_memory in (false, true)
+    for in_memory in (true, false)
         file_path = mkpath(joinpath(pwd(), "test_simulation_results"))
         export_path = mkpath(joinpath(pwd(), "test_export_path"))
         try
-            # Use this simple version until handling of parameters is fixed.
-            test_simulation_results_simple(file_path, export_path, in_memory = in_memory)
             test_simulation_results(file_path, export_path, in_memory = in_memory)
         finally
             rm(file_path, force = true, recursive = true)
