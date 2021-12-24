@@ -206,7 +206,7 @@ end
 
 function _get_store_value(
     res::SimulationProblemResults,
-    names::Vector{<:OptimizationContainerKey},
+    container_keys::Vector{<:OptimizationContainerKey},
     timestamps,
     store::SimulationStore,
 )
@@ -216,15 +216,15 @@ function _get_store_value(
     problem_interval = get_interval(res)
     resolution = get_resolution(res)
     horizon = get_forecast_horizon(res)
-    for name in names
+    for key in container_keys
         _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
         for ts in timestamps
-            out = read_result(DataFrames.DataFrame, store, model_name, name, ts)
+            out = read_result(DataFrames.DataFrame, store, model_name, key, ts)
             time_col = range(ts, length = horizon, step = resolution)
             DataFrames.insertcols!(out, 1, :DateTime => time_col)
             _results[ts] = out
         end
-        results[name] = _results
+        results[key] = _results
     end
 
     return results
@@ -279,10 +279,10 @@ function _read_variables(res::SimulationProblemResults, variable_keys, timestamp
     keys_with_values = [k for (k, v) in res.variable_values if !isempty(v)]
     same_keys = isempty([n for n in variable_keys if n ∉ keys_with_values])
     if same_timestamps && same_keys
-        @info "reading variables from SimulationsResults"
+        @debug "reading variables from SimulationsResults"
         vals = filter(p -> (p.first ∈ variable_keys), res.variable_values)
     else
-        @info "reading variables from data store"
+        @debug "reading variables from data store"
         vals = _get_store_value(res, variable_keys, timestamps, store)
     end
     return vals
@@ -388,10 +388,10 @@ function _read_parameters(res::SimulationProblemResults, parameter_keys, timesta
     parameters_with_values = [k for (k, v) in res.parameter_values if !isempty(v)]
     same_parameters = isempty([n for n in parameter_keys if n ∉ parameters_with_values])
     if same_timestamps && same_parameters
-        @info "reading parameters from SimulationsResults"
+        @debug "reading parameters from SimulationsResults"
         vals = filter(p -> (p.first ∈ parameter_keys), res.parameter_values)
     else
-        @info "reading parameters from data store"
+        @debug "reading parameters from data store"
         vals = _get_store_value(res, parameter_keys, timestamps, store)
     end
     return vals
