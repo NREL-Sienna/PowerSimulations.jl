@@ -89,7 +89,7 @@ function to_matrix(array::DenseAxisArray{<:Number})
     return permutedims(array.data)
 end
 
-function encode_tuple_to_column(val::NTuple{N, T}) where {N, T <: AbstractString}
+function encode_tuple_to_column(val::NTuple{N, <:AbstractString}) where {N}
     return join(val, PSI_NAME_DELIMITER)
 end
 
