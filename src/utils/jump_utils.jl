@@ -119,7 +119,7 @@ end
 
 function to_dataframe(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     columns = _get_column_names(array)
-    return DataFrames.DataFrame(_to_matrix(array, columns), collect(columns))
+    return DataFrames.DataFrame(_to_matrix(array, columns), columns)
 end
 
 to_matrix(array::Array) = array
