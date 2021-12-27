@@ -75,9 +75,7 @@ function get_column_names(
     return axes(array)[1]
 end
 
-function _get_column_names(
-    arr::SparseAxisArray{T, N, K},
-) where {T, N, K <: NTuple{N, Any}}
+function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     return sort!(collect(Set(encode_tuple_to_column(k[1:(N - 1)]) for k in keys(arr.data))))
 end
 
