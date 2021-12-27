@@ -70,16 +70,20 @@ end
 
 function get_column_names(
     ::OptimizationContainerKey,
-    arr::DenseAxisArray{T, 2, K},
+    array::DenseAxisArray{T, 2, K},
 ) where {T, K <: NTuple{2, Any}}
-    return axes(arr)[1]
+    return axes(array)[1]
+end
+
+function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
+    return sort!(collect(Set(encode_tuple_to_column(k[1:(N - 1)]) for k in keys(arr.data))))
 end
 
 function get_column_names(
     ::OptimizationContainerKey,
-    arr::SparseAxisArray{T, N, K},
-)::Vector{String} where {T, N, K <: NTuple{N, Any}}
-    return collect(Set(encode_tuple_to_column(k[1:(N - 1)]) for k in keys(arr.data)))
+    array::SparseAxisArray{T, N, K},
+) where {T, N, K <: NTuple{N, Any}}
+    return _get_column_names(array)
 end
 
 # to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
@@ -106,13 +110,14 @@ function _to_matrix(
 end
 
 function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    columns = Set(k[1:(N - 1)] for k in keys(array.data))
+    # Don't use _get_column_names to avoid additional string conversion
+    columns = sort!(unique!([k[1:(N - 1)] for k in keys(array.data)]))
     return _to_matrix(array, columns)
 end
 
 function to_dataframe(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    columns = _encode_tuple_to_column.(Set(k[1:(N - 1)] for k in keys(array.data)))
-    return DataFrames.DataFrame(_to_matrix(array, columns), collect(columns))
+    columns = _get_column_names(array)
+    return DataFrames.DataFrame(_to_matrix(array, columns), columns)
 end
 
 to_matrix(array::Array) = array
