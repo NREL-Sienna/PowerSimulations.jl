@@ -5,8 +5,8 @@ mutable struct SimulationInternal
     models_dir::String
     recorder_dir::String
     results_dir::String
-    run_count::Dict{Int, Dict{Int, Int}}
-    date_ref::Dict{Int, Dates.DateTime}
+    run_count::OrderedDict{Int, OrderedDict{Int, Int}}
+    date_ref::OrderedDict{Int, Dates.DateTime}
     status::RunStatus
     build_status::BuildStatus
     simulation_state::SimulationState
