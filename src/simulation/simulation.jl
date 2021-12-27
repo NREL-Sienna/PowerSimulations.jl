@@ -160,9 +160,9 @@ Manually provided initial times have to be compatible with the specified interva
     end
     if get_models(sim).emulation_model !== nothing
         em = get_models(sim).emulation_model
-        emulator_model_no = last(keys(model_initial_times))
         system = get_system(get_models(sim).emulation_model)
-        ini_time, ts_length = PSY.check_time_series_consistency(sys, PSY.SingleTimeSeries)
+        ini_time, ts_length =
+            PSY.check_time_series_consistency(system, PSY.SingleTimeSeries)
         resolution = PSY.get_time_series_resolution(system)
         em_available_times = range(ini_time, step = resolution, length = ts_length)
         if get_initial_time(sim) ∉ em_available_times
@@ -173,7 +173,7 @@ Manually provided initial times have to be compatible with the specified interva
                 ),
             )
         else
-            model_initial_times[emulator_model_no + 1] = sim.initial_time
+            model_initial_times[length(model_initial_times) + 1] = [sim.initial_time]
         end
     end
     set_current_time!(sim, sim.initial_time)
@@ -251,11 +251,15 @@ function _build_emulation_model!(sim::Simulation)
     end
 
     try
-        get_execution_count(model)
+        initial_time = get_initial_time(sim)
+        set_initial_time!(model, initial_time)
+        output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
+        mkpath(output_dir)
+        set_output_dir!(model, output_dir)
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
             build_impl!(model)
         end
-        sim.internal.date_ref[model_number] = initial_time
+        sim.internal.date_ref[length(sim.internal.date_ref) + 1] = initial_time
         set_status!(model, BuildStatus.BUILT)
     catch
         set_status!(model, BuildStatus.FAILED)
@@ -284,7 +288,7 @@ function _initialize_problem_storage!(
     sequence = get_sequence(sim)
     executions_by_model = sequence.executions_by_model
     models = get_models(sim)
-    model_store_params = OrderedDict{Symbol, ModelStoreParams}()
+    decision_model_store_params = OrderedDict{Symbol, ModelStoreParams}()
     model_req = Dict{Symbol, SimulationModelStoreRequirements}()
     num_param_containers = 0
     rules = CacheFlushRules(
@@ -293,7 +297,7 @@ function _initialize_problem_storage!(
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
-        model_store_params[model_name] = model.internal.store_parameters
+        decision_model_store_params[model_name] = model.internal.store_parameters
         horizon = get_horizon(model)
         num_executions = executions_by_model[model_name]
         reqs = SimulationModelStoreRequirements()
@@ -342,16 +346,35 @@ function _initialize_problem_storage!(
             length(reqs.expressions)
     end
 
+    em = get_emulation_model(models)
+    if em === nothing
+        emulation_model_store_params = ModelStoreParams(
+        0, # Num Execution
+        1,
+        0, # Interval
+        0, # Resolution
+        get_base_power(decision_model_store_params[1]),
+        get_system_uuid(decision_model_store_params[1]),
+        )
+    else
+        emulation_model_store_params = em.internal.store_parameters
+    end
+
     simulation_store_params = SimulationStoreParams(
         get_initial_time(sim),
         get_step_resolution(sequence),
         get_steps(sim),
-        model_store_params,
+        decision_model_store_params,
+        emulation_model_store_params
     )
     @debug "initialized problem requirements" simulation_store_params
     store = get_simulation_store(sim)
     initialize_problem_storage!(store, simulation_store_params, model_req, rules)
     return simulation_store_params
+end
+
+function _initialize_system_state_storage!(sim::Simulation)
+    system_state = get_system_states(get_simulation_state(sim))
 end
 
 function _build!(sim::Simulation, serialize::Bool)
@@ -381,7 +404,7 @@ function _build!(sim::Simulation, serialize::Bool)
     if em !== nothing
         system = get_system(em)
         em_resolution = PSY.get_time_series_resolution(system)
-        set_executions!(em, Int(step_resolution / em_resolution))
+        set_executions!(em, get_steps(sim)*Int(step_resolution / em_resolution))
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Check Steps" begin
@@ -548,9 +571,9 @@ function _set_system_state!(sim::Simulation, model_name::String)
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
             # and write to store ()
         else
-            error("Something went really wrong. Please report this error. \n
-                  last_update: $(last_update) \n
-                  simulation_time: $(simulation_time) \n
+            error("Something went really wrong. Please report this error. \\
+                  last_update: $(last_update) \\
+                  simulation_time: $(simulation_time) \\
                   key: $(encode_key_as_string(key))")
         end
         IS.@record :execution StateUpdateEvent(
@@ -617,7 +640,7 @@ function _execute!(
             "start",
         )
         for (ix, model_number) in enumerate(execution_order)
-            model = get_decision_models(models)[model_number]
+            model = get_simulation_model(models, model_number)
             model_name = get_name(model)
             IS.@record :simulation_status ProblemExecutionEvent(
                 get_current_time(sim),
