@@ -54,6 +54,19 @@ function get_simulation_model(models::SimulationModels, name::Symbol)
     error("Model $name not stored in SimulationModels")
 end
 
+
+function get_simulation_model(models::SimulationModels, index::Int)
+    n_decision_models = length(get_decision_models(models))
+    if index == n_decision_models + 1
+        return models.emulation_model
+    elseif index <= n_decision_models
+        return get_decision_models(models)[index]
+    else
+        error("Model number $index is invalid")
+    end
+end
+
+
 get_decision_models(models::SimulationModels) = models.decision_models
 get_emulation_model(models::SimulationModels) = models.emulation_model
 
