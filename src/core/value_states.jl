@@ -102,6 +102,18 @@ function set_state_data!(state::ValueStates, key::ConstraintKey, val::ValueState
     return
 end
 
+function has_state_data(state::ValueStates, key::VariableKey)
+    return haskey(state.variables, key)
+end
+
+function has_state_data(state::ValueStates, key::AuxVarKey)
+    return haskey(state.aux_variables, key)
+end
+
+function has_state_data(state::ValueStates, key::ConstraintKey)
+    return haskey(state.duals, key)
+end
+
 function get_state_data(
     state::ValueStates,
     ::T,

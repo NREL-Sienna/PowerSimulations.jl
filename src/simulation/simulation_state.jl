@@ -109,6 +109,50 @@ function _initialize_system_states!(
     return
 end
 
+function _initialize_system_states!(
+    sim_state::SimulationState,
+    emulation_model::EmulationModel,
+    simulation_initial_time::Dates.DateTime,
+    params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
+)
+    decision_states = get_decision_states(sim_state)
+    emulator_states = get_system_states(sim_state)
+    emulation_container = get_optimization_container(emulation_model)
+
+    for field in fieldnames(ValueStates)
+        field_containers = getfield(emulation_container, field)
+        for (key, value) in field_containers
+            column_names = get_column_names(key, value)
+            set_state_data!(
+                emulator_states,
+                key,
+                ValueState(
+                    DataFrames.DataFrame(column_names .=> NaN),
+                    [simulation_initial_time],
+                    get_resolution(emulation_model),
+                ),
+            )
+        end
+    end
+
+    for key in get_state_keys(decision_states)
+        if has_state_data(emulator_states, key)
+            continue
+        end
+        cols = DataFrames.names(get_state_values(decision_states, key))
+        set_state_data!(
+            emulator_states,
+            key,
+            ValueState(
+                DataFrames.DataFrame(cols .=> NaN),
+                [simulation_initial_time],
+                params[key].resolution,
+            ),
+        )
+    end
+    return
+end
+
 function initialize_simulation_state!(
     sim_state::SimulationState,
     models::SimulationModels,
