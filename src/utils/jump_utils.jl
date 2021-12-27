@@ -110,8 +110,8 @@ function _to_matrix(
 end
 
 function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    # Don't use _get_column_names to avoid allocation of the columns vector
-    columns = Set(k[1:(N - 1)] for k in keys(array.data))
+    # Don't use _get_column_names to avoid additional string conversion
+    columns = sort!(unique!([k[1:(N - 1)] for k in keys(array.data)]))
     return _to_matrix(array, columns)
 end
 
