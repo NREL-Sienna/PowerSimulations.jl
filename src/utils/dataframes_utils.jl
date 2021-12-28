@@ -3,136 +3,18 @@
 Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
 
 # Arguments
-- `input_array`: JuMP DenseAxisArray or SparseAxisArray to convert
-- `columns::Vector{Symbol}`: Required when there is only one axis which is data. Ignored if
-  `input_array` includes an axis for device names.
+- `array`: JuMP DenseAxisArray or SparseAxisArray to convert
+- `key::OptimizationContainerKey`:
 """
-function axis_array_to_dataframe(input_array::DenseAxisArray{Float64}, columns = nothing)
-    if length(axes(input_array)) == 1
-        result = Vector{Float64}(undef, length(first(input_array.axes)))
-
-        for t in input_array.axes[1]
-            result[t] = input_array[t]
-        end
-
-        @assert columns !== nothing
-        return DataFrames.DataFrame(columns[1] => result)
-
-    elseif length(axes(input_array)) == 2
-        result = Array{Float64, length(input_array.axes)}(
-            undef,
-            length(input_array.axes[2]),
-            length(input_array.axes[1]),
-        )
-        names = Array{Symbol, 1}(undef, length(input_array.axes[1]))
-
-        for t in input_array.axes[2], (ix, name) in enumerate(input_array.axes[1])
-            result[t, ix] = input_array[name, t]
-            names[ix] = Symbol(name)
-        end
-
-        return DataFrames.DataFrame(result, names)
-
-    elseif length(axes(input_array)) == 3
-        extra_dims = sum(length(axes(input_array)[2:(end - 1)]))
-        extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
-        result_df = DataFrames.DataFrame()
-        names = vcat(extra_vars, Symbol.(axes(input_array)[1]))
-
-        for i in input_array.axes[2]
-            third_dim = collect(fill(i, size(input_array)[end]))
-            result = Matrix{Float64}(
-                undef,
-                length(last(input_array.axes)),
-                length(first(input_array.axes)),
-            )
-            for t in last(input_array.axes),
-                (ix, name) in enumerate(first(input_array.axes))
-
-                result[t, ix] = input_array[name, i, t]
-            end
-            res = DataFrames.DataFrame(hcat(third_dim, result), :auto)
-            result_df = vcat(result_df, res)
-        end
-
-        return DataFrames.rename!(result_df, names)
-
-    else
-        error("Dimension Number $(length(axes(input_array))) not Supported")
-    end
+function axis_array_to_dataframe(
+    array::Union{DenseAxisArray, SparseAxisArray},
+    key::OptimizationContainerKey,
+)
+    return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array))
 end
 
-function axis_array_to_dataframe(input_array::DenseAxisArray, columns = nothing)
-    if length(axes(input_array)) == 1
-        result = Vector{Float64}(undef, length(first(input_array.axes)))
-        for t in input_array.axes[1]
-            result[t] = jump_value(input_array[t])
-        end
-        @assert columns !== nothing
-        return DataFrames.DataFrame(columns[1] => result)
-    elseif length(axes(input_array)) == 2
-        result = Array{Float64, length(input_array.axes)}(
-            undef,
-            length(input_array.axes[2]),
-            length(input_array.axes[1]),
-        )
-        names = Array{Symbol, 1}(undef, length(input_array.axes[1]))
-
-        for t in input_array.axes[2], (ix, name) in enumerate(input_array.axes[1])
-            result[t, ix] = jump_value(input_array[name, t])
-            names[ix] = Symbol(name)
-        end
-
-        return DataFrames.DataFrame(result, names)
-
-    elseif length(axes(input_array)) == 3
-        extra_dims = sum(length(axes(input_array)[2:(end - 1)]))
-        extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
-        result_df = DataFrames.DataFrame()
-        names = vcat(extra_vars, Symbol.(axes(input_array)[1]))
-
-        for i in input_array.axes[2]
-            third_dim = collect(fill(i, size(input_array)[end]))
-            result = Matrix{Float64}(
-                undef,
-                length(last(input_array.axes)),
-                length(first(input_array.axes)),
-            )
-            for t in last(input_array.axes),
-                (ix, name) in enumerate(first(input_array.axes))
-
-                result[t, ix] = jump_value(input_array[name, i, t])
-            end
-            res = DataFrames.DataFrame(hcat(third_dim, result), :auto)
-            result_df = vcat(result_df, res)
-        end
-        return DataFrames.rename!(result_df, names)
-    else
-        @warn(
-            "Dimension Number $(length(axes(input_array))) not Supported, returning empty DataFrame"
-        )
-        return DataFrames.DataFrame()
-    end
-end
-
-function axis_array_to_dataframe(input_array::SparseAxisArray, columns = nothing)
-    columns = Set()
-    timesteps = Set{Int}()
-    for k in keys(array.data)
-        push!(columns, (k[1], k[2]))
-        push!(timesteps, k[3])
-    end
-
-    data = Matrix{Float64}(undef, length(timesteps), length(columns))
-
-    for (ix, col) in enumerate(columns), t in timesteps
-        data[t, ix] = array.data[(col..., t)]
-    end
-    return DataFrames.DataFrame(data, Symbol.(columns))
-end
-
-function axis_array_to_dataframe(input_array::Matrix{Float64}, columns)
-    return DataFrames.DataFrame(input_array, columns)
+function axis_array_to_dataframe(array::Matrix{Float64}, key::OptimizationContainerKey)
+    return DataFrames.DataFrame(array, get_column_names(key, array))
 end
 
 function write_data(

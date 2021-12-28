@@ -303,7 +303,7 @@ function read_result(
     if ndims(data) < 2 || size(data)[1] == 1
         data = reshape(data, length(data), 1)
     end
-    return DataFrames.DataFrame(data, Symbol.(columns))
+    return DataFrames.DataFrame(data, columns)
 end
 
 function read_result(
@@ -389,7 +389,6 @@ function write_result!(
     key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     data,
-    columns = nothing,  # Unused here. Matches the interface for InMemorySimulationStore.
 )
     output_cache = get_output_cache(store.cache, model_name, key)
 

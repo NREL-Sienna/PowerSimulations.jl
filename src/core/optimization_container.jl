@@ -697,7 +697,7 @@ function get_variable(
 end
 
 function read_variables(container::OptimizationContainer)
-    return Dict(k => axis_array_to_dataframe(v) for (k, v) in get_variables(container))
+    return Dict(k => axis_array_to_dataframe(v, k) for (k, v) in get_variables(container))
 end
 
 ##################################### AuxVariable Container ################################
@@ -829,9 +829,7 @@ function get_constraint(
 end
 
 function read_duals(container::OptimizationContainer)
-    return Dict(
-        k => axis_array_to_dataframe(v, [encode_key(k)]) for (k, v) in get_duals(container)
-    )
+    return Dict(k => axis_array_to_dataframe(v, k) for (k, v) in get_duals(container))
 end
 
 ##################################### Parameter Container ##################################
@@ -988,8 +986,8 @@ function read_parameters(container::OptimizationContainer)
     parameters = get_parameters(container)
     (parameters === nothing || isempty(parameters)) && return params_dict
     for (k, v) in parameters
-        param_array = axis_array_to_dataframe(get_parameter_array(v))
-        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
+        param_array = axis_array_to_dataframe(get_parameter_array(v), k)
+        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v), k)
         params_dict[k] = param_array .* multiplier_array
     end
     return params_dict
@@ -1108,7 +1106,7 @@ end
 
 function read_expressions(container::OptimizationContainer)
     return Dict(
-        k => axis_array_to_dataframe(v) for (k, v) in get_expressions(container) if
+        k => axis_array_to_dataframe(v, k) for (k, v) in get_expressions(container) if
         !(get_entry_type(k) <: SystemBalanceExpressions)
     )
 end
@@ -1189,7 +1187,7 @@ function write_initial_conditions_data(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                ic_data_dict[key] = axis_array_to_dataframe(field_container, ["System"])
+                ic_data_dict[key] = axis_array_to_dataframe(field_container, key)
             end
         end
     end

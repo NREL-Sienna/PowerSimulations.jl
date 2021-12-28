@@ -536,11 +536,7 @@ function write_model_dual_results!(
 )
     container = get_optimization_container(model)
     for (key, dual) in get_duals(container)
-        cols = axes(dual)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, execution, dual, cols)
+        write_result!(store, key, execution, dual)
     end
     return
 end
@@ -568,12 +564,7 @@ function write_model_parameter_results!(
             data[r_ix, c_ix] = val1 * val2
         end
 
-        cols = axes(param_array)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-
-        write_result!(store, key, execution, data, cols)
+        write_result!(store, key, execution, data)
     end
     return
 end
@@ -585,11 +576,7 @@ function write_model_variable_results!(
 )
     container = get_optimization_container(model)
     for (key, variable) in get_variables(container)
-        cols = axes(variable)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, execution, variable, cols)
+        write_result!(store, key, execution, variable)
     end
     return
 end
@@ -601,11 +588,7 @@ function write_model_aux_variable_results!(
 )
     container = get_optimization_container(model)
     for (key, variable) in get_aux_variables(container)
-        cols = axes(variable)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, execution, variable, cols)
+        write_result!(store, key, execution, variable)
     end
     return
 end
@@ -617,11 +600,7 @@ function write_model_expression_results!(
 )
     container = get_optimization_container(model)
     for (key, expression) in get_expressions(container)
-        cols = axes(expression)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, execution, expression, cols)
+        write_result!(store, key, execution, expression)
     end
     return
 end
