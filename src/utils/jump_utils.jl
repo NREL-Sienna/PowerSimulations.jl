@@ -69,14 +69,14 @@ function get_column_names(
     key::OptimizationContainerKey,
     array::DenseAxisArray{T, 1, K},
 ) where {T, K <: NTuple{1, Any}}
-    return [encode_key_as_string(key)]
+    return get_column_names(key)
 end
 
 function get_column_names(
     ::OptimizationContainerKey,
     array::DenseAxisArray{T, 2, K},
 ) where {T, K <: NTuple{2, Any}}
-    return axes(array)[1]
+    return string.(axes(array)[1])
 end
 
 function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
