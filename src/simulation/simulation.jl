@@ -349,12 +349,12 @@ function _initialize_problem_storage!(
     em = get_emulation_model(models)
     if em === nothing
         emulation_model_store_params = ModelStoreParams(
-        0, # Num Execution
-        1,
-        0, # Interval
-        0, # Resolution
-        get_base_power(decision_model_store_params[1]),
-        get_system_uuid(decision_model_store_params[1]),
+            0, # Num Execution
+            1,
+            0, # Interval
+            0, # Resolution
+            get_base_power(decision_model_store_params[1]),
+            get_system_uuid(decision_model_store_params[1]),
         )
     else
         emulation_model_store_params = em.internal.store_parameters
@@ -365,7 +365,7 @@ function _initialize_problem_storage!(
         get_step_resolution(sequence),
         get_steps(sim),
         decision_model_store_params,
-        emulation_model_store_params
+        OrderedDict(Symbol(get_name(em)) => emulation_model_store_params),
     )
     @debug "initialized problem requirements" simulation_store_params
     store = get_simulation_store(sim)
@@ -404,7 +404,7 @@ function _build!(sim::Simulation, serialize::Bool)
     if em !== nothing
         system = get_system(em)
         em_resolution = PSY.get_time_series_resolution(system)
-        set_executions!(em, get_steps(sim)*Int(step_resolution / em_resolution))
+        set_executions!(em, get_steps(sim) * Int(step_resolution / em_resolution))
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Check Steps" begin

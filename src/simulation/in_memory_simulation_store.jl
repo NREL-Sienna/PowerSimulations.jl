@@ -89,7 +89,7 @@ function initialize_problem_storage!(
     flush_rules,
 )
     store.params = params
-    for problem in keys(store.params.models_params)
+    for problem in keys(store.params.decision_models_params)
         store.dm_data[problem] = DecisionModelStore()
         for type in STORE_CONTAINERS
             for (name, reqs) in getfield(problem_reqs[problem], type)
@@ -98,9 +98,22 @@ function initialize_problem_storage!(
                 @debug "Added $type $name in $problem" _group = LOG_GROUP_SIMULATION_STORE
             end
         end
-
-        # TODO EmulationModel: how do we differentiate DM and EM?
     end
+
+    for problem in keys(store.params.emulation_model_params)
+        store.em_data[problem] = EmulationModelStore()
+        for type in STORE_CONTAINERS
+            for (name, reqs) in getfield(problem_reqs[problem], type)
+                container = getfield(store.dm_data[problem], type)
+                container[name] = DataFrames.DataFrame(
+                    OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
+                )
+                @debug "Added $type $name in $problem" _group = LOG_GROUP_SIMULATION_STORE
+            end
+        end
+    end
+
+    return
 end
 
 function write_result!(

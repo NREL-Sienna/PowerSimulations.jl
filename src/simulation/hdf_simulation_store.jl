@@ -49,7 +49,8 @@ mutable struct HdfSimulationStore <: SimulationStore
     file::HDF5.File
     params::SimulationStoreParams
     # The key order is the problem execution order.
-    datasets::OrderedDict{Symbol, ModelDatasets}
+    dm_datasets::OrderedDict{Symbol, ModelDatasets}
+    em_datasets::ModelDatasets
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
@@ -82,6 +83,7 @@ function HdfSimulationStore(
         SimulationStoreParams(),
         datasets,
         Dict{Symbol, HDF5.Dataset}(),
+        ModelDatasets(),
         Dict{Symbol, Int}(),
         cache,
     )
