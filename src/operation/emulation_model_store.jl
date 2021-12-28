@@ -67,25 +67,12 @@ function initialize_storage!(
         field_containers = getfield(container, type)
         results_container = getfield(store, type)
         for (key, field_container) in field_containers
-            container_axes = axes(field_container)
             @debug "Adding $(encode_key_as_string(key)) to EmulationModelStore" _group =
                 LOG_GROUP_MODEL_STORE
-            if length(container_axes) == 2
-                if type == STORE_CONTAINER_PARAMETERS
-                    column_names = string.(get_parameter_array(field_container).axes[1])
-                else
-                    column_names = string.(axes(field_container)[1])
-                end
-                results_container[key] = DataFrames.DataFrame(
-                    OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
-                )
-            elseif length(container_axes) == 1
-                @assert_op container_axes[1] == get_time_steps(container)
-                results_container[key] =
-                    DataFrames.DataFrame("System" => fill(NaN, num_of_executions))
-            else
-                error("Container structure for $(encode_key_as_string(key)) not supported")
-            end
+            column_names = get_column_names(key, field_container)
+            results_container[key] = DataFrames.DataFrame(
+                OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
+            )
         end
     end
 end
