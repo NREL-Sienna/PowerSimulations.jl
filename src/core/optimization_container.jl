@@ -750,8 +750,8 @@ function add_dual_container!(
     sparse = false,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     if is_milp(container)
-        @warn("The model has resulted in a MILP, \n
-              dual value retrieval requires solving an additional Linear Program \n
+        @warn("The model has resulted in a MILP, \\
+              dual value retrieval requires solving an additional Linear Program \\
               which increases simulation time and the results could be innacurate.")
     end
     const_key = ConstraintKey(T, U)
