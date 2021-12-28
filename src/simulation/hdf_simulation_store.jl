@@ -147,6 +147,7 @@ function open_store(
         )
         return func(store)
     finally
+        flush(store)
         store !== nothing && close(store)
     end
 end
@@ -208,7 +209,7 @@ end
 """
 Read the optimizer stats for a problem execution.
 """
-function read_problem_optimizer_stats(
+function read_optimizer_stats(
     store::HdfSimulationStore,
     simulation_step,
     problem,
@@ -223,7 +224,7 @@ end
 """
 Return the optimizer stats for a problem as a DataFrame.
 """
-function read_problem_optimizer_stats(store::HdfSimulationStore, problem)
+function read_optimizer_stats(store::HdfSimulationStore, problem)
     dataset = _get_dataset(OptimizerStats, store, problem)
     data = permutedims(dataset[:, :])
     stats = [to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
@@ -302,7 +303,7 @@ function read_result(
     if ndims(data) < 2 || size(data)[1] == 1
         data = reshape(data, length(data), 1)
     end
-    return DataFrames.DataFrame(data, Symbol.(columns))
+    return DataFrames.DataFrame(data, columns)
 end
 
 function read_result(
@@ -388,7 +389,6 @@ function write_result!(
     key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     data,
-    columns = nothing,  # Unused here. Matches the interface for InMemorySimulationStore.
 )
     output_cache = get_output_cache(store.cache, model_name, key)
 

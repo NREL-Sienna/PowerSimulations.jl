@@ -34,6 +34,7 @@ function to_matrix(array::DenseAxisArray)
     len_axes = length(ax)
     if len_axes == 1
         data = jump_value.((array[x] for x in ax[1]))
+        data = reshape(data, length(data), 1)
     elseif len_axes == 2
         data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
         for t in ax[2], (ix, name) in enumerate(ax[1])
@@ -60,19 +61,22 @@ function to_matrix(array::DenseAxisArray)
     return data
 end
 
-# TODO: These functions could be use in other places for the store etc
+function get_column_names(key::OptimizationContainerKey)
+    return [encode_key_as_string(key)]
+end
+
 function get_column_names(
     key::OptimizationContainerKey,
-    ::DenseAxisArray{T, 1, K},
+    array::DenseAxisArray{T, 1, K},
 ) where {T, K <: NTuple{1, Any}}
-    return [encode_key_as_string(key)]
+    return get_column_names(key)
 end
 
 function get_column_names(
     ::OptimizationContainerKey,
     array::DenseAxisArray{T, 2, K},
 ) where {T, K <: NTuple{2, Any}}
-    return axes(array)[1]
+    return string.(axes(array)[1])
 end
 
 function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
@@ -80,18 +84,22 @@ function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTup
 end
 
 function get_column_names(
-    ::OptimizationContainerKey,
+    key::OptimizationContainerKey,
     array::SparseAxisArray{T, N, K},
 ) where {T, N, K <: NTuple{N, Any}}
+    return get_column_names(array)
+end
+
+function get_column_names(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     return _get_column_names(array)
 end
 
 # to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
 # HDF5 Store.
-function to_matrix(array::DenseAxisArray{<:Number})
-    length(axes(array)) > 2 && error("array axes not supported: $(size(array))")
-    return permutedims(array.data)
-end
+#function to_matrix(array::DenseAxisArray{<:Number})
+#    length(axes(array)) > 2 && error("array axes not supported: $(size(array))")
+#    return deepcopy(permutedims(array.data))
+#end
 
 function encode_tuple_to_column(val::NTuple{N, <:AbstractString}) where {N}
     return join(val, PSI_NAME_DELIMITER)
@@ -184,7 +192,7 @@ function _calc_dimensions(array::DenseAxisArray, name, num_rows::Int, horizon::I
 end
 
 function _calc_dimensions(array::SparseAxisArray, name, num_rows::Int, horizon::Int)
-    columns = unique([(k[1], k[3]) for k in keys(array.data)])
+    columns = get_column_names(array)
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end

@@ -77,21 +77,10 @@ end
 #    return
 #end
 
-function read_model_optimizer_stats(
-    store::InMemorySimulationStore,
-    model_name,
-    timestamp::Dates.DateTime,
-)
-    return read_optimizer_stats(store.dm_data[model_name], timestamp)
+function read_optimizer_stats(store::InMemorySimulationStore, model_name)
+    # TODO EmulationModel: this interface is TBD
+    return read_optimizer_stats(store.dm_data[model_name])
 end
-
-# TODO EmulationModel: this interface is TBD
-#function read_model_optimizer_stats(
-#    store::InMemorySimulationStore,
-#    execution::Int,
-#)
-#    return read_optimizer_stats(store.em_data, execution)
-#end
 
 function initialize_problem_storage!(
     store::InMemorySimulationStore,
@@ -120,9 +109,8 @@ function write_result!(
     key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     array,
-    columns = nothing,
 )
-    write_result!(store.dm_data[model_name], key, timestamp, array, columns)
+    write_result!(store.dm_data[model_name], key, timestamp, array)
     return
 end
 
@@ -132,9 +120,8 @@ end
 #    key::OptimizationContainerKey,
 #    execution::Int,
 #    array,
-#    columns = nothing,
 #)
-#    write_result!(store.em_data, key, execution, array, columns)
+#    write_result!(store.em_data, key, execution, array)
 #    return
 #end
 

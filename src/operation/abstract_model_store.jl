@@ -41,9 +41,9 @@ function list_fields(store::AbstractModelStore, container_type::Symbol)
     return keys(getfield(store, container_type))
 end
 
-function write_result!(store::AbstractModelStore, key, index, array, columns)
+function write_result!(store::AbstractModelStore, key, index, array)
     field = get_store_container_type(key)
-    return write_result!(store, field, key, index, array, columns)
+    return write_result!(store, field, key, index, array)
 end
 
 function read_results(store::AbstractModelStore, key, index = nothing)

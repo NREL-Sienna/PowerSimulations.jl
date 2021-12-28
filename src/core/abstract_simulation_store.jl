@@ -16,4 +16,4 @@ abstract type SimulationStore end
 # - write_result!
 # - read_result!
 # - write_optimizer_stats!
-# - read_problem_optimizer_stats
+# - read_optimizer_stats

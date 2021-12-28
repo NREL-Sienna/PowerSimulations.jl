@@ -68,7 +68,7 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
     ) do store
         problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
-        for (name, problem_params) in sim_params.problems
+        for (name, problem_params) in sim_params.models_params
             name = string(name)
             problem_result = SimulationProblemResults(
                 store,
@@ -94,8 +94,8 @@ function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
         execution_path = get_simulation_dir(sim)
         problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
-        for (name, problem_params) in sim_params.problems
-            model = get_model(sim, name)
+        for (name, problem_params) in sim_params.models_params
+            model = get_simulation_model(get_models(sim), name)
             name = string(name)
             problem_result = SimulationProblemResults(
                 store,
@@ -185,7 +185,13 @@ function export_results(results::SimulationResults, exports)
         export_results(results, exports, results.store)
     else
         simulation_store_path = joinpath(results.path, "data_store")
-        open_store(HdfSimulationStore, simulation_store_path, "r") do store
+        problem_path = joinpath(results.path, "problems")
+        open_store(
+            HdfSimulationStore,
+            simulation_store_path,
+            "r",
+            problem_path = problem_path,
+        ) do store
             export_results(results, exports, store)
         end
     end
@@ -202,7 +208,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
         problem_exports = get_problem_exports(exports, problem_results.problem)
         path =
             exports.path === nothing ? problem_results.results_output_folder : exports.path
-        for timestamp in get_existing_timestamps(problem_results)
+        for timestamp in get_timestamps(problem_results)
             !should_export(exports, timestamp) && continue
 
             export_path = mkpath(joinpath(path, problem_results.problem, "variables"))
@@ -263,23 +269,38 @@ function export_result(
     timestamp::Dates.DateTime,
     df::DataFrames.DataFrame,
 )
-    filename =
-        joinpath(path, string(encode_key(key)) * "_" * convert_for_path(timestamp) * ".csv")
-    export_result(CSV.File, filename, df)
+    name = encode_key_as_string(key)
+    export_result(CSV.File, path, name, timestamp, df)
 end
 
-function export_result(::Type{CSV.File}, path, key, df::DataFrames.DataFrame)
-    filename = joinpath(path, string(encode_key(key)) * ".csv")
+function export_result(
+    ::Type{CSV.File},
+    path,
+    name::AbstractString,
+    timestamp::Dates.DateTime,
+    df::DataFrames.DataFrame,
+)
+    filename = joinpath(path, name * "_" * convert_for_path(timestamp) * ".csv")
     export_result(CSV.File, filename, df)
 end
 
 function export_result(
     ::Type{CSV.File},
     path,
-    timestamp::Dates.DateTime,
+    key::OptimizationContainerKey,
     df::DataFrames.DataFrame,
 )
-    filename = joinpath(path, convert_for_path(timestamp) * ".csv")
+    name = encode_key_as_string(key)
+    export_result(CSV.File, path, name, df)
+end
+
+function export_result(
+    ::Type{CSV.File},
+    path,
+    name::AbstractString,
+    df::DataFrames.DataFrame,
+)
+    filename = joinpath(path, name * ".csv")
     export_result(CSV.File, filename, df)
 end
 

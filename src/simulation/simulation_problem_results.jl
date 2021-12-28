@@ -140,6 +140,7 @@ function get_system!(results::SimulationProblemResults)
     file = joinpath(
         results.execution_path,
         "problems",
+        results.problem,
         make_system_filename(results.system_uuid),
     )
     results.system = PSY.System(file, time_series_read_only = true)
@@ -187,7 +188,6 @@ _get_dicts(res::SimulationProblemResults) =
 
 function _get_store_value(
     res::SimulationProblemResults,
-    field::Symbol,
     container_keys::Vector{<:OptimizationContainerKey},
     timestamps,
     ::Nothing,
@@ -200,14 +200,13 @@ function _get_store_value(
         "r",
         problem_path = problem_path,
     ) do store
-        _get_store_value(res, field, container_keys, timestamps, store)
+        _get_store_value(res, container_keys, timestamps, store)
     end
 end
 
 function _get_store_value(
     res::SimulationProblemResults,
-    field::Symbol,
-    names::Vector{<:OptimizationContainerKey},
+    container_keys::Vector{<:OptimizationContainerKey},
     timestamps,
     store::SimulationStore,
 )
@@ -217,15 +216,15 @@ function _get_store_value(
     problem_interval = get_interval(res)
     resolution = get_resolution(res)
     horizon = get_forecast_horizon(res)
-    for name in names
+    for key in container_keys
         _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
         for ts in timestamps
-            out = read_result(DataFrames.DataFrame, store, model_name, field, name, ts)
+            out = read_result(DataFrames.DataFrame, store, model_name, key, ts)
             time_col = range(ts, length = horizon, step = resolution)
             DataFrames.insertcols!(out, 1, :DateTime => time_col)
             _results[ts] = out
         end
-        results[name] = _results
+        results[key] = _results
     end
 
     return results
@@ -235,7 +234,7 @@ function _validate_keys(existing_keys, container_keys::Vector{<:OptimizationCont
     existing = Set(existing_keys)
     for key in container_keys
         if key ∉ existing
-            @error "$key is not stored", sort(existing_keys)
+            @error "$key is not stored", existing_keys
             throw(IS.InvalidValue("$key is not stored"))
         end
     end
@@ -269,12 +268,7 @@ function _process_timestamps(
     return requested_range
 end
 
-function _read_variables(
-    res::SimulationProblemResults,
-    variable_keys::Vector{<:VariableKey},
-    timestamps,
-    store,
-)
+function _read_variables(res::SimulationProblemResults, variable_keys, timestamps, store)
     isempty(variable_keys) && return FieldResultsByTime()
     if store === nothing && res.store !== nothing
         # In this case we have an InMemorySimulationStore.
@@ -285,17 +279,11 @@ function _read_variables(
     keys_with_values = [k for (k, v) in res.variable_values if !isempty(v)]
     same_keys = isempty([n for n in variable_keys if n ∉ keys_with_values])
     if same_timestamps && same_keys
-        @info "reading variables from SimulationsResults"
+        @debug "reading variables from SimulationsResults"
         vals = filter(p -> (p.first ∈ variable_keys), res.variable_values)
     else
-        @info "reading variables from data store"
-        vals = _get_store_value(
-            res,
-            STORE_CONTAINER_VARIABLES,
-            variable_keys,
-            timestamps,
-            store,
-        )
+        @debug "reading variables from data store"
+        vals = _get_store_value(res, variable_keys, timestamps, store)
     end
     return vals
 end
@@ -335,12 +323,7 @@ function read_variables_internal(
     return var_values
 end
 
-function _read_duals(
-    res::SimulationProblemResults,
-    dual_keys::Vector{<:ConstraintKey},
-    timestamps,
-    store,
-)
+function _read_duals(res::SimulationProblemResults, dual_keys, timestamps, store)
     isempty(dual_keys) && return FieldResultsByTime()
     if store === nothing && res.store !== nothing
         # In this case we have an InMemorySimulationStore.
@@ -355,7 +338,7 @@ function _read_duals(
         vals = filter(p -> (p.first ∈ dual_keys), res.dual_values)
     else
         @debug "reading duals from data store"
-        vals = _get_store_value(res, STORE_CONTAINER_DUALS, dual_keys, timestamps, store)
+        vals = _get_store_value(res, dual_keys, timestamps, store)
     end
     return vals
 end
@@ -394,33 +377,22 @@ function read_duals_internal(
     return var_values
 end
 
-function _read_parameters(
-    res::SimulationProblemResults,
-    parameter_keys::Vector{<:ParameterKey},
-    timestamps,
-    store,
-)
+function _read_parameters(res::SimulationProblemResults, parameter_keys, timestamps, store)
     isempty(parameter_keys) && return FieldResultsByTime()
     if store === nothing && res.store !== nothing
         # In this case we have an InMemorySimulationStore.
         store = res.store
     end
-    _validate_keys(res.parameter_values, parameter_keys)
+    _validate_keys(keys(res.parameter_values), parameter_keys)
     same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
     parameters_with_values = [k for (k, v) in res.parameter_values if !isempty(v)]
     same_parameters = isempty([n for n in parameter_keys if n ∉ parameters_with_values])
     if same_timestamps && same_parameters
-        @info "reading parameters from SimulationsResults"
+        @debug "reading parameters from SimulationsResults"
         vals = filter(p -> (p.first ∈ parameter_keys), res.parameter_values)
     else
-        @info "reading parameters from data store"
-        vals = _get_store_value(
-            res,
-            STORE_CONTAINER_PARAMETERS,
-            parameter_keys,
-            timestamps,
-            store,
-        )
+        @debug "reading parameters from data store"
+        vals = _get_store_value(res, parameter_keys, timestamps, store)
     end
     return vals
 end
@@ -484,7 +456,7 @@ function read_variable(
 )
     key = _deserialize_key(VariableKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
-    return _read_variables(res, [key], timestamps, store)
+    return _read_variables(res, [key], timestamps, store)[key]
 end
 
 """
@@ -506,7 +478,7 @@ function read_dual(
 )
     key = _deserialize_key(ConstraintKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
-    return _read_duals(res, [key], timestamps, store)
+    return _read_duals(res, [key], timestamps, store)[key]
 end
 
 """
@@ -530,7 +502,7 @@ function read_parameter(
     #parameter_key = ParameterKey(param_type(time_series_name), device_type)
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
-    return _read_parameters(res; parameters = [key], kwargs...)[key]
+    return _read_parameters(res, [key], timestamps, store)[key]
 end
 
 """
@@ -554,7 +526,7 @@ function _read_optimizer_stats(res::SimulationProblemResults, ::Nothing)
 end
 
 function _read_optimizer_stats(res::SimulationProblemResults, store::SimulationStore)
-    return read_problem_optimizer_stats(store, Symbol(res.problem))
+    return read_optimizer_stats(store, Symbol(res.problem))
 end
 
 #function get_realized_timestamps(
@@ -717,23 +689,26 @@ function load_results!(
     res::SimulationProblemResults,
     count::Int;
     initial_time::Union{Dates.DateTime, Nothing} = nothing,
-    variables::Vector{Tuple} = Vector{Tuple}(),
-    duals::Vector{Tuple} = Vector{Tuple}(),
-    parameters::Vector{Tuple} = Vector{Tuple}(),
+    variables = Vector{Tuple}(),
+    duals = Vector{Tuple}(),
+    parameters = Vector{Tuple}(),
 )
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
 
     res.results_timestamps = _process_timestamps(res, initial_time, count)
 
+    dual_keys = [_deserialize_key(ConstraintKey, res, x...) for x in duals]
+    parameter_keys = [_deserialize_key(ParameterKey, res, x...) for x in parameters]
+    variable_keys = [_deserialize_key(VariableKey, res, x...) for x in variables]
     function merge_results(store)
         merge!(
             res.variable_values,
-            _read_variables(res, variables, res.results_timestamps, store),
+            _read_variables(res, variable_keys, res.results_timestamps, store),
         )
-        merge!(res.dual_values, _read_duals(res, duals, res.results_timestamps, store))
+        merge!(res.dual_values, _read_duals(res, dual_keys, res.results_timestamps, store))
         merge!(
             res.parameter_values,
-            _read_parameters(res, parameters, res.results_timestamps, store),
+            _read_parameters(res, parameter_keys, res.results_timestamps, store),
         )
     end
 
@@ -741,7 +716,13 @@ function load_results!(
         merge_results(res.store)
     else
         simulation_store_path = joinpath(res.execution_path, "data_store")
-        open_store(HdfSimulationStore, simulation_store_path, "r") do store
+        problem_path = joinpath(get_execution_path(res), "problems")
+        open_store(
+            HdfSimulationStore,
+            simulation_store_path,
+            "r",
+            problem_path = problem_path,
+        ) do store
             merge_results(store)
         end
     end
