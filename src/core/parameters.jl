@@ -54,6 +54,10 @@ get_attributes(c::ParameterContainer) = c.attributes
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
+function get_column_names(key::ParameterKey, c::ParameterContainer)
+    return get_column_names(key, get_parameter_array(c))
+end
+
 function _set_parameter!(
     array::AbstractArray{Float64},
     ::JuMP.Model,

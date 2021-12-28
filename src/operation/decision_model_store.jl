@@ -49,31 +49,15 @@ function initialize_storage!(
         field_containers = getfield(container, type)
         results_container = getfield(store, type)
         for (key, field_container) in field_containers
-            container_axes = axes(field_container)
             @debug "Adding $(encode_key_as_string(key)) to DecisionModelStore" _group =
                 LOG_GROUP_MODEL_STORE
             results_container[key] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
+            column_names = get_column_names(key, field_container)
             for timestamp in
                 range(initial_time, step = model_interval, length = num_of_executions)
-                if length(container_axes) == 2
-                    if type == STORE_CONTAINER_PARAMETERS
-                        column_names = string.(get_parameter_array(field_container).axes[1])
-                    else
-                        column_names = string.(axes(field_container)[1])
-                    end
-
-                    results_container[key][timestamp] = DataFrames.DataFrame(
-                        OrderedDict(c => fill(NaN, time_steps_count) for c in column_names),
-                    )
-                elseif length(container_axes) == 1
-                    results_container[key][timestamp] = DataFrames.DataFrame(
-                        encode_key_as_string(key) => fill(NaN, time_steps_count),
-                    )
-                else
-                    error(
-                        "Container structure for $(encode_key_as_string(key)) not supported",
-                    )
-                end
+                results_container[key][timestamp] = DataFrames.DataFrame(
+                    OrderedDict(c => fill(NaN, time_steps_count) for c in column_names),
+                )
             end
         end
     end
