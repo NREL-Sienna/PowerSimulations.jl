@@ -96,10 +96,9 @@ function write_result!(
     key::OptimizationContainerKey,
     execution::Int,
     array,
-    columns,
 )
     container = getfield(data, field)
-    df = axis_array_to_dataframe(array, columns)
+    df = axis_array_to_dataframe(array, key)
     container[key][execution, :] = df[1, :]
     return
 end

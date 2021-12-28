@@ -109,9 +109,8 @@ function write_result!(
     key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     array,
-    columns = nothing,
 )
-    write_result!(store.dm_data[model_name], key, timestamp, array, columns)
+    write_result!(store.dm_data[model_name], key, timestamp, array)
     return
 end
 
@@ -121,9 +120,8 @@ end
 #    key::OptimizationContainerKey,
 #    execution::Int,
 #    array,
-#    columns = nothing,
 #)
-#    write_result!(store.em_data, key, execution, array, columns)
+#    write_result!(store.em_data, key, execution, array)
 #    return
 #end
 

@@ -85,10 +85,9 @@ function write_result!(
     key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     array,
-    columns,
 )
     container = getfield(data, field)
-    df = axis_array_to_dataframe(array, columns)
+    df = axis_array_to_dataframe(array, key)
     container[key][timestamp] = df
     return
 end
