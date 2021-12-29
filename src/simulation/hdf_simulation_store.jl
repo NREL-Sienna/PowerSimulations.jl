@@ -82,8 +82,8 @@ function HdfSimulationStore(
         file,
         SimulationStoreParams(),
         datasets,
-        Dict{Symbol, HDF5.Dataset}(),
         ModelDatasets(),
+        Dict{Symbol, HDF5.Dataset}(),
         Dict{Symbol, Int}(),
         cache,
     )
@@ -174,20 +174,21 @@ function Base.flush(store::HdfSimulationStore)
 end
 
 get_params(store::HdfSimulationStore) = store.params
-function get_model_params(store::HdfSimulationStore, model_name::Symbol)
-    return get_params(store).models_params[model_name]
+
+function get_decision_model_params(store::HdfSimulationStore, model_name::Symbol)
+    return get_params(store).decision_models_params[model_name]
 end
 
 """
 Return the problem names in order of execution.
 """
-list_models(store::HdfSimulationStore) = keys(store.datasets)
+list_models(store::HdfSimulationStore) = keys(store.dm_datasets)
 
 """
 Return the fields stored for the `problem` and `container_type` (duals/parameters/variables).
 """
 function list_fields(store::HdfSimulationStore, problem::Symbol, container_type::Symbol)
-    container = getfield(store.datasets[problem], container_type)
+    container = getfield(store.dm_datasets[problem], container_type)
     return keys(container)
 end
 
@@ -195,7 +196,7 @@ function write_optimizer_stats!(
     store::HdfSimulationStore,
     model_name::Symbol,
     stats::OptimizerStats,
-    timestamp,  # Unused here. Matches the interface for InMemorySimulationStore.
+    ::Dates.DateTime,
 )
     dataset = _get_dataset(OptimizerStats, store, model_name)
 
@@ -218,7 +219,8 @@ function read_optimizer_stats(
     execution_index,
 )
     optimizer_stats_write_index =
-        (simulation_step - 1) * store.params.models_params[problem].num_executions + index
+        (simulation_step - 1) *
+        store.params.decision_models_params[problem].num_executions + index
     dataset = _get_dataset(OptimizerStats, store, problem)
     return OptimizerStats(dataset[:, optimizer_stats_write_index])
 end
@@ -235,23 +237,24 @@ end
 
 function initialize_problem_storage!(
     store::HdfSimulationStore,
-    params,
-    problem_reqs,
-    flush_rules,
+    params::SimulationStoreParams,
+    dm_problem_reqs::Dict{Symbol, SimulationModelStoreRequirements},
+    em_problem_reqs::SimulationModelStoreRequirements,
+    flush_rules::CacheFlushRules,
 )
     store.params = params
     root = store.file[HDF_SIMULATION_ROOT_PATH]
-    problems_group = _get_group_or_create(root, "problems")
+    problems_group = _get_group_or_create(root, "decision_models")
     set_max_size!(store.cache, flush_rules.max_size)
     set_min_flush_size!(store.cache, flush_rules.min_flush_size)
     @debug "initialize_problem_storage" store.cache
 
-    for problem in keys(store.params.models_params)
-        store.datasets[problem] = ModelDatasets()
+    for problem in keys(store.params.decision_models_params)
+        store.dm_datasets[problem] = ModelDatasets()
         problem_group = _get_group_or_create(problems_group, string(problem))
         for type in STORE_CONTAINERS
             group = _get_group_or_create(problem_group, string(type))
-            for (key, reqs) in getfield(problem_reqs[problem], type)
+            for (key, reqs) in getfield(dm_problem_reqs[problem], type)
                 name = encode_key_as_string(key)
                 dataset = _create_dataset(group, name, reqs)
                 # Columns can't be stored in attributes because they might be larger than
@@ -259,7 +262,7 @@ function initialize_problem_storage!(
                 col = _make_column_name(name)
                 HDF5.write_dataset(group, col, string.(reqs["columns"]))
                 column_dataset = group[col]
-                datasets = getfield(store.datasets[problem], type)
+                datasets = getfield(store.dm_datasets[problem], type)
                 datasets[key] = Dataset(dataset, column_dataset)
                 add_output_cache!(
                     store.cache,
@@ -270,7 +273,7 @@ function initialize_problem_storage!(
             end
         end
 
-        num_stats = params.num_steps * params.models_params[problem].num_executions
+        num_stats = params.num_steps * params.decision_models_params[problem].num_executions
         columns = fieldnames(OptimizerStats)
         num_columns = length(columns)
         dataset = HDF5.create_dataset(
@@ -285,8 +288,24 @@ function initialize_problem_storage!(
         @debug "Initialized optimizer_stats_datasets $problem ($num_columns, $num_stats)"
     end
 
+    emulator_group = _get_group_or_create(root, "emulation_model")
+    for type in STORE_CONTAINERS
+        group = _get_group_or_create(emulator_group, string(type))
+        for (key, reqs) in getfield(em_problem_reqs, type)
+            name = encode_key_as_string(key)
+            dataset = _create_dataset(group, name, reqs)
+            # Columns can't be stored in attributes because they might be larger than
+            # the max size of 64 KiB.
+            col = _make_column_name(name)
+            HDF5.write_dataset(group, col, string.(reqs["columns"]))
+            column_dataset = group[col]
+            datasets = getfield(store.em_datasets, type)
+            datasets[key] = Dataset(dataset, column_dataset)
+        end
+    end
     # This has to run after problem groups are created.
-    _serialize_attributes(store, problems_group, problem_reqs)
+    _serialize_attributes(store)
+    return
 end
 
 log_cache_hit_percentages(x::HdfSimulationStore) = log_cache_hit_percentages(x.cache)
@@ -353,7 +372,7 @@ function read_result(
 )
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
 
-    model_params = get_model_params(store, model_name)
+    model_params = get_decision_model_params(store, model_name)
     num_executions = model_params.num_executions
     if execution_index > num_executions
         throw(
@@ -473,13 +492,13 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
         Dates.Millisecond(HDF5.read(HDF5.attributes(group)["step_resolution_ms"]))
     num_steps = HDF5.read(HDF5.attributes(group)["num_steps"])
     store.params = SimulationStoreParams(initial_time, step_resolution, num_steps)
-    empty!(store.datasets)
+    empty!(store.dm_datasets)
     for problem in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/problems/$problem"]
         model_name = Symbol(problem)
         container_metadata =
             deserialize_metadata(OptimizationContainerMetadata, problem_path, model_name)
-        store.params.models_params[model_name] = ModelStoreParams(
+        store.params.decision_models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
@@ -488,7 +507,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
             Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
             container_metadata,
         )
-        store.datasets[model_name] = ModelDatasets()
+        store.dm_datasets[model_name] = ModelDatasets()
         for type in STORE_CONTAINERS
             group = problem_group[string(type)]
             for name in keys(group)
@@ -497,7 +516,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
                     column_dataset = group[_make_column_name(name)]
                     item = Dataset(dataset, column_dataset)
                     container_key = deserialize_key(container_metadata, name)
-                    getfield(store.datasets[model_name], type)[container_key] = item
+                    getfield(store.dm_datasets[model_name], type)[container_key] = item
                     add_output_cache!(
                         store.cache,
                         model_name,
@@ -515,30 +534,49 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
     @debug "deserialized store params and datasets" store.params
 end
 
-function _serialize_attributes(store::HdfSimulationStore, problems_group, problem_reqs)
+function _serialize_attributes(store::HdfSimulationStore)
     params = store.params
     group = store.file["simulation"]
     HDF5.attributes(group)["problem_order"] =
-        [string(k) for k in keys(params.models_params)]
+        [string(k) for k in keys(params.decision_models_params)]
     HDF5.attributes(group)["initial_time"] = string(params.initial_time)
     HDF5.attributes(group)["step_resolution_ms"] =
         Dates.Millisecond(params.step_resolution).value
     HDF5.attributes(group)["num_steps"] = params.num_steps
 
-    for problem in keys(params.models_params)
-        problem_group = store.file["simulation/problems/$problem"]
+    for problem in keys(params.decision_models_params)
+        problem_group = store.file["simulation/decision_models/$problem"]
         HDF5.attributes(problem_group)["num_executions"] =
-            params.models_params[problem].num_executions
-        HDF5.attributes(problem_group)["horizon"] = params.models_params[problem].horizon
+            params.decision_models_params[problem].num_executions
+        HDF5.attributes(problem_group)["horizon"] =
+            params.decision_models_params[problem].horizon
         HDF5.attributes(problem_group)["resolution_ms"] =
-            Dates.Millisecond(params.models_params[problem].resolution).value
+            Dates.Millisecond(params.decision_models_params[problem].resolution).value
         HDF5.attributes(problem_group)["interval_ms"] =
-            Dates.Millisecond(params.models_params[problem].interval).value
+            Dates.Millisecond(params.decision_models_params[problem].interval).value
         HDF5.attributes(problem_group)["base_power"] =
-            params.models_params[problem].base_power
+            params.decision_models_params[problem].base_power
         HDF5.attributes(problem_group)["system_uuid"] =
-            string(params.models_params[problem].system_uuid)
+            string(params.decision_models_params[problem].system_uuid)
     end
+
+    em_params = first(values(params.emulation_model_params))
+    emulation_group = store.file["simulation/emulation_model"]
+    HDF5.attributes(emulation_group)["num_executions"] = em_params.num_executions
+    HDF5.attributes(emulation_group)["horizon"] = em_params.horizon
+    HDF5.attributes(emulation_group)["resolution_ms"] =
+        Dates.Millisecond(em_params.resolution).value
+    HDF5.attributes(emulation_group)["interval_ms"] =
+        Dates.Millisecond(em_params.interval).value
+    HDF5.attributes(emulation_group)["base_power"] = em_params.base_power
+    HDF5.attributes(emulation_group)["system_uuid"] = string(em_params.system_uuid)
+    return
+end
+
+function _serialize_em_attributes(store::HdfSimulationStore, emulation_group, em_reqs)
+    params = store.params
+
+    return
 end
 
 function _flush_data!(
@@ -583,10 +621,11 @@ function _flush_data!(cache::OptimzationResultCache, store::HdfSimulationStore)
     # Do we need flush down to some ~70% watermark?
     # What are GC implications of doing replacing entries one at a time vs freeing large
     # chunks at once?
+    return
 end
 
 function _get_columns_dataset(store::HdfSimulationStore, key)
-    return getfield(store.datasets[key.model], key.type)[key.name].columns
+    return getfield(store.dm_datasets[key.model], key.type)[key.name].columns
 end
 
 function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, model_name)
@@ -594,7 +633,7 @@ function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, model_n
 end
 
 function _get_dataset(store::HdfSimulationStore, model_name::Symbol)
-    return store.datasets[model_name]
+    return store.dm_datasets[model_name]
 end
 
 function _get_dataset(
@@ -602,7 +641,7 @@ function _get_dataset(
     model_name::Symbol,
     opt_container_key::VariableKey,
 )
-    return getfield(store.datasets[model_name], STORE_CONTAINER_VARIABLES)[opt_container_key]
+    return getfield(store.dm_datasets[model_name], STORE_CONTAINER_VARIABLES)[opt_container_key]
 end
 
 function _get_dataset(
@@ -610,7 +649,7 @@ function _get_dataset(
     model_name::Symbol,
     opt_container_key::ConstraintKey,
 )
-    return getfield(store.datasets[model_name], STORE_CONTAINER_DUALS)[opt_container_key]
+    return getfield(store.dm_datasets[model_name], STORE_CONTAINER_DUALS)[opt_container_key]
 end
 
 function _get_dataset(
@@ -618,7 +657,7 @@ function _get_dataset(
     model_name::Symbol,
     opt_container_key::AuxVarKey,
 )
-    return getfield(store.datasets[model_name], STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
+    return getfield(store.dm_datasets[model_name], STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
 end
 
 function _get_dataset(
@@ -626,7 +665,7 @@ function _get_dataset(
     model_name::Symbol,
     opt_container_key::ParameterKey,
 )
-    return getfield(store.datasets[model_name], STORE_CONTAINER_PARAMETERS)[opt_container_key]
+    return getfield(store.dm_datasets[model_name], STORE_CONTAINER_PARAMETERS)[opt_container_key]
 end
 
 function _get_dataset(
@@ -634,7 +673,7 @@ function _get_dataset(
     model_name::Symbol,
     opt_container_key::ExpressionKey,
 )
-    return getfield(store.datasets[model_name], STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
+    return getfield(store.dm_datasets[model_name], STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
 end
 
 function _get_dataset(store::HdfSimulationStore, key::OptimizationResultCacheKey)
@@ -662,7 +701,7 @@ function _get_indices(store::HdfSimulationStore, model_name::Symbol, timestamp)
             ArgumentError("timestamp = $timestamp is beyond the simulation: step = $step"),
         )
     end
-    problem_params = store.params.models_params[model_name]
+    problem_params = store.params.decision_models_params[model_name]
     initial_time = store.params.initial_time + (step - 1) * store.params.step_resolution
     time_diff = timestamp - initial_time
     if time_diff % problem_params.interval != Dates.Millisecond(0)
