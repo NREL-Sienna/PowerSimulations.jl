@@ -75,7 +75,7 @@ function ValueStates()
         Dict{AuxVarKey, ValueState}(),
         Dict{VariableKey, ValueState}(),
         Dict{ParameterKey, ValueState}(),
-        Dict{ExpressionKey, ValueState}()
+        Dict{ExpressionKey, ValueState}(),
     )
 end
 
@@ -93,6 +93,10 @@ end
 
 function get_parameters_values(state::ValueStates)
     return state.parameters
+end
+
+function get_expression_values(state::ValueStates)
+    return state.expressions
 end
 
 function get_state_keys(state::ValueStates)
@@ -118,7 +122,6 @@ end
 function get_state_data(state::ValueStates, key::ExpressionKey)
     return state.expressions[key]
 end
-
 
 function set_state_data!(state::ValueStates, key::VariableKey, val::ValueState)
     state.variables[key] = val
