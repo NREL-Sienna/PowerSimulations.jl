@@ -30,9 +30,9 @@ function Base.empty!(store::InMemorySimulationStore)
     for val in values(store.dm_data)
         empty!(val)
     end
-    # TODO EmulationModel: this interface is TBD
-    #empty!(store.em_data)
+    empty!(store.em_data)
     @debug "Emptied the store" _group = LOG_GROUP_SIMULATION_STORE
+    return
 end
 
 Base.isopen(::InMemorySimulationStore) = true
@@ -131,6 +131,7 @@ function write_result!(
     execution::Int,
     array,
 )
+    write_result!(store.em_data, key, execution, array)
     return
 end
 
