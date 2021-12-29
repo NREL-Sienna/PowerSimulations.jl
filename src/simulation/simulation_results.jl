@@ -149,7 +149,7 @@ An example JSON file demonstrating possible options is below. Note that `start_t
 
 ```
 {
-  "problems": [
+  "decision_models": [
     {
       "name": "ED",
       "variables": [

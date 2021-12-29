@@ -280,6 +280,77 @@ function _initialize_simulation_state!(sim::Simulation)
     return
 end
 
+function _get_model_store_requirements!(
+    rules::CacheFlushRules,
+    model::OperationModel,
+    num_rows::Int,
+)
+    model_name = get_name(model)
+    horizon = get_horizon(model)
+    reqs = SimulationModelStoreRequirements()
+    container = get_optimization_container(model)
+
+    for (key, array) in get_duals(container)
+        reqs.duals[key] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
+        add_rule!(rules, model_name, key, false, CachePriority.LOW)
+    end
+
+    for (key, param_container) in get_parameters(container)
+        array = get_parameter_array(param_container)
+        reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, false, CachePriority.LOW)
+    end
+
+    for (key, array) in get_variables(container)
+        reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, false, CachePriority.HIGH)
+    end
+
+    for (key, array) in get_aux_variables(container)
+        reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, false, CachePriority.HIGH)
+    end
+
+    for (key, array) in get_expressions(container)
+        reqs.expressions[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, false, CachePriority.LOW)
+    end
+
+    return reqs
+end
+
+function _get_emulation_store_requirements(sim::Simulation)
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_states(sim_state)
+    sim_time = get_steps(sim) * get_step_resolution(get_sequence(sim))
+    reqs = SimulationModelStoreRequirements()
+
+    for (key, state_values) in get_duals_values(system_state)
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.duals[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+
+    for (key, state_values) in get_parameters_values(system_state)
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.parameters[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+
+    for (key, state_values) in get_variables_values(system_state)
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+
+    for (key, state_values) in get_aux_variables_values(system_state)
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.aux_variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+    return reqs
+end
+
 function _initialize_problem_storage!(
     sim::Simulation,
     cache_size_mib,
@@ -289,8 +360,9 @@ function _initialize_problem_storage!(
     executions_by_model = sequence.executions_by_model
     models = get_models(sim)
     decision_model_store_params = OrderedDict{Symbol, ModelStoreParams}()
-    model_req = Dict{Symbol, SimulationModelStoreRequirements}()
-    num_param_containers = 0
+    dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
+    # TODO: Seems unused. Check with DT
+    # num_param_containers = 0
     rules = CacheFlushRules(
         max_size = cache_size_mib * MiB,
         min_flush_size = min_cache_flush_size_mib,
@@ -298,78 +370,55 @@ function _initialize_problem_storage!(
     for model in get_decision_models(models)
         model_name = get_name(model)
         decision_model_store_params[model_name] = model.internal.store_parameters
-        horizon = get_horizon(model)
         num_executions = executions_by_model[model_name]
-        reqs = SimulationModelStoreRequirements()
-        container = get_optimization_container(model)
         num_rows = num_executions * get_steps(sim)
-
-        # TODO: configuration of keep_in_cache and priority are not correct
-
-        for (key, array) in get_duals(container)
-            reqs.duals[key] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.LOW)
-        end
-
-        for (key, param_container) in get_parameters(container)
-            array = get_parameter_array(param_container)
-            reqs.parameters[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.LOW)
-        end
-
-        for (key, array) in get_variables(container)
-            reqs.variables[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
-        end
-
-        for (key, array) in get_aux_variables(container)
-            reqs.aux_variables[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
-        end
-
-        for (key, array) in get_expressions(container)
-            reqs.expressions[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.LOW)
-        end
-
-        model_req[model_name] = reqs
-
-        num_param_containers +=
-            length(reqs.duals) +
-            length(reqs.parameters) +
-            length(reqs.variables) +
-            length(reqs.aux_variables) +
-            length(reqs.expressions)
+        dm_model_req[model_name] = _get_model_store_requirements!(rules, model, num_rows)
+        # num_param_containers +=
+        #     length(reqs.duals) +
+        #     length(reqs.parameters) +
+        #     length(reqs.variables) +
+        #     length(reqs.aux_variables) +
+        #     length(reqs.expressions)
     end
 
     em = get_emulation_model(models)
     if em === nothing
-        emulation_model_store_params = ModelStoreParams(
-            0, # Num Execution
-            1,
-            0, # Interval
-            0, # Resolution
-            get_base_power(decision_model_store_params[1]),
-            get_system_uuid(decision_model_store_params[1]),
+        base_params = first(values(decision_model_store_params))
+        sim_time = get_step_resolution(sequence) * get_steps(sim)
+        resolution = minimum([v.resolution for v in values(decision_model_store_params)])
+        emulation_model_store_params = OrderedDict(
+            :Emulator => ModelStoreParams(
+                sim_time ÷ resolution, # Num Executions
+                1,
+                resolution, # Interval
+                resolution, # Resolution
+                get_base_power(base_params),
+                get_system_uuid(base_params),
+            ),
         )
     else
-        emulation_model_store_params = em.internal.store_parameters
+        emulation_model_store_params =
+            OrderedDict(Symbol(get_name(em)) => em.internal.store_parameters)
     end
+
+    em_model_req = _get_emulation_store_requirements(sim)
 
     simulation_store_params = SimulationStoreParams(
         get_initial_time(sim),
         get_step_resolution(sequence),
         get_steps(sim),
         decision_model_store_params,
-        OrderedDict(Symbol(get_name(em)) => emulation_model_store_params),
+        emulation_model_store_params,
     )
     @debug "initialized problem requirements" simulation_store_params
     store = get_simulation_store(sim)
-    initialize_problem_storage!(store, simulation_store_params, model_req, rules)
+    initialize_problem_storage!(
+        store,
+        simulation_store_params,
+        dm_model_req,
+        em_model_req,
+        rules,
+    )
     return simulation_store_params
 end
 
@@ -534,7 +583,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     simulation_time = get_current_time(sim)
     state = get_simulation_state(sim)
     for field in fieldnames(ValueStates)
-        model_params = get_model_params(store, model_name)
+        model_params = get_decision_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
             # TODO: Read Array here to avoid allocating the DataFrame
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
