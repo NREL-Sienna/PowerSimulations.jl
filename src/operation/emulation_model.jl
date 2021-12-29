@@ -225,7 +225,7 @@ end
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
-            @warn "EmulationProblem status not BuildStatus.EMPTY. Resetting"
+            @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
         # TODO-PJ: Temporary while are able to switch from PJ to POI
@@ -321,43 +321,23 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     return
 end
 
-function calculate_aux_variables!(model::EmulationModel)
-    container = get_optimization_container(model)
-    system = get_system(model)
-    calculate_aux_variables!(container, system)
-    return
-end
-
-function calculate_dual_variables!(model::EmulationModel)
-    container = get_optimization_container(model)
-    system = get_system(model)
-    calculate_dual_variables!(container, system)
-    return
-end
-
-"""
-The one step solution method for the emulation model. Any Custom EmulationModel
-needs to reimplement this method. This method is called by run! and execute!.
-"""
-function one_step_solve!(model::EmulationModel)
-    solve_impl!(model)
-    return
-end
-
-function update_parameters(model::EmulationModel, store::EmulationModelStore)
+function update_parameters!(
+    model::EmulationModel,
+    store::Union{ValueStates, EmulationModelStore},
+)
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, store)
     end
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     model::EmulationModel,
-    store::EmulationModelStore,
+    source::EmulationModelStore,
     ::InterProblemChronology,
 )
     for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key, store)
+        update_initial_conditions!(model, key, source)
     end
     return
 end
@@ -368,10 +348,10 @@ function update_model!(
     ini_cond_chronology,
 )
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
-        update_parameters(model, source)
+        update_parameters!(model, source)
     end
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
-        update_initial_conditions(model, source, ini_cond_chronology)
+        update_initial_conditions!(model, source, ini_cond_chronology)
     end
     return
 end
@@ -396,7 +376,7 @@ function run_impl(
     prog_bar = ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
     for execution in 1:(internal.executions)
         TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
-            one_step_solve!(model)
+            solve_impl!(model)
             write_results!(model, execution)
             advance_execution_count!(model)
             update_model!(model)
@@ -490,31 +470,6 @@ function run!(
         close(logger)
     end
     return get_run_status(model)
-end
-
-"""
-Default solve method for an Emulation model used inside of a Simulation. Solves problems that conform to the requirements of EmulationModel{<: EmulationProblem}
-
-# Arguments
-- `step::Int`: Simulation Step
-- `model::EmulationModel`: Emulation model
-- `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
-- `store::SimulationStore`: Simulation output store
-"""
-function run!(
-    step::Int,
-    model::EmulationModel{<:EmulationProblem},
-    start_time::Dates.DateTime,
-    store::SimulationStore,
-)
-    # Initialize the InMemorySimulationStore
-    solve_status = run!(model)
-    if solve_status == RunStatus.SUCCESSFUL
-        write_results!(model, start_time, store)
-        advance_execution_count!(model)
-    end
-
-    return solve_status
 end
 
 function write_results!(model::EmulationModel, execution::Int)

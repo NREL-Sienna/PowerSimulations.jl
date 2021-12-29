@@ -325,20 +325,6 @@ function reset!(model::DecisionModel)
     return
 end
 
-function calculate_aux_variables!(model::DecisionModel)
-    container = get_optimization_container(model)
-    system = get_system(model)
-    calculate_aux_variables!(container, system)
-    return
-end
-
-function calculate_dual_variables!(model::DecisionModel)
-    container = get_optimization_container(model)
-    system = get_system(model)
-    calculate_dual_variables!(container, system)
-    return
-end
-
 """
 Default solve method for models that conform to the requirements of
 DecisionModel{<: DecisionProblem}.
@@ -422,58 +408,11 @@ function solve!(
     return get_run_status(model)
 end
 
-function update_parameters(model::DecisionModel, decision_states::ValueStates)
+function update_parameters!(model::DecisionModel, decision_states::ValueStates)
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, decision_states)
     end
     return
-end
-
-function update_initial_conditions(model::DecisionModel, state, ::InterProblemChronology)
-    for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key, state)
-    end
-    return
-end
-
-function update_initial_conditions(model::DecisionModel, state, ::IntraProblemChronology)
-    #for key in keys(get_initial_conditions(model))
-    #    update_initial_conditions!(model, key, state)
-    #end
-    error("Not Implemented yet")
-    return
-end
-
-"""
-Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<: DecisionProblem}
-
-# Arguments
-- `step::Int`: Simulation Step
-- `model::OperationModel`: operation model
-- `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
-- `store::SimulationStore`: Simulation output store
-
-# Accepted Key Words
-- `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
-"""
-function solve!(
-    step::Int,
-    model::DecisionModel{<:DecisionProblem},
-    start_time::Dates.DateTime,
-    store::SimulationStore;
-    exports = nothing,
-)
-    # Note, we don't call solve!(decision_model) here because the solve call includes a lot of
-    # other logic used when solving
-    solve_impl!(model)
-    if get_run_status(model) == RunStatus.SUCCESSFUL
-        stats = get_optimizer_stats(model)
-        write_optimizer_stats!(store, get_name(model), stats, start_time)
-        write_results!(store, model, start_time; exports = exports)
-        advance_execution_count!(model)
-    end
-
-    return get_run_status(model)
 end
 
 function write_results!(

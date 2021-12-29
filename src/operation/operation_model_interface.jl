@@ -95,6 +95,37 @@ function solve_impl!(model::OperationModel)
     return
 end
 
+"""
+Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<: DecisionProblem}
+
+# Arguments
+- `step::Int`: Simulation Step
+- `model::OperationModel`: operation model
+- `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
+- `store::SimulationStore`: Simulation output store
+
+# Accepted Key Words
+- `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
+"""
+function solve!(
+    step::Int,
+    model::OperationModel,
+    start_time::Dates.DateTime,
+    store::SimulationStore;
+    exports = nothing,
+)
+    # Note, we don't call solve!(decision_model) here because the solve call includes a lot of
+    # other logic used when solving the models separate from a simulation
+    solve_impl!(model)
+    @assert get_current_time(model) == start_time
+    if get_run_status(model) == RunStatus.SUCCESSFUL
+        write_optimizer_stats!(store, model)
+        write_results!(store, model, start_time; exports = exports)
+        advance_execution_count!(model)
+    end
+    return get_run_status(model)
+end
+
 set_console_level!(model::OperationModel, val) = get_internal(model).console_level = val
 set_file_level!(model::OperationModel, val) = get_internal(model).file_level = val
 set_executions!(model::OperationModel, val::Int) = model.internal.executions = val
@@ -354,10 +385,10 @@ end
 
 function update_model!(model::OperationModel, source, ini_cond_chronology)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
-        update_parameters(model, get_decision_states(source))
+        update_parameters!(model, get_decision_states(source))
     end
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
-        update_initial_conditions(model, source, ini_cond_chronology)
+        update_initial_conditions!(model, source, ini_cond_chronology)
     end
     return
 end
