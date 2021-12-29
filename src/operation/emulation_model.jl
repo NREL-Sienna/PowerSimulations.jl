@@ -377,7 +377,7 @@ function run_impl(
     for execution in 1:(internal.executions)
         TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
             solve_impl!(model)
-            write_results!(model, execution)
+            write_results!(get_store(model), model, execution)
             advance_execution_count!(model)
             update_model!(model)
             ProgressMeter.update!(
@@ -472,8 +472,7 @@ function run!(
     return get_run_status(model)
 end
 
-function write_results!(model::EmulationModel, execution::Int)
-    store = get_store(model)
+function write_results!(store::EmulationModelStore, model::EmulationModel, execution::Int)
     write_model_dual_results!(store, model, execution)
     write_model_parameter_results!(store, model, execution)
     write_model_variable_results!(store, model, execution)
@@ -484,6 +483,30 @@ function write_results!(model::EmulationModel, execution::Int)
     return
 end
 
+function write_results!(
+    store::SimulationStore,
+    model::EmulationModel,
+    ::Dates.DateTime;
+    exports = nothing,
+)
+    # TODO: EM exports
+    # if exports !== nothing
+    #     export_params = Dict{Symbol, Any}(
+    #         :exports => exports,
+    #         :exports_path => joinpath(exports.path, string(get_name(model))),
+    #         :file_type => get_export_file_type(exports),
+    #         :resolution => get_resolution(model),
+    #         :horizon => get_horizon(get_settings(model)),
+    #     )
+    # else
+    #     export_params = nothing
+    # end
+    execution = get_execution_count(model) + 1
+    @show execution
+    write_results!(store, model, execution)
+    return
+end
+
 function write_model_dual_results!(
     store::EmulationModelStore,
     model::EmulationModel,
@@ -491,6 +514,7 @@ function write_model_dual_results!(
 )
     container = get_optimization_container(model)
     for (key, dual) in get_duals(container)
+        !write_resulting_value(key) && continue
         write_result!(store, key, execution, dual)
     end
     return
@@ -507,6 +531,7 @@ function write_model_parameter_results!(
     horizon = 1
 
     for (key, parameter) in parameters
+        !write_resulting_value(key) && continue
         name = encode_key(key)
         param_array = get_parameter_array(parameter)
         multiplier_array = get_multiplier_array(parameter)
@@ -525,6 +550,7 @@ function write_model_variable_results!(
 )
     container = get_optimization_container(model)
     for (key, variable) in get_variables(container)
+        !write_resulting_value(key) && continue
         write_result!(store, key, execution, variable)
     end
     return
@@ -537,6 +563,7 @@ function write_model_aux_variable_results!(
 )
     container = get_optimization_container(model)
     for (key, variable) in get_aux_variables(container)
+        !write_resulting_value(key) && continue
         write_result!(store, key, execution, variable)
     end
     return
@@ -549,6 +576,7 @@ function write_model_expression_results!(
 )
     container = get_optimization_container(model)
     for (key, expression) in get_expressions(container)
+        !write_resulting_value(key) && continue
         write_result!(store, key, execution, expression)
     end
     return

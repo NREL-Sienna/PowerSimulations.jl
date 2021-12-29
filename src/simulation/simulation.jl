@@ -326,6 +326,7 @@ function _get_emulation_store_requirements(sim::Simulation)
     reqs = SimulationModelStoreRequirements()
 
     for (key, state_values) in get_duals_values(system_state)
+        !write_resulting_value(key) && continue
         dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.duals[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
@@ -338,15 +339,24 @@ function _get_emulation_store_requirements(sim::Simulation)
     end
 
     for (key, state_values) in get_variables_values(system_state)
+        !write_resulting_value(key) && continue
         dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_aux_variables_values(system_state)
+        !write_resulting_value(key) && continue
         dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.aux_variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+
+    for (key, state_values) in get_expression_values(system_state)
+        !write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.expressions[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
     return reqs
 end
@@ -560,7 +570,7 @@ function build!(
     return get_simulation_build_status(sim)
 end
 
-function _apply_warm_start!(model::DecisionModel)
+function _apply_warm_start!(model::OperationModel)
     container = get_optimization_container(model)
     # If the model was used to retrieve duals from an MILP the logic has to be different
     if isempty(container.primal_values_cache)
@@ -577,6 +587,10 @@ function _apply_warm_start!(model::DecisionModel)
     return
 end
 
+function _update_simulation_state!(::Simulation, model::EmulationModel)
+    return
+end
+
 function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_name = get_name(model)
     store = get_simulation_store(sim)
@@ -586,6 +600,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
         model_params = get_decision_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
             # TODO: Read Array here to avoid allocating the DataFrame
+            !has_state_data(get_decision_states(state), key) && continue
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
             update_state_data!(
                 key,

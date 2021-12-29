@@ -416,7 +416,21 @@ function update_parameters!(model::DecisionModel, decision_states::ValueStates)
 end
 
 function write_results!(
-    store,
+    store::DecisionModelStore,
+    model::DecisionModel,
+    timestamp::Dates.DateTime,
+    export_params = nothing,
+)
+    write_model_dual_results!(store, model, timestamp, export_params)
+    write_model_parameter_results!(store, model, timestamp, export_params)
+    write_model_variable_results!(store, model, timestamp, export_params)
+    write_model_aux_variable_results!(store, model, timestamp, export_params)
+    write_model_expression_results!(store, model, timestamp, export_params)
+    return
+end
+
+function write_results!(
+    store::SimulationStore,
     model::DecisionModel,
     timestamp::Dates.DateTime;
     exports = nothing,
@@ -433,11 +447,7 @@ function write_results!(
         export_params = nothing
     end
 
-    write_model_dual_results!(store, model, timestamp, export_params)
-    write_model_parameter_results!(store, model, timestamp, export_params)
-    write_model_variable_results!(store, model, timestamp, export_params)
-    write_model_aux_variable_results!(store, model, timestamp, export_params)
-    write_model_expression_results!(store, model, timestamp, export_params)
+    write_results!(store, model, timestamp, export_params)
     return
 end
 
