@@ -122,3 +122,6 @@ struct FixValueParameter <: VariableValueParameter end
 struct EnergyTargetParameter <: VariableValueParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
+
+write_resulting_value(::Type{<:ParameterType}) = false
+write_resulting_value(::Type{<:RightHandSideParameter}) = true
