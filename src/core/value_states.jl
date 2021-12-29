@@ -22,6 +22,10 @@ get_data_resolution(s::ValueState) = s.resolution
 get_timestamps(s::ValueState) = s.timestamps
 _get_values(s::ValueState) = s.values
 
+function get_column_names(::OptimizationContainerKey, s::ValueState)
+    return DataFrames.names(_get_values(s))
+end
+
 function get_end_of_step_timestamp(s::ValueState)
     return get_timestamps(s)[s.end_of_step_index]
 end
@@ -61,6 +65,7 @@ struct ValueStates
     duals::Dict{ConstraintKey, ValueState}
     aux_variables::Dict{AuxVarKey, ValueState}
     variables::Dict{VariableKey, ValueState}
+    parameters::Dict{ParameterKey, ValueState}
 end
 
 function ValueStates()
@@ -68,7 +73,24 @@ function ValueStates()
         Dict{ConstraintKey, ValueState}(),
         Dict{AuxVarKey, ValueState}(),
         Dict{VariableKey, ValueState}(),
+        Dict{ParameterKey, ValueState}(),
     )
+end
+
+function get_duals_values(state::ValueStates)
+    return state.duals
+end
+
+function get_aux_variables_values(state::ValueStates)
+    return state.aux_variables
+end
+
+function get_variables_values(state::ValueStates)
+    return state.variables
+end
+
+function get_parameters_values(state::ValueStates)
+    return state.parameters
 end
 
 function get_state_keys(state::ValueStates)
@@ -87,6 +109,10 @@ function get_state_data(state::ValueStates, key::ConstraintKey)
     return state.duals[key]
 end
 
+function get_state_data(state::ValueStates, key::ParameterKey)
+    return state.parameters[key]
+end
+
 function set_state_data!(state::ValueStates, key::VariableKey, val::ValueState)
     state.variables[key] = val
     return
@@ -102,6 +128,11 @@ function set_state_data!(state::ValueStates, key::ConstraintKey, val::ValueState
     return
 end
 
+function set_state_data!(state::ValueStates, key::ParameterKey, val::ValueState)
+    state.parameters[key] = val
+    return
+end
+
 function has_state_data(state::ValueStates, key::VariableKey)
     return haskey(state.variables, key)
 end
@@ -112,6 +143,10 @@ end
 
 function has_state_data(state::ValueStates, key::ConstraintKey)
     return haskey(state.duals, key)
+end
+
+function has_state_data(state::ValueStates, key::ParameterKey)
+    return haskey(state.parameters, key)
 end
 
 function get_state_data(
@@ -136,6 +171,14 @@ function get_state_data(
     ::Type{U},
 ) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
     return get_state_data(state, AuxVarKey(T, U))
+end
+
+function get_state_data(
+    state::ValueStates,
+    ::T,
+    ::Type{U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_state_data(state, ParameterKey(T, U))
 end
 
 function get_state_values(state::ValueStates, key::OptimizationContainerKey)

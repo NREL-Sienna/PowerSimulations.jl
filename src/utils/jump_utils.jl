@@ -67,7 +67,7 @@ end
 
 function get_column_names(
     key::OptimizationContainerKey,
-    array::DenseAxisArray{T, 1, K},
+    ::DenseAxisArray{T, 1, K},
 ) where {T, K <: NTuple{1, Any}}
     return get_column_names(key)
 end
@@ -169,17 +169,16 @@ end
 
 remove_undef!(expression_array::SparseAxisArray) = expression_array
 
-function _calc_dimensions(array::DenseAxisArray, name, num_rows::Int, horizon::Int)
+function _calc_dimensions(array::DenseAxisArray, key, num_rows::Int, horizon::Int)
     ax = axes(array)
+    columns = get_column_names(key, array)
     # Two use cases for read:
     # 1. Read data for one execution for one device.
     # 2. Read data for one execution for all devices.
     # This will ensure that data on disk is contiguous in both cases.
     if length(ax) == 1
-        columns = [name]
         dims = (horizon, 1, num_rows)
     elseif length(ax) == 2
-        columns = collect(axes(array)[1])
         dims = (horizon, length(columns), num_rows)
         # elseif length(ax) == 3
         #     # TODO: untested
@@ -191,8 +190,8 @@ function _calc_dimensions(array::DenseAxisArray, name, num_rows::Int, horizon::I
     return Dict("columns" => columns, "dims" => dims)
 end
 
-function _calc_dimensions(array::SparseAxisArray, name, num_rows::Int, horizon::Int)
-    columns = get_column_names(array)
+function _calc_dimensions(array::SparseAxisArray, key, num_rows::Int, horizon::Int)
+    columns = get_column_names(key, array)
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end
