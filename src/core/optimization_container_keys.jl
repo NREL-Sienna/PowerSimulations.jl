@@ -29,3 +29,8 @@ function check_meta_chars(meta)
         throw(IS.InvalidValue("'$_DELIMITER' is not allowed in meta"))
     end
 end
+
+function write_resulting_value(key_val::OptimizationContainerKey)
+    value_type = get_entry_type(key_val)
+    return write_resulting_value(value_type)
+end
