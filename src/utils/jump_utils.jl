@@ -169,7 +169,12 @@ end
 
 remove_undef!(expression_array::SparseAxisArray) = expression_array
 
-function _calc_dimensions(array::DenseAxisArray, key, num_rows::Int, horizon::Int)
+function _calc_dimensions(
+    array::DenseAxisArray,
+    key::OptimizationContainerKey,
+    num_rows::Int,
+    horizon::Int,
+)
     ax = axes(array)
     columns = get_column_names(key, array)
     # Two use cases for read:
@@ -190,7 +195,12 @@ function _calc_dimensions(array::DenseAxisArray, key, num_rows::Int, horizon::In
     return Dict("columns" => columns, "dims" => dims)
 end
 
-function _calc_dimensions(array::SparseAxisArray, key, num_rows::Int, horizon::Int)
+function _calc_dimensions(
+    array::SparseAxisArray,
+    key::OptimizationContainerKey,
+    num_rows::Int,
+    horizon::Int,
+)
     columns = get_column_names(key, array)
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
