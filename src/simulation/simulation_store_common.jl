@@ -168,3 +168,15 @@ function write_model_expression_results!(
         end
     end
 end
+
+function write_optimizer_stats!(store::SimulationStore, model::DecisionModel)
+    stats = get_optimizer_stats(model)
+    write_optimizer_stats!(store, get_name(model), stats, get_current_time(model))
+    return
+end
+
+function write_optimizer_stats!(store::SimulationStore, model::EmulationModel)
+    stats = get_optimizer_stats(model)
+    write_optimizer_stats!(store, stats, get_execution_count(model))
+    return
+end
