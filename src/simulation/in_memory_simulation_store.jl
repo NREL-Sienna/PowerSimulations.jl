@@ -67,15 +67,14 @@ function write_optimizer_stats!(
     return
 end
 
-# TODO EmulationModel: this interface is TBD
-#function write_optimizer_stats!(
-#    store::InMemorySimulationStore,
-#    stats::OptimizerStats,
-#    execution::Int,
-#)
-#    write_optimizer_stats!(store.em_data, stats, index)
-#    return
-#end
+function write_optimizer_stats!(
+    store::InMemorySimulationStore,
+    stats::OptimizerStats,
+    execution::Int,
+)
+    write_optimizer_stats!(store.em_data, stats, execution)
+    return
+end
 
 function read_optimizer_stats(store::InMemorySimulationStore, model_name)
     # TODO EmulationModel: this interface is TBD
@@ -107,7 +106,8 @@ function initialize_problem_storage!(
             container[name] = DataFrames.DataFrame(
                 OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
             )
-            @info "Added $type $name in emulation data" _group = LOG_GROUP_SIMULATION_STORE
+            @debug "Added $type $name in emulation store" _group =
+                LOG_GROUP_SIMULATION_STORE
         end
     end
 
@@ -125,16 +125,14 @@ function write_result!(
     return
 end
 
-# TODO EmulationModel: this interface is TBD
-#function write_result!(
-#    store::InMemorySimulationStore,
-#    key::OptimizationContainerKey,
-#    execution::Int,
-#    array,
-#)
-#    write_result!(store.em_data, key, execution, array)
-#    return
-#end
+function write_result!(
+    store::InMemorySimulationStore,
+    key::OptimizationContainerKey,
+    execution::Int,
+    array,
+)
+    return
+end
 
 function read_result(
     ::Type{DataFrames.DataFrame},
