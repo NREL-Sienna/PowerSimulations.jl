@@ -643,10 +643,7 @@ function _set_system_state!(sim::Simulation, model_name::String)
 end
 
 """ Default problem update function for most problems with no customization"""
-function update_model!(
-    model::DecisionModel{M},
-    sim::Simulation,
-) where {M <: DecisionProblem}
+function update_model!(model::OperationModel, sim::Simulation)
     if get_requires_rebuild(model)
         # TODO: Implement this case where the model is re-built
         # build_impl!(model)
