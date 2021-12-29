@@ -141,6 +141,26 @@ function update_parameter_values!(
     return
 end
 
+function update_parameter_values!(
+    param_array::AbstractArray{T},
+    attributes::VariableValueAttributes,
+    ::Type{<:PSY.Component},
+    model::EmulationModel,
+    state::ValueStates,
+) where {T <: Union{PJ.ParameterRef, Float64}}
+    current_time = get_current_time(model)
+    state_values = get_state_values(state, get_attribute_key(attributes))
+    component_names, _ = axes(param_array)
+    state_data = get_state_data(state, get_attribute_key(attributes))
+    state_timestamps = get_timestamps(state_data)
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    for name in component_names
+        # Pass indices in this way since JuMP DenseAxisArray don't support view()
+        _set_param_value!(param_array, state_values[state_data_index, name], name, 1)
+    end
+    return
+end
+
 """
 Update parameter function an OperationModel
 """
