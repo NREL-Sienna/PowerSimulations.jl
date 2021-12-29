@@ -5,6 +5,20 @@ get_store_container_type(::ExpressionKey) = STORE_CONTAINER_EXPRESSIONS
 get_store_container_type(::ParameterKey) = STORE_CONTAINER_PARAMETERS
 get_store_container_type(::VariableKey) = STORE_CONTAINER_VARIABLES
 
+function write_results!(
+    store::SimulationStore,
+    model::DecisionModel,
+    timestamp::Dates.DateTime,
+    export_params::Union{Dict{Symbol, Any}, Nothing},
+)
+    write_model_dual_results!(store, model, timestamp, export_params)
+    write_model_parameter_results!(store, model, timestamp, export_params)
+    write_model_variable_results!(store, model, timestamp, export_params)
+    write_model_aux_variable_results!(store, model, timestamp, export_params)
+    write_model_expression_results!(store, model, timestamp, export_params)
+    return
+end
+
 function write_model_dual_results!(
     store::SimulationStore,
     model::DecisionModel,
@@ -19,6 +33,7 @@ function write_model_dual_results!(
     end
 
     for (key, constraint) in get_duals(container)
+        !write_resulting_value(key) && continue
         write_result!(store, model_name, key, timestamp, constraint)
 
         if exports !== nothing &&
@@ -51,6 +66,7 @@ function write_model_parameter_results!(
 
     parameters = get_parameters(container)
     for (key, container) in parameters
+        !write_resulting_value(key) && continue
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
         @assert_op length(axes(param_array)) == 2
@@ -90,6 +106,7 @@ function write_model_variable_results!(
     end
 
     for (key, variable) in variables
+        !write_resulting_value(key) && continue
         write_result!(store, model_name, key, timestamp, variable)
 
         if exports !== nothing &&
@@ -119,6 +136,7 @@ function write_model_aux_variable_results!(
     end
 
     for (key, variable) in get_aux_variables(container)
+        !write_resulting_value(key) && continue
         write_result!(store, model_name, key, timestamp, variable)
 
         if exports !== nothing &&
@@ -154,6 +172,7 @@ function write_model_expression_results!(
     end
 
     for (key, expression) in expressions
+        !write_resulting_value(key) && continue
         write_result!(store, model_name, key, timestamp, expression)
 
         if exports !== nothing &&
@@ -172,6 +191,17 @@ end
 function write_optimizer_stats!(store::SimulationStore, model::DecisionModel)
     stats = get_optimizer_stats(model)
     write_optimizer_stats!(store, get_name(model), stats, get_current_time(model))
+    return
+end
+
+function write_results!(store::SimulationStore, model::EmulationModel, execution::Int)
+    em_store = store.em_data
+    write_model_dual_results!(em_store, model, execution)
+    write_model_parameter_results!(em_store, model, execution)
+    write_model_variable_results!(em_store, model, execution)
+    write_model_aux_variable_results!(em_store, model, execution)
+    write_model_expression_results!(em_store, model, execution)
+    set_last_recorded_row!(em_store, execution)
     return
 end
 
