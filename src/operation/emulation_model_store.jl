@@ -75,6 +75,7 @@ function initialize_storage!(
             )
         end
     end
+    return
 end
 
 function write_result!(
@@ -108,6 +109,7 @@ function write_optimizer_stats!(
 )
     @assert !(execution in keys(store.optimizer_stats))
     store.optimizer_stats[execution] = stats
+    return
 end
 
 function read_optimizer_stats(store::EmulationModelStore)
