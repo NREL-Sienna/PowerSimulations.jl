@@ -40,8 +40,8 @@ Base.close(::InMemorySimulationStore) = nothing
 Base.flush(::InMemorySimulationStore) = nothing
 get_params(store::InMemorySimulationStore) = store.params
 
-function get_model_params(store::InMemorySimulationStore, model_name::Symbol)
-    return get_params(store).models_params[model_name]
+function get_decision_model_params(store::InMemorySimulationStore, model_name::Symbol)
+    return get_params(store).decision_models_params[model_name]
 end
 
 list_models(x::InMemorySimulationStore) = collect(keys(x.dm_data))
@@ -84,15 +84,16 @@ end
 
 function initialize_problem_storage!(
     store::InMemorySimulationStore,
-    params,
-    problem_reqs,
-    flush_rules,
+    params::SimulationStoreParams,
+    dm_problem_reqs::Dict{Symbol, SimulationModelStoreRequirements},
+    em_problem_reqs::SimulationModelStoreRequirements,
+    ::CacheFlushRules,
 )
     store.params = params
     for problem in keys(store.params.decision_models_params)
         store.dm_data[problem] = DecisionModelStore()
         for type in STORE_CONTAINERS
-            for (name, reqs) in getfield(problem_reqs[problem], type)
+            for (name, reqs) in getfield(dm_problem_reqs[problem], type)
                 container = getfield(store.dm_data[problem], type)
                 container[name] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
                 @debug "Added $type $name in $problem" _group = LOG_GROUP_SIMULATION_STORE
@@ -100,16 +101,13 @@ function initialize_problem_storage!(
         end
     end
 
-    for problem in keys(store.params.emulation_model_params)
-        store.em_data[problem] = EmulationModelStore()
-        for type in STORE_CONTAINERS
-            for (name, reqs) in getfield(problem_reqs[problem], type)
-                container = getfield(store.dm_data[problem], type)
-                container[name] = DataFrames.DataFrame(
-                    OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
-                )
-                @debug "Added $type $name in $problem" _group = LOG_GROUP_SIMULATION_STORE
-            end
+    for type in STORE_CONTAINERS
+        for (name, reqs) in getfield(em_problem_reqs, type)
+            container = getfield(store.em_data, type)
+            container[name] = DataFrames.DataFrame(
+                OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
+            )
+            @info "Added $type $name in emulation data" _group = LOG_GROUP_SIMULATION_STORE
         end
     end
 
