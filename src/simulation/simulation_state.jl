@@ -95,7 +95,7 @@ function _initialize_system_states!(
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_states(sim_state)
     for key in get_state_keys(decision_states)
-        cols = DataFrames.names(get_state_values(decision_states, key))
+        cols = get_column_names(key, get_state_data(decision_states, key))
         set_state_data!(
             emulator_states,
             key,
