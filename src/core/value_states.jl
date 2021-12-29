@@ -66,6 +66,7 @@ struct ValueStates
     aux_variables::Dict{AuxVarKey, ValueState}
     variables::Dict{VariableKey, ValueState}
     parameters::Dict{ParameterKey, ValueState}
+    expressions::Dict{ExpressionKey, ValueState}
 end
 
 function ValueStates()
@@ -74,6 +75,7 @@ function ValueStates()
         Dict{AuxVarKey, ValueState}(),
         Dict{VariableKey, ValueState}(),
         Dict{ParameterKey, ValueState}(),
+        Dict{ExpressionKey, ValueState}()
     )
 end
 
@@ -113,6 +115,11 @@ function get_state_data(state::ValueStates, key::ParameterKey)
     return state.parameters[key]
 end
 
+function get_state_data(state::ValueStates, key::ExpressionKey)
+    return state.expressions[key]
+end
+
+
 function set_state_data!(state::ValueStates, key::VariableKey, val::ValueState)
     state.variables[key] = val
     return
@@ -133,6 +140,11 @@ function set_state_data!(state::ValueStates, key::ParameterKey, val::ValueState)
     return
 end
 
+function set_state_data!(state::ValueStates, key::ExpressionKey, val::ValueState)
+    state.expressions[key] = val
+    return
+end
+
 function has_state_data(state::ValueStates, key::VariableKey)
     return haskey(state.variables, key)
 end
@@ -147,6 +159,10 @@ end
 
 function has_state_data(state::ValueStates, key::ParameterKey)
     return haskey(state.parameters, key)
+end
+
+function has_state_data(state::ValueStates, key::ExpressionKey)
+    return haskey(state.expressions, key)
 end
 
 function get_state_data(
@@ -181,6 +197,14 @@ function get_state_data(
     return get_state_data(state, ParameterKey(T, U))
 end
 
+function get_state_data(
+    state::ValueStates,
+    ::T,
+    ::Type{U},
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    return get_state_data(state, ExpressionKey(T, U))
+end
+
 function get_state_values(state::ValueStates, key::OptimizationContainerKey)
     return _get_values(get_state_data(state, key))
 end
@@ -207,6 +231,14 @@ function get_state_values(
     ::Type{U},
 ) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
     return get_state_values(state, AuxVarKey(T, U))
+end
+
+function get_state_values(
+    state::ValueStates,
+    ::T,
+    ::Type{U},
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    return get_state_values(state, ExpressionKey(T, U))
 end
 
 function get_state_values(
