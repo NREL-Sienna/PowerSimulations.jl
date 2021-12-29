@@ -1,4 +1,27 @@
 function update_initial_conditions!(
+    model::OperationModel,
+    state::SimulationState,
+    ::InterProblemChronology,
+)
+    for key in keys(get_initial_conditions(model))
+        update_initial_conditions!(model, key, state)
+    end
+    return
+end
+
+function update_initial_conditions!(
+    model::OperationModel,
+    state::SimulationState,
+    ::IntraProblemChronology,
+)
+    #for key in keys(get_initial_conditions(model))
+    #    update_initial_conditions!(model, key, state)
+    #end
+    error("Not Implemented yet")
+    return
+end
+
+function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
     model_resolution::Dates.Period,
