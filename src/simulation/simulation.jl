@@ -291,7 +291,7 @@ function _get_model_store_requirements!(
     container = get_optimization_container(model)
 
     for (key, array) in get_duals(container)
-        reqs.duals[key] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
+        reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon)
         add_rule!(rules, model_name, key, false, CachePriority.LOW)
     end
 
