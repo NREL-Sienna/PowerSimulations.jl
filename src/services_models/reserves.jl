@@ -102,8 +102,6 @@ function add_constraints!(
         container =
             get_parameter(container, RequirementTimeSeriesParameter(), SR, service_name)
         param = get_parameter_array(container)
-        # TODO: Check multiplier, this container isn't being set here
-        multiplier = get_multiplier_array(container)
         for t in time_steps
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
