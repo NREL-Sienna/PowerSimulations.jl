@@ -62,6 +62,8 @@ function _make_params()
         sim["step_resolution"],
         sim["num_steps"],
         problems,
+        # Emulation Problem Params. Export not implemented yet
+        OrderedDict{Symbol, ModelStoreParams}()
     )
 end
 
