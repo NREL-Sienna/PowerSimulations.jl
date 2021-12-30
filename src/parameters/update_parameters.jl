@@ -40,15 +40,16 @@ function update_parameter_values!(
     horizon = get_time_steps(get_optimization_container(model))[end]
     components = get_available_components(V, get_system(model))
     for component in components
+        name = PSY.get_name(component)
         ts_vector = get_time_series_values!(
             U,
             model,
             component,
             get_time_series_name(attributes),
+            get_time_series_multiplier_id(attributes),
             initial_forecast_time,
             horizon,
         )
-        name = PSY.get_name(component)
         for (t, value) in enumerate(ts_vector)
             _set_param_value!(param_array, value, name, t)
         end
@@ -73,6 +74,7 @@ function update_parameter_values!(
         model,
         service,
         get_time_series_name(attributes),
+        get_time_series_multiplier_id(attributes),
         initial_forecast_time,
         horizon,
     )
@@ -98,6 +100,7 @@ function update_parameter_values!(
             model,
             component,
             get_time_series_name(attributes),
+            get_time_series_multiplier_id(attributes),
             initial_forecast_time,
         )
         _set_param_value!(param_array, ts_vector[1], PSY.get_name(component), 1)

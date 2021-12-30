@@ -58,6 +58,6 @@ function get_time_series(
     return _get_time_series(
         container,
         component,
-        TimeSeriesAttributes{PSY.Deterministic}(forecast_name),
+        TimeSeriesAttributes(PSY.Deterministic, forecast_name),
     )
 end

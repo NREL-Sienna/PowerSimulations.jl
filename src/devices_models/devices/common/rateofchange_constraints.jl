@@ -21,7 +21,9 @@ function _get_ramp_constraint_devices(
             p_lims = PSY.get_active_power_limits(d)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
             if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
-                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
+                @debug "Generator has a nonbinding ramp limits. Constraints Skipped" PSY.get_name(
+                    d,
+                )
                 continue
             else
                 push!(filtered_device, d)

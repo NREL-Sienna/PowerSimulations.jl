@@ -2,6 +2,7 @@ struct TimeSeriesCacheKey
     component_uuid::Base.UUID
     time_series_type::Type{<:IS.TimeSeriesData}
     name::String
+    multiplier_id::Int
 end
 
 # TODO: Marge all structs (ModelInternal, ModelStoreParams and SimulationInfo) to a single Internal Struct

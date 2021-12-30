@@ -56,6 +56,7 @@ function get_time_series_values!(
     model::DecisionModel,
     component,
     name,
+    multiplier_id::Int,
     initial_time,
     horizon::Int;
     ignore_scaling_factors = true,
@@ -72,7 +73,7 @@ function get_time_series_values!(
     end
 
     cache = get_time_series_cache(model)
-    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name)
+    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name, multiplier_id)
     if haskey(cache, key)
         ts_cache = cache[key]
     else
@@ -96,6 +97,7 @@ function get_time_series_values!(
     model::EmulationModel,
     component,
     name,
+    multiplier_id::Int,
     initial_time,
     len::Int = 1;
     ignore_scaling_factors = true,
@@ -112,7 +114,7 @@ function get_time_series_values!(
     end
 
     cache = get_time_series_cache(model)
-    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name)
+    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name, multiplier_id)
     if haskey(cache, key)
         ts_cache = cache[key]
     else

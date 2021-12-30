@@ -1,3 +1,22 @@
+"""
+Function to create a unique index of time series names for each device model. For example,
+if two parameters each reference the same time series name, this function will return a
+different value for each parameter entry
+"""
+function create_time_series_multiplier_index(
+    model,
+    ::Type{T},
+) where {T <: TimeSeriesParameter}
+    ts_names = get_time_series_names(model)
+    if length(ts_names) > 1
+        ts_name = ts_names[T]
+        ts_id = findfirst(x -> x == T, [k for (k, v) in ts_names if v == ts_name])
+    else
+        ts_id = 1
+    end
+    return ts_id
+end
+
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
@@ -66,9 +85,12 @@ function add_parameters!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     ts_name = get_time_series_names(model)[T]
-    @debug "adding" T name ts_type _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    time_series_mult_id = create_time_series_multiplier_index(model, T)
+    @debug "adding" T ts_name ts_type time_series_mult_id _group =
+        LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container =
         add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
+    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
     jump_model = get_jump_model(container)
     for d in devices
         name = PSY.get_name(d)
@@ -115,6 +137,7 @@ function add_parameters!(
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
     ts_name = get_time_series_names(model)[T]
+    time_series_mult_id = create_time_series_multiplier_index(model, T)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     @debug "adding" parameter_type U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -128,6 +151,7 @@ function add_parameters!(
         time_steps;
         meta = name,
     )
+    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
     jump_model = get_jump_model(container)
     ts_vector = get_time_series(container, service, T(), name)
     multiplier = get_multiplier_value(T(), service, V())

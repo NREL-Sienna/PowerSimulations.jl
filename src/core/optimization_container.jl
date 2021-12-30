@@ -882,7 +882,7 @@ function add_param_container!(
     if isabstracttype(V)
         error("$V can't be abstract: $param_key")
     end
-    attributes = TimeSeriesAttributes{V}(name)
+    attributes = TimeSeriesAttributes(V, name)
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 

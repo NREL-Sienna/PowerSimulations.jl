@@ -871,7 +871,7 @@ function variable_cost!(
     cost_component::PSY.VariableCost{Float64},
     time_period::Int,
 )
-    @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS PSY.get_name(component)
     base_power = get_base_power(container)
     cost_data = PSY.get_cost(cost_component)
     linear_gen_cost!(
