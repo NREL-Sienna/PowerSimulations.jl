@@ -165,3 +165,25 @@ function _get_model_results(store::InMemorySimulationStore, model_name::Symbol)
 
     return results[model_name]
 end
+
+function write_optimizer_stats!(
+    store::InMemorySimulationStore,
+    model::DecisionModel,
+    timestamp::Dates.DateTime,
+)
+    stats = get_optimizer_stats(model)
+    dm_data = store.dm_data
+    write_optimizer_stats!(dm_data[get_name(model)], stats, timestamp)
+    return
+end
+
+function write_optimizer_stats!(
+    store::InMemorySimulationStore,
+    model::EmulationModel,
+    execution::Int,
+)
+    stats = get_optimizer_stats(model)
+    em_data = store.em_data
+    write_optimizer_stats!(em_data, stats, execution)
+    return
+end

@@ -316,7 +316,7 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     )
     model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
-    empty!(model.store)
+    empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)
     return
 end
@@ -357,7 +357,7 @@ function update_model!(
 end
 
 function update_model!(model::EmulationModel)
-    update_model!(model, model.store, InterProblemChronology())
+    update_model!(model, get_store(model), InterProblemChronology())
     return
 end
 
@@ -378,6 +378,8 @@ function run_impl(
         TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
             solve_impl!(model)
             write_results!(get_store(model), model, execution)
+            write_optimizer_stats!(get_store(model), get_optimizer_stats(model), execution)
+            set_last_recorded_row!(get_store(model), execution)
             advance_execution_count!(model)
             update_model!(model)
             ProgressMeter.update!(
@@ -439,7 +441,7 @@ function run!(
         Logging.with_logger(logger) do
             try
                 initialize_storage!(
-                    model.store,
+                    get_store(model),
                     get_optimization_container(model),
                     model.internal.store_parameters,
                 )
@@ -472,112 +474,24 @@ function run!(
     return get_run_status(model)
 end
 
-function write_results!(store::EmulationModelStore, model::EmulationModel, execution::Int)
-    write_model_dual_results!(store, model, execution)
-    write_model_parameter_results!(store, model, execution)
-    write_model_variable_results!(store, model, execution)
-    write_model_aux_variable_results!(store, model, execution)
-    write_model_expression_results!(store, model, execution)
-    write_optimizer_stats!(store, get_optimizer_stats(model), execution)
-    set_last_recorded_row!(store, execution)
-    return
-end
-
 function write_results!(
     store::SimulationStore,
     model::EmulationModel,
     ::Dates.DateTime;
     exports = nothing,
 )
-    # TODO: EM exports
-    # if exports !== nothing
-    #     export_params = Dict{Symbol, Any}(
-    #         :exports => exports,
-    #         :exports_path => joinpath(exports.path, string(get_name(model))),
-    #         :file_type => get_export_file_type(exports),
-    #         :resolution => get_resolution(model),
-    #         :horizon => get_horizon(get_settings(model)),
-    #     )
-    # else
-    #     export_params = nothing
-    # end
+    if exports !== nothing
+        export_params = Dict{Symbol, Any}(
+            :exports => exports,
+            :exports_path => joinpath(exports.path, string(get_name(model))),
+            :file_type => get_export_file_type(exports),
+            :resolution => get_resolution(model),
+            :horizon => 1,
+        )
+    else
+        export_params = nothing
+    end
     execution = get_execution_count(model) + 1
-    @show execution
-    write_results!(store, model, execution)
-    return
-end
-
-function write_model_dual_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    for (key, dual) in get_duals(container)
-        !write_resulting_value(key) && continue
-        write_result!(store, key, execution, dual)
-    end
-    return
-end
-
-function write_model_parameter_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    parameters = get_parameters(container)
-    (parameters === nothing || isempty(parameters)) && return
-    horizon = 1
-
-    for (key, parameter) in parameters
-        !write_resulting_value(key) && continue
-        name = encode_key(key)
-        param_array = get_parameter_array(parameter)
-        multiplier_array = get_multiplier_array(parameter)
-        @assert_op length(axes(param_array)) == 2
-        num_columns = size(param_array)[1]
-        data = jump_value.(param_array) .* multiplier_array
-        write_result!(store, key, execution, data)
-    end
-    return
-end
-
-function write_model_variable_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    for (key, variable) in get_variables(container)
-        !write_resulting_value(key) && continue
-        write_result!(store, key, execution, variable)
-    end
-    return
-end
-
-function write_model_aux_variable_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    for (key, variable) in get_aux_variables(container)
-        !write_resulting_value(key) && continue
-        write_result!(store, key, execution, variable)
-    end
-    return
-end
-
-function write_model_expression_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    for (key, expression) in get_expressions(container)
-        !write_resulting_value(key) && continue
-        write_result!(store, key, execution, expression)
-    end
+    write_results!(store, model, execution, export_params)
     return
 end
