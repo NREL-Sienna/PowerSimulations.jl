@@ -82,12 +82,12 @@ function write_result!(
     data::EmulationModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    execution::Int,
+    index::EMULATION_MODEL_INDEX,
     array,
 )
     container = getfield(data, get_store_container_type(key))
     df = axis_array_to_dataframe(array, key)
-    container[key][execution, :] = df[1, :]
+    container[key][index, :] = df[1, :]
     return
 end
 
@@ -105,10 +105,10 @@ end
 function write_optimizer_stats!(
     store::EmulationModelStore,
     stats::OptimizerStats,
-    execution::Int,
+    index::EMULATION_MODEL_INDEX,
 )
-    @assert !(execution in keys(store.optimizer_stats))
-    store.optimizer_stats[execution] = stats
+    @assert !(index in keys(store.optimizer_stats))
+    store.optimizer_stats[index] = stats
     return
 end
 
@@ -118,8 +118,8 @@ end
 
 get_last_recorded_row(x::EmulationModelStore) = x.last_recorded_row
 
-function set_last_recorded_row!(store::EmulationModelStore, execution)
-    @debug "set_last_recorded_row!" _group = LOG_GROUP_MODEL_STORE execution
-    store.last_recorded_row = execution
+function set_last_recorded_row!(store::EmulationModelStore, index)
+    @debug "set_last_recorded_row!" _group = LOG_GROUP_MODEL_STORE index
+    store.last_recorded_row = index
     return
 end
