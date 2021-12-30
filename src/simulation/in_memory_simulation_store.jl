@@ -114,24 +114,61 @@ function initialize_problem_storage!(
     return
 end
 
-function write_result!(
+function write_results!(
     store::InMemorySimulationStore,
-    model_name,
-    key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
-    array,
+    model::EmulationModel,
+    ::Dates.DateTime;
+    exports = nothing,
 )
-    write_result!(store.dm_data[model_name], key, timestamp, array)
+    em_store = store.em_data
+
+    if exports !== nothing
+        export_params = Dict{Symbol, Any}(
+            :exports => exports,
+            :exports_path => joinpath(exports.path, string(get_name(model))),
+            :file_type => get_export_file_type(exports),
+            :resolution => get_resolution(model),
+            :horizon => 1,
+        )
+    else
+        export_params = nothing
+    end
+
+    index = get_execution_count(model) + 1
+
+    write_model_dual_results!(em_store, model, index, export_params)
+    write_model_parameter_results!(em_store, model, index, export_params)
+    write_model_variable_results!(em_store, model, index, export_params)
+    write_model_aux_variable_results!(em_store, model, index, export_params)
+    write_model_expression_results!(em_store, model, index, export_params)
     return
 end
 
-function write_result!(
+function write_results!(
     store::InMemorySimulationStore,
-    key::OptimizationContainerKey,
-    execution::Int,
-    array,
+    model::DecisionModel,
+    index::Union{Dates.DateTime, Int};
+    exports = nothing,
 )
-    write_result!(store.em_data, key, execution, array)
+    dm_store = store.dm_data[get_name(model)]
+
+    if exports !== nothing
+        export_params = Dict{Symbol, Any}(
+            :exports => exports,
+            :exports_path => joinpath(exports.path, string(get_name(model))),
+            :file_type => get_export_file_type(exports),
+            :resolution => get_resolution(model),
+            :horizon => get_horizon(get_settings(model)),
+        )
+    else
+        export_params = nothing
+    end
+
+    write_model_dual_results!(dm_store, model, index, export_params)
+    write_model_parameter_results!(dm_store, model, index, export_params)
+    write_model_variable_results!(dm_store, model, index, export_params)
+    write_model_aux_variable_results!(dm_store, model, index, export_params)
+    write_model_expression_results!(dm_store, model, index, export_params)
     return
 end
 
@@ -174,6 +211,16 @@ function write_optimizer_stats!(
     stats = get_optimizer_stats(model)
     dm_data = store.dm_data
     write_optimizer_stats!(dm_data[get_name(model)], stats, timestamp)
+    return
+end
+
+function write_optimizer_stats!(
+    store::InMemorySimulationStore,
+    model::EmulationModel,
+    ::Dates.DateTime,
+)
+    index = get_execution_count(model) + 1
+    write_optimizer_stats!(store, model, index)
     return
 end
 
