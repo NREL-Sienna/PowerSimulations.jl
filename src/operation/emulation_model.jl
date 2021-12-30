@@ -473,25 +473,3 @@ function run!(
     end
     return get_run_status(model)
 end
-
-function write_results!(
-    store::SimulationStore,
-    model::EmulationModel,
-    ::Dates.DateTime;
-    exports = nothing,
-)
-    if exports !== nothing
-        export_params = Dict{Symbol, Any}(
-            :exports => exports,
-            :exports_path => joinpath(exports.path, string(get_name(model))),
-            :file_type => get_export_file_type(exports),
-            :resolution => get_resolution(model),
-            :horizon => 1,
-        )
-    else
-        export_params = nothing
-    end
-    execution = get_execution_count(model) + 1
-    write_results!(store, model, execution, export_params)
-    return
-end

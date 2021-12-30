@@ -419,25 +419,3 @@ function update_parameters!(model::DecisionModel, decision_states::ValueStates)
     end
     return
 end
-
-function write_results!(
-    store::SimulationStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime;
-    exports = nothing,
-)
-    if exports !== nothing
-        export_params = Dict{Symbol, Any}(
-            :exports => exports,
-            :exports_path => joinpath(exports.path, string(get_name(model))),
-            :file_type => get_export_file_type(exports),
-            :resolution => get_resolution(model),
-            :horizon => get_horizon(get_settings(model)),
-        )
-    else
-        export_params = nothing
-    end
-
-    write_results!(store, model, timestamp, export_params)
-    return
-end
