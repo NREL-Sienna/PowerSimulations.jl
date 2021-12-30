@@ -583,7 +583,35 @@ function _apply_warm_start!(model::OperationModel)
     return
 end
 
-function _update_simulation_state!(::Simulation, model::EmulationModel)
+function _update_simulation_state!(sim::Simulation, model::EmulationModel)
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_states(sim_state)
+    simulation_time = get_current_time(sim)
+    for key in get_state_keys(system_state)
+        state_data = get_state_data(decision_state, key)
+        last_update = get_last_updated_timestamp(decision_state, key)
+        simulation_time > get_end_of_step_timestamp(state_data) && continue
+        if last_update <= simulation_time
+            # TODO: Implement setter functions for this operation to avoid hardcoding index 1
+            # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
+            # in-place value update
+            get_state_values(system_state, key)[1, :] .=
+
+                DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
+        else
+            error("Something went really wrong. Please report this error. \\
+                  last_update: $(last_update) \\
+                  simulation_time: $(simulation_time) \\
+                  key: $(encode_key_as_string(key))")
+        end
+        IS.@record :execution StateUpdateEvent(
+            key,
+            simulation_time,
+            get_name(model),
+            "SystemState",
+        )
+    end
+    # write_to_em_store()
     return
 end
 
@@ -614,16 +642,14 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             )
         end
     end
+    _set_system_state_from_decision_state!(state, model)
     return
 end
 
-function _set_system_state!(sim::Simulation, model_name::String)
-    # TODO: Update after solution of emulation
-    # em = get_emulation_model(get_models(sim))
-    sim_state = get_simulation_state(sim)
+function _set_system_state_from_decision_state!(sim_state::SimulationState, model::DecisionModel)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
-    simulation_time = get_current_time(sim)
+    simulation_time = get_current_time(sim_state)
 
     for key in get_state_keys(decision_state)
         state_data = get_state_data(decision_state, key)
@@ -645,11 +671,11 @@ function _set_system_state!(sim::Simulation, model_name::String)
         IS.@record :execution StateUpdateEvent(
             key,
             simulation_time,
-            model_name,
+            get_name(model),
             "SystemState",
         )
     end
-
+    # if last model -> write to em
     return
 end
 
@@ -737,11 +763,11 @@ function _execute!(
                     end
                 end
 
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update System State" begin
-                    if status == RunStatus.SUCCESSFUL
-                        _set_system_state!(sim, string(model_name))
-                    end
-                end
+                # TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update System State" begin
+                #     if status == RunStatus.SUCCESSFUL
+                #         _set_system_state!(sim, string(model_name))
+                #     end
+                # end
 
                 global_problem_execution_count = (step - 1) * length(execution_order) + ix
                 sim.internal.run_count[step][model_number] += 1
