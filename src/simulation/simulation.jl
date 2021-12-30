@@ -596,7 +596,6 @@ function _update_simulation_state!(sim::Simulation, model::EmulationModel)
             # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
             # in-place value update
             get_state_values(system_state, key)[1, :] .=
-
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
         else
             error("Something went really wrong. Please report this error. \\
@@ -646,7 +645,10 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     return
 end
 
-function _set_system_state_from_decision_state!(sim_state::SimulationState, model::DecisionModel)
+function _set_system_state_from_decision_state!(
+    sim_state::SimulationState,
+    model::DecisionModel,
+)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
     simulation_time = get_current_time(sim_state)
