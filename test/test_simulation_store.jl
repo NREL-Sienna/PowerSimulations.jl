@@ -57,8 +57,20 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
         sim["step_resolution"],
         sim["num_steps"],
         models,
+        # Emulation Model Store requirements. No tests yet
+        OrderedDict(
+            :Emulator => ModelStoreParams(
+                100, # Num Executions
+                1,
+                Minute(5), # Interval
+                Minute(5), # Resolution
+                100.0,
+                Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
+            ),
+        ),
     )
-    initialize_problem_storage!(store, params, model_reqs, cache_rules)
+    em_reqs = SimulationModelStoreRequirements()
+    initialize_problem_storage!(store, params, model_reqs, em_reqs, cache_rules)
 end
 
 function _run_sim_test(path, sim, variables, model_defs, cache_rules, seed)
@@ -127,7 +139,7 @@ function _verify_data(expected, store, model, name, time, columns)
     df = read_result(DataFrames.DataFrame, store, model, name, time)
     @test expected_df == df
 
-    # TODO read_result with DenseAxisArray
+    # TODO-DT read_result with DenseAxisArray
 end
 
 @testset "Test SimulationStore 2-d arrays" begin
