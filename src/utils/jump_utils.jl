@@ -29,36 +29,29 @@ function jump_value(input::Float64)::Float64
     return input
 end
 
-function to_matrix(array::DenseAxisArray)
-    ax = axes(array)
-    len_axes = length(ax)
-    if len_axes == 1
-        data = jump_value.((array[x] for x in ax[1]))
-        data = reshape(data, length(data), 1)
-    elseif len_axes == 2
-        data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
-        for t in ax[2], (ix, name) in enumerate(ax[1])
-            data[t, ix] = jump_value(array[name, t])
-        end
-        # TODO: this needs a better plan
-        #elseif len_axes == 3
-        #    extra_dims = sum(length(axes(array)[2:(end - 1)]))
-        #    arrays = Vector{Matrix}()
-
-        #    for i in ax[2]
-        #        third_dim = collect(fill(i, size(array)[end]))
-        #        data = Matrix{Float64}(undef, length(last(ax)), length(first(ax)))
-        #        for t in last(ax), (ix, name) in enumerate(first(ax))
-        #            data[t, ix] = jump_value(array[name, i, t])
-        #        end
-        #        push!(arrays, data)
-        #    end
-        #    data = vcat(arrays)
-    else
-        error("array axes not supported: $(axes(array))")
-    end
-
+function to_matrix(array::DenseAxisArray{T, 1, K}) where {T, K <: NTuple{1, Any}}
+    data = jump_value.(array.data)
+    data = reshape(data, length(data), 1)
     return data
+end
+
+function to_matrix(array::DenseAxisArray{T, 2, K}) where {T, K <: NTuple{2, Any}}
+    ax = axes(array)
+    data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
+    for t in ax[2], (ix, name) in enumerate(ax[1])
+        data[t, ix] = jump_value(array[name, t])
+    end
+    return data
+end
+
+# to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
+# HDF5 Store.
+function to_matrix(array::DenseAxisArray{T, 2, K}) where {T <: Real, K <: NTuple{2, Any}}
+    return deepcopy(permutedims(array.data))
+end
+
+function to_matrix(::DenseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
+    throw(error("Converting $(N)-dimensional DenseAxisArrays to matrix is currently not supported"))
 end
 
 function get_column_names(key::OptimizationContainerKey)
@@ -84,7 +77,7 @@ function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTup
 end
 
 function get_column_names(
-    key::OptimizationContainerKey,
+    ::OptimizationContainerKey,
     array::SparseAxisArray{T, N, K},
 ) where {T, N, K <: NTuple{N, Any}}
     return get_column_names(array)
@@ -93,13 +86,6 @@ end
 function get_column_names(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     return _get_column_names(array)
 end
-
-# to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
-# HDF5 Store.
-#function to_matrix(array::DenseAxisArray{<:Number})
-#    length(axes(array)) > 2 && error("array axes not supported: $(size(array))")
-#    return deepcopy(permutedims(array.data))
-#end
 
 function encode_tuple_to_column(val::NTuple{N, <:AbstractString}) where {N}
     return join(val, PSI_NAME_DELIMITER)
