@@ -87,10 +87,6 @@ end
 
 function to_dataframe(stats::OptimizerStats)
     df = DataFrames.DataFrame([to_namedtuple(stats)])
-    #if !_part_of_simulation(stats)
-    #    DataFrames.select!(df, _BASE_FIELDS)
-    #end
-
     return df
 end
 

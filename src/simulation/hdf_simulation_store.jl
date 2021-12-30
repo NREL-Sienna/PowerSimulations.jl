@@ -454,7 +454,6 @@ function write_result!(
     index::EMULATION_MODEL_INDEX,
     data,
 )
-
     return
 end
 

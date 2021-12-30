@@ -61,18 +61,18 @@ function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model_name,
     stats::OptimizerStats,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX,
 )
-    write_optimizer_stats!(store.dm_data[model_name], stats, timestamp)
+    write_optimizer_stats!(store.dm_data[model_name], stats, index)
     return
 end
 
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     stats::OptimizerStats,
-    execution::Int,
+    index::EMULATION_MODEL_INDEX,
 )
-    write_optimizer_stats!(store.em_data, stats, execution)
+    write_optimizer_stats!(store.em_data, stats, index)
     return
 end
 
@@ -97,7 +97,6 @@ function write_result!(
     write_result!(store.em_data, model_name, key, index, array)
     return
 end
-
 
 function read_optimizer_stats(store::InMemorySimulationStore, model_name)
     # TODO EmulationModel: this interface is TBD
@@ -142,7 +141,7 @@ function read_result(
     store::InMemorySimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX
+    index::DECISION_MODEL_INDEX,
 )
     return read_results(store.dm_data[model_name], key, index)
 end
@@ -152,7 +151,7 @@ function read_result(
     store::InMemorySimulationStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index::EMULATION_MODEL_INDEX
+    index::EMULATION_MODEL_INDEX,
 )
     return read_results(store.em_data, key, index)
 end
@@ -172,7 +171,7 @@ end
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model::DecisionModel,
-    index::DECISION_MODEL_INDEX
+    index::DECISION_MODEL_INDEX,
 )
     stats = get_optimizer_stats(model)
     dm_data = store.dm_data
@@ -183,7 +182,7 @@ end
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model::EmulationModel,
-    index::EMULATION_MODEL_INDEX
+    index::EMULATION_MODEL_INDEX,
 )
     stats = get_optimizer_stats(model)
     em_data = store.em_data

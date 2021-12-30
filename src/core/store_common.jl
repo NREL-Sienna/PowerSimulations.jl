@@ -41,7 +41,7 @@ function write_model_dual_results!(
     model::T,
     index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-) where T <: OperationModel
+) where {T <: OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -72,7 +72,7 @@ function write_model_parameter_results!(
     model::T,
     index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-) where T <: OperationModel
+) where {T <: OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -109,7 +109,7 @@ function write_model_variable_results!(
     model::T,
     index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-) where T <: OperationModel
+) where {T <: OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -146,7 +146,7 @@ function write_model_aux_variable_results!(
     model::T,
     index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-) where T <: OperationModel
+) where {T <: OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -177,7 +177,7 @@ function write_model_expression_results!(
     model::T,
     index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-) where T <: OperationModel
+) where {T <: OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
