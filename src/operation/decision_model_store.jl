@@ -80,7 +80,7 @@ function read_results(
     data::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index::Union{DECISION_MODEL_INDEX, Nothing} = nothing
+    index::Union{DECISION_MODEL_INDEX, Nothing} = nothing,
 )
     container = getfield(data, get_store_container_type(key))
     data = container[key]

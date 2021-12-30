@@ -95,7 +95,6 @@ function solve_impl!(model::OperationModel)
     return
 end
 
-
 set_console_level!(model::OperationModel, val) = get_internal(model).console_level = val
 set_file_level!(model::OperationModel, val) = get_internal(model).file_level = val
 set_executions!(model::OperationModel, val::Int) = model.internal.executions = val
