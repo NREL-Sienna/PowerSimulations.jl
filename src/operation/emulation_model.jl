@@ -500,6 +500,7 @@ function solve!(
     if get_run_status(model) == RunStatus.SUCCESSFUL
         advance_execution_count!(model)
         write_results!(store, model, get_execution_count(model); exports = exports)
+        set_last_recorded_row!(get_em_data(store), get_execution_count(model))
         write_optimizer_stats!(store, model, get_execution_count(model))
     end
     return get_run_status(model)
