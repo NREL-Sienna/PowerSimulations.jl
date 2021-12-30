@@ -76,6 +76,29 @@ function write_optimizer_stats!(
     return
 end
 
+function write_result!(
+    store::InMemorySimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::DECISION_MODEL_INDEX,
+    array,
+)
+    write_result!(store.dm_data[model_name], model_name, key, index, array)
+    return
+end
+
+function write_result!(
+    store::InMemorySimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::EMULATION_MODEL_INDEX,
+    array,
+)
+    write_result!(store.em_data, model_name, key, index, array)
+    return
+end
+
+
 function read_optimizer_stats(store::InMemorySimulationStore, model_name)
     # TODO EmulationModel: this interface is TBD
     return read_optimizer_stats(store.dm_data[model_name])
@@ -114,81 +137,24 @@ function initialize_problem_storage!(
     return
 end
 
-function write_results!(
+function read_result(
+    ::Type{DataFrames.DataFrame},
     store::InMemorySimulationStore,
-    model::EmulationModel,
-    ::Dates.DateTime;
-    exports = nothing,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::DECISION_MODEL_INDEX
 )
-    em_store = store.em_data
-
-    if exports !== nothing
-        export_params = Dict{Symbol, Any}(
-            :exports => exports,
-            :exports_path => joinpath(exports.path, string(get_name(model))),
-            :file_type => get_export_file_type(exports),
-            :resolution => get_resolution(model),
-            :horizon => 1,
-        )
-    else
-        export_params = nothing
-    end
-
-    index = get_execution_count(model) + 1
-
-    write_model_dual_results!(em_store, model, index, export_params)
-    write_model_parameter_results!(em_store, model, index, export_params)
-    write_model_variable_results!(em_store, model, index, export_params)
-    write_model_aux_variable_results!(em_store, model, index, export_params)
-    write_model_expression_results!(em_store, model, index, export_params)
-    return
-end
-
-function write_results!(
-    store::InMemorySimulationStore,
-    model::DecisionModel,
-    index::Union{Dates.DateTime, Int};
-    exports = nothing,
-)
-    dm_store = store.dm_data[get_name(model)]
-
-    if exports !== nothing
-        export_params = Dict{Symbol, Any}(
-            :exports => exports,
-            :exports_path => joinpath(exports.path, string(get_name(model))),
-            :file_type => get_export_file_type(exports),
-            :resolution => get_resolution(model),
-            :horizon => get_horizon(get_settings(model)),
-        )
-    else
-        export_params = nothing
-    end
-
-    write_model_dual_results!(dm_store, model, index, export_params)
-    write_model_parameter_results!(dm_store, model, index, export_params)
-    write_model_variable_results!(dm_store, model, index, export_params)
-    write_model_aux_variable_results!(dm_store, model, index, export_params)
-    write_model_expression_results!(dm_store, model, index, export_params)
-    return
+    return read_results(store.dm_data[model_name], key, index)
 end
 
 function read_result(
     ::Type{DataFrames.DataFrame},
     store::InMemorySimulationStore,
-    model_name,
-    key,
-    timestamp::Dates.DateTime,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EMULATION_MODEL_INDEX
 )
-    return read_result(store, model_name, key, timestamp)
-end
-
-function read_result(
-    store::InMemorySimulationStore,
-    model_name,
-    key,
-    timestamp::Dates.DateTime,
-)
-    return read_results(store.dm_data[model_name], key, timestamp)
+    return read_results(store.em_data, key, index)
 end
 
 # Note that this function is not type-stable.
@@ -206,31 +172,21 @@ end
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model::DecisionModel,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX
 )
     stats = get_optimizer_stats(model)
     dm_data = store.dm_data
-    write_optimizer_stats!(dm_data[get_name(model)], stats, timestamp)
+    write_optimizer_stats!(dm_data[get_name(model)], stats, index)
     return
 end
 
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model::EmulationModel,
-    ::Dates.DateTime,
-)
-    index = get_execution_count(model) + 1
-    write_optimizer_stats!(store, model, index)
-    return
-end
-
-function write_optimizer_stats!(
-    store::InMemorySimulationStore,
-    model::EmulationModel,
-    execution::Int,
+    index::EMULATION_MODEL_INDEX
 )
     stats = get_optimizer_stats(model)
     em_data = store.em_data
-    write_optimizer_stats!(em_data, stats, execution)
+    write_optimizer_stats!(em_data, stats, index)
     return
 end

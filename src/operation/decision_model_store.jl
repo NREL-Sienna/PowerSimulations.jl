@@ -67,12 +67,12 @@ function write_result!(
     data::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX,
     array,
 )
     container = getfield(data, get_store_container_type(key))
     df = axis_array_to_dataframe(array, key)
-    container[key][timestamp] = df
+    container[key][index] = df
     return
 end
 
@@ -80,26 +80,26 @@ function read_results(
     data::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    timestamp = nothing,
+    index::Union{DECISION_MODEL_INDEX, Nothing} = nothing
 )
     container = getfield(data, get_store_container_type(key))
     data = container[key]
-    if isnothing(timestamp)
+    if isnothing(index)
         @assert length(data) == 1
-        timestamp = first(keys(data))
+        index = first(keys(data))
     end
 
     # Return a copy because callers may mutate it.
-    return copy(data[timestamp], copycols = true)
+    return copy(data[index], copycols = true)
 end
 
 function write_optimizer_stats!(
     store::DecisionModelStore,
     stats::OptimizerStats,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX,
 )
-    @assert !(timestamp in keys(store.optimizer_stats))
-    store.optimizer_stats[timestamp] = stats
+    @assert !(index in keys(store.optimizer_stats))
+    store.optimizer_stats[index] = stats
 end
 
 function read_optimizer_stats(store::DecisionModelStore)

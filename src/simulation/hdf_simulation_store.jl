@@ -195,7 +195,7 @@ end
 function write_optimizer_stats!(
     store::HdfSimulationStore,
     model::OperationModel,
-    ::Union{Int, Dates.DateTime},
+    ::DECISION_MODEL_INDEX,
 )
     stats = get_optimizer_stats(model)
     model_name = get_name(model)
@@ -210,14 +210,22 @@ function write_optimizer_stats!(
     return
 end
 
+function write_optimizer_stats!(
+    store::HdfSimulationStore,
+    model::OperationModel,
+    ::EMULATION_MODEL_INDEX,
+)
+    return
+end
+
 """
 Read the optimizer stats for a problem execution.
 """
 function read_optimizer_stats(
     store::HdfSimulationStore,
-    simulation_step,
-    model_name,
-    execution_index,
+    simulation_step::Int,
+    model_name::Symbol,
+    execution_index::Int,
 )
     optimizer_stats_write_index =
         (simulation_step - 1) *
@@ -319,9 +327,9 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX,
 )
-    data, columns = _read_data_columns(store, model_name, key, timestamp)
+    data, columns = _read_data_columns(store, model_name, key, index)
     if ndims(data) < 2 || size(data)[1] == 1
         data = reshape(data, length(data), 1)
     end
@@ -333,9 +341,9 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX,
 )
-    data, columns = _read_data_columns(store, model_name, key, timestamp)
+    data, columns = _read_data_columns(store, model_name, key, index)
     return DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
 end
 
@@ -344,13 +352,13 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX,
 )
-    if is_cached(store.cache, model_name, key, timestamp)
-        data = read_result(store.cache, model_name, key, timestamp)
+    if is_cached(store.cache, model_name, key, index)
+        data = read_result(store.cache, model_name, key, index)
     else
         # PERF: If this will be commonly used then we need to remove reading of columns.
-        data, _ = read_result(store, model_name, key, timestamp)
+        data, _ = read_result(store, model_name, key, index)
     end
 end
 
@@ -358,9 +366,9 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX,
 )
-    simulation_step, execution_index = _get_indices(store, model_name, timestamp)
+    simulation_step, execution_index = _get_indices(store, model_name, index)
     return read_result(store, model_name, key, simulation_step, execution_index)
 end
 
@@ -403,19 +411,19 @@ function read_result(
 end
 
 """
-Write a model result for a timestamp to the store.
+Write a decision model result for a timestamp to the store.
 """
 function write_result!(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
+    index::DECISION_MODEL_INDEX,
     data,
 )
     output_cache = get_output_cache(store.cache, model_name, key)
 
     cur_size = get_size(store.cache)
-    add_result!(output_cache, timestamp, to_matrix(data), is_full(store.cache, cur_size))
+    add_result!(output_cache, index, to_matrix(data), is_full(store.cache, cur_size))
 
     if get_dirty_size(output_cache) >= get_min_flush_size(store.cache)
         discard = !should_keep_in_cache(output_cache)
@@ -433,6 +441,20 @@ function write_result!(
     #end
 
     @debug "write_result" get_size(store.cache)
+    return
+end
+
+"""
+Write an emulation model result for a timestamp to the store.
+"""
+function write_result!(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::EMULATION_MODEL_INDEX,
+    data,
+)
+
     return
 end
 
