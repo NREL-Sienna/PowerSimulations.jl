@@ -119,8 +119,8 @@ function solve!(
     solve_impl!(model)
     @assert get_current_time(model) == start_time
     if get_run_status(model) == RunStatus.SUCCESSFUL
-        write_optimizer_stats!(store, model)
         write_results!(store, model, start_time; exports = exports)
+        write_optimizer_stats!(store, model, start_time)
         advance_execution_count!(model)
     end
     return get_run_status(model)

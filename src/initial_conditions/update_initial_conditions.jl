@@ -3,7 +3,7 @@ function _update_initial_conditions!(
     key::ICKey{T, U},
     source, # Store or State are used in simulations by default
 ) where {T <: InitialConditionType, U <: PSY.Component}
-    if get_execution_count(model) > 0
+    if get_execution_count(model) < 1
         return
     end
     container = get_optimization_container(model)

@@ -80,12 +80,12 @@ end
 
 function write_result!(
     data::EmulationModelStore,
-    field::Symbol,
+    ::Symbol,
     key::OptimizationContainerKey,
     execution::Int,
     array,
 )
-    container = getfield(data, field)
+    container = getfield(data, get_store_container_type(key))
     df = axis_array_to_dataframe(array, key)
     container[key][execution, :] = df[1, :]
     return
@@ -93,11 +93,11 @@ end
 
 function read_results(
     data::EmulationModelStore,
-    container_type::Symbol,
+    ::Symbol,
     key::OptimizationContainerKey,
     index = nothing,
 )
-    container = getfield(data, container_type)
+    container = getfield(data, get_store_container_type(key))
     # Return a copy because callers may mutate it.
     return copy(container[key], copycols = true)
 end

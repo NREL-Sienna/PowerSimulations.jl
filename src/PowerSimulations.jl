@@ -436,6 +436,7 @@ include("core/optimizer_stats.jl")
 include("core/value_states.jl")
 
 include("core/optimization_container.jl")
+include("core/store_common.jl")
 
 # Order Required
 include("initial_conditions/initial_condition_chronologies.jl")
@@ -474,7 +475,6 @@ include("simulation/simulation_models.jl")
 include("simulation/simulation_state.jl")
 include("simulation/initial_condition_update_simulation.jl")
 include("simulation/simulation_store_params.jl")
-include("simulation/simulation_store_common.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
 include("simulation/simulation_problem_results.jl")

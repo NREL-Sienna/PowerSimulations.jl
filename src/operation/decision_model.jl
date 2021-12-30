@@ -320,7 +320,7 @@ function reset!(model::DecisionModel)
     model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
     model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
-    empty!(model.store)
+    empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)
     return
 end
@@ -372,14 +372,19 @@ function solve!(
         Logging.with_logger(logger) do
             try
                 initialize_storage!(
-                    model.store,
+                    get_store(model),
                     get_optimization_container(model),
                     model.internal.store_parameters,
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                     _pre_solve_model_checks(model, optimizer)
                     solve_impl!(model)
-                    write_results!(model.store, model, get_initial_time(model))
+                    write_results!(get_store(model), model, get_initial_time(model))
+                    write_optimizer_stats!(
+                        get_store(model),
+                        get_optimizer_stats(model),
+                        get_initial_time(model),
+                    )
                 end
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
@@ -416,20 +421,6 @@ function update_parameters!(model::DecisionModel, decision_states::ValueStates)
 end
 
 function write_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params = nothing,
-)
-    write_model_dual_results!(store, model, timestamp, export_params)
-    write_model_parameter_results!(store, model, timestamp, export_params)
-    write_model_variable_results!(store, model, timestamp, export_params)
-    write_model_aux_variable_results!(store, model, timestamp, export_params)
-    write_model_expression_results!(store, model, timestamp, export_params)
-    return
-end
-
-function write_results!(
     store::SimulationStore,
     model::DecisionModel,
     timestamp::Dates.DateTime;
@@ -448,80 +439,5 @@ function write_results!(
     end
 
     write_results!(store, model, timestamp, export_params)
-    return
-end
-
-function write_model_dual_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    for (key, dual) in get_duals(container)
-        write_result!(store, key, timestamp, dual)
-    end
-    return
-end
-
-function write_model_parameter_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    parameters = get_parameters(container)
-    (parameters === nothing || isempty(parameters)) && return
-    horizon = get_horizon(model)
-
-    for (key, parameter) in parameters
-        name = encode_key(key)
-        param_array = get_parameter_array(parameter)
-        multiplier_array = get_multiplier_array(parameter)
-        @assert_op length(axes(param_array)) == 2
-        num_columns = size(param_array)[1]
-        data = jump_value.(param_array) .* multiplier_array
-        write_result!(store, key, timestamp, data)
-    end
-    return
-end
-
-function write_model_variable_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    for (key, variable) in get_variables(container)
-        write_result!(store, key, timestamp, variable)
-    end
-    return
-end
-
-function write_model_aux_variable_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    for (key, variable) in get_aux_variables(container)
-        write_result!(store, key, timestamp, variable)
-    end
-    return
-end
-
-function write_model_expression_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    for (key, expression) in get_expressions(container)
-        write_result!(store, key, timestamp, expression)
-    end
     return
 end

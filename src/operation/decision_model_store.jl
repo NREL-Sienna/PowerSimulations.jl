@@ -65,12 +65,12 @@ end
 
 function write_result!(
     data::DecisionModelStore,
-    field::Symbol,
+    ::Symbol,
     key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     array,
 )
-    container = getfield(data, field)
+    container = getfield(data, get_store_container_type(key))
     df = axis_array_to_dataframe(array, key)
     container[key][timestamp] = df
     return
@@ -78,11 +78,11 @@ end
 
 function read_results(
     data::DecisionModelStore,
-    container_type::Symbol,
+    ::Symbol,
     key::OptimizationContainerKey,
     timestamp = nothing,
 )
-    container = getfield(data, container_type)
+    container = getfield(data, get_store_container_type(key))
     data = container[key]
     if isnothing(timestamp)
         @assert length(data) == 1
