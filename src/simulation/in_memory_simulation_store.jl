@@ -27,10 +27,10 @@ function open_store(
 end
 
 function Base.empty!(store::InMemorySimulationStore)
-    for val in values(store.dm_data)
+    for val in values(get_dm_data(store))
         empty!(val)
     end
-    empty!(store.em_data)
+    empty!(get_em_data(store))
     @debug "Emptied the store" _group = LOG_GROUP_SIMULATION_STORE
     return
 end
@@ -63,7 +63,7 @@ function write_optimizer_stats!(
     stats::OptimizerStats,
     index::DECISION_MODEL_INDEX,
 )
-    write_optimizer_stats!(store.dm_data[model_name], stats, index)
+    write_optimizer_stats!(get_dm_data(store)[model_name], stats, index)
     return
 end
 
@@ -72,7 +72,7 @@ function write_optimizer_stats!(
     stats::OptimizerStats,
     index::EMULATION_MODEL_INDEX,
 )
-    write_optimizer_stats!(store.em_data, stats, index)
+    write_optimizer_stats!(get_em_data(store), stats, index)
     return
 end
 
@@ -83,7 +83,7 @@ function write_result!(
     index::DECISION_MODEL_INDEX,
     array,
 )
-    write_result!(store.dm_data[model_name], model_name, key, index, array)
+    write_result!(get_dm_data(store)[model_name], model_name, key, index, array)
     return
 end
 
@@ -94,13 +94,13 @@ function write_result!(
     index::EMULATION_MODEL_INDEX,
     array,
 )
-    write_result!(store.em_data, model_name, key, index, array)
+    write_result!(get_em_data(store), model_name, key, index, array)
     return
 end
 
 function read_optimizer_stats(store::InMemorySimulationStore, model_name)
     # TODO EmulationModel: this interface is TBD
-    return read_optimizer_stats(store.dm_data[model_name])
+    return read_optimizer_stats(get_dm_data(store)[model_name])
 end
 
 function initialize_problem_storage!(
@@ -112,10 +112,10 @@ function initialize_problem_storage!(
 )
     store.params = params
     for problem in keys(store.params.decision_models_params)
-        store.dm_data[problem] = DecisionModelStore()
+        get_dm_data(store)[problem] = DecisionModelStore()
         for type in STORE_CONTAINERS
             for (name, reqs) in getfield(dm_problem_reqs[problem], type)
-                container = getfield(store.dm_data[problem], type)
+                container = getfield(get_dm_data(store)[problem], type)
                 container[name] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
                 @debug "Added $type $name in $problem" _group = LOG_GROUP_SIMULATION_STORE
             end
@@ -124,7 +124,7 @@ function initialize_problem_storage!(
 
     for type in STORE_CONTAINERS
         for (name, reqs) in getfield(em_problem_reqs, type)
-            container = getfield(store.em_data, type)
+            container = getfield(get_em_data(store), type)
             container[name] = DataFrames.DataFrame(
                 OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
             )
@@ -143,7 +143,7 @@ function read_result(
     key::OptimizationContainerKey,
     index::DECISION_MODEL_INDEX,
 )
-    return read_results(store.dm_data[model_name], key, index)
+    return read_results(get_dm_data(store)[model_name], key, index)
 end
 
 function read_result(
@@ -153,13 +153,13 @@ function read_result(
     key::OptimizationContainerKey,
     index::EMULATION_MODEL_INDEX,
 )
-    return read_results(store.em_data, key, index)
+    return read_results(get_em_data(store), key, index)
 end
 
 # Note that this function is not type-stable.
 function _get_model_results(store::InMemorySimulationStore, model_name::Symbol)
-    if model_name in keys(store.dm_data)
-        results = store.dm_data
+    if model_name in keys(get_dm_data(store))
+        results = get_dm_data(store)
     else
         # TODO EmulationModel: this interface is TBD
         error("model name $model_name is not stored")
@@ -174,7 +174,7 @@ function write_optimizer_stats!(
     index::DECISION_MODEL_INDEX,
 )
     stats = get_optimizer_stats(model)
-    dm_data = store.dm_data
+    dm_data = get_dm_data(store)
     write_optimizer_stats!(dm_data[get_name(model)], stats, index)
     return
 end
@@ -185,7 +185,7 @@ function write_optimizer_stats!(
     index::EMULATION_MODEL_INDEX,
 )
     stats = get_optimizer_stats(model)
-    em_data = store.em_data
+    em_data = get_em_data(store)
     write_optimizer_stats!(em_data, stats, index)
     return
 end
