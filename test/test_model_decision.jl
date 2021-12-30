@@ -257,8 +257,7 @@ end
     @test PSI._JUMP_MODEL_FILENAME in file_list
     @test PSI._SERIALIZED_MODEL_FILENAME in file_list
     ED2 = DecisionModel(fpath, OSQP_optimizer)
-    build!(ED2, output_dir = fpath)
-    solve!(ED2)
+    @test build!(ED2, output_dir = fpath) == PSI.BuildStatus.BUILT
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 
     path2 = mktempdir(cleanup = true)
@@ -272,7 +271,6 @@ end
     @test .!all(occursin.(r".h5", file_list))
     ED3 = DecisionModel(path2, OSQP_optimizer; system = sys)
     build!(ED3, output_dir = path2)
-    solve!(ED3)
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
